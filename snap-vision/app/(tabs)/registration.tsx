@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { View, TextInput, Button, Text, Alert } from 'react-native';
+import { useState } from 'react';
+import { View, TextInput, Button, Alert } from 'react-native';
 import { auth } from './firebase';
 console.log('AUTH OBJECT:', auth);
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 
-const Registration = () => {
+export const Registration = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -19,12 +19,12 @@ const Registration = () => {
   };
 
   return (
-    <View>
-      <TextInput placeholder="Email" onChangeText={setEmail} />
+    <View className='h-full w-full flex flex-col items-center justify-center bg-green-300'>
+      {/* <TextInput placeholder="Email" onChangeText={setEmail} />
       <TextInput placeholder="Password" secureTextEntry onChangeText={setPassword} />
-      <Button title="Register" onPress={handleRegister} />
+      <Button title="Register" onPress={handleRegister} /> */}
     </View>
   );
 };
 
-export default Registration;
+// export default Registration;

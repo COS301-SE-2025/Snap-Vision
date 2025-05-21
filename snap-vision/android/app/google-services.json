@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "835075541618",
+    "project_id": "snap-vision-f6954",
+    "storage_bucket": "snap-vision-f6954.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:835075541618:android:834f54e024bfd79c3550eb",
+        "android_client_info": {
+          "package_name": "com.anonymous.snapvision"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQ2vPsm8pc0GBKNGQUUO_loYRmEhp1jRY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:835075541618:android:7c3d16a5b67f8b603550eb",
+        "android_client_info": {
+          "package_name": "com.example.snap_vision"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQ2vPsm8pc0GBKNGQUUO_loYRmEhp1jRY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
