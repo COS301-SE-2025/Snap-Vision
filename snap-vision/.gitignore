@@ -42,6 +42,6 @@ yarn-error.*
 /android/app/.cxx/
 /android/app/build/
 /android/build/
-
+**/.idea/
 
 app-example
