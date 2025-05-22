@@ -1,36 +1,37 @@
-import { View, Text } from 'react-native';
-import { useEffect, useState } from 'react';
-import { db } from '../../firebase';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import React, { useState } from 'react';
+import { View, TextInput, Button, Alert } from 'react-native';
+import auth from '@react-native-firebase/auth';
 
-export default function HomeScreen() {
-  const [docs, setDocs] = useState([]);
+export const RegistrationInIndex = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  useEffect(() => {
-    const testFirestore = async () => {
-      try {
-        await addDoc(collection(db, 'testCollection'), {
-          name: 'SnapVision Test',
-          createdAt: Date.now(),
-        });
-
-        const snapshot = await getDocs(collection(db, 'testCollection'));
-        const results = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setDocs(results);
-      } catch (err) {
-        console.error('❌ Firestore Error:', err);
-      }
-    };
-
-    testFirestore();
-  }, []);
+  const handleRegister = async () => {
+    try {
+      await auth().createUserWithEmailAndPassword(email, password);
+      Alert.alert('Success', 'User registered!');
+    } catch (error: any) {
+      console.error('Registration Error:', error.message);
+      Alert.alert('Registration Error', error.message);
+    }
+  };
 
   return (
-    <View style={{ padding: 24 }}>
-      <Text style={{ fontSize: 18, fontWeight: 'bold' }}>📦 Firestore Results:</Text>
-      {docs.map(doc => (
-        <Text key={doc.id}>{JSON.stringify(doc)}</Text>
-      ))}
+    <View className='h-full w-full flex flex-col items-center justify-center bg-green-300'>
+      <TextInput
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+        className="border border-black rounded-lg p-2"
+      />
+      <TextInput
+        placeholder="Password"
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword}
+        className="border border-black rounded-lg p-2"
+      />
+      <Button title="Register" onPress={handleRegister} />
     </View>
   );
-}
+};

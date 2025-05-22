@@ -1,19 +1,7 @@
 // firebase.js
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore"; // ✅ Firestore
-// Auth, Storage, etc. available too
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDRHL31HfdoUk53NBlWYP5C9Plz8HgisoQ",
-  authDomain: "snap-vision-f6954.firebaseapp.com",
-  projectId: "snap-vision-f6954",
-  storageBucket: "snap-vision-f6954.appspot.com", // ✅ fixed `.appspot.com`
-  messagingSenderId: "835075541618",
-  appId: "1:835075541618:web:f2a2b1e4711c8b583550eb",
-  measurementId: "G-1V4J5TG5PC"
-};
+// No need for manual initialization — already auto-initialized via native setup
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-export { db };
+export { auth, firestore };
