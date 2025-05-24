@@ -1,16 +1,54 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Text, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
+import Geolocation from '@react-native-community/geolocation';
+import { PermissionsAndroid } from 'react-native';
 
 const MapScreen = () => {
   const [status, setStatus] = useState('Loading map...');
   const [error, setError] = useState<string | null>(null);
+const webViewRef = React.useRef<WebView>(null); // provide correct type
+
+  const sendLocationToWebView = (lat: number, lon: number) => {
+  const jsCode = `
+    if (window.updateUserLocation) {
+      window.updateUserLocation(${lat}, ${lon});
+    }
+  `;
+  webViewRef.current?.injectJavaScript(jsCode);
+};
+
+  const requestLocation = async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        Geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            sendLocationToWebView(latitude, longitude);
+          },
+          (error) => {
+            console.error(error);
+            setError('Failed to get location');
+          },
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+        );
+      } else {
+        setError('Location permission denied');
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+  };
 
   const handleWebViewMessage = (event: any) => {
     try {
       const data = event.nativeEvent.data;
       if (data === 'MAP_READY') {
         setStatus('Map loaded');
+        requestLocation(); // Get location when map is ready
       } else {
         const parsed = JSON.parse(data);
         if (parsed.type === 'ERROR') {
@@ -19,42 +57,44 @@ const MapScreen = () => {
         }
       }
     } catch (e) {
-      console.log('WebView message:', data);
+      console.log('WebView message:', event.nativeEvent.data);
     }
   };
 
   return (
     <View style={styles.container}>
       <WebView
-        source={{ uri: Platform.OS === 'android' 
-          ? 'file:///android_asset/leaflet.html' 
-          : './leaflet.html' }}
-        originWhitelist={['*']}
+        ref={webViewRef}
+        source={{
+          uri: Platform.OS === 'android'
+            ? 'file:///android_asset/leaflet.html'
+            : './leaflet.html'
+        }}
+        onMessage={handleWebViewMessage}
         javaScriptEnabled={true}
         domStorageEnabled={true}
-        mixedContentMode="always"
         allowFileAccess={true}
         allowUniversalAccessFromFileURLs={true}
-        onMessage={handleWebViewMessage}
+        mixedContentMode="always"
+        originWhitelist={['*']}
+        style={styles.webview}
         onError={(syntheticEvent) => {
           const { nativeEvent } = syntheticEvent;
-          setError(`WebView Error: ${nativeEvent.description}`);
+          setError( `WebView Error: ${nativeEvent.description}`);
         }}
-        style={styles.webview}
       />
-      
       {error && (
         <View style={styles.errorOverlay}>
           <Text style={styles.errorText}>{error}</Text>
         </View>
       )}
-      
       <View style={styles.statusOverlay}>
         <Text style={styles.statusText}>{status}</Text>
       </View>
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
