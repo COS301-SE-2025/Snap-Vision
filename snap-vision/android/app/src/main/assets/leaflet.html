@@ -1,48 +1,72 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    />
-    <title>Leaflet in WebView</title>
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
-    <style>
-      html,
-      body,
-      #map {
-        height: 100%;
-        margin: 0;
-        padding: 0;
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <style>
+    html, body, #map { 
+      height: 100%; 
+      width: 100%;
+      margin: 0; 
+      padding: 0; 
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script>
+    // Initialize error handling
+    window.onerror = function(message, source, lineno, colno, error) {
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'ERROR',
+          message: message,
+          source: source,
+          line: lineno,
+          stack: error?.stack
+        }));
       }
-    </style>
-  </head>
-  <body>
-    <div id="map"></div>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-      const map = L.map('map').setView([37.7749, -122.4194], 13); // San Francisco
-setTimeout(() => {
-  map.invalidateSize(); // Forces Leaflet to recalculate dimensions
-}, 100);
-L.tileLayer('https://tile.openstreetmap.org/%7Bz%7D/%7Bx%7D/%7By%7D.png', {
-  maxZoom: 19,
-  attribution: '© OpenStreetMap contributors'
-}).addTo(map);
-      map.locate({ setView: true, maxZoom: 16 });
-      function onLocationFound(e) {
-        var radius = e.accuracy;
-        L.marker(e.latlng)
-          .addTo(map)
-          .bindPopup("You are within " + Math.round(radius) + " meters.")
-          .openPopup();
-        L.circle(e.latlng, radius).addTo(map);
+    };
+
+    try {
+      // Initialize map
+      var map = L.map('map', {
+        preferCanvas: true,
+        zoomControl: true,
+        attributionControl: true,
+        center: [-25.7557, 28.2314],
+        zoom: 14,
+      });
+
+      // Add tile layer
+      L.tileLayer('https://api.maptiler.com/maps/basic-v2/{z}/{x}/{y}.png?key=xUUmaj1CwbUxWTcxxbmb', {
+        attribution: '© OpenStreetMap contributors & MapTiler',
+        tileSize: 512,
+        zoomOffset: -1,
+        detectRetina: true,
+        crossOrigin: 'anonymous'
+      }).addTo(map);
+
+      // Force resize handling
+      setTimeout(() => {
+        map.invalidateSize();
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage('MAP_READY');
+        }
+      }, 500);
+
+    } catch (error) {
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'ERROR',
+          message: error.message,
+          stack: error.stack
+        }));
       }
-      map.on("locationfound", onLocationFound);
-    </script>
-  </body>
+    }
+  </script>
+</body>
 </html>
