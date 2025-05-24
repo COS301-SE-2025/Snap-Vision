@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -18,6 +18,25 @@
 
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
   <script>
+    let userMarker;
+
+  // Function to update user's location on the map
+  window.updateUserLocation = function(lat, lon) {
+    const userLatLng = [lat, lon];
+
+    // Move map center
+    map.setView(userLatLng, 15);
+
+    // Add or move the marker
+    if (userMarker) {
+      userMarker.setLatLng(userLatLng);
+    } else {
+      userMarker = L.marker(userLatLng).addTo(map)
+        .bindPopup("You are here")
+        .openPopup();
+    }
+  };
+  
     // Initialize error handling
     window.onerror = function(message, source, lineno, colno, error) {
       if (window.ReactNativeWebView) {
