@@ -92,7 +92,7 @@ export default function RegistrationScreen() {
 
       <TouchableOpacity onPress={() => navigation.navigate('Login')}>
         <Text style={styles.signUpText}>
-          Don’t have an account? SIGN UP
+          Already have an account? LOGIN
         </Text>
       </TouchableOpacity>
 
