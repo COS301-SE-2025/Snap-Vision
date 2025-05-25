@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Text, Platform } from 'react-native';
+import { View, StyleSheet, Text, Platform, TouchableOpacity, Share, Alert } from 'react-native';
 import { WebView } from 'react-native-webview';
 import Geolocation from '@react-native-community/geolocation';
 import { PermissionsAndroid } from 'react-native';
@@ -7,16 +7,20 @@ import { PermissionsAndroid } from 'react-native';
 const MapScreen = () => {
   const [status, setStatus] = useState('Loading map...');
   const [error, setError] = useState<string | null>(null);
-const webViewRef = React.useRef<WebView>(null); // provide correct type
+  const [currentLocation, setCurrentLocation] = useState<{latitude: number, longitude: number} | null>(null);
+  const webViewRef = React.useRef<WebView>(null);
 
   const sendLocationToWebView = (lat: number, lon: number) => {
-  const jsCode = `
-    if (window.updateUserLocation) {
-      window.updateUserLocation(${lat}, ${lon});
-    }
-  `;
-  webViewRef.current?.injectJavaScript(jsCode);
-};
+    // Store the current location for sharing
+    setCurrentLocation({latitude: lat, longitude: lon});
+    
+    const jsCode = `
+      if (window.updateUserLocation) {
+        window.updateUserLocation(${lat}, ${lon});
+      }
+    `;
+    webViewRef.current?.injectJavaScript(jsCode);
+  };
 
   const requestLocation = async () => {
     try {
@@ -61,6 +65,37 @@ const webViewRef = React.useRef<WebView>(null); // provide correct type
     }
   };
 
+  // Share location function
+  const shareLocation = async () => {
+    if (!currentLocation) {
+      Alert.alert('No Location', 'Your location is not available yet.');
+      return;
+    }
+
+    try {
+      // Create Google Maps URL with current location
+      const url = `https://www.google.com/maps?q=${currentLocation.latitude},${currentLocation.longitude}`;
+      
+      // Create a message to share
+      const message = `Check out my location: ${url}`;
+      
+      const result = await Share.share({
+        message: message,
+        url: url, // iOS only
+        title: 'Share Location'
+      });
+
+      if (result.action === Share.sharedAction) {
+        setStatus('Location shared successfully');
+      } else if (result.action === Share.dismissedAction) {
+        setStatus('Share cancelled');
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      setError('Failed to share location');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <WebView
@@ -80,21 +115,33 @@ const webViewRef = React.useRef<WebView>(null); // provide correct type
         style={styles.webview}
         onError={(syntheticEvent) => {
           const { nativeEvent } = syntheticEvent;
-          setError( `WebView Error: ${nativeEvent.description}`);
+          setError(`WebView Error: ${nativeEvent.description}`);
         }}
       />
+      
+      {/* Share button - only shows when location is available */}
+      {currentLocation && (
+        <TouchableOpacity 
+          style={styles.shareButton}
+          onPress={shareLocation}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.shareButtonText}>SHARE LOCATION</Text>
+        </TouchableOpacity>
+      )}
+      
       {error && (
         <View style={styles.errorOverlay}>
           <Text style={styles.errorText}>{error}</Text>
         </View>
       )}
+      
       <View style={styles.statusOverlay}>
         <Text style={styles.statusText}>{status}</Text>
       </View>
     </View>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -104,6 +151,27 @@ const styles = StyleSheet.create({
   webview: {
     flex: 1,
     backgroundColor: 'transparent',
+  },
+  shareButton: {
+    position: 'absolute',
+    bottom: 80,
+    right: 20,
+    backgroundColor: '#007AFF',
+    borderRadius: 25,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  shareButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   errorOverlay: {
     position: 'absolute',

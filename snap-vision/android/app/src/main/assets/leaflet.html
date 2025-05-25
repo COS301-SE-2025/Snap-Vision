@@ -25,14 +25,14 @@
     const userLatLng = [lat, lon];
 
     // Move map center
-    map.setView(userLatLng, 15);
+    map.setView(userLatLng, 30);
 
     // Add or move the marker
     if (userMarker) {
       userMarker.setLatLng(userLatLng);
     } else {
       userMarker = L.marker(userLatLng).addTo(map)
-        .bindPopup("You are here")
+        .bindPopup("You are here! \n")
         .openPopup();
     }
   };
