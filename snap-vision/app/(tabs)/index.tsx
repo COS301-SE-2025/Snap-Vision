@@ -11,45 +11,45 @@ export type RootStackParamList = {
 };
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-export const RegistrationInIndex = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const navigation = useNavigation<NavigationProp>();
+// export const RegistrationInIndex = () => {
+//   const [email, setEmail] = useState('');
+//   const [password, setPassword] = useState('');
+//   const navigation = useNavigation<NavigationProp>();
 
-  const handleAuth = async () => {
-    try {
-      if (isRegisterMode) {
-        await auth().createUserWithEmailAndPassword(email, password);
-        Alert.alert('Success', 'User registered!');
-      } else {
-        await auth().signInWithEmailAndPassword(email, password);
-        Alert.alert('Success', 'Logged in!');
-      }
-    } catch (error: any) {
-      console.error('Auth Error:', error.message);
-      Alert.alert(isRegisterMode ? 'Registration Error' : 'Login Error', error.message);
-    }
-  };
+//   const handleAuth = async () => {
+//     try {
+//       if (isRegisterMode) {
+//         await auth().createUserWithEmailAndPassword(email, password);
+//         Alert.alert('Success', 'User registered!');
+//       } else {
+//         await auth().signInWithEmailAndPassword(email, password);
+//         Alert.alert('Success', 'Logged in!');
+//       }
+//     } catch (error: any) {
+//       console.error('Auth Error:', error.message);
+//       Alert.alert(isRegisterMode ? 'Registration Error' : 'Login Error', error.message);
+//     }
+//   };
 
-  return (
-    <View className='h-full w-full flex flex-col items-center justify-center bg-green-300 px-6'>
-      <TextInput
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        className="border border-black rounded-lg p-2 w-full mb-3 bg-white"
-      />
-      <TextInput
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-        className="border border-black rounded-lg p-2 w-full mb-3 bg-white"
-      />
-      <Button title="Register" onPress={handleRegister} />
-      <View className="mt-4">
-        <Button title="View 2D Map" onPress={() => navigation.navigate('Map')} />
-      </View>
-    </View>
-  );
-};
+//   return (
+//     <View className='h-full w-full flex flex-col items-center justify-center bg-green-300 px-6'>
+//       <TextInput
+//         placeholder="Email"
+//         value={email}
+//         onChangeText={setEmail}
+//         className="border border-black rounded-lg p-2 w-full mb-3 bg-white"
+//       />
+//       <TextInput
+//         placeholder="Password"
+//         secureTextEntry
+//         value={password}
+//         onChangeText={setPassword}
+//         className="border border-black rounded-lg p-2 w-full mb-3 bg-white"
+//       />
+//       <Button title="Register" onPress={handleRegister} />
+//       <View className="mt-4">
+//         <Button title="View 2D Map" onPress={() => navigation.navigate('Map')} />
+//       </View>
+//     </View>
+//   );
+// };
