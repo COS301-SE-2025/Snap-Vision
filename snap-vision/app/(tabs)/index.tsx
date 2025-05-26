@@ -1,11 +1,20 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Alert, Text, TouchableOpacity } from 'react-native';
 import auth from '@react-native-firebase/auth';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+// Import the type from App.tsx or define it here
+export type RootStackParamList = {
+  Register: undefined;
+  Map: undefined;
+};
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const RegistrationInIndex = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isRegisterMode, setIsRegisterMode] = useState(true); // Toggle between login/register
+  const navigation = useNavigation<NavigationProp>();
 
   const handleAuth = async () => {
     try {
@@ -37,15 +46,10 @@ export const RegistrationInIndex = () => {
         onChangeText={setPassword}
         className="border border-black rounded-lg p-2 w-full mb-3 bg-white"
       />
-      <Button title={isRegisterMode ? 'Register' : 'Login'} onPress={handleAuth} />
-
-      <TouchableOpacity onPress={() => setIsRegisterMode(!isRegisterMode)}>
-        <Text className="text-blue-600 mt-4">
-          {isRegisterMode
-            ? 'Already have an account? Login'
-            : "Don't have an account? Register"}
-        </Text>
-      </TouchableOpacity>
+      <Button title="Register" onPress={handleRegister} />
+      <View className="mt-4">
+        <Button title="View 2D Map" onPress={() => navigation.navigate('Map')} />
+      </View>
     </View>
   );
 };

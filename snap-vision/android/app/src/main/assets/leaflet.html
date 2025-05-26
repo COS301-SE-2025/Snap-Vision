@@ -1,0 +1,91 @@
+<!DOCTYPE html> 
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <style>
+    html, body, #map { 
+      height: 100%; 
+      width: 100%;
+      margin: 0; 
+      padding: 0; 
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script>
+    let userMarker;
+
+  // Function to update user's location on the map
+  window.updateUserLocation = function(lat, lon) {
+    const userLatLng = [lat, lon];
+
+    // Move map center
+    map.setView(userLatLng, 30);
+
+    // Add or move the marker
+    if (userMarker) {
+      userMarker.setLatLng(userLatLng);
+    } else {
+      userMarker = L.marker(userLatLng).addTo(map)
+        .bindPopup("You are here! \n")
+        .openPopup();
+    }
+  };
+  
+    // Initialize error handling
+    window.onerror = function(message, source, lineno, colno, error) {
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'ERROR',
+          message: message,
+          source: source,
+          line: lineno,
+          stack: error?.stack
+        }));
+      }
+    };
+
+    try {
+      // Initialize map
+      var map = L.map('map', {
+        preferCanvas: true,
+        zoomControl: true,
+        attributionControl: true,
+        center: [-25.7557, 28.2314],
+        zoom: 14,
+      });
+
+      // Add tile layer
+      L.tileLayer('https://api.maptiler.com/maps/basic-v2/{z}/{x}/{y}.png?key=xUUmaj1CwbUxWTcxxbmb', {
+        attribution: '© OpenStreetMap contributors & MapTiler',
+        tileSize: 512,
+        zoomOffset: -1,
+        detectRetina: true,
+        crossOrigin: 'anonymous'
+      }).addTo(map);
+
+      // Force resize handling
+      setTimeout(() => {
+        map.invalidateSize();
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage('MAP_READY');
+        }
+      }, 500);
+
+    } catch (error) {
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'ERROR',
+          message: error.message,
+          stack: error.stack
+        }));
+      }
+    }
+  </script>
+</body>
+</html>
