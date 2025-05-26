@@ -13,7 +13,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Register'>;
 export type RootStackParamList = {
   Register: undefined;
   Login: undefined;
-  Map: undefined;
+  MapScreen: undefined;
 };
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -24,7 +24,7 @@ export default function App() {
       <Stack.Screen name="Register" component={RegistrationScreen} />
               <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen 
-          name="Map"  // 🟢 Must match exactly what you're using in navigate()
+          name="MapScreen"  // 🟢 Must match exactly what you're using in navigate()
           component={MapScreen}
           options={{ title: 'Map View' }}
         />
