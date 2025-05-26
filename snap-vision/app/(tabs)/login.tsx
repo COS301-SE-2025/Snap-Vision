@@ -43,7 +43,7 @@ export default function LoginScreen() {
     try {
       await auth().signInWithEmailAndPassword(email, password);
       Alert.alert('Success', 'Logged in!');
-      navigation.navigate('MapScreen'); // Change if Home screen route differs
+      navigation.navigate('Tabs'); // Change if Home screen route differs
     } catch (error: any) {
       console.error('Login Error:', error);
       const errorMessages: { [key: string]: string } = {
