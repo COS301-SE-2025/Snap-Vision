@@ -9,6 +9,18 @@ import {
 } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import { useNavigation } from '@react-navigation/native';
+import { NavigationProp } from '@react-navigation/native';
+import MapScreen from './MapScreen';
+
+// Define your navigation type
+type RootStackParamList = {
+  Login: undefined;
+  Register: undefined;
+  MapScreen: undefined;
+  // Add other screens as needed
+};
+
+type NavigationProps = NavigationProp<RootStackParamList>;
 
 export default function LoginScreen() {
   const navigation = useNavigation();
@@ -31,7 +43,7 @@ export default function LoginScreen() {
     try {
       await auth().signInWithEmailAndPassword(email, password);
       Alert.alert('Success', 'Logged in!');
-      navigation.navigate('Home'); // Change if Home screen route differs
+      navigation.navigate('MapScreen'); // Change if Home screen route differs
     } catch (error: any) {
       console.error('Login Error:', error);
       const errorMessages: { [key: string]: string } = {
