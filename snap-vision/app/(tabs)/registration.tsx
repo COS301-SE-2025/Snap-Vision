@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  Button,
 } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import { useNavigation } from '@react-navigation/native';
@@ -20,6 +19,30 @@ export default function RegistrationScreen() {
   const [rememberMe, setRememberMe] = useState(false);
 
   const handleRegister = async () => {
+    // Empty field check
+    if (!username.trim() || !email.trim() || !password || !confirmPassword) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    // Email format check
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
+    // Password strength check
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      Alert.alert(
+        'Error',
+        'Password must be at least 8 characters, include a capital letter, a number, and a special character'
+      );
+      return;
+    }
+
+    // Confirm password match
     if (password !== confirmPassword) {
       Alert.alert('Error', 'Passwords do not match');
       return;
@@ -30,7 +53,17 @@ export default function RegistrationScreen() {
       Alert.alert('Success', 'Account created!');
       navigation.navigate('Login');
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      console.error('Registration Error:', error);
+      const errorMessages: { [key: string]: string } = {
+        'auth/email-already-in-use': 'This email is already registered.',
+        'auth/invalid-email': 'The email address is not valid.',
+        'auth/weak-password': 'Password is too weak (must meet all criteria).',
+      };
+      const message =
+        errorMessages[error?.code] ??
+        error?.message ??
+        'Something went wrong. Please try again.';
+      Alert.alert('Registration Error', message);
     }
   };
 
@@ -69,7 +102,7 @@ export default function RegistrationScreen() {
       <Text style={styles.label}>Confirm Password</Text>
       <TextInput
         style={styles.input}
-        placeholder="Enter your password"
+        placeholder="Confirm your password"
         secureTextEntry
         value={confirmPassword}
         onChangeText={setConfirmPassword}
@@ -91,9 +124,7 @@ export default function RegistrationScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.signUpText}>
-          Already have an account? LOGIN
-        </Text>
+        <Text style={styles.signUpText}>Already have an account? LOGIN</Text>
       </TouchableOpacity>
 
       <View style={styles.dividerRow}>
@@ -117,7 +148,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     color: '#2f6e83',
-    fontFamily: 'cursive', // Replace with custom font if available
+    fontFamily: 'cursive', // replace if you're loading a custom font
   },
   star: {
     textAlign: 'center',

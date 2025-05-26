@@ -1,4 +1,3 @@
-// app/(tabs)/login.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -18,12 +17,35 @@ export default function LoginScreen() {
   const [rememberMe, setRememberMe] = useState(false);
 
   const handleLogin = async () => {
+    if (!email.trim() || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
     try {
       await auth().signInWithEmailAndPassword(email, password);
       Alert.alert('Success', 'Logged in!');
-      navigation.navigate('Home'); // Change or create Home screen
+      navigation.navigate('Home'); // Change if Home screen route differs
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      console.error('Login Error:', error);
+      const errorMessages: { [key: string]: string } = {
+        'auth/invalid-email': 'Invalid email address.',
+        'auth/user-not-found': 'No account found with this email.',
+        'auth/wrong-password': 'Incorrect password.',
+        'auth/too-many-requests': 'Too many login attempts. Try again later.',
+        'auth/invalid-credential': 'Incorrect email or password.',
+      };
+      const message =
+        errorMessages[error?.code] ??
+        error?.message ??
+        'Something went wrong. Please try again.';
+      Alert.alert('Login Error', message);
     }
   };
 
@@ -93,7 +115,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     color: '#2f6e83',
-    fontFamily: 'cursive', // swap with custom font if needed
+    fontFamily: 'cursive', // replace with custom font if needed
   },
   star: {
     textAlign: 'center',
