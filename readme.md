@@ -1,5 +1,9 @@
 # BLT’S – Snap Vision – AR Navigation for Indoor & Outdoor Spaces
 
+[![Requirements](https://img.shields.io/badge/requirement-complete-brightgreen)](https://img.shields.io/badge/requirement-complete-brightgreen)
+[![Closed Issues](https://img.shields.io/github/issues/detail/state/COS301-SE-2025/Snap-Vision/30)](https://github.com/COS301-SE-2025/Snap-Vision/issues/30)
+[![Open Issues](https://img.shields.io/github/issues/COS301-SE-2025/Snap-Vision)](https://github.com/COS301-SE-2025/Snap-Vision/issues)
+
 Snap Vision is a mobile application designed to help users navigate complex indoor and outdoor environments such as university campuses and malls using AR-powered visual guidance. The app uses a combination of GPS, Bluetooth beacons, and AR overlays to provide seamless real-time wayfinding. This project was developed by Team BLT’S for the COS301 Capstone Module at the University of Pretoria.
 
 ---
