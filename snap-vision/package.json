@@ -5,6 +5,7 @@
   "scripts": {
     "copy-html": "cp assets/leaflet.html android/app/src/main/assets/leaflet.html",
     "android": "npm run copy-html && react-native run-android",
+    "android": "npm run copy-html && react-native run-android",
     "ios": "react-native run-ios",
     "start": "react-native start",
     "clean": "cd android && ./gradlew clean && cd ..",
@@ -16,7 +17,6 @@
     "@react-native-firebase/app": "^22.2.0",
     "@react-native-firebase/auth": "^22.2.0",
     "@react-native-firebase/firestore": "^22.2.0",
-    "@react-native-picker/picker": "^2.11.0",
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.9",
@@ -33,6 +33,7 @@
     "react-native-safe-area-context": "^5.4.1",
     "react-native-screens": "~4.10.0",
     "react-native-svg-transformer": "^1.5.1",
+    "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.20.0",
     "react-native-webview": "^13.13.5",
     "react-test-renderer": "^19.0.0"

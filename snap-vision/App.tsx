@@ -1,35 +1,32 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import MapScreen from './app/(tabs)/MapScreen';
-import RegistrationScreen from './app/(tabs)/registration';
+
 import LoginScreen from './app/(tabs)/login';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import RegistrationScreen from './app/(tabs)/registration';
+import BottomTabs from './app/(tabs)/BottomTabs';
 
-
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Register'>;
-
+import { ThemeProvider } from './app/(tabs)/ThemeContext';
 
 export type RootStackParamList = {
-  Register: undefined;
   Login: undefined;
-  MapScreen: undefined;
+  Register: undefined;
+  Tabs: undefined; 
 };
+
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
   return (
+    <ThemeProvider>
     <NavigationContainer>
-      <Stack.Navigator>
-      <Stack.Screen name="Register" component={RegistrationScreen} />
-              <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen 
-          name="MapScreen"  // 🟢 Must match exactly what you're using in navigate()
-          component={MapScreen}
-          options={{ title: 'Map View' }}
-        />
+      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Register" component={RegistrationScreen} />
+        <Stack.Screen name="Tabs" component={BottomTabs} /> 
       </Stack.Navigator>
     </NavigationContainer>
+    </ThemeProvider>
+
   );
 }
-
