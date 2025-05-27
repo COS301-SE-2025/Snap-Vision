@@ -19,10 +19,10 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm install
+        run: cd snap-vision && npm install
 
       - name: Run lint
-        run: npm run lint
+        run: cd snap-vision && npm run lint
 
       - name: Run tests
-        run: npm test
+        run: cd snap-vision && npm test
