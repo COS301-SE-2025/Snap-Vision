@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="(https://github.com/COS301-SE-2025/Snap-Vision/blob/main/docs/img/Modern-Minimalist-Graffiti-Dream-Brand-Logo-_1_.svg)" alt="Snap Vision Logo" width="150"/>
+  <img src="https://github.com/COS301-SE-2025/Snap-Vision/blob/main/docs/img/Modern-Minimalist-Graffiti-Dream-Brand-Logo-_1_.svg" alt="Snap Vision Logo" width="150"/>
   <h1>BLT’S – Snap Vision – AR Navigation for Indoor & Outdoor Spaces</h1>
 </div>
 
