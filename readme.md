@@ -3,6 +3,10 @@
 [![Requirements](https://img.shields.io/badge/requirement-complete-brightgreen)](https://img.shields.io/badge/requirement-complete-brightgreen)
 [![Closed Issues](https://img.shields.io/github/issues/detail/state/COS301-SE-2025/Snap-Vision/30)](https://github.com/COS301-SE-2025/Snap-Vision/issues/30)
 [![Open Issues](https://img.shields.io/github/issues/COS301-SE-2025/Snap-Vision)](https://github.com/COS301-SE-2025/Snap-Vision/issues)
+[![Open Pull Requests](https://img.shields.io/github/issues-pr/COS301-SE-2025/Snap-Vision)](https://github.com/COS301-SE-2025/Snap-Vision/pulls)
+[![Closed Pull Requests](https://img.shields.io/github/issues-pr-closed/COS301-SE-2025/Snap-Vision)](https://github.com/COS301-SE-2025/Snap-Vision/pulls?q=is%3Apr+is%3Aclosed)
+[![Build Status (dev)](https://img.shields.io/github/actions/workflow/status/COS301-SE-2025/Snap-Vision/ci.yml?branch=dev)](https://github.com/COS301-SE-2025/Snap-Vision/actions/workflows/ci.yml)
+
 
 Snap Vision is a mobile application designed to help users navigate complex indoor and outdoor environments such as university campuses and malls using AR-powered visual guidance. The app uses a combination of GPS, Bluetooth beacons, and AR overlays to provide seamless real-time wayfinding. This project was developed by Team BLT’S for the COS301 Capstone Module at the University of Pretoria.
 
