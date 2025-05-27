@@ -140,5 +140,5 @@ We follow the **Gitflow branching model**:
 ## Stakeholders
 
 <div align="center">
-  <img src="https://github.com/COS301-SE-2025/Snap-Vision/blob/99042bfefb67aa418ccc083b7918fba940431f5c/docs/img/Modern%20Minimalist%20Graffiti%20Dream%20Brand%20Logo%20(1).png" alt="Stakeholders Image" width="400"/>
+  <img src="https://github.com/COS301-SE-2025/Snap-Vision/blob/715d64ac39a0f5d102d1dfa768005163b7e2d806/docs/img/naked-insurance.png" alt="Stakeholders Image" width="400"/>
 </div>
