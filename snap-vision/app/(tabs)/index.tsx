@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { View, TextInput, Button, Alert, Text, TouchableOpacity } from 'react-native';
-import auth from '@react-native-firebase/auth';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+// import React, { useState } from 'react';
+// import { View, TextInput, Button, Alert, Text, TouchableOpacity } from 'react-native';
+// import auth from '@react-native-firebase/auth';
+// import { useNavigation } from '@react-navigation/native';
+// import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-// Import the type from App.tsx or define it here
-export type RootStackParamList = {
-  Register: undefined;
-  Map: undefined;
-};
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+// // Import the type from App.tsx or define it here
+// export type RootStackParamList = {
+//   Register: undefined;
+//   Map: undefined;
+// };
+// type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 // export const RegistrationInIndex = () => {
 //   const [email, setEmail] = useState('');
