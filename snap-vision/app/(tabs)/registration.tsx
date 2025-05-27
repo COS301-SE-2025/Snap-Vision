@@ -119,7 +119,7 @@ export default function RegistrationScreen() {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
+      <TouchableOpacity testID="register-button" style={styles.registerButton} onPress={handleRegister}>
         <Text style={styles.buttonText}>REGISTER</Text>
       </TouchableOpacity>
 
