@@ -44,7 +44,7 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 
 ## Functional Requirements
 
-📎 [Software Requirements Specification (SRS)](https://drive.google.com/drive/u/1/folders/1hJd8K3xOJxd9a8xGaGVL14uTiqMgJgAf)
+📎 [Software Requirements Specification (SRS)](https://drive.google.com/file/d/1PjbgsJOFsjdsjYa_vm__W2UnuMKIfOYw/view?usp=sharing)
 
 ---
 
@@ -56,13 +56,13 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 
 ## Wireframes
 
-📎 [Figma WireFrames](https://drive.google.com/drive/u/1/folders/1hJd8K3xOJxd9a8xGaGVL14uTiqMgJgAf)
+📎 [Figma WireFrames](https://docs.google.com/document/d/1Tw_-R32h6ZFYEEylHIMkNw99Q2SSMdZmDiZ4tZZgZcI/edit?usp=sharing)
 
 ---
 
 ## Video Demo 1
 
-📎 [Video Upload](https://drive.google.com/drive/u/1/folders/1hJd8K3xOJxd9a8xGaGVL14uTiqMgJgAf)
+📎 [Video Upload](https://drive.google.com/file/d/1rTIKg24IbTOZThUpLjTd6B59khP-cZaL/view?usp=sharing)
 
 ---
 
