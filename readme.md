@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://github.com/COS301-SE-2025/Snap-Vision/blob/main/docs/img/Modern-Minimalist-Graffiti-Dream-Brand-Logo-_1_.svg" alt="Snap Vision Logo" width="150"/>
+  <img src="https://github.com/COS301-SE-2025/Snap-Vision/blob/99042bfefb67aa418ccc083b7918fba940431f5c/docs/img/Modern%20Minimalist%20Graffiti%20Dream%20Brand%20Logo%20(1).png" alt="Snap Vision Logo" width="150"/>
   <h1>BLT’S – Snap Vision – AR Navigation for Indoor & Outdoor Spaces</h1>
 </div>
 
@@ -107,14 +107,6 @@ Hey there, Saalihah here! I'm a CS student who loves solving problems, delving i
 
 ---
 
-## Stakeholders
-
-<div align="center">
-  <img src="https://github.com/COS301-SE-2025/Snap-Vision/blob/da281c84fc8d30698079100e668448b2b29e9c93/docs/img/Screenshot%202025-05-27%20203010.png" alt="Stakeholders Image" width="400"/>
-</div>
-
----
-
 ## Target Platforms
 
 - Android 10+ (ARCore-supported devices)  
@@ -142,3 +134,11 @@ We follow the **Gitflow branching model**:
 - `dev` – ongoing development  
 - `feature/*` – new features  
 - `hotfix/*` – emergency bug fixes
+
+---
+
+## Stakeholders
+
+<div align="center">
+  <img src="https://github.com/COS301-SE-2025/Snap-Vision/blob/99042bfefb67aa418ccc083b7918fba940431f5c/docs/img/Modern%20Minimalist%20Graffiti%20Dream%20Brand%20Logo%20(1).png" alt="Stakeholders Image" width="400"/>
+</div>
