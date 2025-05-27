@@ -11,7 +11,7 @@ Snap Vision is a mobile application designed to help users navigate complex indo
 ## 📄 Functional Requirements
 
 You can find the full Software Requirements Specification (SRS) here:  
-📎 [Software Requirements Specification (SRS)](https://docs.google.com/document/d/1tRwYYw-HVJ73V7EsCPIahCzvW-M6hx3Q5RQLMtaNijU/edit?tab=t.0#heading=h.ooq5mat7c5ui)
+📎 [Software Requirements Specification (SRS)](https://drive.google.com/drive/u/1/folders/1hJd8K3xOJxd9a8xGaGVL14uTiqMgJgAf)
 
 ---
 
@@ -19,6 +19,20 @@ You can find the full Software Requirements Specification (SRS) here:
 
 Track our development progress via our public GitHub Project Board:  
 📎 [GitHub Project Board](https://github.com/orgs/COS301-SE-2025/projects/153)
+
+---
+
+## 📌 WireFrames
+
+See our WireFrame designs:  
+📎 [Figma WireFrames](https://drive.google.com/drive/u/1/folders/1hJd8K3xOJxd9a8xGaGVL14uTiqMgJgAf)
+
+---
+
+## 📌 Video Demo1 
+
+See our working ui for demo 1:  
+📎 [Video Upload](https://drive.google.com/drive/u/1/folders/1hJd8K3xOJxd9a8xGaGVL14uTiqMgJgAf)
 
 ---
 
