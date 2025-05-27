@@ -65,7 +65,7 @@ describe('LoginScreen', () => {
     await waitFor(() => {
       expect(mockSignIn).toHaveBeenCalledWith('test@example.com', 'password123');
       expect(Alert.alert).toHaveBeenCalledWith('Success', 'Logged in!');
-      expect(mockNavigate).toHaveBeenCalledWith('MapScreen');
+      expect(mockNavigate).toHaveBeenCalledWith('Tabs');
     });
   });
 
