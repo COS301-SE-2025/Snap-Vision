@@ -9,76 +9,62 @@ import {
 } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import { useNavigation } from '@react-navigation/native';
+import { NavigationProp } from '@react-navigation/native';
+import MapScreen from './MapScreen';
 
-export default function RegistrationScreen() {
+// Define your navigation type
+type RootStackParamList = {
+  Login: undefined;
+  Register: undefined;
+  MapScreen: undefined;
+  // Add other screens as needed
+};
+
+type NavigationProps = NavigationProp<RootStackParamList>;
+
+export default function LoginScreen() {
   const navigation = useNavigation();
-  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
 
-  const handleRegister = async () => {
-    // Empty field check
-    if (!username.trim() || !email.trim() || !password || !confirmPassword) {
+  const handleLogin = async () => {
+    if (!email.trim() || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
-    // Email format check
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       Alert.alert('Error', 'Please enter a valid email address');
       return;
     }
 
-    // Password strength check
-    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
-    if (!passwordRegex.test(password)) {
-      Alert.alert(
-        'Error',
-        'Password must be at least 8 characters, include a capital letter, a number, and a special character'
-      );
-      return;
-    }
-
-    // Confirm password match
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return;
-    }
-
     try {
-      await auth().createUserWithEmailAndPassword(email, password);
-      Alert.alert('Success', 'Account created!');
-      navigation.navigate('Login');
+      await auth().signInWithEmailAndPassword(email, password);
+      Alert.alert('Success', 'Logged in!');
+      navigation.navigate('Tabs'); // Change if Home screen route differs
     } catch (error: any) {
-      console.error('Registration Error:', error);
+      console.error('Login Error:', error);
       const errorMessages: { [key: string]: string } = {
-        'auth/email-already-in-use': 'This email is already registered.',
-        'auth/invalid-email': 'The email address is not valid.',
-        'auth/weak-password': 'Password is too weak (must meet all criteria).',
+        'auth/invalid-email': 'Invalid email address.',
+        'auth/user-not-found': 'No account found with this email.',
+        'auth/wrong-password': 'Incorrect password.',
+        'auth/too-many-requests': 'Too many login attempts. Try again later.',
+        'auth/invalid-credential': 'Incorrect email or password.',
       };
       const message =
         errorMessages[error?.code] ??
         error?.message ??
         'Something went wrong. Please try again.';
-      Alert.alert('Registration Error', message);
+      Alert.alert('Login Error', message);
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>REGISTER</Text>
+      <Text style={styles.header}>LOGIN</Text>
       <Text style={styles.star}>★</Text>
-
-      <Text style={styles.label}>UserName</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your name"
-        value={username}
-        onChangeText={setUsername}
-      />
 
       <Text style={styles.label}>Email</Text>
       <TextInput
@@ -99,15 +85,6 @@ export default function RegistrationScreen() {
         onChangeText={setPassword}
       />
 
-      <Text style={styles.label}>Confirm Password</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Confirm your password"
-        secureTextEntry
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-      />
-
       <View style={styles.rememberContainer}>
         <TouchableOpacity onPress={() => setRememberMe(!rememberMe)}>
           <Text style={styles.rememberText}>
@@ -119,12 +96,14 @@ export default function RegistrationScreen() {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity testID="register-button" style={styles.registerButton} onPress={handleRegister}>
-        <Text style={styles.buttonText}>REGISTER</Text>
+      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}  testID="login-button">
+        <Text style={styles.buttonText}>LOGIN</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.signUpText}>Already have an account? LOGIN</Text>
+      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+        <Text style={styles.signUpText}>
+          Don’t have an account? SIGN UP
+        </Text>
       </TouchableOpacity>
 
       <View style={styles.dividerRow}>
@@ -148,7 +127,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     color: '#2f6e83',
-    fontFamily: 'cursive', // replace if you're loading a custom font
+    fontFamily: 'cursive', // replace with custom font if needed
   },
   star: {
     textAlign: 'center',
@@ -183,7 +162,7 @@ const styles = StyleSheet.create({
   forgotText: {
     color: '#2f6e83',
   },
-  registerButton: {
+  loginButton: {
     backgroundColor: '#2f6e83',
     paddingVertical: 14,
     borderRadius: 8,

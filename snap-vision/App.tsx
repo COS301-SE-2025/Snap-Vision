@@ -1,25 +1,32 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { RegistrationInIndex } from './app/(tabs)';
-// import { HomeScreen } from './app/(tabs)';
-// import { Registration } from './app/(tabs)/registration';
-// import RegisterScreen from './app/(tabs)/RegisterScreen';
-// import registration from './app/(tabs)/registration';
 
+import LoginScreen from './app/(tabs)/login';
+import RegistrationScreen from './app/(tabs)/registration';
+import BottomTabs from './app/(tabs)/BottomTabs';
 
-const Stack = createNativeStackNavigator();
+import { ThemeProvider } from './app/(tabs)/ThemeContext';
+
+export type RootStackParamList = {
+  Login: undefined;
+  Register: undefined;
+  Tabs: undefined; 
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
   return (
+    <ThemeProvider>
     <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen 
-          name="Register" 
-          component={RegistrationInIndex} 
-          options={{ title: 'Register' }} 
-        />
+      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Register" component={RegistrationScreen} />
+        <Stack.Screen name="Tabs" component={BottomTabs} /> 
       </Stack.Navigator>
     </NavigationContainer>
+    </ThemeProvider>
+
   );
 }

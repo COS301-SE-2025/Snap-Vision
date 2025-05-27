@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Leaflet Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <style>
+    html, body, #map {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    .leaflet-popup-content-wrapper {
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script>
+    let map;
+    let userMarker = null;
+    let crowdMarker = null;
+
+    // Reported crowd densities and corresponding emoji/icons
+    const crowdEmojis = {
+      empty: '🟢 Empty',
+      light: '🟡 Light',
+      moderate: '🟠 Moderate',
+      crowded: '🔴 Crowded',
+      overcrowded: '⚫ Overcrowded'
+    };
+
+    // Handle uncaught errors
+    window.onerror = function(message, source, lineno, colno, error) {
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'ERROR',
+          message,
+          source,
+          line: lineno,
+          column: colno,
+          stack: error?.stack
+        }));
+      }
+    };
+
+    function initMap() {
+      map = L.map('map', {
+        zoomControl: true,
+        attributionControl: true,
+        preferCanvas: true,
+        center: [-25.7557, 28.2314],
+        zoom: 14,
+      });
+
+      L.tileLayer('https://api.maptiler.com/maps/basic-v2/{z}/{x}/{y}.png?key=xUUmaj1CwbUxWTcxxbmb', {
+        attribution: '© OpenStreetMap contributors & MapTiler',
+        tileSize: 512,
+        zoomOffset: -1,
+        detectRetina: true,
+        crossOrigin: 'anonymous'
+      }).addTo(map);
+
+      // Tell React Native that the map is ready
+      setTimeout(() => {
+        map.invalidateSize();
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage('MAP_READY');
+        }
+      }, 500);
+    }
+
+    // Function to update user location
+    window.updateUserLocation = function(lat, lon) {
+      const coords = [lat, lon];
+      if (!map) return;
+
+      map.setView(coords, 16);
+
+      if (userMarker) {
+        userMarker.setLatLng(coords);
+      } else {
+        userMarker = L.marker(coords)
+          .addTo(map)
+          .bindPopup("📍 You are here!")
+          .openPopup();
+      }
+    };
+
+    // Function to show crowd report above the location
+    window.updateCrowdDensity = function(lat, lon, density) {
+      const coords = [lat, lon];
+      if (!map) return;
+
+      const label = crowdEmojis[density] || density;
+
+      if (crowdMarker) {
+        crowdMarker.setLatLng(coords).setPopupContent(`👥 Crowd: ${label}`).openPopup();
+      } else {
+        crowdMarker = L.marker(coords)
+          .addTo(map)
+          .bindPopup(`👥 Crowd: ${label}`)
+          .openPopup();
+      }
+    };
+
+    // Start the map
+    try {
+      initMap();
+    } catch (e) {
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'ERROR',
+          message: e.message,
+          stack: e.stack
+        }));
+      }
+    }
+  </script>
+</body>
+</html>
