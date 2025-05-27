@@ -110,7 +110,7 @@ Hey there, Saalihah here! I'm a CS student who loves solving problems, delving i
 ## Stakeholders
 
 <div align="center">
-  <img src="assets/stakeholders-placeholder.png" alt="Stakeholders Image" width="400"/>
+  <img src="https://github.com/COS301-SE-2025/Snap-Vision/blob/da281c84fc8d30698079100e668448b2b29e9c93/docs/img/Screenshot%202025-05-27%20203010.png" alt="Stakeholders Image" width="400"/>
 </div>
 
 ---
