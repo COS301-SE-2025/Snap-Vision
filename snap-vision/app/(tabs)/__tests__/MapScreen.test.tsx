@@ -51,71 +51,71 @@ jest.mock('react-native/Libraries/PermissionsAndroid/PermissionsAndroid', () => 
   },
 }));
 
-// describe('MapScreen', () => {
-//   beforeEach(() => {
-//     jest.clearAllMocks();
-//   });
+describe('MapScreen', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
-//   it('renders without crashing', () => {
-//     render(<MapScreen />);
-//   });
+  it('renders without crashing', () => {
+    render(<MapScreen />);
+  });
 
-//   it('handles map ready message and updates status', async () => {
-//     const { getByTestId } = render(<MapScreen />);
-//     const webView = getByTestId('mocked-webview');
+  it('handles map ready message and updates status', async () => {
+    const { getByTestId } = render(<MapScreen />);
+    const webView = getByTestId('mocked-webview');
 
-//     if (webView.props.onMessage) {
-//       await act(async () => {
-//         webView.props.onMessage({
-//           nativeEvent: {
-//             data: 'MAP_READY',
-//           },
-//         });
-//       });
-//     }
-//   });
+    if (webView.props.onMessage) {
+      await act(async () => {
+        webView.props.onMessage({
+          nativeEvent: {
+            data: 'MAP_READY',
+          },
+        });
+      });
+    }
+  });
 
-//   it('handles location and sends to WebView', async () => {
-//     const mockPosition = {
-//       coords: {
-//         latitude: 10,
-//         longitude: 20,
-//       },
-//     };
+  it('handles location and sends to WebView', async () => {
+    const mockPosition = {
+      coords: {
+        latitude: 10,
+        longitude: 20,
+      },
+    };
 
-//     (Geolocation.getCurrentPosition as jest.Mock).mockImplementationOnce((success) =>
-//       success(mockPosition)
-//     );
+    (Geolocation.getCurrentPosition as jest.Mock).mockImplementationOnce((success) =>
+      success(mockPosition)
+    );
 
-//     const { getByTestId } = render(<MapScreen />);
-//     const webView = getByTestId('mocked-webview');
+    const { getByTestId } = render(<MapScreen />);
+    const webView = getByTestId('mocked-webview');
 
-//     if (webView.props.onMessage) {
-//       await act(async () => {
-//         webView.props.onMessage({
-//           nativeEvent: {
-//             data: 'MAP_READY',
-//           },
-//         });
-//       });
-//     }
-//   });
+    if (webView.props.onMessage) {
+      await act(async () => {
+        webView.props.onMessage({
+          nativeEvent: {
+            data: 'MAP_READY',
+          },
+        });
+      });
+    }
+  });
 
-//   it('handles invalid JSON message gracefully', async () => {
-//     const { getByTestId } = render(<MapScreen />);
-//     const webView = getByTestId('mocked-webview');
+  it('handles invalid JSON message gracefully', async () => {
+    const { getByTestId } = render(<MapScreen />);
+    const webView = getByTestId('mocked-webview');
 
-//     if (webView.props.onMessage) {
-//       await act(async () => {
-//         webView.props.onMessage({
-//           nativeEvent: {
-//             data: 'INVALID_JSON',
-//           },
-//         });
-//       });
-//     }
-//   });
-// });
+    if (webView.props.onMessage) {
+      await act(async () => {
+        webView.props.onMessage({
+          nativeEvent: {
+            data: 'INVALID_JSON',
+          },
+        });
+      });
+    }
+  });
+});
 
 describe('Crowd Reporting', () => {
   beforeEach(() => {
