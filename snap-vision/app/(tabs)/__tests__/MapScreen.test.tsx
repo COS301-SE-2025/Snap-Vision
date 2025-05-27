@@ -11,9 +11,11 @@ const mockInjectJavaScript = jest.fn();
 jest.mock('@react-native-picker/picker', () => {
   const React = require('react');
   const { View, Text } = require('react-native');
-  const Picker = ({ children, selectedValue, onValueChange }) => 
+  const Picker = ({ children, selectedValue, onValueChange }) =>
     React.createElement(View, { selectedValue, onValueChange, displayValue: selectedValue }, children);
+  Picker.displayName = 'Picker';
   Picker.Item = ({ label, value }) => React.createElement(Text, { value }, label);
+  Picker.Item.displayName = 'Picker.Item';
   return { Picker };
 });
 
@@ -23,13 +25,19 @@ jest.mock('react-native-webview', () => {
   const { forwardRef, useImperativeHandle, useRef } = require('react');
   const { View } = require('react-native');
 
-  const WebView = forwardRef((props, ref) => {
-    const localRef = useRef();
-    useImperativeHandle(ref, () => ({
-      injectJavaScript: mockInjectJavaScript, // Use the captured function
-    }));
-    return <View {...props} testID="mocked-webview" ref={localRef} />;
-  });
+  const WebView = forwardRef(
+    (
+      props: React.ComponentProps<typeof View>,
+      ref: React.Ref<{ injectJavaScript: typeof mockInjectJavaScript }>
+    ) => {
+      const localRef = useRef();
+      useImperativeHandle(ref, () => ({
+        injectJavaScript: mockInjectJavaScript,
+      }));
+      return <View {...props} testID="mocked-webview" ref={localRef} />;
+    }
+  );
+  WebView.displayName = 'WebView';
 
   return { WebView };
 });
