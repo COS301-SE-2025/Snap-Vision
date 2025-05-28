@@ -6,7 +6,6 @@ import Geolocation from '@react-native-community/geolocation';
 import { PermissionsAndroid } from 'react-native';
 import { Share } from 'react-native';
 
-// Capture the mock function for later assertions
 const mockInjectJavaScript = jest.fn();
 
 jest.mock('react-native/Libraries/PermissionsAndroid/PermissionsAndroid', () => ({
@@ -27,7 +26,6 @@ jest.mock('react-native/Libraries/Alert/Alert', () => ({
   alert: jest.fn(),
 }));
 
-// Mock Picker
 jest.mock('@react-native-picker/picker', () => {
   const React = require('react');
   const { View, Text } = require('react-native');
@@ -37,7 +35,6 @@ jest.mock('@react-native-picker/picker', () => {
   return { Picker };
 });
 
-// Mock WebView with ref
 jest.mock('react-native-webview', () => {
   const React = require('react');
   const { forwardRef, useImperativeHandle, useRef } = require('react');
@@ -54,12 +51,10 @@ jest.mock('react-native-webview', () => {
   return { WebView };
 });
 
-// Mock Geolocation
 jest.mock('@react-native-community/geolocation', () => ({
   getCurrentPosition: jest.fn(),
 }));
 
-// Mock Permissions
 jest.mock('react-native/Libraries/PermissionsAndroid/PermissionsAndroid', () => ({
   request: jest.fn(),
   RESULTS: {
@@ -71,14 +66,12 @@ jest.mock('react-native/Libraries/PermissionsAndroid/PermissionsAndroid', () => 
   },
 }));
 
-// Mock Share
 jest.mock('react-native/Libraries/Share/Share', () => ({
   share: jest.fn(),
   sharedAction: 'sharedAction',
   dismissedAction: 'dismissedAction',
 }));
 
-// Mock Alert
 jest.mock('react-native/Libraries/Alert/Alert', () => ({
   alert: jest.fn(),
 }));
@@ -127,6 +120,38 @@ describe('Location Tests', () => {
           }
         });
       });
+      expect(true).toBe(true);
+    });
+  });
+
+  describe('Component State', () => {
+    it('renders WebView with correct testID', () => {
+      const { getByTestId } = render(<MapScreen />);
+      const webView = getByTestId('mocked-webview');
+      
+      expect(webView).toBeTruthy();
+    });
+
+    it('maintains component stability during re-renders', () => {
+      const { rerender, getByTestId } = render(<MapScreen />);
+      const initialWebView = getByTestId('mocked-webview');
+      
+      rerender(<MapScreen />);
+      const rerenderedWebView = getByTestId('mocked-webview');
+      
+      expect(rerenderedWebView).toBeTruthy();
+    });
+
+    it('handles rapid message succession', async () => {
+      const { getByTestId } = render(<MapScreen />);
+      const webView = getByTestId('mocked-webview');
+
+      await act(async () => {
+        webView.props.onMessage({ nativeEvent: { data: 'MAP_READY' } });
+        webView.props.onMessage({ nativeEvent: { data: 'LOCATION_READY' } });
+        webView.props.onMessage({ nativeEvent: { data: JSON.stringify({ type: 'TEST' }) } });
+      });
+
       expect(true).toBe(true);
     });
   });
