@@ -19,7 +19,7 @@
   <a href="https://github.com/COS301-SE-2025/Snap-Vision/issues">
     <img src="https://img.shields.io/github/issues/COS301-SE-2025/Snap-Vision" alt="Open Issues">
   </a>
-  <a href="https://github.com/COS301-SE-2025/Snap-Vision/issues/30">
+  <a href="https://img.shields.io/github/issues-closed/COS301-SE-2025/Snap-Vision">
     <img src="https://img.shields.io/github/issues/detail/state/COS301-SE-2025/Snap-Vision/36" alt="Closed Issue 30">
   </a>
   <a href="https://github.com/COS301-SE-2025/Snap-Vision/pulls">
