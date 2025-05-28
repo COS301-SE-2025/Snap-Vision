@@ -31,6 +31,13 @@
   <a href="https://github.com/COS301-SE-2025/Snap-Vision/actions/workflows/ci.yml?branch=dev">
     <img src="https://img.shields.io/github/actions/workflow/status/COS301-SE-2025/Snap-Vision/ci.yml?branch=dev" alt="Build Status (dev)">
   </a>
+  <a href="https://img.shields.io/github/languages/top/COS301-SE-2025/Snap-Vision">
+    <img src="https://img.shields.io/github/languages/top/COS301-SE-2025/Snap-Vision" alt="Top Language">
+  </a>
+  <a href="https://img.shields.io/github/languages/count/COS301-SE-2025/Snap-Vision">
+    <img src="https://img.shields.io/github/languages/count/COS301-SE-2025/Snap-Vision" alt="Language Count">
+  </a>
+
 </div>
 
 ---
