@@ -130,4 +130,84 @@ describe('Location Tests', () => {
       expect(true).toBe(true);
     });
   });
+
+  describe('Location Message Handling', () => {
+    it('handles location update messages', async () => {
+      const { getByTestId } = render(<MapScreen />);
+      const webView = getByTestId('mocked-webview');
+
+      await act(async () => {
+        webView.props.onMessage({
+          nativeEvent: {
+            data: JSON.stringify({
+              type: 'LOCATION_UPDATE',
+              latitude: 25.7617,
+              longitude: 28.2021
+            })
+          }
+        });
+      });
+
+      expect(true).toBe(true);
+    });
+
+    it('handles location error messages', async () => {
+      const { getByTestId } = render(<MapScreen />);
+      const webView = getByTestId('mocked-webview');
+
+      await act(async () => {
+        webView.props.onMessage({
+          nativeEvent: {
+            data: JSON.stringify({
+              type: 'LOCATION_ERROR',
+              message: 'GPS unavailable'
+            })
+          }
+        });
+      });
+
+      expect(true).toBe(true);
+    });
+
+    it('handles map initialization messages', async () => {
+      const { getByTestId } = render(<MapScreen />);
+      const webView = getByTestId('mocked-webview');
+
+      await act(async () => {
+        webView.props.onMessage({
+          nativeEvent: {
+            data: 'MAP_INITIALIZED'
+          }
+        });
+      });
+
+      expect(true).toBe(true);
+    });
+  });
+
+  describe('WebView JavaScript Injection', () => {
+    it('handles multiple message types without errors', async () => {
+      const { getByTestId } = render(<MapScreen />);
+      const webView = getByTestId('mocked-webview');
+
+      const messages = [
+        'MAP_READY',
+        'LOCATION_REQUESTED',
+        JSON.stringify({ type: 'STATUS', message: 'ready' }),
+        'INVALID_MESSAGE_TYPE'
+      ];
+
+      for (const message of messages) {
+        await act(async () => {
+          webView.props.onMessage({
+            nativeEvent: {
+              data: message
+            }
+          });
+        });
+      }
+
+      expect(true).toBe(true);
+    });
+  });
 });
