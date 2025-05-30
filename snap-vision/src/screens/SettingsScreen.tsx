@@ -1,10 +1,11 @@
+// SettingsScreen.tsx
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 import SettingsContent from '../components/organisms/SettingsContent';
 
-export default function UserSettingsScreen() {
+export default function SettingsScreen({ navigation }) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
@@ -13,7 +14,7 @@ export default function UserSettingsScreen() {
       <View style={[styles.header, { backgroundColor: '#A75C00' }]}>
         <Text style={styles.headerText}>‹ User Settings</Text>
       </View>
-      <SettingsContent isDark={isDark} />
+      <SettingsContent isDark={isDark} navigation={navigation} /> {/* pass it here */}
     </ScrollView>
   );
 }

@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from './src/screens/LoginScreen'; 
 import RegistrationScreen from './src/screens/RegistrationScreen';
 import BottomTabs from './src/navigation/BottomTabs';
+import SettingsNavigator from './src/navigation/SettingsNavigator';
 
 import { ThemeProvider } from './src/theme/ThemeContext'; 
 
