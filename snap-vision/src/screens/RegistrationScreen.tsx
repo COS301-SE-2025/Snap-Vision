@@ -1,11 +1,15 @@
-// src/screens/RegistrationScreen.tsx
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import RegisterForm from '../components/organisms/RegisterForm';
+import { useTheme } from '../theme/ThemeContext';
+import { getThemeColors } from '../theme';
 
 export default function RegistrationScreen() {
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <RegisterForm />
     </View>
   );
@@ -14,7 +18,6 @@ export default function RegistrationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
     justifyContent: 'center',
     paddingHorizontal: 24,
   },

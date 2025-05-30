@@ -1,24 +1,28 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import LoginForm from '../components/organisms/LoginForm';
+import ThemedText from '../components/atoms/ThemedText';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 
-export default function LoginScreen() {
+const AchievementsScreen = () => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <LoginForm />
+      <ThemedText size="xl" weight="bold" style={{ color: colors.text }}>
+        Achievements
+      </ThemedText>
     </View>
   );
-}
+};
+
+export default AchievementsScreen;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 24,
+    alignItems: 'center',
   },
 });
