@@ -5,6 +5,7 @@ import HomeScreen from '../screens/HomeScreen';
 import MapScreen from '../screens/MapScreen';
 import AchievementsScreen from '../screens/AchievementsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import AdminScreen from '../screens/AdminScreen';
 import TabBarIcon from '../components/molecules/TabBarIcon';
 import { useTheme } from '../theme/ThemeContext';
 
