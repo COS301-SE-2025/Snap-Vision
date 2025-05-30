@@ -6,13 +6,14 @@ interface Props extends TouchableOpacityProps {
   title: string;
 }
 
-export default function AppButton({ title, ...rest }: Props) {
+export default function AppButton({ title, testID, ...rest }: Props & { testID?: string }) {
   return (
-    <TouchableOpacity style={styles.button} {...rest}>
+    <TouchableOpacity style={styles.button} testID={testID} {...rest}>
       <Text style={styles.buttonText}>{title}</Text>
     </TouchableOpacity>
   );
 }
+
 
 const styles = StyleSheet.create({
   button: {

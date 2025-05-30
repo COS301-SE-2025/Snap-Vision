@@ -4,6 +4,7 @@ import { View, Text, Alert, StyleSheet } from 'react-native';
 import AppInput from '../atoms/AppInput';
 import AppButton from '../atoms/AppButton';
 import RememberMe from '../molecules/RememberMe';
+
 import auth from '@react-native-firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -103,7 +104,7 @@ export default function RegisterForm() {
 
       <RememberMe rememberMe={rememberMe} onToggle={() => setRememberMe(!rememberMe)} />
 
-      <AppButton title="REGISTER" onPress={handleRegister} />
+      <AppButton title="REGISTER" onPress={handleRegister} testID="register-button"/>
 
       <Text style={styles.signUpText} onPress={() => navigation.navigate('Tabs')}>
         Already have an account? <Text style={styles.bold}>LOGIN</Text>

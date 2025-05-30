@@ -75,7 +75,7 @@ export default function LoginForm() {
 
       <RememberMe rememberMe={rememberMe} onToggle={() => setRememberMe(!rememberMe)} />
 
-      <AppButton title="LOGIN" onPress={handleLogin} />
+      <AppButton title="LOGIN" onPress={handleLogin} testID="login-button"/>
 
       <Text style={styles.signUpText} onPress={() => navigation.navigate('Register')}>
         Don’t have an account? <Text style={styles.signUpBold}>SIGN UP</Text>
