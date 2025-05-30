@@ -35,6 +35,7 @@ export default function BottomTabs() {
       <Tab.Screen name="Map" component={MapScreen} />
       <Tab.Screen name="Achievements" component={AchievementsScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
+      <Tab.Screen name="Admin" component={AdminScreen} />
     </Tab.Navigator>
   );
 }
