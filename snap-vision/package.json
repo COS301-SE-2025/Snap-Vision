@@ -1,6 +1,6 @@
 {
   "name": "snap-vision",
-  "main": "expo-router/entry",
+  "main": "index",
   "version": "1.0.0",
   "scripts": {
     "copy-html": "cp assets/leaflet.html android/app/src/main/assets/leaflet.html",
@@ -9,7 +9,7 @@
     "start": "react-native start",
     "clean": "cd android && ./gradlew clean && cd ..",
     "test": "jest",
-    "lint" : "eslint ."
+    "lint": "eslint ."
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
@@ -23,8 +23,8 @@
     "@react-navigation/native": "^7.1.9",
     "@react-navigation/native-stack": "^7.3.13",
     "@react-navigation/stack": "^7.3.2",
+    "babel-plugin-module-resolver": "^4.1.0",
     "cli-spinners": "^3.2.0",
-    "nativewind": "^4.1.23",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-native": "0.79.2",
@@ -40,7 +40,10 @@
     "react-test-renderer": "^19.0.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.25.2",
+    "@babel/core": "^7.23.9",
+    "@babel/plugin-transform-private-methods": "^7.27.1",
+    "@babel/preset-env": "^7.23.7",
+    "@babel/runtime": "^7.23.9",
     "@react-native-community/cli": "^18.0.0",
     "@react-native/metro-config": "^0.79.2",
     "@testing-library/jest-native": "^5.4.3",
