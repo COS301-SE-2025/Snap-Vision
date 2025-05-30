@@ -1,3 +1,4 @@
+// SettingsContent.tsx
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import SectionTitle from '../atoms/SectionTitle';
@@ -6,9 +7,10 @@ import SettingItem from '../molecules/SettingsItem';
 
 interface Props {
   isDark: boolean;
+  navigation: any; 
 }
 
-export default function SettingsContent({ isDark }: Props) {
+export default function SettingsContent({ isDark, navigation }: Props) {
   const colors = {
     background: isDark ? '#000' : '#fff',
     textPrimary: isDark ? '#f5f5f5' : '#222',
@@ -19,12 +21,12 @@ export default function SettingsContent({ isDark }: Props) {
   };
 
   const items = [
-    { icon: 'key', label: 'Account' },
-    { icon: 'star', label: 'Badges and Achievements' },
-    { icon: 'lock', label: 'Privacy and Security' },
-    { icon: 'bell', label: 'Notifications' },
-    { icon: 'cog', label: 'App Preferences' },
-    { icon: 'information', label: 'Support' },
+    { icon: 'key', label: 'Account', screen: 'AccountSettings' },
+    { icon: 'star', label: 'Badges and Achievements', screen: 'Achievements' },
+    { icon: 'lock', label: 'Privacy and Security', screen: 'PrivacySecurity' },
+    { icon: 'bell', label: 'Notifications', screen: 'NotificationSettings' },
+    { icon: 'cog', label: 'App Preferences', screen: 'AppPreferences' },
+    { icon: 'information', label: 'Support', screen: 'Support' },
   ];
 
   return (
@@ -46,6 +48,7 @@ export default function SettingsContent({ isDark }: Props) {
             icon={item.icon}
             label={item.label}
             color={colors.textPrimary}
+            onPress={() => navigation.navigate(item.screen)}
           />
         ))}
       </View>

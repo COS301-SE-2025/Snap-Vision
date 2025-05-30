@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Text } from 'react-native';
-import SettingsHeader from '../molecules/Settingsheader';
+import SettingsHeader from '../molecules/SettingsHeader';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 

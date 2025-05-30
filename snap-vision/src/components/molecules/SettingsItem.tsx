@@ -1,3 +1,4 @@
+// SettingItem.tsx
 import React from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import IconText from '../atoms/IconText';
@@ -6,11 +7,12 @@ interface Props {
   icon: string;
   label: string;
   color: string;
+  onPress: () => void;
 }
 
-export default function SettingItem({ icon, label, color }: Props) {
+export default function SettingItem({ icon, label, color, onPress }: Props) {
   return (
-    <TouchableOpacity style={styles.item}>
+    <TouchableOpacity style={styles.item} onPress={onPress}>
       <IconText icon={icon} text={label} color={color} />
     </TouchableOpacity>
   );
