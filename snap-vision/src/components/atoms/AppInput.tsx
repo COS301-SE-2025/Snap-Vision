@@ -1,21 +1,22 @@
 import React from 'react';
 import { TextInput, StyleSheet, TextInputProps } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
-import { getThemeColors } from '../../theme';
 
 export default function AppInput({ style, ...props }: TextInputProps & { style?: any }) {
   const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
 
   return (
     <TextInput
       {...props}
       style={[
         styles.input,
-        { borderColor: colors.primary, color: colors.text },
+        {
+          borderColor: isDark ? '#824713' : '#B78459',
+          color: isDark ? '#ffffff' : '#000000', 
+        },
         style,
       ]}
-      placeholderTextColor={colors.primary}
+      placeholderTextColor={isDark ? '#824713' : '#B78459'}
     />
   );
 }
