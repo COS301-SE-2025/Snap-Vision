@@ -1,75 +1,118 @@
 // src/components/organisms/HomeContent.tsx
 import React from 'react';
-import { View, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
 import HeaderWithIcons from '../molecules/HeaderWithIcons';
-import MapButton from '../molecules/MapButton';
 import QrCard from '../molecules/QrCard';
-import SectionTitle from '../atoms/SectionTitle';
+import AppButton from '../atoms/AppButton';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
+import { useNavigation } from '@react-navigation/native';
 
-interface Props {
-  isDark: boolean;
-}
-
-export default function HomeContent({ isDark }: Props) {
-  const colors = {
-    background: isDark ? '#000' : '#fff',
-    textPrimary: isDark ? '#69c6d0' : '#2f6e83',
-    border: isDark ? '#444' : '#ddd',
-    card: isDark ? '#1e1e1e' : '#f0f0f0',
-    qrText: isDark ? '#f7d85c' : '#333',
-    subText: isDark ? '#ccc' : '#666',
-  };
+export default function HomeContent() {
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
+  const navigation = useNavigation();
 
   return (
-    <View style={{ backgroundColor: colors.background }}>
-      <HeaderWithIcons textColor={colors.textPrimary} />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <HeaderWithIcons />
 
-      <View style={[styles.separator, { borderBottomColor: colors.border }]} />
+      <View style={{ height: 20 }} />
 
-      <View style={styles.buttonRow}>
-        <MapButton />
-        <QrCard
-          backgroundColor={colors.card}
-          titleColor={colors.qrText}
-          subtitleColor={colors.subText}
-        />
+      {/* First separator (slightly lowered) */}
+      <View style={{ marginTop: 20 }}>
+        <View style={[styles.separator, { borderBottomColor: colors.border }]} />
       </View>
 
+      {/* Go to Maps + QR Section */}
+      <View style={styles.actionBlock}>
+        <View style={styles.actionRow}>
+          <View style={styles.mapButtonWrapper}>
+            <View style={styles.mapButtonBox}>
+              <AppButton
+                title="GO TO MAPS"
+                onPress={() => navigation.navigate('Map')}
+                color={colors.primary}
+              />
+            </View>
+          </View>
+
+          <View style={styles.qrWrapper}>
+            <QrCard
+              backgroundColor={isDark ? '#1e1e1e' : '#f9f9f9'}
+              titleColor={colors.primary}
+              subtitleColor={colors.secondary}
+            />
+          </View>
+        </View>
+      </View>
+
+      {/* Second separator */}
       <View style={[styles.separator, { borderBottomColor: colors.border }]} />
 
-      <SectionTitle color={colors.textPrimary}>Recently Visited</SectionTitle>
+      {/* Recently Visited */}
+      <Text style={[styles.recentlyVisitedLabel, { color: colors.secondary }]}>
+        Recently Visited
+      </Text>
 
-      <View style={styles.imageRow}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.imageRow}
+      >
         <Image source={require('../../assets/images/placeholder.jpg')} style={styles.image} />
         <Image source={require('../../assets/images/placeholder.jpg')} style={styles.image} />
-      </View>
+        <Image source={require('../../assets/images/placeholder.jpg')} style={styles.image} />
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingTop: 64,
+  },
   separator: {
-    marginTop: 20,
     borderBottomWidth: 1,
     marginVertical: 20,
-    top: 60,
   },
-  buttonRow: {
-    top: 60,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
+  recentlyVisitedLabel: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginHorizontal: 20,
+    marginBottom: 10,
+    marginTop: 40,
   },
   imageRow: {
+    paddingHorizontal: 20,
+    gap: 16,
+  },
+  image: {
+    width: 140,
+    height: 160,
+    borderRadius: 10,
+  },
+  actionBlock: {
+    marginTop: 20, // was 40, now slightly higher
+  },
+  actionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    marginTop: 100,
+    alignItems: 'stretch',
   },
-  image: {
-    width: '48%',
-    height: 150,
-    borderRadius: 10,
+  mapButtonWrapper: {
+    flex: 1.1,
+    marginRight: 8,
+  },
+  mapButtonBox: {
+    flex: 1,
+    justifyContent: 'center',
+    height: 120,
+  },
+  qrWrapper: {
+    flex: 1,
+    marginLeft: 8,
   },
 });

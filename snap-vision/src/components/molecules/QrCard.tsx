@@ -15,7 +15,7 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
       <Icon name="camera-outline" size={20} color="#f7d85c" />
       <View style={{ marginLeft: 6 }}>
         <Text style={[styles.qrTitle, { color: titleColor }]}>Scan a nearby QR code</Text>
-        <Text style={[styles.qrSubtitle, { color: subtitleColor }]}>to enable offline mode</Text>
+        {/* <Text style={[styles.qrSubtitle, { color: subtitleColor }]}>to enable offline mode</Text> */}
       </View>
     </View>
   );
