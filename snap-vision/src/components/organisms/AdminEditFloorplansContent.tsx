@@ -65,7 +65,6 @@ export default function AdminEditFloorplansContent({
           <AppButton
             title="Save Changes"
             onPress={handleSave}
-            style={{ marginTop: 16 }}
           />
         )}
       </ScrollView>

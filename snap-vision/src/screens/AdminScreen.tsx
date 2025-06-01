@@ -6,6 +6,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 import { useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
+import ThemedText from '../components/atoms/ThemedText';
 
 type AdminStackParamList = {
   AdminLoadFloorplans: undefined;
@@ -36,12 +37,10 @@ const AdminScreen = () => {
         <AppButton 
           title="Load Floorplans" 
           onPress={handleLoadFloorplans}
-          style={styles.adminButton}
         />
         <AppButton 
           title="Edit Floorplans" 
           onPress={handleEditFloorplans}
-          style={styles.adminButton}
         />
       </View>
     </View>
@@ -63,8 +62,5 @@ const styles = StyleSheet.create({
   buttonContainer: {
     width: '100%',
     maxWidth: 300,
-  },
-  adminButton: {
-    marginBottom: 16,
-  },
+  }
 });
