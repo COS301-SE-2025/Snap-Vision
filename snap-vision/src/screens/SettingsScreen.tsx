@@ -1,30 +1,35 @@
+// SettingsScreen.tsx
 import React from 'react';
-import { View, Switch, StyleSheet } from 'react-native';
-import ThemedText from '../components/atoms/ThemedText';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
+import SettingsContent from '../components/organisms/SettingsContent';
 
-const SettingsScreen = () => {
-  const { isDark, toggleTheme } = useTheme();
+export default function SettingsScreen({ navigation }) {
+  const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ThemedText size="lg" weight="bold" style={{ color: colors.text }}>
-        Dark Mode
-      </ThemedText>
-      <Switch value={isDark} onValueChange={toggleTheme} />
-    </View>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: '#A75C00' }]}>
+        <Text style={styles.headerText}>‹ User Settings</Text>
+      </View>
+      <SettingsContent isDark={isDark} navigation={navigation} /> {/* pass it here */}
+    </ScrollView>
   );
-};
-
-export default SettingsScreen;
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+  },
+  header: {
+    padding: 16,
     justifyContent: 'center',
-    alignItems: 'center',
+  },
+  headerText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });

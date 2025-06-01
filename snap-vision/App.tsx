@@ -7,6 +7,7 @@ import RegistrationScreen from './src/screens/RegistrationScreen';
 import BottomTabs from './src/navigation/BottomTabs';
 import AdminLoadFloorplansScreen from './src/screens/AdminLoadFloorplansScreen';
 import AdminEditFloorplansScreen from './src/screens/AdminEditFloorplansScreen';
+import SettingsNavigator from './src/navigation/SettingsNavigator';
 
 import { ThemeProvider } from './src/theme/ThemeContext'; 
 
