@@ -106,11 +106,11 @@ const styles = StyleSheet.create({
     flex: 1.1,
     marginRight: 8,
   },
-  mapButtonBox: {
-    flex: 1,
-    justifyContent: 'center',
-    height: 120,
-  },
+ mapButtonBox: {
+  justifyContent: 'center',
+  alignItems: 'stretch', // optional for button alignment
+},
+
   qrWrapper: {
     flex: 1,
     marginLeft: 8,
