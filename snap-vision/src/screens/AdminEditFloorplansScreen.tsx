@@ -1,182 +1,151 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 import TopBar from '../components/molecules/TopBar';
-import AppSecondaryButton from '../components/atoms/AppSecondaryButton';
 import AppButton from '../components/atoms/AppButton';
+import AppSecondaryButton from '../components/atoms/AppSecondaryButton';
 import AppInput from '../components/atoms/AppInput';
 
-const ROOM_TYPES = ['Lecture Hall', 'Office', 'Bathroom', 'Cafeteria'];
+const mockFloorplans = [
+  { id: '1', name: 'Science Hall - Floor 2' },
+  { id: '2', name: 'Main Mall - Basement' },
+];
+
+const ACTIONS = [
+  { key: 'add', label: 'Add Room/Shop' },
+  { key: 'update', label: 'Update Room/Shop' },
+  { key: 'remove', label: 'Remove Room/Shop' },
+];
 
 export default function AdminEditFloorplansScreen() {
-  const [roomName, setRoomName] = useState('');
-  const [selectedType, setSelectedType] = useState<string | null>(null);
   const navigation = useNavigation();
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
+  const [selectedFloorplan, setSelectedFloorplan] = useState<string | null>(null);
+  const [selectedAction, setSelectedAction] = useState<string | null>(null);
+
+  // Example state for add/update
+  const [roomName, setRoomName] = useState('');
+  const [roomType, setRoomType] = useState('');
+
+  // Handlers for actions
+  const handleUploadNew = () => { /* logic to upload new floorplan */ };
+  const handleAddRoom = () => { /* logic to add room */ };
+  const handleUpdateRoom = () => { /* logic to update room */ };
+  const handleRemoveRoom = () => { /* logic to remove room */ };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar title="Edit Floorplans" onBackPress={() => navigation.goBack()} />
+      <ScrollView contentContainerStyle={{ padding: 16 }}>
+        {/* Step 1: Select Floorplan */}
+        <Text style={[styles.label, { color: colors.text }]}>Select Floorplan</Text>
+        <View style={styles.floorplanList}>
+          {mockFloorplans.map(fp => (
+            <TouchableOpacity
+              key={fp.id}
+              style={[
+                styles.floorplanItem,
+                { backgroundColor: selectedFloorplan === fp.id ? colors.primary : colors.card }
+              ]}
+              onPress={() => {
+                setSelectedFloorplan(fp.id);
+                setSelectedAction(null);
+              }}
+            >
+              <Text style={{ color: selectedFloorplan === fp.id ? colors.background : colors.text }}>
+                {fp.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <AppSecondaryButton title="Upload New Floorplan" onPress={handleUploadNew} />
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
-        {/* Map Container */}
-        <View style={styles.mapContainer}>
-          <View style={[styles.mapPlaceholder, { backgroundColor: colors.card }]}>
-            <Text style={[styles.mapText, { color: colors.text }]}>
-              Interactive canvas showing uploaded floorplan image.
-            </Text>
-            <View style={[styles.locationIcon, { backgroundColor: colors.secondary + '55' }]} />
+        {/* Step 2: Choose Action */}
+        {selectedFloorplan && (
+          <>
+            <Text style={[styles.label, { color: colors.text, marginTop: 24 }]}>What would you like to do?</Text>
+            <View style={styles.actionRow}>
+              {ACTIONS.map(action => (
+                <AppButton
+                  key={action.key}
+                  title={action.label}
+                  onPress={() => setSelectedAction(action.key)}
+                  style={{
+                    flex: 1,
+                    marginRight: action.key !== ACTIONS[ACTIONS.length - 1].key ? 8 : 0,
+                    backgroundColor: selectedAction === action.key ? colors.primary : colors.card,
+                  }}
+                  textStyle={{
+                    color: selectedAction === action.key ? colors.background : colors.text,
+                  }}
+                />
+              ))}
+            </View>
+          </>
+        )}
+
+        {/* Step 3: Show Form/Action */}
+        {selectedAction === 'add' && (
+          <View style={{ marginTop: 24 }}>
+            <Text style={[styles.label, { color: colors.text }]}>Add Room/Shop</Text>
+            <AppInput
+              placeholder="Room/Shop Name"
+              value={roomName}
+              onChangeText={setRoomName}
+              style={[
+                styles.textField,
+                { borderColor: colors.primary, color: colors.text, backgroundColor: colors.background }
+              ]}
+              placeholderTextColor={colors.text + '99'}
+            />
+            <AppInput
+              placeholder="Room/Shop Type"
+              value={roomType}
+              onChangeText={setRoomType}
+              style={[
+                styles.textField,
+                { borderColor: colors.primary, color: colors.text, backgroundColor: colors.background }
+              ]}
+              placeholderTextColor={colors.text + '99'}
+            />
+            <AppButton title="Add" onPress={handleAddRoom} />
           </View>
-        </View>
+        )}
 
-        {/* Room Name Input */}
-        <View style={styles.inputSection}>
-          <Text style={[styles.inputLabel, { color: colors.text }]}>Room Name</Text>
-          <AppInput
-            style={[
-              styles.textField,
-              { borderColor: colors.primary, color: colors.text, backgroundColor: colors.background }
-            ]}
-            placeholder="Enter room name"
-            placeholderTextColor={colors.text + '99'}
-            value={roomName}
-            onChangeText={setRoomName}
-          />
-          <Text style={[styles.inputInfo, { color: colors.text }]}>
-            Specify the name of the room being added.
-          </Text>
-        </View>
-
-        {/* Room Type Selection */}
-        <View style={styles.selectionSection}>
-          <Text style={[styles.inputLabel, { color: colors.text }]}>Room Type</Text>
-          <View style={styles.chipGroup}>
-            {ROOM_TYPES.map(type => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.chip,
-                  { backgroundColor: selectedType === type ? colors.primary : colors.card }
-                ]}
-                onPress={() => setSelectedType(type)}
-              >
-                <Text style={[
-                  styles.chipText,
-                  {
-                    color: selectedType === type ? colors.background : colors.text,
-                    fontWeight: selectedType === type ? '500' : '400'
-                  }
-                ]}>
-                  {type}
-                </Text>
-              </TouchableOpacity>
-            ))}
+        {selectedAction === 'update' && (
+          <View style={{ marginTop: 24 }}>
+            <Text style={[styles.label, { color: colors.text }]}>Update Room/Shop</Text>
+            {/* Add update form here */}
+            <AppButton title="Update" onPress={handleUpdateRoom} />
           </View>
-          <Text style={[styles.inputInfo, { color: colors.text }]}>
-            Select the type of room being added.
-          </Text>
-        </View>
+        )}
 
-        {/* Buttons */}
-        <View style={styles.buttonRow}>
-          <AppSecondaryButton
-            title="Discard Changes"
-            onPress={() => {/* handle discard */}}
-            style={{ flex: 1, marginRight: 8, marginBottom: 0 }}
-          />
-          <AppButton
-            title="Save Changes"
-            onPress={() => {/* handle save */}}
-            style={{ flex: 1, marginBottom: 0 }}
-          />
-        </View>
+        {selectedAction === 'remove' && (
+          <View style={{ marginTop: 24 }}>
+            <Text style={[styles.label, { color: colors.text }]}>Remove Room/Shop</Text>
+            {/* Add remove form here */}
+            <AppButton title="Remove" onPress={handleRemoveRoom} />
+          </View>
+        )}
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  mapContainer: {
-    width: '100%',
-    height: 336,
-    paddingHorizontal: 12,
-    marginTop: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mapPlaceholder: {
-    flex: 1,
-    width: '100%',
-    borderRadius: 6,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  mapText: {
-    fontSize: 16,
-    fontWeight: '500',
-    textAlign: 'center',
-    marginTop: 150,
-  },
-  locationIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    position: 'absolute',
-    top: 144,
-    left: '45%',
-  },
-  inputSection: {
-    width: '100%',
-    paddingHorizontal: 12,
-    marginTop: 24,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  textField: {
-    borderRadius: 6,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 4,
-  },
-  inputInfo: {
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  selectionSection: {
-    width: '100%',
-    paddingHorizontal: 12,
-    marginTop: 12,
-  },
-  chipGroup: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 4,
-    flexWrap: 'wrap',
-  },
-  chip: {
-    padding: 8,
+  container: { flex: 1 },
+  label: { fontSize: 16, fontWeight: '500', marginBottom: 8 },
+  floorplanList: { flexDirection: 'row', marginBottom: 12, flexWrap: 'wrap', gap: 8 },
+  floorplanItem: {
+    padding: 12,
     borderRadius: 6,
     marginRight: 8,
-    marginBottom: 4,
-  },
-  chipText: {
-    fontSize: 14,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 12,
-    marginTop: 24,
     marginBottom: 8,
   },
+  actionRow: { flexDirection: 'row', marginTop: 8, marginBottom: 8 },
+  textField: { borderRadius: 6, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 8 },
 });
