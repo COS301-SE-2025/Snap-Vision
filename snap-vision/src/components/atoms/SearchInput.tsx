@@ -1,25 +1,32 @@
+// src/components/atoms/SearchInput.tsx
 import React from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { TextInput, View, StyleSheet, TouchableOpacity } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
 
 interface Props {
   placeholder: string;
-  onSearch: () => void;
-  textColor: string;
-  backgroundColor: string;
-  borderColor: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  onSearch?: () => void;
 }
 
-export default function SearchInput({ placeholder, onSearch, textColor, backgroundColor, borderColor }: Props) {
+export default function SearchInput({ placeholder, value, onChangeText, onSearch }: Props) {
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <TextInput
+        style={[styles.input, { color: colors.text }]}
         placeholder={placeholder}
-        placeholderTextColor={textColor}
-        style={[styles.input, { color: textColor, backgroundColor, borderColor }]}
+        placeholderTextColor={isDark ? '#999' : '#666'}
+        value={value}
+        onChangeText={onChangeText}
       />
-      <TouchableOpacity style={[styles.button, { backgroundColor: '#A75C00' }]} onPress={onSearch}>
-        <Icon name="magnify" size={20} color="#fff" />
+      <TouchableOpacity style={[styles.searchButton, { backgroundColor: '#824713' }]} onPress={onSearch}>
+        <Icon name="search" size={20} color="#fff" />
       </TouchableOpacity>
     </View>
   );
@@ -28,20 +35,21 @@ export default function SearchInput({ placeholder, onSearch, textColor, backgrou
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
     alignItems: 'center',
-    marginTop: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginHorizontal: 16,
+    marginBottom: 8,
   },
   input: {
     flex: 1,
-    height: 40,
-    borderWidth: 1,
-    borderRadius: 8,
     paddingHorizontal: 12,
+    paddingVertical: 12,
+    fontSize: 16,
   },
-  button: {
-    marginLeft: 8,
-    padding: 10,
-    borderRadius: 8,
+  searchButton: {
+    padding: 12,
+    borderTopRightRadius: 8,
+    borderBottomRightRadius: 8,
   },
 });

@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import SectionTitle from '../atoms/SectionTitle';
-import SearchInput from '../atoms/SearchInput';
+import SearchInput from '../atoms/SettingsSearch';
 import SettingItem from '../molecules/SettingsItem';
 
 interface Props {
