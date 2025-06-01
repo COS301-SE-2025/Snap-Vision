@@ -1,11 +1,12 @@
+// AccountSettingsScreen.tsx
 import React from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import AccountSettingsContent from '../components/organisms/AccountSettingsContent';
 
-export default function AccountSettingsScreen() {
+export default function AccountSettingsScreen({ navigation }) {
   return (
     <ScrollView style={styles.container}>
-      <AccountSettingsContent />
+      <AccountSettingsContent navigation={navigation} />
     </ScrollView>
   );
 }
