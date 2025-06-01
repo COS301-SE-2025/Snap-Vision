@@ -1,5 +1,7 @@
 import React from 'react';
 import { Text, StyleSheet, TextStyle } from 'react-native';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
 
 interface Props {
   children: React.ReactNode;
@@ -9,6 +11,9 @@ interface Props {
 }
 
 export default function ThemedText({ children, size = 'md', weight = 'normal', style }: Props) {
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
+  
   const fontSize = {
     sm: 14,
     md: 16,
@@ -17,7 +22,7 @@ export default function ThemedText({ children, size = 'md', weight = 'normal', s
   }[size];
 
   return (
-    <Text style={[styles.base, { fontSize, fontWeight: weight, color: '#2f6e83' }, style]}>
+    <Text style={[styles.base, { fontSize, fontWeight: weight, color: colors.text }, style]}>
       {children}
     </Text>
   );
@@ -25,6 +30,6 @@ export default function ThemedText({ children, size = 'md', weight = 'normal', s
 
 const styles = StyleSheet.create({
   base: {
-    textAlign: 'center',
+    textAlign: 'left', // Changed from center to left
   },
 });

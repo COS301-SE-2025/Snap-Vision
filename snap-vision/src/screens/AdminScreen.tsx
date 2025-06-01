@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import ThemedText from '../components/atoms/ThemedText';
+import AdminSettingsForm from '../components/organisms/AdminSettingsForm';
 import AppButton from '../components/atoms/AppButton';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
