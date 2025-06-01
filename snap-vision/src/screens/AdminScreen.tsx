@@ -9,6 +9,7 @@ import type { NavigationProp } from '@react-navigation/native';
 
 type AdminStackParamList = {
   AdminLoadFloorplans: undefined;
+  AdminEditFloorplans: undefined;
 };
 
 type AdminNavigationProp = NavigationProp<AdminStackParamList>;
@@ -21,10 +22,13 @@ const AdminScreen = () => {
   const handleLoadFloorplans = () => {
     navigation.navigate('AdminLoadFloorplans');
   };
+  const handleEditFloorplans = () => {
+    navigation.navigate('AdminEditFloorplans');
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ThemedText size="xl" weight="bold" style={[styles.title, { color: colors.text }]}>
+      <ThemedText size="xl" weight="bold">
         Admin Dashboard
       </ThemedText>
       
@@ -32,6 +36,11 @@ const AdminScreen = () => {
         <AppButton 
           title="Load Floorplans" 
           onPress={handleLoadFloorplans}
+          style={styles.adminButton}
+        />
+        <AppButton 
+          title="Edit Floorplans" 
+          onPress={handleEditFloorplans}
           style={styles.adminButton}
         />
       </View>
