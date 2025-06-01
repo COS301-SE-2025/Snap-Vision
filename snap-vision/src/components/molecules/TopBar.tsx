@@ -17,7 +17,7 @@ export default function TopBar({ title, onBackPress }: Props) {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.content, { backgroundColor: colors.primary }]}>
         <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
-          <Icon name="chevron-back" size={24} color={colors.text} />
+          <Icon name="chevron-back" size={24} color={isDark ? colors.text : '#000'} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: '#000' }]}>{title}</Text>
       </View>
