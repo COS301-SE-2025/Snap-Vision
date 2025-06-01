@@ -11,7 +11,7 @@ export default function PrivacySecurityContent() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}> 
-      <SettingsHeader title="Privacy & Security" />
+      <SettingsHeader title="Privacy & Security"/>
       <PrivacySettings />
     </View>
   );
@@ -19,7 +19,6 @@ export default function PrivacySecurityContent() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    padding: 16,
+    flex: 1
   },
 });

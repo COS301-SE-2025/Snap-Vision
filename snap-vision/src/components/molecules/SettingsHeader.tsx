@@ -15,11 +15,11 @@ export default function SettingsHeader({ title }: Props) {
   const colors = getThemeColors(isDark);
 
   return (
-    <View style={[styles.header, { backgroundColor: isDark ? '#824713' : '#B78459' }]}> 
+    <View style={[styles.header, { backgroundColor: colors.primary }]}> 
       <TouchableOpacity onPress={() => navigation.goBack()}>
-        <Ionicons name="arrow-back" size={24} color="black" />
+        <Ionicons name="arrow-back" size={24} color="white" />
       </TouchableOpacity>
-      <Text style={[styles.title, { color: 'black' }]}>{title}</Text>
+      <Text style={[styles.title, { color: 'white' }]}>{title}</Text>
     </View>
   );
 }

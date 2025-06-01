@@ -11,8 +11,8 @@ export default function SettingsScreen({ navigation }) {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: '#A75C00' }]}>
-        <Text style={styles.headerText}>‹ User Settings</Text>
+      <View style={[styles.header, { backgroundColor: colors.primary }]}>
+        <Text style={styles.headerText}>User Settings</Text>
       </View>
       <SettingsContent isDark={isDark} navigation={navigation} /> {/* pass it here */}
     </ScrollView>

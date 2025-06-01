@@ -4,6 +4,8 @@ import { View, StyleSheet } from 'react-native';
 import SectionTitle from '../atoms/SectionTitle';
 import SearchInput from '../atoms/SettingsSearch';
 import SettingItem from '../molecules/SettingsItem';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
 
 interface Props {
   isDark: boolean;
@@ -11,14 +13,7 @@ interface Props {
 }
 
 export default function SettingsContent({ isDark, navigation }: Props) {
-  const colors = {
-    background: isDark ? '#000' : '#fff',
-    textPrimary: isDark ? '#f5f5f5' : '#222',
-    border: isDark ? '#444' : '#ccc',
-    card: isDark ? '#1e1e1e' : '#f0f0f0',
-    textBoxBackground: isDark ? '#824713' : '#B78459',
-    textBoxText: '#000',
-  };
+  const colors = getThemeColors(isDark);
 
   const items = [
     { icon: 'key', label: 'Account', screen: 'AccountSettings' },
@@ -35,9 +30,9 @@ export default function SettingsContent({ isDark, navigation }: Props) {
         <SearchInput
           placeholder="Search Settings"
           onSearch={() => {}}
-          textColor={colors.textBoxText}
-          backgroundColor={colors.textBoxBackground}
-          borderColor={colors.textBoxBackground}
+          textColor={colors.secondary}
+          backgroundColor={colors.background}
+          borderColor={colors.primary}
         />
       </View>
 
@@ -47,7 +42,7 @@ export default function SettingsContent({ isDark, navigation }: Props) {
             key={index}
             icon={item.icon}
             label={item.label}
-            color={colors.textPrimary}
+            color={colors.primary}
             onPress={() => navigation.navigate(item.screen)}
           />
         ))}
