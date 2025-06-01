@@ -9,12 +9,17 @@ import {
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useUserManagement } from '../../hooks/useUserManagement';
+import TopBar from '../molecules/TopBar';
 import SearchInput from '../atoms/SearchInput';
 import RoleFilter from '../molecules/RoleFilter';
 import UserCard from '../molecules/UserCard';
 import ActionButton from '../atoms/ActionButton';
 
-export default function ManageUsersForm() {
+interface Props {
+  navigation: any;
+}
+
+export default function ManageUsersForm({ navigation }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   
@@ -41,7 +46,9 @@ export default function ManageUsersForm() {
   }
 
   return (
-    <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <TopBar title="Manage Users" onBackPress={() => navigation.goBack()} />
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
       {/* Search */}
       <View style={styles.searchContainer}>
         <SearchInput
@@ -100,11 +107,15 @@ export default function ManageUsersForm() {
           style={styles.actionButton}
         />
       </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
