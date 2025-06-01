@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 import AppInput from '../components/atoms/AppInput';
 import AppButton from '../components/atoms/AppButton';
+import AppSecondaryButton from '../components/atoms/AppSecondaryButton';
 import FloorplanListItem from '../components/molecules/FloorplanListItem';
 import TopBar from '../components/molecules/TopBar';
 
@@ -42,12 +43,10 @@ export default function AdminLoadFloorplansScreen({ navigation }: any) {
   const [floorLabel, setFloorLabel] = useState('');
 
   const handleUpload = () => {
-    // Upload functionality to be implemented
     console.log('Upload floorplan');
   };
 
   const handleSaveChanges = () => {
-    // Save changes functionality to be implemented
     console.log('Save changes');
   };
 
@@ -66,7 +65,6 @@ export default function AdminLoadFloorplansScreen({ navigation }: any) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar title="Load Floorplans" onBackPress={() => navigation.goBack()} />
-      
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Building Name Input */}
         <View style={styles.inputSection}>
@@ -75,9 +73,13 @@ export default function AdminLoadFloorplansScreen({ navigation }: any) {
             placeholder="Enter the building's name"
             value={buildingName}
             onChangeText={setBuildingName}
-            style={styles.textField}
+            style={[
+              styles.textField,
+              { borderColor: colors.primary, color: colors.text, backgroundColor: colors.background }
+            ]}
+            placeholderTextColor={colors.text + '99'}
           />
-          <Text style={styles.infoText}>e.g. Science Hall</Text>
+          <Text style={[styles.infoText, { color: colors.text } ]}>e.g. Science Hall</Text>
         </View>
 
         {/* Floor Label Input */}
@@ -87,16 +89,21 @@ export default function AdminLoadFloorplansScreen({ navigation }: any) {
             placeholder="e.g., Floor 2, Basement"
             value={floorLabel}
             onChangeText={setFloorLabel}
-            style={styles.textField}
+            style={[
+              styles.textField,
+              { borderColor: colors.primary, color: colors.text, backgroundColor: colors.background }
+            ]}
+            placeholderTextColor={colors.text + '99'}
           />
-          <Text style={styles.infoText}>Specify the floor designation</Text>
+          <Text style={[styles.infoText, { color: colors.text } ]}>Specify the floor designation</Text>
         </View>
 
         {/* Upload Button */}
         <View style={styles.buttonSection}>
-          <TouchableOpacity style={styles.uploadButton} onPress={handleUpload}>
-            <Text style={styles.uploadButtonText}>Click to Upload</Text>
-          </TouchableOpacity>
+          <AppSecondaryButton
+            title="Click to Upload"
+            onPress={handleUpload}
+          />
         </View>
 
         {/* Save Changes Button */}
@@ -111,7 +118,7 @@ export default function AdminLoadFloorplansScreen({ navigation }: any) {
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
                 Previously Uploaded Floorplans
               </Text>
-              <Text style={styles.sectionSubtitle}>Manage your uploads</Text>
+              <Text style={[styles.sectionSubtitle, { color: colors.text }]}>Manage your uploads</Text>
             </View>
           </View>
 
@@ -122,6 +129,7 @@ export default function AdminLoadFloorplansScreen({ navigation }: any) {
               onView={() => handleView(item.id)}
               onEdit={() => handleEdit(item.id)}
               onDelete={() => handleDelete(item.id)}
+              colors={colors}
             />
           ))}
         </View>
@@ -146,30 +154,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginBottom: 8,
+    // color removed
   },
   textField: {
     marginBottom: 4,
   },
   infoText: {
     fontSize: 12,
-    color: 'rgba(0, 0, 0, 0.50)',
+    // color removed
   },
   buttonSection: {
     marginBottom: 16,
-  },
-  uploadButton: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#B78459',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-  },
-  uploadButtonText: {
-    color: 'black',
-    fontSize: 16,
-    fontWeight: '500',
   },
   listSection: {
     marginTop: 20,
@@ -185,9 +180,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '500',
     marginBottom: 2,
+    // color removed
   },
   sectionSubtitle: {
     fontSize: 12,
-    color: 'rgba(0, 0, 0, 0.50)',
+    // color removed
   },
 });
