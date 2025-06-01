@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
 
 interface Props {
   title: string;
@@ -8,13 +10,16 @@ interface Props {
 }
 
 export default function TopBar({ title, onBackPress }: Props) {
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
+
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.content, { backgroundColor: colors.primary }]}>
         <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
-          <Icon name="chevron-back" size={24} color="rgba(0, 0, 0, 0.70)" />
+          <Icon name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>{title}</Text>
+        <Text style={[styles.title, { color: '#000' }]}>{title}</Text>
       </View>
     </View>
   );
@@ -22,7 +27,6 @@ export default function TopBar({ title, onBackPress }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'white',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.12,
@@ -30,7 +34,6 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   content: {
-    backgroundColor: '#B78459',
     paddingHorizontal: 8,
     paddingVertical: 12,
     flexDirection: 'row',
@@ -45,7 +48,6 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    color: 'black',
     fontSize: 20,
     fontWeight: '500',
   },

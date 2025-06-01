@@ -1,30 +1,39 @@
-// src/components/atoms/AppButton.tsx
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, TouchableOpacityProps } from 'react-native';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
 
 interface Props extends TouchableOpacityProps {
   title: string;
 }
 
-export default function AppButton({ title, testID, ...rest }: Props & { testID?: string }) {
+export default function AppButton({ title, testID, style, ...rest }: Props & { testID?: string }) {
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
+
   return (
-    <TouchableOpacity style={styles.button} testID={testID} {...rest}>
-      <Text style={styles.buttonText}>{title}</Text>
+    <TouchableOpacity
+      style={[
+        styles.button,
+        { backgroundColor: colors.primary },
+        style,
+      ]}
+      testID={testID}
+      {...rest}
+    >
+      <Text style={[styles.buttonText, { color: colors.background }]}>{title}</Text>
     </TouchableOpacity>
   );
 }
 
-
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: '#2f6e83',
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
     marginBottom: 20,
   },
   buttonText: {
-    color: '#fff',
     fontWeight: '600',
   },
 });
