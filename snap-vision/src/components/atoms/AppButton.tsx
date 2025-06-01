@@ -5,23 +5,20 @@ import { getThemeColors } from '../../theme';
 
 interface Props extends TouchableOpacityProps {
   title: string;
+  testID?: string;
 }
 
-export default function AppButton({ title, testID, style, ...rest }: Props & { testID?: string }) {
+export default function AppButton({ title, testID, ...rest }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
   return (
     <TouchableOpacity
-      style={[
-        styles.button,
-        { backgroundColor: colors.primary },
-        style,
-      ]}
+      style={[styles.button, { backgroundColor: colors.primary }]}
       testID={testID}
       {...rest}
     >
-      <Text style={[styles.buttonText, { color: colors.background }]}>{title}</Text>
+      <Text style={[styles.buttonText, { color: '#fff' }]}>{title}</Text>
     </TouchableOpacity>
   );
 }
@@ -35,5 +32,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontWeight: '600',
+    fontSize: 16,
   },
 });
