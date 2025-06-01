@@ -18,6 +18,7 @@ import ProgressCard from '../components/atoms/ProgressCard';
 import RewardCard from '../components/molecules/RewardCard';
 import ActionButton from '../components/molecules/ActionButton';
 import { Challenge, UserProgress, Reward, ExploreCategory } from '../types/achievements';
+import TopBar from '../components/molecules/TopBar';
 
 const AchievementsScreen = () => {
   const { isDark } = useTheme();
@@ -94,12 +95,7 @@ const AchievementsScreen = () => {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.primary }]}>
-        <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-          <Icon name="chevron-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Badges and Achievements</Text>
-      </View>
+      <TopBar title="Badges and Achievements" onBackPress={handleBackPress} />
 
       <ScrollView 
         style={[styles.container, { backgroundColor: colors.background }]}
@@ -276,13 +272,6 @@ export default AchievementsScreen;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 22,
-    paddingTop: 30,
   },
   backButton: {
     marginRight: 12,

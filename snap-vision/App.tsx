@@ -8,6 +8,7 @@ import BottomTabs from './src/navigation/BottomTabs';
 import AdminLoadFloorplansScreen from './src/screens/AdminLoadFloorplansScreen';
 import AdminEditFloorplansScreen from './src/screens/AdminEditFloorplansScreen';
 import SettingsNavigator from './src/navigation/SettingsNavigator';
+import AdminSettingsFrom from './src/components/organisms/AdminSettingsForm';
 
 import { ThemeProvider } from './src/theme/ThemeContext'; 
 
@@ -24,6 +25,7 @@ export default function App() {
             <Stack.Screen name="Tabs" component={BottomTabs} />
             <Stack.Screen name="AdminLoadFloorplans" component={AdminLoadFloorplansScreen} />
             <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
+            <Stack.Screen name="Admin Settings" component={AdminSettingsFrom} />
           </Stack.Navigator>
       </NavigationContainer>
     </ThemeProvider>

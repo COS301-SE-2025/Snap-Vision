@@ -11,6 +11,7 @@ import ThemedText from '../components/atoms/ThemedText';
 type AdminStackParamList = {
   AdminLoadFloorplans: undefined;
   AdminEditFloorplans: undefined;
+  'Admin Settings': undefined;
 };
 
 type AdminNavigationProp = NavigationProp<AdminStackParamList>;
@@ -25,6 +26,9 @@ const AdminScreen = () => {
   };
   const handleEditFloorplans = () => {
     navigation.navigate('AdminEditFloorplans');
+  };
+  const handleSettings = () => {
+    navigation.navigate('Admin Settings');
   };
 
   return (
@@ -41,6 +45,10 @@ const AdminScreen = () => {
         <AppButton 
           title="Edit Floorplans" 
           onPress={handleEditFloorplans}
+        />
+        <AppButton 
+          title="Settings" 
+          onPress={handleSettings}
         />
       </View>
     </View>
