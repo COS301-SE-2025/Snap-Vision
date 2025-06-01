@@ -7,10 +7,9 @@ import RegistrationScreen from './src/screens/RegistrationScreen';
 import BottomTabs from './src/navigation/BottomTabs';
 import AdminLoadFloorplansScreen from './src/screens/AdminLoadFloorplansScreen';
 import AdminEditFloorplansScreen from './src/screens/AdminEditFloorplansScreen';
-import SettingsNavigator from './src/navigation/SettingsNavigator';
 import AdminSettingsFrom from './src/components/organisms/AdminSettingsForm';
-
-import { ThemeProvider } from './src/theme/ThemeContext'; 
+import { ThemeProvider } from './src/theme/ThemeContext';
+import ManageUsersScreen from './src/screens/ManageUsersScreen';
 
 
 const Stack = createNativeStackNavigator();
@@ -25,7 +24,8 @@ export default function App() {
             <Stack.Screen name="Tabs" component={BottomTabs} />
             <Stack.Screen name="AdminLoadFloorplans" component={AdminLoadFloorplansScreen} />
             <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
-            <Stack.Screen name="Admin Settings" component={AdminSettingsFrom} />
+            <Stack.Screen name="AdminSettings" component={AdminSettingsFrom} />
+            <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
           </Stack.Navigator>
       </NavigationContainer>
     </ThemeProvider>
