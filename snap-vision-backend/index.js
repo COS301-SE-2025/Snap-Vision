@@ -7,6 +7,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get('/', (req, res) => {
+  res.send('Snap Vision backend is running');
+});
+
+
 app.get('/api/directions', async (req, res) => {
   const { start, end, mode = 'foot-walking' } = req.query;
   const apiKey = process.env.ORS_API_KEY;
