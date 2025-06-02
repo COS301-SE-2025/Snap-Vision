@@ -154,6 +154,8 @@
 
   // Add start and end markers for debug
   L.marker(latlngs[0]).addTo(map).bindPopup("🚩 Start").openPopup();
+
+  
   L.marker(latlngs[latlngs.length - 1]).addTo(map).bindPopup("🏁 End");
 };
 
