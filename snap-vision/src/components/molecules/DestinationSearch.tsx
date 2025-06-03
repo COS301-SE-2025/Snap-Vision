@@ -1,6 +1,6 @@
-// molecules/DestinationSearch.tsx
+// src/components/molecules/DestinationSearch.tsx
 import React from 'react';
-import { View, TextInput, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, TextInput, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { getThemeColors } from '../../theme';
 import { useTheme } from '../../theme/ThemeContext';
 import { TextIcon } from '../atoms/TextIcon';
@@ -9,9 +9,11 @@ interface Props {
   value: string;
   onChange: (text: string) => void;
   onSearch: () => void;
+  suggestions: any[];
+  onSelectSuggestion: (feature: any) => void;
 }
 
-const DestinationSearch = ({ value, onChange, onSearch }: Props) => {
+const DestinationSearch = ({ value, onChange, onSearch, suggestions, onSelectSuggestion }: Props) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
@@ -30,6 +32,20 @@ const DestinationSearch = ({ value, onChange, onSearch }: Props) => {
           <TextIcon icon="🔍" />
         </TouchableOpacity>
       </View>
+
+      {suggestions.length > 0 && (
+        <View style={[styles.dropdown, { backgroundColor: colors.background, borderColor: colors.border }]}>
+          <FlatList
+            data={suggestions}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity onPress={() => onSelectSuggestion(item)} style={styles.suggestionItem}>
+                <Text style={{ color: colors.text }}>{item.place_name}</Text>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+      )}
     </View>
   );
 };
@@ -63,6 +79,17 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  dropdown: {
+    marginTop: 8,
+    borderWidth: 1,
+    borderRadius: 8,
+    maxHeight: 200,
+  },
+  suggestionItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
   },
 });
 

@@ -4,6 +4,14 @@ import { View, Alert, Share, StyleSheet, TextInput, TouchableOpacity, Text} from
 import Geolocation from '@react-native-community/geolocation';
 import { PermissionsAndroid } from 'react-native';
 import { WebView as WebViewType } from 'react-native-webview';
+import { useEffect } from 'react';
+import { MAPTILER_API_KEY } from '@env'; // assumes you're using `react-native-dotenv`
+
+// Add this type declaration at the top-level of your project (e.g., src/types/env.d.ts):
+// declare module '@env' {
+//   export const MAPTILER_API_KEY: string;
+// }
+
 
 import MapWebView from '../components/organisms/MapWebView';
 import CrowdReportModal from '../components/molecules/CrowdReportModal';
@@ -116,50 +124,73 @@ const MapScreen = () => {
   };
 
   const handleDestinationSearch = () => {
-  if (!destination.trim()) {
-    setError('Please enter a destination');
-    return;
-  }
-
-  if (!currentLocation) {
-    setError('Current location not available yet');
+  if (!currentLocation || !destinationCoords) {
+    setError('Please select a valid destination');
     return;
   }
 
   const fetchRoute = async () => {
     try {
       const start = `${currentLocation.longitude},${currentLocation.latitude}`;
-      const end = `${currentLocation.longitude + 0.005},${currentLocation.latitude + 0.002}`;
+      const end = `${destinationCoords[0]},${destinationCoords[1]}`;
 
-      console.log('📍 Starting fetch from:', start, 'to:', end);
-
-      const response = await fetch(`http://192.168.56.1:3000/api/directions?start=${start}&end=${end}`);
+      const response = await fetch(`http://10.0.0.10:3000/api/directions?start=${start}&end=${end}`);//Change 10.0.0.10 to your IP address
+      //In command prompt: ipconfig, take the second IPV4 address that appears in the list
+      //If using Android Studio, 10.0.2.2 should work
+      //This will be changed once the app is deployed
       const data = await response.json();
 
-      console.log('📦 Raw route response:', data);
-
       const coordinates = data.features?.[0]?.geometry?.coordinates;
+      if (!coordinates || coordinates.length === 0) throw new Error('No route found');
 
-      if (!coordinates || coordinates.length === 0) {
-        throw new Error('No coordinates in response');
-      }
-
-      lastRoute.current = coordinates; // ✅ Save route here
+      lastRoute.current = coordinates;
 
       const jsRouteCode = `window.drawRoute && window.drawRoute(${JSON.stringify(coordinates)});`;
-      console.log('🧠 Injecting route JS:', jsRouteCode);
-
       webViewRef.current?.injectJavaScript(jsRouteCode);
       setStatus('Route drawn!');
     } catch (error) {
-      console.error('❌ Route error:', error);
+      console.error('Route fetch error:', error);
       setError('Failed to fetch or draw route');
     }
   };
 
-  console.log('🔵 Destination search initiated');
   fetchRoute();
 };
+
+
+
+const [suggestions, setSuggestions] = useState<any[]>([]);
+const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
+
+useEffect(() => {
+  const delayDebounce = setTimeout(() => {
+    if (!destination.trim()) return;
+    fetchSuggestions(destination.trim());
+  }, 300);
+
+  return () => clearTimeout(delayDebounce);
+}, [destination]);
+
+const fetchSuggestions = async (query: string) => {
+  try {
+    const url = `https://api.maptiler.com/geocoding/${encodeURIComponent(query)}.json?key=${MAPTILER_API_KEY}&proximity=28.2314,-25.7557&bbox=27.9,-25.9,28.6,-25.6`;
+    const res = await fetch(url);
+    const json = await res.json();
+    setSuggestions(json.features || []);
+  } catch (e) {
+    console.error('Geocoding error:', e);
+    setSuggestions([]);
+  }
+};
+
+
+const handleSelectSuggestion = (feature: any) => {
+  setDestination(feature.place_name);
+  setDestinationCoords(feature.center); // [lon, lat]
+  setSuggestions([]); // Clear dropdown
+};
+
+
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -167,7 +198,10 @@ const MapScreen = () => {
         value={destination}
         onChange={setDestination}
         onSearch={handleDestinationSearch}
+        suggestions={suggestions}
+        onSelectSuggestion={handleSelectSuggestion}
       />
+
 
       <View style={{ flex: 1 }}>
         <MapWebView ref={webViewRef} onMessage={handleWebViewMessage} />
