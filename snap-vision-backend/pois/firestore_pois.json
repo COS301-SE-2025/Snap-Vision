@@ -66,7 +66,7 @@
   },
   {
     "id": "relation/17839145",
-    "name": null,
+    "name": "Tukkiewerf",
     "description": null,
     "ref": null,
     "centroid": {
@@ -652,104 +652,6 @@
     }
   },
   {
-    "id": "way/483964416",
-    "name": null,
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.23540762649811,
-      "latitude": -25.756975567429713
-    },
-    "tags": {
-      "@id": "way/483964416",
-      "building": "dormitory"
-    }
-  },
-  {
-    "id": "way/483964417",
-    "name": null,
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.235560728631132,
-      "latitude": -25.757017557504916
-    },
-    "tags": {
-      "@id": "way/483964417",
-      "building": "dormitory"
-    }
-  },
-  {
-    "id": "way/483964418",
-    "name": null,
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.235751884230986,
-      "latitude": -25.757065631015337
-    },
-    "tags": {
-      "@id": "way/483964418",
-      "building": "dormitory"
-    }
-  },
-  {
-    "id": "way/483964419",
-    "name": null,
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.23532731583183,
-      "latitude": -25.757119660770794
-    },
-    "tags": {
-      "@id": "way/483964419",
-      "building": "dormitory"
-    }
-  },
-  {
-    "id": "way/483964421",
-    "name": null,
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.23551160957932,
-      "latitude": -25.757224627756187
-    },
-    "tags": {
-      "@id": "way/483964421",
-      "building": "dormitory"
-    }
-  },
-  {
-    "id": "way/483964422",
-    "name": null,
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.235719788939868,
-      "latitude": -25.75721572824437
-    },
-    "tags": {
-      "@id": "way/483964422",
-      "building": "dormitory"
-    }
-  },
-  {
-    "id": "way/483964423",
-    "name": null,
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.235459190445308,
-      "latitude": -25.757360533823014
-    },
-    "tags": {
-      "@id": "way/483964423",
-      "building": "dormitory"
-    }
-  },
-  {
     "id": "way/483965316",
     "name": "House Khutso",
     "description": "Women's Residence",
@@ -818,22 +720,6 @@
       "building": "yes",
       "fast_food": "cafeteria",
       "name": "Jake Dining Hall"
-    }
-  },
-  {
-    "id": "way/483965514",
-    "name": null,
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.234985697347437,
-      "latitude": -25.75279269777125
-    },
-    "tags": {
-      "@id": "way/483965514",
-      "amenity": "fast_food",
-      "building": "yes",
-      "fast_food": "cafeteria"
     }
   },
   {
@@ -939,20 +825,6 @@
     }
   },
   {
-    "id": "way/483969203",
-    "name": null,
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.2332042,
-      "latitude": -25.752872050000004
-    },
-    "tags": {
-      "@id": "way/483969203",
-      "building": "yes"
-    }
-  },
-  {
     "id": "way/483969319",
     "name": "Engineering 1 Building",
     "description": "Faculty of Engineering, Built Environment & IT",
@@ -970,20 +842,6 @@
       "description": "Faculty of Engineering, Built Environment & IT",
       "name": "Engineering 1 Building",
       "ref": "9"
-    }
-  },
-  {
-    "id": "way/483969917",
-    "name": null,
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.232512456964617,
-      "latitude": -25.751784516299153
-    },
-    "tags": {
-      "@id": "way/483969917",
-      "building": "yes"
     }
   },
   {
@@ -1015,50 +873,8 @@
     }
   },
   {
-    "id": "way/483969921",
-    "name": null,
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.2325425,
-      "latitude": -25.751970449999998
-    },
-    "tags": {
-      "@id": "way/483969921",
-      "building": "yes"
-    }
-  },
-  {
-    "id": "way/483969922",
-    "name": null,
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.23223552785837,
-      "latitude": -25.751990953728654
-    },
-    "tags": {
-      "@id": "way/483969922",
-      "building": "yes"
-    }
-  },
-  {
-    "id": "way/483969923",
-    "name": null,
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.23222334701492,
-      "latitude": -25.751785335803355
-    },
-    "tags": {
-      "@id": "way/483969923",
-      "building": "yes"
-    }
-  },
-  {
     "id": "way/483970724",
-    "name": null,
+    "name": "Drama Department Carport",
     "description": null,
     "ref": null,
     "centroid": {
@@ -1068,70 +884,6 @@
     "tags": {
       "@id": "way/483970724",
       "building": "carport"
-    }
-  },
-  {
-    "id": "way/483972000",
-    "name": "House Nala",
-    "description": "Women's Residence",
-    "ref": null,
-    "centroid": {
-      "longitude": 28.233618765793537,
-      "latitude": -25.753346013041554
-    },
-    "tags": {
-      "@id": "way/483972000",
-      "alt_name": "Klaradyn",
-      "building": "dormitory",
-      "description": "Women's Residence",
-      "name": "House Nala"
-    }
-  },
-  {
-    "id": "way/483972001",
-    "name": null,
-    "description": "Other building connected to Erica",
-    "ref": null,
-    "centroid": {
-      "longitude": 28.233494114161296,
-      "latitude": -25.753021608778027
-    },
-    "tags": {
-      "@id": "way/483972001",
-      "addr:city": "Pretoria",
-      "addr:postcode": "0028",
-      "addr:street": "Prospect Street",
-      "building": "yes",
-      "description": "Other building connected to Erica",
-      "source": "Hatfield Digital Twin City"
-    }
-  },
-  {
-    "id": "way/483972002",
-    "name": null,
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.23282805,
-      "latitude": -25.752936
-    },
-    "tags": {
-      "@id": "way/483972002",
-      "building": "roof"
-    }
-  },
-  {
-    "id": "way/483972003",
-    "name": null,
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.232517269825543,
-      "latitude": -25.752764516293706
-    },
-    "tags": {
-      "@id": "way/483972003",
-      "building": "roof"
     }
   },
   {
@@ -1145,34 +897,6 @@
     },
     "tags": {
       "@id": "way/483972071",
-      "building": "yes"
-    }
-  },
-  {
-    "id": "way/483972136",
-    "name": null,
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.232503058755654,
-      "latitude": -25.752895227432
-    },
-    "tags": {
-      "@id": "way/483972136",
-      "building": "roof"
-    }
-  },
-  {
-    "id": "way/483972137",
-    "name": null,
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.232851500000002,
-      "latitude": -25.752792300000003
-    },
-    "tags": {
-      "@id": "way/483972137",
       "building": "yes"
     }
   },
@@ -1210,20 +934,6 @@
     }
   },
   {
-    "id": "way/483972575",
-    "name": null,
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.234260813266822,
-      "latitude": -25.756935078450837
-    },
-    "tags": {
-      "@id": "way/483972575",
-      "building": "yes"
-    }
-  },
-  {
     "id": "way/483972629",
     "name": "Maths building",
     "description": null,
@@ -1236,6 +946,26 @@
       "@id": "way/483972629",
       "building": "university",
       "name": "Maths building"
+    }
+  },
+  {
+    "id": "way/483972684",
+    "name": "Monastery Hall",
+    "description": null,
+    "ref": "49",
+    "centroid": {
+      "longitude": 28.233200883600638,
+      "latitude": -25.754522301959444
+    },
+    "tags": {
+      "@id": "way/483972684",
+      "building": "yes",
+      "building:levels": "1",
+      "name": "Monastery Hall",
+      "name:af": "Kloostersaal",
+      "name:en": "Monastery Hall",
+      "ref": "49",
+      "wheelchair": "yes"
     }
   },
   {
@@ -1271,20 +1001,6 @@
       "height": "6.5",
       "name": "Building 70",
       "ref": "70"
-    }
-  },
-  {
-    "id": "way/483973181",
-    "name": null,
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.232268477992214,
-      "latitude": -25.75630889862225
-    },
-    "tags": {
-      "@id": "way/483973181",
-      "building": "carport"
     }
   },
   {
