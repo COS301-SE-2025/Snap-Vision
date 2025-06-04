@@ -1239,26 +1239,6 @@
     }
   },
   {
-    "id": "way/483972684",
-    "name": "Monastery Hall", //take this one out but just confirm
-    "description": null,
-    "ref": "49",
-    "centroid": {
-      "longitude": 28.233200883600638,
-      "latitude": -25.754522301959444
-    },
-    "tags": {
-      "@id": "way/483972684",
-      "building": "yes",
-      "building:levels": "1",
-      "name": "Monastery Hall",
-      "name:af": "Kloostersaal",
-      "name:en": "Monastery Hall",
-      "ref": "49",
-      "wheelchair": "yes"
-    }
-  },
-  {
     "id": "way/483972788",
     "name": "Lier Theatre",
     "description": null,
@@ -1326,52 +1306,8 @@
     }
   },
   {
-    "id": "way/483974442",
-    "name": "Wheat Board GreenHouse",
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.234447394460314,
-      "latitude": -25.757097155973238
-    },
-    "tags": {
-      "@id": "way/483974442",
-      "building": "yes"
-    }
-  },
-  {
-    "id": "way/483974445",
-    "name": null, //undercover parking, behind NAS building
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.234846778692944,
-      "latitude": -25.757132282179334
-    },
-    "tags": {
-      "@id": "way/483974445",
-      "building": "roof",
-      "layer": "1"
-    }
-  },
-  {
-    "id": "way/483974446",
-    "name": null, //behind NAS building, those cool undercover parking?
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.234884749999992,
-      "latitude": -25.75697725
-    },
-    "tags": {
-      "@id": "way/483974446",
-      "building": "roof",
-      "layer": "1"
-    }
-  },
-  {
     "id": "way/483974454",
-    "name": null, //behind bio-informatics, just confirm what it is
+    "name": null,
     "description": null,
     "ref": null,
     "centroid": {
@@ -1385,7 +1321,7 @@
   },
   {
     "id": "way/483974462",
-    "name": "Monastery Hall", //correct one so take out the duplicate
+    "name": "Monastery Hall",
     "description": null,
     "ref": null,
     "centroid": {
@@ -1394,118 +1330,6 @@
     },
     "tags": {
       "@id": "way/483974462",
-      "building": "yes"
-    }
-  },
-  {
-    "id": "way/483976319",
-    "name": null, //take out, way out of uni bounds
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.235187923961007,
-      "latitude": -25.753814691940992
-    },
-    "tags": {
-      "@id": "way/483976319",
-      "building": "yes"
-    }
-  },
-  {
-    "id": "way/483976328",
-    "name": null, //take out, way out of uni bounds
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.2358037,
-      "latitude": -25.75309695
-    },
-    "tags": {
-      "@id": "way/483976328",
-      "building": "yes"
-    }
-  },
-  {
-    "id": "way/483976329",
-    "name": null,//take out, way out of uni bounds
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.235881050000003,
-      "latitude": -25.75324065000001
-    },
-    "tags": {
-      "@id": "way/483976329",
-      "building": "yes"
-    }
-  },
-  {
-    "id": "way/483976330",
-    "name": null, //take out, way out of uni bounds
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.235875960705783,
-      "latitude": -25.753363527777314
-    },
-    "tags": {
-      "@id": "way/483976330",
-      "building": "yes"
-    }
-  },
-  {
-    "id": "way/483976331",
-    "name": null, //take out, way out of uni bounds
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.236157020270532,
-      "latitude": -25.753342830599845
-    },
-    "tags": {
-      "@id": "way/483976331",
-      "building": "yes"
-    }
-  },
-  {
-    "id": "way/483976332",
-    "name": null, //take out, way out of uni bounds
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.236073750000003,
-      "latitude": -25.753349699999998
-    },
-    "tags": {
-      "@id": "way/483976332",
-      "building": "yes"
-    }
-  },
-  {
-    "id": "way/483976333",
-    "name": null,//take out, way out of uni bounds
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.236251350000003,
-      "latitude": -25.753322
-    },
-    "tags": {
-      "@id": "way/483976333",
-      "building": "yes"
-    }
-  },
-  {
-    "id": "way/483976334",
-    "name": null, //take out, way out of uni bounds
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.236261892441966,
-      "latitude": -25.753357966151533
-    },
-    "tags": {
-      "@id": "way/483976334",
       "building": "yes"
     }
   },
@@ -1551,20 +1375,6 @@
       "name": "House Mags",
       "operator": "University of Pretoria",
       "rooms": "288"
-    }
-  },
-  {
-    "id": "way/483976338",
-    "name": null, //out of uni bounds, maybe a res house or undercover parking
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.23505384666022,
-      "latitude": -25.75311078326981
-    },
-    "tags": {
-      "@id": "way/483976338",
-      "building": "dormitory"
     }
   },
   {
@@ -1663,36 +1473,8 @@
     }
   },
   {
-    "id": "way/484350806",
-    "name": null, //grass- should prob take out
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.23224383796627,
-      "latitude": -25.7530749678343
-    },
-    "tags": {
-      "@id": "way/484350806",
-      "building": "yes"
-    }
-  },
-  {
-    "id": "way/484350808",
-    "name": null, //up house/res?
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.2324699,
-      "latitude": -25.7530219
-    },
-    "tags": {
-      "@id": "way/484350808",
-      "building": "roof"
-    }
-  },
-  {
     "id": "way/484350810",
-    "name": null, //behind centenary building
+    "name": null,
     "description": null,
     "ref": null,
     "centroid": {
@@ -1721,36 +1503,8 @@
     }
   },
   {
-    "id": "way/484350814",
-    "name": null, //another up res
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.232885327114477,
-      "latitude": -25.753064597871617
-    },
-    "tags": {
-      "@id": "way/484350814",
-      "building": "roof"
-    }
-  },
-  {
-    "id": "way/484350817",
-    "name": null, //up res
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.23295959871381,
-      "latitude": -25.75324007263913
-    },
-    "tags": {
-      "@id": "way/484350817",
-      "building": "roof"
-    }
-  },
-  {
     "id": "way/484350820",
-    "name": null, //up res
+    "name": null,
     "description": null,
     "ref": null,
     "centroid": {
@@ -1759,20 +1513,6 @@
     },
     "tags": {
       "@id": "way/484350820",
-      "building": "yes"
-    }
-  },
-  {
-    "id": "way/484351511",
-    "name": null, //security guard entrance?
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.2360429,
-      "latitude": -25.7563508
-    },
-    "tags": {
-      "@id": "way/484351511",
       "building": "yes"
     }
   },
@@ -1865,7 +1605,7 @@
   },
   {
     "id": "way/484352989",
-    "name": null, //uni day house?
+    "name": null,
     "description": null,
     "ref": null,
     "centroid": {
@@ -2020,34 +1760,6 @@
     }
   },
   {
-    "id": "way/484958076",
-    "name": null,//parking/non access building for security or smth?
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.227561800859274,
-      "latitude": -25.75304671886955
-    },
-    "tags": {
-      "@id": "way/484958076",
-      "building": "shed"
-    }
-  },
-  {
-    "id": "way/484958077",
-    "name": null, //parking?
-    "description": null,
-    "ref": null,
-    "centroid": {
-      "longitude": 28.227647572581013,
-      "latitude": -25.753110852871295
-    },
-    "tags": {
-      "@id": "way/484958077",
-      "building": "shed"
-    }
-  },
-  {
     "id": "way/484959037",
     "name": "Mining Industry Study Centre",
     "description": "Faculty of Engineering, Built Environment & IT",
@@ -2119,7 +1831,7 @@
   },
   {
     "id": "way/484965071",
-    "name": null,//bushes?
+    "name": null,
     "description": null,
     "ref": null,
     "centroid": {
@@ -2204,7 +1916,7 @@
   },
   {
     "id": "way/504578797",
-    "name": null,//somehwere past campus
+    "name": null,
     "description": null,
     "ref": null,
     "centroid": {
