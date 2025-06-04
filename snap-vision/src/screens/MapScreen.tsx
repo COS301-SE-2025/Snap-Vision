@@ -236,7 +236,10 @@ const handleSelectPOI = (poi: any) => {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <DestinationSearch
         value={destination}
-        onChange={setDestination}
+        onChange={text => {
+          setDestination(text);
+          filterPOIs(text);
+        }}
         onSearch={handleDestinationSearch}
         suggestions={poiSuggestions}
         onSelectSuggestion={handleSelectPOI}
