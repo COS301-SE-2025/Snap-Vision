@@ -1240,7 +1240,7 @@
   },
   {
     "id": "way/483972684",
-    "name": "Monastery Hall",
+    "name": "Monastery Hall", //take this one out but just confirm
     "description": null,
     "ref": "49",
     "centroid": {
@@ -1327,7 +1327,7 @@
   },
   {
     "id": "way/483974442",
-    "name": null,
+    "name": "Wheat Board GreenHouse",
     "description": null,
     "ref": null,
     "centroid": {
@@ -1341,7 +1341,7 @@
   },
   {
     "id": "way/483974445",
-    "name": null,
+    "name": null, //undercover parking, behind NAS building
     "description": null,
     "ref": null,
     "centroid": {
@@ -1356,7 +1356,7 @@
   },
   {
     "id": "way/483974446",
-    "name": null,
+    "name": null, //behind NAS building, those cool undercover parking?
     "description": null,
     "ref": null,
     "centroid": {
@@ -1371,7 +1371,7 @@
   },
   {
     "id": "way/483974454",
-    "name": null,
+    "name": null, //behind bio-informatics, just confirm what it is
     "description": null,
     "ref": null,
     "centroid": {
@@ -1385,7 +1385,7 @@
   },
   {
     "id": "way/483974462",
-    "name": null,
+    "name": "Monastery Hall", //correct one so take out the duplicate
     "description": null,
     "ref": null,
     "centroid": {
@@ -1399,7 +1399,7 @@
   },
   {
     "id": "way/483976319",
-    "name": null,
+    "name": null, //take out, way out of uni bounds
     "description": null,
     "ref": null,
     "centroid": {
@@ -1413,7 +1413,7 @@
   },
   {
     "id": "way/483976328",
-    "name": null,
+    "name": null, //take out, way out of uni bounds
     "description": null,
     "ref": null,
     "centroid": {
@@ -1427,7 +1427,7 @@
   },
   {
     "id": "way/483976329",
-    "name": null,
+    "name": null,//take out, way out of uni bounds
     "description": null,
     "ref": null,
     "centroid": {
@@ -1441,7 +1441,7 @@
   },
   {
     "id": "way/483976330",
-    "name": null,
+    "name": null, //take out, way out of uni bounds
     "description": null,
     "ref": null,
     "centroid": {
@@ -1455,7 +1455,7 @@
   },
   {
     "id": "way/483976331",
-    "name": null,
+    "name": null, //take out, way out of uni bounds
     "description": null,
     "ref": null,
     "centroid": {
@@ -1469,7 +1469,7 @@
   },
   {
     "id": "way/483976332",
-    "name": null,
+    "name": null, //take out, way out of uni bounds
     "description": null,
     "ref": null,
     "centroid": {
@@ -1483,7 +1483,7 @@
   },
   {
     "id": "way/483976333",
-    "name": null,
+    "name": null,//take out, way out of uni bounds
     "description": null,
     "ref": null,
     "centroid": {
@@ -1497,7 +1497,7 @@
   },
   {
     "id": "way/483976334",
-    "name": null,
+    "name": null, //take out, way out of uni bounds
     "description": null,
     "ref": null,
     "centroid": {
@@ -1555,7 +1555,7 @@
   },
   {
     "id": "way/483976338",
-    "name": null,
+    "name": null, //out of uni bounds, maybe a res house or undercover parking
     "description": null,
     "ref": null,
     "centroid": {
@@ -1664,7 +1664,7 @@
   },
   {
     "id": "way/484350806",
-    "name": null,
+    "name": null, //grass- should prob take out
     "description": null,
     "ref": null,
     "centroid": {
@@ -1678,7 +1678,7 @@
   },
   {
     "id": "way/484350808",
-    "name": null,
+    "name": null, //up house/res?
     "description": null,
     "ref": null,
     "centroid": {
@@ -1692,7 +1692,7 @@
   },
   {
     "id": "way/484350810",
-    "name": null,
+    "name": null, //behind centenary building
     "description": null,
     "ref": null,
     "centroid": {
@@ -1722,7 +1722,7 @@
   },
   {
     "id": "way/484350814",
-    "name": null,
+    "name": null, //another up res
     "description": null,
     "ref": null,
     "centroid": {
@@ -1736,7 +1736,7 @@
   },
   {
     "id": "way/484350817",
-    "name": null,
+    "name": null, //up res
     "description": null,
     "ref": null,
     "centroid": {
@@ -1750,7 +1750,7 @@
   },
   {
     "id": "way/484350820",
-    "name": null,
+    "name": null, //up res
     "description": null,
     "ref": null,
     "centroid": {
@@ -1764,7 +1764,7 @@
   },
   {
     "id": "way/484351511",
-    "name": null,
+    "name": null, //security guard entrance?
     "description": null,
     "ref": null,
     "centroid": {
@@ -1851,8 +1851,8 @@
   },
   {
     "id": "way/484352988",
-    "name": null,
-    "description": null,
+    "name": "PDBY(Perdeby)",
+    "description": "Perdeby is the official student newspaper of the University of Pretoria",
     "ref": null,
     "centroid": {
       "longitude": 28.23210874417255,
@@ -1865,7 +1865,7 @@
   },
   {
     "id": "way/484352989",
-    "name": null,
+    "name": null, //uni day house?
     "description": null,
     "ref": null,
     "centroid": {
@@ -2021,7 +2021,7 @@
   },
   {
     "id": "way/484958076",
-    "name": null,
+    "name": null,//parking/non access building for security or smth?
     "description": null,
     "ref": null,
     "centroid": {
@@ -2035,7 +2035,7 @@
   },
   {
     "id": "way/484958077",
-    "name": null,
+    "name": null, //parking?
     "description": null,
     "ref": null,
     "centroid": {
@@ -2119,7 +2119,7 @@
   },
   {
     "id": "way/484965071",
-    "name": null,
+    "name": null,//bushes?
     "description": null,
     "ref": null,
     "centroid": {
@@ -2190,7 +2190,7 @@
   },
   {
     "id": "way/485699592",
-    "name": null,
+    "name": "Botany Greenhouse",
     "description": null,
     "ref": null,
     "centroid": {
@@ -2204,7 +2204,7 @@
   },
   {
     "id": "way/504578797",
-    "name": null,
+    "name": null,//somehwere past campus
     "description": null,
     "ref": null,
     "centroid": {
