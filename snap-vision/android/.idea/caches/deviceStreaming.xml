@@ -4,6 +4,18 @@
     <option name="deviceSelectionList">
       <list>
         <PersistentDeviceSelectionData>
+          <option name="api" value="34" />
+          <option name="brand" value="Sony" />
+          <option name="codename" value="A402SO" />
+          <option name="id" value="A402SO" />
+          <option name="labId" value="google" />
+          <option name="manufacturer" value="Sony" />
+          <option name="name" value="Xperia 10" />
+          <option name="screenDensity" value="450" />
+          <option name="screenX" value="1080" />
+          <option name="screenY" value="2520" />
+        </PersistentDeviceSelectionData>
+        <PersistentDeviceSelectionData>
           <option name="api" value="27" />
           <option name="brand" value="DOCOMO" />
           <option name="codename" value="F01L" />
@@ -197,6 +209,18 @@
         </PersistentDeviceSelectionData>
         <PersistentDeviceSelectionData>
           <option name="api" value="34" />
+          <option name="brand" value="google" />
+          <option name="codename" value="caiman" />
+          <option name="id" value="caiman" />
+          <option name="labId" value="google" />
+          <option name="manufacturer" value="Google" />
+          <option name="name" value="Pixel 9 Pro" />
+          <option name="screenDensity" value="360" />
+          <option name="screenX" value="960" />
+          <option name="screenY" value="2142" />
+        </PersistentDeviceSelectionData>
+        <PersistentDeviceSelectionData>
+          <option name="api" value="35" />
           <option name="brand" value="google" />
           <option name="codename" value="caiman" />
           <option name="id" value="caiman" />
