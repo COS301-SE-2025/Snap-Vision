@@ -40,7 +40,7 @@ const DestinationSearch = ({ value, onChange, onSearch, suggestions, onSelectSug
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <TouchableOpacity onPress={() => onSelectSuggestion(item)} style={styles.suggestionItem}>
-                <Text style={{ color: colors.text }}>{item.place_name}</Text>
+                <Text style={{ color: colors.text }}>{item.name}</Text>
               </TouchableOpacity>
             )}
           />

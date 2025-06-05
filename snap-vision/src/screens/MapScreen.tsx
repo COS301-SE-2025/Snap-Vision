@@ -6,8 +6,9 @@ import { PermissionsAndroid } from 'react-native';
 import { WebView as WebViewType } from 'react-native-webview';
 import { useEffect } from 'react';
 import { MAPTILER_API_KEY } from '@env'; // assumes you're using `react-native-dotenv`
+import firestore from '@react-native-firebase/firestore';
 
-// Add this type declaration at the top-level of your project (e.g., src/types/env.d.ts):
+// Add this type declaration at the top-level of project (e.g., src/types/env.d.ts):
 // declare module '@env' {
 //   export const MAPTILER_API_KEY: string;
 // }
@@ -134,7 +135,7 @@ const MapScreen = () => {
       const start = `${currentLocation.longitude},${currentLocation.latitude}`;
       const end = `${destinationCoords[0]},${destinationCoords[1]}`;
 
-      const response = await fetch(`http://10.0.0.10:3000/api/directions?start=${start}&end=${end}`);//Change 10.0.0.10 to your IP address
+      const response = await fetch(`http://192.168.0.133:3000/api/directions?start=${start}&end=${end}`);//Change 10.0.0.10 to your IP address
       //In command prompt: ipconfig, take the second IPV4 address that appears in the list
       //If using Android Studio, 10.0.2.2 should work
       //This will be changed once the app is deployed
@@ -158,48 +159,52 @@ const MapScreen = () => {
 };
 
 
-
-const [suggestions, setSuggestions] = useState<any[]>([]);
 const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
+const [pois, setPOIs] = useState<any[]>([]);
 
 useEffect(() => {
-  const delayDebounce = setTimeout(() => {
-    if (!destination.trim()) return;
-    fetchSuggestions(destination.trim());
-  }, 300);
+  const fetchPOIs = async () => {
+    try {
+      const snapshot = await firestore().collection('UPcampusPOIs').get();
+      const poiList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setPOIs(poiList);
+    } catch (e) {
+      console.error('Failed to fetch POIs:', e);
+    }
+  };
+  fetchPOIs();
+}, []);
 
-  return () => clearTimeout(delayDebounce);
-}, [destination]);
+const [poiSuggestions, setPOISuggestions] = useState<any[]>([]);
 
-const fetchSuggestions = async (query: string) => {
-  try {
-    const url = `https://api.maptiler.com/geocoding/${encodeURIComponent(query)}.json?key=${MAPTILER_API_KEY}&proximity=28.2314,-25.7557&bbox=27.9,-25.9,28.6,-25.6`;
-    const res = await fetch(url);
-    const json = await res.json();
-    setSuggestions(json.features || []);
-  } catch (e) {
-    console.error('Geocoding error:', e);
-    setSuggestions([]);
+const filterPOIs = (query: string) => {
+  if (!query.trim()) {
+    setPOISuggestions([]);
+    return;
   }
+  const filtered = pois.filter(poi =>
+    poi.name && poi.name.toLowerCase().includes(query.toLowerCase())
+  );
+  setPOISuggestions(filtered);
 };
 
-
-const handleSelectSuggestion = (feature: any) => {
-  setDestination(feature.place_name);
-  setDestinationCoords(feature.center); // [lon, lat]
-  setSuggestions([]); // Clear dropdown
+const handleSelectPOI = (poi: any) => {
+  setDestination(poi.name);
+  setDestinationCoords([poi.centroid.longitude, poi.centroid.latitude]);
+  setPOISuggestions([]);
 };
-
-
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <DestinationSearch
         value={destination}
-        onChange={setDestination}
+        onChange={text => {
+          setDestination(text);
+          filterPOIs(text);
+        }}
         onSearch={handleDestinationSearch}
-        suggestions={suggestions}
-        onSelectSuggestion={handleSelectSuggestion}
+        suggestions={poiSuggestions}
+        onSelectSuggestion={handleSelectPOI}
       />
 
 
