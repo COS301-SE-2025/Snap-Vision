@@ -8,7 +8,7 @@ import { useEffect } from 'react';
 import { MAPTILER_API_KEY } from '@env'; // assumes you're using `react-native-dotenv`
 import firestore from '@react-native-firebase/firestore';
 
-// Add this type declaration at the top-level of your project (e.g., src/types/env.d.ts):
+// Add this type declaration at the top-level of project (e.g., src/types/env.d.ts):
 // declare module '@env' {
 //   export const MAPTILER_API_KEY: string;
 // }
@@ -160,44 +160,6 @@ const MapScreen = () => {
 
 
 const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
-// const [suggestions, setSuggestions] = useState<any[]>([]);
-
-
-// useEffect(() => {
-//   const delayDebounce = setTimeout(() => {
-//     if (!destination.trim()) return;
-//     fetchSuggestions(destination.trim());
-//   }, 300);
-
-//   return () => clearTimeout(delayDebounce);
-// }, [destination]);
-
-// const fetchSuggestions = async (query: string) => {
-//   try {
-//     const url = `https://api.maptiler.com/geocoding/${encodeURIComponent(query)}.json?key=${MAPTILER_API_KEY}&proximity=28.2314,-25.7557&bbox=27.9,-25.9,28.6,-25.6`;
-//     console.log('fetching suggestions from:', url);
-//     const res = await fetch(url);
-//     if(!res.ok){
-//       console.error('Geocoding API error:', res.status, res.statusText);
-//       setSuggestions([]);
-//       return;
-//     }
-//     const json = await res.json();
-//     console.log('Geocoding response:', json);
-//     setSuggestions(json.features || []);
-//   } catch (e) {
-//     console.error('Geocoding error:', e);
-//     setSuggestions([]);
-//   }
-// };
-
-
-// const handleSelectSuggestion = (feature: any) => {
-//   setDestination(feature.place_name);
-//   setDestinationCoords(feature.center); // [lon, lat]
-//   setSuggestions([]); // Clear dropdown
-// };
-
 const [pois, setPOIs] = useState<any[]>([]);
 
 useEffect(() => {
