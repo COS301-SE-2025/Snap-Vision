@@ -134,6 +134,7 @@ const MapScreen = () => {
     try {
       const start = `${currentLocation.longitude},${currentLocation.latitude}`;
       const end = `${destinationCoords[0]},${destinationCoords[1]}`;
+      webViewRef.current?.injectJavaScript('window.clearDestinationMarker && window.clearDestinationMarker();');
 
       const response = await fetch(`http://192.168.0.133:3000/api/directions?start=${start}&end=${end}`);//Change 10.0.0.10 to your IP address
       //In command prompt: ipconfig, take the second IPV4 address that appears in the list
