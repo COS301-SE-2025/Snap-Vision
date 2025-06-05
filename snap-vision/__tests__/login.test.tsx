@@ -1,7 +1,8 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import LoginForm from '../src/components/organisms/LoginForm'; // Adjusted import path
+import LoginForm from '../src/components/organisms/LoginForm';
 import { Alert } from 'react-native';
+import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
 
 // Mock Firebase auth
 const mockSignIn = jest.fn();
@@ -23,6 +24,13 @@ jest.mock('@react-navigation/native', () => ({
 const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
 
 describe('LoginForm', () => {
+  beforeAll(() => {
+    jest.useFakeTimers();
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -32,7 +40,11 @@ describe('LoginForm', () => {
   });
 
   it('shows error when fields are empty', async () => {
-    const { getByTestId } = render(<LoginForm />);
+    const { getByTestId } = render(
+      <ThemeProviderWrapper>
+        <LoginForm />
+      </ThemeProviderWrapper>
+    );
     
     fireEvent.press(getByTestId('login-button'));
     
@@ -42,7 +54,11 @@ describe('LoginForm', () => {
   });
 
   it('shows error for invalid email', async () => {
-    const { getByPlaceholderText, getByTestId } = render(<LoginForm />);
+    const { getByPlaceholderText, getByTestId } = render(
+      <ThemeProviderWrapper>
+        <LoginForm />
+      </ThemeProviderWrapper>
+    );
     
     fireEvent.changeText(getByPlaceholderText('Enter your email'), 'invalid-email');
     fireEvent.changeText(getByPlaceholderText('Enter your password'), '123456');
@@ -55,11 +71,18 @@ describe('LoginForm', () => {
 
   it('logs in and navigates on valid credentials', async () => {
     mockSignIn.mockResolvedValueOnce({});
-    const { getByPlaceholderText, getByTestId } = render(<LoginForm />);
+    const { getByPlaceholderText, getByTestId } = render(
+      <ThemeProviderWrapper>
+        <LoginForm />
+      </ThemeProviderWrapper>
+    );
     
     fireEvent.changeText(getByPlaceholderText('Enter your email'), 'test@example.com');
     fireEvent.changeText(getByPlaceholderText('Enter your password'), 'password123');
     fireEvent.press(getByTestId('login-button'));
+
+    // Advance timers if navigation is delayed
+    jest.runAllTimers();
     
     await waitFor(() => {
       expect(mockSignIn).toHaveBeenCalledWith('test@example.com', 'password123');
@@ -70,7 +93,11 @@ describe('LoginForm', () => {
 
   it('shows specific error message on login failure', async () => {
     mockSignIn.mockRejectedValueOnce({ code: 'auth/wrong-password' });
-    const { getByPlaceholderText, getByTestId } = render(<LoginForm />);
+    const { getByPlaceholderText, getByTestId } = render(
+      <ThemeProviderWrapper>
+        <LoginForm />
+      </ThemeProviderWrapper>
+    );
     
     fireEvent.changeText(getByPlaceholderText('Enter your email'), 'test@example.com');
     fireEvent.changeText(getByPlaceholderText('Enter your password'), 'wrongpass');    
@@ -82,13 +109,21 @@ describe('LoginForm', () => {
   });
 
   it('navigates to Register screen', () => {
-    const { getByText } = render(<LoginForm />);
+    const { getByText } = render(
+      <ThemeProviderWrapper>
+        <LoginForm />
+      </ThemeProviderWrapper>
+    );
     fireEvent.press(getByText(/SIGN UP/i));
     expect(mockNavigate).toHaveBeenCalledWith('Register');
   });
 
   it('toggles Remember Me', () => {
-    const { getByText } = render(<LoginForm />);
+    const { getByText } = render(
+      <ThemeProviderWrapper>
+        <LoginForm />
+      </ThemeProviderWrapper>
+    );
     const rememberMe = getByText(/Remember Me/);
     fireEvent.press(rememberMe);
     expect(rememberMe.props.children).toContain('◉');

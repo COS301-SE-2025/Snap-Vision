@@ -1,8 +1,9 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import RegisterForm from '../src/components/organisms/RegisterForm'; // 🔁 Update this path
+import RegisterForm from '../src/components/organisms/RegisterForm';
 import { Alert } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
+import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
 
 const mockCreateUser = jest.fn();
 
@@ -25,9 +26,11 @@ jest.spyOn(Alert, 'alert');
 describe('RegisterForm', () => {
   const setup = () =>
     render(
-      <NavigationContainer>
-        <RegisterForm />
-      </NavigationContainer>
+      <ThemeProviderWrapper>
+        <NavigationContainer>
+          <RegisterForm />
+        </NavigationContainer>
+      </ThemeProviderWrapper>
     );
 
   beforeEach(() => {
