@@ -37,9 +37,7 @@ export default function LoginForm() {
       await auth().signInWithEmailAndPassword(email, password);
       Alert.alert('Success', 'Logged in!');
       setSuccessMessage('Login successful!');
-      setTimeout(() => {
-        navigation.navigate('Tabs');
-      }, 1000);
+      navigation.navigate('Tabs'); //removed timeout for testing purposes
     } catch (error: any) {
       const errorMessages: Record<string, string> = {
         'auth/invalid-email': 'Invalid email address.',
