@@ -16,6 +16,30 @@
     .leaflet-popup-content-wrapper {
       font-size: 14px;
     }
+    .poi-marker {
+      background-color: #007bff;
+      border: 2px solid white;
+      border-radius: 50%;
+      width: 12px;
+      height: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .poi-marker:hover {
+      background-color: #0056b3;
+      transform: scale(1.2);
+      cursor: pointer;
+    }
+    .poi-label {
+      background-color: rgba(255, 255, 255, 0.9);
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 12px;
+      font-weight: bold;
+      color: #333;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -29,6 +53,8 @@
     let destinationMarker = null;
     let endCircle = null;
     let startCircle = null;
+    let poiMarkers = [];
+    let poiData = [];
 
     // Reported crowd densities and corresponding emoji/icons
     const crowdEmojis = {
@@ -110,6 +136,95 @@
           .addTo(map)
           .bindPopup(`👥 Crowd: ${label}`)
           .openPopup();
+      }
+    };
+
+    // Function to display POIs on the map
+    window.displayPOIs = function(pois) {
+      if (!map || !Array.isArray(pois)) return;
+      
+      console.log("🏢 Displaying", pois.length, "POIs on map");
+      
+      // Clear existing POI markers
+      poiMarkers.forEach(marker => map.removeLayer(marker));
+      poiMarkers = [];
+      poiData = pois;
+
+      pois.forEach(poi => {
+        if (!poi.centroid || !poi.centroid.latitude || !poi.centroid.longitude) {
+          console.warn("⚠️ POI missing coordinates:", poi);
+          return;
+        }
+
+        const coords = [poi.centroid.latitude, poi.centroid.longitude];
+        
+        // Create custom icon for POI
+        const poiIcon = L.divIcon({
+          className: 'poi-marker',
+          html: '',
+          iconSize: [12, 12],
+          iconAnchor: [6, 6]
+        });
+
+        // Create marker
+        const marker = L.marker(coords, { icon: poiIcon })
+          .addTo(map)
+          .bindPopup(`
+            <div style="text-align: center;">
+              <strong>🏢 ${poi.name || 'Unnamed Building'}</strong><br>
+              <button onclick="selectPOI('${poi.id}')" style="
+                margin-top: 8px;
+                padding: 6px 12px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+              ">Navigate Here</button>
+            </div>
+          `);
+
+        // Add label that shows on hover or zoom
+        if (map.getZoom() >= 16) {
+          const label = L.marker(coords, {
+            icon: L.divIcon({
+              className: 'poi-label',
+              html: poi.name || 'Building',
+              iconSize: [null, null],
+              iconAnchor: [0, 0]
+            })
+          }).addTo(map);
+          
+          poiMarkers.push(label);
+        }
+
+        poiMarkers.push(marker);
+      });
+
+      // Show/hide labels based on zoom level
+      map.on('zoomend', function() {
+        const zoom = map.getZoom();
+        poiMarkers.forEach(marker => {
+          if (marker.options.icon && marker.options.icon.options.className === 'poi-label') {
+            if (zoom >= 16) {
+              marker.addTo(map);
+            } else {
+              map.removeLayer(marker);
+            }
+          }
+        });
+      });
+    };
+
+    // Function to handle POI selection from map
+    window.selectPOI = function(poiId) {
+      const poi = poiData.find(p => p.id === poiId);
+      if (poi && window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'POI_SELECTED',
+          poi: poi
+        }));
       }
     };
 

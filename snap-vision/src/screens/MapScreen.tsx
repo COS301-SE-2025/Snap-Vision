@@ -41,6 +41,7 @@ const MapScreen = () => {
   const [showShareTooltip, setShowShareTooltip] = useState(false);
   const [showReportTooltip, setShowReportTooltip] = useState(false);
   const webViewRef = useRef<WebViewType>(null);
+  const [isMapReady, setIsMapReady] = useState(false);
 
   const sendLocationToWebView = (lat: number, lon: number) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
@@ -77,6 +78,7 @@ const MapScreen = () => {
       const data = event.nativeEvent.data;
       if (data === 'MAP_READY') {
         setStatus('Map loaded');
+         setIsMapReady(true);
         requestLocation();
         if (lastRoute.current.length > 0) {
         const reinject = `window.drawRoute && window.drawRoute(${JSON.stringify(lastRoute.current)});`;
@@ -88,6 +90,12 @@ const MapScreen = () => {
         const parsed = JSON.parse(data);
         if (parsed.type === 'ERROR') {
           setError(parsed.message);
+        } else if (parsed.type === 'POI_SELECTED') {
+          // Handle POI selection from map tap
+          const selectedPOI = parsed.poi;
+          setDestination(selectedPOI.name);
+          setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
+          setStatus(`Selected: ${selectedPOI.name}`);
         }
       }
     } catch (e) {
@@ -136,7 +144,7 @@ const MapScreen = () => {
       const end = `${destinationCoords[0]},${destinationCoords[1]}`;
       webViewRef.current?.injectJavaScript('window.clearDestinationMarker && window.clearDestinationMarker();');
 
-      const response = await fetch(`http://192.168.0.133:3000/api/directions?start=${start}&end=${end}`);//Change 10.0.0.10 to your IP address
+      const response = await fetch(`http://10.0.2.2:3000/api/directions?start=${start}&end=${end}`);//Change 10.0.0.10 to your IP address
       //In command prompt: ipconfig, take the second IPV4 address that appears in the list
       //If using Android Studio, 10.0.2.2 should work
       //This will be changed once the app is deployed
@@ -175,6 +183,14 @@ useEffect(() => {
   };
   fetchPOIs();
 }, []);
+
+// Send POIs to WebView when they change and WebView is ready
+useEffect(() => {
+  if (isMapReady && pois.length > 0 && webViewRef.current) {
+    const jsPOICode = `window.displayPOIs && window.displayPOIs(${JSON.stringify(pois)});`;
+    webViewRef.current.injectJavaScript(jsPOICode);
+  }
+}, [isMapReady, pois]);
 
 const [poiSuggestions, setPOISuggestions] = useState<any[]>([]);
 
