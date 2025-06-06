@@ -134,7 +134,7 @@ const MapScreen = () => {
       const start = `${currentLocation.longitude},${currentLocation.latitude}`;
       const end = `${destinationCoords[0]},${destinationCoords[1]}`;
 
-      const response = await fetch(`http://10.0.0.10:3000/api/directions?start=${start}&end=${end}`);//Change 10.0.0.10 to your IP address
+      const response = await fetch(`http://10.0.2.2:3000/api/directions?start=${start}&end=${end}`);//Change 10.0.0.10 to your IP address
       //In command prompt: ipconfig, take the second IPV4 address that appears in the list
       //If using Android Studio, 10.0.2.2 should work
       //This will be changed once the app is deployed
@@ -174,8 +174,15 @@ useEffect(() => {
 const fetchSuggestions = async (query: string) => {
   try {
     const url = `https://api.maptiler.com/geocoding/${encodeURIComponent(query)}.json?key=${MAPTILER_API_KEY}&proximity=28.2314,-25.7557&bbox=27.9,-25.9,28.6,-25.6`;
+    console.log('🔍 Fetching suggestions from:', url);
     const res = await fetch(url);
+    if (!res.ok) {
+      console.error('Geocoding API error:', res.status, res.statusText);
+      setSuggestions([]);
+      return;
+    }
     const json = await res.json();
+    console.log('Geocoding response:', json);
     setSuggestions(json.features || []);
   } catch (e) {
     console.error('Geocoding error:', e);
