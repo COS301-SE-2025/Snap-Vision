@@ -1,8 +1,8 @@
 // src/screens/MapScreen.tsx
 import React, { useState, useRef } from 'react';
-import { View, Alert, Share, StyleSheet, TextInput, TouchableOpacity, Text, PermissionsAndroid } from 'react-native';
+import { View, Alert, Share, StyleSheet, TextInput, TouchableOpacity, Text} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
-
+import { PermissionsAndroid } from 'react-native';
 import { WebView as WebViewType } from 'react-native-webview';
 import { useEffect } from 'react';
 import { MAPTILER_API_KEY } from '@env'; // assumes you're using `react-native-dotenv`
