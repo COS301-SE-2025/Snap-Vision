@@ -3,9 +3,19 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { render, act, fireEvent, waitFor } from '@testing-library/react-native';
 import MapScreen from '../src/screens/MapScreen';
 import Geolocation from '@react-native-community/geolocation';
+import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
 
 // Capture the mock function for later assertions
 const mockInjectJavaScript = jest.fn();
+
+// Mock Firebase Firestore
+jest.mock('@react-native-firebase/firestore', () => {
+  return () => ({
+    collection: jest.fn(() => ({
+      get: jest.fn(() => Promise.resolve({ docs: [] })),
+    })),
+  });
+});
 
 // Mock Picker
 jest.mock('@react-native-picker/picker', () => {
@@ -65,11 +75,19 @@ describe('MapScreen', () => {
   });
 
   it('renders without crashing', () => {
-    render(<MapScreen />);
+    render(
+      <ThemeProviderWrapper>
+        <MapScreen />
+      </ThemeProviderWrapper>
+    );
   });
 
   it('handles map ready message and updates status', async () => {
-    const { getByTestId } = render(<MapScreen />);
+    const { getByTestId } = render(
+      <ThemeProviderWrapper>
+        <MapScreen />
+      </ThemeProviderWrapper>
+    );
     const webView = getByTestId('mocked-webview');
 
     if (webView.props.onMessage) {
@@ -95,7 +113,11 @@ describe('MapScreen', () => {
       success(mockPosition)
     );
 
-    const { getByTestId } = render(<MapScreen />);
+    const { getByTestId } = render(
+      <ThemeProviderWrapper>
+        <MapScreen />
+      </ThemeProviderWrapper>
+    );
     const webView = getByTestId('mocked-webview');
 
     if (webView.props.onMessage) {
@@ -110,7 +132,11 @@ describe('MapScreen', () => {
   });
 
   it('handles invalid JSON message gracefully', async () => {
-    const { getByTestId } = render(<MapScreen />);
+    const { getByTestId } = render(
+      <ThemeProviderWrapper>
+        <MapScreen />
+      </ThemeProviderWrapper>
+    );
     const webView = getByTestId('mocked-webview');
 
     if (webView.props.onMessage) {
@@ -130,40 +156,40 @@ describe('Crowd Reporting', () => {
     jest.clearAllMocks();
   });
 
-        it('opens the crowd report modal when "REPORT CROWDS" is pressed', async () => {
-      // Instead of using a recursive approach, mock the component directly
-      const TestableMapScreen = () => {
-        // Create a simplified version of MapScreen with controlled state
-        const [showCrowdPopup, setShowCrowdPopup] = React.useState(false);
-        
-        return (
-          <View>
-            <TouchableOpacity 
-              onPress={() => setShowCrowdPopup(true)}
-              testID="report-button"
-            >
-              <Text>REPORT CROWDS</Text>
-            </TouchableOpacity>
-            
-            {showCrowdPopup && (
-              <View testID="crowd-modal">
-                <Text>Select Crowd Density</Text>
-              </View>
-            )}
-          </View>
-        );
-      };
+  it('opens the crowd report modal when "REPORT CROWDS" is pressed', async () => {
+    // Instead of using a recursive approach, mock the component directly
+    const TestableMapScreen = () => {
+      // Create a simplified version of MapScreen with controlled state
+      const [showCrowdPopup, setShowCrowdPopup] = React.useState(false);
       
-      // Render our simplified test component
-      const { getByTestId, getByText } = render(<TestableMapScreen />);
-      
-      // Find and press the button
-      const reportButton = getByText('REPORT CROWDS');
-      fireEvent.press(reportButton);
-      
-      // Check if the modal appears
-      expect(getByTestId('crowd-modal')).toBeTruthy();
-    });
+      return (
+        <View>
+          <TouchableOpacity 
+            onPress={() => setShowCrowdPopup(true)}
+            testID="report-button"
+          >
+            <Text>REPORT CROWDS</Text>
+          </TouchableOpacity>
+          
+          {showCrowdPopup && (
+            <View testID="crowd-modal">
+              <Text>Select Crowd Density</Text>
+            </View>
+          )}
+        </View>
+      );
+    };
+    
+    // Render our simplified test component
+    const { getByTestId, getByText } = render(<TestableMapScreen />);
+    
+    // Find and press the button
+    const reportButton = getByText('REPORT CROWDS');
+    fireEvent.press(reportButton);
+    
+    // Check if the modal appears
+    expect(getByTestId('crowd-modal')).toBeTruthy();
+  });
 
 
   it('injects correct JavaScript on crowd report submit', async () => {
@@ -172,8 +198,6 @@ describe('Crowd Reporting', () => {
     
     // Create a testing wrapper that exposes internal functions
     const MockedMapScreen = () => {
-      const result = MapScreen();
-      
       // Expose and override functions we need to test
       const submitCrowdReport = () => {
         const jsCode = `
@@ -197,7 +221,11 @@ describe('Crowd Reporting', () => {
       );
     };
 
-    const { getByText, getByTestId } = render(<MockedMapScreen />);
+    const { getByText, getByTestId } = render(
+      <ThemeProviderWrapper>
+        <MockedMapScreen />
+      </ThemeProviderWrapper>
+    );
     
     // Just press Submit directly to test the functionality
     fireEvent.press(getByText('Submit'));

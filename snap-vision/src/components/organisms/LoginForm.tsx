@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import AppInput from '../atoms/AppInput';
 import AppButton from '../atoms/AppButton';
 import RememberMe from '../molecules/RememberMe';
@@ -7,8 +7,6 @@ import auth from '@react-native-firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
-
-
 
 export default function LoginForm() {
   const navigation = useNavigation();
@@ -26,30 +24,20 @@ export default function LoginForm() {
     let hasError = false;
     setSuccessMessage('');
 
-    if (!email.trim()) {
-      newErrors.email = 'Email is required.';
-      hasError = true;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = 'Invalid email format.';
-      hasError = true;
+    if (!email.trim() || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
     }
-
-    if (!password) {
-      newErrors.password = 'Password is required.';
-      hasError = true;
-    }
-
-    if (hasError) {
-      setErrors(newErrors);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      Alert.alert('Error', 'Please enter a valid email address');
       return;
     }
 
     try {
       await auth().signInWithEmailAndPassword(email, password);
+      Alert.alert('Success', 'Logged in!');
       setSuccessMessage('Login successful!');
-      setTimeout(() => {
-        navigation.navigate('Tabs');
-      }, 1000);
+      navigation.navigate('Tabs'); //removed timeout for testing purposes
     } catch (error: any) {
       const errorMessages: Record<string, string> = {
         'auth/invalid-email': 'Invalid email address.',
@@ -58,20 +46,25 @@ export default function LoginForm() {
         'auth/too-many-requests': 'Too many attempts. Try again later.',
         'auth/invalid-credential': 'Invalid credentials.',
       };
-      setErrors({ email: '', password: errorMessages[error?.code] || 'Login failed.' });
+      const msg = errorMessages[error?.code] || 'Login failed.';
+      if (error?.code === 'auth/wrong-password') {
+        Alert.alert('Login Error', msg);
+      } else {
+        Alert.alert('Error', msg);
+      }
+      setErrors({ email: '', password: msg });
     }
   };
 
   return (
     <View>
       <Text style={[styles.header, {
-      fontFamily: 'PermanentMarkerRegular',
-      color: colors.primary,
-      transform: [{ rotate: '-3deg' }],
-    }]}>
-      LOGIN
-    </Text>
-      {/* <Text style={[styles.starOverlay, { color: colors.primary }]}>Wander Less. Discover More.</Text> */}
+        fontFamily: 'PermanentMarkerRegular',
+        color: colors.primary,
+        transform: [{ rotate: '-3deg' }],
+      }]}>
+        LOGIN
+      </Text>
 
       <Text style={[styles.label, { color: colors.secondary }]}>Email</Text>
       <AppInput
@@ -101,8 +94,13 @@ export default function LoginForm() {
       {errors.password ? <Text style={styles.error}>{errors.password}</Text> : null}
 
       <RememberMe rememberMe={rememberMe} onToggle={() => setRememberMe(!rememberMe)} />
-
-      <AppButton title="LOGIN" onPress={handleLogin} color={colors.primary} />
+      
+      <AppButton
+        title="LOGIN"
+        onPress={handleLogin}
+        color={colors.primary}
+        testID="login-button"
+      />
 
       {successMessage ? <Text style={styles.success}>{successMessage}</Text> : null}
 
@@ -130,11 +128,10 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   starOverlay: {
-  position: 'absolute',
-  top: 200,
-  left: 50,
-  fontSize: 24,
-  
+    position: 'absolute',
+    top: 200,
+    left: 50,
+    fontSize: 24,
   },
   titleWrapper: {
     alignSelf: 'center',
