@@ -50,6 +50,9 @@
     let map;
     let userMarker = null;
     let crowdMarker = null;
+    let destinationMarker = null;
+    let endCircle = null;
+    let startCircle = null;
     let poiMarkers = [];
     let poiData = [];
 
@@ -238,43 +241,72 @@
       }
     }
 
-    // Function to draw a route from an array of [lon, lat] pairs
-   window.drawRoute = function(coords) {
-  if (!map || !Array.isArray(coords)) return;
+    // Function to clear the destination marker and end circle
+    window.clearDestinationMarker = function() {
+      if (destinationMarker) {
+        map.removeLayer(destinationMarker);
+        destinationMarker = null;
+      }
+      if (endCircle) {
+        map.removeLayer(endCircle);
+        endCircle = null;
+      }
+    };
 
-  console.log("🟦 drawRoute received", coords.length, "points");
-
-  // Remove existing route if already present
-  if (window.routeLayer) {
-    map.removeLayer(window.routeLayer);
-  }
-
-  const latlngs = coords.map(([lon, lat]) => [lat, lon]);
-
-  window.routeLayer = L.polyline(latlngs, {
-    color: 'blue',
-    weight: 6,
-    opacity: 1,
-    dashArray: '8,6',
-  }).addTo(map);
-
-  L.circle(latlngs[0], { radius: 5, color: 'green' }).addTo(map);
-  L.circle(latlngs[latlngs.length - 1], { radius: 5, color: 'red' }).addTo(map);
-
-
-  const bounds = window.routeLayer.getBounds();
-  console.log("📐 Fitting to bounds:", bounds);
-
-  map.fitBounds(bounds.pad(0.3)); // Add padding to help visibility
-
-  // Add start and end markers for debug
-  L.marker(latlngs[0]).addTo(map).bindPopup("🚩 Start").openPopup();
-
-  
-  L.marker(latlngs[latlngs.length - 1]).addTo(map).bindPopup("🏁 End");
-};
-
-
+    
+    window.drawRoute = function(coords) {
+      if (!map || !Array.isArray(coords)) return;
+    
+      // Remove existing route if already present
+      if (window.routeLayer) {
+        map.removeLayer(window.routeLayer);
+        window.routeLayer = null;
+      }
+    
+      // Remove previous destination marker
+      if (destinationMarker) {
+        map.removeLayer(destinationMarker);
+        destinationMarker = null;
+      }
+    
+      // Remove previous end circle
+      if (endCircle) {
+        map.removeLayer(endCircle);
+        endCircle = null;
+      }
+    
+      // Remove previous start circle
+      if (startCircle) {
+        map.removeLayer(startCircle);
+        startCircle = null;
+      }
+    
+      const latlngs = coords.map(([lon, lat]) => [lat, lon]);
+    
+      window.routeLayer = L.polyline(latlngs, {
+        color: 'blue',
+        weight: 6,
+        opacity: 1,
+        dashArray: '8,6',
+      }).addTo(map);
+    
+      // Add start circle and keep reference
+      startCircle = L.circle(latlngs[0], { radius: 5, color: 'green' }).addTo(map);
+    
+      // Add end circle and keep reference
+      endCircle = L.circle(latlngs[latlngs.length - 1], { radius: 5, color: 'red' }).addTo(map);
+    
+      const bounds = window.routeLayer.getBounds();
+      map.fitBounds(bounds.pad(0.3));
+    
+      // Add start marker
+      L.marker(latlngs[0]).addTo(map).bindPopup("🚩 Start").openPopup();
+    
+      // Add end marker and keep reference
+      destinationMarker = L.marker(latlngs[latlngs.length - 1]).addTo(map).bindPopup("🏁 End");
+    };
+    
+    // ...existing code...
 
   </script>
 </body>
