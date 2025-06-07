@@ -32,6 +32,8 @@ const MapWebView = forwardRef<WebViewType, Props>(({ onMessage }, ref) => {
   );
 });
 
+MapWebView.displayName = 'MapWebView';
+
 export default MapWebView;
 
 const styles = StyleSheet.create({
