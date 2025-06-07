@@ -5,7 +5,7 @@ import Geolocation from '@react-native-community/geolocation';
 import { PermissionsAndroid } from 'react-native';
 import { WebView as WebViewType } from 'react-native-webview';
 import { useEffect } from 'react';
-import { MAPTILER_API_KEY } from '@env'; // assumes you're using `react-native-dotenv`
+//import { MAPTILER_API_KEY } from '@env'; // assumes you're using `react-native-dotenv`
 import firestore from '@react-native-firebase/firestore';
 
 // Add this type declaration at the top-level of project (e.g., src/types/env.d.ts):
