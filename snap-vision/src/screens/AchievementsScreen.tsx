@@ -1,28 +1,34 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import ThemedText from '../components/atoms/ThemedText';
+import { SafeAreaView, StyleSheet } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
+import TopBar from '../components/molecules/TopBar';
+import AchievementsForm from '../components/organisms/AchievementsForm';
 
 const AchievementsScreen = () => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
+  const handleBackPress = () => {
+    // Navigation back logic
+    console.log('Back pressed');
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ThemedText size="xl" weight="bold" style={{ color: colors.text }}>
-        Achievements
-      </ThemedText>
-    </View>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+      {/* Header */}
+      <TopBar title="Badges and Achievements" onBackPress={handleBackPress} />
+      
+      {/* Main Content */}
+      <AchievementsForm />
+    </SafeAreaView>
   );
 };
 
 export default AchievementsScreen;
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });

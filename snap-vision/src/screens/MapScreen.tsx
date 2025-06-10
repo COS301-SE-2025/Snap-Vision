@@ -1,17 +1,34 @@
 // src/screens/MapScreen.tsx
 import React, { useState, useRef } from 'react';
-import { View, Alert, Share } from 'react-native';
+import { View, Alert, Share, StyleSheet, TextInput, TouchableOpacity, Text} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import { PermissionsAndroid } from 'react-native';
 import { WebView as WebViewType } from 'react-native-webview';
+import { useEffect } from 'react';
+//import { MAPTILER_API_KEY } from '@env'; // assumes you're using `react-native-dotenv`
+import firestore from '@react-native-firebase/firestore';
+
+// Add this type declaration at the top-level of project (e.g., src/types/env.d.ts):
+// declare module '@env' {
+//   export const MAPTILER_API_KEY: string;
+// }
+
 
 import MapWebView from '../components/organisms/MapWebView';
-import ShareButton from '../components/molecules/ShareButton';
-import ReportButton from '../components/molecules/ReportButton';
 import CrowdReportModal from '../components/molecules/CrowdReportModal';
 import StatusOverlay from '../components/atoms/StatusOverlay';
+import DestinationSearch from '../components/molecules/DestinationSearch';
+import MapActionsPanel from '../components/organisms/MapActionsPanel';
+import { useTheme } from '../theme/ThemeContext';
+import { getThemeColors } from '../theme';
+import { TextIcon } from '../components/atoms/TextIcon';
+
 
 const MapScreen = () => {
+  const lastRoute = useRef<any[]>([]);
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
+  
   const [status, setStatus] = useState('Loading map...');
   const [error, setError] = useState<string | null>(null);
   const [currentLocation, setCurrentLocation] = useState<{
@@ -20,7 +37,11 @@ const MapScreen = () => {
   } | null>(null);
   const [showCrowdPopup, setShowCrowdPopup] = useState(false);
   const [selectedDensity, setSelectedDensity] = useState('moderate');
+  const [destination, setDestination] = useState('');
+  const [showShareTooltip, setShowShareTooltip] = useState(false);
+  const [showReportTooltip, setShowReportTooltip] = useState(false);
   const webViewRef = useRef<WebViewType>(null);
+  const [isMapReady, setIsMapReady] = useState(false);
 
   const sendLocationToWebView = (lat: number, lon: number) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
@@ -57,11 +78,24 @@ const MapScreen = () => {
       const data = event.nativeEvent.data;
       if (data === 'MAP_READY') {
         setStatus('Map loaded');
+         setIsMapReady(true);
         requestLocation();
+        if (lastRoute.current.length > 0) {
+        const reinject = `window.drawRoute && window.drawRoute(${JSON.stringify(lastRoute.current)});`;
+        console.log('🔄 Reinjecting route on MAP_READY');
+        webViewRef.current?.injectJavaScript(reinject);
+      }
+
       } else {
         const parsed = JSON.parse(data);
         if (parsed.type === 'ERROR') {
           setError(parsed.message);
+        } else if (parsed.type === 'POI_SELECTED') {
+          // Handle POI selection from map tap
+          const selectedPOI = parsed.poi;
+          setDestination(selectedPOI.name);
+          setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
+          setStatus(`Selected: ${selectedPOI.name}`);
         }
       }
     } catch (e) {
@@ -74,7 +108,6 @@ const MapScreen = () => {
       Alert.alert('No Location', 'Your location is not available yet.');
       return;
     }
-
     console.log('🔵 Sharing location:', currentLocation);
     console.log('🔵 WebView ref exists?', !!webViewRef.current);
 
@@ -92,8 +125,6 @@ const MapScreen = () => {
   const submitCrowdReport = () => {
     if (!currentLocation) return;
 
-    console.log('🔴 Reporting density:', selectedDensity, currentLocation);
-    console.log('🔴 WebView ref exists?', !!webViewRef.current);
     const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${currentLocation.latitude}, ${currentLocation.longitude}, '${selectedDensity}');`;
     webViewRef.current?.injectJavaScript(jsCrowdCode);
 
@@ -101,16 +132,115 @@ const MapScreen = () => {
     setStatus(`Crowd density reported: ${selectedDensity}`);
   };
 
-  return (
-    <View style={{ flex: 1 }}>
-      <MapWebView ref={webViewRef} onMessage={handleWebViewMessage} />
+  const handleDestinationSearch = () => {
+  if (!currentLocation || !destinationCoords) {
+    setError('Please select a valid destination');
+    return;
+  }
 
-      {currentLocation && (
-        <>
-          <ShareButton onPress={shareLocation} />
-          <ReportButton onPress={() => setShowCrowdPopup(true)} />
-        </>
-      )}
+  const fetchRoute = async () => {
+    try {
+      const start = `${currentLocation.longitude},${currentLocation.latitude}`;
+      const end = `${destinationCoords[0]},${destinationCoords[1]}`;
+      webViewRef.current?.injectJavaScript('window.clearDestinationMarker && window.clearDestinationMarker();');
+
+      const response = await fetch(`http://10.0.2.2:3000/api/directions?start=${start}&end=${end}`);//Change 10.0.0.10 to your IP address
+      //In command prompt: ipconfig, take the second IPV4 address that appears in the list
+      //If using Android Studio, 10.0.2.2 should work
+      //This will be changed once the app is deployed
+      const data = await response.json();
+
+      const coordinates = data.features?.[0]?.geometry?.coordinates;
+      if (!coordinates || coordinates.length === 0) throw new Error('No route found');
+
+      lastRoute.current = coordinates;
+
+      const jsRouteCode = `window.drawRoute && window.drawRoute(${JSON.stringify(coordinates)});`;
+      webViewRef.current?.injectJavaScript(jsRouteCode);
+      setStatus('Route drawn!');
+    } catch (error) {
+      console.error('Route fetch error:', error);
+      setError('Failed to fetch or draw route');
+    }
+  };
+
+  fetchRoute();
+};
+
+
+const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
+const [pois, setPOIs] = useState<any[]>([]);
+
+useEffect(() => {
+  const fetchPOIs = async () => {
+    try {
+      const snapshot = await firestore().collection('UPcampusPOIs').get();
+      const poiList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setPOIs(poiList);
+    } catch (e) {
+      console.error('Failed to fetch POIs:', e);
+    }
+  };
+  fetchPOIs();
+}, []);
+
+// Send POIs to WebView when they change and WebView is ready
+useEffect(() => {
+  if (isMapReady && pois.length > 0 && webViewRef.current) {
+    const jsPOICode = `window.displayPOIs && window.displayPOIs(${JSON.stringify(pois)});`;
+    webViewRef.current.injectJavaScript(jsPOICode);
+  }
+}, [isMapReady, pois]);
+
+const [poiSuggestions, setPOISuggestions] = useState<any[]>([]);
+
+const filterPOIs = (query: string) => {
+  if (!query.trim()) {
+    setPOISuggestions([]);
+    return;
+  }
+  const filtered = pois.filter(poi =>
+    poi.name && poi.name.toLowerCase().includes(query.toLowerCase())
+  );
+  setPOISuggestions(filtered);
+};
+
+const handleSelectPOI = (poi: any) => {
+  setDestination(poi.name);
+  setDestinationCoords([poi.centroid.longitude, poi.centroid.latitude]);
+  setPOISuggestions([]);
+};
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <DestinationSearch
+        value={destination}
+        onChange={text => {
+          setDestination(text);
+          filterPOIs(text);
+        }}
+        onSearch={handleDestinationSearch}
+        suggestions={poiSuggestions}
+        onSelectSuggestion={handleSelectPOI}
+      />
+
+
+      <View style={{ flex: 1 }}>
+        <MapWebView ref={webViewRef} onMessage={handleWebViewMessage} />
+      </View>
+
+      <MapActionsPanel
+        currentLocation={!!currentLocation}
+        onShare={shareLocation}
+        onReport={() => setShowCrowdPopup(true)}
+        shareTooltip={showShareTooltip}
+        reportTooltip={showReportTooltip}
+        onShareIn={() => setShowShareTooltip(true)}
+        onShareOut={() => setShowShareTooltip(false)}
+        onReportIn={() => setShowReportTooltip(true)}
+        onReportOut={() => setShowReportTooltip(false)}
+        color={colors.primary}
+      />
 
       <CrowdReportModal
         visible={showCrowdPopup}

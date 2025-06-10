@@ -1,25 +1,32 @@
-// src/components/atoms/AppInput.tsx
 import React from 'react';
 import { TextInput, StyleSheet, TextInputProps } from 'react-native';
+import { useTheme } from '../../theme/ThemeContext';
 
-export default function AppInput(props: TextInputProps) {
+export default function AppInput({ style, ...props }: TextInputProps & { style?: any }) {
+  const { isDark } = useTheme();
+
   return (
     <TextInput
       {...props}
-      style={[styles.input, props.style]}
-      placeholderTextColor="#888"
+      style={[
+        styles.input,
+        {
+          borderColor: isDark ? '#824713' : '#B78459',
+          color: isDark ? '#ffffff' : '#000000', 
+        },
+        style,
+      ]}
+      placeholderTextColor={isDark ? '#824713' : '#B78459'}
     />
   );
 }
 
 const styles = StyleSheet.create({
   input: {
-    height: 48,
-    borderColor: '#2f6e83',
     borderWidth: 1,
     borderRadius: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#fff',
-    color: '#000',
+    padding: 12,
+    marginBottom: 10,
+    fontSize: 15,
   },
 });

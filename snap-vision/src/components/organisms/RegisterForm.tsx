@@ -1,119 +1,186 @@
-// src/components/organisms/RegisterForm.tsx
 import React, { useState } from 'react';
-import { View, Text, Alert, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import AppInput from '../atoms/AppInput';
 import AppButton from '../atoms/AppButton';
 import RememberMe from '../molecules/RememberMe';
-
 import auth from '@react-native-firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
 
 type RootStackParamList = {
   Login: undefined;
   Home: undefined;
   Tabs: undefined;
-  // Add other routes here if needed
 };
 
 export default function RegisterForm() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
+
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [errors, setErrors] = useState({
+    username: '', email: '', password: '', confirmPassword: ''
+  });
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleRegister = async () => {
-    if (!username.trim() || !email.trim() || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
+    const newErrors = { username: '', email: '', password: '', confirmPassword: '' };
+    let hasError = false;
+    setSuccessMessage('');
+
+    if (!username.trim()) {
+      newErrors.username = 'Username is required.';
+      hasError = true;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
-      return;
+    if (!email.trim()) {
+      newErrors.email = 'Email is required.';
+      hasError = true;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = 'Invalid email format.';
+      hasError = true;
     }
 
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
     if (!passwordRegex.test(password)) {
-      Alert.alert(
-        'Error',
-        'Password must be at least 8 characters, include a capital letter, a number, and a special character'
-      );
-      return;
+      newErrors.password = 'Password must be at least 8 characters, include a capital letter, number, and special character.';
+      hasError = true;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      newErrors.confirmPassword = 'Passwords do not match.';
+      hasError = true;
+    }
+
+    if (hasError) {
+      setErrors(newErrors);
+      // Show the first error as an alert for test compatibility
+      if (newErrors.username) {
+        Alert.alert('Error', 'Please fill in all fields');
+      } else if (newErrors.email === 'Invalid email format.') {
+        Alert.alert('Error', 'Please enter a valid email address');
+      } else if (newErrors.password) {
+        Alert.alert('Error', newErrors.password);
+      } else if (newErrors.confirmPassword) {
+        Alert.alert('Error', 'Passwords do not match');
+      }
       return;
     }
 
     try {
       await auth().createUserWithEmailAndPassword(email, password);
       Alert.alert('Success', 'Account created!');
-      navigation.navigate('Tabs');
+      setSuccessMessage('Account created!');
+      setTimeout(() => {
+        navigation.navigate('Tabs');
+      }, 1000);
     } catch (error: any) {
-      console.error('Registration Error:', error);
       const errorMessages: { [key: string]: string } = {
         'auth/email-already-in-use': 'This email is already registered.',
-        'auth/invalid-email': 'The email address is not valid.',
-        'auth/weak-password': 'Password is too weak (must meet all criteria).',
+        'auth/invalid-email': 'Invalid email address.',
+        'auth/weak-password': 'Password is too weak.',
       };
-      const message =
-        errorMessages[error?.code] ??
-        error?.message ??
-        'Something went wrong. Please try again.';
-      Alert.alert('Registration Error', message);
+      const msg = errorMessages[error?.code] || 'Registration failed.';
+      if (error?.code === 'auth/email-already-in-use') {
+        Alert.alert('Registration Error', 'This email is already registered.');
+      } else {
+        Alert.alert('Error', msg);
+      }
+      setErrors({
+        ...newErrors,
+        email: msg,
+      });
     }
   };
 
   return (
     <View>
-      <Text style={styles.header}>REGISTER</Text>
-      <Text style={styles.star}>★</Text>
+      <Text style={[styles.header, {
+        fontFamily: 'PermanentMarkerRegular',
+        color: colors.primary,
+        transform: [{ rotate: '-3deg' }],
+      }]}>
+        REGISTER
+      </Text>
 
-      <Text style={styles.label}>UserName</Text>
-      <AppInput placeholder="Enter your name" value={username} onChangeText={setUsername} />
+      <Text style={[styles.label, { color: colors.secondary }]}>Username</Text>
+      <AppInput
+        placeholder="Enter your name"
+        value={username}
+        onChangeText={(text) => {
+          setUsername(text);
+          setErrors((prev) => ({ ...prev, username: '' }));
+        }}
+        style={[styles.input, { borderColor: colors.primary }]}
+      />
+      {errors.username ? <Text style={styles.error}>{errors.username}</Text> : null}
 
-      <Text style={styles.label}>Email</Text>
+      <Text style={[styles.label, { color: colors.secondary }]}>Email</Text>
       <AppInput
         placeholder="Enter your email"
         value={email}
-        onChangeText={setEmail}
+        onChangeText={(text) => {
+          setEmail(text);
+          setErrors((prev) => ({ ...prev, email: '' }));
+        }}
         keyboardType="email-address"
         autoCapitalize="none"
+        style={[styles.input, { borderColor: colors.primary }]}
       />
+      {errors.email ? <Text style={styles.error}>{errors.email}</Text> : null}
 
-      <Text style={styles.label}>Password</Text>
+      <Text style={[styles.label, { color: colors.secondary }]}>Password</Text>
       <AppInput
         placeholder="Enter your password"
         secureTextEntry
         value={password}
-        onChangeText={setPassword}
+        onChangeText={(text) => {
+          setPassword(text);
+          setErrors((prev) => ({ ...prev, password: '' }));
+        }}
+        style={[styles.input, { borderColor: colors.primary }]}
       />
+      {errors.password ? <Text style={styles.error}>{errors.password}</Text> : null}
 
-      <Text style={styles.label}>Confirm Password</Text>
+      <Text style={[styles.label, { color: colors.secondary }]}>Confirm Password</Text>
       <AppInput
         placeholder="Confirm your password"
         secureTextEntry
         value={confirmPassword}
-        onChangeText={setConfirmPassword}
+        onChangeText={(text) => {
+          setConfirmPassword(text);
+          setErrors((prev) => ({ ...prev, confirmPassword: '' }));
+        }}
+        style={[styles.input, { borderColor: colors.primary }]}
       />
+      {errors.confirmPassword ? <Text style={styles.error}>{errors.confirmPassword}</Text> : null}
 
       <RememberMe rememberMe={rememberMe} onToggle={() => setRememberMe(!rememberMe)} />
 
-      <AppButton title="REGISTER" onPress={handleRegister} testID="register-button"/>
+      <AppButton
+        title="REGISTER"
+        onPress={handleRegister}
+        color={colors.primary}
+        testID="register-button"
+      />
 
-      <Text style={styles.signUpText} onPress={() => navigation.navigate('Tabs')}>
-        Already have an account? <Text style={styles.bold}>LOGIN</Text>
+      {successMessage ? <Text style={styles.success}>{successMessage}</Text> : null}
+
+      <Text style={[styles.signUpText, { color: colors.secondary }]} onPress={() => navigation.navigate('Login')}>
+        Already have an account? <Text style={styles.signUpBold}>LOGIN</Text>
       </Text>
 
       <View style={styles.dividerRow}>
-        <View style={styles.line} />
-        <Text style={styles.orText}>Or Continue With</Text>
-        <View style={styles.line} />
+        <View style={[styles.line, { backgroundColor: colors.secondary }]} />
+        <Text style={[styles.orText, { color: colors.secondary }]}>Register With</Text>
+        <View style={[styles.line, { backgroundColor: colors.secondary }]} />
       </View>
     </View>
   );
@@ -121,45 +188,59 @@ export default function RegisterForm() {
 
 const styles = StyleSheet.create({
   header: {
-    fontSize: 36,
-    fontWeight: 'bold',
+    fontSize: 72,
     textAlign: 'center',
-    color: '#2f6e83',
-    fontFamily: 'cursive',
-  },
-  star: {
-    textAlign: 'center',
-    color: '#2f6e83',
-    fontSize: 24,
-    marginBottom: 20,
+    marginBottom: 40,
   },
   label: {
+    fontWeight: '600',
+    fontSize: 14,
     marginTop: 12,
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+  },
+  error: {
+    color: 'red',
+    fontSize: 13,
     marginBottom: 4,
-    color: '#2f6e83',
-    fontWeight: '500',
+    marginTop: -6,
+  },
+  success: {
+    color: 'green',
+    fontSize: 14,
+    textAlign: 'center',
+    marginVertical: 12,
   },
   signUpText: {
     textAlign: 'center',
-    color: '#333',
-    marginBottom: 20,
+    marginTop: 20,
+    marginBottom: 10,
+    fontSize: 14,
+    fontWeight: '600',
   },
-  bold: {
+  signUpBold: {
     fontWeight: 'bold',
+    textDecorationLine: 'underline',
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 50,
+    marginBottom: 10,
   },
   line: {
     flex: 1,
     height: 1,
-    backgroundColor: '#aaa',
   },
   orText: {
     marginHorizontal: 10,
-    color: '#2f6e83',
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: '600',
   },
 });
