@@ -480,6 +480,7 @@ useEffect(() => {
       {destination && destinationCoords && (
         <NavigationPanel
           isNavigating={isNavigating}
+          isLoading={isCalculatingRoute}
           onStartNavigation={startNavigation}
           onStopNavigation={stopNavigation}
           progress={routeProgress}
