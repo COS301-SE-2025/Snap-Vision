@@ -384,7 +384,79 @@ const checkRouteDeviation = (latitude: number, longitude: number) => {
   }
 };
 
+// Add this function to recalculate the route
+const recalculateRoute = async (latitude: number, longitude: number) => {
+  if (!destinationCoords) return;
+  
+  try {
+    setStatus('Recalculating route...');
+    
+    const start = `${longitude},${latitude}`;
+    const end = `${destinationCoords[0]},${destinationCoords[1]}`;
+    
+    const response = await fetch(`http://10.0.2.2:3000/api/directions?start=${start}&end=${end}`);
+    const data = await response.json();
+    
+    const coordinates = data.features?.[0]?.geometry?.coordinates;
+    if (!coordinates || coordinates.length === 0) throw new Error('No route found');
+    
+    lastRoute.current = coordinates;
+    
+    const jsRouteCode = `window.updateRoute && window.updateRoute(${JSON.stringify(coordinates)});`;
+    webViewRef.current?.injectJavaScript(jsRouteCode);
+    
+    setStatus('Route updated');
+    
+    // Estimate time based on route length
+    const routeDistance = calculateRouteDistance(coordinates);
+    const avgWalkingSpeed = 1.4; // m/s (5 km/h)
+    const timeInSeconds = routeDistance / avgWalkingSpeed;
+    setEstimatedTime(Math.round(timeInSeconds / 60)); // in minutes
+    
+  } catch (error) {
+    console.error('Route recalculation error:', error);
+    setError('Failed to recalculate route');
+  }
+};
 
+// Add this function to calculate the distance between two points
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const R = 6371e3; // Earth's radius in meters
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // Distance in meters
+};
+
+// Add this function to calculate the total route distance
+const calculateRouteDistance = (coordinates: number[][]) => {
+  let totalDistance = 0;
+  for (let i = 0; i < coordinates.length - 1; i++) {
+    const point1 = coordinates[i];
+    const point2 = coordinates[i + 1];
+    totalDistance += calculateDistance(
+      point1[1], point1[0], 
+      point2[1], point2[0]
+    );
+  }
+  return totalDistance;
+};
+
+// Add this useEffect to clean up when the component unmounts
+useEffect(() => {
+  return () => {
+    // Clear the watch when component unmounts
+    if (watchIdRef.current !== null) {
+      Geolocation.clearWatch(watchIdRef.current);
+    }
+  };
+}, []);
 
     // Modify your MapScreen.tsx return statement to include the NavigationPanel
   
@@ -408,7 +480,6 @@ const checkRouteDeviation = (latitude: number, longitude: number) => {
       {destination && destinationCoords && (
         <NavigationPanel
           isNavigating={isNavigating}
-          isLoading={isCalculatingRoute}
           onStartNavigation={startNavigation}
           onStopNavigation={stopNavigation}
           progress={routeProgress}
