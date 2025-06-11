@@ -250,45 +250,141 @@ const startNavigation = () => {
   }
   
   // If we don't have a route yet, calculate one first
-
-// Add this function to calculate the distance between two points
-const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-  const R = 6371e3; // Earth's radius in meters
-  const φ1 = (lat1 * Math.PI) / 180;
-  const φ2 = (lat2 * Math.PI) / 180;
-  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-  const a =
-    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c; // Distance in meters
-};
-
-// Add this function to calculate the total route distance
-const calculateRouteDistance = (coordinates: number[][]) => {
-  let totalDistance = 0;
-  for (let i = 0; i < coordinates.length - 1; i++) {
-    const point1 = coordinates[i];
-    const point2 = coordinates[i + 1];
-    totalDistance += calculateDistance(
-      point1[1], point1[0], 
-      point2[1], point2[0]
-    );
+  if (lastRoute.current.length === 0) {
+    handleDestinationSearch();
+    // Small delay to ensure route is drawn before starting navigation
+    setTimeout(() => {
+      initializeNavigation();
+    }, 500);
+  } else {
+    // Route already exists, just start navigation
+    initializeNavigation();
   }
-  return totalDistance;
 };
 
-// Add this useEffect to clean up when the component unmounts
-useEffect(() => {
-  return () => {
-    // Clear the watch when component unmounts
-    if (watchIdRef.current !== null) {
-      Geolocation.clearWatch(watchIdRef.current);
+// New function to handle the actual navigation initialization
+const initializeNavigation = () => {
+  setIsNavigating(true);
+  
+  // Start watching position with higher frequency
+  watchIdRef.current = Geolocation.watchPosition(
+    (position) => {
+      const { latitude, longitude } = position.coords;
+      sendLocationToWebView(latitude, longitude);
+      
+      // Check if we need to recalculate route
+      checkRouteDeviation(latitude, longitude);
+    },
+    (error) => {
+      console.error('Location tracking error:', error);
+      setError('Failed to track location');
+    },
+    { 
+      enableHighAccuracy: true, 
+      distanceFilter: 10, // Update every 10 meters
+      interval: 3000,     // Update every 3 seconds (Android)
+      fastestInterval: 1000 // Fastest update interval (Android)
     }
-  };
-}, []);
+  );
+  
+  // Calculate initial estimated time
+  if (lastRoute.current.length > 0) {
+    const routeDistance = calculateRouteDistance(lastRoute.current);
+    const avgWalkingSpeed = 1.4; // m/s (5 km/h)
+    const timeInSeconds = routeDistance / avgWalkingSpeed;
+    setEstimatedTime(Math.round(timeInSeconds / 60)); // in minutes
+    
+    // Calculate initial distance to destination
+    if (currentLocation && destinationCoords) {
+      const destPoint = lastRoute.current[lastRoute.current.length - 1];
+      const distance = calculateDistance(
+        currentLocation.latitude,
+        currentLocation.longitude,
+        destPoint[1], // Latitude
+        destPoint[0]  // Longitude
+      );
+      setDistanceToDestination(distance);
+    }
+  }
+  
+  setStatus('Navigation started');
+};
+
+// Add this function to stop navigation
+const stopNavigation = () => {
+  if (watchIdRef.current !== null) {
+    Geolocation.clearWatch(watchIdRef.current);
+    watchIdRef.current = null;
+  }
+  setIsNavigating(false);
+  setStatus('Navigation stopped');
+};
+
+// Add this function to check if the user has deviated from the route
+const checkRouteDeviation = (latitude: number, longitude: number) => {
+  if (!lastRoute.current || lastRoute.current.length === 0) return;
+  
+  // First, check if we've reached the destination (within 30 meters)
+  const destinationPoint = lastRoute.current[lastRoute.current.length - 1];
+  const distanceToEnd = calculateDistance(
+    latitude, 
+    longitude, 
+    destinationPoint[1], // Latitude
+    destinationPoint[0]  // Longitude
+  );
+  
+  // Update distance to destination
+  setDistanceToDestination(distanceToEnd);
+  
+  // If we're close to destination, end navigation
+  if (distanceToEnd < 30) {
+    stopNavigation();
+    setStatus('You have reached your destination!');
+    webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+    return;
+  }
+  
+  // Check if we've deviated from the route
+  let onRoute = false;
+  let closestDistance = Infinity;
+  let closestPointIndex = 0;
+  
+  // Find closest point on the route
+  for (let i = 0; i < lastRoute.current.length; i++) {
+    const routePoint = lastRoute.current[i];
+    const distance = calculateDistance(
+      latitude, 
+      longitude, 
+      routePoint[1], // Latitude
+      routePoint[0]  // Longitude
+    );
+    
+    if (distance < closestDistance) {
+      closestDistance = distance;
+      closestPointIndex = i;
+    }
+  }
+  
+  // If we're within 50 meters of the route, we're considered on route
+  if (closestDistance < 50) {
+    onRoute = true;
+    
+    // Update route progress (0-100%)
+    const progress = (closestPointIndex / lastRoute.current.length) * 100;
+    setRouteProgress(Math.round(progress));
+    
+    // Update the user's position on the route
+    const jsProgressCode = `window.updateRouteProgress && window.updateRouteProgress(${closestPointIndex});`;
+    webViewRef.current?.injectJavaScript(jsProgressCode);
+  }
+  
+  // If we've deviated significantly, recalculate route
+  if (!onRoute && closestDistance > 100) {
+    recalculateRoute(latitude, longitude);
+  }
+};
+
+
 
     // Modify your MapScreen.tsx return statement to include the NavigationPanel
   
