@@ -243,8 +243,6 @@
 
     // Function to clear the destination marker and end circle
     window.clearDestinationMarker = function() {
-        window.navigationActive = false; // Navigation ended
-
       if (destinationMarker) {
         map.removeLayer(destinationMarker);
         destinationMarker = null;
@@ -255,12 +253,9 @@
       }
     };
 
-    // Function to draw a route on the map
+    
     window.drawRoute = function(coords) {
       if (!map || !Array.isArray(coords)) return;
-
-      window.navigationActive = true; // Set navigation active
-
     
       // Remove existing route if already present
       if (window.routeLayer) {
@@ -295,45 +290,22 @@
         dashArray: '8,6',
       }).addTo(map);
     
-      // Only add end marker/circle
+      // Add start circle and keep reference
+      startCircle = L.circle(latlngs[0], { radius: 5, color: 'green' }).addTo(map);
+    
+      // Add end circle and keep reference
       endCircle = L.circle(latlngs[latlngs.length - 1], { radius: 5, color: 'red' }).addTo(map);
-      destinationMarker = L.marker(latlngs[latlngs.length - 1]).addTo(map).bindPopup("🏁 End");
     
       const bounds = window.routeLayer.getBounds();
       map.fitBounds(bounds.pad(0.3));
-    };
-
-    window.updateUserLocation = function(lat, lon) {
-      const coords = [lat, lon];
-      if (!map) return;
-
-      map.setView(coords, 16);
-
-      // Choose icon and popup based on navigation state
-      let icon = undefined;
-      let popupText = "📍 You are here!";
-      if (window.navigationActive) {
-        icon = L.divIcon({
-          className: '',
-          html: '<div style="background:green;border-radius:50%;width:18px;height:18px;border:2px solid white;display:flex;align-items:center;justify-content:center;">🚩</div>',
-          iconSize: [18, 18],
-          iconAnchor: [9, 9]
-        });
-        popupText = "🚩 Start (You)";
-      }
-
-      if (userMarker) {
-        userMarker.setLatLng(coords);
-        if (icon) userMarker.setIcon(icon);
-        userMarker.setPopupContent(popupText);
-      } else {
-        userMarker = L.marker(coords, icon ? { icon } : undefined)
-          .addTo(map)
-          .bindPopup(popupText)
-          .openPopup();
-      }
-    };
     
+      // Add start marker
+      L.marker(latlngs[0]).addTo(map).bindPopup("🚩 Start").openPopup();
+    
+      // Add end marker and keep reference
+      destinationMarker = L.marker(latlngs[latlngs.length - 1]).addTo(map).bindPopup("🏁 End");
+    };
+
   </script>
 </body>
 </html>
