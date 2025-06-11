@@ -40,6 +40,31 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.2);
       pointer-events: none;
     }
+    .pulse {
+      border-radius: 50%;
+      box-shadow: 0 0 0 rgba(0, 120, 255, 0.4);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(0, 120, 255, 0.4);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(0, 120, 255, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(0, 120, 255, 0);
+      }
+    }
+    .route-progress {
+      stroke-dasharray: 6;
+      animation: dash 1.5s linear infinite;
+    }
+    @keyframes dash {
+      to {
+        stroke-dashoffset: 12;
+      }
+    }
   </style>
 </head>
 <body>
@@ -47,14 +72,20 @@
 
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
   <script>
+    // Global variables
     let map;
     let userMarker = null;
+    let userIcon = null;
     let crowdMarker = null;
     let destinationMarker = null;
     let endCircle = null;
     let startCircle = null;
     let poiMarkers = [];
     let poiData = [];
+    let route = null;
+    let progressLine = null;
+    let isNavigating = false;
+    let userCoordinates = null;
 
     // Reported crowd densities and corresponding emoji/icons
     const crowdEmojis = {
@@ -63,6 +94,13 @@
       moderate: '🟠 Moderate',
       crowded: '🔴 Crowded',
       overcrowded: '⚫ Overcrowded'
+    };
+
+    // Transport mode icons
+    const transportIcons = {
+      walking: '🚶',
+      cycling: '🚲',
+      driving: '🚗'
     };
 
     // Handle uncaught errors
@@ -96,6 +134,14 @@
         crossOrigin: 'anonymous'
       }).addTo(map);
 
+      // Create custom icon for user location
+      userIcon = L.divIcon({
+        className: 'user-location-icon',
+        html: '<div style="background-color: #007bff; border: 3px solid white; border-radius: 50%; width: 16px; height: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.5);" class="pulse"></div>',
+        iconSize: [22, 22],
+        iconAnchor: [11, 11]
+      });
+
       // Tell React Native that the map is ready
       setTimeout(() => {
         map.invalidateSize();
@@ -106,19 +152,26 @@
     }
 
     // Function to update user location
-    window.updateUserLocation = function(lat, lon) {
-      const coords = [lat, lon];
+    window.updateUserLocation = function(lat, lng) {
+      // Store these coordinates for later use
+      userCoordinates = { lat, lng };
+      
       if (!map) return;
 
-      map.setView(coords, 16);
+      const coords = [lat, lng];
 
       if (userMarker) {
         userMarker.setLatLng(coords);
       } else {
-        userMarker = L.marker(coords)
-          .addTo(map)
-          .bindPopup("📍 You are here!")
-          .openPopup();
+        userMarker = L.marker(coords, {
+          icon: userIcon,
+          zIndexOffset: 1000 // Ensure user marker is on top
+        }).addTo(map);
+      }
+
+      // Only center map on user if not navigating
+      if (!isNavigating) {
+        map.setView(coords, map.getZoom() || 16);
       }
     };
 
@@ -228,19 +281,6 @@
       }
     };
 
-    // Start the map
-    try {
-      initMap();
-    } catch (e) {
-      if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({
-          type: 'ERROR',
-          message: e.message,
-          stack: e.stack
-        }));
-      }
-    }
-
     // Function to clear the destination marker and end circle
     window.clearDestinationMarker = function() {
       if (destinationMarker) {
@@ -253,14 +293,22 @@
       }
     };
 
-    
-    window.drawRoute = function(coords) {
-      if (!map || !Array.isArray(coords)) return;
-    
+    // Function to draw a route between points
+    window.drawRoute = function(coords, transportMode = 'walking') {
+      if (!map || !Array.isArray(coords) || coords.length < 2) return;
+      
+      // Set navigation flag
+      isNavigating = true;
+      
       // Remove existing route if already present
-      if (window.routeLayer) {
-        map.removeLayer(window.routeLayer);
-        window.routeLayer = null;
+      if (route) {
+        map.removeLayer(route);
+        route = null;
+      }
+      
+      if (progressLine) {
+        map.removeLayer(progressLine);
+        progressLine = null;
       }
     
       // Remove previous destination marker
@@ -280,34 +328,190 @@
         map.removeLayer(startCircle);
         startCircle = null;
       }
+      
+      // Convert coordinates to Leaflet format
+      let latlngs = coords.map(([lon, lat]) => [lat, lon]);
+      
+      // If we have the user's exact coordinates, use them for the start point
+      if (userCoordinates && latlngs.length > 0) {
+        latlngs[0] = [userCoordinates.lat, userCoordinates.lng];
+      }
+      
+      // Choose color based on transport mode
+      let routeColor;
+      switch (transportMode) {
+        case 'cycling':
+          routeColor = '#1E88E5'; // Blue
+          break;
+        case 'driving':
+          routeColor = '#7B1FA2'; // Purple
+          break;
+        case 'walking':
+        default:
+          routeColor = '#43A047'; // Green
+          break;
+      }
+      
+      // Create the route polyline
+      route = L.polyline(latlngs, {
+        color: routeColor,
+        weight: 5,
+        opacity: 0.8,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(map);
+      
+      // Get transport icon
+      const transportIcon = transportIcons[transportMode] || '🚶';
     
-      const latlngs = coords.map(([lon, lat]) => [lat, lon]);
-    
-      window.routeLayer = L.polyline(latlngs, {
-        color: 'blue',
-        weight: 6,
-        opacity: 1,
-        dashArray: '8,6',
+      // Add start point indicator (don't use a separate marker, just highlight route start)
+      startCircle = L.circle(latlngs[0], { 
+        radius: 8, 
+        color: routeColor,
+        fillColor: '#fff',
+        fillOpacity: 1,
+        weight: 3
       }).addTo(map);
     
-      // Add start circle and keep reference
-      startCircle = L.circle(latlngs[0], { radius: 5, color: 'green' }).addTo(map);
+      // Add end marker with transport icon
+      const endPoint = latlngs[latlngs.length - 1];
+      destinationMarker = L.marker(endPoint).addTo(map)
+        .bindPopup(`${transportIcon} Destination`)
+        .openPopup();
+        
+      // Add end circle
+      endCircle = L.circle(endPoint, { 
+        radius: 8, 
+        color: '#D32F2F', 
+        fillColor: '#fff',
+        fillOpacity: 1,
+        weight: 3
+      }).addTo(map);
     
-      // Add end circle and keep reference
-      endCircle = L.circle(latlngs[latlngs.length - 1], { radius: 5, color: 'red' }).addTo(map);
-    
-      const bounds = window.routeLayer.getBounds();
-      map.fitBounds(bounds.pad(0.3));
-    
-      // Add start marker
-      L.marker(latlngs[0]).addTo(map).bindPopup("🚩 Start").openPopup();
-    
-      // Add end marker and keep reference
-      destinationMarker = L.marker(latlngs[latlngs.length - 1]).addTo(map).bindPopup("🏁 End");
+      // Fit map to show the whole route with padding
+      const bounds = route.getBounds();
+      map.fitBounds(bounds.pad(0.2));
     };
     
-    // ...existing code...
+    // Function to draw an alternative route
+    window.drawAlternativeRoute = function(coords, alternativeIndex) {
+      if (!map || !Array.isArray(coords) || coords.length < 2) return;
+      
+      // Convert coordinates to Leaflet format
+      const latlngs = coords.map(([lon, lat]) => [lat, lon]);
+      
+      // Create the alternative route with dashed line and reduced opacity
+      const alternativeRoute = L.polyline(latlngs, {
+        color: '#9E9E9E', // Gray color for alternatives
+        weight: 4,
+        opacity: 0.6,
+        dashArray: '6,8',
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(map);
+      
+      // Add event handlers to make this route the primary route when clicked
+      alternativeRoute.on('click', function() {
+        // Replace the primary route with this one
+        if (route) {
+          map.removeLayer(route);
+        }
+        
+        // Remove the dashed style and update color
+        alternativeRoute.setStyle({
+          color: '#43A047',
+          dashArray: null,
+          opacity: 0.8
+        });
+        
+        // Update the global route variable to this one
+        route = alternativeRoute;
+        
+        // Notify React Native that the route was changed
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'ROUTE_CHANGED',
+            alternativeIndex: alternativeIndex
+          }));
+        }
+      });
+      
+      return alternativeRoute;
+    };
 
+    // Update route progress
+    window.updateRouteProgress = function(pointIndex) {
+      if (!route) return;
+      
+      // Get the route points
+      const routePoints = route.getLatLngs();
+      
+      // Ensure pointIndex is valid
+      if (pointIndex < 0 || pointIndex >= routePoints.length) return;
+      
+      // Highlight the completed portion of the route
+      const completedSegment = routePoints.slice(0, pointIndex + 1);
+      
+      if (!progressLine) {
+        progressLine = L.polyline(completedSegment, {
+          color: '#FFC107', // Amber color for progress
+          weight: 7,
+          opacity: 0.9,
+          className: 'route-progress'
+        }).addTo(map);
+      } else {
+        progressLine.setLatLngs(completedSegment);
+      }
+    };
+    
+    // Update the route with new coordinates
+    window.updateRoute = function(coordinates) {
+      // Just use drawRoute with updated coordinates
+      window.drawRoute(coordinates);
+    };
+    
+    // Clear the route
+    window.clearRoute = function() {
+      isNavigating = false;
+      
+      if (route) {
+        map.removeLayer(route);
+        route = null;
+      }
+      
+      if (progressLine) {
+        map.removeLayer(progressLine);
+        progressLine = null;
+      }
+      
+      if (startCircle) {
+        map.removeLayer(startCircle);
+        startCircle = null;
+      }
+      
+      if (endCircle) {
+        map.removeLayer(endCircle);
+        endCircle = null;
+      }
+      
+      if (destinationMarker) {
+        map.removeLayer(destinationMarker);
+        destinationMarker = null;
+      }
+    };
+
+    // Start the map
+    try {
+      initMap();
+    } catch (e) {
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'ERROR',
+          message: e.message,
+          stack: e.stack
+        }));
+      }
+    }
   </script>
 </body>
 </html>
