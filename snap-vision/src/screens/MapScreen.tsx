@@ -144,7 +144,7 @@ const MapScreen = () => {
       const end = `${destinationCoords[0]},${destinationCoords[1]}`;
       webViewRef.current?.injectJavaScript('window.clearDestinationMarker && window.clearDestinationMarker();');
 
-      const response = await fetch(`http://10.0.2.2:3000/api/directions?start=${start}&end=${end}`);//Change 10.0.0.10 to your IP address
+      const response = await fetch(`http://192.168.0.133:3000/api/directions?start=${start}&end=${end}`);//Change 10.0.0.10 to your IP address
       //In command prompt: ipconfig, take the second IPV4 address that appears in the list
       //If using Android Studio, 10.0.2.2 should work
       //This will be changed once the app is deployed
@@ -210,6 +210,39 @@ const handleSelectPOI = (poi: any) => {
   setDestinationCoords([poi.centroid.longitude, poi.centroid.latitude]);
   setPOISuggestions([]);
 };
+
+//dynamically request location updates
+useEffect(() => {
+  let watchId: number | null = null;
+
+  const startWatchingLocation = async () => {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+    );
+    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+      watchId = Geolocation.watchPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          sendLocationToWebView(latitude, longitude);
+        },
+        (error) => {
+          setError('Failed to get location');
+        },
+        { enableHighAccuracy: true, distanceFilter: 5, interval: 2000 }
+      );
+    } else {
+      setError('Location permission denied');
+    }
+  };
+
+  startWatchingLocation();
+
+  return () => {
+    if (watchId !== null) {
+      Geolocation.clearWatch(watchId);
+    }
+  };
+}, []);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
