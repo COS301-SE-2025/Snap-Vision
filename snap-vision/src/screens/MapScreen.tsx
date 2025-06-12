@@ -15,7 +15,7 @@ import MapActionsPanel from '../components/organisms/MapActionsPanel';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 
-const ROUTING_API_BASE = "http://192.168.43.155:3000"; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = "http://10.0.2.2:3000"; // <-- Use your correct backend IP here
 
 const MapScreen = () => {
   const lastRoute = useRef<any[]>([]);
@@ -35,14 +35,15 @@ const MapScreen = () => {
   const [showReportTooltip, setShowReportTooltip] = useState(false);
   const webViewRef = useRef<WebViewType>(null);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [isRouteLoading, setIsRouteLoading] = useState(false);
 
   const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
   const [pois, setPOIs] = useState<any[]>([]);
   const [poiSuggestions, setPOISuggestions] = useState<any[]>([]);
 
-  const sendLocationToWebView = (lat: number, lon: number) => {
+  const sendLocationToWebView = (lat: number, lon: number, centerMap = false) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
-    const jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon});`;
+    const jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap});`;
     webViewRef.current?.injectJavaScript(jsCode);
   };
 
@@ -52,10 +53,12 @@ const MapScreen = () => {
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
       );
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        setStatus('Getting your location...');
         Geolocation.getCurrentPosition(
           (position) => {
             const { latitude, longitude } = position.coords;
-            sendLocationToWebView(latitude, longitude);
+            sendLocationToWebView(latitude, longitude, true);
+            setStatus('Location found');
           },
           (error) => {
             setError('Failed to get location');
@@ -87,9 +90,19 @@ const MapScreen = () => {
           setError(parsed.message);
         } else if (parsed.type === 'POI_SELECTED') {
           const selectedPOI = parsed.poi;
+          
+          // Clear any existing route
+          webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+          lastRoute.current = [];
+          
           setDestination(selectedPOI.name);
           setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
           setStatus(`Selected: ${selectedPOI.name}`);
+          
+          // Automatically fetch route when POI is selected
+          if (currentLocation) {
+            fetchRoute([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
+          }
         }
       }
     } catch (e) {
@@ -125,18 +138,28 @@ const MapScreen = () => {
       setError('Please select a valid destination');
       return;
     }
-    fetchRoute();
+    fetchRoute(destinationCoords);
   };
 
-  const fetchRoute = async () => {
+  const fetchRoute = async (destCoords: [number, number]) => {
+    if (!currentLocation) {
+      setError('Your location is not available yet');
+      return;
+    }
+    
+    setIsRouteLoading(true);
+    setStatus('Calculating route...');
+    
     try {
-      const start = `${currentLocation!.longitude},${currentLocation!.latitude}`;
-      const end = `${destinationCoords![0]},${destinationCoords![1]}`;
-      webViewRef.current?.injectJavaScript('window.clearDestinationMarker && window.clearDestinationMarker();');
+      const start = `${currentLocation.longitude},${currentLocation.latitude}`;
+      const end = `${destCoords[0]},${destCoords[1]}`;
+      
+      // Clear any existing route first
+      webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+      
       const url = `${ROUTING_API_BASE}/api/directions?start=${start}&end=${end}`;
       const response = await fetch(url);
       const data = await response.json();
-      console.log('Route API response:', data);
 
       const coordinates = data.features?.[0]?.geometry?.coordinates;
       if (!coordinates || coordinates.length === 0) throw new Error('No route found');
@@ -145,10 +168,12 @@ const MapScreen = () => {
 
       const jsRouteCode = `window.drawRoute && window.drawRoute(${JSON.stringify(coordinates)});`;
       webViewRef.current?.injectJavaScript(jsRouteCode);
-      setStatus('Route drawn!');
+      setStatus('Route found!');
     } catch (error) {
       console.error('Route fetch error:', error);
       setError('Failed to fetch or draw route');
+    } finally {
+      setIsRouteLoading(false);
     }
   };
 
@@ -186,9 +211,18 @@ const MapScreen = () => {
   };
 
   const handleSelectPOI = (poi: any) => {
+    // Clear any existing route
+    webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+    lastRoute.current = [];
+    
     setDestination(poi.name);
     setDestinationCoords([poi.centroid.longitude, poi.centroid.latitude]);
     setPOISuggestions([]);
+    
+    // Automatically fetch route when POI is selected from search
+    if (currentLocation) {
+      fetchRoute([poi.centroid.longitude, poi.centroid.latitude]);
+    }
   };
 
   // Dynamically request location updates
@@ -246,7 +280,8 @@ const MapScreen = () => {
       !currentLocation ||
       !destinationCoords ||
       !lastRoute.current ||
-      lastRoute.current.length === 0
+      lastRoute.current.length === 0 ||
+      isRouteLoading
     ) return;
 
     // Find nearest point on route
@@ -272,15 +307,20 @@ const MapScreen = () => {
 
   // Reroute function
   const rerouteFromCurrentLocation = async () => {
-    if (!currentLocation || !destinationCoords) return;
+    if (!currentLocation || !destinationCoords || isRouteLoading) return;
+    
+    setIsRouteLoading(true);
+    
     try {
       const start = `${currentLocation.longitude},${currentLocation.latitude}`;
       const end = `${destinationCoords[0]},${destinationCoords[1]}`;
-      webViewRef.current?.injectJavaScript('window.clearDestinationMarker && window.clearDestinationMarker();');
+      
+      // Clear any existing route first
+      webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+      
       const url = `${ROUTING_API_BASE}/api/directions?start=${start}&end=${end}`;
       const response = await fetch(url);
       const data = await response.json();
-      console.log('Route API response:', data);
 
       const coordinates = data.features?.[0]?.geometry?.coordinates;
       if (!coordinates || coordinates.length === 0) throw new Error('No route found');
@@ -293,6 +333,8 @@ const MapScreen = () => {
     } catch (error) {
       console.error('Route fetch error:', error);
       setError('Failed to fetch or draw route');
+    } finally {
+      setIsRouteLoading(false);
     }
   };
 
@@ -303,6 +345,12 @@ const MapScreen = () => {
         onChange={text => {
           setDestination(text);
           filterPOIs(text);
+          
+          // Clear route if text field is cleared
+          if (!text.trim()) {
+            webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+            lastRoute.current = [];
+          }
         }}
         onSearch={handleDestinationSearch}
         suggestions={poiSuggestions}
@@ -335,6 +383,7 @@ const MapScreen = () => {
       />
 
       {status && <StatusOverlay status={status} />}
+      {error && <StatusOverlay status={error} isError={true} onDismiss={() => setError(null)} />}
     </View>
   );
 };
