@@ -24,6 +24,7 @@ import MapActionsPanel from '../components/organisms/MapActionsPanel';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 import { TextIcon } from '../components/atoms/TextIcon';
+import DirectionsModal from '../components/organisms/DirectionsModal';
 
 
 const MapScreen = () => {
@@ -224,59 +225,21 @@ const handleSelectPOI = (poi: any) => {
 
 
 
-  return (
+ return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <Modal
-  visible={showDirectionsSheet}
-  animationType="slide"
-  transparent
-  onRequestClose={() => setShowDirectionsSheet(false)}
->
-  <View style={{
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.3)'
-  }}>
-    <View style={{
-      backgroundColor: '#fff',
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      maxHeight: '60%',
-      padding: 16
-    }}>
-      <View style={{ alignItems: 'center', marginBottom: 8 }}>
-        <View style={{
-          width: 40, height: 4, backgroundColor: '#ccc', borderRadius: 2, marginBottom: 8
-        }} />
-        <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 8 }}>
-          Directions to {destination}
-        </Text>
-      </View>
-      <FlatList
-        data={steps}
-        keyExtractor={(_, idx) => idx.toString()}
-        renderItem={({ item, index }) => (
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 }}>
-            <Text style={{ fontWeight: 'bold', marginRight: 8 }}>{index + 1}.</Text>
-            <Text style={{ flex: 1 }}>{item.instruction}</Text>
-          </View>
-        )}
-      />
-      <Pressable
-        style={{
-          marginTop: 16,
-          backgroundColor: '#007bff',
-          padding: 12,
-          borderRadius: 8,
-          alignItems: 'center'
+      <DirectionsModal
+        visible={showDirectionsSheet}
+        onClose={() => setShowDirectionsSheet(false)}
+        onStart={() => {
+          // Add your navigation start logic here
+          console.log('Navigation started');
+          setShowDirectionsSheet(false);
         }}
-        onPress={() => setShowDirectionsSheet(false)}
-      >
-        <Text style={{ color: '#fff', fontWeight: 'bold' }}>Close</Text>
-      </Pressable>
-    </View>
-  </View>
-</Modal>
+        destination={destination}
+        steps={steps}
+        currentStep={currentStep}
+      />
+      {/* Rest of your components remain the same */}
       <DestinationSearch
         value={destination}
         onChange={text => {
@@ -287,6 +250,7 @@ const handleSelectPOI = (poi: any) => {
         suggestions={poiSuggestions}
         onSelectSuggestion={handleSelectPOI}
       />
+      
       <View style={{ flex: 1 }}>
         <MapWebView ref={webViewRef} onMessage={handleWebViewMessage} />
       </View>
