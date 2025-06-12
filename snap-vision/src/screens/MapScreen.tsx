@@ -144,11 +144,12 @@ const MapScreen = () => {
       const end = `${destinationCoords[0]},${destinationCoords[1]}`;
       webViewRef.current?.injectJavaScript('window.clearDestinationMarker && window.clearDestinationMarker();');
 
-      const response = await fetch(`http://192.168.0.133:3000/api/directions?start=${start}&end=${end}`);//Change 10.0.0.10 to your IP address
+      const response = await fetch(`http://192.168.43.155:3000/api/directions?start=${start}&end=${end}`);//Change 10.0.0.10 to your IP address
       //In command prompt: ipconfig, take the second IPV4 address that appears in the list
       //If using Android Studio, 10.0.2.2 should work
       //This will be changed once the app is deployed
       const data = await response.json();
+      console.log('Route API response:', data);
 
       const coordinates = data.features?.[0]?.geometry?.coordinates;
       if (!coordinates || coordinates.length === 0) throw new Error('No route found');
@@ -243,6 +244,79 @@ useEffect(() => {
     }
   };
 }, []);
+
+
+// Helper to calculate distance between two lat/lon points (Haversine formula)
+function getDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const R = 6371000;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+// Add this useEffect after your location watcher useEffect
+useEffect(() => {
+  if (
+    !currentLocation ||
+    !destinationCoords ||
+    !lastRoute.current ||
+    lastRoute.current.length === 0
+  ) return;
+
+  // Find nearest point on route
+  let minDist = Infinity;
+  for (const coord of lastRoute.current) {
+    // route is [lng, lat]
+    const dist = getDistanceMeters(
+      currentLocation.latitude,
+      currentLocation.longitude,
+      coord[1],
+      coord[0]
+    );
+    if (dist < minDist) minDist = dist;
+  }
+
+  // If user is more than 30 meters from the route, reroute
+  if (minDist > 30) {
+    setStatus('Re-routing...');
+    rerouteFromCurrentLocation();
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [currentLocation]);
+
+// Add this function to handle rerouting
+const rerouteFromCurrentLocation = async () => {
+  if (!currentLocation || !destinationCoords) return;
+  try {
+    const start = `${currentLocation.longitude},${currentLocation.latitude}`;
+    const end = `${destinationCoords[0]},${destinationCoords[1]}`;
+    webViewRef.current?.injectJavaScript('window.clearDestinationMarker && window.clearDestinationMarker();');
+
+    const response = await fetch(`http://192.168.0.133:3000/api/directions?start=${start}&end=${end}`);
+    const data = await response.json();
+
+    const coordinates = data.features?.[0]?.geometry?.coordinates;
+    if (!coordinates || coordinates.length === 0) throw new Error('No route found');
+
+    lastRoute.current = coordinates;
+
+    const jsRouteCode = `window.drawRoute && window.drawRoute(${JSON.stringify(coordinates)});`;
+    webViewRef.current?.injectJavaScript(jsRouteCode);
+    setStatus('Route updated!');
+  } catch (error) {
+    console.error('Route fetch error:', error);
+    setError('Failed to fetch or draw route');
+  }
+};
+
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
