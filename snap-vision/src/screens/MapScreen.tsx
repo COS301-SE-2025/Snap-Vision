@@ -50,8 +50,6 @@ const MapScreen = () => {
   const [estimatedTime, setEstimatedTime] = useState<number | null>(null);
   const watchIdRef = useRef<number | null>(null);
 
-  const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
-
   const sendLocationToWebView = (lat: number, lon: number) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
     const jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon});`;
@@ -141,62 +139,40 @@ const MapScreen = () => {
     setStatus(`Crowd density reported: ${selectedDensity}`);
   };
 
-  // Update handleDestinationSearch to use the most current location
-const handleDestinationSearch = () => {
-  if (!destinationCoords) {
+  const handleDestinationSearch = () => {
+  if (!currentLocation || !destinationCoords) {
     setError('Please select a valid destination');
     return;
   }
 
   const fetchRoute = async () => {
-    setIsCalculatingRoute(true);
+    try {
+      const start = `${currentLocation.longitude},${currentLocation.latitude}`;
+      const end = `${destinationCoords[0]},${destinationCoords[1]}`;
+      webViewRef.current?.injectJavaScript('window.clearDestinationMarker && window.clearDestinationMarker();');
 
-    Geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const { latitude, longitude } = position.coords;
-          
-          setCurrentLocation({ latitude, longitude });
+      const response = await fetch(`http://10.0.2.2:3000/api/directions?start=${start}&end=${end}`);//Change 10.0.0.10 to your IP address
+      //In command prompt: ipconfig, take the second IPV4 address that appears in the list
+      //If using Android Studio, 10.0.2.2 should work
+      //This will be changed once the app is deployed
+      const data = await response.json();
 
-          sendLocationToWebView(latitude, longitude);
+      const coordinates = data.features?.[0]?.geometry?.coordinates;
+      if (!coordinates || coordinates.length === 0) throw new Error('No route found');
 
-          webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
-          webViewRef.current?.injectJavaScript('window.clearDestinationMarker && window.clearDestinationMarker();');
+      lastRoute.current = coordinates;
 
-          const start = `${longitude},${latitude}`;
-          const end = `${destinationCoords[0]},${destinationCoords[1]}`;
-
-          const response = await fetch(`http://10.0.2.2:3000/api/directions?start=${start}&end=${end}`);
-          const data = await response.json();
-
-          const coordinates = data.features?.[0]?.geometry?.coordinates;
-          if (!coordinates || coordinates.length === 0) throw new Error('No route found');
-
-          lastRoute.current = coordinates;
-
-          const jsRouteCode = `window.drawRoute && window.drawRoute(${JSON.stringify(coordinates)});`;
-          webViewRef.current?.injectJavaScript(jsRouteCode);
-
-          setStatus('Route drawn!');
-        } catch (err) {
-          console.error('Route fetch error:', err);
-          setError('Failed to fetch or draw route');
-        } finally {
-          setIsCalculatingRoute(false);
-        }
-      },
-      (error) => {
-        console.error('Geolocation error:', error);
-        setError('Failed to get current location for routing');
-        setIsCalculatingRoute(false);
-      },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 1000 }
-    );
+      const jsRouteCode = `window.drawRoute && window.drawRoute(${JSON.stringify(coordinates)});`;
+      webViewRef.current?.injectJavaScript(jsRouteCode);
+      setStatus('Route drawn!');
+    } catch (error) {
+      console.error('Route fetch error:', error);
+      setError('Failed to fetch or draw route');
+    }
   };
 
   fetchRoute();
 };
-
 
 
 const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
@@ -480,7 +456,6 @@ useEffect(() => {
       {destination && destinationCoords && (
         <NavigationPanel
           isNavigating={isNavigating}
-          isLoading={isCalculatingRoute}
           onStartNavigation={startNavigation}
           onStopNavigation={stopNavigation}
           progress={routeProgress}
