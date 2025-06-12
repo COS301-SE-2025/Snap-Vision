@@ -12,6 +12,7 @@ import CrowdReportModal from '../components/molecules/CrowdReportModal';
 import StatusOverlay from '../components/atoms/StatusOverlay';
 import DestinationSearch from '../components/molecules/DestinationSearch';
 import MapActionsPanel from '../components/organisms/MapActionsPanel';
+import NavigationPanel from '../components/organisms/NavigationPanel';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 
@@ -21,6 +22,7 @@ const MapScreen = () => {
   const lastRoute = useRef<any[]>([]);
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
+  const watchIdRef = useRef<number | null>(null);
 
   const [status, setStatus] = useState('Loading map...');
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +38,12 @@ const MapScreen = () => {
   const webViewRef = useRef<WebViewType>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const [isRouteLoading, setIsRouteLoading] = useState(false);
+  
+  // Navigation state
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [routeProgress, setRouteProgress] = useState(0);
+  const [distanceToDestination, setDistanceToDestination] = useState<number | null>(null);
+  const [estimatedTime, setEstimatedTime] = useState<number | null>(null);
 
   const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
   const [pois, setPOIs] = useState<any[]>([]);
@@ -45,6 +53,11 @@ const MapScreen = () => {
     setCurrentLocation({ latitude: lat, longitude: lon });
     const jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap});`;
     webViewRef.current?.injectJavaScript(jsCode);
+    
+    // Update navigation progress when navigating
+    if (isNavigating && destinationCoords) {
+      updateNavigationProgress(lat, lon);
+    }
   };
 
   const requestLocation = async () => {
@@ -90,6 +103,11 @@ const MapScreen = () => {
           setError(parsed.message);
         } else if (parsed.type === 'POI_SELECTED') {
           const selectedPOI = parsed.poi;
+          
+          // Stop navigation if currently navigating
+          if (isNavigating) {
+            stopNavigation();
+          }
           
           // Clear any existing route
           webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
@@ -166,14 +184,132 @@ const MapScreen = () => {
 
       lastRoute.current = coordinates;
 
+      // Calculate distance and time for the route
+      let totalDistance = 0;
+      for (let i = 0; i < coordinates.length - 1; i++) {
+        const point1 = coordinates[i];
+        const point2 = coordinates[i + 1];
+        totalDistance += getDistanceMeters(
+          point1[1], point1[0], 
+          point2[1], point2[0]
+        );
+      }
+      
+      // Set the total distance
+      setDistanceToDestination(totalDistance);
+      
+      // Estimate time (assuming average walking speed of 5 km/h = 1.4 m/s)
+      const timeMinutes = Math.round(totalDistance / (1.4 * 60));
+      setEstimatedTime(timeMinutes);
+
       const jsRouteCode = `window.drawRoute && window.drawRoute(${JSON.stringify(coordinates)});`;
       webViewRef.current?.injectJavaScript(jsRouteCode);
       setStatus('Route found!');
+      
+      // Reset progress
+      setRouteProgress(0);
     } catch (error) {
       console.error('Route fetch error:', error);
       setError('Failed to fetch or draw route');
     } finally {
       setIsRouteLoading(false);
+    }
+  };
+
+  // Start navigation function
+  const startNavigation = () => {
+    if (!currentLocation || !destinationCoords || lastRoute.current.length === 0) {
+      setError('Cannot start navigation without a route');
+      return;
+    }
+    
+    setIsNavigating(true);
+    setStatus('Navigation started');
+    
+    // Start watching position with higher frequency
+    if (watchIdRef.current) {
+      Geolocation.clearWatch(watchIdRef.current);
+    }
+    
+    watchIdRef.current = Geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        sendLocationToWebView(latitude, longitude);
+      },
+      (error) => {
+        setError('Failed to track location');
+      },
+      { 
+        enableHighAccuracy: true, 
+        distanceFilter: 5, // Update every 5 meters
+        interval: 2000 // Update every 2 seconds
+      }
+    );
+  };
+
+  // Stop navigation function
+  const stopNavigation = () => {
+    if (watchIdRef.current) {
+      Geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+    
+    setIsNavigating(false);
+    setStatus('Navigation stopped');
+    
+    // Clear progress line
+    webViewRef.current?.injectJavaScript('if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }');
+  };
+
+  // Update navigation progress
+  const updateNavigationProgress = (latitude: number, longitude: number) => {
+    if (!lastRoute.current || lastRoute.current.length === 0) return;
+    
+    // Find closest point on the route
+    let minDist = Infinity;
+    let closestPointIndex = 0;
+    
+    for (let i = 0; i < lastRoute.current.length; i++) {
+      const routePoint = lastRoute.current[i];
+      const distance = getDistanceMeters(
+        latitude, 
+        longitude, 
+        routePoint[1], // Latitude
+        routePoint[0]  // Longitude
+      );
+      
+      if (distance < minDist) {
+        minDist = distance;
+        closestPointIndex = i;
+      }
+    }
+    
+    // Calculate progress (0-100%)
+    const progress = (closestPointIndex / (lastRoute.current.length - 1)) * 100;
+    setRouteProgress(Math.min(Math.round(progress), 100));
+    
+    // Update route progress visually
+    const jsProgressCode = `window.updateRouteProgress && window.updateRouteProgress(${closestPointIndex});`;
+    webViewRef.current?.injectJavaScript(jsProgressCode);
+    
+    // Check if we've reached the destination (within 20 meters)
+    const destinationPoint = lastRoute.current[lastRoute.current.length - 1];
+    const distanceToEnd = getDistanceMeters(
+      latitude, 
+      longitude, 
+      destinationPoint[1], // Latitude
+      destinationPoint[0]  // Longitude
+    );
+    
+    // Update distance to destination
+    setDistanceToDestination(distanceToEnd);
+    
+    // If we're very close to destination, end navigation
+    if (distanceToEnd < 20) {
+      stopNavigation();
+      setStatus('You have reached your destination!');
+      // Show 100% completion
+      setRouteProgress(100);
     }
   };
 
@@ -194,7 +330,13 @@ const MapScreen = () => {
   // Send POIs to WebView when they change and WebView is ready
   useEffect(() => {
     if (isMapReady && pois.length > 0 && webViewRef.current) {
-      const jsPOICode = `window.displayPOIs && window.displayPOIs(${JSON.stringify(pois)});`;
+      // Modify the POI data to set labels to empty by default
+      const poisWithHiddenLabels = pois.map(poi => ({
+        ...poi,
+        showLabel: false // Add property to control label visibility
+      }));
+      
+      const jsPOICode = `window.displayPOIs && window.displayPOIs(${JSON.stringify(poisWithHiddenLabels)});`;
       webViewRef.current.injectJavaScript(jsPOICode);
     }
   }, [isMapReady, pois]);
@@ -211,6 +353,11 @@ const MapScreen = () => {
   };
 
   const handleSelectPOI = (poi: any) => {
+    // Stop navigation if currently navigating
+    if (isNavigating) {
+      stopNavigation();
+    }
+    
     // Clear any existing route
     webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
     lastRoute.current = [];
@@ -277,6 +424,7 @@ const MapScreen = () => {
   // Dynamic rerouting if user deviates from route
   useEffect(() => {
     if (
+      !isNavigating ||
       !currentLocation ||
       !destinationCoords ||
       !lastRoute.current ||
@@ -303,7 +451,7 @@ const MapScreen = () => {
       rerouteFromCurrentLocation();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentLocation]);
+  }, [currentLocation, isNavigating]);
 
   // Reroute function
   const rerouteFromCurrentLocation = async () => {
@@ -327,6 +475,22 @@ const MapScreen = () => {
 
       lastRoute.current = coordinates;
 
+      // Calculate distance and time for the new route
+      let totalDistance = 0;
+      for (let i = 0; i < coordinates.length - 1; i++) {
+        const point1 = coordinates[i];
+        const point2 = coordinates[i + 1];
+        totalDistance += getDistanceMeters(
+          point1[1], point1[0], 
+          point2[1], point2[0]
+        );
+      }
+      
+      setDistanceToDestination(totalDistance);
+      // Estimate time (assuming average walking speed of 5 km/h = 1.4 m/s)
+      const timeMinutes = Math.round(totalDistance / (1.4 * 60));
+      setEstimatedTime(timeMinutes);
+
       const jsRouteCode = `window.drawRoute && window.drawRoute(${JSON.stringify(coordinates)});`;
       webViewRef.current?.injectJavaScript(jsRouteCode);
       setStatus('Route updated!');
@@ -338,6 +502,15 @@ const MapScreen = () => {
     }
   };
 
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (watchIdRef.current) {
+        Geolocation.clearWatch(watchIdRef.current);
+      }
+    };
+  }, []);
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <DestinationSearch
@@ -346,10 +519,14 @@ const MapScreen = () => {
           setDestination(text);
           filterPOIs(text);
           
-          // Clear route if text field is cleared
+          // Stop navigation and clear route if text field is cleared
           if (!text.trim()) {
+            if (isNavigating) {
+              stopNavigation();
+            }
             webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
             lastRoute.current = [];
+            setDestinationCoords(null);
           }
         }}
         onSearch={handleDestinationSearch}
@@ -360,6 +537,19 @@ const MapScreen = () => {
       <View style={{ flex: 1 }}>
         <MapWebView ref={webViewRef} onMessage={handleWebViewMessage} />
       </View>
+
+      {destination && destinationCoords && (
+        <NavigationPanel
+          isNavigating={isNavigating}
+          isLoading={isRouteLoading}
+          onStartNavigation={startNavigation}
+          onStopNavigation={stopNavigation}
+          progress={routeProgress}
+          distance={distanceToDestination}
+          time={estimatedTime}
+          destination={destination}
+        />
+      )}
 
       <MapActionsPanel
         currentLocation={!!currentLocation}
