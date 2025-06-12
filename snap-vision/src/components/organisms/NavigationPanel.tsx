@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface NavigationPanelProps {
   isNavigating: boolean;
-  isLoading?: boolean;
+  isLoading: boolean;
   onStartNavigation: () => void;
   onStopNavigation: () => void;
   progress: number;
@@ -17,204 +17,194 @@ interface NavigationPanelProps {
 
 const NavigationPanel: React.FC<NavigationPanelProps> = ({
   isNavigating,
-  isLoading = false,
+  isLoading,
   onStartNavigation,
   onStopNavigation,
   progress,
   distance,
   time,
-  destination,
+  destination
 }) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   
-  const formattedDistance = distance !== null 
-    ? distance > 1000 
-      ? `${(distance / 1000).toFixed(1)} km` 
-      : `${Math.round(distance)} m`
-    : '--';
+  // Format the distance (e.g., "2.1 km" or "350 m")
+  const formatDistance = (meters: number | null) => {
+    if (meters === null) return '';
     
-  const formattedTime = time !== null 
-    ? time > 60 
-      ? `${Math.floor(time / 60)}h ${time % 60}m` 
-      : `${time} min`
-    : '--';
+    if (meters >= 1000) {
+      return `${(meters / 1000).toFixed(1)} km`;
+    } else {
+      return `${Math.round(meters)} m`;
+    }
+  };
+  
+  // Format the time (e.g., "5 min" or "< 1 min")
+  const formatTime = (minutes: number | null) => {
+    if (minutes === null) return '';
+    
+    if (minutes < 1) {
+      return '< 1 min';
+    } else {
+      return `${Math.round(minutes)} min`;
+    }
+  };
 
   return (
-    <Animated.View 
-      style={[
-        styles.container, 
-        { 
-          backgroundColor: isDark ? colors.secondary : '#fff',
-          borderColor: colors.primary,
-        }
-      ]}
-    >
-      {isNavigating ? (
-        <>
-          <View style={styles.header}>
-            <Text style={[styles.destinationText, { color: colors.primary }]}>
-              {destination}
+    <View style={[styles.container, { backgroundColor: colors.card }]}>
+      {/* Destination Info */}
+      <View style={styles.infoSection}>
+        <Text style={[styles.destinationText, { color: colors.text }]} numberOfLines={1}>
+          {destination}
+        </Text>
+        
+        {distance !== null && (
+          <View style={styles.detailsRow}>
+            <Icon name="map-marker-distance" size={16} color={colors.primary} style={styles.icon} />
+            <Text style={[styles.detailsText, { color: colors.text }]}>
+              {formatDistance(distance)}
             </Text>
-            <TouchableOpacity 
-              style={[styles.stopButton, { backgroundColor: '#e74c3c' }]} 
-              onPress={onStopNavigation}
-            >
-              <Icon name="stop" size={16} color="#fff" />
-              <Text style={styles.stopButtonText}>Stop</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <View style={styles.infoContainer}>
-            <View style={styles.infoItem}>
-              <Icon name="map-marker-distance" size={24} color={colors.primary} />
-              <Text style={[styles.infoText, { color: isDark ? '#fff' : '#333' }]}>
-                {formattedDistance}
-              </Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Icon name="clock-outline" size={24} color={colors.primary} />
-              <Text style={[styles.infoText, { color: isDark ? '#fff' : '#333' }]}>
-                {formattedTime}
-              </Text>
-            </View>
-          </View>
-          
-          <View style={styles.progressContainer}>
-            <Text style={[styles.progressText, { color: isDark ? '#ccc' : '#666' }]}>
-              {Math.round(progress)}% complete
-            </Text>
-            <View style={[styles.progressBarContainer, { backgroundColor: isDark ? '#444' : '#eee' }]}>
-              <View 
-                style={[
-                  styles.progressBar, 
-                  { 
-                    width: `${progress}%`,
-                    backgroundColor: progress > 90 ? '#27ae60' : colors.primary
-                  }
-                ]} 
-              />
-            </View>
-          </View>
-        </>
-      ) : (
-        <View style={styles.startContainer}>
-          <Text style={[styles.destinationText, { color: colors.primary }]}>
-            {destination}
-          </Text>
-          <TouchableOpacity 
-            style={[
-              styles.startButton, 
-              { 
-                backgroundColor: isLoading ? colors.secondary : colors.primary,
-                opacity: isLoading ? 0.7 : 1 
-              }
-            ]} 
-            onPress={onStartNavigation}
-            disabled={isLoading}
-          >
-            {isLoading ? (
+            
+            {time !== null && (
               <>
-                <ActivityIndicator size="small" color="#fff" />
-                <Text style={styles.startButtonText}>Calculating route...</Text>
-              </>
-            ) : (
-              <>
-                <Icon name="navigation" size={20} color="#fff" />
-                <Text style={styles.startButtonText}>Start Navigation</Text>
+                <Text style={[styles.separator, { color: colors.text }]}>•</Text>
+                <Icon name="clock-outline" size={16} color={colors.primary} style={styles.icon} />
+                <Text style={[styles.detailsText, { color: colors.text }]}>
+                  {formatTime(time)}
+                </Text>
               </>
             )}
-          </TouchableOpacity>
-        </View>
-      )}
-    </Animated.View>
+          </View>
+        )}
+        
+        {/* Progress Bar */}
+        {(isNavigating || progress > 0) && (
+          <View style={[styles.progressContainer, { backgroundColor: colors.border }]}>
+            <View 
+              style={[
+                styles.progressBar, 
+                { width: `${progress}%`, backgroundColor: colors.primary }
+              ]} 
+            />
+            <Text style={[styles.progressText, progress > 50 ? { color: '#fff' } : { color: colors.text }]}>
+              {Math.round(progress)}%
+            </Text>
+          </View>
+        )}
+      </View>
+      
+      {/* Navigation Button */}
+      <TouchableOpacity
+        style={[
+          styles.navButton,
+          { backgroundColor: isNavigating ? '#E53935' : colors.primary }
+        ]}
+        onPress={isNavigating ? onStopNavigation : onStartNavigation}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <ActivityIndicator color="#fff" size="small" />
+        ) : (
+          <>
+            <Icon 
+              name={isNavigating ? "stop-circle" : "navigation"} 
+              size={18} 
+              color="#fff" 
+              style={styles.buttonIcon} 
+            />
+            <Text style={styles.navButtonText}>
+              {isNavigating ? 'Stop' : 'Start'}
+            </Text>
+          </>
+        )}
+      </TouchableOpacity>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 100,
-    left: 16,
-    right: 16,
+    bottom: 70, // Positioned above the MapActionsPanel
+    left: 10,
+    right: 10,
+    padding: 12,
     borderRadius: 12,
-    padding: 16,
-    elevation: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    borderWidth: 1,
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 1000,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+  infoSection: {
+    flex: 1,
+    marginRight: 12,
   },
   destinationText: {
     fontSize: 16,
     fontWeight: 'bold',
-    flex: 1,
-  },
-  stopButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-  },
-  stopButtonText: {
-    color: '#fff',
-    marginLeft: 4,
-    fontWeight: 'bold',
-  },
-  infoContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 12,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  infoText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 6,
-  },
-  progressContainer: {
-    marginTop: 4,
-  },
-  progressText: {
-    fontSize: 12,
     marginBottom: 4,
   },
-  progressBarContainer: {
-    height: 6,
-    borderRadius: 3,
+  detailsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  icon: {
+    marginRight: 4,
+  },
+  detailsText: {
+    fontSize: 14,
+  },
+  separator: {
+    marginHorizontal: 6,
+    fontSize: 12,
+  },
+  progressContainer: {
+    height: 24,
+    borderRadius: 12,
     overflow: 'hidden',
+    position: 'relative',
   },
   progressBar: {
     height: '100%',
   },
-  startContainer: {
-    alignItems: 'center',
-  },
-  startButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 24,
-    marginTop: 12,
-  },
-  startButtonText: {
-    color: '#fff',
-    marginLeft: 8,
+  progressText: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    fontSize: 12,
     fontWeight: 'bold',
-    fontSize: 16,
-  }
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0.5, height: 0.5 },
+    textShadowRadius: 1,
+    paddingTop: 3, // Better centering on Android
+  },
+  navButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    minWidth: 90,
+  },
+  buttonIcon: {
+    marginRight: 6,
+  },
+  navButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
 });
 
 export default NavigationPanel;

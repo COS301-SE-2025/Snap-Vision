@@ -275,11 +275,7 @@
         endCircle = null;
       }
     
-      // Remove previous start circle
-      if (startCircle) {
-        map.removeLayer(startCircle);
-        startCircle = null;
-      }
+      // DO NOT add or remove any start marker or startCircle here!
     
       const latlngs = coords.map(([lon, lat]) => [lat, lon]);
     
@@ -290,23 +286,13 @@
         dashArray: '8,6',
       }).addTo(map);
     
-      // Add start circle and keep reference
-      startCircle = L.circle(latlngs[0], { radius: 5, color: 'green' }).addTo(map);
-    
-      // Add end circle and keep reference
+      // Only add end marker/circle
       endCircle = L.circle(latlngs[latlngs.length - 1], { radius: 5, color: 'red' }).addTo(map);
+      destinationMarker = L.marker(latlngs[latlngs.length - 1]).addTo(map).bindPopup("🏁 End");
     
       const bounds = window.routeLayer.getBounds();
       map.fitBounds(bounds.pad(0.3));
-    
-      // Add start marker
-      L.marker(latlngs[0]).addTo(map).bindPopup("🚩 Start").openPopup();
-    
-      // Add end marker and keep reference
-      destinationMarker = L.marker(latlngs[latlngs.length - 1]).addTo(map).bindPopup("🏁 End");
     };
-    
-    // ...existing code...
 
         // Update route progress
     window.updateRouteProgress = function(pointIndex) {
