@@ -14,6 +14,8 @@ import firestore from '@react-native-firebase/firestore';
 // }
 
 
+import { Modal, FlatList, Pressable } from 'react-native';
+
 import MapWebView from '../components/organisms/MapWebView';
 import CrowdReportModal from '../components/molecules/CrowdReportModal';
 import StatusOverlay from '../components/atoms/StatusOverlay';
@@ -42,6 +44,10 @@ const MapScreen = () => {
   const [showReportTooltip, setShowReportTooltip] = useState(false);
   const webViewRef = useRef<WebViewType>(null);
   const [isMapReady, setIsMapReady] = useState(false);
+
+  // Turn-by-turn state
+  const [steps, setSteps] = useState<any[]>([]);
+  const [currentStep, setCurrentStep] = useState(0);
 
   const sendLocationToWebView = (lat: number, lon: number) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
@@ -158,6 +164,10 @@ const MapScreen = () => {
       const jsRouteCode = `window.drawRoute && window.drawRoute(${JSON.stringify(coordinates)});`;
       webViewRef.current?.injectJavaScript(jsRouteCode);
       setStatus('Route drawn!');
+      const stepsArr = data.features?.[0]?.properties?.segments?.[0]?.steps || [];
+      setSteps(stepsArr);
+      setCurrentStep(0);
+      setShowDirectionsSheet(true);
     } catch (error) {
       console.error('Route fetch error:', error);
       setError('Failed to fetch or draw route');
@@ -170,6 +180,7 @@ const MapScreen = () => {
 
 const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
 const [pois, setPOIs] = useState<any[]>([]);
+const [showDirectionsSheet, setShowDirectionsSheet] = useState(false);
 
 useEffect(() => {
   const fetchPOIs = async () => {
@@ -211,8 +222,61 @@ const handleSelectPOI = (poi: any) => {
   setPOISuggestions([]);
 };
 
+
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <Modal
+  visible={showDirectionsSheet}
+  animationType="slide"
+  transparent
+  onRequestClose={() => setShowDirectionsSheet(false)}
+>
+  <View style={{
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.3)'
+  }}>
+    <View style={{
+      backgroundColor: '#fff',
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      maxHeight: '60%',
+      padding: 16
+    }}>
+      <View style={{ alignItems: 'center', marginBottom: 8 }}>
+        <View style={{
+          width: 40, height: 4, backgroundColor: '#ccc', borderRadius: 2, marginBottom: 8
+        }} />
+        <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 8 }}>
+          Directions to {destination}
+        </Text>
+      </View>
+      <FlatList
+        data={steps}
+        keyExtractor={(_, idx) => idx.toString()}
+        renderItem={({ item, index }) => (
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 }}>
+            <Text style={{ fontWeight: 'bold', marginRight: 8 }}>{index + 1}.</Text>
+            <Text style={{ flex: 1 }}>{item.instruction}</Text>
+          </View>
+        )}
+      />
+      <Pressable
+        style={{
+          marginTop: 16,
+          backgroundColor: '#007bff',
+          padding: 12,
+          borderRadius: 8,
+          alignItems: 'center'
+        }}
+        onPress={() => setShowDirectionsSheet(false)}
+      >
+        <Text style={{ color: '#fff', fontWeight: 'bold' }}>Close</Text>
+      </Pressable>
+    </View>
+  </View>
+</Modal>
       <DestinationSearch
         value={destination}
         onChange={text => {
@@ -223,8 +287,6 @@ const handleSelectPOI = (poi: any) => {
         suggestions={poiSuggestions}
         onSelectSuggestion={handleSelectPOI}
       />
-
-
       <View style={{ flex: 1 }}>
         <MapWebView ref={webViewRef} onMessage={handleWebViewMessage} />
       </View>
