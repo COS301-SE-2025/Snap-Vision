@@ -4,6 +4,7 @@ import { View, TextInput, Text, StyleSheet, TouchableOpacity, FlatList } from 'r
 import { getThemeColors } from '../../theme';
 import { useTheme } from '../../theme/ThemeContext';
 import { TextIcon } from '../atoms/TextIcon';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 interface Props {
   value: string;
@@ -29,7 +30,7 @@ const DestinationSearch = ({ value, onChange, onSearch, suggestions, onSelectSug
           placeholderTextColor={isDark ? '#999' : '#666'}
         />
         <TouchableOpacity onPress={onSearch} style={[styles.button, { backgroundColor: colors.primary }]}>
-          <TextIcon icon="🔍" />
+          <Icon name="search" size={30} color="white" />
         </TouchableOpacity>
       </View>
 
