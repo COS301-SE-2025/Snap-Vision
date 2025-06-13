@@ -222,4 +222,30 @@ describe('TextToSpeech', () => {
       );
     }).not.toThrow();
   });
+  it('renders different content based on isActive prop', () => {
+    const { getByText, rerender } = renderWithTheme(
+      <TextToSpeech
+        isActive={false}
+        onToggle={() => {}}
+        text="Hello"
+        onSpeakingChange={() => {}}
+      />
+    );
+    
+    expect(getByText('🔇')).toBeTruthy();
+    
+    rerender(
+      <ThemeProvider>
+        <TextToSpeech
+          isActive={true}
+          onToggle={() => {}}
+          text="Hello"
+          onSpeakingChange={() => {}}
+        />
+      </ThemeProvider>
+    );
+    
+    expect(getByText('🔊')).toBeTruthy();
+    expect(getByText('Voice On')).toBeTruthy();
+  });
 });
