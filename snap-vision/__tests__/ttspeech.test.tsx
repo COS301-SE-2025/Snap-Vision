@@ -96,4 +96,16 @@ describe('TextToSpeech', () => {
     fireEvent.press(getByText('🔇'));
     expect(onToggle).toHaveBeenCalled();
   });
+
+  it('calls Tts.speak when active with text', () => {
+    renderWithTheme(
+      <TextToSpeech
+        isActive={true}
+        onToggle={() => {}}
+        text="Hello world"
+        onSpeakingChange={() => {}}
+      />
+    );
+    expect(Tts.speak).toHaveBeenCalledWith('Hello world');
+  });
 });
