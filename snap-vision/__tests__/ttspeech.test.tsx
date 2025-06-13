@@ -108,4 +108,16 @@ describe('TextToSpeech', () => {
     );
     expect(Tts.speak).toHaveBeenCalledWith('Hello world');
   });
+
+  it('calls Tts.stop before speaking', () => {
+    renderWithTheme(
+      <TextToSpeech
+        isActive={true}
+        onToggle={() => {}}
+        text="Hello world"
+        onSpeakingChange={() => {}}
+      />
+    );
+    expect(Tts.stop).toHaveBeenCalled();
+  });
 });
