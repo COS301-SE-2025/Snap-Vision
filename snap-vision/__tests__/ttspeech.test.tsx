@@ -199,4 +199,16 @@ describe('TextToSpeech', () => {
     );
     expect(Tts.speak).toHaveBeenCalledWith('Walk 5 meters then 2 kilometers then 10 feet then 3 yards');
   });
+
+  it('works without onSpeakingChange callback', () => {
+    expect(() => {
+      renderWithTheme(
+        <TextToSpeech
+          isActive={true}
+          onToggle={() => {}}
+          text="Hello"
+        />
+      );
+    }).not.toThrow();
+  });
 });
