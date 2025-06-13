@@ -153,4 +153,27 @@ describe('TextToSpeech', () => {
     );
     expect(Tts.speak).toHaveBeenCalledWith('Walk 5 meters forward');
   });
+  it('replaces km with kilometers in text', () => {
+    renderWithTheme(
+      <TextToSpeech
+        isActive={true}
+        onToggle={() => {}}
+        text="Drive 2 km north"
+        onSpeakingChange={() => {}}
+      />
+    );
+    expect(Tts.speak).toHaveBeenCalledWith('Drive 2 kilometers north');
+  });
+
+  it('replaces ft with feet in text', () => {
+    renderWithTheme(
+      <TextToSpeech
+        isActive={true}
+        onToggle={() => {}}
+        text="Go 10 ft ahead"
+        onSpeakingChange={() => {}}
+      />
+    );
+    expect(Tts.speak).toHaveBeenCalledWith('Go 10 feet ahead');
+  });
 });
