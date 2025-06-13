@@ -176,4 +176,27 @@ describe('TextToSpeech', () => {
     );
     expect(Tts.speak).toHaveBeenCalledWith('Go 10 feet ahead');
   });
+  it('replaces yd with yards in text', () => {
+    renderWithTheme(
+      <TextToSpeech
+        isActive={true}
+        onToggle={() => {}}
+        text="Turn after 3 yd"
+        onSpeakingChange={() => {}}
+      />
+    );
+    expect(Tts.speak).toHaveBeenCalledWith('Turn after 3 yards');
+  });
+
+  it('replaces multiple units in same text', () => {
+    renderWithTheme(
+      <TextToSpeech
+        isActive={true}
+        onToggle={() => {}}
+        text="Walk 5 m then 2 km then 10 ft then 3 yd"
+        onSpeakingChange={() => {}}
+      />
+    );
+    expect(Tts.speak).toHaveBeenCalledWith('Walk 5 meters then 2 kilometers then 10 feet then 3 yards');
+  });
 });
