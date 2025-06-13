@@ -142,4 +142,15 @@ describe('TextToSpeech', () => {
     );
     expect(Tts.speak).not.toHaveBeenCalled();
   });
+  it('replaces m with meters in text', () => {
+    renderWithTheme(
+      <TextToSpeech
+        isActive={true}
+        onToggle={() => {}}
+        text="Walk 5 m forward"
+        onSpeakingChange={() => {}}
+      />
+    );
+    expect(Tts.speak).toHaveBeenCalledWith('Walk 5 meters forward');
+  });
 });
