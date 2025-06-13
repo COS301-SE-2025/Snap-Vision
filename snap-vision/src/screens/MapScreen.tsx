@@ -15,6 +15,7 @@ import firestore from '@react-native-firebase/firestore';
 
 
 import { Modal, FlatList, Pressable } from 'react-native';
+import Tts from 'react-native-tts';
 
 import MapWebView from '../components/organisms/MapWebView';
 import CrowdReportModal from '../components/molecules/CrowdReportModal';
@@ -182,6 +183,26 @@ const MapScreen = () => {
 const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
 const [pois, setPOIs] = useState<any[]>([]);
 const [showDirectionsSheet, setShowDirectionsSheet] = useState(false);
+const [isNavigating, setIsNavigating] = useState(false);
+const [shouldStartTTS, setShouldStartTTS] = useState(false);
+
+useEffect(() => {
+  if (isNavigating && shouldStartTTS && steps.length > 0 && currentStep < steps.length) {
+    const instruction = steps[currentStep]?.instruction;
+    if (instruction) {
+      console.log('TTS should speak:', instruction);
+      try {
+        Tts.stop();
+        setTimeout(() => {
+          Tts.speak(instruction);
+        }, 500);
+      } catch (e) {
+        console.error('TTS Error:', e);
+        setError('Voice guidance is not available.');
+      }
+    }
+  }
+}, [isNavigating, shouldStartTTS, steps, currentStep]);
 
 useEffect(() => {
   const fetchPOIs = async () => {
@@ -231,9 +252,11 @@ const handleSelectPOI = (poi: any) => {
         visible={showDirectionsSheet}
         onClose={() => setShowDirectionsSheet(false)}
         onStart={() => {
-          // Add your navigation start logic here
-          console.log('Navigation started');
+          setIsNavigating(true);
+          setShouldStartTTS(true);
+          setCurrentStep(0);
           setShowDirectionsSheet(false);
+          console.log('Navigation started');
         }}
         destination={destination}
         steps={steps}
@@ -267,6 +290,31 @@ const handleSelectPOI = (poi: any) => {
         onReportOut={() => setShowReportTooltip(false)}
         color={colors.primary}
       />
+
+     {isNavigating && (
+  <Pressable
+    style={{
+      position: 'absolute',
+      bottom: 171,
+      right: 22,
+      backgroundColor: colors.primary,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      alignItems: 'center',
+      justifyContent: 'center',
+      elevation: 4,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.3,
+      shadowRadius: 3,
+    }}
+    onPress={() => setShowDirectionsSheet(true)}
+    accessibilityLabel="Show Directions"
+  >
+    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 24 }}>🧭</Text>
+  </Pressable>
+)} 
 
       <CrowdReportModal
         visible={showCrowdPopup}
