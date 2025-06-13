@@ -5,7 +5,13 @@ import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 import SettingsContent from '../components/organisms/SettingsContent';
 
-export default function SettingsScreen({ navigation }) {
+import type { StackNavigationProp } from '@react-navigation/stack';
+
+type SettingsScreenProps = {
+  navigation: StackNavigationProp<any>;
+};
+
+export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 

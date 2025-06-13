@@ -17,7 +17,7 @@ export default function SettingsNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
-      <Stack.Screen name="Achievements" component={AchievementsScreen} />
+      {/* <Stack.Screen name="Achievements" component={AchievementsScreen} /> */}
       <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
       <Stack.Screen name="AppPreferences" component={AppPreferencesScreen} />
       <Stack.Screen name="Support" component={SupportScreen} />
