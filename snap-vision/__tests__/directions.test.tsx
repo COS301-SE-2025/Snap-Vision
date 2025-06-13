@@ -1,6 +1,9 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
+import { View } from 'react-native';
 import DestinationSearch from '../src/components/molecules/DestinationSearch';
+import MapActionsPanel from '../src/components/organisms/MapActionsPanel';
+import TextIcon from '../src/components/atoms/TextIcon';
 import { ThemeProvider } from '../src/theme/ThemeContext';
 
 const renderWithTheme = (ui: React.ReactElement) =>
@@ -69,3 +72,103 @@ describe('DestinationSearch', () => {
     expect(onSelect).toHaveBeenCalledWith(suggestions[0]);
   });
 });
+
+describe('MapActionsPanel', () => {
+  it('renders nothing when no current location', () => {
+    const { queryByText } = renderWithTheme(
+      <MapActionsPanel
+        currentLocation={false}
+        onShare={() => {}}
+        onReport={() => {}}
+        shareTooltip={false}
+        reportTooltip={false}
+        onShareIn={() => {}}
+        onShareOut={() => {}}
+        onReportIn={() => {}}
+        onReportOut={() => {}}
+        color="#000"
+      />
+    );
+    expect(queryByText('📍')).toBeNull();
+    expect(queryByText('⚠️')).toBeNull();
+  });
+
+  it('renders location and warning icons when has current location', () => {
+    const { getByText } = renderWithTheme(
+      <MapActionsPanel
+        currentLocation={true}
+        onShare={() => {}}
+        onReport={() => {}}
+        shareTooltip={false}
+        reportTooltip={false}
+        onShareIn={() => {}}
+        onShareOut={() => {}}
+        onReportIn={() => {}}
+        onReportOut={() => {}}
+        color="#000"
+      />
+    );
+    expect(getByText('📍')).toBeTruthy();
+    expect(getByText('⚠️')).toBeTruthy();
+  });
+
+  it('calls onShare when location icon is pressed', () => {
+    const onShare = jest.fn();
+    const { getByText } = renderWithTheme(
+      <MapActionsPanel
+        currentLocation={true}
+        onShare={onShare}
+        onReport={() => {}}
+        shareTooltip={false}
+        reportTooltip={false}
+        onShareIn={() => {}}
+        onShareOut={() => {}}
+        onReportIn={() => {}}
+        onReportOut={() => {}}
+        color="#000"
+      />
+    );
+    fireEvent.press(getByText('📍'));
+    expect(onShare).toHaveBeenCalled();
+  });
+
+  it('calls onReport when warning icon is pressed', () => {
+    const onReport = jest.fn();
+    const { getByText } = renderWithTheme(
+      <MapActionsPanel
+        currentLocation={true}
+        onShare={() => {}}
+        onReport={onReport}
+        shareTooltip={false}
+        reportTooltip={false}
+        onShareIn={() => {}}
+        onShareOut={() => {}}
+        onReportIn={() => {}}
+        onReportOut={() => {}}
+        color="#000"
+      />
+    );
+    fireEvent.press(getByText('⚠️'));
+    expect(onReport).toHaveBeenCalled();
+  });
+
+  it('shows tooltips when enabled', () => {
+    const { getByText } = renderWithTheme(
+      <MapActionsPanel
+        currentLocation={true}
+        onShare={() => {}}
+        onReport={() => {}}
+        shareTooltip={true}
+        reportTooltip={true}
+        onShareIn={() => {}}
+        onShareOut={() => {}}
+        onReportIn={() => {}}
+        onReportOut={() => {}}
+        color="#000"
+      />
+    );
+    expect(getByText('Share Location')).toBeTruthy();
+    expect(getByText('Report Crowds')).toBeTruthy();
+  });
+});
+
