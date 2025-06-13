@@ -205,4 +205,71 @@ describe('Directions Feature', () => {
     });
   });
 
-  
+  it('should toggle voice guidance on/off', async () => {
+    const { getByTestId } = render(
+      <ThemeProviderWrapper>
+        <MapScreen />
+      </ThemeProviderWrapper>
+    );
+
+    // Wait for WebView to be ready
+    await waitFor(() => expect(WebView).toHaveBeenCalled());
+
+    // Find and press the voice toggle button
+    const voiceToggle = getByTestId('voice-toggle-button');
+    fireEvent.press(voiceToggle);
+
+    await waitFor(() => {
+      expect(Tts.stop).toHaveBeenCalled();
+    });
+  });
+
+  it('should handle navigation step changes', async () => {
+    const { getByPlaceholderText, getByText, getByTestId } = render(
+      <ThemeProviderWrapper>
+        <MapScreen />
+      </ThemeProviderWrapper>
+    );
+
+    // Wait for WebView to be ready
+    await waitFor(() => expect(WebView).toHaveBeenCalled());
+
+    // Enter destination and search
+    const searchInput = getByPlaceholderText('Search destination...');
+    fireEvent.changeText(searchInput, 'Test POI');
+    
+    // Select POI from suggestions
+    await waitFor(() => {
+      const poiSuggestion = getByText('Test POI');
+      fireEvent.press(poiSuggestion);
+    });
+
+    // Trigger search
+    fireEvent(searchInput, 'submitEditing');
+
+    // Start navigation
+    await waitFor(() => {
+      const startButton = getByText('Start Navigation');
+      fireEvent.press(startButton);
+    });
+
+    // Simulate moving to next step
+    act(() => {
+      // This would normally be triggered by location changes in real usage
+      // For test, we'll directly update the state
+      const webViewInstance = WebView.mock.instances[0];
+      webViewInstance.props.onMessage({
+        nativeEvent: {
+          data: JSON.stringify({
+            type: 'NAVIGATION_UPDATE',
+            currentStep: 1
+          })
+        }
+      });
+    });
+
+    await waitFor(() => {
+      expect(Tts.speak).toHaveBeenCalledWith('Turn right on 2nd St');
+    });
+  });
+});
