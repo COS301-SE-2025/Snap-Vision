@@ -199,4 +199,75 @@ describe('TextToSpeech', () => {
     );
     expect(Tts.speak).toHaveBeenCalledWith('Walk 5 meters then 2 kilometers then 10 feet then 3 yards');
   });
+
+  it('works without onSpeakingChange callback', () => {
+    expect(() => {
+      renderWithTheme(
+        <TextToSpeech
+          isActive={true}
+          onToggle={() => {}}
+          text="Hello"
+        />
+      );
+    }).not.toThrow();
+  });
+  it('works without text prop', () => {
+    expect(() => {
+      renderWithTheme(
+        <TextToSpeech
+          isActive={true}
+          onToggle={() => {}}
+          onSpeakingChange={() => {}}
+        />
+      );
+    }).not.toThrow();
+  });
+  it('renders different content based on isActive prop', () => {
+    const { getByText, rerender } = renderWithTheme(
+      <TextToSpeech
+        isActive={false}
+        onToggle={() => {}}
+        text="Hello"
+        onSpeakingChange={() => {}}
+      />
+    );
+    
+    expect(getByText('🔇')).toBeTruthy();
+    
+    rerender(
+      <ThemeProvider>
+        <TextToSpeech
+          isActive={true}
+          onToggle={() => {}}
+          text="Hello"
+          onSpeakingChange={() => {}}
+        />
+      </ThemeProvider>
+    );
+    
+    expect(getByText('🔊')).toBeTruthy();
+    expect(getByText('Voice On')).toBeTruthy();
+  });
+  it('does not replace units that are not whole words', () => {
+    renderWithTheme(
+      <TextToSpeech
+        isActive={true}
+        onToggle={() => {}}
+        text="The gym has equipment"
+        onSpeakingChange={() => {}}
+      />
+    );
+    expect(Tts.speak).toHaveBeenCalledWith('The gym has equipment');
+  });
+  it('only replaces whole word units with word boundaries', () => {
+    renderWithTheme(
+      <TextToSpeech
+        isActive={true}
+        onToggle={() => {}}
+        text="camera vs 5 m distance"
+        onSpeakingChange={() => {}}
+      />
+    );
+    expect(Tts.speak).toHaveBeenCalledWith('camera vs 5 meters distance');
+  });
 });
