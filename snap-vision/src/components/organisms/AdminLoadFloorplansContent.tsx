@@ -52,23 +52,23 @@ export default function AdminLoadFloorplansContent({
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Building Name Input */}
         <View style={styles.inputSection}>
-          <Text style={[styles.inputTitle, { color: colors.text }]}>Building Name</Text>
+          <Text style={[styles.inputTitle, { color: colors.primary }]}>Building Name</Text>
           <AppInput
             placeholder="Enter the building's name"
             value={buildingName}
             onChangeText={setBuildingName}
             style={[
               styles.textField,
-              { borderColor: colors.primary, color: colors.text, backgroundColor: colors.background }
+              { borderColor: colors.primary, color: colors.secondary, backgroundColor: colors.background }
             ]}
-            placeholderTextColor={colors.text + '99'}
+            placeholderTextColor={colors.secondary}
           />
-          <Text style={[styles.infoText, { color: colors.text }]}>e.g. Science Hall</Text>
+          <Text style={[styles.infoText, { color: colors.secondary}]}>e.g. Science Hall</Text>
         </View>
 
         {/* Floor Label Input */}
         <View style={styles.inputSection}>
-          <Text style={[styles.inputTitle, { color: colors.text }]}>Floor Number / Label</Text>
+          <Text style={[styles.inputTitle, { color: colors.primary }]}>Floor Number / Label</Text>
           <AppInput
             placeholder="e.g., Floor 2, Basement"
             value={floorLabel}
@@ -77,9 +77,9 @@ export default function AdminLoadFloorplansContent({
               styles.textField,
               { borderColor: colors.primary, color: colors.text, backgroundColor: colors.background }
             ]}
-            placeholderTextColor={colors.text + '99'}
+            placeholderTextColor={colors.secondary}
           />
-          <Text style={[styles.infoText, { color: colors.text }]}>Specify the floor designation</Text>
+          <Text style={[styles.infoText, { color: colors.secondary }]}>Specify the floor designation</Text>
         </View>
 
         {/* Upload Button */}
@@ -99,10 +99,10 @@ export default function AdminLoadFloorplansContent({
         <View style={styles.listSection}>
           <View style={styles.sectionHeader}>
             <View style={styles.headerText}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              <Text style={[styles.sectionTitle, { color: colors.primary }]}>
                 Previously Uploaded Floorplans
               </Text>
-              <Text style={[styles.sectionSubtitle, { color: colors.text }]}>Manage your uploads</Text>
+              <Text style={[styles.sectionSubtitle, { color: colors.secondary }]}>Manage your uploads</Text>
             </View>
           </View>
 

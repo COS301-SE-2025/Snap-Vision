@@ -34,7 +34,7 @@ export default function AdminEditFloorplansContent({
       <SettingsHeader title="Edit Floorplans" />
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         {/* Step 1: Select Floorplan */}
-        <Text style={[styles.label, { color: colors.text }]}>Select Floorplan</Text>
+        <Text style={[styles.label, { color: colors.primary }]}>Select Floorplan</Text>
         <View style={styles.floorplanList}>
           {mockFloorplans.map(fp => (
             <TouchableOpacity
@@ -45,7 +45,7 @@ export default function AdminEditFloorplansContent({
               ]}
               onPress={() => setSelectedFloorplan(fp.id)}
             >
-              <Text style={{ color: selectedFloorplan === fp.id ? colors.background : colors.text }}>
+              <Text style={{ color: selectedFloorplan === fp.id ? colors.background : colors.secondary }}>
                 {fp.name}
               </Text>
             </TouchableOpacity>

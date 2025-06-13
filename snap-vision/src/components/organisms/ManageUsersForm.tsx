@@ -9,7 +9,6 @@ import {
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useUserManagement } from '../../hooks/useUserManagement';
-import TopBar from '../molecules/TopBar';
 import SearchInput from '../atoms/SearchInput';
 import RoleFilter from '../molecules/RoleFilter';
 import UserCard from '../molecules/UserCard';
@@ -23,7 +22,7 @@ interface Props {
 export default function ManageUsersForm({ navigation }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  
+
   const {
     users,
     loading,
@@ -40,7 +39,7 @@ export default function ManageUsersForm({ navigation }: Props) {
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color="#824713" />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={[styles.loadingText, { color: colors.text }]}>Loading users...</Text>
       </View>
     );
@@ -50,64 +49,64 @@ export default function ManageUsersForm({ navigation }: Props) {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title="Manage Users" />
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-      {/* Search */}
-      <View style={styles.searchContainer}>
-        <SearchInput
-          placeholder="Search Users"
-          value={filters.searchQuery}
-          onChangeText={updateSearchQuery}
-        />
-        <Text style={[styles.searchSubtext, { color: isDark ? '#999' : '#666' }]}>
-          Search by name or email
-        </Text>
-      </View>
+        {/* Search */}
+        <View style={styles.searchContainer}>
+          <SearchInput
+            placeholder="Search Users"
+            value={filters.searchQuery}
+            onChangeText={updateSearchQuery}
+          />
+          <Text style={[styles.searchSubtext, { color: colors.secondary }]}>
+            Search by name or email
+          </Text>
+        </View>
 
-      {/* Role Filter */}
-      <RoleFilter
-        selectedRole={filters.role}
-        onRoleChange={updateRoleFilter}
-      />
-
-      {/* User Accounts Section */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          User Accounts
-        </Text>
-        
-        {users.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={[styles.emptyStateText, { color: colors.text }]}>
-              No users found
-            </Text>
-          </View>
-        ) : (
-          users.map((user) => (
-            <UserCard
-              key={user.id}
-              user={user}
-              onEdit={editUser}
-              onDelete={deleteUser}
-              onToggleStatus={toggleUserStatus}
-            />
-          ))
-        )}
-      </View>
-
-      {/* Action Buttons */}
-      <View style={styles.actionButtonsContainer}>
-        <ActionButton
-          title="Bulk Deactivate"
-          onPress={bulkDeactivate}
-          variant="secondary"
-          style={styles.actionButton}
+        {/* Role Filter */}
+        <RoleFilter
+          selectedRole={filters.role}
+          onRoleChange={updateRoleFilter}
         />
-        <ActionButton
-          title="Add New User"
-          onPress={addNewUser}
-          variant="primary"
-          style={styles.actionButton}
-        />
-      </View>
+
+        {/* User Accounts Section */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            User Accounts
+          </Text>
+
+          {users.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={[styles.emptyStateText, { color: colors.secondary }]}>
+                No users found
+              </Text>
+            </View>
+          ) : (
+            users.map((user) => (
+              <UserCard
+                key={user.id}
+                user={user}
+                onEdit={editUser}
+                onDelete={deleteUser}
+                onToggleStatus={toggleUserStatus}
+              />
+            ))
+          )}
+        </View>
+
+        {/* Action Buttons */}
+        <View style={styles.actionButtonsContainer}>
+          <ActionButton
+            title="Bulk Deactivate"
+            onPress={bulkDeactivate}
+            variant="secondary"
+            style={styles.actionButton}
+          />
+          <ActionButton
+            title="Add New User"
+            onPress={addNewUser}
+            variant="primary"
+            style={styles.actionButton}
+          />
+        </View>
       </ScrollView>
     </View>
   );

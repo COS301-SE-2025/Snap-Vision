@@ -1,4 +1,3 @@
-// src/components/molecules/RoleFilter.tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import FilterButton from '../atoms/FilterButton';
@@ -16,7 +15,7 @@ export default function RoleFilter({ selectedRole, onRoleChange }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.title, { color: colors.text }]}>Filter by Role</Text>
+      <Text style={[styles.title, { color: colors.primary }]}>Filter by Role</Text>
       <View style={styles.buttonsContainer}>
         <FilterButton
           title="Admin"

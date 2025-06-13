@@ -16,7 +16,7 @@ export default function AppInput({ style, ...props }: TextInputProps & { style?:
         },
         style,
       ]}
-      placeholderTextColor={isDark ? '#824713' : '#B78459'}
+      placeholderTextColor={isDark ? '#90AFA8' : '#3E5650'}
     />
   );
 }

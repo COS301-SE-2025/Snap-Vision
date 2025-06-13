@@ -1,8 +1,9 @@
+// src/components/forms/AchievementsForm.tsx
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  ScrollView, 
+import {
+  View,
+  Text,
+  ScrollView,
   StyleSheet,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -20,7 +21,6 @@ export default function AchievementsForm() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
-  // Mock data - replace with actual data from your store/API
   const [userProgress] = useState<UserProgress>({
     pointsEarned: 150,
     badgesUnlocked: 3,
@@ -66,9 +66,9 @@ export default function AchievementsForm() {
   ]);
 
   const [exploreCategories] = useState<ExploreCategory[]>([
-    { id: '1', title: 'Shops', icon: 'storefront', color: '#FF9800' },
-    { id: '2', title: 'Classes', icon: 'library', color: '#2196F3' },
-    { id: '3', title: 'Parks', icon: 'leaf', color: '#4CAF50' },
+    { id: '1', title: 'Shops', icon: 'storefront', color: colors.secondary },
+    { id: '2', title: 'Classes', icon: 'library', color: colors.secondary },
+    { id: '3', title: 'Parks', icon: 'leaf', color: colors.secondary },
   ]);
 
   const handleCategoryPress = (title: string) => {
@@ -84,12 +84,11 @@ export default function AchievementsForm() {
   };
 
   return (
-    <ScrollView 
+    <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       showsVerticalScrollIndicator={false}
     >
-      {/* Welcome Section */}
-      <WelcomeHeader 
+      <WelcomeHeader
         userName="User"
         textColor={colors.text}
         backgroundColor={colors.card}
@@ -97,40 +96,23 @@ export default function AchievementsForm() {
 
       {/* Category Buttons */}
       <View style={styles.categoryRow}>
-        <CategoryButton
-          title="Achievements"
-          iconName="trophy"
-          backgroundColor={colors.card}
-          textColor={colors.text}
-          borderColor={colors.border}
-          onPress={() => handleCategoryPress('Achievements')}
-        />
-        <CategoryButton
-          title="Challenges"
-          iconName="flag"
-          backgroundColor={colors.card}
-          textColor={colors.text}
-          borderColor={colors.border}
-          onPress={() => handleCategoryPress('Challenges')}
-        />
-        <CategoryButton
-          title="Rewards"
-          iconName="gift"
-          backgroundColor={colors.card}
-          textColor={colors.text}
-          borderColor={colors.border}
-          onPress={() => handleCategoryPress('Rewards')}
-        />
+        {['Achievements', 'Challenges', 'Rewards'].map((title, i) => (
+          <CategoryButton
+            key={title}
+            title={title}
+            iconName={title === 'Achievements' ? 'trophy' : title === 'Challenges' ? 'flag' : 'gift'}
+            backgroundColor={colors.card}
+            textColor={colors.text}
+            borderColor={colors.border}
+            onPress={() => handleCategoryPress(title)}
+          />
+        ))}
       </View>
 
       {/* Current Challenges */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          Current Challenges
-        </Text>
-        <Text style={[styles.sectionSubtitle, { color: colors.text }]}>
-          Complete these to earn points!
-        </Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Current Challenges</Text>
+        <Text style={[styles.sectionSubtitle, { color: colors.text }]}>Complete these to earn points!</Text>
         {currentChallenges.map((challenge) => (
           <ChallengeItem
             key={challenge.id}
@@ -145,42 +127,18 @@ export default function AchievementsForm() {
 
       {/* Your Progress */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          Your Progress
-        </Text>
-        <Text style={[styles.sectionSubtitle, { color: colors.text }]}>
-          Keep track of your achievements
-        </Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Progress</Text>
+        <Text style={[styles.sectionSubtitle, { color: colors.text }]}>Keep track of your achievements</Text>
         <View style={styles.progressRow}>
-          <ProgressCard
-            title="Points Earned"
-            value={userProgress.pointsEarned}
-            backgroundColor={colors.card}
-            textColor={colors.text}
-            borderColor={colors.border}
-          />
-          <ProgressCard
-            title="Badges Unlocked"
-            value={userProgress.badgesUnlocked}
-            backgroundColor={colors.card}
-            textColor={colors.text}
-            borderColor={colors.border}
-          />
-          <ProgressCard
-            title="Check-ins"
-            value={userProgress.checkIns}
-            backgroundColor={colors.card}
-            textColor={colors.text}
-            borderColor={colors.border}
-          />
+          <ProgressCard title="Points Earned" value={userProgress.pointsEarned} backgroundColor={colors.card} textColor={colors.text} borderColor={colors.border} />
+          <ProgressCard title="Badges Unlocked" value={userProgress.badgesUnlocked} backgroundColor={colors.card} textColor={colors.text} borderColor={colors.border} />
+          <ProgressCard title="Check-ins" value={userProgress.checkIns} backgroundColor={colors.card} textColor={colors.text} borderColor={colors.border} />
         </View>
       </View>
 
       {/* Unlockable Skins */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          Unlockable Skins
-        </Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Unlockable Skins</Text>
         <View style={styles.rewardsRow}>
           {skins.map((skin) => (
             <RewardCard
@@ -196,9 +154,7 @@ export default function AchievementsForm() {
 
       {/* Explore More */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          Explore More!
-        </Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Explore More!</Text>
         <View style={styles.exploreRow}>
           {exploreCategories.map((category) => (
             <CategoryButton
@@ -247,7 +203,6 @@ export default function AchievementsForm() {
         />
       </View>
 
-      {/* Bottom Spacing */}
       <View style={styles.bottomSpacing} />
     </ScrollView>
   );
@@ -261,6 +216,7 @@ const styles = StyleSheet.create({
   categoryRow: {
     flexDirection: 'row',
     marginBottom: 24,
+    justifyContent: 'space-between',
   },
   section: {
     marginBottom: 24,
@@ -277,12 +233,15 @@ const styles = StyleSheet.create({
   },
   progressRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   rewardsRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   exploreRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   exploreSection: {
     flexDirection: 'row',
