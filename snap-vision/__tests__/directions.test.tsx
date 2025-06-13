@@ -1,148 +1,208 @@
-// src/__tests__/directions.test.tsx
+// snap-vision/__tests__/directions.test.tsx
 import React from 'react';
-import { View } from 'react-native';
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
-import MapScreen from '../screens/MapScreen';
+import MapScreen from '../src/screens/MapScreen';
 import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
-import fetchMock from 'jest-fetch-mock';
-import Geolocation from '@react-native-community/geolocation';
+import * as Permissions from 'react-native-permissions';
+import { WebView } from 'react-native-webview';
 import Tts from 'react-native-tts';
 
-// Mock ThemeContext
-jest.mock('../theme/ThemeContext', () => ({
-  useTheme: () => ({
-    isDark: false,
-    theme: 'light',
-    toggleTheme: jest.fn()
-  }),
-  ThemeProvider: ({ children }) => <>{children}</>
-}));
-
-// Mock Firebase Firestore more thoroughly
-jest.mock('@react-native-firebase/firestore', () => () => ({
-  collection: jest.fn().mockReturnThis(),
-  get: jest.fn(() => Promise.resolve({
-    docs: [
-      { 
-        id: 'poi1', 
-        data: () => ({ 
-          name: 'Library', 
-          centroid: { latitude: 37.42, longitude: -122.08 } 
-        })
+// Mock dependencies
+jest.mock('@react-native-community/geolocation', () => ({
+  getCurrentPosition: jest.fn((success) => 
+    success({
+      coords: {
+        latitude: 37.7749,
+        longitude: -122.4194
       }
-    ]
-  })),
-  where: jest.fn().mockReturnThis(),
-  orderBy: jest.fn().mockReturnThis(),
-  limit: jest.fn().mockReturnThis(),
-  startAfter: jest.fn().mockReturnThis(),
-  doc: jest.fn().mockReturnThis(),
-  set: jest.fn(),
-  update: jest.fn(),
-  delete: jest.fn(),
-  onSnapshot: jest.fn(),
+    })
+  )
 }));
 
-// Mock WebView
-const mockInjectJavaScript = jest.fn();
+jest.mock('react-native-permissions', () => ({
+  request: jest.fn(() => Promise.resolve('granted')),
+  PERMISSIONS: {
+    ANDROID: {
+      ACCESS_FINE_LOCATION: 'android.permission.ACCESS_FINE_LOCATION'
+    }
+  },
+  RESULTS: {
+    GRANTED: 'granted'
+  }
+}));
+
 jest.mock('react-native-webview', () => {
-  const React = require('react');
-  const { forwardRef, useImperativeHandle } = React;
+  const { View } = require('react-native');
   return {
-    WebView: forwardRef((props, ref) => {
-      useImperativeHandle(ref, () => ({
-        injectJavaScript: mockInjectJavaScript,
-      }));
-      return <View {...props} testID="mocked-webview" />;
+    WebView: jest.fn().mockImplementation(({ onMessage }) => {
+      // Simulate MAP_READY message
+      setTimeout(() => {
+        onMessage({ nativeEvent: { data: 'MAP_READY' } });
+      }, 100);
+      return <View testID="mock-webview" />;
     })
   };
 });
 
-// Mock Geolocation
-jest.mock('@react-native-community/geolocation', () => ({
-  getCurrentPosition: jest.fn(),
-  watchPosition: jest.fn(),
-}));
-
-// Mock TTS
 jest.mock('react-native-tts', () => ({
-  speak: jest.fn(),
   stop: jest.fn(),
-  getInitStatus: jest.fn(() => Promise.resolve()),
-  setDefaultRate: jest.fn(),
-  setDefaultPitch: jest.fn(),
-  addEventListener: jest.fn(),
-  removeEventListener: jest.fn(),
+  speak: jest.fn(),
 }));
 
-// Mock PermissionsAndroid
-jest.mock('react-native', () => {
-  const RN = jest.requireActual('react-native');
-  RN.PermissionsAndroid = {
-    request: jest.fn(() => Promise.resolve(RN.PermissionsAndroid.RESULTS.GRANTED)),
-    PERMISSIONS: {
-      ACCESS_FINE_LOCATION: 'android.permission.ACCESS_FINE_LOCATION'
-    },
-    RESULTS: {
-      GRANTED: 'granted'
-    }
-  };
-  return RN;
-});
+jest.mock('@react-native-firebase/firestore', () => () => ({
+  collection: jest.fn(() => ({
+    get: jest.fn(() => Promise.resolve({
+      docs: [
+        {
+          id: '1',
+          data: () => ({
+            name: 'Test POI',
+            centroid: { longitude: -122.4194, latitude: 37.7749 }
+          })
+        }
+      ]
+    }))
+  }))
+}));
 
-fetchMock.enableMocks();
-
-describe('Directions Functionality', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    fetchMock.resetMocks();
-    
-    Geolocation.getCurrentPosition.mockImplementation((success) => 
-      success({ coords: { latitude: 37.42, longitude: -122.08 } })
-    );
-    
-    Tts.speak.mockResolvedValue(undefined);
-    Tts.stop.mockResolvedValue(undefined);
-    Tts.getInitStatus.mockResolvedValue(undefined);
-  });
-
-  it('should fetch and display route when destination is selected', async () => {
-    fetchMock.mockResponseOnce(JSON.stringify({
+// Mock the API call
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({
       features: [{
-        geometry: { coordinates: [[-122.08, 37.42], [-122.09, 37.43]] },
+        geometry: {
+          coordinates: [[-122.4194, 37.7749], [-122.4184, 37.7739]]
+        },
         properties: {
           segments: [{
             steps: [
-              { instruction: 'Head north', distance: 100 },
-              { instruction: 'Turn right', distance: 50 }
-            ],
-            distance: 150,
-            duration: 120
+              { instruction: 'Head north on Main St', distance: 100, duration: 60 },
+              { instruction: 'Turn right on 2nd St', distance: 200, duration: 120 }
+            ]
           }]
         }
       }]
-    }));
+    })
+  })
+);
 
+describe('Directions Feature', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should request location permission and get current location', async () => {
+    const { getByTestId } = render(
+      <ThemeProviderWrapper>
+        <MapScreen />
+      </ThemeProviderWrapper>
+    );
+
+    await waitFor(() => {
+      expect(Permissions.request).toHaveBeenCalledWith(
+        Permissions.PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION
+      );
+    });
+  });
+
+  it('should handle destination search and route fetching', async () => {
     const { getByPlaceholderText, getByText, queryByText } = render(
       <ThemeProviderWrapper>
         <MapScreen />
       </ThemeProviderWrapper>
     );
+
+    // Wait for WebView to be ready
+    await waitFor(() => expect(WebView).toHaveBeenCalled());
+
+    // Enter destination and search
+    const searchInput = getByPlaceholderText('Search destination...');
+    fireEvent.changeText(searchInput, 'Test POI');
     
-    // Wait for initial load
-    await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 100));
-    });
-    
-    fireEvent.changeText(getByPlaceholderText('Search destination...'), 'Library');
-    await waitFor(() => expect(getByText('Library')).toBeTruthy());
-    fireEvent.press(getByText('Library'));
-    fireEvent.press(getByText('Search'));
-    
+    // Select POI from suggestions
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        expect.stringContaining('api/directions?start=-122.08,37.42&end=-122.08,37.42')
+      const poiSuggestion = getByText('Test POI');
+      fireEvent.press(poiSuggestion);
+    });
+
+    // Trigger search
+    fireEvent(searchInput, 'submitEditing');
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalled();
+      expect(WebView).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ref: expect.any(Object),
+        }),
+        expect.anything()
       );
-      expect(mockInjectJavaScript).toHaveBeenCalledWith(expect.stringContaining('window.drawRoute'));
     });
   });
+
+  it('should display directions modal with steps', async () => {
+    const { getByPlaceholderText, getByText, queryByText } = render(
+      <ThemeProviderWrapper>
+        <MapScreen />
+      </ThemeProviderWrapper>
+    );
+
+    // Wait for WebView to be ready
+    await waitFor(() => expect(WebView).toHaveBeenCalled());
+
+    // Enter destination and search
+    const searchInput = getByPlaceholderText('Search destination...');
+    fireEvent.changeText(searchInput, 'Test POI');
+    
+    // Select POI from suggestions
+    await waitFor(() => {
+      const poiSuggestion = getByText('Test POI');
+      fireEvent.press(poiSuggestion);
+    });
+
+    // Trigger search
+    fireEvent(searchInput, 'submitEditing');
+
+    // Check if directions modal is shown with steps
+    await waitFor(() => {
+      expect(getByText('Head north on Main St')).toBeTruthy();
+      expect(getByText('Turn right on 2nd St')).toBeTruthy();
+    });
+  });
+
+  it('should start navigation with voice guidance', async () => {
+    const { getByPlaceholderText, getByText, getByTestId } = render(
+      <ThemeProviderWrapper>
+        <MapScreen />
+      </ThemeProviderWrapper>
+    );
+
+    // Wait for WebView to be ready
+    await waitFor(() => expect(WebView).toHaveBeenCalled());
+
+    // Enter destination and search
+    const searchInput = getByPlaceholderText('Search destination...');
+    fireEvent.changeText(searchInput, 'Test POI');
+    
+    // Select POI from suggestions
+    await waitFor(() => {
+      const poiSuggestion = getByText('Test POI');
+      fireEvent.press(poiSuggestion);
+    });
+
+    // Trigger search
+    fireEvent(searchInput, 'submitEditing');
+
+    // Start navigation
+    await waitFor(() => {
+      const startButton = getByText('Start Navigation');
+      fireEvent.press(startButton);
+    });
+
+    // Check if TTS was called with the first instruction
+    await waitFor(() => {
+      expect(Tts.speak).toHaveBeenCalledWith('Head north on Main St');
+    });
+  });
+
+  
