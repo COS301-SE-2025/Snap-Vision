@@ -259,4 +259,15 @@ describe('TextToSpeech', () => {
     );
     expect(Tts.speak).toHaveBeenCalledWith('The gym has equipment');
   });
+  it('only replaces whole word units with word boundaries', () => {
+    renderWithTheme(
+      <TextToSpeech
+        isActive={true}
+        onToggle={() => {}}
+        text="camera vs 5 m distance"
+        onSpeakingChange={() => {}}
+      />
+    );
+    expect(Tts.speak).toHaveBeenCalledWith('camera vs 5 meters distance');
+  });
 });
