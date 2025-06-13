@@ -38,7 +38,7 @@ jest.mock('@react-native-firebase/firestore', () => () => ({
   startAfter: jest.fn().mockReturnThis(),
   doc: jest.fn().mockReturnThis(),
   set: jest.fn(),
-  update: jest.fn(),r
+  update: jest.fn(),
   delete: jest.fn(),
   onSnapshot: jest.fn(),
 }));
@@ -58,7 +58,37 @@ jest.mock('react-native-webview', () => {
   };
 });
 
+// Mock Geolocation
+jest.mock('@react-native-community/geolocation', () => ({
+  getCurrentPosition: jest.fn(),
+  watchPosition: jest.fn(),
+}));
 
+// Mock TTS
+jest.mock('react-native-tts', () => ({
+  speak: jest.fn(),
+  stop: jest.fn(),
+  getInitStatus: jest.fn(() => Promise.resolve()),
+  setDefaultRate: jest.fn(),
+  setDefaultPitch: jest.fn(),
+  addEventListener: jest.fn(),
+  removeEventListener: jest.fn(),
+}));
+
+// Mock PermissionsAndroid
+jest.mock('react-native', () => {
+  const RN = jest.requireActual('react-native');
+  RN.PermissionsAndroid = {
+    request: jest.fn(() => Promise.resolve(RN.PermissionsAndroid.RESULTS.GRANTED)),
+    PERMISSIONS: {
+      ACCESS_FINE_LOCATION: 'android.permission.ACCESS_FINE_LOCATION'
+    },
+    RESULTS: {
+      GRANTED: 'granted'
+    }
+  };
+  return RN;
+});
 
 fetchMock.enableMocks();
 
@@ -93,4 +123,26 @@ describe('Directions Functionality', () => {
       }]
     }));
 
-   
+    const { getByPlaceholderText, getByText, queryByText } = render(
+      <ThemeProviderWrapper>
+        <MapScreen />
+      </ThemeProviderWrapper>
+    );
+    
+    // Wait for initial load
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    });
+    
+    fireEvent.changeText(getByPlaceholderText('Search destination...'), 'Library');
+    await waitFor(() => expect(getByText('Library')).toBeTruthy());
+    fireEvent.press(getByText('Library'));
+    fireEvent.press(getByText('Search'));
+    
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('api/directions?start=-122.08,37.42&end=-122.08,37.42')
+      );
+      expect(mockInjectJavaScript).toHaveBeenCalledWith(expect.stringContaining('window.drawRoute'));
+    });
+  });
