@@ -71,4 +71,29 @@ describe('TextToSpeech', () => {
     );
     expect(getByText('🔊')).toBeTruthy();
   });
+  it('renders muted icon when inactive', () => {
+    const { getByText } = renderWithTheme(
+      <TextToSpeech
+        isActive={false}
+        onToggle={() => {}}
+        text="Hello"
+        onSpeakingChange={() => {}}
+      />
+    );
+    expect(getByText('🔇')).toBeTruthy();
+  });
+
+  it('calls onToggle when muted icon is pressed', () => {
+    const onToggle = jest.fn();
+    const { getByText } = renderWithTheme(
+      <TextToSpeech
+        isActive={false}
+        onToggle={onToggle}
+        text="Hello"
+        onSpeakingChange={() => {}}
+      />
+    );
+    fireEvent.press(getByText('🔇'));
+    expect(onToggle).toHaveBeenCalled();
+  });
 });
