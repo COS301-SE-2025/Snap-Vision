@@ -211,4 +211,15 @@ describe('TextToSpeech', () => {
       );
     }).not.toThrow();
   });
+  it('works without text prop', () => {
+    expect(() => {
+      renderWithTheme(
+        <TextToSpeech
+          isActive={true}
+          onToggle={() => {}}
+          onSpeakingChange={() => {}}
+        />
+      );
+    }).not.toThrow();
+  });
 });
