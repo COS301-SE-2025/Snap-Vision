@@ -120,4 +120,15 @@ describe('TextToSpeech', () => {
     );
     expect(Tts.stop).toHaveBeenCalled();
   });
+  it('does not call Tts.speak when inactive', () => {
+    renderWithTheme(
+      <TextToSpeech
+        isActive={false}
+        onToggle={() => {}}
+        text="Hello world"
+        onSpeakingChange={() => {}}
+      />
+    );
+    expect(Tts.speak).not.toHaveBeenCalled();
+  });
 });
