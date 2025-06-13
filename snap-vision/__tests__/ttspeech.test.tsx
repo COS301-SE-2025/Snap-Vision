@@ -248,4 +248,15 @@ describe('TextToSpeech', () => {
     expect(getByText('🔊')).toBeTruthy();
     expect(getByText('Voice On')).toBeTruthy();
   });
+  it('does not replace units that are not whole words', () => {
+    renderWithTheme(
+      <TextToSpeech
+        isActive={true}
+        onToggle={() => {}}
+        text="The gym has equipment"
+        onSpeakingChange={() => {}}
+      />
+    );
+    expect(Tts.speak).toHaveBeenCalledWith('The gym has equipment');
+  });
 });
