@@ -60,4 +60,15 @@ describe('TextToSpeech', () => {
     );
     expect(queryByText('Voice On')).toBeNull();
   });
+  it('renders speaker icon when active', () => {
+    const { getByText } = renderWithTheme(
+      <TextToSpeech
+        isActive={true}
+        onToggle={() => {}}
+        text="Hello"
+        onSpeakingChange={() => {}}
+      />
+    );
+    expect(getByText('🔊')).toBeTruthy();
+  });
 });
