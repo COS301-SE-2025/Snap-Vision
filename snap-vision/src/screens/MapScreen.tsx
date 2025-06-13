@@ -26,6 +26,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 import { TextIcon } from '../components/atoms/TextIcon';
 import DirectionsModal from '../components/organisms/DirectionsModal';
+import TextToSpeech from '../components/molecules/TextToSpeech';
 
 
 const MapScreen = () => {
@@ -50,6 +51,8 @@ const MapScreen = () => {
   // Turn-by-turn state
   const [steps, setSteps] = useState<any[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
+  const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const sendLocationToWebView = (lat: number, lon: number) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
@@ -292,30 +295,33 @@ const handleSelectPOI = (poi: any) => {
       />
 
      {isNavigating && (
-  <Pressable
-    style={{
-      position: 'absolute',
-      bottom: 171,
-      right: 22,
-      backgroundColor: colors.primary,
-      width: 56,
-      height: 56,
-      borderRadius: 28,
-      alignItems: 'center',
-      justifyContent: 'center',
-      elevation: 4,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.3,
-      shadowRadius: 3,
-    }}
-    onPress={() => setShowDirectionsSheet(true)}
-    accessibilityLabel="Show Directions"
-  >
-    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 24 }}>🧭</Text>
-  </Pressable>
-)} 
-
+  <>
+    <TextToSpeech
+      isActive={isVoiceEnabled}
+      onToggle={() => setIsVoiceEnabled(!isVoiceEnabled)}
+      text={steps[currentStep]?.instruction}
+      onSpeakingChange={setIsSpeaking}
+    />
+    
+    <Pressable
+      style={{
+        position: 'absolute',
+        bottom: 171,
+        right: 22,
+        backgroundColor: colors.primary,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 4,
+      }}
+      onPress={() => setShowDirectionsSheet(true)}
+    >
+      <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 24 }}>🧭</Text>
+    </Pressable>
+  </>
+)}
       <CrowdReportModal
         visible={showCrowdPopup}
         selectedDensity={selectedDensity}
