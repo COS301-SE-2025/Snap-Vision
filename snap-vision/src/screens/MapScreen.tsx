@@ -16,7 +16,7 @@ import NavigationPanel from '../components/organisms/NavigationPanel';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 
-const ROUTING_API_BASE = "http://10.0.2.2:3000"; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = "http://192.168.0.133:3000"; // <-- Use your correct backend IP here
 
 const MapScreen = () => {
   const lastRoute = useRef<any[]>([]);
