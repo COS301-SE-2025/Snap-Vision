@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import TopBar from '../molecules/TopBar';
+// import TopBar from '../molecules/TopBar';
 import AppButton from '../atoms/AppButton';
 import AppSecondaryButton from '../atoms/AppSecondaryButton';
+import SettingsHeader from '../molecules/SettingsHeader';
 
 interface Floorplan {
   id: string;
@@ -30,7 +31,7 @@ export default function AdminEditFloorplansContent({
 }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <TopBar title="Edit Floorplans" onBackPress={() => navigation.goBack()} />
+      <SettingsHeader title="Edit Floorplans" />
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         {/* Step 1: Select Floorplan */}
         <Text style={[styles.label, { color: colors.text }]}>Select Floorplan</Text>

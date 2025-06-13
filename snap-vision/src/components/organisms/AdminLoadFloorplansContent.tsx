@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import TopBar from '../molecules/TopBar';
+// import TopBar from '../molecules/TopBar';
 import AppInput from '../atoms/AppInput';
 import AppButton from '../atoms/AppButton';
 import AppSecondaryButton from '../atoms/AppSecondaryButton';
 import FloorplanListItem from '../molecules/FloorplanListItem';
+import SettingsHeader from '../molecules/SettingsHeader';
+
 
 interface FloorplanItem {
   id: string;
@@ -46,7 +48,7 @@ export default function AdminLoadFloorplansContent({
 }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <TopBar title="Load Floorplans" onBackPress={() => navigation.goBack()} />
+      <SettingsHeader title="Load Floorplans" />
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Building Name Input */}
         <View style={styles.inputSection}>

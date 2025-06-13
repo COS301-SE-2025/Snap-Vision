@@ -14,6 +14,7 @@ import SearchInput from '../atoms/SearchInput';
 import RoleFilter from '../molecules/RoleFilter';
 import UserCard from '../molecules/UserCard';
 import ActionButton from '../atoms/ActionButton';
+import SettingsHeader from '../molecules/SettingsHeader';
 
 interface Props {
   navigation: any;
@@ -47,7 +48,7 @@ export default function ManageUsersForm({ navigation }: Props) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <TopBar title="Manage Users" onBackPress={() => navigation.goBack()} />
+      <SettingsHeader title="Manage Users" />
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
       {/* Search */}
       <View style={styles.searchContainer}>

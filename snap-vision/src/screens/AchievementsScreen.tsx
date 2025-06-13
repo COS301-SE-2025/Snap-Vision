@@ -1,5 +1,5 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 import TopBar from '../components/molecules/TopBar';
@@ -17,7 +17,10 @@ const AchievementsScreen = () => {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <TopBar title="Badges and Achievements" onBackPress={handleBackPress} />
+      <View style={[styles.header, { backgroundColor: colors.primary }]}>
+        <Text style={styles.headerText}>Badges and Achievements</Text>
+      </View>
+
       
       {/* Main Content */}
       <AchievementsForm />
@@ -30,5 +33,14 @@ export default AchievementsScreen;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+  },
+  header: {
+    padding: 16,
+    justifyContent: 'center',
+  },
+  headerText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
