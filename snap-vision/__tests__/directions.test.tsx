@@ -272,4 +272,41 @@ describe('Directions Feature', () => {
       expect(Tts.speak).toHaveBeenCalledWith('Turn right on 2nd St');
     });
   });
+
+  it('should show POI suggestions when typing in search', async () => {
+  const { getByPlaceholderText, getByText, queryByText } = render(
+    <ThemeProviderWrapper>
+      <MapScreen />
+    </ThemeProviderWrapper>
+  );
+
+  // Wait for initial load
+  await act(async () => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+  });
+
+  fireEvent.changeText(getByPlaceholderText('Search destination...'), 'Lib');
+  
+  await waitFor(() => {
+    expect(getByText('Library')).toBeTruthy();
+    expect(queryByText('No results found')).toBeFalsy();
+  });
+});
+it('should show error when directions API fails', async () => {
+  fetchMock.mockRejectOnce(new Error('Network error'));
+
+  const { getByPlaceholderText, getByText, queryByText } = render(
+    <ThemeProviderWrapper>
+      <MapScreen />
+    </ThemeProviderWrapper>
+  );
+
+  fireEvent.changeText(getByPlaceholderText('Search destination...'), 'Library');
+  fireEvent.press(getByText('Library'));
+  fireEvent.press(getByText('Search'));
+  
+  await waitFor(() => {
+    expect(queryByText('Failed to fetch or draw route')).toBeTruthy();
+  });
+});
 });
