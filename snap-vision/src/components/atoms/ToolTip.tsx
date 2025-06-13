@@ -20,9 +20,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: '100%',
     marginBottom: 5,
-    padding: 6,
+    padding: 2,
     borderWidth: 1,
     borderRadius: 6,
+    maxWidth: 250,
   },
   tooltipText: {
     fontSize: 12,
