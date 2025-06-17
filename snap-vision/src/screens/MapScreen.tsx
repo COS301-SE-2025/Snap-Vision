@@ -1,21 +1,13 @@
 // src/screens/MapScreen.tsx
 import React, { useState, useRef } from 'react';
-import { View, Alert, Share } from 'react-native';
+import { View, Alert, Share, Text } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import { PermissionsAndroid } from 'react-native';
 import { WebView as WebViewType } from 'react-native-webview';
 import { useEffect } from 'react';
 import firestore from '@react-native-firebase/firestore';
-
-// Add this type declaration at the top-level of project (e.g., src/types/env.d.ts):
-// declare module '@env' {
-//   export const MAPTILER_API_KEY: string;
-// }
-
-
 import { Modal, FlatList, Pressable } from 'react-native';
 import Tts from 'react-native-tts';
-
 import MapWebView from '../components/organisms/MapWebView';
 import CrowdReportModal from '../components/molecules/CrowdReportModal';
 import StatusOverlay from '../components/atoms/StatusOverlay';
@@ -56,6 +48,8 @@ const MapScreen = () => {
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isRouteLoading, setIsRouteLoading] = useState(false);
+  const [shouldStartTTS, setShouldStartTTS] = useState(false);
+  const [showDirectionsSheet, setShowDirectionsSheet] = useState(false);
   
   // Navigation state
   const [isNavigating, setIsNavigating] = useState(false);
@@ -336,8 +330,6 @@ const MapScreen = () => {
   };
 
   // Fetch POIs from Firestoreconst [showDirectionsSheet, setShowDirectionsSheet] = useState(false);
-const [isNavigating, setIsNavigating] = useState(false);
-const [shouldStartTTS, setShouldStartTTS] = useState(false);
 
 useEffect(() => {
   if (isNavigating && shouldStartTTS && steps.length > 0 && currentStep < steps.length) {
