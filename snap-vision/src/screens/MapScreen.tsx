@@ -7,6 +7,15 @@ import { WebView as WebViewType } from 'react-native-webview';
 import { useEffect } from 'react';
 import firestore from '@react-native-firebase/firestore';
 
+// Add this type declaration at the top-level of project (e.g., src/types/env.d.ts):
+// declare module '@env' {
+//   export const MAPTILER_API_KEY: string;
+// }
+
+
+import { Modal, FlatList, Pressable } from 'react-native';
+import Tts from 'react-native-tts';
+
 import MapWebView from '../components/organisms/MapWebView';
 import CrowdReportModal from '../components/molecules/CrowdReportModal';
 import StatusOverlay from '../components/atoms/StatusOverlay';
@@ -15,6 +24,9 @@ import MapActionsPanel from '../components/organisms/MapActionsPanel';
 import NavigationPanel from '../components/organisms/NavigationPanel';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
+import { TextIcon } from '../components/atoms/TextIcon';
+import DirectionsModal from '../components/organisms/DirectionsModal';
+import TextToSpeech from '../components/molecules/TextToSpeech';
 
 const ROUTING_API_BASE = "http://192.168.0.133:3000"; // <-- Use your correct backend IP here
 
@@ -37,6 +49,12 @@ const MapScreen = () => {
   const [showReportTooltip, setShowReportTooltip] = useState(false);
   const webViewRef = useRef<WebViewType>(null);
   const [isMapReady, setIsMapReady] = useState(false);
+
+  // Turn-by-turn state
+  const [steps, setSteps] = useState<any[]>([]);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [isRouteLoading, setIsRouteLoading] = useState(false);
   
   // Navigation state
@@ -205,6 +223,10 @@ const MapScreen = () => {
       const jsRouteCode = `window.drawRoute && window.drawRoute(${JSON.stringify(coordinates)});`;
       webViewRef.current?.injectJavaScript(jsRouteCode);
       setStatus('Route found!');
+      const stepsArr = data.features?.[0]?.properties?.segments?.[0]?.steps || [];
+      setSteps(stepsArr);
+      setCurrentStep(0);
+      setShowDirectionsSheet(true);
       
       // Reset progress
       setRouteProgress(0);
@@ -313,7 +335,28 @@ const MapScreen = () => {
     }
   };
 
-  // Fetch POIs from Firestore
+  // Fetch POIs from Firestoreconst [showDirectionsSheet, setShowDirectionsSheet] = useState(false);
+const [isNavigating, setIsNavigating] = useState(false);
+const [shouldStartTTS, setShouldStartTTS] = useState(false);
+
+useEffect(() => {
+  if (isNavigating && shouldStartTTS && steps.length > 0 && currentStep < steps.length) {
+    const instruction = steps[currentStep]?.instruction;
+    if (instruction) {
+      console.log('TTS should speak:', instruction);
+      try {
+        Tts.stop();
+        setTimeout(() => {
+          Tts.speak(instruction);
+        }, 500);
+      } catch (e) {
+        console.error('TTS Error:', e);
+        setError('Voice guidance is not available.');
+      }
+    }
+  }
+}, [isNavigating, shouldStartTTS, steps, currentStep]);
+
   useEffect(() => {
     const fetchPOIs = async () => {
       try {
@@ -511,8 +554,23 @@ const MapScreen = () => {
     };
   }, []);
 
-  return (
+ return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <DirectionsModal
+        visible={showDirectionsSheet}
+        onClose={() => setShowDirectionsSheet(false)}
+        onStart={() => {
+          setIsNavigating(true);
+          setShouldStartTTS(true);
+          setCurrentStep(0);
+          setShowDirectionsSheet(false);
+          console.log('Navigation started');
+        }}
+        destination={destination}
+        steps={steps}
+        currentStep={currentStep}
+      />
+      {/* Rest of your components remain the same */}
       <DestinationSearch
         value={destination}
         onChange={text => {
@@ -533,7 +591,7 @@ const MapScreen = () => {
         suggestions={poiSuggestions}
         onSelectSuggestion={handleSelectPOI}
       />
-
+      
       <View style={{ flex: 1 }}>
         <MapWebView ref={webViewRef} onMessage={handleWebViewMessage} />
       </View>
@@ -564,6 +622,34 @@ const MapScreen = () => {
         color={colors.primary}
       />
 
+     {isNavigating && (
+  <>
+    <TextToSpeech
+      isActive={isVoiceEnabled}
+      onToggle={() => setIsVoiceEnabled(!isVoiceEnabled)}
+      text={steps[currentStep]?.instruction}
+      onSpeakingChange={setIsSpeaking}
+    />
+    
+    <Pressable
+      style={{
+        position: 'absolute',
+        bottom: 171,
+        right: 22,
+        backgroundColor: colors.primary,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 4,
+      }}
+      onPress={() => setShowDirectionsSheet(true)}
+    >
+      <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 24 }}>🧭</Text>
+    </Pressable>
+  </>
+)}
       <CrowdReportModal
         visible={showCrowdPopup}
         selectedDensity={selectedDensity}

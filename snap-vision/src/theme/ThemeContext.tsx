@@ -1,3 +1,4 @@
+//snap-vision\src\theme\ThemeContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Appearance } from 'react-native';
 
