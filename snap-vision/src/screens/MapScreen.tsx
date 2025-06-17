@@ -184,7 +184,7 @@ useEffect(() => {
   fetchPOIs();
 }, []);
 
-// Send POIs to WebView when they change and WebView is ready
+
 useEffect(() => {
   if (isMapReady && pois.length > 0 && webViewRef.current) {
     const jsPOICode = `window.displayPOIs && window.displayPOIs(${JSON.stringify(pois)});`;
