@@ -85,7 +85,8 @@
         attributionControl: true,
         preferCanvas: true,
         center: [-25.7557, 28.2314],
-        zoom: 14,
+        zoom: 20,
+        maxZoom: 25,
       });
 
       L.tileLayer('https://api.maptiler.com/maps/basic-v2/{z}/{x}/{y}.png?key=xUUmaj1CwbUxWTcxxbmb', {
@@ -93,8 +94,22 @@
         tileSize: 512,
         zoomOffset: -1,
         detectRetina: true,
+        maxZoom: 25,
         crossOrigin: 'anonymous'
       }).addTo(map);
+      map.on('zoomend', function() {
+      const zoom = map.getZoom();
+      if (zoom >= 16) {
+        showAllPOIMarkers();
+      } else {
+        // Hide all POI markers when zoomed out
+        poiMarkers.forEach(marker => {
+          if (map.hasLayer(marker)) {
+            map.removeLayer(marker);
+          }
+        });
+      }
+    });
 
       // Tell React Native that the map is ready
       setTimeout(() => {
@@ -140,93 +155,122 @@
     };
 
     // Function to display POIs on the map
-    window.displayPOIs = function(pois) {
+       window.displayPOIs = function(pois) {
       if (!map || !Array.isArray(pois)) return;
-      
-      console.log("🏢 Displaying", pois.length, "POIs on map");
-      
-      // Clear existing POI markers
+    
+      // Remove all existing POI markers
       poiMarkers.forEach(marker => map.removeLayer(marker));
       poiMarkers = [];
       poiData = pois;
-
+    
       pois.forEach(poi => {
-        if (!poi.centroid || !poi.centroid.latitude || !poi.centroid.longitude) {
-          console.warn("⚠️ POI missing coordinates:", poi);
-          return;
-        }
-
+        if (!poi.centroid || !poi.centroid.latitude || !poi.centroid.longitude) return;
         const coords = [poi.centroid.latitude, poi.centroid.longitude];
-        
-        // Create custom icon for POI
+    
         const poiIcon = L.divIcon({
           className: 'poi-marker',
           html: '',
           iconSize: [12, 12],
           iconAnchor: [6, 6]
         });
-
-        // Create marker
+    
         const marker = L.marker(coords, { icon: poiIcon })
-          .addTo(map)
           .bindPopup(`
-            <div style="text-align: center;">
-              <strong>🏢 ${poi.name || 'Unnamed Building'}</strong><br>
-              <button onclick="selectPOI('${poi.id}')" style="
-                margin-top: 8px;
-                padding: 6px 12px;
-                background-color: #007bff;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 12px;
-              ">Navigate Here</button>
-            </div>
-          `);
-
-        // Add label that shows on hover or zoom
-        if (map.getZoom() >= 16) {
-          const label = L.marker(coords, {
-            icon: L.divIcon({
-              className: 'poi-label',
-              html: poi.name || 'Building',
-              iconSize: [null, null],
-              iconAnchor: [0, 0]
-            })
-          }).addTo(map);
-          
-          poiMarkers.push(label);
-        }
-
+    <div style="text-align: center;">
+      <strong>🏢 ${poi.name || 'Unnamed Building'}</strong><br>
+      <button onclick="window.selectPOI('${poi.id}')" style="
+        margin-top: 8px;
+        padding: 6px 12px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+      ">Navigate Here</button>
+    </div>
+  `);
+    
+        // When marker is clicked, hide all others and show only this one
+        marker.on('click', function(e) {
+          hideOtherPOIMarkers(marker);
+          marker.openPopup();
+          // Listen for popup close to restore all markers
+          marker.once('popupclose', function() {
+            showAllPOIMarkers();
+          });
+        });
+    
+        marker.poiData = poi;
         poiMarkers.push(marker);
       });
-
-      // Show/hide labels based on zoom level
-      map.on('zoomend', function() {
-        const zoom = map.getZoom();
-        poiMarkers.forEach(marker => {
-          if (marker.options.icon && marker.options.icon.options.className === 'poi-label') {
-            if (zoom >= 16) {
-              marker.addTo(map);
-            } else {
-              map.removeLayer(marker);
-            }
-          }
-        });
-      });
+    
+      // Show markers only if zoom level is sufficient
+      if (map.getZoom() >= 16) {
+        showAllPOIMarkers();
+      }
     };
-
-    // Function to handle POI selection from map
+    
+    function showAllPOIMarkers() {
+      poiMarkers.forEach(marker => {
+        if (!map.hasLayer(marker)) {
+          marker.addTo(map);
+        }
+      });
+    }
+    
+    function hideOtherPOIMarkers(selectedMarker) {
+      poiMarkers.forEach(marker => {
+        if (marker !== selectedMarker && map.hasLayer(marker)) {
+          map.removeLayer(marker);
+        }
+      });
+    }
+    
     window.selectPOI = function(poiId) {
-      const poi = poiData.find(p => p.id === poiId);
-      if (poi && window.ReactNativeWebView) {
+      const selectedMarker = poiMarkers.find(marker => marker.poiData && marker.poiData.id === poiId);
+      if (selectedMarker && window.ReactNativeWebView) {
         window.ReactNativeWebView.postMessage(JSON.stringify({
           type: 'POI_SELECTED',
-          poi: poi
+          poi: selectedMarker.poiData
         }));
       }
     };
+
+function showAllPOIMarkers() {
+  poiMarkers.forEach(marker => {
+    if (!map.hasLayer(marker)) {
+      marker.addTo(map);
+    }
+  });
+}
+
+function hideOtherPOIMarkers(selectedMarker) {
+  poiMarkers.forEach(marker => {
+    if (marker !== selectedMarker && map.hasLayer(marker)) {
+      map.removeLayer(marker);
+    }
+  });
+}
+
+window.closePOIPopup = function() {
+  map.closePopup();
+  showAllPOIMarkers();
+};
+
+    window.selectPOI = function(poiId) {
+  const selectedMarker = poiMarkers.find(marker => marker.poiData && marker.poiData.id === poiId);
+  if (selectedMarker) {
+    hideOtherPOIMarkers(selectedMarker);
+    
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'POI_SELECTED',
+        poi: selectedMarker.poiData
+      }));
+    }
+  }
+};
 
     // Start the map
     try {
