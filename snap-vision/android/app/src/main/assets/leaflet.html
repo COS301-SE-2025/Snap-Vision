@@ -211,71 +211,42 @@
       }
     };
     
-//     function showAllPOIMarkers() {
-//       poiMarkers.forEach(marker => {
-//         if (!map.hasLayer(marker)) {
-//           marker.addTo(map);
-//         }
-//       });
-//     }
     
-//     function hideOtherPOIMarkers(selectedMarker) {
-//       poiMarkers.forEach(marker => {
-//         if (marker !== selectedMarker && map.hasLayer(marker)) {
-//           map.removeLayer(marker);
-//         }
-//       });
-//     }
+
+function showAllPOIMarkers() {
+  poiMarkers.forEach(marker => {
+    if (!map.hasLayer(marker)) {
+      marker.addTo(map);
+    }
+  });
+}
+
+function hideOtherPOIMarkers(selectedMarker) {
+  poiMarkers.forEach(marker => {
+    if (marker !== selectedMarker && map.hasLayer(marker)) {
+      map.removeLayer(marker);
+    }
+  });
+}
+
+window.closePOIPopup = function() {
+  map.closePopup();
+  showAllPOIMarkers();
+};
+
+    window.selectPOI = function(poiId) {
+  const selectedMarker = poiMarkers.find(marker => marker.poiData && marker.poiData.id === poiId);
+  if (selectedMarker) {
+    hideOtherPOIMarkers(selectedMarker);
     
-//     // "Navigate Here" button: notify React Native
-//     window.selectPOI = function(poiId) {
-//       const selectedMarker = poiMarkers.find(marker => marker.poiData && marker.poiData.id === poiId);
-//       if (selectedMarker && window.ReactNativeWebView) {
-//         window.ReactNativeWebView.postMessage(JSON.stringify({
-//           type: 'POI_SELECTED',
-//           poi: selectedMarker.poiData
-//         }));
-//       }
-//     };
-
-// // Function to show all POI markers
-// function showAllPOIMarkers() {
-//   poiMarkers.forEach(marker => {
-//     if (!map.hasLayer(marker)) {
-//       marker.addTo(map);
-//     }
-//   });
-// }
-
-// // Function to hide all POI markers except the selected one
-// function hideOtherPOIMarkers(selectedMarker) {
-//   poiMarkers.forEach(marker => {
-//     if (marker !== selectedMarker && map.hasLayer(marker)) {
-//       map.removeLayer(marker);
-//     }
-//   });
-// }
-
-// // Function to close popup and show all markers again
-// window.closePOIPopup = function() {
-//   map.closePopup();
-//   showAllPOIMarkers();
-// };
-
-//     window.selectPOI = function(poiId) {
-//   const selectedMarker = poiMarkers.find(marker => marker.poiData && marker.poiData.id === poiId);
-//   if (selectedMarker) {
-//     // Hide other markers
-//     hideOtherPOIMarkers(selectedMarker);
-    
-//     if (window.ReactNativeWebView) {
-//       window.ReactNativeWebView.postMessage(JSON.stringify({
-//         type: 'POI_SELECTED',
-//         poi: selectedMarker.poiData
-//       }));
-//     }
-//   }
-// };
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'POI_SELECTED',
+        poi: selectedMarker.poiData
+      }));
+    }
+  }
+};
 
     // Start the map
     try {
