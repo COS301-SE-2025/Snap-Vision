@@ -20,7 +20,7 @@ import { TextIcon } from '../components/atoms/TextIcon';
 import DirectionsModal from '../components/organisms/DirectionsModal';
 import TextToSpeech from '../components/molecules/TextToSpeech';
 
-const ROUTING_API_BASE = "http://192.168.0.133:3000"; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = "http://192.168.43.155:3000"; // <-- Use your correct backend IP here
 
 const MapScreen = () => {
   const lastRoute = useRef<any[]>([]);

@@ -10,7 +10,7 @@ import AdminSettingsFrom from './src/components/organisms/AdminSettingsForm';
 import { ThemeProvider } from './src/theme/ThemeContext';
 import ManageUsersScreen from './src/screens/ManageUsersScreen';
 import { Linking } from 'react-native';
-import queryString from 'query-string'; // npm install query-string
+import queryString from 'query-string'; // npm install query-strin
 import { NavigationContainerRef } from '@react-navigation/native';
 
 const Stack = createNativeStackNavigator();
