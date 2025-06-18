@@ -9,6 +9,56 @@ import fetchMock from 'jest-fetch-mock';
 // Capture the mock function for later assertions
 const mockInjectJavaScript = jest.fn();
 
+jest.mock('react-native-tts', () => {
+  return {
+    esModule: true,
+    default: {
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      setDefaultLanguage: jest.fn(),
+      setDefaultRate: jest.fn(),
+      setDefaultPitch: jest.fn(),
+      setDefaultVoice: jest.fn(),
+      voices: jest.fn(),
+      speak: jest.fn(),
+      stop: jest.fn(),
+      getInitStatus: jest.fn().mockResolvedValue('success'),
+    }
+  };
+});
+
+jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => 'Icon');
+jest.mock('react-native-vector-icons/Ionicons', () => 'Icon');
+jest.mock('react-native-vector-icons/FontAwesome', () => 'Icon');
+jest.mock('react-native-vector-icons/FontAwesome5', () => 'Icon');
+
+jest.mock('expo-font', () => ({
+  esModule: true,
+  loadAsync: jest.fn().mockResolvedValue(true),
+  isLoaded: jest.fn().mockReturnValue(true),
+  Font: {
+    loadAsync: jest.fn().mockResolvedValue(true),
+    isLoaded: jest.fn().mockReturnValue(true),
+  },
+}));
+
+// Mock @expo/vector-icons
+jest.mock('@expo/vector-icons', () => ({
+  MaterialCommunityIcons: 'MockedMaterialCommunityIcons',
+  Ionicons: 'MockedIonicons',
+  FontAwesome: 'MockedFontAwesome',
+  FontAwesome5: 'MockedFontAwesome5',
+  createIconSet: () => 'MockedIcon',
+}));
+
+
+// Mock other native modules if needed
+jest.mock('@react-native-community/geolocation', () => ({
+  getCurrentPosition: jest.fn(),
+  watchPosition: jest.fn(() => 123),
+  clearWatch: jest.fn(),
+  stopObserving: jest.fn(),
+}));
 // Mock Firebase Firestore
 jest.mock('@react-native-firebase/firestore', () => {
   return () => ({
