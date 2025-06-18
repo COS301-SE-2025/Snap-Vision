@@ -7,11 +7,17 @@ import AppButton from '../atoms/AppButton';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+
+type RootStackParamList = {
+  Map: undefined;
+  // add other screens here if needed
+};
 
 export default function HomeContent() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  const navigation = useNavigation();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -32,7 +38,6 @@ export default function HomeContent() {
               <AppButton
                 title="GO TO MAPS"
                 onPress={() => navigation.navigate('Map')}
-                color={colors.primary}
               />
             </View>
           </View>

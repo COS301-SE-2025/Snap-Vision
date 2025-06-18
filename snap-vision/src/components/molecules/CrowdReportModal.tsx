@@ -32,10 +32,10 @@ const CrowdReportModal: React.FC<CrowdReportModalProps> = ({
   const colors = getThemeColors(isDark);
 
   const densityOptions = [
-    { value: 'low', label: 'Low Crowd', icon: '🟢', description: 'Few people around' },
-    { value: 'moderate', label: 'Moderate Crowd', icon: '🟡', description: 'Some people present' },
-    { value: 'high', label: 'High Crowd', icon: '🟠', description: 'Quite crowded' },
-    { value: 'very-high', label: 'Very High Crowd', icon: '🔴', description: 'Extremely crowded' },
+    { value: 'empty', label: 'Empty', icon: '🟢', description: 'Few people around' },
+    { value: 'light', label: 'Light Crowd', icon: '🟡', description: 'Some people present' },
+    { value: 'moderate', label: 'Moderate Crowd', icon: '🟠', description: 'Quite crowded' },
+    { value: 'crowded', label: 'Very High Crowd', icon: '🔴', description: 'Extremely crowded' },
   ];
 
   return (

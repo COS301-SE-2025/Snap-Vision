@@ -71,7 +71,7 @@ describe('LoginForm', () => {
 
   it('logs in and navigates on valid credentials', async () => {
     mockSignIn.mockResolvedValueOnce({});
-    const { getByPlaceholderText, getByTestId } = render(
+    const { getByPlaceholderText, getByTestId, getByText } = render(
       <ThemeProviderWrapper>
         <LoginForm />
       </ThemeProviderWrapper>
@@ -86,7 +86,7 @@ describe('LoginForm', () => {
     
     await waitFor(() => {
       expect(mockSignIn).toHaveBeenCalledWith('test@example.com', 'password123');
-      expect(Alert.alert).toHaveBeenCalledWith('Success', 'Logged in!');
+      expect(getByText('Login successful!')).toBeTruthy();
       expect(mockNavigate).toHaveBeenCalledWith('Tabs');
     });
   });
