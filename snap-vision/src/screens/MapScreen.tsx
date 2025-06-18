@@ -20,7 +20,7 @@ import { TextIcon } from '../components/atoms/TextIcon';
 import DirectionsModal from '../components/organisms/DirectionsModal';
 import TextToSpeech from '../components/molecules/TextToSpeech';
 
-const ROUTING_API_BASE = "http://192.168.0.133:3000"; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = "http://10.0.2.2:3000"; // <-- Use your correct backend IP here
 
 const MapScreen = () => {
   const lastRoute = useRef<any[]>([]);
@@ -589,16 +589,22 @@ useEffect(() => {
       </View>
 
       {destination && destinationCoords && (
-        <NavigationPanel
-          isNavigating={isNavigating}
-          isLoading={isRouteLoading}
-          onStartNavigation={startNavigation}
-          onStopNavigation={stopNavigation}
-          progress={routeProgress}
-          distance={distanceToDestination}
-          time={estimatedTime}
-          destination={destination}
-        />
+       <NavigationPanel
+  isNavigating={isNavigating}
+  isLoading={isRouteLoading}
+  onStartNavigation={startNavigation}
+  onStopNavigation={stopNavigation}
+  progress={routeProgress}
+  distance={distanceToDestination}
+  time={estimatedTime}
+  destination={destination}
+  isVoiceEnabled={isVoiceEnabled}
+  onToggleVoice={() => setIsVoiceEnabled(!isVoiceEnabled)}
+  currentInstruction={steps[currentStep]?.instruction}
+  onSpeakingChange={setIsSpeaking}
+/>
+
+
       )}
 
       <MapActionsPanel
@@ -616,12 +622,7 @@ useEffect(() => {
 
      {isNavigating && (
   <>
-    <TextToSpeech
-      isActive={isVoiceEnabled}
-      onToggle={() => setIsVoiceEnabled(!isVoiceEnabled)}
-      text={steps[currentStep]?.instruction}
-      onSpeakingChange={setIsSpeaking}
-    />
+ 
     
     <Pressable
       style={{

@@ -111,25 +111,18 @@ const TextToSpeech: React.FC<TextToSpeechProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginHorizontal: 2,
-    alignSelf: 'center',
-    backgroundColor: '#222',
-    minWidth: 90,
-    minHeight: 32,
-    justifyContent: 'center',
-    elevation: 2,
-    position: 'absolute',
-    bottom: 32, // Move to bottom of the screen
-    left: '50%',
-    transform: [{ translateX: -60 }],
-    zIndex: 20,
-  },
+ container: {
+ flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  paddingVertical: 4, // reduced
+  paddingHorizontal: 8, // reduced
+  borderRadius: 6,
+  height: 36, // fixed height
+  width: 100, // fixed width to match both buttons
+  backgroundColor: '#222',
+},
+
   icon: {
     fontSize: 16,
     marginRight: 4,
