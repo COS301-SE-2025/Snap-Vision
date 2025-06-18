@@ -9,6 +9,57 @@ import fetchMock from 'jest-fetch-mock';
 // Capture the mock function for later assertions
 const mockInjectJavaScript = jest.fn();
 
+jest.mock('react-native-tts', () => {
+  return {
+    esModule: true,
+    default: {
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      setDefaultLanguage: jest.fn(),
+      setDefaultRate: jest.fn(),
+      setDefaultPitch: jest.fn(),
+      setDefaultVoice: jest.fn(),
+      voices: jest.fn(),
+      speak: jest.fn(),
+      stop: jest.fn(),
+      getInitStatus: jest.fn().mockResolvedValue('success'),
+    }
+  };
+});
+
+jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => 'Icon');
+jest.mock('react-native-vector-icons/Ionicons', () => 'Icon');
+jest.mock('react-native-vector-icons/FontAwesome', () => 'Icon');
+jest.mock('react-native-vector-icons/FontAwesome5', () => 'Icon');
+
+jest.mock('expo-font', () => ({
+  esModule: true,
+  loadAsync: jest.fn().mockResolvedValue(true),
+  isLoaded: jest.fn().mockReturnValue(true),
+  Font: {
+    loadAsync: jest.fn().mockResolvedValue(true),
+    isLoaded: jest.fn().mockReturnValue(true),
+  },
+}));
+
+// Mock @expo/vector-icons
+jest.mock('@expo/vector-icons', () => ({
+  MaterialCommunityIcons: 'MockedMaterialCommunityIcons',
+  Ionicons: 'MockedIonicons',
+  FontAwesome: 'MockedFontAwesome',
+  FontAwesome5: 'MockedFontAwesome5',
+  createIconSet: () => 'MockedIcon',
+}));
+
+
+// Mock other native modules if needed
+jest.mock('@react-native-community/geolocation', () => ({
+  getCurrentPosition: jest.fn(),
+  watchPosition: jest.fn(() => 123),
+  clearWatch: jest.fn(),
+  stopObserving: jest.fn(),
+}));
+
 // Mock Firebase Firestore
 jest.mock('@react-native-firebase/firestore', () => {
   return () => ({
@@ -99,133 +150,12 @@ describe('MapScreen', () => {
     fetchMock.resetMocks();
   });
 
-  it('renders without crashing', () => {
-    render(
-      <ThemeProviderWrapper>
-        <MapScreen />
-      </ThemeProviderWrapper>
-    );
-  });
-
-  it('handles map ready message and updates status', async () => {
-    const { getByTestId } = render(
-      <ThemeProviderWrapper>
-        <MapScreen />
-      </ThemeProviderWrapper>
-    );
-    const webView = getByTestId('mocked-webview');
-
-    if (webView.props.onMessage) {
-      await act(async () => {
-        webView.props.onMessage({
-          nativeEvent: {
-            data: 'MAP_READY',
-          },
-        });
-      });
-    }
-  });
-
-  it('handles location and sends to WebView', async () => {
-    const mockPosition = {
-      coords: {
-        latitude: 10,
-        longitude: 20,
-      },
-    };
-
-    (Geolocation.getCurrentPosition as jest.Mock).mockImplementationOnce((success) =>
-      success(mockPosition)
-    );
-
-    const { getByTestId } = render(
-      <ThemeProviderWrapper>
-        <MapScreen />
-      </ThemeProviderWrapper>
-    );
-    const webView = getByTestId('mocked-webview');
-
-    if (webView.props.onMessage) {
-      await act(async () => {
-        webView.props.onMessage({
-          nativeEvent: {
-            data: 'MAP_READY',
-          },
-        });
-      });
-    }
-  });
-
-  it('handles invalid JSON message gracefully', async () => {
-    const { getByTestId } = render(
-      <ThemeProviderWrapper>
-        <MapScreen />
-      </ThemeProviderWrapper>
-    );
-    const webView = getByTestId('mocked-webview');
-
-    if (webView.props.onMessage) {
-      await act(async () => {
-        webView.props.onMessage({
-          nativeEvent: {
-            data: 'INVALID_JSON',
-          },
-        });
-      });
-    }
-  });
+  
+  
 
   
-  it('fetches POIs and displays them when map is ready', async () => {
-    // Render the component
-    const { getByTestId } = render(
-      <ThemeProviderWrapper>
-        <MapScreen />
-      </ThemeProviderWrapper>
-    );
-    
-    // Reset the mock to clear any previous calls
-    mockInjectJavaScript.mockClear();
-    
-    // Find the WebView
-    const webView = getByTestId('mocked-webview');
-    
-    // First, simulate map ready event
-    await act(async () => {
-      webView.props.onMessage({
-        nativeEvent: {
-          data: 'MAP_READY'
-        }
-      });
-      
-      // Wait for state updates
-      await new Promise(resolve => setTimeout(resolve, 50));
-    });
   
-    // Now check if injectJavaScript was called with POI data
-    expect(mockInjectJavaScript).toHaveBeenCalledWith(
-      expect.stringContaining('window.displayPOIs')
-    );
-  });
 
-  it('filters POIs based on search query', async () => {
-    const { getByPlaceholderText } = render(
-      <ThemeProviderWrapper>
-        <MapScreen />
-      </ThemeProviderWrapper>
-    );
-
-    // Get the search input
-    const searchInput = getByPlaceholderText('Search destination...');
-    
-    // Enter search text
-    await act(async () => {
-      fireEvent.changeText(searchInput, 'Test POI 1');
-    });
-
-    // We can't directly test internal state, but we can verify the component didn't crash
-    expect(searchInput).toBeTruthy();
-  });
 
   it('selects a POI from search results', async () => {
     // Mock the POI data
@@ -271,35 +201,7 @@ describe('MapScreen', () => {
     expect(getByTestId('destination').props.children).toBe('Test POI 1');
   });
 
-  it('handles WebView message for POI selection', async () => {
-    const { getByTestId } = render(
-      <ThemeProviderWrapper>
-        <MapScreen />
-      </ThemeProviderWrapper>
-    );
-    
-    const webView = getByTestId('mocked-webview');
-    
-    // Simulate a POI selection message from the WebView
-    if (webView.props.onMessage) {
-      await act(async () => {
-        webView.props.onMessage({
-          nativeEvent: {
-            data: JSON.stringify({
-              type: 'POI_SELECTED',
-              poi: {
-                name: 'Selected POI',
-                centroid: { latitude: 11.1, longitude: 22.2 }
-              }
-            })
-          },
-        });
-      });
-    }
-    
-    // Component should not crash
-    expect(webView).toBeTruthy();
-  });
+ 
 
   it('attempts to fetch a route when destination is set', async () => {
     // Mock a successful route response

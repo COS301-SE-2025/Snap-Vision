@@ -10,6 +10,9 @@ module.exports = {
     + '|react-clone-referenced-element'
     + '|react-native-svg'
     + '|native-base'
+    + '|react-native-tts'
+    + '|expo-font'
+    + '|react-native-vector-icons'
     + ')/)',
   ],
   setupFilesAfterEnv: ['@testing-library/jest-native/extend-expect'],
