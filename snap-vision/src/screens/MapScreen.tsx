@@ -20,7 +20,7 @@ import { TextIcon } from '../components/atoms/TextIcon';
 import DirectionsModal from '../components/organisms/DirectionsModal';
 import TextToSpeech from '../components/molecules/TextToSpeech';
 
-const ROUTING_API_BASE = "http://192.168.0.133:3000"; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = "http://10.0.2.2:3000"; // <-- Use your correct backend IP here
 
 const MapScreen = () => {
   const lastRoute = useRef<any[]>([]);
@@ -280,46 +280,50 @@ const MapScreen = () => {
   // Update navigation progress
   const updateNavigationProgress = (latitude: number, longitude: number) => {
     if (!lastRoute.current || lastRoute.current.length === 0) return;
-    
+  
     // Find closest point on the route
     let minDist = Infinity;
     let closestPointIndex = 0;
-    
+  
     for (let i = 0; i < lastRoute.current.length; i++) {
       const routePoint = lastRoute.current[i];
       const distance = getDistanceMeters(
-        latitude, 
-        longitude, 
+        latitude,
+        longitude,
         routePoint[1], // Latitude
         routePoint[0]  // Longitude
       );
-      
+  
       if (distance < minDist) {
         minDist = distance;
         closestPointIndex = i;
       }
     }
-    
+  
     // Calculate progress (0-100%)
     const progress = (closestPointIndex / (lastRoute.current.length - 1)) * 100;
     setRouteProgress(Math.min(Math.round(progress), 100));
-    
+  
+    console.log(`Progress: ${progress}% (Closest point index: ${closestPointIndex})`);
+  
     // Update route progress visually
     const jsProgressCode = `window.updateRouteProgress && window.updateRouteProgress(${closestPointIndex});`;
     webViewRef.current?.injectJavaScript(jsProgressCode);
-    
+  
     // Check if we've reached the destination (within 20 meters)
     const destinationPoint = lastRoute.current[lastRoute.current.length - 1];
     const distanceToEnd = getDistanceMeters(
-      latitude, 
-      longitude, 
+      latitude,
+      longitude,
       destinationPoint[1], // Latitude
       destinationPoint[0]  // Longitude
     );
-    
+  
     // Update distance to destination
     setDistanceToDestination(distanceToEnd);
-    
+  
+    console.log(`Distance to destination: ${distanceToEnd} meters`);
+  
     // If we're very close to destination, end navigation
     if (distanceToEnd < 20) {
       stopNavigation();
