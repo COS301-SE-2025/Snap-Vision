@@ -1,8 +1,10 @@
-// src/components/organisms/MapActionsPanel.tsx
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import ActionButtonWithTooltip from '../molecules/ActionButtonWithTooltip';
 import { TextIcon } from '../atoms/TextIcon';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
 
 interface Props {
   currentLocation: boolean;
@@ -27,29 +29,31 @@ const MapActionsPanel = ({
   onShareOut,
   onReportIn,
   onReportOut,
-  color,
 }: Props) => {
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
+
   if (!currentLocation) return null;
 
   return (
     <View style={styles.container}>
       <ActionButtonWithTooltip
-        icon={<TextIcon icon="📍" />}
+        icon={<Icon name="share-social" size={30} color="white" />}
         onPress={onShare}
         onPressIn={onShareIn}
         onPressOut={onShareOut}
         showTooltip={shareTooltip}
-        backgroundColor={color}
+        backgroundColor={colors.primary}
         tooltipText="Share Location"
       />
       <View style={styles.spacer} />
       <ActionButtonWithTooltip
-        icon={<TextIcon icon="⚠️" />}
+        icon={<Icon name="people" size={30} color="white" />}
         onPress={onReport}
         onPressIn={onReportIn}
         onPressOut={onReportOut}
         showTooltip={reportTooltip}
-        backgroundColor={color}
+        backgroundColor={colors.primary}
         tooltipText="Report Crowds"
       />
     </View>

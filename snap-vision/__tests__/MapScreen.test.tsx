@@ -9,6 +9,41 @@ import fetchMock from 'jest-fetch-mock';
 // Capture the mock function for later assertions
 const mockInjectJavaScript = jest.fn();
 
+
+
+jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => 'Icon');
+jest.mock('react-native-vector-icons/Ionicons', () => 'Icon');
+jest.mock('react-native-vector-icons/FontAwesome', () => 'Icon');
+jest.mock('react-native-vector-icons/FontAwesome5', () => 'Icon');
+
+jest.mock('expo-font', () => ({
+  esModule: true,
+  loadAsync: jest.fn().mockResolvedValue(true),
+  isLoaded: jest.fn().mockReturnValue(true),
+  Font: {
+    loadAsync: jest.fn().mockResolvedValue(true),
+    isLoaded: jest.fn().mockReturnValue(true),
+  },
+}));
+
+// Mock @expo/vector-icons
+jest.mock('@expo/vector-icons', () => ({
+  MaterialCommunityIcons: 'MockedMaterialCommunityIcons',
+  Ionicons: 'MockedIonicons',
+  FontAwesome: 'MockedFontAwesome',
+  FontAwesome5: 'MockedFontAwesome5',
+  createIconSet: () => 'MockedIcon',
+}));
+
+
+// Mock other native modules if needed
+jest.mock('@react-native-community/geolocation', () => ({
+  getCurrentPosition: jest.fn(),
+  watchPosition: jest.fn(() => 123),
+  clearWatch: jest.fn(),
+  stopObserving: jest.fn(),
+}));
+
 // Mock Firebase Firestore
 jest.mock('@react-native-firebase/firestore', () => {
   return () => ({
