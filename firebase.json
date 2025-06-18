@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "Snap-Vision/web",
+    "public": "web",
     "ignore": [
       "firebase.json",
       "**/.*",

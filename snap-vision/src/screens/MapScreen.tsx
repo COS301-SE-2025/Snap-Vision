@@ -146,7 +146,7 @@ const MapScreen = () => {
       return;
     }
     try {
-      const url = `https://www.google.com/maps?q=${currentLocation.latitude},${currentLocation.longitude}`;
+      const url = `https://snap-vision-f6954.web.app/location?lat=${currentLocation.latitude}&lng=${currentLocation.longitude}`;
       const message = `Check out my location: ${url}`;
       await Share.share({ message, url, title: 'Share Location' });
       setStatus('Location shared successfully');
