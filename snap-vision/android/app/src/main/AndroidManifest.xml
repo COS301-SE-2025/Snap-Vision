@@ -29,6 +29,18 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
+
+        <!-- for deep links -->
+        <intent-filter android:autoVerify="true">
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data
+                android:scheme="https"
+                android:host="snap-vision-f6954.web.app"
+                android:pathPrefix="/location" />
+        </intent-filter>
+
       </activity>
       <meta-data
     android:name="com.google.android.geo.API_KEY"
