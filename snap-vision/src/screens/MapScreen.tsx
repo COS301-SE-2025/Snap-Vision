@@ -19,8 +19,14 @@ import { getThemeColors } from '../theme';
 import { TextIcon } from '../components/atoms/TextIcon';
 import DirectionsModal from '../components/organisms/DirectionsModal';
 import TextToSpeech from '../components/molecules/TextToSpeech';
+import { useRoute } from '@react-navigation/native';
 
-const ROUTING_API_BASE = "http://10.0.2.2:3000"; // <-- Use your correct backend IP here
+type MapScreenParams = {
+  lat?: string;
+  lng?: string;
+};
+
+const ROUTING_API_BASE = "http://192.168.0.133:3000"; // <-- Use your correct backend IP here
 
 const MapScreen = () => {
   const lastRoute = useRef<any[]>([]);
@@ -60,6 +66,12 @@ const MapScreen = () => {
   const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
   const [pois, setPOIs] = useState<any[]>([]);
   const [poiSuggestions, setPOISuggestions] = useState<any[]>([]);
+
+  // share location things
+  const route = useRoute();
+  const params = route.params as MapScreenParams;
+  const [hasHandledDeepLink, setHasHandledDeepLink] = useState(false);
+
 
   const sendLocationToWebView = (lat: number, lon: number, centerMap = false) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
@@ -388,6 +400,7 @@ useEffect(() => {
   };
 
   const handleSelectPOI = (poi: any) => {
+    setHasHandledDeepLink(true); // Prevent deep link from overriding
     // Stop navigation if currently navigating
     if (isNavigating) {
       stopNavigation();
@@ -536,6 +549,19 @@ useEffect(() => {
       setIsRouteLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!hasHandledDeepLink && params && params.lat && params.lng) {
+      const lat = parseFloat(params.lat);
+      const lng = parseFloat(params.lng);
+      setDestination("Friend's Location");
+      setDestinationCoords([lng, lat]);
+      if (currentLocation) {
+        fetchRoute([lng, lat]);
+      }
+      setHasHandledDeepLink(true); // Mark as handled
+    }
+  }, [params, currentLocation, hasHandledDeepLink]);
 
   // Clean up on unmount
   useEffect(() => {
