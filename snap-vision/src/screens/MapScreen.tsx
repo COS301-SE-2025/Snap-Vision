@@ -26,7 +26,7 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = "http://192.168.0.133:3000"; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = "http://10.0.2.2:3000"; // <-- Use your correct backend IP here
 
 const MapScreen = () => {
   const lastRoute = useRef<any[]>([]);
@@ -78,8 +78,12 @@ const MapScreen = () => {
     const jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap});`;
     webViewRef.current?.injectJavaScript(jsCode);
     
-    // Update navigation progress when navigating
-    if (isNavigating && destinationCoords) {
+    // Always update progress when navigating - force this to run
+    if (isNavigating && lastRoute.current && lastRoute.current.length > 0) {
+      // Add visual feedback that we're updating
+      setStatus(`Updating location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
+      
+      // Call updateNavigationProgress directly
       updateNavigationProgress(lat, lon);
     }
   };
@@ -253,6 +257,7 @@ const MapScreen = () => {
     
     setIsNavigating(true);
     setStatus('Navigation started');
+    setRouteProgress(0);
     
     // Start watching position with higher frequency
     if (watchIdRef.current) {
@@ -270,7 +275,7 @@ const MapScreen = () => {
       { 
         enableHighAccuracy: true, 
         distanceFilter: 5, // Update every 5 meters
-        interval: 2000 // Update every 2 seconds
+        interval: 1000 // Update every 2 seconds
       }
     );
   };
@@ -289,56 +294,135 @@ const MapScreen = () => {
     webViewRef.current?.injectJavaScript('if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }');
   };
 
-  // Update navigation progress
+  // Update the updateNavigationProgress function to check for destination arrival
+  
   const updateNavigationProgress = (latitude: number, longitude: number) => {
-    if (!lastRoute.current || lastRoute.current.length === 0) return;
-    
+    if (!lastRoute.current || lastRoute.current.length === 0) {
+      return;
+    }
+  
     // Find closest point on the route
     let minDist = Infinity;
     let closestPointIndex = 0;
-    
+  
     for (let i = 0; i < lastRoute.current.length; i++) {
       const routePoint = lastRoute.current[i];
       const distance = getDistanceMeters(
-        latitude, 
-        longitude, 
+        latitude,
+        longitude,
         routePoint[1], // Latitude
         routePoint[0]  // Longitude
       );
-      
+  
       if (distance < minDist) {
         minDist = distance;
         closestPointIndex = i;
       }
     }
+  
+    // Calculate a more precise progress
+    // Consider not just the closest point, but also the percentage between points
+    let progressValue;
     
-    // Calculate progress (0-100%)
-    const progress = (closestPointIndex / (lastRoute.current.length - 1)) * 100;
-    setRouteProgress(Math.min(Math.round(progress), 100));
+    if (closestPointIndex < lastRoute.current.length - 1) {
+      // Calculate distance between current point and next point
+      const currentPoint = lastRoute.current[closestPointIndex];
+      const nextPoint = lastRoute.current[closestPointIndex + 1];
+      
+      // Distance from user to closest point
+      const distToClosest = getDistanceMeters(
+        latitude, longitude,
+        currentPoint[1], currentPoint[0]
+      );
+      
+      // Distance from user to next point
+      const distToNext = getDistanceMeters(
+        latitude, longitude,
+        nextPoint[1], nextPoint[0]
+      );
+      
+      // Distance between closest and next point
+      const segmentLength = getDistanceMeters(
+        currentPoint[1], currentPoint[0],
+        nextPoint[1], nextPoint[0]
+      );
+      
+      // If we're between two points, calculate the fractional position
+      if (distToClosest + distToNext <= segmentLength * 1.2) { // Allow some margin
+        const segmentProgress = distToClosest / (distToClosest + distToNext);
+        const fractionalIndex = closestPointIndex + segmentProgress;
+        progressValue = (fractionalIndex / (lastRoute.current.length - 1)) * 100;
+      } else {
+        // Just use the closest point index
+        progressValue = (closestPointIndex / (lastRoute.current.length - 1)) * 100;
+      }
+    } else {
+      // At the last point
+      progressValue = 100;
+    }
     
-    // Update route progress visually
-    const jsProgressCode = `window.updateRouteProgress && window.updateRouteProgress(${closestPointIndex});`;
-    webViewRef.current?.injectJavaScript(jsProgressCode);
+    // Update progress with a more precise value
+    const newProgress = Math.min(Math.round(progressValue), 100);
+    setRouteProgress(newProgress);
     
-    // Check if we've reached the destination (within 20 meters)
+    // Check if we've reached the destination point
     const destinationPoint = lastRoute.current[lastRoute.current.length - 1];
     const distanceToEnd = getDistanceMeters(
-      latitude, 
-      longitude, 
-      destinationPoint[1], // Latitude
-      destinationPoint[0]  // Longitude
+      latitude, longitude,
+      destinationPoint[1], destinationPoint[0]
     );
     
     // Update distance to destination
     setDistanceToDestination(distanceToEnd);
     
-    // If we're very close to destination, end navigation
-    if (distanceToEnd < 20) {
-      stopNavigation();
-      setStatus('You have reached your destination!');
-      // Show 100% completion
-      setRouteProgress(100);
+    // Keep status update brief to avoid UI clutter
+    setStatus(`Progress: ${newProgress}%`);
+  
+    // Update route progress visually
+    if (webViewRef.current) {
+      const jsProgressCode = `
+        if (window.updateRouteProgress) {
+          window.updateRouteProgress(${closestPointIndex}, ${progressValue / 100});
+        }
+      `;
+      webViewRef.current.injectJavaScript(jsProgressCode);
     }
+  
+    // Check destination arrival based on either:
+    // 1. Progress is 100%
+    // 2. Distance to destination is less than 20 meters
+    if (newProgress >= 100 || distanceToEnd < 20) {
+      destinationReached();
+    }
+  };
+  
+  // Add this new function to handle reaching the destination
+  const destinationReached = () => {
+    if (!isNavigating) return; // Only handle if actually navigating
+    
+    // Stop navigation
+    stopNavigation();
+    
+    // Show destination reached message
+    setStatus('You have reached your destination!');
+    
+    // Ensure progress is set to 100%
+    setRouteProgress(100);
+    
+    // Speak the arrival message if voice is enabled
+    if (isVoiceEnabled) {
+      Tts.stop();
+      setTimeout(() => {
+        Tts.speak('You have reached your destination');
+      }, 500);
+    }
+    
+    // Optional: Show a congratulatory alert
+    Alert.alert(
+      'Destination Reached',
+      'You have arrived at your destination!',
+      [{ text: 'OK', onPress: () => console.log('Destination reached acknowledged') }]
+    );
   };
 
   // Fetch POIs from Firestoreconst [showDirectionsSheet, setShowDirectionsSheet] = useState(false);
@@ -571,6 +655,21 @@ useEffect(() => {
       }
     };
   }, []);
+
+    // Add this new useEffect after your other useEffects
+  useEffect(() => {
+    // Only run when navigating
+    if (!isNavigating || !currentLocation) return;
+    
+    // Force update progress every 2 seconds
+    const progressInterval = setInterval(() => {
+      if (currentLocation && lastRoute.current && lastRoute.current.length > 0) {
+        updateNavigationProgress(currentLocation.latitude, currentLocation.longitude);
+      }
+    }, 500);
+    
+    return () => clearInterval(progressInterval);
+  }, [isNavigating, currentLocation]);
 
  return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
