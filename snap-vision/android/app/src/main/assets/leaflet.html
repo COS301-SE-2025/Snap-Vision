@@ -211,7 +211,31 @@
       }
     };
     
+    function showAllPOIMarkers() {
+      poiMarkers.forEach(marker => {
+        if (!map.hasLayer(marker)) {
+          marker.addTo(map);
+        }
+      });
+    }
     
+    function hideOtherPOIMarkers(selectedMarker) {
+      poiMarkers.forEach(marker => {
+        if (marker !== selectedMarker && map.hasLayer(marker)) {
+          map.removeLayer(marker);
+        }
+      });
+    }
+    
+    window.selectPOI = function(poiId) {
+      const selectedMarker = poiMarkers.find(marker => marker.poiData && marker.poiData.id === poiId);
+      if (selectedMarker && window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'POI_SELECTED',
+          poi: selectedMarker.poiData
+        }));
+      }
+    };
 
 function showAllPOIMarkers() {
   poiMarkers.forEach(marker => {
