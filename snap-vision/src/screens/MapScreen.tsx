@@ -66,8 +66,12 @@ const MapScreen = () => {
     const jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap});`;
     webViewRef.current?.injectJavaScript(jsCode);
     
-    // Update navigation progress when navigating
-    if (isNavigating && destinationCoords) {
+    // Always update progress when navigating - force this to run
+    if (isNavigating && lastRoute.current && lastRoute.current.length > 0) {
+      // Add visual feedback that we're updating
+      setStatus(`Updating location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
+      
+      // Call updateNavigationProgress directly
       updateNavigationProgress(lat, lon);
     }
   };
@@ -241,6 +245,7 @@ const MapScreen = () => {
     
     setIsNavigating(true);
     setStatus('Navigation started');
+    setRouteProgress(0);
     
     // Start watching position with higher frequency
     if (watchIdRef.current) {
@@ -279,7 +284,13 @@ const MapScreen = () => {
 
   // Update navigation progress
   const updateNavigationProgress = (latitude: number, longitude: number) => {
-    if (!lastRoute.current || lastRoute.current.length === 0) return;
+    // Add alert for debugging
+    setStatus(`Updating progress: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+    
+    if (!lastRoute.current || lastRoute.current.length === 0) {
+      setStatus('No route data available');
+      return;
+    }
   
     // Find closest point on the route
     let minDist = Infinity;
@@ -302,13 +313,23 @@ const MapScreen = () => {
   
     // Calculate progress (0-100%)
     const progress = (closestPointIndex / (lastRoute.current.length - 1)) * 100;
-    setRouteProgress(Math.min(Math.round(progress), 100));
-  
-    console.log(`Progress: ${progress}% (Closest point index: ${closestPointIndex})`);
+    const newProgress = Math.min(Math.round(progress), 100);
+    
+    // Force update the UI with the progress
+    setRouteProgress(newProgress);
+    
+    // Show progress in status for debugging
+    setStatus(`Progress: ${newProgress}% (Point ${closestPointIndex}/${lastRoute.current.length-1})`);
   
     // Update route progress visually
-    const jsProgressCode = `window.updateRouteProgress && window.updateRouteProgress(${closestPointIndex});`;
-    webViewRef.current?.injectJavaScript(jsProgressCode);
+    if (webViewRef.current) {
+      const jsProgressCode = `
+        if (window.updateRouteProgress) {
+          window.updateRouteProgress(${closestPointIndex});
+        }
+      `;
+      webViewRef.current.injectJavaScript(jsProgressCode);
+    }
   
     // Check if we've reached the destination (within 20 meters)
     const destinationPoint = lastRoute.current[lastRoute.current.length - 1];
@@ -321,8 +342,6 @@ const MapScreen = () => {
   
     // Update distance to destination
     setDistanceToDestination(distanceToEnd);
-  
-    console.log(`Distance to destination: ${distanceToEnd} meters`);
   
     // If we're very close to destination, end navigation
     if (distanceToEnd < 20) {
@@ -549,6 +568,21 @@ useEffect(() => {
       }
     };
   }, []);
+
+    // Add this new useEffect after your other useEffects
+  useEffect(() => {
+    // Only run when navigating
+    if (!isNavigating || !currentLocation) return;
+    
+    // Force update progress every 2 seconds
+    const progressInterval = setInterval(() => {
+      if (currentLocation && lastRoute.current && lastRoute.current.length > 0) {
+        updateNavigationProgress(currentLocation.latitude, currentLocation.longitude);
+      }
+    }, 2000);
+    
+    return () => clearInterval(progressInterval);
+  }, [isNavigating, currentLocation]);
 
  return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
