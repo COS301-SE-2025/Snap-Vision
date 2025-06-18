@@ -282,6 +282,8 @@ const MapScreen = () => {
     webViewRef.current?.injectJavaScript('if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }');
   };
 
+  // Update the updateNavigationProgress function to check for destination arrival
+  
   const updateNavigationProgress = (latitude: number, longitude: number) => {
     if (!lastRoute.current || lastRoute.current.length === 0) {
       return;
@@ -351,6 +353,16 @@ const MapScreen = () => {
     const newProgress = Math.min(Math.round(progressValue), 100);
     setRouteProgress(newProgress);
     
+    // Check if we've reached the destination point
+    const destinationPoint = lastRoute.current[lastRoute.current.length - 1];
+    const distanceToEnd = getDistanceMeters(
+      latitude, longitude,
+      destinationPoint[1], destinationPoint[0]
+    );
+    
+    // Update distance to destination
+    setDistanceToDestination(distanceToEnd);
+    
     // Keep status update brief to avoid UI clutter
     setStatus(`Progress: ${newProgress}%`);
   
@@ -364,9 +376,42 @@ const MapScreen = () => {
       webViewRef.current.injectJavaScript(jsProgressCode);
     }
   
-    // Check destination arrival and update remaining logic...
-    // Rest of the function remains the same
-  }
+    // Check destination arrival based on either:
+    // 1. Progress is 100%
+    // 2. Distance to destination is less than 20 meters
+    if (newProgress >= 100 || distanceToEnd < 20) {
+      destinationReached();
+    }
+  };
+  
+  // Add this new function to handle reaching the destination
+  const destinationReached = () => {
+    if (!isNavigating) return; // Only handle if actually navigating
+    
+    // Stop navigation
+    stopNavigation();
+    
+    // Show destination reached message
+    setStatus('You have reached your destination!');
+    
+    // Ensure progress is set to 100%
+    setRouteProgress(100);
+    
+    // Speak the arrival message if voice is enabled
+    if (isVoiceEnabled) {
+      Tts.stop();
+      setTimeout(() => {
+        Tts.speak('You have reached your destination');
+      }, 500);
+    }
+    
+    // Optional: Show a congratulatory alert
+    Alert.alert(
+      'Destination Reached',
+      'You have arrived at your destination!',
+      [{ text: 'OK', onPress: () => console.log('Destination reached acknowledged') }]
+    );
+  };
 
   // Fetch POIs from Firestoreconst [showDirectionsSheet, setShowDirectionsSheet] = useState(false);
 
