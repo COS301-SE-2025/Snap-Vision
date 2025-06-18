@@ -1,12 +1,13 @@
 // src/screens/MapScreen.tsx
 import React, { useState, useRef } from 'react';
-import { View, Alert, Share } from 'react-native';
+import { View, Alert, Share, Text } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import { PermissionsAndroid } from 'react-native';
 import { WebView as WebViewType } from 'react-native-webview';
 import { useEffect } from 'react';
 import firestore from '@react-native-firebase/firestore';
-
+import { Modal, FlatList, Pressable } from 'react-native';
+import Tts from 'react-native-tts';
 import MapWebView from '../components/organisms/MapWebView';
 import CrowdReportModal from '../components/molecules/CrowdReportModal';
 import StatusOverlay from '../components/atoms/StatusOverlay';
@@ -15,6 +16,15 @@ import MapActionsPanel from '../components/organisms/MapActionsPanel';
 import NavigationPanel from '../components/organisms/NavigationPanel';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
+import { TextIcon } from '../components/atoms/TextIcon';
+import DirectionsModal from '../components/organisms/DirectionsModal';
+import TextToSpeech from '../components/molecules/TextToSpeech';
+import { useRoute } from '@react-navigation/native';
+
+type MapScreenParams = {
+  lat?: string;
+  lng?: string;
+};
 
 const ROUTING_API_BASE = "http://192.168.0.133:3000"; // <-- Use your correct backend IP here
 
@@ -37,7 +47,15 @@ const MapScreen = () => {
   const [showReportTooltip, setShowReportTooltip] = useState(false);
   const webViewRef = useRef<WebViewType>(null);
   const [isMapReady, setIsMapReady] = useState(false);
+
+  // Turn-by-turn state
+  const [steps, setSteps] = useState<any[]>([]);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [isRouteLoading, setIsRouteLoading] = useState(false);
+  const [shouldStartTTS, setShouldStartTTS] = useState(false);
+  const [showDirectionsSheet, setShowDirectionsSheet] = useState(false);
   
   // Navigation state
   const [isNavigating, setIsNavigating] = useState(false);
@@ -48,6 +66,12 @@ const MapScreen = () => {
   const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
   const [pois, setPOIs] = useState<any[]>([]);
   const [poiSuggestions, setPOISuggestions] = useState<any[]>([]);
+
+  // share location things
+  const route = useRoute();
+  const params = route.params as MapScreenParams;
+  const [hasHandledDeepLink, setHasHandledDeepLink] = useState(false);
+
 
   const sendLocationToWebView = (lat: number, lon: number, centerMap = false) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
@@ -134,7 +158,7 @@ const MapScreen = () => {
       return;
     }
     try {
-      const url = `https://www.google.com/maps?q=${currentLocation.latitude},${currentLocation.longitude}`;
+      const url = `https://snap-vision-f6954.web.app/location?lat=${currentLocation.latitude}&lng=${currentLocation.longitude}`;
       const message = `Check out my location: ${url}`;
       await Share.share({ message, url, title: 'Share Location' });
       setStatus('Location shared successfully');
@@ -205,6 +229,10 @@ const MapScreen = () => {
       const jsRouteCode = `window.drawRoute && window.drawRoute(${JSON.stringify(coordinates)});`;
       webViewRef.current?.injectJavaScript(jsRouteCode);
       setStatus('Route found!');
+      const stepsArr = data.features?.[0]?.properties?.segments?.[0]?.steps || [];
+      setSteps(stepsArr);
+      setCurrentStep(0);
+      setShowDirectionsSheet(true);
       
       // Reset progress
       setRouteProgress(0);
@@ -313,7 +341,26 @@ const MapScreen = () => {
     }
   };
 
-  // Fetch POIs from Firestore
+  // Fetch POIs from Firestoreconst [showDirectionsSheet, setShowDirectionsSheet] = useState(false);
+
+useEffect(() => {
+  if (isNavigating && shouldStartTTS && steps.length > 0 && currentStep < steps.length) {
+    const instruction = steps[currentStep]?.instruction;
+    if (instruction) {
+      console.log('TTS should speak:', instruction);
+      try {
+        Tts.stop();
+        setTimeout(() => {
+          Tts.speak(instruction);
+        }, 500);
+      } catch (e) {
+        console.error('TTS Error:', e);
+        setError('Voice guidance is not available.');
+      }
+    }
+  }
+}, [isNavigating, shouldStartTTS, steps, currentStep]);
+
   useEffect(() => {
     const fetchPOIs = async () => {
       try {
@@ -353,6 +400,7 @@ const MapScreen = () => {
   };
 
   const handleSelectPOI = (poi: any) => {
+    setHasHandledDeepLink(true); // Prevent deep link from overriding
     // Stop navigation if currently navigating
     if (isNavigating) {
       stopNavigation();
@@ -502,6 +550,19 @@ const MapScreen = () => {
     }
   };
 
+  useEffect(() => {
+    if (!hasHandledDeepLink && params && params.lat && params.lng) {
+      const lat = parseFloat(params.lat);
+      const lng = parseFloat(params.lng);
+      setDestination("Friend's Location");
+      setDestinationCoords([lng, lat]);
+      if (currentLocation) {
+        fetchRoute([lng, lat]);
+      }
+      setHasHandledDeepLink(true); // Mark as handled
+    }
+  }, [params, currentLocation, hasHandledDeepLink]);
+
   // Clean up on unmount
   useEffect(() => {
     return () => {
@@ -511,8 +572,23 @@ const MapScreen = () => {
     };
   }, []);
 
-  return (
+ return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <DirectionsModal
+        visible={showDirectionsSheet}
+        onClose={() => setShowDirectionsSheet(false)}
+        onStart={() => {
+          setIsNavigating(true);
+          setShouldStartTTS(true);
+          setCurrentStep(0);
+          setShowDirectionsSheet(false);
+          console.log('Navigation started');
+        }}
+        destination={destination}
+        steps={steps}
+        currentStep={currentStep}
+      />
+      {/* Rest of your components remain the same */}
       <DestinationSearch
         value={destination}
         onChange={text => {
@@ -533,22 +609,28 @@ const MapScreen = () => {
         suggestions={poiSuggestions}
         onSelectSuggestion={handleSelectPOI}
       />
-
+      
       <View style={{ flex: 1 }}>
         <MapWebView ref={webViewRef} onMessage={handleWebViewMessage} />
       </View>
 
       {destination && destinationCoords && (
-        <NavigationPanel
-          isNavigating={isNavigating}
-          isLoading={isRouteLoading}
-          onStartNavigation={startNavigation}
-          onStopNavigation={stopNavigation}
-          progress={routeProgress}
-          distance={distanceToDestination}
-          time={estimatedTime}
-          destination={destination}
-        />
+       <NavigationPanel
+  isNavigating={isNavigating}
+  isLoading={isRouteLoading}
+  onStartNavigation={startNavigation}
+  onStopNavigation={stopNavigation}
+  progress={routeProgress}
+  distance={distanceToDestination}
+  time={estimatedTime}
+  destination={destination}
+  isVoiceEnabled={isVoiceEnabled}
+  onToggleVoice={() => setIsVoiceEnabled(!isVoiceEnabled)}
+  currentInstruction={steps[currentStep]?.instruction}
+  onSpeakingChange={setIsSpeaking}
+/>
+
+
       )}
 
       <MapActionsPanel
@@ -564,6 +646,29 @@ const MapScreen = () => {
         color={colors.primary}
       />
 
+     {isNavigating && (
+  <>
+ 
+    
+    <Pressable
+      style={{
+        position: 'absolute',
+        bottom: 171,
+        right: 22,
+        backgroundColor: colors.primary,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 4,
+      }}
+      onPress={() => setShowDirectionsSheet(true)}
+    >
+      <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 24 }}>🧭</Text>
+    </Pressable>
+  </>
+)}
       <CrowdReportModal
         visible={showCrowdPopup}
         selectedDensity={selectedDensity}

@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Pressable } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import TextToSpeech from '../molecules/TextToSpeech'; // Import the TTS component
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 interface NavigationPanelProps {
   isNavigating: boolean;
@@ -13,6 +15,10 @@ interface NavigationPanelProps {
   distance: number | null;
   time: number | null;
   destination: string;
+  isVoiceEnabled: boolean;
+  onToggleVoice: () => void;
+  currentInstruction?: string;
+  onSpeakingChange?: (isSpeaking: boolean) => void;
 }
 
 const NavigationPanel: React.FC<NavigationPanelProps> = ({
@@ -23,8 +29,13 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
   progress,
   distance,
   time,
-  destination
+  destination,
+  isVoiceEnabled,
+  onToggleVoice,
+  currentInstruction,
+  onSpeakingChange,
 }) => {
+
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   
@@ -52,94 +63,97 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.card }]}>
-      {/* Destination Info */}
-      <View style={styles.infoSection}>
-        <Text style={[styles.destinationText, { color: colors.text }]} numberOfLines={1}>
-          {destination}
-        </Text>
-        
-        {distance !== null && (
-          <View style={styles.detailsRow}>
-            <Icon name="map-marker-distance" size={16} color={colors.primary} style={styles.icon} />
-            <Text style={[styles.detailsText, { color: colors.text }]}>
-              {formatDistance(distance)}
-            </Text>
-            
-            {time !== null && (
-              <>
-                <Text style={[styles.separator, { color: colors.text }]}>•</Text>
-                <Icon name="clock-outline" size={16} color={colors.primary} style={styles.icon} />
-                <Text style={[styles.detailsText, { color: colors.text }]}>
-                  {formatTime(time)}
-                </Text>
-              </>
-            )}
-          </View>
-        )}
-        
-        {/* Progress Bar */}
-        {(isNavigating || progress > 0) && (
-          <View style={[styles.progressContainer, { backgroundColor: colors.border }]}>
-            <View 
-              style={[
-                styles.progressBar, 
-                { width: `${progress}%`, backgroundColor: colors.primary }
-              ]} 
-            />
-            <Text style={[styles.progressText, progress > 50 ? { color: '#fff' } : { color: colors.text }]}>
-              {Math.round(progress)}%
-            </Text>
-          </View>
-        )}
-      </View>
-      
-      {/* Navigation Button */}
-      <TouchableOpacity
-        style={[
-          styles.navButton,
-          { backgroundColor: isNavigating ? '#E53935' : colors.primary }
-        ]}
-        onPress={isNavigating ? onStopNavigation : onStartNavigation}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <ActivityIndicator color="#fff" size="small" />
-        ) : (
+  {/* Destination Info */}
+  <View style={styles.infoSection}>
+    <Text style={[styles.destinationText, { color: colors.text }]} numberOfLines={1}>
+      {destination}
+    </Text>
+
+    {distance !== null && (
+      <View style={styles.detailsRow}>
+        <Icon name="map-marker-distance" size={16} color={colors.primary} style={styles.icon} />
+        <Text style={[styles.detailsText, { color: colors.text }]}>{formatDistance(distance)}</Text>
+
+        {time !== null && (
           <>
-            <Icon 
-              name={isNavigating ? "stop-circle" : "navigation"} 
-              size={18} 
-              color="#fff" 
-              style={styles.buttonIcon} 
-            />
-            <Text style={styles.navButtonText}>
-              {isNavigating ? 'Stop' : 'Start'}
-            </Text>
+            <Text style={[styles.separator, { color: colors.text }]}>•</Text>
+            <Icon name="clock-outline" size={16} color={colors.primary} style={styles.icon} />
+            <Text style={[styles.detailsText, { color: colors.text }]}>{formatTime(time)}</Text>
           </>
         )}
-      </TouchableOpacity>
+      </View>
+    )}
+
+    {(isNavigating || progress > 0) && (
+      <View style={[styles.progressContainer, { backgroundColor: colors.border }]}>
+        <View
+          style={[
+            styles.progressBar,
+            { width: `${progress}%`, backgroundColor: colors.primary }
+          ]}
+        />
+        <Text style={[styles.progressText, progress > 50 ? { color: '#fff' } : { color: colors.text }]}>
+          {Math.round(progress)}%
+        </Text>
+      </View>
+    )}
+
+    {/* Buttons vertically stacked */}
+    <View style={styles.actionsContainer}>
+  <Pressable
+    style={[styles.voiceStyleButton, { backgroundColor: isNavigating ? '#E53935' : colors.primary }]}
+    onPress={isNavigating ? onStopNavigation : onStartNavigation}
+    disabled={isLoading}
+  >
+    <Text style={styles.voiceIcon}>
+  {isLoading ? '⏳' : isNavigating ? '🛑' : '🧭'}
+</Text>
+
+    <Text style={styles.voiceLabel}>
+      {isLoading ? 'Loading' : isNavigating ? 'Stop' : 'Start'}
+    </Text>
+  </Pressable>
+
+  {isNavigating && (
+    <View style={{ marginTop: 8 }}>
+      <TextToSpeech
+        isActive={isVoiceEnabled}
+        onToggle={onToggleVoice}
+        text={currentInstruction}
+        onSpeakingChange={onSpeakingChange}
+      />
     </View>
+  )}
+</View>
+
+  </View>
+</View>
+
+
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    bottom: 70, // Positioned above the MapActionsPanel
-    left: 10,
-    right: 10,
-    padding: 12,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    zIndex: 1000,
-  },
+  position: 'absolute',
+  bottom: 20,
+  left: '10%',         // Changed from 10
+  right: '10%',        // Changed from 10
+  maxWidth: 360,       // Optional: limit max width
+  padding: 12,
+  borderRadius: 12,
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.25,
+  shadowRadius: 3.84,
+  elevation: 5,
+  zIndex: 1000,
+  alignSelf: 'center', // Helps centralize on screen
+},
+
   infoSection: {
     flex: 1,
     marginRight: 12,
@@ -205,6 +219,46 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
+
+  actionColumn: {
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+voiceStyleButton: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  paddingVertical: 4, // reduced
+  paddingHorizontal: 8, // reduced
+  borderRadius: 6,
+  height: 36, // fixed height
+  width: 100, // fixed width to match both buttons
+  backgroundColor: '#222',
+},
+
+
+voiceIcon: {
+  fontSize: 16,
+  marginRight: 4,
+  color: '#fff',
+},
+
+voiceLabel: {
+  fontSize: 12,
+  fontWeight: 'bold',
+  color: '#fff',
+},
+
+actionsContainer: {
+  flexDirection: 'row',
+  justifyContent: 'flex-end',
+  alignItems: 'center',
+  gap: 8, // If using React Native >= 0.71; otherwise, use marginRight
+},
+
+
+
 });
 
 export default NavigationPanel;
