@@ -1,4 +1,3 @@
-// src/components/molecules/UserCard.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -17,45 +16,36 @@ export default function UserCard({ user, onEdit, onDelete, onToggleStatus }: Pro
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
-  const getRoleColor = (role: string) => {
-    return role === 'Admin' ? '#824713' : '#B78459';
-  };
-
-  const getStatusColor = (status: string) => {
-    return status === 'Active' ? '#4CAF50' : '#FF9800';
-  };
+  const roleColor = user.role === 'Admin' ? colors.secondary : colors.roleSecondary;
+  const statusColor = user.status === 'Active' ? colors.statusActive : colors.statusInactive;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <View style={styles.leftSection}>
-        <Icon name="person-circle" size={40} color={colors.text} />
+        <Icon name="person-circle" size={40} color={colors.secondary} />
         <View style={styles.userInfo}>
-          <Text style={[styles.userName, { color: colors.text }]}>{user.name}</Text>
-          <Text style={[styles.userEmail, { color: isDark ? '#999' : '#666' }]}>{user.email}</Text>
+          <Text style={[styles.userName, { color: colors.primary }]}>{user.name}</Text>
+          <Text style={[styles.userEmail, { color: colors.secondary }]}>{user.email}</Text>
         </View>
       </View>
       
       <View style={styles.rightSection}>
         <View style={styles.roleStatusContainer}>
-          <Text style={[styles.roleText, { color: getRoleColor(user.role) }]}>
-            {user.role}
-          </Text>
-          <Text style={[styles.statusText, { color: getStatusColor(user.status) }]}>
-            {user.status}
-          </Text>
+          <Text style={[styles.roleText, { color: roleColor }]}>{user.role}</Text>
+          <Text style={[styles.statusText, { color: statusColor }]}>{user.status}</Text>
         </View>
         
         <View style={styles.actionsContainer}>
           <TouchableOpacity style={styles.actionButton} onPress={() => onEdit(user)}>
-            <Icon name="create-outline" size={20} color="#824713" />
+            <Icon name="create-outline" size={20} color={colors.primary} />
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.actionButton} onPress={() => onDelete(user)}>
-            <Icon name="close" size={20} color="#F44336" />
+            <Icon name="close" size={20} color={colors.danger} />
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.actionButton} onPress={() => onToggleStatus(user)}>
-            <Icon name="lock-closed" size={20} color="#FF9800" />
+            <Icon name="lock-closed" size={20} color={colors.warning} />
           </TouchableOpacity>
         </View>
       </View>

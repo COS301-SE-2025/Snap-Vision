@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import TopBar from '../molecules/TopBar';
+// import TopBar from '../molecules/TopBar';
 import AppButton from '../atoms/AppButton';
 import AppSecondaryButton from '../atoms/AppSecondaryButton';
+import SettingsHeader from '../molecules/SettingsHeader';
 
 interface Floorplan {
   id: string;
@@ -30,10 +31,10 @@ export default function AdminEditFloorplansContent({
 }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <TopBar title="Edit Floorplans" onBackPress={() => navigation.goBack()} />
+      <SettingsHeader title="Edit Floorplans" />
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         {/* Step 1: Select Floorplan */}
-        <Text style={[styles.label, { color: colors.text }]}>Select Floorplan</Text>
+        <Text style={[styles.label, { color: colors.primary }]}>Select Floorplan</Text>
         <View style={styles.floorplanList}>
           {mockFloorplans.map(fp => (
             <TouchableOpacity
@@ -44,7 +45,7 @@ export default function AdminEditFloorplansContent({
               ]}
               onPress={() => setSelectedFloorplan(fp.id)}
             >
-              <Text style={{ color: selectedFloorplan === fp.id ? colors.background : colors.text }}>
+              <Text style={{ color: selectedFloorplan === fp.id ? colors.background : colors.secondary }}>
                 {fp.name}
               </Text>
             </TouchableOpacity>

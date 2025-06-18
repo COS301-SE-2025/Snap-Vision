@@ -1,4 +1,3 @@
-// src/components/atoms/FilterButton.tsx
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -16,13 +15,16 @@ export default function FilterButton({ title, iconName, isSelected, onPress }: P
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
+  const selectedBackground = colors.secondary;
+  const selectedText = '#fff';
+
   return (
     <TouchableOpacity
       style={[
         styles.container,
         {
-          backgroundColor: isSelected ? '#824713' : colors.card,
-          borderColor: isSelected ? '#824713' : colors.border,
+          backgroundColor: isSelected ? selectedBackground : colors.card,
+          borderColor: isSelected ? selectedBackground : colors.secondary,
         },
       ]}
       onPress={onPress}
@@ -30,13 +32,13 @@ export default function FilterButton({ title, iconName, isSelected, onPress }: P
       <Icon
         name={iconName}
         size={20}
-        color={isSelected ? '#fff' : colors.text}
+        color={isSelected ? selectedText : colors.secondary}
         style={styles.icon}
       />
       <Text
         style={[
           styles.text,
-          { color: isSelected ? '#fff' : colors.text },
+          { color: isSelected ? selectedText : colors.secondary },
         ]}
       >
         {title}

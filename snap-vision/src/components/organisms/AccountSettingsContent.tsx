@@ -1,54 +1,65 @@
-    import React from 'react';
-    import { View, StyleSheet, Alert } from 'react-native';
-    import SettingsHeader from '../molecules/SettingsHeader';
-    import AccountDetails from '../molecules/AccountDetails';
-    import { useTheme } from '../../theme/ThemeContext';
-    import { getThemeColors } from '../../theme';
-    import LogoutButton from '../molecules/LogoutButton';
-    import auth from '@react-native-firebase/auth'; // Updated import
+import React from 'react';
+import { View, StyleSheet, Alert, SafeAreaView, ScrollView } from 'react-native';
+import SettingsHeader from '../molecules/SettingsHeader';
+import AccountDetails from '../molecules/AccountDetails';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
+import LogoutButton from '../molecules/LogoutButton';
+import auth from '@react-native-firebase/auth';
 
-    interface Props {
-    navigation: any;
+interface Props {
+  navigation: any;
+}
+
+export default function AccountSettingsContent({ navigation }: Props) {
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
+
+  const handleLogout = async () => {
+    try {
+      await auth().signOut();
+      Alert.alert('Logged Out', 'You have been logged out successfully.');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    } catch (error) {
+      const errorMessage =
+        error && typeof error === 'object' && 'message' in error
+          ? (error as { message?: string }).message
+          : 'An error occurred while logging out.';
+      Alert.alert('Error Logging Out', errorMessage || 'An error occurred while logging out.');
     }
+  };
 
-    export default function AccountSettingsContent({ navigation }: Props) {
-    const { isDark } = useTheme();
-    const colors = getThemeColors(isDark);
-    const handleLogout = async () => {
-        console.log('tonyyyy');
-        try {
-        //console.log('Attempting to log out...');
-        await auth().signOut(); 
-        //console.log('Logged out successfully');
-        Alert.alert('Logged Out', 'You have been logged out successfully.');
-        navigation.reset({
-            index: 0,
-            routes: [{ name: 'Login' }],
-        });
-        } catch (error) {
-        console.error('Error logging out:', error);
-        Alert.alert('Error Logging Out', error.message || 'An error occurred while logging out.');
-        }
-    };
-
-    return (
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
+  return (
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent]}
+        style={{ backgroundColor: colors.background }}
+      >
         <SettingsHeader title="Account Settings" />
         <AccountDetails />
-
         <View style={styles.logoutWrapper}>
-            <LogoutButton onLogout={handleLogout} />
+          <LogoutButton onLogout={handleLogout} />
         </View>
-        </View>
-    );
-    }
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
 
-    const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    logoutWrapper: {
-        marginTop: 24,
-        alignItems: 'center',
-    },
-    });
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'space-between',
+    paddingBottom: 32,
+  },
+  logoutWrapper: {
+    marginTop: 24,
+    alignItems: 'center',
+  },
+});

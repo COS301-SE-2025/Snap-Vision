@@ -5,10 +5,17 @@ import IconButton from '../atoms/IconButton';
 import FAIcon from 'react-native-vector-icons/FontAwesome5';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
+import { useNavigation } from '@react-navigation/native';
+
+  type RootStackParamList = {
+    NotificationSettingsScreen: undefined;
+    AccountSettings: undefined;
+  };
 
 export default function HeaderWithIcons() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
+  const navigation = useNavigation<any>();
 
   return (
     <View style={styles.header}>
@@ -24,6 +31,11 @@ export default function HeaderWithIcons() {
         name="notifications-outline"
         color={colors.secondary}
         style={styles.notification}
+        onPress={() =>
+          navigation.navigate('Settings', {
+            screen: 'NotificationSettings',
+          })
+        }
       />
 
       <FAIcon
@@ -31,6 +43,11 @@ export default function HeaderWithIcons() {
         size={28}
         color={colors.secondary}
         style={styles.profile}
+        onPress={() =>
+          navigation.navigate('Settings', {
+            screen: 'AccountSettings',
+          })
+        }
       />
     </View>
   );
@@ -44,17 +61,18 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   title: {
-    fontSize: 54,
+    fontSize: 42,
     textAlign: 'center',
+    maxWidth: '90%',
   },
   notification: {
     position: 'absolute',
-    top: -10,   
-    right: 50,
+    top: -50,   
+    right: 55,
   },
   profile: {
     position: 'absolute',
-    top: -10,   
-    right: 10,
+    top: -50,   
+    right: 15,
   },
 });

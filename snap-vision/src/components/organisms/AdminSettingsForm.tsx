@@ -7,6 +7,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import TopBar from '../molecules/TopBar';
 import { useNavigation } from '@react-navigation/native';
+import SettingsHeader from '../molecules/SettingsHeader';
 
 const SectionHeader = ({ title }: { title: string }) => {
   const { isDark } = useTheme();
@@ -54,7 +55,7 @@ const AdminSettingsForm = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <TopBar title="App Settings" onBackPress={() => navigation.goBack()} />
+      <SettingsHeader title="App Settings" />
       <ScrollView 
         style={[styles.container, { backgroundColor: colors.background }]}
         contentContainerStyle={styles.contentContainer}

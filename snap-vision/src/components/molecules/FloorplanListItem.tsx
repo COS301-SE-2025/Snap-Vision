@@ -28,25 +28,25 @@ export default function FloorplanListItem({ item, onView, onEdit, onDelete, colo
       </View>
       
       <View style={styles.content}>
-        <Text style={[styles.title, { color: colors.text }]}>
+        <Text style={[styles.title, { color: colors.primary }]}>
           {item.buildingName} - {item.floorLabel}
         </Text>
-        <Text style={[styles.status, { color: item.status === 'active' ? colors.primary : colors.secondary }]}>
+        <Text style={[styles.status, { color: item.status === 'active' ? colors.secondary : colors.secondary }]}>
           {item.status}
         </Text>
       </View>
       
-      <Text style={[styles.date, { color: colors.text }]}>Uploaded on: {item.uploadDate}</Text>
+      <Text style={[styles.date, { color: colors.primary }]}>Uploaded on: {item.uploadDate}</Text>
       
       <View style={styles.actionButtons}>
         <TouchableOpacity onPress={onView} style={styles.actionButton}>
-          <Icon name="eye-outline" size={16} color={colors.text} />
+          <Icon name="eye-outline" size={16} color={colors.secondary} />
         </TouchableOpacity>
         <TouchableOpacity onPress={onEdit} style={styles.actionButton}>
-          <Icon name="create-outline" size={16} color={colors.text} />
+          <Icon name="create-outline" size={16} color={colors.secondary} />
         </TouchableOpacity>
         <TouchableOpacity onPress={onDelete} style={styles.actionButton}>
-          <Icon name="trash-outline" size={16} color={colors.text} />
+          <Icon name="trash-outline" size={16} color={colors.secondary} />
         </TouchableOpacity>
       </View>
     </View>

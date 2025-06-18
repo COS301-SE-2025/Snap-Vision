@@ -1,4 +1,3 @@
-// src/components/atoms/SearchInput.tsx
 import React from 'react';
 import { TextInput, View, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -17,16 +16,19 @@ export default function SearchInput({ placeholder, value, onChangeText, onSearch
   const colors = getThemeColors(isDark);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, borderColor: colors.primary }]}>
       <TextInput
-        style={[styles.input, { color: colors.text }]}
+        style={[styles.input, { color: colors.secondary }]}
         placeholder={placeholder}
-        placeholderTextColor={isDark ? '#999' : '#666'}
+        placeholderTextColor={colors.secondary}
         value={value}
         onChangeText={onChangeText}
       />
-      <TouchableOpacity style={[styles.searchButton, { backgroundColor: '#824713' }]} onPress={onSearch}>
-        <Icon name="search" size={20} color="#fff" />
+      <TouchableOpacity
+        style={[styles.searchButton, { backgroundColor: colors.primary }]}
+        onPress={onSearch}
+      >
+        <Icon name="search" size={20} color={'#fff'} />
       </TouchableOpacity>
     </View>
   );

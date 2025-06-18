@@ -9,7 +9,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
 export default function LoginForm() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
@@ -35,9 +35,11 @@ export default function LoginForm() {
 
     try {
       await auth().signInWithEmailAndPassword(email, password);
-      Alert.alert('Success', 'Logged in!');
+      // Alert.alert('Success', 'Logged in!');
       setSuccessMessage('Login successful!');
-      navigation.navigate('Tabs'); //removed timeout for testing purposes
+      setTimeout(() => {
+      navigation.navigate('Tabs');
+      }, 500); 
     } catch (error: any) {
       const errorMessages: Record<string, string> = {
         'auth/invalid-email': 'Invalid email address.',
@@ -98,7 +100,6 @@ export default function LoginForm() {
       <AppButton
         title="LOGIN"
         onPress={handleLogin}
-        color={colors.primary}
         testID="login-button"
       />
 
