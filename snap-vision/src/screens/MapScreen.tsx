@@ -26,8 +26,8 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = "http://10.32.220.249:3000"; // <-- Use your correct backend IP here
-//L wifi: 10.32.220.249
+const ROUTING_API_BASE = "http://192.168.0.127:3000"; // <-- Use your correct backend IP here
+//L wifi: 192.168.0.127
 
 const MapScreen = () => {
   const lastRoute = useRef<any[]>([]);
@@ -635,8 +635,9 @@ useEffect(() => {
     }
   };
 
+  //deep links for sharing location
   useEffect(() => {
-    if (!hasHandledDeepLink && params && params.lat && params.lng) {
+    if (params && params.lat && params.lng) {
       const lat = parseFloat(params.lat);
       const lng = parseFloat(params.lng);
       setDestination("Friend's Location");
@@ -644,9 +645,8 @@ useEffect(() => {
       if (currentLocation) {
         fetchRoute([lng, lat]);
       }
-      setHasHandledDeepLink(true); // Mark as handled
     }
-  }, [params, currentLocation, hasHandledDeepLink]);
+  }, [params, currentLocation]);
 
   // Clean up on unmount
   useEffect(() => {
