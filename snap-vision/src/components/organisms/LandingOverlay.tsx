@@ -21,4 +21,23 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
   const swappedTextColor = colors.primary;   // Use brown for text
   const swappedAccentColor = colors.text;    // Blue for accents/headings
 
-  
+  return (
+    <TouchableWithoutFeedback onPress={onDismiss}>
+      <View style={[styles.overlay, { backgroundColor: overlayBackgroundColor }]}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <Text
+            style={[
+              styles.titles,
+              {
+                color: swappedTextColor,
+                fontFamily: 'PermanentMarkerRegular',
+                transform: [{ rotate: '-2deg' }],
+              },
+            ]}
+          >
+            Snap Vision
+          </Text>
+
+          <Text style={[styles.tagline, { color: swappedAccentColor }]}>
+            Wander Less, Discover More
+          </Text>
