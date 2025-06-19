@@ -774,7 +774,27 @@ useEffect(() => {
         onReportOut={() => setShowReportTooltip(false)}
         color={colors.primary}
       />
-
+{isNavigating && steps.length > 0 && (
+  <Pressable
+    onPress={() => setShowDirectionsSheet(true)}
+    style={{
+      position: 'absolute',
+      top: 59,
+      left: 20,
+      right: 20,
+      backgroundColor: colors.card,
+      borderRadius: 8,
+      padding: 12,
+      alignItems: 'center',
+      elevation: 4,
+      zIndex: 1001,
+    }}
+  >
+    <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 16 }}>
+      {steps[currentStep]?.instruction}
+    </Text>
+  </Pressable>
+)}
       <CrowdReportModal
         visible={showCrowdPopup}
         selectedDensity={selectedDensity}
