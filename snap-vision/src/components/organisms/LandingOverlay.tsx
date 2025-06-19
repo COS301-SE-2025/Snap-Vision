@@ -41,3 +41,25 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
           <Text style={[styles.tagline, { color: swappedAccentColor }]}>
             Wander Less, Discover More
           </Text>
+
+          <Text style={[styles.description, { color: swappedTextColor }]}>
+            Snap Vision is an indoor and outdoor navigation system designed to help students and visitors
+            find their way around university spaces. Our mission is to make every step intuitive,
+            accessible, and fast — whether you’re locating a lecture hall or the nearest exit.
+          </Text>
+
+          <View style={styles.featureSection}>
+            <Text style={[styles.sectionTitle, { color: swappedTextColor }]}>Key Features</Text>
+            <View style={styles.featureBox}>
+              <Text style={[styles.featureText, { color: swappedTextColor }]}>Turn-by-turn Navigation</Text>
+            </View>
+            <View style={styles.featureBox}>
+              <Text style={[styles.featureText, { color: swappedTextColor }]}>Indoor & Outdoor Coverage</Text>
+            </View>
+            <View style={styles.featureBox}>
+              <Text style={[styles.featureText, { color: swappedTextColor }]}>Voice Assistance</Text>
+            </View>
+            <View style={styles.featureBox}>
+              <Text style={[styles.featureText, { color: swappedTextColor }]}>AR Navigation</Text>
+            </View>
+          </View>
