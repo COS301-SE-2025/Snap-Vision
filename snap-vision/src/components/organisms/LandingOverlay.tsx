@@ -98,3 +98,31 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     lineHeight: 22,
   },
+  featureSection: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 16,
+  },
+  featureBox: {
+    padding: 12,
+    marginVertical: 6,
+    backgroundColor: '#eeeeee33',
+    borderRadius: 10,
+    width: '90%',
+    alignItems: 'center',
+  },
+  featureText: {
+    fontSize: 16,
+  },
+  footer: {
+    fontSize: 12,
+    marginTop: 20,
+  },
+});
+
+export default LandingOverlay;
