@@ -9,6 +9,7 @@ import NotificationSettingsScreen from '../screens/NotificationSettingsScreen';
 import AppPreferencesScreen from '../screens/AppPreferences';
 import SupportScreen from '../screens/SupportScreen';
 import PrivacySecurityScreen from '../screens/PrivacySecurityScreen';
+import FAQScreen from '../screens/FAQScreen'; 
 
 const Stack = createNativeStackNavigator();
 
@@ -22,6 +23,7 @@ export default function SettingsNavigator() {
       <Stack.Screen name="AppPreferences" component={AppPreferencesScreen} />
       <Stack.Screen name="Support" component={SupportScreen} />
       <Stack.Screen name="PrivacySecurity" component={PrivacySecurityScreen} />
+      <Stack.Screen name="FAQ" component={FAQScreen} />
     </Stack.Navigator>
   );
 }
