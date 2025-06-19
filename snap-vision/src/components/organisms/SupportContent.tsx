@@ -22,7 +22,7 @@ export default function SupportContent() {
       title: 'Contact Support', 
       icon: 'email-outline',
       description: 'Send us an email with your question',
-      onPress: () => console.log('Contact Support pressed')
+      onPress: () => navigation.navigate('ContactSupport')
     },
     { 
       title: 'Tutorial', 
