@@ -63,3 +63,22 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
               <Text style={[styles.featureText, { color: swappedTextColor }]}>AR Navigation</Text>
             </View>
           </View>
+
+          <Text style={[styles.footer, { color: swappedTextColor }]}>© 2025 Snap Vision Team</Text>
+        </ScrollView>
+      </View>
+    </TouchableWithoutFeedback>
+  );
+};
+
+const styles = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 10,
+  },
+  container: {
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexGrow: 1,
+  },
