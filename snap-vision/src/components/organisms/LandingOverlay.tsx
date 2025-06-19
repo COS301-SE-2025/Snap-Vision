@@ -82,3 +82,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexGrow: 1,
   },
+  titles: {
+    fontSize: 42,
+    textAlign: 'center',
+    maxWidth: '90%',
+  },
+  tagline: {
+    fontSize: 18,
+    fontStyle: 'italic',
+    marginBottom: 20,
+  },
+  description: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 30,
+    lineHeight: 22,
+  },
