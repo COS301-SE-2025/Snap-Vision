@@ -26,7 +26,8 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = "http://10.0.2.2:3000"; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = "http://10.32.220.249:3000"; // <-- Use your correct backend IP here
+//L wifi: 10.32.220.249
 
 const MapScreen = () => {
   const lastRoute = useRef<any[]>([]);
@@ -670,6 +671,41 @@ useEffect(() => {
     
     return () => clearInterval(progressInterval);
   }, [isNavigating, currentLocation]);
+
+
+  // Dynamically request location updates every 3 seconds
+  useEffect(() => {
+    let watchId: number | null = null;
+  
+    const startWatchingLocation = async () => {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        watchId = Geolocation.watchPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            sendLocationToWebView(latitude, longitude);
+          },
+          (error) => {
+            setError('Failed to get location');
+          },
+          { enableHighAccuracy: true, distanceFilter: 0, interval: 3000, fastestInterval: 3000 }
+        );
+      } else {
+        setError('Location permission denied');
+      }
+    };
+  
+    startWatchingLocation();
+  
+    return () => {
+      if (watchId !== null) {
+        Geolocation.clearWatch(watchId);
+      }
+    };
+  }, []);
+
 
  return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
