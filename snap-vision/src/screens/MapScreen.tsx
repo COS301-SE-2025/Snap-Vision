@@ -718,7 +718,26 @@ useEffect(() => {
         isNavigating={isNavigating}
       />
       {/* Rest of your components remain the same */}
-      
+      {!isNavigating && (
+        <DestinationSearch
+          value={destination}
+          onChange={text => {
+            setDestination(text);
+            filterPOIs(text);
+            if (!text.trim()) {
+              if (isNavigating) {
+                stopNavigation();
+              }
+              webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+              lastRoute.current = [];
+              setDestinationCoords(null);
+            }
+          }}
+          onSearch={handleDestinationSearch}
+          suggestions={poiSuggestions}
+          onSelectSuggestion={handleSelectPOI}
+        />
+      )}
       
       <View style={{ flex: 1 }}>
         <MapWebView ref={webViewRef} onMessage={handleWebViewMessage} />
