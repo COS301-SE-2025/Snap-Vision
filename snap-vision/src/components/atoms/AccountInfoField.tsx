@@ -13,9 +13,9 @@ export default function AccountInfoField({ label, value }: AccountInfoFieldProps
   const colors = getThemeColors(isDark);
 
   return (
-    <View style={[styles.container, { borderColor: colors.border }]}>
+    <View style={[styles.container, { borderColor: colors.border || '#e1e1e1' }]}>
       <Text style={[styles.label, { color: colors.secondary }]}>{label}</Text>
-      <Text style={[styles.value, { color: colors.primary }]}>{value}</Text>
+      <Text style={[styles.value, { color: colors.text }]}>{value}</Text>
     </View>
   );
 }

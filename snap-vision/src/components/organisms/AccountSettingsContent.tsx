@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import SettingsHeader from '../molecules/SettingsHeader';
 import AccountDetails from '../molecules/AccountDetails';
@@ -14,9 +14,11 @@ interface Props {
 export default function AccountSettingsContent({ navigation }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
     try {
+      setIsLoggingOut(true);
       await auth().signOut();
       Alert.alert('Logged Out', 'You have been logged out successfully.');
       navigation.reset({
@@ -29,6 +31,8 @@ export default function AccountSettingsContent({ navigation }: Props) {
           ? (error as { message?: string }).message
           : 'An error occurred while logging out.';
       Alert.alert('Error Logging Out', errorMessage || 'An error occurred while logging out.');
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -37,7 +41,7 @@ export default function AccountSettingsContent({ navigation }: Props) {
       <SettingsHeader title="Account Settings" />
       <AccountDetails />
       <View style={styles.logoutWrapper}>
-        <LogoutButton onLogout={handleLogout} />
+        <LogoutButton onLogout={handleLogout} isLoading={isLoggingOut} />
       </View>
     </View>
   );
