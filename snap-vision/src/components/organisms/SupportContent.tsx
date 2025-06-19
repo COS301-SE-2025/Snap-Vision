@@ -28,7 +28,7 @@ export default function SupportContent() {
       title: 'Tutorial', 
       icon: 'book-open-page-variant-outline',
       description: 'View the tutorial to learn how to use SnapVision',
-      onPress: () => console.log('Tutorial pressed')
+      onPress: () => navigation.navigate('Tutorial')
     }
   ];
 

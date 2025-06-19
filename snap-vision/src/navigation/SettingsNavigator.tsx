@@ -11,6 +11,7 @@ import SupportScreen from '../screens/SupportScreen';
 import PrivacySecurityScreen from '../screens/PrivacySecurityScreen';
 import FAQScreen from '../screens/FAQScreen'; 
 import ContactSupportScreen from '../screens/ContactSupportScreen';
+import TutorialScreen from '../screens/TutorialScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -19,13 +20,13 @@ export default function SettingsNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
-      {/* <Stack.Screen name="Achievements" component={AchievementsScreen} /> */}
       <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
       <Stack.Screen name="AppPreferences" component={AppPreferencesScreen} />
       <Stack.Screen name="Support" component={SupportScreen} />
       <Stack.Screen name="PrivacySecurity" component={PrivacySecurityScreen} />
       <Stack.Screen name="FAQ" component={FAQScreen} />
       <Stack.Screen name="ContactSupport" component={ContactSupportScreen} />
+      <Stack.Screen name="Tutorial" component={TutorialScreen} />
     </Stack.Navigator>
   );
 }
