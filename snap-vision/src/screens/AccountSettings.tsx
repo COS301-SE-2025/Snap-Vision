@@ -1,8 +1,8 @@
-// AccountSettingsScreen.tsx
 import React from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
 import AccountSettingsContent from '../components/organisms/AccountSettingsContent';
-
+import { useTheme } from '../theme/ThemeContext';
+import { getThemeColors } from '../theme';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 type AccountSettingsScreenProps = {
@@ -10,14 +10,29 @@ type AccountSettingsScreenProps = {
 };
 
 export default function AccountSettingsScreen({ navigation }: AccountSettingsScreenProps) {
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
+  
   return (
-    <ScrollView style={styles.container}>
-      <AccountSettingsContent navigation={navigation} />
-    </ScrollView>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+      <StatusBar 
+        backgroundColor={colors.background}
+        barStyle={isDark ? 'light-content' : 'dark-content'} 
+      />
+      <ScrollView 
+        style={[styles.container, { backgroundColor: colors.background }]}
+        contentContainerStyle={{ backgroundColor: colors.background }}
+      >
+        <AccountSettingsContent navigation={navigation} />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },

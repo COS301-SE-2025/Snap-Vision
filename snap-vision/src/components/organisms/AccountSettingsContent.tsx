@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Alert, SafeAreaView, ScrollView } from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native';
 import SettingsHeader from '../molecules/SettingsHeader';
 import AccountDetails from '../molecules/AccountDetails';
 import { useTheme } from '../../theme/ThemeContext';
@@ -33,29 +33,19 @@ export default function AccountSettingsContent({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <ScrollView
-        contentContainerStyle={[styles.scrollContent]}
-        style={{ backgroundColor: colors.background }}
-      >
-        <SettingsHeader title="Account Settings" />
-        <AccountDetails />
-        <View style={styles.logoutWrapper}>
-          <LogoutButton onLogout={handleLogout} />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <SettingsHeader title="Account Settings" />
+      <AccountDetails />
+      <View style={styles.logoutWrapper}>
+        <LogoutButton onLogout={handleLogout} />
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
-    
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'space-between',
     paddingBottom: 32,
   },
   logoutWrapper: {
