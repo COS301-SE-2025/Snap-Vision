@@ -1,25 +1,13 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import RegisterForm from '../src/components/organisms/RegisterForm';
 import { Alert } from 'react-native';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { NavigationContainer } from '@react-navigation/native';
+import RegisterForm from '../src/components/organisms/RegisterForm';
 import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
 
-const mockCreateUser = jest.fn();
-
-jest.mock('@react-native-firebase/auth', () => () => ({
-  createUserWithEmailAndPassword: mockCreateUser,
-}));
-
-jest.mock('@react-navigation/native', () => {
-  const actualNav = jest.requireActual('@react-navigation/native');
-  return {
-    ...actualNav,
-    useNavigation: () => ({
-      navigate: jest.fn(),
-    }),
-  };
-});
+// Import mock Firebase module
+import auth from '@react-native-firebase/auth';
+const mockCreateUserWithEmailAndPassword = (auth as any).mockCreateUserWithEmailAndPassword;
 
 jest.spyOn(Alert, 'alert');
 
@@ -49,7 +37,9 @@ describe('RegisterForm', () => {
 
   it('shows alert if fields are empty', () => {
     const { getByTestId } = setup();
+
     fireEvent.press(getByTestId('register-button'));
+
     expect(Alert.alert).toHaveBeenCalledWith('Error', 'Please fill in all fields');
   });
 
@@ -96,7 +86,7 @@ describe('RegisterForm', () => {
   });
 
   it('calls Firebase auth and navigates on success', async () => {
-    mockCreateUser.mockResolvedValueOnce({});
+    mockCreateUserWithEmailAndPassword.mockResolvedValueOnce({});
 
     const { getByPlaceholderText, getByTestId } = setup();
 
@@ -108,13 +98,13 @@ describe('RegisterForm', () => {
     fireEvent.press(getByTestId('register-button'));
 
     await waitFor(() => {
-      expect(mockCreateUser).toHaveBeenCalledWith('john@example.com', 'Strong@123');
+      expect(mockCreateUserWithEmailAndPassword).toHaveBeenCalledWith('john@example.com', 'Strong@123');
       expect(Alert.alert).toHaveBeenCalledWith('Success', 'Account created!');
     });
   });
 
   it('shows Firebase error if email already in use', async () => {
-    mockCreateUser.mockRejectedValueOnce({ code: 'auth/email-already-in-use' });
+    mockCreateUserWithEmailAndPassword.mockRejectedValueOnce({ code: 'auth/email-already-in-use' });
 
     const { getByPlaceholderText, getByTestId } = setup();
 
