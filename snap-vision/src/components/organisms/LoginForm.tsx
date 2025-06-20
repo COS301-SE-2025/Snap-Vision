@@ -22,8 +22,6 @@ export default function LoginForm() {
   const [successMessage, setSuccessMessage] = useState('');
 
   const handleLogin = async () => {
-    const newErrors = { email: '', password: '' };
-    let hasError = false;
     setSuccessMessage('');
 
     if (!email.trim() || !password) {
