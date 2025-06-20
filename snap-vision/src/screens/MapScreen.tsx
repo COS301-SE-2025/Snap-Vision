@@ -27,7 +27,8 @@ type MapScreenParams = {
 };
 
 const ROUTING_API_BASE = "http://192.168.0.133:3000"; // <-- Use your correct backend IP here
-// T wifi: 192.168.0.133
+// emulator: 10.0.2.2
+// T home: 192.168.0.133
 //L wifi: 192.168.0.127
 // T data: 192.168.43.155
 

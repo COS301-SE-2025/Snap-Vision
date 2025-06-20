@@ -1,23 +1,30 @@
 // src/screens/HomeScreen.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import HomeContent from '../components/organisms/HomeContent';
+import MapHomeContent from '../components/organisms/HomeContent';
+import LandingOverlay from '../components/organisms/LandingOverlay';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 
-export default function HomeScreen() {
+const HomeScreen = () => {
+  const [showLanding, setShowLanding] = useState(true);
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
+  
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <HomeContent />
+      {!showLanding && <MapHomeContent />}
+      {showLanding && <LandingOverlay onDismiss={() => setShowLanding(false)} />}
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
 });
+
+export default HomeScreen;
+
