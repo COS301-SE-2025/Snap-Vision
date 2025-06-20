@@ -21,15 +21,19 @@ function AppInner() {
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
   const { setCoords } = useDeepLink();
   const [authReady, setAuthReady] = useState(false);
+  const [initialRoute, setInitialRoute] = useState<'Login' | 'Tabs'>('Login');
   const [pendingDeepLink, setPendingDeepLink] = useState<{ lat?: string; lng?: string } | null>(null);
 
   // Listen for auth state
   useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged(() => {
-      setAuthReady(true); // Only set to true after Firebase has checked auth state
+    const unsubscribe = auth().onAuthStateChanged((user) => {
+      setInitialRoute(user ? 'Tabs' : 'Login');
+      setAuthReady(true); // Only render navigator after this
     });
     return unsubscribe;
   }, []);
+
+  // if(!authReady) return null;
 
   // Handle deep link only after auth is ready
   useEffect(() => {
@@ -82,15 +86,20 @@ function AppInner() {
   return (
     <ThemeProvider>
       <NavigationContainer ref={navigationRef}>
-        <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Login" component={LoginScreen} />
+        {authReady && (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {initialRoute === 'Tabs' ? (
+            <Stack.Screen name="Tabs" component={BottomTabs} />
+          ) : (
+            <Stack.Screen name="Login" component={LoginScreen} />
+          )}
           <Stack.Screen name="Register" component={RegistrationScreen} />
-          <Stack.Screen name="Tabs" component={BottomTabs} />
           <Stack.Screen name="AdminLoadFloorplans" component={AdminLoadFloorplansScreen} />
           <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
           <Stack.Screen name="AdminSettings" component={AdminSettingsFrom} />
           <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
         </Stack.Navigator>
+      )}
       </NavigationContainer>
     </ThemeProvider>
   );
