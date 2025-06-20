@@ -15,6 +15,7 @@ import { NavigationContainerRef } from '@react-navigation/native';
 import { DeepLinkProvider, useDeepLink } from './src/DeepLinkContext';
 import auth from '@react-native-firebase/auth';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
+import { navigationRef } from './src/navigation/RootNavigation';
 
 const Stack = createNativeStackNavigator();
 
