@@ -195,7 +195,18 @@
   `);
     
         // When marker is clicked, hide all others and show only this one
-       
+        marker.on('click', function(e) {
+          if (!isNavigating) { // Only allow POI interactions when not navigating
+            hideOtherPOIMarkers(marker);
+            marker.openPopup();
+            // Listen for popup close to restore all markers
+            marker.once('popupclose', function() {
+              if (!isNavigating) { // Only restore markers if not navigating
+                showAllPOIMarkers();
+              }
+            });
+          }
+        });
     
         marker.poiData = poi;
         poiMarkers.push(marker);
@@ -207,7 +218,15 @@
       }
     };
     
-    
+    function showAllPOIMarkers() {
+      if (!isNavigating) { // Only show POI markers when not navigating
+        poiMarkers.forEach(marker => {
+          if (!map.hasLayer(marker)) {
+            marker.addTo(map);
+          }
+        });
+      }
+    }
     
     function hideOtherPOIMarkers(selectedMarker) {
       poiMarkers.forEach(marker => {
