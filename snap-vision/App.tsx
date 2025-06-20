@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import LoginScreen from './src/screens/LoginScreen'; 
+import LoginScreen from './src/screens/LoginScreen';
 import RegistrationScreen from './src/screens/RegistrationScreen';
 import BottomTabs from './src/navigation/BottomTabs';
 import AdminLoadFloorplansScreen from './src/screens/AdminLoadFloorplansScreen';
@@ -10,28 +10,37 @@ import AdminSettingsFrom from './src/components/organisms/AdminSettingsForm';
 import { ThemeProvider } from './src/theme/ThemeContext';
 import ManageUsersScreen from './src/screens/ManageUsersScreen';
 import { Linking } from 'react-native';
-import queryString from 'query-string'; // npm install query-strin
+import queryString from 'query-string';
 import { NavigationContainerRef } from '@react-navigation/native';
+import { DeepLinkProvider, useDeepLink } from './src/DeepLinkContext';
+import auth from '@react-native-firebase/auth';
 
 const Stack = createNativeStackNavigator();
 
-export default function App() {
+function AppInner() {
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
+  const { setCoords } = useDeepLink();
+  const [authReady, setAuthReady] = useState(false);
+  const [pendingDeepLink, setPendingDeepLink] = useState<{ lat?: string; lng?: string } | null>(null);
 
+  // Listen for auth state
+  useEffect(() => {
+    const unsubscribe = auth().onAuthStateChanged(() => {
+      setAuthReady(true); // Only set to true after Firebase has checked auth state
+    });
+    return unsubscribe;
+  }, []);
+
+  // Handle deep link only after auth is ready
   useEffect(() => {
     const handleDeepLink = (event: { url: string }) => {
       const url = event.url;
       if (url.includes('/location')) {
         const [, query = ''] = url.split('?');
         const params = queryString.parse(query);
-        // Navigate to the Map tab inside BottomTabs
-        navigationRef.current?.navigate('Tabs', {
-          screen: 'Map', // Change 'Map' to your actual tab name if different
-          params: {
-            lat: params.lat,
-            lng: params.lng,
-          },
-        });
+
+        // Save the deep link params until auth is ready
+        setPendingDeepLink({ lat: params.lat as string, lng: params.lng as string });
       }
     };
 
@@ -45,6 +54,30 @@ export default function App() {
       linkingListener.remove();
     };
   }, []);
+  
+    // When auth is ready and there's a pending deep link, handle navigation
+    useEffect(() => {
+      if (!authReady || !pendingDeepLink) return;
+  
+      if (auth().currentUser) {
+        // User is already logged in, navigate directly to Map with coordinates
+        navigationRef.current?.navigate('Tabs', {
+          screen: 'Map',
+          params: {
+            lat: pendingDeepLink.lat,
+            lng: pendingDeepLink.lng,
+          },
+        });
+      } else {
+        // User is not logged in, save coords and go to Login screen
+        setCoords({ lat: pendingDeepLink.lat, lng: pendingDeepLink.lng });
+        navigationRef.current?.reset({
+          index: 0,
+          routes: [{ name: 'Login' }],
+        });
+      }
+      setPendingDeepLink(null);
+    }, [authReady, pendingDeepLink, setCoords]);
 
   return (
     <ThemeProvider>
@@ -60,5 +93,13 @@ export default function App() {
         </Stack.Navigator>
       </NavigationContainer>
     </ThemeProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <DeepLinkProvider>
+      <AppInner />
+    </DeepLinkProvider>
   );
 }

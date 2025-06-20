@@ -17,6 +17,7 @@ export default function BottomTabs() {
 
   return (
     <Tab.Navigator
+      initialRouteName="Home"
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size }) => (
           <TabBarIcon routeName={route.name} color={color} size={size} />

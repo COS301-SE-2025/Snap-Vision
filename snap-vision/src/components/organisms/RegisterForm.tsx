@@ -8,17 +8,19 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
+import { useDeepLink } from '../../DeepLinkContext';
 
 type RootStackParamList = {
   Login: undefined;
   Home: undefined;
-  Tabs: undefined;
+  Tabs: { screen?: string; params?: { lat: string; lng: string } } | undefined;
 };
 
 export default function RegisterForm() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
+  const { coords, setCoords } = useDeepLink();
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -79,7 +81,15 @@ export default function RegisterForm() {
       Alert.alert('Success', 'Account created!');
       setSuccessMessage('Account created!');
       setTimeout(() => {
-        navigation.navigate('Tabs');
+        if (coords && coords.lat && coords.lng) {
+          navigation.replace('Tabs', {
+            screen: 'Map',
+            params: { lat: coords.lat, lng: coords.lng },
+          });
+          setCoords(null); // Clear after use
+        } else {
+          navigation.replace('Tabs');
+        }
       }, 1000);
     } catch (error: any) {
       const errorMessages: { [key: string]: string } = {
@@ -167,7 +177,6 @@ export default function RegisterForm() {
       <AppButton
         title="REGISTER"
         onPress={handleRegister}
-        color={colors.primary}
         testID="register-button"
       />
 
