@@ -7,11 +7,13 @@ import auth from '@react-native-firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
+import { useDeepLink } from '../../DeepLinkContext';
 
 export default function LoginForm() {
   const navigation = useNavigation<any>();
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
+  const { coords, setCoords } = useDeepLink();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,10 +37,17 @@ export default function LoginForm() {
 
     try {
       await auth().signInWithEmailAndPassword(email, password);
-      // Alert.alert('Success', 'Logged in!');
       setSuccessMessage('Login successful!');
       setTimeout(() => {
-      navigation.navigate('Tabs');
+        if (coords && coords.lat && coords.lng) {
+          navigation.replace('Tabs', {
+            screen: 'Map',
+            params: { lat: coords.lat, lng: coords.lng },
+          });
+          setCoords(null); // Clear after use
+        } else {
+          navigation.replace('Tabs');
+        }
       }, 500); 
     } catch (error: any) {
       const errorMessages: Record<string, string> = {

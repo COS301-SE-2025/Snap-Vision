@@ -29,6 +29,8 @@ type MapScreenParams = {
 const ROUTING_API_BASE = "http://192.168.0.133:3000"; // <-- Use your correct backend IP here
 // emulator: 10.0.2.2
 // T home: 192.168.0.133
+//L wifi: 192.168.0.127
+// T data: 192.168.43.155
 
 const MapScreen = () => {
   const lastRoute = useRef<any[]>([]);
@@ -635,17 +637,17 @@ useEffect(() => {
       setIsRouteLoading(false);
     }
   };
-
+  
+  // Handle deep link params if they exist
   useEffect(() => {
-    if (!hasHandledDeepLink && params && params.lat && params.lng) {
+    // Only process params once and if they exist
+    if (!hasHandledDeepLink && params && params.lat && params.lng && currentLocation) {
       const lat = parseFloat(params.lat);
       const lng = parseFloat(params.lng);
       setDestination("Friend's Location");
       setDestinationCoords([lng, lat]);
-      if (currentLocation) {
-        fetchRoute([lng, lat]);
-      }
-      setHasHandledDeepLink(true); // Mark as handled
+      fetchRoute([lng, lat]);
+      setHasHandledDeepLink(true);
     }
   }, [params, currentLocation, hasHandledDeepLink]);
 
@@ -672,6 +674,41 @@ useEffect(() => {
     
     return () => clearInterval(progressInterval);
   }, [isNavigating, currentLocation]);
+
+
+  // Dynamically request location updates every 3 seconds
+  useEffect(() => {
+    let watchId: number | null = null;
+  
+    const startWatchingLocation = async () => {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        watchId = Geolocation.watchPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            sendLocationToWebView(latitude, longitude);
+          },
+          (error) => {
+            setError('Failed to get location');
+          },
+          { enableHighAccuracy: true, distanceFilter: 0, interval: 3000, fastestInterval: 3000 }
+        );
+      } else {
+        setError('Location permission denied');
+      }
+    };
+  
+    startWatchingLocation();
+  
+    return () => {
+      if (watchId !== null) {
+        Geolocation.clearWatch(watchId);
+      }
+    };
+  }, []);
+
 
  return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
