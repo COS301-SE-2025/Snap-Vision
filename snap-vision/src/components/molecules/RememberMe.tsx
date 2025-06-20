@@ -15,11 +15,11 @@ export default function RememberMe({ rememberMe, onToggle, onForgotPassword }: P
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={onToggle}>
+      {/* <TouchableOpacity onPress={onToggle}>
         <Text style={[styles.linkText, { color: colors.secondary }]}>
           {rememberMe ? '◉' : '◯'} Remember Me
         </Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
       <TouchableOpacity onPress={onForgotPassword}>
         <Text style={[styles.linkText, { color: colors.secondary }]}>
           Forgot Password?
@@ -32,13 +32,14 @@ export default function RememberMe({ rememberMe, onToggle, onForgotPassword }: P
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 20,
+    // justifyContent: 'space-between',
+    alignSelf: 'flex-end',
+    alignItems: 'flex-end',
+    marginTop: 10,
     marginBottom: 30,
   },
   linkText: {
     fontWeight: '600',
-    fontSize: 14,
+    fontSize: 12,
   },
 });
