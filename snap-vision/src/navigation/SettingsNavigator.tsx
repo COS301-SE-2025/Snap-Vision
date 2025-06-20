@@ -4,7 +4,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import SettingsScreen from '../screens/SettingsScreen';
 import AccountSettingsScreen from '../screens/AccountSettings';
-import AchievementsScreen from '../screens/AchievementsScreen';
 import NotificationSettingsScreen from '../screens/NotificationSettingsScreen';
 import AppPreferencesScreen from '../screens/AppPreferences';
 import SupportScreen from '../screens/SupportScreen';
