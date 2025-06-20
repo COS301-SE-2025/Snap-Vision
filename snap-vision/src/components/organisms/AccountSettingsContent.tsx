@@ -6,6 +6,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import LogoutButton from '../molecules/LogoutButton';
 import auth from '@react-native-firebase/auth';
+import { resetToLogin } from '../../navigation/RootNavigation';
 
 interface Props {
   navigation: any;
@@ -21,10 +22,7 @@ export default function AccountSettingsContent({ navigation }: Props) {
       setIsLoggingOut(true);
       await auth().signOut();
       Alert.alert('Logged Out', 'You have been logged out successfully.');
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Login' }],
-      });
+      resetToLogin();
     } catch (error) {
       const errorMessage =
         error && typeof error === 'object' && 'message' in error

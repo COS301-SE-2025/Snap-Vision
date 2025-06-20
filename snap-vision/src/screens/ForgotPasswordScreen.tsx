@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import AppInput from '../components/atoms/AppInput';
 import AppButton from '../components/atoms/AppButton';
 import { useTheme } from '../theme/ThemeContext';
@@ -26,7 +26,18 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.header, {
+        fontFamily: 'PermanentMarkerRegular',
+        color: colors.primary,
+        transform: [{ rotate: '-3deg' }],
+      }]}>
+        RESET PASSWORD
+      </Text>
+
+      <Text style={[styles.label, { color: colors.secondary }]}>
+        Email
+      </Text>
       <AppInput
         placeholder="Enter your email"
         value={email}
@@ -35,6 +46,7 @@ export default function ForgotPasswordScreen() {
         autoCapitalize="none"
         style={[styles.input, { borderColor: colors.primary }]}
       />
+
       <AppButton title="Send Reset Email" onPress={handleResetPassword} />
     </View>
   );
@@ -45,13 +57,24 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     justifyContent: 'center',
-    backgroundColor: 'white',
+  },
+  header: {
+    fontSize: 48,
+    textAlign: 'center',
+    marginBottom: 32,
+  },
+  label: {
+    fontWeight: '600',
+    fontSize: 14,
+    marginTop: 12,
+    marginBottom: 8,
   },
   input: {
-    marginBottom: 20,
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
+    fontSize: 15,
+    marginBottom: 24,
   },
 });

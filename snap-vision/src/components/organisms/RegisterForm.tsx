@@ -14,6 +14,7 @@ type RootStackParamList = {
   Login: undefined;
   Home: undefined;
   Tabs: { screen?: string; params?: { lat: string; lng: string } } | undefined;
+  ForgotPassword: undefined;
 };
 
 export default function RegisterForm() {
@@ -172,7 +173,11 @@ export default function RegisterForm() {
       />
       {errors.confirmPassword ? <Text style={styles.error}>{errors.confirmPassword}</Text> : null}
 
-      <RememberMe rememberMe={rememberMe} onToggle={() => setRememberMe(!rememberMe)} />
+      <RememberMe
+          rememberMe={rememberMe}
+          onToggle={() => setRememberMe(!rememberMe)}
+          onForgotPassword={() => navigation.navigate('ForgotPassword')}
+      />
 
       <AppButton
         title="REGISTER"
@@ -197,7 +202,8 @@ export default function RegisterForm() {
 
 const styles = StyleSheet.create({
   header: {
-    fontSize: 72,
+    fontSize: 60,
+    fontFamily: 'PermanentMarkerRegular',
     textAlign: 'center',
     marginBottom: 40,
   },
