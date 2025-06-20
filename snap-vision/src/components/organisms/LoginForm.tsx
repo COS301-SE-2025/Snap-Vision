@@ -102,7 +102,12 @@ export default function LoginForm() {
       />
       {errors.password ? <Text style={styles.error}>{errors.password}</Text> : null}
 
-      <RememberMe rememberMe={rememberMe} onToggle={() => setRememberMe(!rememberMe)} />
+      <RememberMe
+        rememberMe={rememberMe}
+        onToggle={() => setRememberMe(!rememberMe)}
+        onForgotPassword={() => navigation.navigate('ForgotPassword')}
+      />
+
       
       <AppButton
         title="LOGIN"

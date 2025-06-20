@@ -14,6 +14,7 @@ import queryString from 'query-string';
 import { NavigationContainerRef } from '@react-navigation/native';
 import { DeepLinkProvider, useDeepLink } from './src/DeepLinkContext';
 import auth from '@react-native-firebase/auth';
+import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -98,6 +99,7 @@ function AppInner() {
           <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
           <Stack.Screen name="AdminSettings" component={AdminSettingsFrom} />
           <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         </Stack.Navigator>
       )}
       </NavigationContainer>
