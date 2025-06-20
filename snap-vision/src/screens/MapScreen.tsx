@@ -258,6 +258,7 @@ const MapScreen = () => {
     setIsNavigating(true);
     setStatus('Navigation started');
     setRouteProgress(0);
+        webViewRef.current?.injectJavaScript('window.setNavigationState && window.setNavigationState(true);');
     
     // Start watching position with higher frequency
     if (watchIdRef.current) {
@@ -289,6 +290,7 @@ const MapScreen = () => {
     
     setIsNavigating(false);
     setStatus('Navigation stopped');
+    webViewRef.current?.injectJavaScript('window.setNavigationState && window.setNavigationState(false);');
     
     // Clear progress line
     webViewRef.current?.injectJavaScript('if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }');
@@ -802,8 +804,6 @@ useEffect(() => {
         onSubmit={submitCrowdReport}
         onCancel={() => setShowCrowdPopup(false)}
       />
-
-      {status && <StatusOverlay status={status} />}
       {error && <StatusOverlay status={error} isError={true} onDismiss={() => setError(null)} />}
     </View>
   );
