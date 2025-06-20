@@ -235,7 +235,47 @@
         }
       });
     }
-   
+    window.closePOIPopup = function() {
+      map.closePopup();
+      if (!isNavigating) { // Only restore markers if not navigating
+        showAllPOIMarkers();
+      }
+    };
+
+    window.selectPOI = function(poiId) {
+      const selectedMarker = poiMarkers.find(marker => marker.poiData && marker.poiData.id === poiId);
+      if (selectedMarker) {
+        hideOtherPOIMarkers(selectedMarker);
+        
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'POI_SELECTED',
+            poi: selectedMarker.poiData
+          }));
+        }
+      }
+    };
+
+    // New functions to control navigation state
+    window.setNavigationState = function(navigating) {
+      isNavigating = navigating;
+      
+      if (navigating) {
+        // Hide all POI markers when navigation starts
+        poiMarkers.forEach(marker => {
+          if (map.hasLayer(marker)) {
+            map.removeLayer(marker);
+          }
+        });
+        // Close any open popups
+        map.closePopup();
+      } else {
+        // Show POI markers when navigation stops (if zoom level is appropriate)
+        if (map.getZoom() >= 16) {
+          showAllPOIMarkers();
+        }
+      }
+    };
 
     // Start the map
     try {
