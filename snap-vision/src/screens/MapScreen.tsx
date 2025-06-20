@@ -262,6 +262,7 @@ const MapScreen = () => {
     setIsNavigating(true);
     setStatus('Navigation started');
     setRouteProgress(0);
+        webViewRef.current?.injectJavaScript('window.setNavigationState && window.setNavigationState(true);');
     
     // Start watching position with higher frequency
     if (watchIdRef.current) {
@@ -293,6 +294,7 @@ const MapScreen = () => {
     
     setIsNavigating(false);
     setStatus('Navigation stopped');
+    webViewRef.current?.injectJavaScript('window.setNavigationState && window.setNavigationState(false);');
     
     // Clear progress line
     webViewRef.current?.injectJavaScript('if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }');
@@ -364,6 +366,24 @@ const MapScreen = () => {
       // At the last point
       progressValue = 100;
     }
+     if (steps.length > 0) {
+    let stepIndex = 0;
+    let minDist = Infinity;
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      const [lon, lat] = step.way_points
+        ? lastRoute.current[step.way_points[0]]
+        : lastRoute.current[0];
+      const dist = getDistanceMeters(latitude, longitude, lat, lon);
+      if (dist < minDist) {
+        minDist = dist;
+        stepIndex = i;
+      }
+    }
+    if (stepIndex !== currentStep) {
+      setCurrentStep(stepIndex);
+    }
+  }
     
     // Update progress with a more precise value
     const newProgress = Math.min(Math.round(progressValue), 100);
@@ -449,6 +469,18 @@ useEffect(() => {
   }
 }, [isNavigating, shouldStartTTS, steps, currentStep]);
 
+useEffect(() => {
+  if (isNavigating && steps.length > 0 && currentStep < steps.length) {
+    const instruction = steps[currentStep]?.instruction;
+    if (instruction) {
+      Tts.stop();
+      setTimeout(() => {
+        Tts.speak(instruction);
+      }, 500);
+    }
+  }
+}, [isNavigating, steps, currentStep]);
+
   useEffect(() => {
     const fetchPOIs = async () => {
       try {
@@ -507,7 +539,6 @@ useEffect(() => {
       fetchRoute([poi.centroid.longitude, poi.centroid.latitude]);
     }
   };
-
   // Dynamically request location updates
   useEffect(() => {
     let watchId: number | null = null;
@@ -725,28 +756,29 @@ useEffect(() => {
         destination={destination}
         steps={steps}
         currentStep={currentStep}
+        isNavigating={isNavigating}
       />
       {/* Rest of your components remain the same */}
-      <DestinationSearch
-        value={destination}
-        onChange={text => {
-          setDestination(text);
-          filterPOIs(text);
-          
-          // Stop navigation and clear route if text field is cleared
-          if (!text.trim()) {
-            if (isNavigating) {
-              stopNavigation();
+      {!isNavigating && (
+        <DestinationSearch
+          value={destination}
+          onChange={text => {
+            setDestination(text);
+            filterPOIs(text);
+            if (!text.trim()) {
+              if (isNavigating) {
+                stopNavigation();
+              }
+              webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+              lastRoute.current = [];
+              setDestinationCoords(null);
             }
-            webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
-            lastRoute.current = [];
-            setDestinationCoords(null);
-          }
-        }}
-        onSearch={handleDestinationSearch}
-        suggestions={poiSuggestions}
-        onSelectSuggestion={handleSelectPOI}
-      />
+          }}
+          onSearch={handleDestinationSearch}
+          suggestions={poiSuggestions}
+          onSelectSuggestion={handleSelectPOI}
+        />
+      )}
       
       <View style={{ flex: 1 }}>
         <MapWebView ref={webViewRef} onMessage={handleWebViewMessage} />
@@ -783,29 +815,26 @@ useEffect(() => {
         onReportOut={() => setShowReportTooltip(false)}
         color={colors.primary}
       />
-
-     {isNavigating && (
-  <>
- 
-    
-    <Pressable
-      style={{
-        position: 'absolute',
-        bottom: 171,
-        right: 22,
-        backgroundColor: colors.primary,
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        alignItems: 'center',
-        justifyContent: 'center',
-        elevation: 4,
-      }}
-      onPress={() => setShowDirectionsSheet(true)}
-    >
-      <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 24 }}>🧭</Text>
-    </Pressable>
-  </>
+{isNavigating && steps.length > 0 && (
+  <Pressable
+    onPress={() => setShowDirectionsSheet(true)}
+    style={{
+      position: 'absolute',
+      top: 59,
+      left: 20,
+      right: 20,
+      backgroundColor: colors.card,
+      borderRadius: 8,
+      padding: 12,
+      alignItems: 'center',
+      elevation: 4,
+      zIndex: 1001,
+    }}
+  >
+    <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 16 }}>
+      {steps[currentStep]?.instruction}
+    </Text>
+  </Pressable>
 )}
       <CrowdReportModal
         visible={showCrowdPopup}
@@ -814,8 +843,6 @@ useEffect(() => {
         onSubmit={submitCrowdReport}
         onCancel={() => setShowCrowdPopup(false)}
       />
-
-      {status && <StatusOverlay status={status} />}
       {error && <StatusOverlay status={error} isError={true} onDismiss={() => setError(null)} />}
     </View>
   );

@@ -55,6 +55,8 @@
     let startCircle = null;
     let poiMarkers = [];
     let poiData = [];
+    let isNavigating = false; // Track navigation state
+    
 
     // Reported crowd densities and corresponding emoji/icons
     const crowdEmojis = {
@@ -97,19 +99,20 @@
         maxZoom: 25,
         crossOrigin: 'anonymous'
       }).addTo(map);
+      
       map.on('zoomend', function() {
-      const zoom = map.getZoom();
-      if (zoom >= 16) {
-        showAllPOIMarkers();
-      } else {
-        // Hide all POI markers when zoomed out
-        poiMarkers.forEach(marker => {
-          if (map.hasLayer(marker)) {
-            map.removeLayer(marker);
-          }
-        });
-      }
-    });
+        const zoom = map.getZoom();
+        if (zoom >= 16 && !isNavigating) { // Only show POIs when not navigating
+          showAllPOIMarkers();
+        } else {
+          // Hide all POI markers when zoomed out or navigating
+          poiMarkers.forEach(marker => {
+            if (map.hasLayer(marker)) {
+              map.removeLayer(marker);
+            }
+          });
+        }
+      });
 
       // Tell React Native that the map is ready
       setTimeout(() => {
@@ -155,7 +158,7 @@
     };
 
     // Function to display POIs on the map
-       window.displayPOIs = function(pois) {
+    window.displayPOIs = function(pois) {
       if (!map || !Array.isArray(pois)) return;
     
       // Remove all existing POI markers
@@ -193,30 +196,36 @@
     
         // When marker is clicked, hide all others and show only this one
         marker.on('click', function(e) {
-          hideOtherPOIMarkers(marker);
-          marker.openPopup();
-          // Listen for popup close to restore all markers
-          marker.once('popupclose', function() {
-            showAllPOIMarkers();
-          });
+          if (!isNavigating) { // Only allow POI interactions when not navigating
+            hideOtherPOIMarkers(marker);
+            marker.openPopup();
+            // Listen for popup close to restore all markers
+            marker.once('popupclose', function() {
+              if (!isNavigating) { // Only restore markers if not navigating
+                showAllPOIMarkers();
+              }
+            });
+          }
         });
     
         marker.poiData = poi;
         poiMarkers.push(marker);
       });
     
-      // Show markers only if zoom level is sufficient
-      if (map.getZoom() >= 16) {
+      // Show markers only if zoom level is sufficient and not navigating
+      if (map.getZoom() >= 16 && !isNavigating) {
         showAllPOIMarkers();
       }
     };
     
     function showAllPOIMarkers() {
-      poiMarkers.forEach(marker => {
-        if (!map.hasLayer(marker)) {
-          marker.addTo(map);
-        }
-      });
+      if (!isNavigating) { // Only show POI markers when not navigating
+        poiMarkers.forEach(marker => {
+          if (!map.hasLayer(marker)) {
+            marker.addTo(map);
+          }
+        });
+      }
     }
     
     function hideOtherPOIMarkers(selectedMarker) {
@@ -226,51 +235,47 @@
         }
       });
     }
-    
-    window.selectPOI = function(poiId) {
-      const selectedMarker = poiMarkers.find(marker => marker.poiData && marker.poiData.id === poiId);
-      if (selectedMarker && window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({
-          type: 'POI_SELECTED',
-          poi: selectedMarker.poiData
-        }));
+    window.closePOIPopup = function() {
+      map.closePopup();
+      if (!isNavigating) { // Only restore markers if not navigating
+        showAllPOIMarkers();
       }
     };
 
-function showAllPOIMarkers() {
-  poiMarkers.forEach(marker => {
-    if (!map.hasLayer(marker)) {
-      marker.addTo(map);
-    }
-  });
-}
-
-function hideOtherPOIMarkers(selectedMarker) {
-  poiMarkers.forEach(marker => {
-    if (marker !== selectedMarker && map.hasLayer(marker)) {
-      map.removeLayer(marker);
-    }
-  });
-}
-
-window.closePOIPopup = function() {
-  map.closePopup();
-  showAllPOIMarkers();
-};
-
     window.selectPOI = function(poiId) {
-  const selectedMarker = poiMarkers.find(marker => marker.poiData && marker.poiData.id === poiId);
-  if (selectedMarker) {
-    hideOtherPOIMarkers(selectedMarker);
-    
-    if (window.ReactNativeWebView) {
-      window.ReactNativeWebView.postMessage(JSON.stringify({
-        type: 'POI_SELECTED',
-        poi: selectedMarker.poiData
-      }));
-    }
-  }
-};
+      const selectedMarker = poiMarkers.find(marker => marker.poiData && marker.poiData.id === poiId);
+      if (selectedMarker) {
+        hideOtherPOIMarkers(selectedMarker);
+        
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'POI_SELECTED',
+            poi: selectedMarker.poiData
+          }));
+        }
+      }
+    };
+
+    // New functions to control navigation state
+    window.setNavigationState = function(navigating) {
+      isNavigating = navigating;
+      
+      if (navigating) {
+        // Hide all POI markers when navigation starts
+        poiMarkers.forEach(marker => {
+          if (map.hasLayer(marker)) {
+            map.removeLayer(marker);
+          }
+        });
+        // Close any open popups
+        map.closePopup();
+      } else {
+        // Show POI markers when navigation stops (if zoom level is appropriate)
+        if (map.getZoom() >= 16) {
+          showAllPOIMarkers();
+        }
+      }
+    };
 
     // Start the map
     try {

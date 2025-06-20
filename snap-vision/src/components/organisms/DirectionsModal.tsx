@@ -12,6 +12,7 @@ interface DirectionsModalProps {
   destination: string;
   steps: any[];
   currentStep: number;
+  isNavigating: boolean;
 }
 
 const DirectionsModal: React.FC<DirectionsModalProps> = ({
@@ -74,14 +75,7 @@ const DirectionsModal: React.FC<DirectionsModalProps> = ({
           />
           
           {/* Button container */}
-          <View style={styles.buttonContainer}>
-            <Pressable
-              style={[styles.button, styles.startButton, { backgroundColor: colors.primary }]}
-              onPress={onStart}
-            >
-              <Text style={styles.buttonText}>Start Navigation</Text>
-            </Pressable>
-            
+                    <View style={styles.buttonContainer}>
             <Pressable
               style={[styles.button, { borderColor: colors.border }]}
               onPress={onClose}
