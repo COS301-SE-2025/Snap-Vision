@@ -1,4 +1,3 @@
-// src/components/molecules/CrowdReportModal.tsx
 import React from 'react';
 import {
   View,
@@ -12,11 +11,13 @@ import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { Picker } from '@react-native-picker/picker';
 
-
 interface CrowdReportModalProps {
   visible: boolean;
   selectedDensity: string;
+  selectedPOI: any | null;
+  availablePOIs: any[];
   onChangeDensity: (density: string) => void;
+  onChangePOI: (poi: any) => void;
   onSubmit: () => void;
   onCancel: () => void;
 }
@@ -24,7 +25,10 @@ interface CrowdReportModalProps {
 const CrowdReportModal: React.FC<CrowdReportModalProps> = ({
   visible,
   selectedDensity,
+  selectedPOI,
+  availablePOIs,
   onChangeDensity,
+  onChangePOI,
   onSubmit,
   onCancel,
 }) => {
@@ -36,6 +40,7 @@ const CrowdReportModal: React.FC<CrowdReportModalProps> = ({
     { value: 'light', label: 'Light Crowd', icon: '🟡', description: 'Some people present' },
     { value: 'moderate', label: 'Moderate Crowd', icon: '🟠', description: 'Quite crowded' },
     { value: 'crowded', label: 'Very High Crowd', icon: '🔴', description: 'Extremely crowded' },
+    { value: 'overcrowded', label: 'Overcrowded', icon: '⚫', description: 'Dangerously packed' },
   ];
 
   return (
@@ -57,8 +62,37 @@ const CrowdReportModal: React.FC<CrowdReportModalProps> = ({
             </Text>
           </View>
 
+          {/* Building Selection */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Select Building
+            </Text>
+            <View style={[styles.pickerContainer, { borderColor: colors.border }]}>
+              <Picker
+                selectedValue={selectedPOI ? selectedPOI.id : ''}
+                onValueChange={(itemValue) => {
+                  const poi = availablePOIs.find(p => p.id === itemValue);
+                  onChangePOI(poi || null);
+                }}
+                style={{ color: colors.text }}
+              >
+                <Picker.Item label="Select a building..." value="" />
+                {availablePOIs
+                  .filter(poi => poi.name) // Only show POIs with names
+                  .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                  .map(poi => (
+                    <Picker.Item key={poi.id} label={poi.name || poi.id} value={poi.id} />
+                  ))
+                }
+              </Picker>
+            </View>
+          </View>
+
           {/* Density Options */}
           <View style={styles.optionsContainer}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Select Crowd Level
+            </Text>
             {densityOptions.map((option) => (
               <TouchableOpacity
                 key={option.value}
@@ -130,9 +164,13 @@ const CrowdReportModal: React.FC<CrowdReportModalProps> = ({
               style={[
                 styles.actionButton,
                 styles.submitButton,
-                { backgroundColor: colors.primary }
+                { 
+                  backgroundColor: colors.primary,
+                  opacity: !selectedPOI || !selectedDensity ? 0.5 : 1 
+                }
               ]}
               onPress={onSubmit}
+              disabled={!selectedPOI || !selectedDensity}
             >
               <Text style={[styles.buttonText, { color: '#ffffff' }]}>
                 Submit Report
@@ -179,6 +217,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     opacity: 0.7,
+  },
+  section: {
+    paddingHorizontal: 20,
+    paddingTop: 15,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 15,
   },
   optionsContainer: {
     paddingHorizontal: 20,

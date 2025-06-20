@@ -40,6 +40,16 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.2);
       pointer-events: none;
     }
+    .crowd-marker {
+      z-index: 1000 !important;
+    }
+    .crowd-marker div {
+      transition: all 0.2s ease;
+    }
+    .crowd-marker div:hover {
+      transform: scale(1.1);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+    }
   </style>
 </head>
 <body>
@@ -49,7 +59,7 @@
   <script>
     let map;
     let userMarker = null;
-    let crowdMarker = null;
+    let crowdMarkers = {}; // object to track markers by buildingId
     let destinationMarker = null;
     let endCircle = null;
     let startCircle = null;
@@ -60,11 +70,11 @@
 
     // Reported crowd densities and corresponding emoji/icons
     const crowdEmojis = {
-      empty: '🟢 Empty',
-      light: '🟡 Light',
-      moderate: '🟠 Moderate',
-      crowded: '🔴 Crowded',
-      overcrowded: '⚫ Overcrowded'
+      empty: '🟢',
+      light: '🟡',
+      moderate: '🟠',
+      crowded: '🔴',
+      overcrowded: '⚫'
     };
 
     // Handle uncaught errors
@@ -140,21 +150,52 @@
       }
     };
 
-    // Function to show crowd report above the location
-    window.updateCrowdDensity = function(lat, lon, density) {
+    // Updated function to show crowd report for specific buildings
+    window.updateCrowdDensity = function(lat, lon, density, buildingId) {
       const coords = [lat, lon];
       if (!map) return;
 
-      const label = crowdEmojis[density] || density;
-
-      if (crowdMarker) {
-        crowdMarker.setLatLng(coords).setPopupContent(`👥 Crowd: ${label}`).openPopup();
-      } else {
-        crowdMarker = L.marker(coords)
-          .addTo(map)
-          .bindPopup(`👥 Crowd: ${label}`)
-          .openPopup();
+      const emoji = crowdEmojis[density] || '❓';
+      
+      // Remove existing marker for this building if it exists
+      if (crowdMarkers[buildingId] && map.hasLayer(crowdMarkers[buildingId])) {
+        map.removeLayer(crowdMarkers[buildingId]);
       }
+      
+      // Create a custom divIcon for the crowd indicator
+      const crowdIcon = L.divIcon({
+        className: 'crowd-marker',
+        html: `<div style="background-color: rgba(255,255,255,0.9); 
+                          padding: 3px 8px; 
+                          border-radius: 12px; 
+                          font-size: 14px;
+                          font-weight: bold;
+                          box-shadow: 0 1px 3px rgba(0,0,0,0.3);">
+                ${emoji}
+              </div>`,
+        iconSize: [30, 20],
+        iconAnchor: [15, 10]
+      });
+      
+      // Create and add the marker
+      crowdMarkers[buildingId] = L.marker(coords, { icon: crowdIcon, zIndexOffset: 1000 })
+        .addTo(map);
+        
+      // Add a popup with more details
+      crowdMarkers[buildingId].bindPopup(`
+        <strong>Crowd Level: ${density.charAt(0).toUpperCase() + density.slice(1)}</strong><br>
+        <small>Updated recently • Expires in 1 hour</small>
+      `);
+    };
+
+    // Function to clear all crowd markers
+    window.clearCrowdMarkers = function() {
+      Object.values(crowdMarkers).forEach(marker => {
+        if (map.hasLayer(marker)) {
+          map.removeLayer(marker);
+        }
+      });
+      crowdMarkers = {};
     };
 
     // Function to display POIs on the map
@@ -302,6 +343,28 @@
       }
     };
 
+    // Clear all route-related elements
+    window.clearRoute = function() {
+      if (window.routeLayer) {
+        map.removeLayer(window.routeLayer);
+        window.routeLayer = null;
+      }
+      
+      if (destinationMarker) {
+        map.removeLayer(destinationMarker);
+        destinationMarker = null;
+      }
+      
+      if (endCircle) {
+        map.removeLayer(endCircle);
+        endCircle = null;
+      }
+      
+      if (window.progressLine) {
+        map.removeLayer(window.progressLine);
+        window.progressLine = null;
+      }
+    };
     
     window.drawRoute = function(coords) {
       if (!map || !Array.isArray(coords)) return;
@@ -341,6 +404,33 @@
     
       const bounds = window.routeLayer.getBounds();
       map.fitBounds(bounds.pad(0.3));
+    };
+
+    // Added this new function to update route progress visually
+    window.updateRouteProgress = function(pointIndex, progressRatio) {
+      if (!window.routeLayer || !map) return;
+      
+      const allPoints = window.routeLayer.getLatLngs();
+      if (!allPoints || allPoints.length === 0) return;
+      
+      // Calculate how many points to include in the progress line
+      const pointCount = Math.ceil(allPoints.length * progressRatio);
+      
+      // Make sure we're not exceeding the array bounds
+      const endIndex = Math.min(pointCount, allPoints.length);
+      const progressPoints = allPoints.slice(0, endIndex);
+      
+      // Remove existing progress line if it exists
+      if (window.progressLine) {
+        map.removeLayer(window.progressLine);
+      }
+      
+      // Create a new progress line
+      window.progressLine = L.polyline(progressPoints, {
+        color: '#4CAF50', // Green color for progress
+        weight: 6,
+        opacity: 0.8
+      }).addTo(map);
     };
 
   </script>
