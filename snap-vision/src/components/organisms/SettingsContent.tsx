@@ -1,10 +1,8 @@
 // SettingsContent.tsx
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import SectionTitle from '../atoms/SectionTitle';
 import SearchInput from '../atoms/SettingsSearch';
 import SettingItem from '../molecules/SettingsItem';
-import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
 interface Props {

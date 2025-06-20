@@ -1,10 +1,9 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import TextToSpeech from '../molecules/TextToSpeech'; // Import the TTS component
-import Ionicons from 'react-native-vector-icons/Ionicons';
 
 interface NavigationPanelProps {
   isNavigating: boolean;
