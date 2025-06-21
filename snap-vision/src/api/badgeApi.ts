@@ -9,3 +9,13 @@ export async function fetchBadgeSnapshot(uid: string) {
   if (!res.ok) throw new Error('Unable to fetch badge data');
   return res.json();                // { badges:[], points, ... }
 }
+
+export async function unlockBadge(uid: string, badgeId: BadgeId) {
+  const res = await fetch(`${BASE}/unlock`, {
+    method : 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body   : JSON.stringify({ uid, badgeId }),
+  });
+  if (!res.ok) throw new Error('Unable to unlock badge');
+  return res.json();                // updated user snapshot
+}
