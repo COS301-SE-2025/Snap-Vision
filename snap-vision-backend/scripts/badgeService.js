@@ -21,3 +21,33 @@ const db = admin.firestore();
  * @param {string} userId - Unique user identifier
  * @param {string} badgeId - Badge ID to unlock
  */
+async function unlockBadgeForUser(userId, badgeId) {
+  const userRef = db.collection('users').doc(userId);
+
+  try {
+    await db.runTransaction(async (transaction) => {
+      const userDoc = await transaction.get(userRef);
+
+      if (!userDoc.exists) {
+        // User doc does not exist - create with badge and initial points
+        transaction.set(userRef, {
+          badges: [badgeId],
+          points: 50,
+          checkIns: 0,
+          routesCompleted: 0,
+        });
+      } else {
+        const data = userDoc.data();
+        const badges = data.badges || [];
+
+        if (!badges.includes(badgeId)) {
+          badges.push(badgeId);
+          transaction.update(userRef, {
+            badges,
+            points: (data.points || 0) + 50,
+          });
+        } else {
+          console.log(`User ${userId} already unlocked badge ${badgeId}`);
+        }
+      }
+    });
