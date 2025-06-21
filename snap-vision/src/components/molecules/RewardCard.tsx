@@ -19,30 +19,33 @@ export default function RewardCard({
   borderColor = '#ddd',
   onPress 
 }: Props) {
-  const getRewardIcon = () => {
-    return reward.type === 'limited' ? 'shirt' : 'color-palette';
+  const isUnlocked = reward.isUnlocked;
+
+  const getStatusIcon = () => {
+    return isUnlocked ? 'medal-outline' : 'lock-closed-outline';
   };
 
-  const getTagColor = () => {
-    return reward.type === 'limited' ? '#FF9800' : '#9C27B0';
+  const getStatusColor = () => {
+    return isUnlocked ? '#4CAF50' : '#F44336'; // green or red
   };
 
   return (
     <TouchableOpacity 
       style={[
         styles.container, 
-        { backgroundColor, borderColor }
+        { backgroundColor, borderColor, opacity: isUnlocked ? 1 : 0.4 }
       ]}
       onPress={onPress}
+      disabled={!isUnlocked}
     >
-      <View style={[styles.tag, { backgroundColor: getTagColor() }]}>
+      <View style={[styles.tag, { backgroundColor: getStatusColor() }]}>
         <Text style={styles.tagText}>
-          {reward.type === 'limited' ? 'Limited' : 'Exclusive'}
+          {isUnlocked ? 'Unlocked' : 'Locked'}
         </Text>
       </View>
       
       <View style={styles.iconContainer}>
-        <Icon name={getRewardIcon()} size={32} color={textColor} />
+        <Icon name={getStatusIcon()} size={32} color={textColor} />
       </View>
       
       <Text style={[styles.title, { color: textColor }]}>
@@ -82,6 +85,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 10,
     fontWeight: 'bold',
+    textTransform: 'uppercase',
   },
   iconContainer: {
     marginTop: 24,
