@@ -51,3 +51,29 @@ async function unlockBadgeForUser(userId, badgeId) {
         }
       }
     });
+
+    console.log(`Badge ${badgeId} unlocked for user ${userId}`);
+  } catch (error) {
+    console.error(`Error unlocking badge ${badgeId} for user ${userId}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Fetches badge data and stats for a user.
+ * @param {string} userId - Unique user identifier
+ * @returns {Promise<Object|null>} - User badge data or null if user not found
+ */
+async function getUserBadgeData(userId) {
+  const userRef = db.collection('users').doc(userId);
+  const userDoc = await userRef.get();
+
+  if (!userDoc.exists) return null;
+
+  return userDoc.data();
+}
+
+module.exports = {
+  unlockBadgeForUser,
+  getUserBadgeData,
+};
