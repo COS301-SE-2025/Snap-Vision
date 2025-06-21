@@ -10,11 +10,13 @@ import React, {
   useEffect,
 } from 'react';
 import { BADGES } from '../types/badges';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /* ------------------------------------------------------------------
    1.  Types
 ------------------------------------------------------------------- */
 export type BadgeId = keyof typeof BADGES; // 'first-login' | 'destination-reached' | 'qr-scan' ...
+const BADGE_STORAGE_KEY = 'user-badges';
 
 interface BadgeState {
   unlocked: Set<BadgeId>;   // all badges earned
@@ -111,9 +113,8 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
   const clearJustUnlocked = () =>
     setState(prev => ({ ...prev, justUnlocked: [] }));
 
-    useEffect(() => {
-    unlock('first-login');
-  }, []);
+ 
+  
   /* ---------- expose context ---------- */
   const value: BadgeContextType = {
     state,
