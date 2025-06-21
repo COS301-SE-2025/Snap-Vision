@@ -44,3 +44,32 @@ export const useBadges = () => {
   }
   return ctx;
 };
+
+/* ------------------------------------------------------------------
+   3.  Provider
+------------------------------------------------------------------- */
+const initialState: BadgeState = {
+  unlocked: new Set<BadgeId>(),
+  justUnlocked: [],
+  points: 0,
+  checkIns: 0,
+  routesCompleted: 0,
+};
+
+export const BadgeProvider = ({ children }: { children: ReactNode }) => {
+  const [state, setState] = useState<BadgeState>(initialState);
+
+  /* ---------- core helpers ---------- */
+  const unlock = (id: BadgeId) => {
+    setState(prev => {
+      if (prev.unlocked.has(id)) return prev; // already unlocked
+
+      const updatedSet = new Set(prev.unlocked).add(id);
+      return {
+        ...prev,
+        unlocked: updatedSet,
+        justUnlocked: [...prev.justUnlocked, id],
+        points: prev.points + 50, // 🎉 +50 per badge
+      };
+    });
+  };
