@@ -92,7 +92,6 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
     useEffect(() => {
     unlock('first-login');
   }, []);
-  
   /* ---------- expose context ---------- */
   const value: BadgeContextType = {
     state,
