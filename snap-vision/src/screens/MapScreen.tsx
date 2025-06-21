@@ -20,7 +20,7 @@ import { TextIcon } from '../components/atoms/TextIcon';
 import DirectionsModal from '../components/organisms/DirectionsModal';
 import TextToSpeech from '../components/molecules/TextToSpeech';
 import { useRoute } from '@react-navigation/native';
-
+import { useBadges } from '../context/BadgeContext'; 
 type MapScreenParams = {
   lat?: string;
   lng?: string;
@@ -73,7 +73,8 @@ const MapScreen = () => {
   const route = useRoute();
   const params = route.params as MapScreenParams;
   const [hasHandledDeepLink, setHasHandledDeepLink] = useState(false);
-
+  const { unlock } = useBadges();  
+  const { state, clearJustUnlocked } = useBadges();
 
   const sendLocationToWebView = (lat: number, lon: number, centerMap = false) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
@@ -168,6 +169,7 @@ const MapScreen = () => {
       const message = `Check out my location: ${url}`;
       await Share.share({ message, url, title: 'Share Location' });
       setStatus('Location shared successfully');
+      unlock('share-location');
     } catch {
       setError('Failed to share location');
     }
@@ -179,6 +181,7 @@ const MapScreen = () => {
     webViewRef.current?.injectJavaScript(jsCrowdCode);
     setShowCrowdPopup(false);
     setStatus(`Crowd density reported: ${selectedDensity}`);
+    unlock('reported-crowd');
   };
 
   const handleDestinationSearch = () => {
