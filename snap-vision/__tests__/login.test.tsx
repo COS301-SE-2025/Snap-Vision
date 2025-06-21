@@ -22,6 +22,31 @@ jest.mock('@react-navigation/native', () => ({
   }),
 }));
 
+jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => 'Icon');
+jest.mock('react-native-vector-icons/Ionicons', () => 'Icon');
+jest.mock('react-native-vector-icons/FontAwesome', () => 'Icon');
+jest.mock('react-native-vector-icons/FontAwesome5', () => 'Icon');
+
+jest.mock('expo-font', () => ({
+  esModule: true,
+  loadAsync: jest.fn().mockResolvedValue(true),
+  isLoaded: jest.fn().mockReturnValue(true),
+  Font: {
+    loadAsync: jest.fn().mockResolvedValue(true),
+    isLoaded: jest.fn().mockReturnValue(true),
+  },
+}));
+
+// Mock @expo/vector-icons
+jest.mock('@expo/vector-icons', () => ({
+  MaterialCommunityIcons: 'MockedMaterialCommunityIcons',
+  Ionicons: 'MockedIonicons',
+  FontAwesome: 'MockedFontAwesome',
+  FontAwesome5: 'MockedFontAwesome5',
+  createIconSet: () => 'MockedIcon',
+}));
+
+
 // Mock DeepLinkContext
 jest.mock('../src/DeepLinkContext', () => {
   const originalModule = jest.requireActual('../src/DeepLinkContext');
