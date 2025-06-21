@@ -17,6 +17,8 @@ import { BADGES, BadgeId } from '../types/badges';
 import WelcomeHeader from '../components/molecules/WelcomeHeader';
 import ProgressCard from '../components/atoms/ProgressCard';
 import RewardCard from '../components/molecules/RewardCard';
+import BadgeUnlockNotifier from '../components/organisms/BadgeUnlockNotifier';
+import { BadgeProvider } from '../context/BadgeContext';
 
 export default function AchievementsScreen() {
   const { isDark } = useTheme();
@@ -25,15 +27,14 @@ export default function AchievementsScreen() {
   const unlockedArray = Array.from(state.unlocked);
 
   useEffect(() => {
-    if (state.justUnlocked.length > 0) {
-      const names = state.justUnlocked.map(id => BADGES[id]?.title || id).join(', ');
-      Alert.alert('🎉 Achievement Unlocked!', `You earned: ${names}`, [
-        { text: 'Nice!', onPress: clearJustUnlocked },
-      ]);
-    }
+    console.log('Unlocked badges:', Array.from(state.unlocked));
+
   }, [state.justUnlocked]);
 
   return (
+    <View style={{ flex: 1 }}>
+    
+    <BadgeUnlockNotifier />
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       <WelcomeHeader
         userName="User"
@@ -78,6 +79,8 @@ export default function AchievementsScreen() {
 
       <View style={styles.bottomSpacing} />
     </ScrollView>
+    
+    </View>
   );
 }
 
