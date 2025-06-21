@@ -16,3 +16,20 @@ export default function BadgeUnlockNotifier() {
       clearJustUnlocked();
     }
   }, [state.justUnlocked]);
+
+  // Show next badge popup if none currently shown
+  useEffect(() => {
+    if (!currentBadge && queue.length > 0) {
+      setCurrentBadge(queue[0]);
+      setQueue(q => q.slice(1));
+    }
+  }, [queue, currentBadge]);
+
+  const handleClose = () => {
+    setCurrentBadge(null);
+  };
+
+  return currentBadge ? (
+    <BadgePopup badgeId={currentBadge} onClose={handleClose} />
+  ) : null;
+}
