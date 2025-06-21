@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
+import { useBadges } from '../../context/BadgeContext';
 
 type RootStackParamList = {
   Login: undefined;
@@ -29,6 +30,7 @@ export default function RegisterForm() {
     username: '', email: '', password: '', confirmPassword: ''
   });
   const [successMessage, setSuccessMessage] = useState('');
+  const { unlock } = useBadges();
 
   const handleRegister = async () => {
     const newErrors = { username: '', email: '', password: '', confirmPassword: '' };
@@ -76,6 +78,7 @@ export default function RegisterForm() {
 
     try {
       await auth().createUserWithEmailAndPassword(email, password);
+      unlock('first-login');
       Alert.alert('Success', 'Account created!');
       setSuccessMessage('Account created!');
       setTimeout(() => {
