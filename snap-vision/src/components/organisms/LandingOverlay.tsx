@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,37 +6,102 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   Keyboard,
+  Animated,
+  Easing,
 } from 'react-native';
+import MaskedView from '@react-native-masked-view/masked-view';
+import LinearGradient from 'react-native-linear-gradient';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
 const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
+  const bg = colors.background;
 
-  // Swap the text and primary colors
-  const baseBlue = colors.text; // Blue used as background
-  const overlayBackgroundColor = `${baseBlue}99`; // ~60% opacity
+  const swappedTextColor = colors.primary;
+  const swappedAccentColor = colors.text;
 
-  const swappedTextColor = colors.primary;   // Use brown for text
-  const swappedAccentColor = colors.text;    // Blue for accents/headings
+  const snapAnim1 = useRef(new Animated.Value(0)).current;
+  const snapAnim2 = useRef(new Animated.Value(0)).current;
+  const shimmerAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.stagger(300, [
+      Animated.spring(snapAnim1, {
+        toValue: 1,
+        useNativeDriver: true,
+        stiffness: 150,
+        damping: 8,
+      }),
+      Animated.spring(snapAnim2, {
+        toValue: 1,
+        useNativeDriver: true,
+        stiffness: 150,
+        damping: 8,
+      }),
+    ]).start();
+
+    Animated.loop(
+      Animated.timing(shimmerAnim, {
+        toValue: 1,
+        duration: 1800,
+        useNativeDriver: true,
+      })
+    ).start();
+  }, []);
+
+  const shimmerTranslate = shimmerAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-150, 150],
+  });
 
   return (
     <TouchableWithoutFeedback onPress={onDismiss}>
-      <View style={[styles.overlay, { backgroundColor: overlayBackgroundColor }]}>
+      <View style={[styles.overlay, { backgroundColor: bg }]}>
         <ScrollView contentContainerStyle={styles.container}>
-          <Text
-            style={[
-              styles.titles,
-              {
-                color: swappedTextColor,
-                fontFamily: 'PermanentMarkerRegular',
-                transform: [{ rotate: '-2deg' }],
-              },
-            ]}
-          >
-            Snap Vision
-          </Text>
+          <View style={styles.snapTitleRow}>
+            <Animated.Text
+              style={[
+                styles.snapTitle,
+                {
+                  color: swappedTextColor,
+                  fontFamily: 'PermanentMarkerRegular',
+                  transform: [
+                    { scale: snapAnim1.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.3, 1],
+                      }) },
+                    { rotate: '-2deg' },
+                  ],
+                  opacity: snapAnim1,
+                },
+              ]}
+            >
+              Snap
+            </Animated.Text>
+
+            <Animated.Text
+              style={[
+                styles.snapTitle,
+                {
+                  color: swappedTextColor,
+                  fontFamily: 'PermanentMarkerRegular',
+                  marginLeft: 10,
+                  transform: [
+                    { scale: snapAnim2.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.3, 1],
+                      }) },
+                    { rotate: '2deg' },
+                  ],
+                  opacity: snapAnim2,
+                },
+              ]}
+            >
+              Vision
+            </Animated.Text>
+          </View>
 
           <Text style={[styles.tagline, { color: swappedAccentColor }]}>
             Wander Less, Discover More
@@ -49,22 +114,46 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
           </Text>
 
           <View style={styles.featureSection}>
-            <Text style={[styles.sectionTitle, { color: swappedTextColor }]}>Key Features</Text>
-            <View style={styles.featureBox}>
-              <Text style={[styles.featureText, { color: swappedTextColor }]}>Turn-by-turn Navigation</Text>
-            </View>
-            <View style={styles.featureBox}>
-              <Text style={[styles.featureText, { color: swappedTextColor }]}>Indoor & Outdoor Coverage</Text>
-            </View>
-            <View style={styles.featureBox}>
-              <Text style={[styles.featureText, { color: swappedTextColor }]}>Voice Assistance</Text>
-            </View>
-            <View style={styles.featureBox}>
-              <Text style={[styles.featureText, { color: swappedTextColor }]}>AR Navigation</Text>
-            </View>
+            <MaskedView
+              maskElement={
+                <View style={{ height: 40, justifyContent: 'center', alignItems: 'center' }}>
+                  <Text style={[styles.sectionTitle, { color: 'black' }]}>
+                    Key Features
+                  </Text>
+                </View>
+              }
+            >
+              <Animated.View
+                style={{
+                  height: 40,
+                  width: 600, // Wider than mask so it can scroll across
+                  transform: [{ translateX: shimmerTranslate }],
+                }}
+              >
+                <LinearGradient
+                  colors={['#69c6d0', '#ffffff', '#69c6d0']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={{ flex: 1 }}
+                />
+              </Animated.View>
+            </MaskedView>
+
+
+
+            {[
+              'Turn-by-turn Navigation',
+              'Indoor & Outdoor Coverage',
+              'Voice Assistance',
+              'AR Navigation',
+            ].map((feature, index) => (
+              <View key={index} style={[styles.featureBox, { backgroundColor: colors.secondary }]}>
+                <Text style={[styles.featureText, { color: bg }]}>{feature}</Text>
+              </View>
+            ))}
           </View>
 
-          <Text style={[styles.footer, { color: swappedTextColor }]}>© 2025 Snap Vision Team</Text>
+          <Text style={[styles.footer, { color: swappedAccentColor }]}>© 2025 Snap Vision Team</Text>
         </ScrollView>
       </View>
     </TouchableWithoutFeedback>
@@ -82,10 +171,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexGrow: 1,
   },
-  titles: {
+  snapTitleRow: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  snapTitle: {
     fontSize: 42,
     textAlign: 'center',
-    maxWidth: '90%',
   },
   tagline: {
     fontSize: 18,
@@ -111,17 +203,24 @@ const styles = StyleSheet.create({
   featureBox: {
     padding: 12,
     marginVertical: 6,
-    backgroundColor: '#eeeeee33',
-    borderRadius: 10,
+    backgroundColor: '#ffffff10',
+    borderRadius: 12,
     width: '90%',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#69c6d0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   featureText: {
     fontSize: 16,
   },
   footer: {
     fontSize: 12,
-    marginTop: 20,
+    marginTop: 0,
   },
 });
 

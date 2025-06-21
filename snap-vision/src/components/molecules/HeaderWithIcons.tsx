@@ -6,6 +6,7 @@ import FAIcon from 'react-native-vector-icons/FontAwesome5';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useNavigation } from '@react-navigation/native';
+import { useLanding } from '../../context/LandingContext';
 
   type RootStackParamList = {
     NotificationSettingsScreen: undefined;
@@ -16,6 +17,7 @@ export default function HeaderWithIcons() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const navigation = useNavigation<any>();
+  const { setHasSeenLanding } = useLanding(); 
 
   return (
     <View style={styles.header}>
@@ -49,6 +51,15 @@ export default function HeaderWithIcons() {
           })
         }
       />
+
+      <FAIcon
+        name="info-circle"
+        size={24}
+        color={colors.secondary}
+        style={styles.info}
+        onPress={() => setHasSeenLanding(true)} // Update this if needed
+      />
+
     </View>
   );
 }
@@ -75,4 +86,10 @@ const styles = StyleSheet.create({
     top: -50,   
     right: 15,
   },
+  info: {
+    position: 'absolute',
+    top: -50,
+    left: 25, // Adjust spacing as needed
+  },
+
 });
