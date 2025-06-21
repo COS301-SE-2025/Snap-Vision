@@ -15,5 +15,14 @@ export const BADGES: Record<BadgeId, Badge> = {
     title: 'First Login',
     description: 'You signed up for the first time!',
   },
- 
+  'qr-scan': {
+    id: 'qr-scan',
+    title: 'QR Code Scanned',
+    description: 'You scanned your first QR!',
+  },
+  'destination-reached': {
+    id: 'destination-reached',
+    title: 'Destination Reached',
+    description: 'You arrived at your first destination!',
+  },
 };
