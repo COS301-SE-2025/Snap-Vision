@@ -62,4 +62,37 @@ const styles = StyleSheet.create({
     elevation: 9999,
     alignItems: 'center',
   },
- 
+  popup: {
+    flexDirection: 'row',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    width: '100%',
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  textContainer: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  title: {
+    fontWeight: 'bold',
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  badgeTitle: {
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  description: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  closeButton: {
+    marginLeft: 12,
+  },
+  closeText: {
+    fontSize: 20,
+  },
+});
