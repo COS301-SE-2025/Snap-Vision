@@ -75,12 +75,34 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const incrementRoutes = () => {
-    setState(prev => {
-      const routesCompleted = prev.routesCompleted + 1;
-      // Add route‑based milestone badges here if you like
-      return { ...prev, routesCompleted };
-    });
-  };
+  setState(prev => {
+    const newCount = prev.routesCompleted + 1;
+    const nextState = { ...prev, routesCompleted: newCount };
+
+    // Award milestone badges
+    const routeMilestones: Record<number, BadgeId> = {
+      10: '10-destinations',
+      50: '50-destinations',
+      100: '100-destinations',
+      150: '150-destinations',
+      200: '200-destinations',
+    };
+
+    const badgeToAward = routeMilestones[newCount];
+    if (badgeToAward && !prev.unlocked.has(badgeToAward)) {
+      const newUnlocked = new Set(prev.unlocked).add(badgeToAward);
+      return {
+        ...nextState,
+        unlocked: newUnlocked,
+        justUnlocked: [...prev.justUnlocked, badgeToAward],
+        points: prev.points + 50,
+      };
+    }
+
+    return nextState;
+  });
+};
+
 
   const incrementCheckIns = () => {
     setState(prev => ({ ...prev, checkIns: prev.checkIns + 1 }));
