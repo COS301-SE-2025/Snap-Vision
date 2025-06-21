@@ -13,6 +13,7 @@ import { Linking } from 'react-native';
 import queryString from 'query-string'; // npm install query-strin
 import { NavigationContainerRef } from '@react-navigation/native';
 import { BadgeProvider } from './src/context/BadgeContext';
+import BadgeUnlockNotifier from './src/components/organisms/BadgeUnlockNotifier';
 
 const Stack = createNativeStackNavigator();
 
@@ -51,6 +52,7 @@ export default function App() {
     <ThemeProvider>
       <BadgeProvider>
       <NavigationContainer ref={navigationRef}>
+        <BadgeUnlockNotifier /> 
         <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Register" component={RegistrationScreen} />
