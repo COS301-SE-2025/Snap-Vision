@@ -17,6 +17,7 @@ export default function LoginForm() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({ email: '', password: '' });
   const [successMessage, setSuccessMessage] = useState('');
@@ -42,11 +43,11 @@ export default function LoginForm() {
             screen: 'Map',
             params: { lat: coords.lat, lng: coords.lng },
           });
-          setCoords(null); // Clear after use
+          setCoords(null);
         } else {
           navigation.replace('Tabs');
         }
-      }, 500); 
+      }, 500);
     } catch (error: any) {
       const errorMessages: Record<string, string> = {
         'auth/invalid-email': 'Invalid email address.',
@@ -67,11 +68,16 @@ export default function LoginForm() {
 
   return (
     <View>
-      <Text style={[styles.header, {
-        fontFamily: 'PermanentMarkerRegular',
-        color: colors.primary,
-        transform: [{ rotate: '-3deg' }],
-      }]}>
+      <Text
+        style={[
+          styles.header,
+          {
+            fontFamily: 'PermanentMarkerRegular',
+            color: colors.primary,
+            transform: [{ rotate: '-3deg' }],
+          },
+        ]}
+      >
         LOGIN
       </Text>
 
@@ -92,12 +98,14 @@ export default function LoginForm() {
       <Text style={[styles.label, { color: colors.secondary }]}>Password</Text>
       <AppInput
         placeholder="Enter your password"
-        secureTextEntry
+        secureTextEntry={!showPassword}
         value={password}
         onChangeText={(text) => {
           setPassword(text);
           setErrors((prev) => ({ ...prev, password: '' }));
         }}
+        rightIcon={showPassword ? 'eye-off' : 'eye'}
+        onRightIconPress={() => setShowPassword((prev) => !prev)}
         style={[styles.input, { borderColor: colors.primary }]}
       />
       {errors.password ? <Text style={styles.error}>{errors.password}</Text> : null}
@@ -108,12 +116,7 @@ export default function LoginForm() {
         onForgotPassword={() => navigation.navigate('ForgotPassword')}
       />
 
-      
-      <AppButton
-        title="LOGIN"
-        onPress={handleLogin}
-        testID="login-button"
-      />
+      <AppButton title="LOGIN" onPress={handleLogin} testID="login-button" />
 
       {successMessage ? <Text style={styles.success}>{successMessage}</Text> : null}
 
@@ -139,21 +142,6 @@ const styles = StyleSheet.create({
     fontFamily: 'PermanentMarkerRegular',
     textAlign: 'center',
     marginBottom: 40,
-  },
-  starOverlay: {
-    position: 'absolute',
-    top: 200,
-    left: 50,
-    fontSize: 24,
-  },
-  titleWrapper: {
-    alignSelf: 'center',
-    position: 'relative',
-  },
-  star: {
-    fontSize: 20,
-    textAlign: 'center',
-    marginBottom: 20,
   },
   label: {
     fontWeight: '600',
