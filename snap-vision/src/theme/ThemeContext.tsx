@@ -1,5 +1,5 @@
 //snap-vision\src\theme\ThemeContext.tsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { Appearance } from 'react-native';
 
 type Theme = 'light' | 'dark';

@@ -8,11 +8,6 @@ import { getThemeColors } from '../../theme';
 import { useNavigation } from '@react-navigation/native';
 import { useLanding } from '../../context/LandingContext';
 
-  type RootStackParamList = {
-    NotificationSettingsScreen: undefined;
-    AccountSettings: undefined;
-  };
-
 export default function HeaderWithIcons() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
