@@ -12,6 +12,7 @@ import ManageUsersScreen from './src/screens/ManageUsersScreen';
 import { Linking } from 'react-native';
 import queryString from 'query-string'; // npm install query-strin
 import { NavigationContainerRef } from '@react-navigation/native';
+import { BadgeProvider } from './src/context/BadgeContext';
 
 const Stack = createNativeStackNavigator();
 
@@ -48,6 +49,7 @@ export default function App() {
 
   return (
     <ThemeProvider>
+      <BadgeProvider>
       <NavigationContainer ref={navigationRef}>
         <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Login" component={LoginScreen} />
@@ -59,6 +61,7 @@ export default function App() {
           <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
         </Stack.Navigator>
       </NavigationContainer>
+      </BadgeProvider>
     </ThemeProvider>
   );
 }
