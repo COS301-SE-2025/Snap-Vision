@@ -73,3 +73,36 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
       };
     });
   };
+
+  const incrementRoutes = () => {
+    setState(prev => {
+      const routesCompleted = prev.routesCompleted + 1;
+      // Add route‑based milestone badges here if you like
+      return { ...prev, routesCompleted };
+    });
+  };
+
+  const incrementCheckIns = () => {
+    setState(prev => ({ ...prev, checkIns: prev.checkIns + 1 }));
+  };
+
+  const clearJustUnlocked = () =>
+    setState(prev => ({ ...prev, justUnlocked: [] }));
+
+    useEffect(() => {
+    unlock('first-login');
+  }, []);
+  
+  /* ---------- expose context ---------- */
+  const value: BadgeContextType = {
+    state,
+    unlock,
+    incrementRoutes,
+    incrementCheckIns,
+    clearJustUnlocked,
+  };
+
+  return (
+    <BadgeContext.Provider value={value}>{children}</BadgeContext.Provider>
+  );
+};
