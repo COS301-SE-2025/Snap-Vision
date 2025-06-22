@@ -40,15 +40,17 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.2);
       pointer-events: none;
     }
-    .crowd-marker {
-      z-index: 1000 !important;
+    .crowd-indicator {
+      display: inline-block;
+      margin-right: 5px;
+      font-size: 14px;
     }
-    .crowd-marker div {
-      transition: all 0.2s ease;
-    }
-    .crowd-marker div:hover {
-      transform: scale(1.1);
-      box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+    .crowd-info {
+      margin: 5px 0;
+      padding: 5px;
+      border-radius: 4px;
+      background-color: rgba(240, 240, 240, 0.8);
+      font-size: 12px;
     }
   </style>
 </head>
@@ -59,12 +61,12 @@
   <script>
     let map;
     let userMarker = null;
-    let crowdMarkers = {}; // object to track markers by buildingId
     let destinationMarker = null;
     let endCircle = null;
     let startCircle = null;
     let poiMarkers = [];
     let poiData = [];
+    let crowdData = {}; // Store crowd data by buildingId
     let isNavigating = false; // Track navigation state
     
 
@@ -75,6 +77,14 @@
       moderate: '🟠',
       crowded: '🔴',
       overcrowded: '⚫'
+    };
+
+    const crowdLabels = {
+      empty: 'Empty',
+      light: 'Light Crowd',
+      moderate: 'Moderate Crowd',
+      crowded: 'Very High Crowd',
+      overcrowded: 'Overcrowded'
     };
 
     // Handle uncaught errors
@@ -150,53 +160,72 @@
       }
     };
 
-    // Updated function to show crowd report for specific buildings
+    // Updated function to store crowd data without adding markers
     window.updateCrowdDensity = function(lat, lon, density, buildingId) {
-      const coords = [lat, lon];
       if (!map) return;
-
-      const emoji = crowdEmojis[density] || '❓';
       
-      // Remove existing marker for this building if it exists
-      if (crowdMarkers[buildingId] && map.hasLayer(crowdMarkers[buildingId])) {
-        map.removeLayer(crowdMarkers[buildingId]);
+      // Store the crowd data for this building
+      crowdData[buildingId] = {
+        density: density,
+        label: crowdLabels[density] || 'Unknown',
+        emoji: crowdEmojis[density] || '❓',
+        timestamp: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString()
+      };
+      
+      // Update any open popups if this building is currently shown
+      const marker = poiMarkers.find(m => m.poiData && m.poiData.id === buildingId);
+      if (marker && marker.isPopupOpen()) {
+        updatePopupContent(marker);
+      }
+    };
+
+    // Function to clear all crowd data
+    window.clearCrowdData = function() {
+      crowdData = {};
+    };
+
+    // Helper function to create popup content with crowd info
+    function getPopupContent(poi) {
+      const buildingId = poi.id;
+      const crowdInfo = crowdData[buildingId];
+      
+      let crowdHtml = '';
+      if (crowdInfo) {
+        crowdHtml = `
+          <div class="crowd-info">
+            <span class="crowd-indicator">${crowdInfo.emoji}</span>
+            <strong>Crowd: ${crowdInfo.label}</strong><br>
+            <small>Updated recently • Expires in 1 hour</small>
+          </div>
+        `;
       }
       
-      // Create a custom divIcon for the crowd indicator
-      const crowdIcon = L.divIcon({
-        className: 'crowd-marker',
-        html: `<div style="background-color: rgba(255,255,255,0.9); 
-                          padding: 3px 8px; 
-                          border-radius: 12px; 
-                          font-size: 14px;
-                          font-weight: bold;
-                          box-shadow: 0 1px 3px rgba(0,0,0,0.3);">
-                ${emoji}
-              </div>`,
-        iconSize: [30, 20],
-        iconAnchor: [15, 10]
-      });
-      
-      // Create and add the marker
-      crowdMarkers[buildingId] = L.marker(coords, { icon: crowdIcon, zIndexOffset: 1000 })
-        .addTo(map);
-        
-      // Add a popup with more details
-      crowdMarkers[buildingId].bindPopup(`
-        <strong>Crowd Level: ${density.charAt(0).toUpperCase() + density.slice(1)}</strong><br>
-        <small>Updated recently • Expires in 1 hour</small>
-      `);
-    };
+      return `
+        <div style="text-align: center;">
+          <strong>🏢 ${poi.name || 'Unnamed Building'}</strong>
+          ${crowdHtml}
+          <button onclick="window.selectPOI('${poi.id}')" style="
+            margin-top: 8px;
+            padding: 6px 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+          ">Navigate Here</button>
+        </div>
+      `;
+    }
 
-    // Function to clear all crowd markers
-    window.clearCrowdMarkers = function() {
-      Object.values(crowdMarkers).forEach(marker => {
-        if (map.hasLayer(marker)) {
-          map.removeLayer(marker);
-        }
-      });
-      crowdMarkers = {};
-    };
+    // Function to update popup content with latest crowd data
+    function updatePopupContent(marker) {
+      if (marker && marker.getPopup()) {
+        const popupContent = getPopupContent(marker.poiData);
+        marker.setPopupContent(popupContent);
+      }
+    }
 
     // Function to display POIs on the map
     window.displayPOIs = function(pois) {
@@ -219,26 +248,14 @@
         });
     
         const marker = L.marker(coords, { icon: poiIcon })
-          .bindPopup(`
-    <div style="text-align: center;">
-      <strong>🏢 ${poi.name || 'Unnamed Building'}</strong><br>
-      <button onclick="window.selectPOI('${poi.id}')" style="
-        margin-top: 8px;
-        padding: 6px 12px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 12px;
-      ">Navigate Here</button>
-    </div>
-  `);
+          .bindPopup(getPopupContent(poi));
     
         // When marker is clicked, hide all others and show only this one
         marker.on('click', function(e) {
           if (!isNavigating) { // Only allow POI interactions when not navigating
             hideOtherPOIMarkers(marker);
+            // Update popup content before opening
+            updatePopupContent(marker);
             marker.openPopup();
             // Listen for popup close to restore all markers
             marker.once('popupclose', function() {
@@ -276,6 +293,7 @@
         }
       });
     }
+    
     window.closePOIPopup = function() {
       map.closePopup();
       if (!isNavigating) { // Only restore markers if not navigating
@@ -432,7 +450,6 @@
         opacity: 0.8
       }).addTo(map);
     };
-
   </script>
 </body>
 </html>
