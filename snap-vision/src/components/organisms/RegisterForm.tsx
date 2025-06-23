@@ -86,8 +86,9 @@ export default function RegisterForm() {
               // Automatically create a Firestore entry for this user
               await firestore().collection('userInformation').doc(uid).set({
                 email,
-                role: 'user', // default role for all new signups
-                createdAt: firestore.FieldValue.serverTimestamp(),
+                name: username.trim(),
+                active: true,
+                role: 'user', 
               });
 
               Alert.alert('Success', 'Account created!');
