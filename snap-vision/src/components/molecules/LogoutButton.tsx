@@ -19,7 +19,7 @@ export default function LogoutButton({ onLogout, isLoading = false }: LogoutButt
       disabled={isLoading}
     >
       {isLoading ? (
-        <ActivityIndicator color="#FFFFFF" size="small" />
+        <ActivityIndicator color="#FFFFFF" size="small" testID='loading-indicator' />
       ) : (
         <Text style={styles.buttonText}>Log Out</Text>
       )}

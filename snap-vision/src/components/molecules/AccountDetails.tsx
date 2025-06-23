@@ -71,7 +71,7 @@ export default function AccountDetails() {
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color={colors.primary} testID='loading-indicator'/>
       </View>
     );
   }
