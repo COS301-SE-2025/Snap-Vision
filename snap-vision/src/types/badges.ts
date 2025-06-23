@@ -11,7 +11,8 @@ export type BadgeId =
   | '200-destinations'
   | 'enabled-notifications'
   | 'reported-crowd'   //done
-  | 'points-150';          
+  | 'points-150'   //done
+  | 'fast-finisher';      
 
 
 
@@ -83,6 +84,11 @@ export const BADGES: Record<BadgeId, Badge> = {
     id: 'points-150',
     title: 'Points Collector',
     description: 'Earned 150 points.',
+  },
+   'fast-finisher': {
+    id: 'fast-finisher',
+    title: 'Speed Runner',
+    description: 'Reached your destination in under 5 minutes!',
   },
 
 };
