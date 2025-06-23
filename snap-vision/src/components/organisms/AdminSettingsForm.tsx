@@ -5,8 +5,6 @@ import SettingItem from '../molecules/SettingItem';
 import ThemedText from '../atoms/ThemedText';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
-import TopBar from '../molecules/TopBar';
-import { useNavigation } from '@react-navigation/native';
 import SettingsHeader from '../molecules/SettingsHeader';
 
 const SectionHeader = ({ title }: { title: string }) => {
@@ -32,8 +30,6 @@ const Divider = () => {
 const AdminSettingsForm = () => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  const navigation = useNavigation();
-
   const [enable2FA, setEnable2FA] = useState(false);
   const [sessionTimeout] = useState('15 minutes');
   const [defaultViewMode] = useState('AR');

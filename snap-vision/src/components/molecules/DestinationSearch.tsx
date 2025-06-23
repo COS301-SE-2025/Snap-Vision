@@ -3,7 +3,6 @@ import React from 'react';
 import { View, TextInput, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { getThemeColors } from '../../theme';
 import { useTheme } from '../../theme/ThemeContext';
-import { TextIcon } from '../atoms/TextIcon';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 interface Props {

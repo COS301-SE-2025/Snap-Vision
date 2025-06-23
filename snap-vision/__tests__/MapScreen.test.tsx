@@ -1,8 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native'; 
-import { render, act, fireEvent, waitFor } from '@testing-library/react-native';
-import MapScreen from '../src/screens/MapScreen';
-import Geolocation from '@react-native-community/geolocation';
+import { render, act, fireEvent } from '@testing-library/react-native';
 import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
 import fetchMock from 'jest-fetch-mock';
 
@@ -168,11 +166,11 @@ describe('MapScreen', () => {
     // Create a component that simulates POI selection
     const TestPOISelection = () => {
       const [destination, setDestination] = React.useState('');
-      const [destinationCoords, setDestinationCoords] = React.useState<[number, number] | null>(null);
+      //const [setDestinationCoords] = React.useState<[number, number] | null>(null);
       
       const handleSelectPOI = (poi: any) => {
         setDestination(poi.name);
-        setDestinationCoords([poi.centroid.longitude, poi.centroid.latitude]);
+        //setDestinationCoords([poi.centroid.longitude, poi.centroid.latitude]);
       };
       
       return (
@@ -384,7 +382,7 @@ describe('Crowd Reporting', () => {
       );
     };
 
-    const { getByText, getByTestId } = render(
+    const { getByText} = render(
       <ThemeProviderWrapper>
         <MockedMapScreen />
       </ThemeProviderWrapper>

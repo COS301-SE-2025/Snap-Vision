@@ -1,12 +1,9 @@
 // src/screens/MapScreen.tsx
-import React, { useState, useRef } from 'react';
-import { View, Alert, Share, Text } from 'react-native';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { View, Alert, Share, Text, PermissionsAndroid, Pressable } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
-import { PermissionsAndroid } from 'react-native';
 import { WebView as WebViewType } from 'react-native-webview';
-import { useEffect } from 'react';
 import firestore from '@react-native-firebase/firestore';
-import { Modal, FlatList, Pressable } from 'react-native';
 import Tts from 'react-native-tts';
 import MapWebView from '../components/organisms/MapWebView';
 import CrowdReportModal from '../components/molecules/CrowdReportModal';
@@ -16,9 +13,7 @@ import MapActionsPanel from '../components/organisms/MapActionsPanel';
 import NavigationPanel from '../components/organisms/NavigationPanel';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
-import { TextIcon } from '../components/atoms/TextIcon';
 import DirectionsModal from '../components/organisms/DirectionsModal';
-import TextToSpeech from '../components/molecules/TextToSpeech';
 import { useRoute } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 
@@ -41,7 +36,7 @@ const MapScreen = () => {
   const colors = getThemeColors(isDark);
   const watchIdRef = useRef<number | null>(null);
 
-  const [status, setStatus] = useState('Loading map...');
+  const [setStatus] = useState('Loading map...');
   const [error, setError] = useState<string | null>(null);
   const [currentLocation, setCurrentLocation] = useState<{
     latitude: number;
@@ -59,7 +54,7 @@ const MapScreen = () => {
   const [steps, setSteps] = useState<any[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [setIsSpeaking] = useState(false);
   const [isRouteLoading, setIsRouteLoading] = useState(false);
   const [shouldStartTTS, setShouldStartTTS] = useState(false);
   const [showDirectionsSheet, setShowDirectionsSheet] = useState(false);
@@ -81,10 +76,26 @@ const MapScreen = () => {
 
   // crowd reports
   const [selectedPOI, setSelectedPOI] = useState<any>(null);
-  const [crowdReports, setCrowdReports] = useState<Record<string, any>>({});
+  const [setCrowdReports] = useState<Record<string, any>>({});
   const [selectedFeature, setSelectedFeature] = useState<any>(null);
 
-  const sendLocationToWebView = (lat: number, lon: number, centerMap = false) => {
+  // Helper to calculate distance between two lat/lon points (Haversine formula)
+  const getDistanceMeters = useCallback((lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const toRad = (x: number) => (x * Math.PI) / 180;
+    const R = 6371000;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) *
+        Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }, []);
+
+  const sendLocationToWebView = useCallback((lat: number, lon: number, centerMap = false) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
     const jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap});`;
     webViewRef.current?.injectJavaScript(jsCode);
@@ -97,9 +108,9 @@ const MapScreen = () => {
       // Call updateNavigationProgress directly
       updateNavigationProgress(lat, lon);
     }
-  };
+  }, [isNavigating]);
 
-  const requestLocation = async () => {
+  const requestLocation = useCallback(async () => {
     try {
       const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
@@ -120,10 +131,10 @@ const MapScreen = () => {
       } else {
         setError('Location permission denied');
       }
-    } catch (err) {
+    } catch (_) {
       setError('Permission request failed');
     }
-  };
+  }, [sendLocationToWebView]);
 
   const handleWebViewMessage = (event: any) => {
     try {
@@ -166,7 +177,7 @@ const MapScreen = () => {
           }
         }
       }
-    } catch (e) {
+    } catch (_) {
       console.log('WebView message:', event.nativeEvent.data);
     }
   };
@@ -194,7 +205,7 @@ const MapScreen = () => {
     fetchRoute(destinationCoords);
   };
 
-  const fetchRoute = async (destCoords: [number, number]) => {
+  const fetchRoute = useCallback(async (destCoords: [number, number]) => {
     if (!currentLocation) {
       setError('Your location is not available yet');
       return;
@@ -253,59 +264,10 @@ const MapScreen = () => {
     } finally {
       setIsRouteLoading(false);
     }
-  };
+  }, [currentLocation, getDistanceMeters]);
 
-  // Start navigation function
-  const startNavigation = () => {
-    if (!currentLocation || !destinationCoords || lastRoute.current.length === 0) {
-      setError('Cannot start navigation without a route');
-      return;
-    }
-    
-    setIsNavigating(true);
-    setStatus('Navigation started');
-    setRouteProgress(0);
-        webViewRef.current?.injectJavaScript('window.setNavigationState && window.setNavigationState(true);');
-    
-    // Start watching position with higher frequency
-    if (watchIdRef.current) {
-      Geolocation.clearWatch(watchIdRef.current);
-    }
-    
-    watchIdRef.current = Geolocation.watchPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        sendLocationToWebView(latitude, longitude);
-      },
-      (error) => {
-        setError('Failed to track location');
-      },
-      { 
-        enableHighAccuracy: true, 
-        distanceFilter: 5, // Update every 5 meters
-        interval: 1000 // Update every 2 seconds
-      }
-    );
-  };
-
-  // Stop navigation function
-  const stopNavigation = () => {
-    if (watchIdRef.current) {
-      Geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
-    }
-    
-    setIsNavigating(false);
-    setStatus('Navigation stopped');
-    webViewRef.current?.injectJavaScript('window.setNavigationState && window.setNavigationState(false);');
-    
-    // Clear progress line
-    webViewRef.current?.injectJavaScript('if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }');
-  };
-
-  // Update the updateNavigationProgress function to check for destination arrival
-  
-  const updateNavigationProgress = (latitude: number, longitude: number) => {
+  // Update the navigation progress function with useCallback
+  const updateNavigationProgress = useCallback((latitude: number, longitude: number) => {
     if (!lastRoute.current || lastRoute.current.length === 0) {
       return;
     }
@@ -421,6 +383,54 @@ const MapScreen = () => {
     if (newProgress >= 100 || distanceToEnd < 20) {
       destinationReached();
     }
+  }, [getDistanceMeters, steps, currentStep]);
+
+  // Start navigation function
+  const startNavigation = () => {
+    if (!currentLocation || !destinationCoords || lastRoute.current.length === 0) {
+      setError('Cannot start navigation without a route');
+      return;
+    }
+    
+    setIsNavigating(true);
+    setStatus('Navigation started');
+    setRouteProgress(0);
+        webViewRef.current?.injectJavaScript('window.setNavigationState && window.setNavigationState(true);');
+    
+    // Start watching position with higher frequency
+    if (watchIdRef.current) {
+      Geolocation.clearWatch(watchIdRef.current);
+    }
+    
+    watchIdRef.current = Geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        sendLocationToWebView(latitude, longitude);
+      },
+      (error) => {
+        setError('Failed to track location');
+      },
+      { 
+        enableHighAccuracy: true, 
+        distanceFilter: 5, // Update every 5 meters
+        interval: 1000 // Update every 2 seconds
+      }
+    );
+  };
+
+  // Stop navigation function
+  const stopNavigation = () => {
+    if (watchIdRef.current) {
+      Geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+    
+    setIsNavigating(false);
+    setStatus('Navigation stopped');
+    webViewRef.current?.injectJavaScript('window.setNavigationState && window.setNavigationState(false);');
+    
+    // Clear progress line
+    webViewRef.current?.injectJavaScript('if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }');
   };
   
   // Add this new function to handle reaching the destination
@@ -452,38 +462,8 @@ const MapScreen = () => {
     );
   };
 
-  // Add this function to handle report submission
-  const submitCrowdReport = async () => {
-    if (!selectedPOI || !selectedDensity) {
-      setError('Please select a building and density level');
-      return;
-    }
-    
-    try {
-      // Save report to Firestore
-      await firestore().collection('crowdReports').add({
-        buildingId: selectedPOI.id,
-        buildingName: selectedPOI.name,
-        density: selectedDensity,
-        timestamp: firestore.FieldValue.serverTimestamp(),
-        reportedBy: auth().currentUser?.uid || 'anonymous',
-        centroid: selectedPOI.centroid,
-        expiresAt: new Date(Date.now() + 60 * 60 * 1000) // 1 hour from now
-      });
-      
-      // Update UI
-      const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${selectedPOI.centroid.latitude}, ${selectedPOI.centroid.longitude}, '${selectedDensity}', '${selectedPOI.id}');`;
-      webViewRef.current?.injectJavaScript(jsCrowdCode);
-      setShowCrowdPopup(false);
-      setStatus(`Crowd density reported for ${selectedPOI.name}`);
-    } catch (error) {
-      console.error('Error saving crowd report:', error);
-      setError('Failed to submit crowd report');
-    }
-  };
-
   // Add function to fetch recent crowd reports
-  const fetchRecentCrowdReports = async () => {
+  const fetchRecentCrowdReports = useCallback(async () => {
     try {
       const oneHourAgo = new Date();
       oneHourAgo.setHours(oneHourAgo.getHours() - 1);
@@ -523,6 +503,36 @@ const MapScreen = () => {
         setError('Crowd reports feature unavailable: Permission error');
       }
     }
+  }, [isMapReady]);
+
+  // Add this function to handle report submission
+  const submitCrowdReport = async () => {
+    if (!selectedPOI || !selectedDensity) {
+      setError('Please select a building and density level');
+      return;
+    }
+    
+    try {
+      // Save report to Firestore
+      await firestore().collection('crowdReports').add({
+        buildingId: selectedPOI.id,
+        buildingName: selectedPOI.name,
+        density: selectedDensity,
+        timestamp: firestore.FieldValue.serverTimestamp(),
+        reportedBy: auth().currentUser?.uid || 'anonymous',
+        centroid: selectedPOI.centroid,
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000) // 1 hour from now
+      });
+      
+      // Update UI
+      const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${selectedPOI.centroid.latitude}, ${selectedPOI.centroid.longitude}, '${selectedDensity}', '${selectedPOI.id}');`;
+      webViewRef.current?.injectJavaScript(jsCrowdCode);
+      setShowCrowdPopup(false);
+      setStatus(`Crowd density reported for ${selectedPOI.name}`);
+    } catch (error) {
+      console.error('Error saving crowd report:', error);
+      setError('Failed to submit crowd report');
+    }
   };
 
   // Add useEffect to fetch crowd reports periodically
@@ -533,7 +543,7 @@ const MapScreen = () => {
       
       return () => clearInterval(interval);
     }
-  }, [isMapReady]);
+  }, [isMapReady, fetchRecentCrowdReports]);
 
   // Add a function to handle opening the crowd report modal
   const openCrowdReportModal = () => {
@@ -682,23 +692,7 @@ useEffect(() => {
         Geolocation.clearWatch(watchId);
       }
     };
-  }, []);
-
-  // Helper to calculate distance between two lat/lon points (Haversine formula)
-  function getDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
-    const toRad = (x: number) => (x * Math.PI) / 180;
-    const R = 6371000;
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRad(lat1)) *
-        Math.cos(toRad(lat2)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
+  }, [sendLocationToWebView]);
 
   // Dynamic rerouting if user deviates from route
   useEffect(() => {
@@ -729,8 +723,7 @@ useEffect(() => {
       setStatus('Re-routing...');
       rerouteFromCurrentLocation();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentLocation, isNavigating]);
+  }, [currentLocation, isNavigating, destinationCoords, isRouteLoading, getDistanceMeters, fetchRoute]);
 
   // Reroute function
   const rerouteFromCurrentLocation = async () => {
@@ -792,7 +785,7 @@ useEffect(() => {
       fetchRoute([lng, lat]);
       setHasHandledDeepLink(true);
     }
-  }, [params, currentLocation, hasHandledDeepLink]);
+  }, [params, currentLocation, hasHandledDeepLink, fetchRoute]);
 
   // Clean up on unmount
   useEffect(() => {
@@ -816,7 +809,7 @@ useEffect(() => {
     }, 500);
     
     return () => clearInterval(progressInterval);
-  }, [isNavigating, currentLocation]);
+  }, [isNavigating, currentLocation, updateNavigationProgress]);
 
 
   // Dynamically request location updates every 3 seconds
@@ -850,7 +843,7 @@ useEffect(() => {
         Geolocation.clearWatch(watchId);
       }
     };
-  }, []);
+  }, [sendLocationToWebView]);
 
 
  return (

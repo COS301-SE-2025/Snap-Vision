@@ -1,9 +1,8 @@
 // src/components/organisms/DirectionsModal.tsx
 import React from 'react';
-import { Modal, View, FlatList, Pressable, Text } from 'react-native';
+import { Modal, View, FlatList, Pressable, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
-import { StyleSheet } from 'react-native';
 
 interface DirectionsModalProps {
   visible: boolean;
@@ -75,7 +74,7 @@ const DirectionsModal: React.FC<DirectionsModalProps> = ({
           />
           
           {/* Button container */}
-                    <View style={styles.buttonContainer}>
+          <View style={styles.buttonContainer}>
             <Pressable
               style={[styles.button, { borderColor: colors.border }]}
               onPress={onClose}

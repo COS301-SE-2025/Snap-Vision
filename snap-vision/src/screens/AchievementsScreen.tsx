@@ -2,17 +2,11 @@ import React from 'react';
 import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
-import TopBar from '../components/molecules/TopBar';
 import AchievementsForm from '../components/organisms/AchievementsForm';
 
 const AchievementsScreen = () => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-
-  const handleBackPress = () => {
-    // Navigation back logic
-    console.log('Back pressed');
-  };
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
