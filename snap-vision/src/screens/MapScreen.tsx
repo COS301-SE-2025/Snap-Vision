@@ -517,6 +517,10 @@ const MapScreen = () => {
       }
     } catch (error) {
       console.error('Error fetching crowd reports:', error);
+      // More informative error handling
+      if (error.code === 'firestore/permission-denied') {
+        setError('Crowd reports feature unavailable: Permission error');
+      }
     }
   };
 
@@ -535,7 +539,21 @@ const MapScreen = () => {
     // If user has selected a POI on map, use that as default
     if (selectedFeature) {
       setSelectedPOI(selectedFeature);
+    } else if (destination && destinationCoords) {
+      // If user has a destination set in the search bar but no selected feature,
+      // find the corresponding POI
+      const matchingPOI = pois.find(poi => 
+        poi.name === destination || 
+        (poi.centroid && 
+         poi.centroid.longitude === destinationCoords[0] && 
+         poi.centroid.latitude === destinationCoords[1])
+      );
+      
+      if (matchingPOI) {
+        setSelectedPOI(matchingPOI);
+      }
     }
+    
     setShowCrowdPopup(true);
   };
 
@@ -622,11 +640,16 @@ useEffect(() => {
     setDestinationCoords([poi.centroid.longitude, poi.centroid.latitude]);
     setPOISuggestions([]);
     
+    // Update selected POI and feature for crowd reporting
+    setSelectedFeature(poi);
+    setSelectedPOI(poi);
+    
     // Automatically fetch route when POI is selected from search
     if (currentLocation) {
       fetchRoute([poi.centroid.longitude, poi.centroid.latitude]);
     }
   };
+  
   // Dynamically request location updates
   useEffect(() => {
     let watchId: number | null = null;
