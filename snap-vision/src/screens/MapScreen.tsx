@@ -77,7 +77,12 @@ const MapScreen = () => {
   
   const { unlock, incrementRoutes } = useBadges();  
   const { state, clearJustUnlocked } = useBadges();
+  const { setNavigationStartTime } = useBadges();
+  const { maybeUnlockFastFinisher, incrementCheckIns } = useBadges();
+const [popupBadge, setPopupBadge] = useState<string | null>(null);
 
+
+    
   const sendLocationToWebView = (lat: number, lon: number, centerMap = false) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
     const jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap});`;
@@ -265,7 +270,7 @@ const MapScreen = () => {
     setIsNavigating(true);
     setStatus('Navigation started');
     setRouteProgress(0);
-    
+    setNavigationStartTime(Date.now());
     // Start watching position with higher frequency
     if (watchIdRef.current) {
       Geolocation.clearWatch(watchIdRef.current);
