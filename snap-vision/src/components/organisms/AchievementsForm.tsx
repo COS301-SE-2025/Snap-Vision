@@ -67,7 +67,45 @@ export default function AchievementsForm() {
     >
       <WelcomeHeader userName="User" textColor={colors.text} backgroundColor={colors.card} />
 
-      {/* Category Buttons */}
+      {/* Progress (live data) */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Progress</Text>
+        <Text style={[styles.sectionSubtitle, { color: colors.text }]}>Keep track of your achievements</Text>
+        <View style={styles.progressRow}>
+          <ProgressCard title="Points Earned"    value={state.points}             backgroundColor={colors.card} textColor={colors.text} borderColor={colors.border} />
+          <ProgressCard title="Badges Unlocked" value={state.unlocked.size}      backgroundColor={colors.card} textColor={colors.text} borderColor={colors.border} />
+          <ProgressCard title="Check‑ins"        value={state.checkIns}           backgroundColor={colors.card} textColor={colors.text} borderColor={colors.border} />
+        </View>
+      </View>
+
+      {/* Your Badges */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Badges</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {(Object.keys(BADGES) as BadgeId[]).map(id => {
+            const badge = BADGES[id];
+            return (
+              <RewardCard
+                key={id}
+                reward={{
+                  id,
+                  title: badge.title,
+                  description: badge.description,
+                  type: 'limited',
+                  unlockCondition: '',
+                  isUnlocked: unlockedArray.includes(id),
+                }}
+                textColor={unlockedArray.includes(id) ? colors.text : colors.subtleText}
+                backgroundColor={colors.card}
+                borderColor={colors.border}
+              />
+            );
+          })}
+        </ScrollView>
+      </View>
+
+
+      {/* Category Buttons
       <View style={styles.categoryRow}>
         {['Achievements', 'Challenges', 'Rewards'].map(title => (
           <CategoryButton
@@ -80,24 +118,9 @@ export default function AchievementsForm() {
             onPress={() => handleCategoryPress(title)}
           />
         ))}
-      </View>
+      </View> */}
 
-      
-
-      {/* Progress (live data) */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Progress</Text>
-        <Text style={[styles.sectionSubtitle, { color: colors.text }]}>Keep track of your achievements</Text>
-        <View style={styles.progressRow}>
-          <ProgressCard title="Points Earned"    value={state.points}             backgroundColor={colors.card} textColor={colors.text} borderColor={colors.border} />
-          <ProgressCard title="Badges Unlocked" value={state.unlocked.size}      backgroundColor={colors.card} textColor={colors.text} borderColor={colors.border} />
-          <ProgressCard title="Check‑ins"        value={state.checkIns}           backgroundColor={colors.card} textColor={colors.text} borderColor={colors.border} />
-        </View>
-      </View>
-
-      
-
-      {/* Explore More */}
+      {/* Explore More
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Explore More!</Text>
         <View style={styles.exploreRow}>
@@ -113,7 +136,7 @@ export default function AchievementsForm() {
             />
           ))}
         </View>
-      </View>
+      </View> */}
 
       {/* Dynamic Challenges */}
 <View style={styles.section}>
@@ -142,36 +165,12 @@ export default function AchievementsForm() {
 
       {/* Action Buttons */}
       <View style={styles.actionButtons}>
-        <ActionButton title="View Badges"   variant="outline" borderColor={colors.text} textColor={colors.text} onPress={() => handleActionPress('View Badges')} />
-        <ActionButton title="Check Points"  variant="outline" borderColor={colors.text} textColor={colors.text} onPress={() => handleActionPress('Check Points')} />
+        {/* <ActionButton title="View Badges"   variant="outline" borderColor={colors.text} textColor={colors.text} onPress={() => handleActionPress('View Badges')} />
+        <ActionButton title="Check Points"  variant="outline" borderColor={colors.text} textColor={colors.text} onPress={() => handleActionPress('Check Points')} /> */}
         <ActionButton title="Start Challenge" variant="primary" backgroundColor={colors.primary} textColor="#fff" onPress={() => handleActionPress('Start Challenge')} />
       </View>
 
-      {/* Your Badges */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Badges</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {(Object.keys(BADGES) as BadgeId[]).map(id => {
-            const badge = BADGES[id];
-            return (
-              <RewardCard
-                key={id}
-                reward={{
-                  id,
-                  title: badge.title,
-                  description: badge.description,
-                  type: 'limited',
-                  unlockCondition: '',
-                  isUnlocked: unlockedArray.includes(id),
-                }}
-                textColor={unlockedArray.includes(id) ? colors.text : colors.subtleText}
-                backgroundColor={colors.card}
-                borderColor={colors.border}
-              />
-            );
-          })}
-        </ScrollView>
-      </View>
+      
 
       <View style={styles.bottomSpacing} />
     </ScrollView>
