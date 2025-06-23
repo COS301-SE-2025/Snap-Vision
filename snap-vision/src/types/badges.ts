@@ -1,5 +1,4 @@
 // 1. Badge ID types
-// 1. Badge ID types
 export type BadgeId =
   | 'first-login'  //done
   | 'qr-scan'      
@@ -11,7 +10,10 @@ export type BadgeId =
   | '150-destinations'
   | '200-destinations'
   | 'enabled-notifications'
-  | 'reported-crowd';   //done
+  | 'reported-crowd'   //done
+  | 'points-150';          
+
+
 
 // 2. Badge shape
 export interface Badge {
@@ -77,5 +79,11 @@ export const BADGES: Record<BadgeId, Badge> = {
     title: 'Safety Watch',
     description: 'Reported a crowded area.',
   },
+  'points-150': {
+    id: 'points-150',
+    title: 'Points Collector',
+    description: 'Earned 150 points.',
+  },
+
 };
 
