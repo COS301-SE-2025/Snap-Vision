@@ -157,12 +157,6 @@ export default function AchievementsForm() {
 </View>
 
 
-      {/* Explore Banner */}
-      <View style={styles.exploreSection}>
-        <Icon name="location" size={24} color={colors.text} />
-        <Text style={[styles.exploreText, { color: colors.text }]}>Explore exciting areas</Text>
-      </View>
-
       {/* Action Buttons */}
       <View style={styles.actionButtons}>
         {/* <ActionButton title="View Badges"   variant="outline" borderColor={colors.text} textColor={colors.text} onPress={() => handleActionPress('View Badges')} />
