@@ -4,31 +4,31 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import SettingsHeader from '../molecules/SettingsHeader';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
+import { useNavigation } from '@react-navigation/native';
 
 export default function SupportContent() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
+  const navigation = useNavigation<any>();
 
   const supportOptions = [
     { 
       title: 'FAQ', 
       icon: 'frequently-asked-questions',
-      description: 'View frequently asked questions' 
+      description: 'View frequently asked questions',
+      onPress: () => navigation.navigate('FAQ')
     },
     { 
       title: 'Contact Support', 
       icon: 'email-outline',
-      description: 'Send us an email with your question' 
+      description: 'Send us an email with your question',
+      onPress: () => navigation.navigate('ContactSupport')
     },
     { 
-      title: 'Report a Bug', 
-      icon: 'bug-outline',
-      description: 'Report technical issues or bugs' 
-    },
-    { 
-      title: 'Feature Request', 
-      icon: 'lightbulb-outline',
-      description: 'Suggest new features or improvements' 
+      title: 'Tutorial', 
+      icon: 'book-open-page-variant-outline',
+      description: 'View the tutorial to learn how to use SnapVision',
+      onPress: () => navigation.navigate('Tutorial')
     }
   ];
 
@@ -44,7 +44,7 @@ export default function SupportContent() {
         <TouchableOpacity 
           key={index}
           style={[styles.optionContainer, { borderBottomColor: colors.border || '#e1e1e1' }]}
-          onPress={() => {}}
+          onPress={option.onPress}  // Use the onPress property from each option
         >
           <View style={styles.iconContainer}>
             <Icon name={option.icon} size={24} color={colors.primary} />
