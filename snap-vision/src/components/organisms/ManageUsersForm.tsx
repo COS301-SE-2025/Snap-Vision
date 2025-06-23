@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
@@ -48,7 +49,7 @@ export default function ManageUsersForm({ navigation }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title="Manage Users" />
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={true}>
         {/* Search */}
         <View style={styles.searchContainer}>
           <SearchInput
@@ -84,16 +85,56 @@ export default function ManageUsersForm({ navigation }: Props) {
               <UserCard
                 key={user.id}
                 user={user}
-                onEdit={editUser}
-                onDelete={deleteUser}
-                onToggleStatus={toggleUserStatus}
+                onEdit={(u) => {
+                  const newRole = u.role === 'Admin' ? 'Viewer' : 'Admin';
+                  Alert.alert(
+                    'Confirm Role Change',
+                    `Are you sure you want to make this user a ${newRole}?`,
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Confirm',
+                        onPress: () => editUser({ ...u, role: newRole }),
+                      },
+                    ]
+                  );
+                }}
+                onDelete={(u) => {
+                  Alert.alert(
+                    'Confirm Deletion',
+                    `Are you sure you want to delete ${u.name}?`,
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Delete',
+                        style: 'destructive',
+                        onPress: () => deleteUser(u),
+                      },
+                    ]
+                  );
+                }}
+                onToggleStatus={(u) => {
+                  const newStatus = u.status === 'Active' ? 'Inactive' : 'Active';
+                  Alert.alert(
+                    'Confirm Status Change',
+                    `Are you sure you want to set this user as ${newStatus}?`,
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Confirm',
+                        onPress: () => toggleUserStatus(u),
+                      },
+                    ]
+                  );
+                }}
               />
+
             ))
           )}
         </View>
 
         {/* Action Buttons */}
-        <View style={styles.actionButtonsContainer}>
+        {/* <View style={styles.actionButtonsContainer}>
           <ActionButton
             title="Bulk Deactivate"
             onPress={bulkDeactivate}
@@ -106,7 +147,7 @@ export default function ManageUsersForm({ navigation }: Props) {
             variant="primary"
             style={styles.actionButton}
           />
-        </View>
+        </View> */}
       </ScrollView>
     </View>
   );
