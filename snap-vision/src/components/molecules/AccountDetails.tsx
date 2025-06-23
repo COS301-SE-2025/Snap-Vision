@@ -1,3 +1,4 @@
+//prev
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import AccountInfoField from '../atoms/AccountInfoField';
@@ -12,7 +13,7 @@ export default function AccountDetails() {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState({
     email: '',
-  });
+  }); 
 
   useEffect(() => {
     const fetchUserData = async () => {
