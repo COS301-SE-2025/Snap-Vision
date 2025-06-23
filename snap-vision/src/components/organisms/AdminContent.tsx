@@ -8,6 +8,7 @@ interface Props {
   onEditFloorplans: () => void;
   onSettings: () => void;
   onManageUsers: () => void;
+  onFloorplanEditor?: () => void;
 }
 
 export default function AdminScreenContent({
@@ -16,6 +17,7 @@ export default function AdminScreenContent({
   onEditFloorplans,
   onSettings,
   onManageUsers,
+  onFloorplanEditor,
 }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -60,6 +62,12 @@ export default function AdminScreenContent({
           title="Manage Users" 
           onPress={onManageUsers}
         />
+        {onFloorplanEditor && (
+          <AppButton 
+            title="Floorplan Editor" 
+            onPress={onFloorplanEditor}
+          />
+        )}
       </View>
     </View>
   );
