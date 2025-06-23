@@ -21,6 +21,7 @@ import DirectionsModal from '../components/organisms/DirectionsModal';
 import TextToSpeech from '../components/molecules/TextToSpeech';
 import { useRoute } from '@react-navigation/native';
 import { useBadges } from '../context/BadgeContext'; 
+
 type MapScreenParams = {
   lat?: string;
   lng?: string;
@@ -73,7 +74,8 @@ const MapScreen = () => {
   const route = useRoute();
   const params = route.params as MapScreenParams;
   const [hasHandledDeepLink, setHasHandledDeepLink] = useState(false);
-  const { unlock } = useBadges();  
+  
+  const { unlock, incrementRoutes } = useBadges();  
   const { state, clearJustUnlocked } = useBadges();
 
   const sendLocationToWebView = (lat: number, lon: number, centerMap = false) => {
@@ -402,9 +404,16 @@ const MapScreen = () => {
   };
   
   // Add this new function to handle reaching the destination
-  const destinationReached = () => {
+  const destinationReached = async() => {
     if (!isNavigating) return; // Only handle if actually navigating
     
+     try {
+    await unlock('destination-reached');
+    await incrementRoutes();
+  } catch (e) {
+    console.warn('Failed to update badge state:', e);
+  }
+
     // Stop navigation
     stopNavigation();
     
