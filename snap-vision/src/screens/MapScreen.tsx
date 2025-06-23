@@ -962,7 +962,10 @@ useEffect(() => {
       <CrowdReportModal
         visible={showCrowdPopup}
         selectedDensity={selectedDensity}
+        selectedPOI={selectedPOI}
+        availablePOIs={pois}
         onChangeDensity={setSelectedDensity}
+        onChangePOI={setSelectedPOI}
         onSubmit={submitCrowdReport}
         onCancel={() => setShowCrowdPopup(false)}
       />
