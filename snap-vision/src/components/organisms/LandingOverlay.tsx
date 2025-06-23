@@ -1,4 +1,4 @@
-import React, { useRef, useEffect} from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -47,7 +47,7 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
         useNativeDriver: true,
       })
     ).start();
-  }, []);
+  }, [snapAnim1, snapAnim2, shimmerAnim]); // Add dependencies to fix ESLint warning
 
   const shimmerTranslate = shimmerAnim.interpolate({
     inputRange: [0, 1],
@@ -64,7 +64,6 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
                 styles.snapTitle,
                 {
                   color: swappedTextColor,
-                  fontFamily: 'PermanentMarkerRegular',
                   transform: [
                     { scale: snapAnim1.interpolate({
                         inputRange: [0, 1],
@@ -84,7 +83,6 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
                 styles.snapTitle,
                 {
                   color: swappedTextColor,
-                  fontFamily: 'PermanentMarkerRegular',
                   marginLeft: 10,
                   transform: [
                     { scale: snapAnim2.interpolate({
@@ -108,36 +106,16 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
           <Text style={[styles.description, { color: swappedTextColor }]}>
             Snap Vision is an indoor and outdoor navigation system designed to help students and visitors
             find their way around university spaces. Our mission is to make every step intuitive,
-            accessible, and fast — whether you’re locating a lecture hall or the nearest exit.
+            accessible, and fast — whether you're locating a lecture hall or the nearest exit.
           </Text>
 
           <View style={styles.featureSection}>
-            <MaskedView
-              maskElement={
-                <View style={{ height: 40, justifyContent: 'center', alignItems: 'center' }}>
-                  <Text style={[styles.sectionTitle, { color: 'black' }]}>
-                    Key Features
-                  </Text>
-                </View>
-              }
-            >
-              <Animated.View
-                style={{
-                  height: 40,
-                  width: 600, // Wider than mask so it can scroll across
-                  transform: [{ translateX: shimmerTranslate }],
-                }}
-              >
-                <LinearGradient
-                  colors={['#69c6d0', '#ffffff', '#69c6d0']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={{ flex: 1 }}
-                />
-              </Animated.View>
-            </MaskedView>
-
-
+            {/* Replace MaskedView with a simpler implementation */}
+            <View style={{ height: 40, justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+              <Text style={[styles.sectionTitle, { color: swappedTextColor }]}>
+                Key Features
+              </Text>
+            </View>
 
             {[
               'Turn-by-turn Navigation',
@@ -145,8 +123,8 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
               'Voice Assistance',
               'AR Navigation',
             ].map((feature, index) => (
-              <View key={index} style={[styles.featureBox, { backgroundColor: colors.secondary }]}>
-                <Text style={[styles.featureText, { color: bg }]}>{feature}</Text>
+              <View key={index} style={[styles.featureBox, { backgroundColor: isDark ? '#333' : '#f0f0f0', borderColor: colors.primary }]}>
+                <Text style={[styles.featureText, { color: colors.text }]}>{feature}</Text>
               </View>
             ))}
           </View>
@@ -176,6 +154,7 @@ const styles = StyleSheet.create({
   snapTitle: {
     fontSize: 42,
     textAlign: 'center',
+    fontWeight: 'bold',
   },
   tagline: {
     fontSize: 18,
@@ -196,17 +175,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
-    marginBottom: 16,
   },
   featureBox: {
     padding: 12,
     marginVertical: 6,
-    backgroundColor: '#ffffff10',
     borderRadius: 12,
     width: '90%',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#69c6d0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
