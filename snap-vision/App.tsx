@@ -49,8 +49,9 @@ export default function App() {
   }, []);
 
   return (
+    <BadgeProvider>
     <ThemeProvider>
-      <BadgeProvider>
+      
       <NavigationContainer ref={navigationRef}>
         <BadgeUnlockNotifier /> 
         <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
@@ -63,7 +64,7 @@ export default function App() {
           <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
         </Stack.Navigator>
       </NavigationContainer>
-      </BadgeProvider>
     </ThemeProvider>
+    </BadgeProvider>
   );
 }
