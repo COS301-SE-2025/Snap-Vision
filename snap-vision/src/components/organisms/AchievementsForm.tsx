@@ -25,24 +25,15 @@ import { BADGES, BadgeId } from '../../types/badges';      // <- ensure BadgeId 
 /* ------------------------------------------------------------------ */
 import { Challenge, Reward, ExploreCategory } from '../../types/achievements';
 
-const currentChallenges: Challenge[] = [
-  { id: '1', title: 'Visit 5 Lecture Halls', description: 'Unlock a special guide', isCompleted: true,  icon: 'school',   type: 'current' },
-  { id: '2', title: 'Explore New Buildings', description: 'Unlock a badge',         isCompleted: false, icon: 'business', type: 'current' },
-];
-
-const skins: Reward[] = [
-  { id: '1', title: 'Campus Explorer', description: 'Golden compass avatar skin', type: 'limited',   unlockCondition: 'Visit 5 different lecture halls', isUnlocked: false },
-  { id: '2', title: 'Night Owl',       description: 'Mystical owl profile frame', type: 'exclusive', unlockCondition: 'Check-in after 10 PM three times', isUnlocked: false },
-];
-
 export default function AchievementsForm() {
   /* ───────── theme ───────── */
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
   /* ───────── badge context ───────── */
-  const { state, clearJustUnlocked } = useBadges();
+  const { state, clearJustUnlocked, getChallenges } = useBadges();
   const unlockedArray = Array.from(state.unlocked);
+  const currentChallenges = getChallenges();
 
   /* ───────── popup on unlock ───────── */
   useEffect(() => {
@@ -91,21 +82,7 @@ export default function AchievementsForm() {
         ))}
       </View>
 
-      {/* Current Challenges */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Current Challenges</Text>
-        <Text style={[styles.sectionSubtitle, { color: colors.text }]}>Complete these to earn points!</Text>
-        {currentChallenges.map(ch => (
-          <ChallengeItem
-            key={ch.id}
-            challenge={ch}
-            textColor={colors.text}
-            backgroundColor={colors.card}
-            borderColor={colors.border}
-            onPress={() => handleChallengePress(ch)}
-          />
-        ))}
-      </View>
+      
 
       {/* Progress (live data) */}
       <View style={styles.section}>
@@ -118,21 +95,7 @@ export default function AchievementsForm() {
         </View>
       </View>
 
-      {/* Unlockable Skins */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Unlockable Skins</Text>
-        <View style={styles.rewardsRow}>
-          {skins.map(skin => (
-            <RewardCard
-              key={skin.id}
-              reward={skin}
-              textColor={colors.text}
-              backgroundColor={colors.card}
-              borderColor={colors.border}
-            />
-          ))}
-        </View>
-      </View>
+      
 
       {/* Explore More */}
       <View style={styles.section}>
@@ -151,6 +114,25 @@ export default function AchievementsForm() {
           ))}
         </View>
       </View>
+
+      {/* Dynamic Challenges */}
+<View style={styles.section}>
+  <Text style={[styles.sectionTitle, { color: colors.text }]}>Current Challenges</Text>
+  <Text style={[styles.sectionSubtitle, { color: colors.text }]}>
+    Complete these to earn points!
+  </Text>
+  {currentChallenges.map((challenge) => (
+    <ChallengeItem
+      key={challenge.id}
+      challenge={challenge}
+      textColor={colors.text}
+      backgroundColor={colors.card}
+      borderColor={colors.border}
+      onPress={() => handleChallengePress(challenge)}
+    />
+  ))}
+</View>
+
 
       {/* Explore Banner */}
       <View style={styles.exploreSection}>
