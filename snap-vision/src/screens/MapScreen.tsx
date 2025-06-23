@@ -844,7 +844,7 @@ useEffect(() => {
         onSubmit={submitCrowdReport}
         onCancel={() => setShowCrowdPopup(false)}
       />
-      {error && <StatusOverlay status={error} isError={true} onDismiss={() => setError(null)} />}
+      {error && <StatusOverlay status={error} />}
     </View>
   );
 };
