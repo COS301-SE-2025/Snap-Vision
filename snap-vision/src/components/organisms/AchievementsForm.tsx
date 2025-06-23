@@ -72,9 +72,9 @@ export default function AchievementsForm() {
         <Text style={[styles.sectionTitle, { color: colors.primary}]}>Your Progress</Text>
         <Text style={[styles.sectionSubtitle, { color: colors.text }]}>Keep track of your achievements</Text>
         <View style={styles.progressRow}>
-          <ProgressCard title="Points Earned"    value={state.points}             backgroundColor={colors.card} textColor={colors.text} borderColor={colors.border} />
-          <ProgressCard title="Badges Unlocked" value={state.unlocked.size}      backgroundColor={colors.card} textColor={colors.text} borderColor={colors.border} />
-          <ProgressCard title="Check‑ins"        value={state.checkIns}           backgroundColor={colors.card} textColor={colors.text} borderColor={colors.border} />
+          <ProgressCard title="Points Earned"    value={state.points}         />
+          <ProgressCard title="Badges Unlocked" value={state.unlocked.size}      />
+          <ProgressCard title="Check‑ins"        value={state.checkIns}    />
         </View>
       </View>
 
@@ -148,9 +148,6 @@ export default function AchievementsForm() {
    <ChallengeItem
   key={challenge.id}
   challenge={challenge}
-  textColor={colors.text}
-  backgroundColor={colors.card}
-  borderColor={colors.border}
   onPress={() => handleChallengePress(challenge)}
 />
 
