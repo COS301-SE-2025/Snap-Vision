@@ -4,8 +4,7 @@ const router  = express.Router();
 const {
   unlockBadgeForUser,
   getUserBadgeData,
-} = require('../../scripts/badgeService');      // <── re-use your script
-                                                 //      (move it to src/services/ later)
+} = require('../../scripts/badgeService');     
                                                  
 // POST /api/badges/unlock   { uid, badgeId }
 router.post('/unlock', async (req, res) => {
@@ -16,7 +15,7 @@ router.post('/unlock', async (req, res) => {
   try {
     await unlockBadgeForUser(uid, badgeId);
     const data = await getUserBadgeData(uid);
-    res.json(data);                               // return updated snapshot
+    res.json(data);                             
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
