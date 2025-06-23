@@ -21,6 +21,7 @@ import DirectionsModal from '../components/organisms/DirectionsModal';
 import TextToSpeech from '../components/molecules/TextToSpeech';
 import { useRoute } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 type MapScreenParams = {
@@ -28,7 +29,7 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = "http://10.0.2.2:3000"; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = "http://192.168.0.133:3000"; // <-- Use your correct backend IP here
 // emulator: 10.0.2.2
 // T home: 192.168.0.133
 //L wifi: 192.168.0.127
@@ -852,6 +853,94 @@ useEffect(() => {
     };
   }, []);
 
+  interface Floorplan {
+    buildingId: string;
+    floorLabel: string;
+    uri: string;
+    [key: string]: any;
+  }
+
+  // Add state for floorplans and floor selector modal
+  const [floorplans, setFloorplans] = useState<Floorplan[]>([]);
+  const [showFloorSelector, setShowFloorSelector] = useState(false);
+
+  const handleEnterBuilding = async (buildingId: string): Promise<void> => {
+    try {
+      // Check if we have floorplans for this building
+      const keys: string[] = Array.from(await AsyncStorage.getAllKeys());
+      const floorplanKeys: string[] = keys.filter(key =>
+        key.startsWith(`floorplan_${buildingId}`)
+      );
+      
+      if (floorplanKeys.length > 0) {
+        // Show floor selector
+        const floorplans: Floorplan[] = await Promise.all(
+          floorplanKeys.map(async (key: string) => {
+            const data = await AsyncStorage.getItem(key);
+            return JSON.parse(data as string) as Floorplan;
+          })
+        );
+        
+        setFloorplans(floorplans);
+        setShowFloorSelector(true);
+      } else {
+        setError('No indoor maps available for this building');
+      }
+    } catch (error) {
+      console.error('Error loading indoor maps:', error);
+    }
+  };
+  
+  //load a specific floor
+  interface RoomPOI {
+    id?: string;
+    name?: string;
+    buildingId: string;
+    floorId: string;
+    [key: string]: any;
+  }
+
+  // State for room POIs on the current floor
+  const [roomPOIs, setRoomPOIs] = useState<RoomPOI[]>([]);
+
+  interface LoadFloorPlanProps {
+    buildingId: string;
+    floorLabel: string;
+    uri: string;
+    [key: string]: any;
+  }
+
+  function setIsIndoorMode(arg0: boolean) {
+  throw new Error('Function not implemented.');
+  }
+  function setCurrentFloorplan(floorplan: LoadFloorPlanProps) {
+    throw new Error('Function not implemented.');
+  }
+
+  const loadFloorPlan = async (floorplan: LoadFloorPlanProps): Promise<void> => {
+    try {
+      setIsIndoorMode(true);
+      setCurrentFloorplan(floorplan);
+
+      // Load room POIs for this floor
+      const snapshot = await firestore()
+        .collection('RoomPOIs')
+        .where('buildingId', '==', floorplan.buildingId)
+        .where('floorId', '==', floorplan.floorLabel)
+        .get();
+
+      const roomPOIs: RoomPOI[] = snapshot.docs.map(doc => doc.data() as RoomPOI);
+      setRoomPOIs(roomPOIs);
+
+      // Switch to indoor map view
+      webViewRef.current?.injectJavaScript(`
+        showIndoorMap("${floorplan.uri}", ${JSON.stringify(roomPOIs)});
+      `);
+    } catch (error) {
+      console.error('Error loading floor plan:', error);
+    }
+  };
+
 
  return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -975,3 +1064,4 @@ useEffect(() => {
 };
 
 export default MapScreen;
+
