@@ -19,6 +19,7 @@ import ProgressCard from '../components/atoms/ProgressCard';
 import RewardCard from '../components/molecules/RewardCard';
 import BadgeUnlockNotifier from '../components/organisms/BadgeUnlockNotifier';
 import { BadgeProvider } from '../context/BadgeContext';
+import AchievementsForm from '../components/organisms/AchievementsForm';
 
 export default function AchievementsScreen() {
   const { isDark } = useTheme();
@@ -36,48 +37,9 @@ export default function AchievementsScreen() {
     
     <BadgeUnlockNotifier />
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
-      <WelcomeHeader
-        userName="User"
-        textColor={colors.text}
-        backgroundColor={colors.card}
-      />
-
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Progress</Text>
-        <Text style={[styles.sectionSubtitle, { color: colors.text }]}>Keep track of your achievements</Text>
-        <View style={styles.progressRow}>
-          <ProgressCard title="Points Earned" value={state.points} backgroundColor={colors.card} textColor={colors.text} borderColor={colors.border} />
-          <ProgressCard title="Badges Unlocked" value={state.unlocked.size} backgroundColor={colors.card} textColor={colors.text} borderColor={colors.border} />
-          <ProgressCard title="Check-ins" value={state.checkIns} backgroundColor={colors.card} textColor={colors.text} borderColor={colors.border} />
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Badges</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {(Object.keys(BADGES) as BadgeId[]).map((id) => {
-            const badge = BADGES[id];
-            return (
-              <RewardCard
-                key={id}
-                reward={{
-                  id,
-                  title: badge.title,
-                  description: badge.description,
-                  type: 'limited',
-                  unlockCondition: '',
-                  isUnlocked: unlockedArray.includes(id),
-                }}
-                textColor={unlockedArray.includes(id) ? colors.text : colors.subtleText}
-                backgroundColor={colors.card}
-                borderColor={colors.border}
-              />
-            );
-          })}
-        </ScrollView>
-      </View>
-
+      <AchievementsForm />
       <View style={styles.bottomSpacing} />
+      
     </ScrollView>
     
     </View>
