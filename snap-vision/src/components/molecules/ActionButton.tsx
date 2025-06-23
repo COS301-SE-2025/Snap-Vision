@@ -1,6 +1,8 @@
 // src/components/molecules/ActionButton.tsx
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
 
 interface Props {
   title: string;
@@ -19,34 +21,39 @@ export default function ActionButton({
   borderColor,
   variant = 'primary'
 }: Props) {
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
+
   const getButtonStyle = () => {
     switch (variant) {
       case 'primary':
         return {
-          backgroundColor: backgroundColor || '#824713',
-          borderColor: backgroundColor || '#824713',
+          backgroundColor: backgroundColor || colors.primary,
+          borderColor: borderColor || colors.primary,
         };
       case 'secondary':
         return {
-          backgroundColor: backgroundColor || '#f0f0f0',
-          borderColor: borderColor || '#ddd',
+          backgroundColor: backgroundColor || colors.card,
+          borderColor: borderColor || colors.border,
         };
       case 'outline':
         return {
           backgroundColor: 'transparent',
-          borderColor: borderColor || '#824713',
+          borderColor: borderColor || colors.primary,
         };
       default:
         return {
-          backgroundColor: backgroundColor || '#824713',
-          borderColor: backgroundColor || '#824713',
+          backgroundColor: backgroundColor || colors.primary,
+          borderColor: borderColor || colors.primary,
         };
     }
   };
 
   const getTextColor = () => {
     if (textColor) return textColor;
-    return variant === 'primary' ? '#fff' : '#333';
+    if (variant === 'primary') return '#fff';
+    // For secondary and outline, use theme text color
+    return colors.text;
   };
 
   return (
