@@ -3,34 +3,30 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Challenge } from '../../types/achievements';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
 
 interface Props {
   challenge: Challenge;
-  textColor?: string;
-  backgroundColor?: string;
-  borderColor?: string;
   onPress?: () => void;
 }
 
-export default function ChallengeItem({ 
-  challenge, 
-  textColor = '#333',
-  backgroundColor = '#fff',
-  borderColor = '#ddd',
-  onPress 
-}: Props) {
+export default function ChallengeItem({ challenge, onPress }: Props) {
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
+
   const getStatusIcon = () => {
     if (challenge.isCompleted) {
-      return <Icon name="checkmark-circle" size={24} color="#4CAF50" />;
+      return <Icon name="checkmark-circle" size={24} color={colors.statusActive} />;
     }
-    return <Icon name={challenge.icon} size={24} color={textColor} />;
+    return <Icon name={challenge.icon} size={24} color={colors.text} />;
   };
 
   return (
     <TouchableOpacity 
       style={[
         styles.container, 
-        { backgroundColor, borderColor }
+        { backgroundColor: colors.card, borderColor: colors.border }
       ]}
       onPress={onPress}
     >
@@ -38,10 +34,10 @@ export default function ChallengeItem({
         {getStatusIcon()}
       </View>
       <View style={styles.contentContainer}>
-        <Text style={[styles.title, { color: textColor }]}>
+        <Text style={[styles.title, { color: colors.primary }]}>
           {challenge.title}
         </Text>
-        <Text style={[styles.description, { color: textColor, opacity: 0.7 }]}>
+        <Text style={[styles.description, { color: colors.text, opacity: 0.7 }]}>
           {challenge.description}
         </Text>
       </View>
