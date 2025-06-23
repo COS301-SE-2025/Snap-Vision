@@ -65,11 +65,11 @@ export default function AchievementsForm() {
       style={[styles.container, { backgroundColor: colors.background }]}
       showsVerticalScrollIndicator={false}
     >
-      <WelcomeHeader userName="User" textColor={colors.text} backgroundColor={colors.card} />
+      <WelcomeHeader userName="User" />
 
       {/* Progress (live data) */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Progress</Text>
+        <Text style={[styles.sectionTitle, { color: colors.primary}]}>Your Progress</Text>
         <Text style={[styles.sectionSubtitle, { color: colors.text }]}>Keep track of your achievements</Text>
         <View style={styles.progressRow}>
           <ProgressCard title="Points Earned"    value={state.points}             backgroundColor={colors.card} textColor={colors.text} borderColor={colors.border} />
@@ -80,7 +80,7 @@ export default function AchievementsForm() {
 
       {/* Your Badges */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Badges</Text>
+        <Text style={[styles.sectionTitle, { color: colors.primary }]}>Your Badges</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {(Object.keys(BADGES) as BadgeId[]).map(id => {
             const badge = BADGES[id];
@@ -95,7 +95,7 @@ export default function AchievementsForm() {
                   unlockCondition: '',
                   isUnlocked: unlockedArray.includes(id),
                 }}
-                textColor={unlockedArray.includes(id) ? colors.text : colors.subtleText}
+                //textColor={unlockedArray.includes(id) ? colors.text : colors.subtleText}
                 backgroundColor={colors.card}
                 borderColor={colors.border}
               />
@@ -140,19 +140,20 @@ export default function AchievementsForm() {
 
       {/* Dynamic Challenges */}
 <View style={styles.section}>
-  <Text style={[styles.sectionTitle, { color: colors.text }]}>Current Challenges</Text>
+  <Text style={[styles.sectionTitle, { color: colors.primary}]}>Current Challenges</Text>
   <Text style={[styles.sectionSubtitle, { color: colors.text }]}>
     Complete these to earn points!
   </Text>
   {currentChallenges.map((challenge) => (
-    <ChallengeItem
-      key={challenge.id}
-      challenge={challenge}
-      textColor={colors.text}
-      backgroundColor={colors.card}
-      borderColor={colors.border}
-      onPress={() => handleChallengePress(challenge)}
-    />
+   <ChallengeItem
+  key={challenge.id}
+  challenge={challenge}
+  textColor={colors.text}
+  backgroundColor={colors.card}
+  borderColor={colors.border}
+  onPress={() => handleChallengePress(challenge)}
+/>
+
   ))}
 </View>
 
