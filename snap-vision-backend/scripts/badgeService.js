@@ -21,35 +21,73 @@ const db = admin.firestore();
  * @param {string} userId - Unique user identifier
  * @param {string} badgeId - Badge ID to unlock
  */
+/**
+ * Unlocks a badge for a user.
+ * ─ Adds the given badgeId (if not already present)
+ * ─ Increments points by 50 each time a NEW badge is added
+ * ─ Automatically unlocks the "points-150" badge once the user reaches ≥150 pts
+ * ─ Creates the user doc if it doesn't exist
+ *
+ * @param {string} userId  Unique user identifier
+ * @param {string} badgeId Badge ID to unlock
+ */
 async function unlockBadgeForUser(userId, badgeId) {
+  const POINT_INCREMENT   = 50;
+  const POINTS_MILESTONE  = 150;
+  const MILESTONE_BADGE   = 'points-150';       // <── make sure this exists in BADGES
+
   const userRef = db.collection('users').doc(userId);
 
   try {
     await db.runTransaction(async (transaction) => {
       const userDoc = await transaction.get(userRef);
 
+      /* ───────────────────────────────
+       * 1️⃣  CREATE user doc if missing
+       * ─────────────────────────────── */
       if (!userDoc.exists) {
-        // User doc does not exist - create with badge and initial points
+        const startingPoints = POINT_INCREMENT;         // first badge = +50 pts
+        const badges = [badgeId];
+
+        // milestone check on very first badge
+        if (startingPoints >= POINTS_MILESTONE && !badges.includes(MILESTONE_BADGE)) {
+          badges.push(MILESTONE_BADGE);
+        }
+
         transaction.set(userRef, {
-          badges: [badgeId],
-          points: 50,
-          checkIns: 0,
+          badges,
+          points         : startingPoints,
+          checkIns       : 0,
           routesCompleted: 0,
         });
-      } else {
-        const data = userDoc.data();
-        const badges = data.badges || [];
-
-        if (!badges.includes(badgeId)) {
-          badges.push(badgeId);
-          transaction.update(userRef, {
-            badges,
-            points: (data.points || 0) + 50,
-          });
-        } else {
-          console.log(`User ${userId} already unlocked badge ${badgeId}`);
-        }
+        return;
       }
+
+      /* ───────────────────────────────
+       * 2️⃣  UPDATE existing user doc
+       * ─────────────────────────────── */
+      const data   = userDoc.data();
+      const badges = data.badges ? [...data.badges] : [];
+      let   points = data.points  || 0;
+
+      // a) add requested badge & points
+      if (!badges.includes(badgeId)) {
+        badges.push(badgeId);
+        points += POINT_INCREMENT;
+      } else {
+        console.log(`User ${userId} already unlocked badge ${badgeId}`);
+      }
+
+      // b) milestone badge check (after possible increment)
+      if (points >= POINTS_MILESTONE && !badges.includes(MILESTONE_BADGE)) {
+        badges.push(MILESTONE_BADGE);
+      }
+
+      // c) write back
+      transaction.update(userRef, {
+        badges,
+        points,
+      });
     });
 
     console.log(`Badge ${badgeId} unlocked for user ${userId}`);
@@ -58,6 +96,7 @@ async function unlockBadgeForUser(userId, badgeId) {
     throw error;
   }
 }
+
 
 /**
  * Fetches badge data and stats for a user.
