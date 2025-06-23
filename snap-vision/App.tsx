@@ -15,6 +15,7 @@ import { DeepLinkProvider, useDeepLink } from './src/DeepLinkContext';
 import auth from '@react-native-firebase/auth';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 import { LandingProvider } from './src/context/LandingContext';
+import { UserProvider } from './src/context/UserContext';
 
 const Stack = createNativeStackNavigator();
 
@@ -110,8 +111,10 @@ function AppInner() {
 export default function App() {
   return (
     <DeepLinkProvider>
-      <LandingProvider> {/* add this */}
-        <AppInner />
+      <LandingProvider>
+        <UserProvider>
+          <AppInner />
+        </UserProvider>
       </LandingProvider>
     </DeepLinkProvider>
   );

@@ -18,6 +18,12 @@ export default function RoleFilter({ selectedRole, onRoleChange }: Props) {
       <Text style={[styles.title, { color: colors.primary }]}>Filter by Role</Text>
       <View style={styles.buttonsContainer}>
         <FilterButton
+          title="All"
+          iconName="people"
+          isSelected={selectedRole === 'All'}
+          onPress={() => onRoleChange('All')}
+        />
+        <FilterButton
           title="Admin"
           iconName="shield-checkmark"
           isSelected={selectedRole === 'Admin'}
