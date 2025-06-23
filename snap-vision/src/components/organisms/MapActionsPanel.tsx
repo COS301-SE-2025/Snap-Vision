@@ -63,7 +63,7 @@ const MapActionsPanel = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 30,
+    bottom: 170,
     right: 20,
     flexDirection: 'column',
   },

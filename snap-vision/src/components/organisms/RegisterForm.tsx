@@ -8,22 +8,27 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
+import { useDeepLink } from '../../DeepLinkContext';
 
 type RootStackParamList = {
   Login: undefined;
   Home: undefined;
-  Tabs: undefined;
+  Tabs: { screen?: string; params?: { lat: string; lng: string } } | undefined;
+  ForgotPassword: undefined;
 };
 
 export default function RegisterForm() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
+  const { coords, setCoords } = useDeepLink();
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({
     username: '', email: '', password: '', confirmPassword: ''
@@ -61,7 +66,6 @@ export default function RegisterForm() {
 
     if (hasError) {
       setErrors(newErrors);
-      // Show the first error as an alert for test compatibility
       if (newErrors.username) {
         Alert.alert('Error', 'Please fill in all fields');
       } else if (newErrors.email === 'Invalid email format.') {
@@ -79,7 +83,15 @@ export default function RegisterForm() {
       Alert.alert('Success', 'Account created!');
       setSuccessMessage('Account created!');
       setTimeout(() => {
-        navigation.navigate('Tabs');
+        if (coords && coords.lat && coords.lng) {
+          navigation.replace('Tabs', {
+            screen: 'Map',
+            params: { lat: coords.lat, lng: coords.lng },
+          });
+          setCoords(null);
+        } else {
+          navigation.replace('Tabs');
+        }
       }, 1000);
     } catch (error: any) {
       const errorMessages: { [key: string]: string } = {
@@ -139,12 +151,14 @@ export default function RegisterForm() {
       <Text style={[styles.label, { color: colors.secondary }]}>Password</Text>
       <AppInput
         placeholder="Enter your password"
-        secureTextEntry
+        secureTextEntry={!showPassword}
         value={password}
         onChangeText={(text) => {
           setPassword(text);
           setErrors((prev) => ({ ...prev, password: '' }));
         }}
+        rightIcon={showPassword ? 'eye-off' : 'eye'}
+        onRightIconPress={() => setShowPassword(prev => !prev)}
         style={[styles.input, { borderColor: colors.primary }]}
       />
       {errors.password ? <Text style={styles.error}>{errors.password}</Text> : null}
@@ -152,22 +166,27 @@ export default function RegisterForm() {
       <Text style={[styles.label, { color: colors.secondary }]}>Confirm Password</Text>
       <AppInput
         placeholder="Confirm your password"
-        secureTextEntry
+        secureTextEntry={!showConfirmPassword}
         value={confirmPassword}
         onChangeText={(text) => {
           setConfirmPassword(text);
           setErrors((prev) => ({ ...prev, confirmPassword: '' }));
         }}
+        rightIcon={showConfirmPassword ? 'eye-off' : 'eye'}
+        onRightIconPress={() => setShowConfirmPassword(prev => !prev)}
         style={[styles.input, { borderColor: colors.primary }]}
       />
       {errors.confirmPassword ? <Text style={styles.error}>{errors.confirmPassword}</Text> : null}
 
-      <RememberMe rememberMe={rememberMe} onToggle={() => setRememberMe(!rememberMe)} />
+      <RememberMe
+        rememberMe={rememberMe}
+        onToggle={() => setRememberMe(!rememberMe)}
+        onForgotPassword={() => navigation.navigate('ForgotPassword')}
+      />
 
       <AppButton
         title="REGISTER"
         onPress={handleRegister}
-        color={colors.primary}
         testID="register-button"
       />
 
@@ -188,7 +207,8 @@ export default function RegisterForm() {
 
 const styles = StyleSheet.create({
   header: {
-    fontSize: 72,
+    fontSize: 60,
+    fontFamily: 'PermanentMarkerRegular',
     textAlign: 'center',
     marginBottom: 40,
   },

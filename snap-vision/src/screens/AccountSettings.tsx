@@ -21,7 +21,7 @@ export default function AccountSettingsScreen({ navigation }: AccountSettingsScr
       />
       <ScrollView 
         style={[styles.container, { backgroundColor: colors.background }]}
-        contentContainerStyle={{ backgroundColor: colors.background }}
+        contentContainerStyle={{ backgroundColor: colors.background, flexGrow: 1 }}
       >
         <AccountSettingsContent navigation={navigation} />
       </ScrollView>
