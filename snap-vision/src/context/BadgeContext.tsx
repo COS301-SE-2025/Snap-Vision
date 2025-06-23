@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { BADGES, BadgeId } from '../types/badges';
 import { fetchBadgeSnapshot, unlockBadge as unlockViaApi } from '../api/badgeApi';
 import auth from '@react-native-firebase/auth';          // <- or your auth lib
+import { Challenge } from '../types/achievements'; // ✅ add this if missing
 
 type BadgeState = {
   unlocked       : Set<BadgeId>;
@@ -19,6 +20,7 @@ type Ctx = {
   incrementRoutes   : () => Promise<void>; // TODO wire if needed
   incrementCheckIns : () => Promise<void>;
   clearJustUnlocked : () => void;
+  getChallenges     : () => Challenge[];
 };
 
 const empty: BadgeState = {
@@ -28,6 +30,8 @@ const empty: BadgeState = {
   checkIns       : 0,
   routesCompleted: 0,
 };
+
+
 
 const BadgeContext = createContext<Ctx | undefined>(undefined);
 export const useBadges = () => {
@@ -94,13 +98,44 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
   const clearJustUnlocked = () =>
     setState(prev => ({ ...prev, justUnlocked: [] }));
 
+    const getChallenges = (): Challenge[] => [
+    {
+      id: 'lecture_halls',
+      title: 'Visit 5 Lecture Halls',
+      description: 'Unlock a special guide',
+      isCompleted: state.checkIns >= 5,
+      icon: 'school',
+      type: 'current',
+    },
+    {
+      id: 'explore_buildings',
+      title: 'Explore 3 New Buildings',
+      description: 'Unlock a badge',
+      isCompleted: state.routesCompleted >= 3,
+      icon: 'business',
+      type: 'current',
+    },
+    {
+      id: 'points_master',
+      title: 'Earn 200 Points',
+      description: 'Become a legend!',
+      isCompleted: state.points >= 200,
+      icon: 'star',
+      type: 'current',
+    },
+  ];
+
+
   const value: Ctx = {
     state,
     unlock,
     incrementRoutes  : async () => {/* TODO similar to unlock */},
     incrementCheckIns: async () => {/* TODO similar to unlock */},
     clearJustUnlocked,
+    getChallenges,
+    
   };
+
 
   return <BadgeContext.Provider value={value}>{children}</BadgeContext.Provider>;
 };
