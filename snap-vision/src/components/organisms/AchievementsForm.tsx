@@ -18,48 +18,36 @@ import RewardCard from '../molecules/RewardCard';
 import ActionButton from '../molecules/ActionButton';
 
 import { useBadges } from '../../context/BadgeContext';
-import { BADGES, BadgeId } from '../../types/badges';      // <- ensure BadgeId exported
-
-/* ------------------------------------------------------------------ */
-/* Hard‑coded sample data for challenges/skins — leave as is          */
-/* ------------------------------------------------------------------ */
+import { BADGES, BadgeId } from '../../types/badges';      
 import { Challenge, Reward, ExploreCategory } from '../../types/achievements';
 
 export default function AchievementsForm() {
-  /* ───────── theme ───────── */
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
-  /* ───────── badge context ───────── */
   const { state, clearJustUnlocked, getChallenges } = useBadges();
   const unlockedArray = Array.from(state.unlocked);
   const currentChallenges = getChallenges();
 
-  /* ───────── popup on unlock ───────── */
   useEffect(() => {
     if (state.justUnlocked.length) {
       const names = state.justUnlocked
         .map(id => BADGES[id].title)
         .join(', ');
-      Alert.alert('🎉  Badge Unlocked!', `You earned: ${names}`, [
-        { text: 'Nice!', onPress: clearJustUnlocked }
-      ]);
+      
     }
   }, [state.justUnlocked]);
 
-  /* ───────── dummy explore data (uses theme) ───────── */
   const exploreCategories: ExploreCategory[] = [
     { id: '1', title: 'Shops',   icon: 'storefront', color: colors.secondary },
     { id: '2', title: 'Classes', icon: 'library',    color: colors.secondary },
     { id: '3', title: 'Parks',   icon: 'leaf',       color: colors.secondary },
   ];
 
-  /* ───────── handlers ───────── */
   const handleCategoryPress  = (title: string)  => console.log(`${title} category pressed`);
   const handleChallengePress = (c: Challenge)   => console.log(`Challenge ${c.title} pressed`);
   const handleActionPress    = (a: string)      => console.log(`${a} button pressed`);
 
-  /* ---------- UI ---------- */
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
@@ -139,20 +127,20 @@ export default function AchievementsForm() {
       </View> */}
 
       {/* Dynamic Challenges */}
-<View style={styles.section}>
-  <Text style={[styles.sectionTitle, { color: colors.primary}]}>Current Challenges</Text>
-  <Text style={[styles.sectionSubtitle, { color: colors.text }]}>
-    Complete these to earn points!
-  </Text>
-  {currentChallenges.map((challenge) => (
-   <ChallengeItem
-  key={challenge.id}
-  challenge={challenge}
-  onPress={() => handleChallengePress(challenge)}
-/>
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.primary}]}>Current Challenges</Text>
+        <Text style={[styles.sectionSubtitle, { color: colors.text }]}>
+          Complete these to earn points!
+        </Text>
+        {currentChallenges.map((challenge) => (
+        <ChallengeItem
+        key={challenge.id}
+        challenge={challenge}
+        onPress={() => handleChallengePress(challenge)}
+      />
 
-  ))}
-</View>
+        ))}
+      </View>
 
 
       {/* Action Buttons */}
@@ -169,7 +157,6 @@ export default function AchievementsForm() {
   );
 }
 
-/* ---------- styles remain unchanged ---------- */
 const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 16 },
   categoryRow: { flexDirection: 'row', marginBottom: 24, justifyContent: 'space-between' },
