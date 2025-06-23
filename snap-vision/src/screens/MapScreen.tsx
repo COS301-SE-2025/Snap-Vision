@@ -1,6 +1,6 @@
 // src/screens/MapScreen.tsx
 import React, { useState, useRef } from 'react';
-import { View, Alert, Share, Text } from 'react-native';
+import { View, Alert, Share, Text, TextInput, TouchableOpacity } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import { PermissionsAndroid } from 'react-native';
 import { WebView as WebViewType } from 'react-native-webview';
@@ -28,12 +28,13 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = "http://10.0.2.2:3000"; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = "http://10.0.0.9:3000"; // <-- Use your correct backend IP here
 // emulator: 10.0.2.2
-// T home: 192.168.0.133
-//L wifi: 192.168.0.127
-// T data: 192.168.43.155
 // B home:  192.168.56.1
+// L wifi: 192.168.0.127
+// T home: 192.168.0.133
+// T data: 192.168.43.155
+// Th home: 10.0.0.9
 
 const MapScreen = () => {
   const lastRoute = useRef<any[]>([]);
@@ -84,6 +85,63 @@ const MapScreen = () => {
   const [crowdReports, setCrowdReports] = useState<Record<string, any>>({});
   const [selectedFeature, setSelectedFeature] = useState<any>(null);
 
+  //Admin stuff
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showAddPOIModal, setShowAddPOIModal] = useState(false);
+  const [addPOICoords, setAddPOICoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [buildingName, setBuildingName] = useState('');
+  const [numberOfFloors, setNumberOfFloors] = useState('');
+  const [showEditPOIModal, setShowEditPOIModal] = useState(false);
+  const [editingPOI, setEditingPOI] = useState<any>(null);
+  const [newName, setNewName] = useState('');
+  const [newFloors, setNewFloors] = useState('');
+
+  //Check if user is admin
+  useEffect(() => {
+    const fetchRole = async () => {
+      const userId = auth().currentUser?.uid;
+      if (!userId) return;
+      const userDoc = await firestore().collection('userInformation').doc(userId).get();
+      const role = userDoc.data()?.role;
+      setIsAdmin(role === 'admin');
+    };
+    fetchRole();
+  }, []);
+
+  // Inject admin handlers into the WebView
+  useEffect(() => {
+  if (isMapReady && webViewRef.current) {
+    // Set admin mode in the WebView
+    const setAdminJS = `window.setAdminMode && window.setAdminMode(${isAdmin ? 'true' : 'false'});`;
+    webViewRef.current.injectJavaScript(setAdminJS);
+
+    // Re-display POIs to update popups/buttons
+    const jsPOICode = `window.displayPOIs && window.displayPOIs(${JSON.stringify(pois)});`;
+    webViewRef.current.injectJavaScript(jsPOICode);
+
+    // (Optional) Re-inject admin handlers if needed
+    const injectedJS = `
+        window.editPOI = function(poiId) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'EDIT_POI',
+            poiId: poiId
+          }));
+        };
+        window.deletePOI = function(poiId) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'DELETE_POI',
+            poiId: poiId
+          }));
+        };
+      `;
+      webViewRef.current.injectJavaScript(injectedJS);
+    }
+  }, [isAdmin, isMapReady, pois]);
+
+
+
+
+
   const sendLocationToWebView = (lat: number, lon: number, centerMap = false) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
     const jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap});`;
@@ -126,50 +184,206 @@ const MapScreen = () => {
   };
 
   const handleWebViewMessage = (event: any) => {
-    try {
-      const data = event.nativeEvent.data;
-      if (data === 'MAP_READY') {
-        setStatus('Map loaded');
-        setIsMapReady(true);
-        requestLocation();
-        if (lastRoute.current.length > 0) {
-          const reinject = `window.drawRoute && window.drawRoute(${JSON.stringify(lastRoute.current)});`;
-          webViewRef.current?.injectJavaScript(reinject);
-        }
-      } else {
-        const parsed = JSON.parse(data);
-        if (parsed.type === 'ERROR') {
-          setError(parsed.message);
-        } else if (parsed.type === 'POI_SELECTED') {
-          const selectedPOI = parsed.poi;
-          
-          // Stop navigation if currently navigating
-          if (isNavigating) {
-            stopNavigation();
+  try {
+    const data = event.nativeEvent.data;
+
+    // Helper: Open modal to add new POI
+    const openAddBuildingModal = (lat: number, lon: number) => {
+      setAddPOICoords({ lat, lon });
+      setShowAddPOIModal(true);
+    };
+
+    // Helper: Open modal to edit existing POI
+    const openEditBuildingModal = (poi: any) => {
+      setEditingPOI(poi);
+      setNewName(poi.name || '');
+      setNewFloors(poi.floors?.toString() || '');
+      setShowEditPOIModal(true);
+    };
+
+    // Helper: Confirm delete
+    const confirmDeleteBuilding = (poi: any) => {
+      Alert.alert(
+        'Delete Building',
+        `Are you sure you want to delete "${poi.name}"?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              await firestore().collection('UPcampusPOIs').doc(poi.id).delete();
+              fetchPOIs(); // refresh POI list
+            }
           }
-          
-          // Clear any existing route
-          webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
-          lastRoute.current = [];
-          
-          setDestination(selectedPOI.name);
-          setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
-          setStatus(`Selected: ${selectedPOI.name}`);
-          
-          // Save the selected feature for crowd reporting
-          setSelectedFeature(selectedPOI);
-          setSelectedPOI(selectedPOI);
-          
-          // Automatically fetch route when POI is selected
-          if (currentLocation) {
-            fetchRoute([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
-          }
-        }
+        ]
+      );
+    };
+
+    // === Handle simple message ===
+    if (data === 'MAP_READY') {
+      setStatus('Map loaded');
+      setIsMapReady(true);
+      requestLocation();
+
+      if (lastRoute.current.length > 0) {
+        const reinject = `window.drawRoute && window.drawRoute(${JSON.stringify(lastRoute.current)});`;
+        webViewRef.current?.injectJavaScript(reinject);
       }
+      return;
+    }
+
+    // === Handle JSON message ===
+    const parsed = JSON.parse(data);
+
+    switch (parsed.type) {
+      case 'ERROR':
+        setError(parsed.message);
+        break;
+
+      case 'POI_SELECTED':
+        const selectedPOI = parsed.poi;
+
+        if (isAdmin) {
+          Alert.alert(
+            `Building: ${selectedPOI.name}`,
+            'Admin Actions',
+            [
+              { text: 'Edit', onPress: () => openEditBuildingModal(selectedPOI) },
+              { text: 'Delete', onPress: () => confirmDeleteBuilding(selectedPOI) },
+              { text: 'Cancel', style: 'cancel' },
+            ]
+          );
+        }
+
+        
+
+        if (isNavigating) {
+          stopNavigation();
+        }
+
+        webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+        lastRoute.current = [];
+
+        setDestination(selectedPOI.name);
+        setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
+        setStatus(`Selected: ${selectedPOI.name}`);
+        setSelectedFeature(selectedPOI);
+        setSelectedPOI(selectedPOI);
+
+        if (currentLocation) {
+          fetchRoute([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
+        }
+        break;
+
+      case 'ADMIN_ADD_POI':
+        openAddBuildingModal(parsed.lat, parsed.lon);
+        break;
+
+      case 'EDIT_POI':
+        const poiToEdit = pois.find(p => p.id === parsed.poiId);
+        if (poiToEdit) {
+          openEditBuildingModal(poiToEdit);
+        }
+        break;
+
+      case 'DELETE_POI':
+        const poiToDelete = pois.find(p => p.id === parsed.poiId);
+        if (poiToDelete) {
+          confirmDeleteBuilding(poiToDelete);
+        }
+        break;
+
+      default:
+        console.log('Unknown message type from WebView:', parsed.type);
+    }
+
+  } catch (e) {
+    console.log('WebView message error:', event.nativeEvent.data);
+  }
+};
+
+
+  //Add building (admin only)
+  const submitNewBuilding = async () => {
+    if (!addPOICoords) return;
+    if (!buildingName.trim()) return Alert.alert('Building name required');
+    if (!numberOfFloors.trim() || isNaN(Number(numberOfFloors)))
+      return Alert.alert('Please enter a valid number of floors');
+    try {
+      const newDoc = {
+        name: buildingName,
+        centroid: {
+          latitude: addPOICoords.lat,
+          longitude: addPOICoords.lon,
+        },
+        floors: Number(numberOfFloors),
+        tags: {
+          building: "yes"
+        }
+      };
+      await firestore().collection('UPcampusPOIs').add(newDoc);
+      setShowAddPOIModal(false);
+      setStatus('Building added!');
+      fetchPOIs(); // Refresh markers
     } catch (e) {
-      console.log('WebView message:', event.nativeEvent.data);
+      setError('Failed to add building');
     }
   };
+
+  //Edit Building(name and floors)
+  const submitEditBuilding = async () => {
+    if (!newName.trim()) return Alert.alert('Building name required');
+    if (!newFloors.trim() || isNaN(Number(numberOfFloors)))
+      return Alert.alert('Please enter a valid number of floors');
+    try {
+      await firestore().collection('UPcampusPOIs').doc(editingPOI.id).update({
+        name: newName,
+        floors: Number(newFloors),
+      });
+      setShowEditPOIModal(false);
+      fetchPOIs();
+      setStatus('Building updated!');
+    } catch {
+      setError('Failed to update');
+    }
+  };
+
+  //Admin delete building
+  const confirmDeleteBuilding = (poi: any) => {
+    Alert.alert(
+      'Confirm Delete',
+      `Delete ${poi.name}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await firestore().collection('UPcampusPOIs').doc(poi.id).delete();
+              fetchPOIs();
+              setStatus('Deleted!');
+            } catch {
+              setError('Failed to delete');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Open modal to add new building
+  const openEditBuildingModal = (poi: any) => {
+    setEditingPOI(poi);
+    setNewName(poi.name || '');
+    setNewFloors(poi.floors?.toString() || '');
+    setShowEditPOIModal(true);
+  };
+
+
+
+
 
   const shareLocation = async () => {
     if (!currentLocation) {
@@ -588,18 +802,34 @@ useEffect(() => {
   }
 }, [isNavigating, steps, currentStep]);
 
+
+  const fetchPOIs = async () => {
+    try {
+      const snapshot = await firestore().collection('UPcampusPOIs').get();
+      const poiList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setPOIs(poiList);
+    } catch (e) {
+      console.error('Failed to fetch POIs:', e);
+    }
+  };
+
   useEffect(() => {
-    const fetchPOIs = async () => {
-      try {
-        const snapshot = await firestore().collection('UPcampusPOIs').get();
-        const poiList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setPOIs(poiList);
-      } catch (e) {
-        console.error('Failed to fetch POIs:', e);
-      }
-    };
     fetchPOIs();
   }, []);
+
+  //Old version, took it out of useEffect for reusability
+  // useEffect(() => {
+  //   const fetchPOIs = async () => {
+  //     try {
+  //       const snapshot = await firestore().collection('UPcampusPOIs').get();
+  //       const poiList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  //       setPOIs(poiList);
+  //     } catch (e) {
+  //       console.error('Failed to fetch POIs:', e);
+  //     }
+  //   };
+  //   fetchPOIs();
+  // }, []);
 
   // Send POIs to WebView when they change and WebView is ready
   useEffect(() => {
@@ -867,6 +1097,83 @@ useEffect(() => {
           onCancel={() => setShowCrowdPopup(false)}
         />
       )}
+
+      {showAddPOIModal && (
+        <Modal transparent visible animationType="slide">
+          <View style={{
+            flex: 1,
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            padding: 20
+          }}>
+            <View style={{ backgroundColor: 'white', borderRadius: 10, padding: 20 }}>
+              <Text style={{ fontWeight: 'bold' }}>Add Building</Text>
+              <Text>Name:</Text>
+              <TextInput
+                value={buildingName}
+                onChangeText={setBuildingName}
+                placeholder="Building Name"
+                style={{ borderBottomWidth: 1, marginBottom: 10 }}
+              />
+              <Text>Floors:</Text>
+              <TextInput
+                value={numberOfFloors}
+                onChangeText={setNumberOfFloors}
+                placeholder="e.g. 3"
+                keyboardType="numeric"
+                style={{ borderBottomWidth: 1, marginBottom: 10 }}
+              />
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Pressable onPress={() => setShowAddPOIModal(false)}>
+                  <Text>Cancel</Text>
+                </Pressable>
+                <Pressable onPress={submitNewBuilding}>
+                  <Text style={{ fontWeight: 'bold' }}>Add</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {showEditPOIModal && (
+        <Modal transparent visible animationType="slide">
+          <View style={{
+            flex: 1,
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            padding: 20
+          }}>
+            <View style={{ backgroundColor: 'white', borderRadius: 10, padding: 20 }}>
+              <Text style={{ fontWeight: 'bold' }}>Edit Building</Text>
+              <Text>Name:</Text>
+              <TextInput
+                value={newName}
+                onChangeText={setNewName}
+                placeholder="New Name"
+                style={{ borderBottomWidth: 1, marginBottom: 10 }}
+              />
+              <Text>Floors:</Text>
+              <TextInput
+                value={newFloors}
+                onChangeText={setNewFloors}
+                placeholder="e.g. 4"
+                keyboardType="numeric"
+                style={{ borderBottomWidth: 1, marginBottom: 10 }}
+              />
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Pressable onPress={() => setShowEditPOIModal(false)}>
+                  <Text>Cancel</Text>
+                </Pressable>
+                <Pressable onPress={submitEditBuilding}>
+                  <Text style={{ fontWeight: 'bold' }}>Save</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+
       <DirectionsModal
         visible={showDirectionsSheet}
         onClose={() => setShowDirectionsSheet(false)}
@@ -908,22 +1215,20 @@ useEffect(() => {
       </View>
 
       {destination && destinationCoords && (
-       <NavigationPanel
-  isNavigating={isNavigating}
-  isLoading={isRouteLoading}
-  onStartNavigation={startNavigation}
-  onStopNavigation={stopNavigation}
-  progress={routeProgress}
-  distance={distanceToDestination}
-  time={estimatedTime}
-  destination={destination}
-  isVoiceEnabled={isVoiceEnabled}
-  onToggleVoice={() => setIsVoiceEnabled(!isVoiceEnabled)}
-  currentInstruction={steps[currentStep]?.instruction}
-  onSpeakingChange={setIsSpeaking}
-/>
-
-
+        <NavigationPanel
+          isNavigating={isNavigating}
+          isLoading={isRouteLoading}
+          onStartNavigation={startNavigation}
+          onStopNavigation={stopNavigation}
+          progress={routeProgress}
+          distance={distanceToDestination}
+          time={estimatedTime}
+          destination={destination}
+          isVoiceEnabled={isVoiceEnabled}
+          onToggleVoice={() => setIsVoiceEnabled(!isVoiceEnabled)}
+          currentInstruction={steps[currentStep]?.instruction}
+          onSpeakingChange={setIsSpeaking}
+          />
       )}
 
       <MapActionsPanel
@@ -938,40 +1243,62 @@ useEffect(() => {
         onReportOut={() => setShowReportTooltip(false)}
         color={colors.primary}
       />
-{isNavigating && steps.length > 0 && (
-  <Pressable
-    onPress={() => setShowDirectionsSheet(true)}
-    style={{
-      position: 'absolute',
-      top: 59,
-      left: 20,
-      right: 20,
-      backgroundColor: colors.card,
-      borderRadius: 8,
-      padding: 12,
-      alignItems: 'center',
-      elevation: 4,
-      zIndex: 1001,
-    }}
-  >
-    <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 16 }}>
-      {steps[currentStep]?.instruction}
-    </Text>
-  </Pressable>
-)}
-      <CrowdReportModal
-        visible={showCrowdPopup}
-        selectedDensity={selectedDensity}
-        selectedPOI={selectedPOI}
-        availablePOIs={pois}
-        onChangeDensity={setSelectedDensity}
-        onChangePOI={setSelectedPOI}
-        onSubmit={submitCrowdReport}
-        onCancel={() => setShowCrowdPopup(false)}
-      />
-      {error && <StatusOverlay status={error} />}
-    </View>
-  );
-};
+
+    {isNavigating && steps.length > 0 && (
+      <Pressable
+        onPress={() => setShowDirectionsSheet(true)}
+        style={{
+          position: 'absolute',
+          top: 59,
+          left: 20,
+          right: 20,
+          backgroundColor: colors.card,
+          borderRadius: 8,
+          padding: 12,
+          alignItems: 'center',
+          elevation: 4,
+          zIndex: 1001,
+        }}
+      >
+        <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 16 }}>
+          {steps[currentStep]?.instruction}
+        </Text>
+      </Pressable>
+    )}
+          <CrowdReportModal
+            visible={showCrowdPopup}
+            selectedDensity={selectedDensity}
+            selectedPOI={selectedPOI}
+            availablePOIs={pois}
+            onChangeDensity={setSelectedDensity}
+            onChangePOI={setSelectedPOI}
+            onSubmit={submitCrowdReport}
+            onCancel={() => setShowCrowdPopup(false)}
+          />
+          {error && <StatusOverlay status={error} />}
+
+          {isAdmin && (
+            <TouchableOpacity
+              style={{
+                position: 'absolute',
+                bottom: 100,
+                right: 20,
+                backgroundColor: '#007bff',
+                paddingVertical: 10,
+                paddingHorizontal: 16,
+                borderRadius: 8,
+                elevation: 4,
+              }}
+              onPress={() => {
+                webViewRef.current?.injectJavaScript(`window.enableAdminPOICreation();`);
+              }}
+            >
+              <Text style={{ color: 'white', fontWeight: 'bold' }}>+ Add POI</Text>
+            </TouchableOpacity>
+          )}
+
+        </View>
+      );
+    };
 
 export default MapScreen;
