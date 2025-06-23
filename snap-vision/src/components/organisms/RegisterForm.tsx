@@ -9,6 +9,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useDeepLink } from '../../DeepLinkContext';
+import firestore from '@react-native-firebase/firestore';
 
 type RootStackParamList = {
   Login: undefined;
@@ -78,39 +79,49 @@ export default function RegisterForm() {
       return;
     }
 
-    try {
-      await auth().createUserWithEmailAndPassword(email, password);
-      Alert.alert('Success', 'Account created!');
-      setSuccessMessage('Account created!');
-      setTimeout(() => {
-        if (coords && coords.lat && coords.lng) {
-          navigation.replace('Tabs', {
-            screen: 'Map',
-            params: { lat: coords.lat, lng: coords.lng },
-          });
-          setCoords(null);
-        } else {
-          navigation.replace('Tabs');
-        }
-      }, 1000);
-    } catch (error: any) {
-      const errorMessages: { [key: string]: string } = {
-        'auth/email-already-in-use': 'This email is already registered.',
-        'auth/invalid-email': 'Invalid email address.',
-        'auth/weak-password': 'Password is too weak.',
-      };
-      const msg = errorMessages[error?.code] || 'Registration failed.';
-      if (error?.code === 'auth/email-already-in-use') {
-        Alert.alert('Registration Error', 'This email is already registered.');
-      } else {
-        Alert.alert('Error', msg);
-      }
-      setErrors({
-        ...newErrors,
-        email: msg,
-      });
-    }
-  };
+          try {
+              const userCredential = await auth().createUserWithEmailAndPassword(email, password);
+              const uid = userCredential.user.uid;
+
+              // Automatically create a Firestore entry for this user
+              await firestore().collection('userInformation').doc(uid).set({
+                email,
+                role: 'user', // default role for all new signups
+                createdAt: firestore.FieldValue.serverTimestamp(),
+              });
+
+              Alert.alert('Success', 'Account created!');
+              setSuccessMessage('Account created!');
+
+              setTimeout(() => {
+                if (coords && coords.lat && coords.lng) {
+                  navigation.replace('Tabs', {
+                    screen: 'Map',
+                    params: { lat: coords.lat, lng: coords.lng },
+                  });
+                  setCoords(null);
+                } else {
+                  navigation.replace('Tabs');
+                }
+              }, 1000);
+            } catch (error: any) {
+              const errorMessages: { [key: string]: string } = {
+                'auth/email-already-in-use': 'This email is already registered.',
+                'auth/invalid-email': 'Invalid email address.',
+                'auth/weak-password': 'Password is too weak.',
+              };
+              const msg = errorMessages[error?.code] || 'Registration failed.';
+              if (error?.code === 'auth/email-already-in-use') {
+                Alert.alert('Registration Error', 'This email is already registered.');
+              } else {
+                Alert.alert('Error', msg);
+              }
+              setErrors({
+                ...newErrors,
+                email: msg,
+              });
+            }
+        };
 
   return (
     <View>
