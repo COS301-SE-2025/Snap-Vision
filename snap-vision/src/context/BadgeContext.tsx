@@ -1,5 +1,4 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-// src/context/BadgeContext.tsx
+
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { BADGES, BadgeId } from '../types/badges';
 import { fetchBadgeSnapshot, unlockBadge as unlockViaApi } from '../api/badgeApi';
@@ -21,6 +20,8 @@ type Ctx = {
   incrementCheckIns : () => Promise<void>;
   clearJustUnlocked : () => void;
   getChallenges     : () => Challenge[];
+  setNavigationStartTime: (time: number) => void;
+  maybeUnlockFastFinisher: () => Promise<void>;
 };
 
 const empty: BadgeState = {
@@ -32,8 +33,8 @@ const empty: BadgeState = {
 };
 
 
-
 const BadgeContext = createContext<Ctx | undefined>(undefined);
+
 export const useBadges = () => {
   const ctx = useContext(BadgeContext);
   if (!ctx) throw new Error('useBadges outside provider');
@@ -42,6 +43,7 @@ export const useBadges = () => {
 
 export const BadgeProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<BadgeState>(empty);
+  const [navigationStartTime, setNavigationStartTime] = useState<number | null>(null);
   const uid = auth().currentUser?.uid;       
 
   useEffect(() => {
@@ -118,6 +120,15 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
       icon: 'business',
       type: 'current',
     },
+
+     {
+    id: 'fast_finisher',
+    title: 'Speed Runner',
+    description: 'Reach a destination within 5 minutes of starting navigation',
+    isCompleted: state.unlocked.has('fast-finisher'), 
+    icon: 'speedometer', 
+    type: 'current',
+     },
     {
       id: 'points_master',
       title: 'Earn 500 Points',
@@ -126,17 +137,25 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
       icon: 'star',
       type: 'current',
     },
+    
   ];
 
 
   const value: Ctx = {
     state,
     unlock,
-    incrementRoutes  : async () => {/* TODO similar to unlock */},
-    incrementCheckIns: async () => {/* TODO similar to unlock */},
+    incrementRoutes  : async () => {},
+    incrementCheckIns: async () => {},
     clearJustUnlocked,
     getChallenges,
-    
+    setNavigationStartTime: (time) => setNavigationStartTime(time),
+    maybeUnlockFastFinisher: async () => {
+      if (!navigationStartTime) return;
+      const elapsed = (Date.now() - navigationStartTime) / 1000; // seconds
+      if (elapsed <= 5 * 60 && !state.unlocked.has('fast-finisher')) {
+        await unlock('fast-finisher');
+      }
+    },
   };
 
 
