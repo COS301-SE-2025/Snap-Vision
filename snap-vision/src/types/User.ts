@@ -4,7 +4,7 @@ export interface User {
   name: string;
   email: string;
   role: 'Admin' | 'Viewer';
-  status: 'Active' | 'Inactive';
+  status?: 'Active' | 'Inactive';
   createdAt?: Date;
   updatedAt?: Date;
 }
