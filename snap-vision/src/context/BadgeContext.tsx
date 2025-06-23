@@ -3,8 +3,8 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { BADGES, BadgeId } from '../types/badges';
 import { fetchBadgeSnapshot, unlockBadge as unlockViaApi } from '../api/badgeApi';
-import auth from '@react-native-firebase/auth';          // <- or your auth lib
-import { Challenge } from '../types/achievements'; // ✅ add this if missing
+import auth from '@react-native-firebase/auth';         
+import { Challenge } from '../types/achievements'; 
 
 type BadgeState = {
   unlocked       : Set<BadgeId>;
@@ -17,7 +17,7 @@ type BadgeState = {
 type Ctx = {
   state             : BadgeState;
   unlock            : (id: BadgeId) => Promise<void>;
-  incrementRoutes   : () => Promise<void>; // TODO wire if needed
+  incrementRoutes   : () => Promise<void>; 
   incrementCheckIns : () => Promise<void>;
   clearJustUnlocked : () => void;
   getChallenges     : () => Challenge[];
@@ -42,9 +42,8 @@ export const useBadges = () => {
 
 export const BadgeProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<BadgeState>(empty);
-  const uid = auth().currentUser?.uid;         // 🔒 ensure user is logged in
+  const uid = auth().currentUser?.uid;       
 
-  /* ── hydrate from Firestore on first render ────────────────────── */
   useEffect(() => {
     if (!uid) return;
     (async () => {
@@ -63,11 +62,9 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
     })();
   }, [uid]);
 
-  /* ── unlock wrapper ────────────────────────────────────────────── */
   const unlock = async (id: BadgeId) => {
     if (!uid) return;
 
-    // ✨ Optimistic update
     setState(prev => {
       if (prev.unlocked.has(id)) return prev;
       const unlocked = new Set(prev.unlocked).add(id);
@@ -80,18 +77,16 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
     });
 
     try {
-      const snap = await unlockViaApi(uid, id);          // 🔗 call backend
-      // Replace local state with server truth (guards against dupes)
+      const snap = await unlockViaApi(uid, id);          
       setState({
         unlocked       : new Set<BadgeId>(snap.badges || []),
-        justUnlocked   : [],                            // triggers popup
+        justUnlocked   : [],                          
         points         : snap.points,
         checkIns       : snap.checkIns,
         routesCompleted: snap.routesCompleted,
       });
     } catch (e) {
       console.error('unlock failed, reverting', e);
-      // Rollback if needed (exercise left for you)
     }
   };
 
@@ -99,7 +94,15 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
     setState(prev => ({ ...prev, justUnlocked: [] }));
 
     const getChallenges = (): Challenge[] => [
-    {
+      {
+      id         : 'earn_150_pts',
+      title      : 'Earn 150 Points',
+      description: 'Unlock the Point Collector badge',
+      isCompleted: state.points >= 150,
+      icon       : 'wallet',
+      type       : 'current',
+    },
+      {
       id: 'lecture_halls',
       title: 'Visit 5 Lecture Halls',
       description: 'Unlock a special guide',
@@ -117,9 +120,9 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
     },
     {
       id: 'points_master',
-      title: 'Earn 200 Points',
+      title: 'Earn 500 Points',
       description: 'Become a legend!',
-      isCompleted: state.points >= 200,
+      isCompleted: state.points >= 500,
       icon: 'star',
       type: 'current',
     },
