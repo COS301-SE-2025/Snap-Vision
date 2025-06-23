@@ -1,8 +1,8 @@
-//prev
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import AccountInfoField from '../atoms/AccountInfoField';
 import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
@@ -13,7 +13,9 @@ export default function AccountDetails() {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState({
     email: '',
-  }); 
+    name: '',
+    role: ''
+  });
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -27,10 +29,33 @@ export default function AccountDetails() {
           return;
         }
         
-        // Basic info from auth
+        // Default user info from Auth
         let userInfo = {
           email: currentUser.email || '',
+          name: '',
+          role: ''
         };
+        
+        // Get additional info from Firestore
+        try {
+          const userDoc = await firestore()
+            .collection('userInformation')
+            .where('email', '==', currentUser.email)
+            .get();
+          
+          if (!userDoc.empty) {
+            const firestoreData = userDoc.docs[0].data();
+            userInfo = {
+              ...userInfo,
+              name: firestoreData.name || '',
+              role: firestoreData.role || ''
+            };
+          } else {
+            console.log('No matching document found in userInformation collection');
+          }
+        } catch (firestoreError) {
+          console.error('Error fetching from Firestore:', firestoreError);
+        }
         
         setUserData(userInfo);
       } catch (error) {
@@ -54,7 +79,8 @@ export default function AccountDetails() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <AccountInfoField label="Email Address" value={userData.email} />
-      <AccountInfoField label="Password" value="••••••••••" />
+      <AccountInfoField label="Name" value={userData.name || 'Not provided'} />
+      <AccountInfoField label="Role" value={userData.role || 'Standard User'} />
     </View>
   );
 }
