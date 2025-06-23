@@ -46,7 +46,6 @@ export async function fetchUserData(): Promise<UserInfo | null> {
     
     return userInfo;
   } catch (error) {
-    console.error('Error fetching user data:', error);
     return null;
   }
 }
