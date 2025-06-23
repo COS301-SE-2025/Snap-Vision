@@ -27,14 +27,13 @@ export const useUserManagement = () => {
             name: d.name || '',
             email: d.email || '',
             role: d.role === 'admin' ? 'Admin' : 'Viewer',
-            status: d.active === false ? 'Inactive' : 'Active',
           };
         });
         setUsers(data);
         setLoading(false);
       },
       error => {
-        console.error('🔥 Firestore error:', error);
+        console.error('Firestore error:', error);
         setLoading(false);
       }
     );
@@ -96,31 +95,6 @@ export const useUserManagement = () => {
   };
 
 
-  const toggleUserStatus = async (user: User) => {
-    try {
-      const newActive = user.status !== 'Active' ? true : false;
-      await firestore().collection('userInformation').doc(user.id).update({
-        active: newActive,
-      });
-    } catch (err) {
-      console.error('Failed to update status:', err);
-    }
-  };
-
-
-  const bulkDeactivate = async () => {
-    // TODO: Implement bulk deactivate functionality
-    console.log('Bulk deactivate users');
-    setUsers(prev =>
-      prev.map(user => ({ ...user, status: 'Inactive' as const }))
-    );
-  };
-
-  const addNewUser = () => {
-    // TODO: Navigate to add user screen or show modal
-    console.log('Add new user');
-  };
-
   return {
     users: filteredUsers,
     loading,
@@ -129,8 +103,5 @@ export const useUserManagement = () => {
     updateRoleFilter,
     editUser,
     deleteUser,
-    toggleUserStatus,
-    bulkDeactivate,
-    addNewUser,
   };
 };

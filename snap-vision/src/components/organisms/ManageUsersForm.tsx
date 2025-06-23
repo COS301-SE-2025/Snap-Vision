@@ -32,9 +32,6 @@ export default function ManageUsersForm({ navigation }: Props) {
     updateRoleFilter,
     editUser,
     deleteUser,
-    toggleUserStatus,
-    bulkDeactivate,
-    addNewUser,
   } = useUserManagement();
 
   if (loading) {
@@ -109,20 +106,6 @@ export default function ManageUsersForm({ navigation }: Props) {
                         text: 'Delete',
                         style: 'destructive',
                         onPress: () => deleteUser(u),
-                      },
-                    ]
-                  );
-                }}
-                onToggleStatus={(u) => {
-                  const newStatus = u.status === 'Active' ? 'Inactive' : 'Active';
-                  Alert.alert(
-                    'Confirm Status Change',
-                    `Are you sure you want to set this user as ${newStatus}?`,
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Confirm',
-                        onPress: () => toggleUserStatus(u),
                       },
                     ]
                   );

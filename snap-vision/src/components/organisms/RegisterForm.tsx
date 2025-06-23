@@ -87,7 +87,6 @@ export default function RegisterForm() {
               await firestore().collection('userInformation').doc(uid).set({
                 email,
                 name: username.trim(),
-                active: true,
                 role: 'user', 
               });
 
