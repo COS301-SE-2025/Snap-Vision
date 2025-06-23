@@ -28,11 +28,12 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = "http://192.168.0.133:3000"; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = "http://10.0.2.2:3000"; // <-- Use your correct backend IP here
 // emulator: 10.0.2.2
 // T home: 192.168.0.133
 //L wifi: 192.168.0.127
 // T data: 192.168.43.155
+// B home:  192.168.56.1
 
 const MapScreen = () => {
   const lastRoute = useRef<any[]>([]);
@@ -958,7 +959,14 @@ useEffect(() => {
     </Text>
   </Pressable>
 )}
-      {error && <StatusOverlay status={error} isError={true} onDismiss={() => setError(null)} />}
+      <CrowdReportModal
+        visible={showCrowdPopup}
+        selectedDensity={selectedDensity}
+        onChangeDensity={setSelectedDensity}
+        onSubmit={submitCrowdReport}
+        onCancel={() => setShowCrowdPopup(false)}
+      />
+      {error && <StatusOverlay status={error} />}
     </View>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from './src/screens/LoginScreen';
 import RegistrationScreen from './src/screens/RegistrationScreen';
@@ -11,9 +11,10 @@ import { ThemeProvider } from './src/theme/ThemeContext';
 import ManageUsersScreen from './src/screens/ManageUsersScreen';
 import { Linking } from 'react-native';
 import queryString from 'query-string';
-import { NavigationContainerRef } from '@react-navigation/native';
 import { DeepLinkProvider, useDeepLink } from './src/DeepLinkContext';
 import auth from '@react-native-firebase/auth';
+import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
+import { LandingProvider } from './src/context/LandingContext';
 
 const Stack = createNativeStackNavigator();
 
@@ -21,15 +22,19 @@ function AppInner() {
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
   const { setCoords } = useDeepLink();
   const [authReady, setAuthReady] = useState(false);
+  const [initialRoute, setInitialRoute] = useState<'Login' | 'Tabs'>('Login');
   const [pendingDeepLink, setPendingDeepLink] = useState<{ lat?: string; lng?: string } | null>(null);
 
   // Listen for auth state
   useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged(() => {
-      setAuthReady(true); // Only set to true after Firebase has checked auth state
+    const unsubscribe = auth().onAuthStateChanged((user) => {
+      setInitialRoute(user ? 'Tabs' : 'Login');
+      setAuthReady(true); // Only render navigator after this
     });
     return unsubscribe;
   }, []);
+
+  // if(!authReady) return null;
 
   // Handle deep link only after auth is ready
   useEffect(() => {
@@ -82,15 +87,21 @@ function AppInner() {
   return (
     <ThemeProvider>
       <NavigationContainer ref={navigationRef}>
-        <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Login" component={LoginScreen} />
+        {authReady && (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {initialRoute === 'Tabs' ? (
+            <Stack.Screen name="Tabs" component={BottomTabs} />
+          ) : (
+            <Stack.Screen name="Login" component={LoginScreen} />
+          )}
           <Stack.Screen name="Register" component={RegistrationScreen} />
-          <Stack.Screen name="Tabs" component={BottomTabs} />
           <Stack.Screen name="AdminLoadFloorplans" component={AdminLoadFloorplansScreen} />
           <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
           <Stack.Screen name="AdminSettings" component={AdminSettingsFrom} />
           <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         </Stack.Navigator>
+      )}
       </NavigationContainer>
     </ThemeProvider>
   );
@@ -99,7 +110,9 @@ function AppInner() {
 export default function App() {
   return (
     <DeepLinkProvider>
-      <AppInner />
+      <LandingProvider> {/* add this */}
+        <AppInner />
+      </LandingProvider>
     </DeepLinkProvider>
   );
 }
