@@ -1,17 +1,17 @@
 // 1. Badge ID types
 // 1. Badge ID types
 export type BadgeId =
-  | 'first-login'
-  | 'qr-scan'
-  | 'destination-reached'
-  | 'share-location'
+  | 'first-login'  //done
+  | 'qr-scan'      
+  | 'destination-reached'  //done 
+  | 'share-location' //done
   | '10-destinations'
   | '50-destinations'
   | '100-destinations'
   | '150-destinations'
   | '200-destinations'
   | 'enabled-notifications'
-  | 'reported-crowd';
+  | 'reported-crowd';   //done
 
 // 2. Badge shape
 export interface Badge {
