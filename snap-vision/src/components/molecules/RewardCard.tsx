@@ -3,10 +3,11 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Reward } from '../../types/achievements';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
 
 interface Props {
   reward: Reward;
-  textColor?: string;
   backgroundColor?: string;
   borderColor?: string;
   onPress?: () => void;
@@ -14,11 +15,13 @@ interface Props {
 
 export default function RewardCard({ 
   reward, 
-  textColor = '#333',
-  backgroundColor = '#fff',
-  borderColor = '#ddd',
+  backgroundColor,
+  borderColor,
   onPress 
 }: Props) {
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
+
   const isUnlocked = reward.isUnlocked;
 
   const getStatusIcon = () => {
@@ -26,14 +29,18 @@ export default function RewardCard({
   };
 
   const getStatusColor = () => {
-    return isUnlocked ? '#4CAF50' : '#F44336'; // green or red
+    return isUnlocked ? colors.statusActive : colors.danger;
   };
 
   return (
     <TouchableOpacity 
       style={[
         styles.container, 
-        { backgroundColor, borderColor, opacity: isUnlocked ? 1 : 0.4 }
+        { 
+          backgroundColor: backgroundColor ?? colors.card, 
+          borderColor: borderColor ?? colors.border, 
+          opacity: isUnlocked ? 1 : 0.4 
+        }
       ]}
       onPress={onPress}
       disabled={!isUnlocked}
@@ -45,18 +52,19 @@ export default function RewardCard({
       </View>
       
       <View style={styles.iconContainer}>
-        <Icon name={getStatusIcon()} size={32} color={textColor} />
+        <Icon name={getStatusIcon()} size={32} color={colors.text} />
       </View>
       
-      <Text style={[styles.title, { color: textColor }]}>
-        {reward.title}
-      </Text>
+      <Text style={[styles.title, { color: colors.primary }]}>
+  {reward.title}
+</Text>
+
       
-      <Text style={[styles.description, { color: textColor, opacity: 0.7 }]}>
+      <Text style={[styles.description, { color: colors.text, opacity: 0.7 }]}>
         {reward.description}
       </Text>
       
-      <Text style={[styles.condition, { color: textColor, opacity: 0.8 }]}>
+      <Text style={[styles.condition, { color: colors.text, opacity: 0.8 }]}>
         {reward.unlockCondition}
       </Text>
     </TouchableOpacity>
