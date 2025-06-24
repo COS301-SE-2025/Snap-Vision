@@ -61,16 +61,16 @@
   <script>
 
       window.isAdmin = false; // default
-  window.setAdminMode = function (flag) {
-    window.isAdmin = flag;
-  };
+        window.setAdminMode = function (flag) {
+          window.isAdmin = flag;
+        };
 
     let map;
     let userMarker = null;
     let destinationMarker = null;
     let endCircle = null;
     let startCircle = null;
-    let poiMarkers = [];
+    window.poiMarkers = [];
     let poiData = [];
     let crowdData = {}; // Store crowd data by buildingId
     let isNavigating = false; // Track navigation state
@@ -132,7 +132,7 @@
           showAllPOIMarkers();
         } else {
           // Hide all POI markers when zoomed out or navigating
-          poiMarkers.forEach(marker => {
+          window.poiMarkers.forEach(marker => {
             if (map.hasLayer(marker)) {
               map.removeLayer(marker);
             }
@@ -180,7 +180,7 @@
       };
       
       // Update any open popups if this building is currently shown
-      const marker = poiMarkers.find(m => m.poiData && m.poiData.id === buildingId);
+      const marker = window.poiMarkers.find(m => m.poiData && m.poiData.id === buildingId);
       if (marker && marker.isPopupOpen()) {
         updatePopupContent(marker);
       }
@@ -246,65 +246,74 @@
 
     // Function to display POIs on the map
     window.displayPOIs = function(pois) {
-      if (!map || !Array.isArray(pois)) return;
-    
-      // Remove all existing POI markers
-      poiMarkers.forEach(marker => map.removeLayer(marker));
-      poiMarkers = [];
-      poiData = pois;
-    
-      pois.forEach(poi => {
-        if (!poi.centroid || !poi.centroid.latitude || !poi.centroid.longitude) return;
-        const coords = [poi.centroid.latitude, poi.centroid.longitude];
-    
-        const poiIcon = L.divIcon({
-          className: 'poi-marker',
-          html: '',
-          iconSize: [12, 12],
-          iconAnchor: [6, 6]
-        });
-    
-        const marker = L.marker(coords, { icon: poiIcon })
-          .bindPopup(getPopupContent(poi));
-    
-        // When marker is clicked, hide all others and show only this one
-        marker.on('click', function(e) {
-          if (!isNavigating) { // Only allow POI interactions when not navigating
-            hideOtherPOIMarkers(marker);
-            // Update popup content before opening
-            updatePopupContent(marker);
-            marker.openPopup();
-            // Listen for popup close to restore all markers
-            marker.once('popupclose', function() {
-              if (!isNavigating) { // Only restore markers if not navigating
-                showAllPOIMarkers();
-              }
-            });
+  if (!map || !Array.isArray(pois)) return;
+
+  // Defensive: Remove all markers except user/destination
+  map.eachLayer(layer => {
+    if (
+      layer instanceof L.Marker &&
+      layer !== userMarker &&
+      layer !== destinationMarker
+    ) {
+      map.removeLayer(layer);
+    }
+  });
+  window.poiMarkers = [];
+  poiData = pois;
+
+  pois.forEach(poi => {
+    if (!poi.centroid || !poi.centroid.latitude || !poi.centroid.longitude) return;
+    const coords = [poi.centroid.latitude, poi.centroid.longitude];
+
+    const poiIcon = L.divIcon({
+      className: 'poi-marker',
+      html: '',
+      iconSize: [12, 12],
+      iconAnchor: [6, 6]
+    });
+
+    const marker = L.marker(coords, { icon: poiIcon })
+      .bindPopup(getPopupContent(poi));
+
+    marker.on('click', function(e) {
+      if (!isNavigating) {
+        hideOtherPOIMarkers(marker);
+        updatePopupContent(marker);
+        marker.openPopup();
+        marker.once('popupclose', function() {
+          if (!isNavigating) {
+            showAllPOIMarkers();
           }
         });
-    
-        marker.poiData = poi;
-        poiMarkers.push(marker);
-      });
-    
-      // Show markers only if zoom level is sufficient and not navigating
-      if (map.getZoom() >= 16 && !isNavigating) {
-        showAllPOIMarkers();
       }
-    };
+    });
+
+    marker.poiData = poi;
+    window.poiMarkers.push(marker);
+  });
+
+  if (map.getZoom() >= 16 && !isNavigating) {
+    showAllPOIMarkers();
+  }
+};
     
     function showAllPOIMarkers() {
       if (!isNavigating) { // Only show POI markers when not navigating
-        poiMarkers.forEach(marker => {
+        window.poiMarkers.forEach(marker => {
           if (!map.hasLayer(marker)) {
             marker.addTo(map);
           }
         });
+        let count = 0;
+        map.eachLayer(layer => {
+          if (layer instanceof L.Marker) count++;
+        });
+        console.log('Markers on map:', count, 'Tracked markers:', window.poiMarkers.length);
       }
     }
     
     function hideOtherPOIMarkers(selectedMarker) {
-      poiMarkers.forEach(marker => {
+      window.poiMarkers.forEach(marker => {
         if (marker !== selectedMarker && map.hasLayer(marker)) {
           map.removeLayer(marker);
         }
@@ -319,7 +328,7 @@
     };
 
     window.selectPOI = function(poiId) {
-      const selectedMarker = poiMarkers.find(marker => marker.poiData && marker.poiData.id === poiId);
+      const selectedMarker = window.poiMarkers.find(marker => marker.poiData && marker.poiData.id === poiId);
       if (selectedMarker) {
         hideOtherPOIMarkers(selectedMarker);
         
@@ -338,7 +347,7 @@
       
       if (navigating) {
         // Hide all POI markers when navigation starts
-        poiMarkers.forEach(marker => {
+        window.poiMarkers.forEach(marker => {
           if (map.hasLayer(marker)) {
             map.removeLayer(marker);
           }
@@ -479,6 +488,20 @@
           lon
         }));
       });
+    };
+
+    //Remove POIs from map (without re-refresh)
+    window.clearPOIMarkers = function() {
+      if (window.poiMarkers && Array.isArray(window.poiMarkers)) {
+        console.log('Clearing markers:', window.poiMarkers.length);
+        window.poiMarkers.forEach(marker => {
+          if (map.hasLayer(marker)) {
+            map.removeLayer(marker);
+          }
+        });
+        window.poiMarkers = [];
+        console.log('Markers after clear:', window.poiMarkers.length);
+      }
     };
 
   </script>
