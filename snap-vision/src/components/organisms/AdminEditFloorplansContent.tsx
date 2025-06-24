@@ -132,7 +132,7 @@ export default function AdminEditFloorplansContent({
             {/* Removed the Upload Updated Floorplan button as requested */}
             
             {/* Edit Room POIs button */}
-            <AppButton
+            <AppSecondaryButton
               title="Edit Room POIs"
               onPress={handleEditRooms}
               style={{ 
