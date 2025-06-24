@@ -28,7 +28,7 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = "http://192.168.45.203:3000"; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = "http://10.0.0.9:3000"; // <-- Use your correct backend IP here
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
 // L wifi: 192.168.0.127
@@ -334,14 +334,12 @@ const MapScreen = () => {
   //Edit Building(name and floors)
   const submitEditBuilding = async () => {
     if (!newName.trim()) return Alert.alert('Building name required');
-    if (!newFloors.trim() || isNaN(Number(newFloors)))
+    if (!newFloors.trim() || isNaN(Number(numberOfFloors)))
       return Alert.alert('Please enter a valid number of floors');
     try {
       await firestore().collection('UPcampusPOIs').doc(editingPOI.id).update({
         name: newName,
         floors: Number(newFloors),
-        centroid: editingPOI.centroid, // preserve centroid
-        tags: editingPOI.tags, 
       });
       setShowEditPOIModal(false);
       fetchPOIs();
@@ -836,17 +834,16 @@ useEffect(() => {
   // Send POIs to WebView when they change and WebView is ready
   useEffect(() => {
     if (isMapReady && pois.length > 0 && webViewRef.current) {
-        // Clear existing markers
-        webViewRef.current.injectJavaScript('window.clearPOIMarkers && window.clearPOIMarkers();');
-        // Send updated POIs
-        const poisWithHiddenLabels = pois.map(poi => ({
-          ...poi,
-          showLabel: false
-        }));
-        const jsPOICode = `window.displayPOIs && window.displayPOIs(${JSON.stringify(poisWithHiddenLabels)});`;
-        webViewRef.current.injectJavaScript(jsPOICode);
-      }
-    }, [isMapReady, pois]);
+      // Modify the POI data to set labels to empty by default
+      const poisWithHiddenLabels = pois.map(poi => ({
+        ...poi,
+        showLabel: false // Add property to control label visibility
+      }));
+      
+      const jsPOICode = `window.displayPOIs && window.displayPOIs(${JSON.stringify(poisWithHiddenLabels)});`;
+      webViewRef.current.injectJavaScript(jsPOICode);
+    }
+  }, [isMapReady, pois]);
 
   const filterPOIs = (query: string) => {
     if (!query.trim()) {
