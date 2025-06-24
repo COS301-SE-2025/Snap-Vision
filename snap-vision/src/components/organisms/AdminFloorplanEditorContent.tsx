@@ -1,5 +1,5 @@
 import React, { RefObject } from 'react';
-import { View, Text, StyleSheet, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { WebView } from 'react-native-webview';
 import AppButton from '../atoms/AppButton';
 import AppSecondaryButton from '../atoms/AppSecondaryButton';
@@ -33,6 +33,7 @@ interface AdminFloorplanEditorContentProps {
   setRoomData: (data: any) => void;
   saveRoomPOI: () => void;
   goBack: () => void;
+  isDarkMode?: boolean; // Add this prop to pass theme info to WebView
 }
 
 export default function AdminFloorplanEditorContent({
@@ -47,11 +48,12 @@ export default function AdminFloorplanEditorContent({
   roomData,
   setRoomData,
   saveRoomPOI,
-  goBack
+  goBack,
+  isDarkMode = false // Default to light mode if not provided
 }: AdminFloorplanEditorContentProps) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Text style={[styles.headerTitle, { color: colors.text }]}>
           Add Room POIs - {floorLabel}
         </Text>
@@ -66,16 +68,30 @@ export default function AdminFloorplanEditorContent({
         source={{ html: getHTML() }}
         onMessage={handleMessage}
         style={styles.webview}
+        // Add theme color overrides for WebView content
+        injectedJavaScriptBeforeContentLoaded={`
+          window.isDarkMode = ${isDarkMode};
+          window.themeColors = {
+            background: "${colors.background}",
+            text: "${colors.text}",
+            border: "${colors.border}",
+            primary: "${colors.primary}"
+          };
+          true;
+        `}
       />
       
-      <View style={styles.footer}>
+      <View style={[styles.footer, { borderTopColor: colors.border }]}>
         <Text style={[styles.footerText, { color: colors.text }]}>
           {roomMarkers.length} rooms added
         </Text>
-        <AppSecondaryButton 
-          title="Done" 
+        {/* Use TouchableOpacity instead of AppButton for Done button */}
+        <TouchableOpacity 
           onPress={goBack}
-        />
+          style={[styles.doneButton, { backgroundColor: colors.primary }]}
+        >
+          <Text style={styles.doneButtonText}>Done</Text>
+        </TouchableOpacity>
       </View>
       
       {/* Modal for room details */}
@@ -91,23 +107,33 @@ export default function AdminFloorplanEditorContent({
             placeholder="Room Name/Number"
             value={roomData.name}
             onChangeText={(text) => setRoomData({...roomData, name: text})}
-            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
+            style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.background }]}
             placeholderTextColor={colors.secondary}
           />
           
           <View style={styles.typeSelector}>
-            <Text style={[{ color: colors.text }]}>Room Type:</Text>
+            <Text style={{ color: colors.text, marginBottom: 8 }}>Room Type:</Text>
             <View style={styles.typeOptions}>
               {['classroom', 'office', 'lab', 'restroom', 'stairs', 'elevator'].map(type => (
-                <AppSecondaryButton 
+                <TouchableOpacity 
                   key={type}
-                  title={type.charAt(0).toUpperCase() + type.slice(1)}
                   onPress={() => setRoomData({...roomData, type})}
                   style={[
                     styles.typeOption,
-                    roomData.type === type ? { backgroundColor: colors.primary } : { backgroundColor: colors.card },
+                    { 
+                      backgroundColor: roomData.type === type ? colors.primary : colors.card,
+                      borderColor: colors.border,
+                      borderWidth: 1
+                    },
                   ]}
-                />
+                >
+                  <Text style={{ 
+                    color: roomData.type === type ? '#FFFFFF' : colors.text,
+                    fontSize: 14
+                  }}>
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </Text>
+                </TouchableOpacity>
               ))}
             </View>
           </View>
@@ -116,24 +142,32 @@ export default function AdminFloorplanEditorContent({
             placeholder="Description (optional)"
             value={roomData.description}
             onChangeText={(text) => setRoomData({...roomData, description: text})}
-            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
+            style={[styles.input, { 
+              borderColor: colors.border, 
+              color: colors.text,
+              backgroundColor: colors.background,
+              minHeight: 80
+            }]}
             placeholderTextColor={colors.secondary}
             multiline
           />
           
           <View style={styles.modalButtons}>
-            <AppSecondaryButton 
-              title="Cancel"
+            {/* Use TouchableOpacity for Cancel button */}
+            <TouchableOpacity
               onPress={() => setIsModalVisible(false)}
-              style={{ flex: 1, marginRight: 8 }}
-            />
-            <AppSecondaryButton 
-              title="Save"
+              style={[styles.cancelButton, { borderColor: colors.border }]}
+            >
+              <Text style={{ color: colors.text }}>Cancel</Text>
+            </TouchableOpacity>
+            
+            {/* Use TouchableOpacity for Save button */}
+            <TouchableOpacity
               onPress={saveRoomPOI}
-              style={{ 
-                flex: 1
-              }}
-            />
+              style={[styles.saveButton, { backgroundColor: colors.primary }]}
+            >
+              <Text style={{ color: '#FFFFFF' }}>Save</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -148,7 +182,6 @@ const styles = StyleSheet.create({
   header: {
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
   },
   headerTitle: {
     fontSize: 18,
@@ -167,10 +200,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#ddd',
   },
   footerText: {
     fontSize: 16,
+  },
+  doneButton: {
+    paddingHorizontal: 40,
+    paddingVertical: 15,
+    minWidth: 140,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8
+  },
+  doneButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF'
   },
   modalContent: {
     padding: 20,
@@ -200,11 +245,28 @@ const styles = StyleSheet.create({
   typeOption: {
     padding: 8,
     borderRadius: 4,
-    marginBottom: 4,
-    marginRight: 4,
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   modalButtons: {
     flexDirection: 'row',
     marginTop: 16,
+    justifyContent: 'space-between'
+  },
+  cancelButton: {
+    flex: 1,
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+    borderWidth: 1,
+    borderRadius: 4
+  },
+  saveButton: {
+    flex: 1,
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 4
   }
 });

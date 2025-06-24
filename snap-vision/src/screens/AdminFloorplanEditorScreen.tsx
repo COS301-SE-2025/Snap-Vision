@@ -21,20 +21,24 @@ type FloorplanEditorScreenProps = {
 
 export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScreenProps) {
   const route = useRoute<RouteProp<{ params: FloorplanEditorScreenRouteParams }, 'params'>>();
+  const theme = useTheme();
+  const colors = getThemeColors(theme.dark);
+  const isDarkMode = theme.dark;
   
   // Add defensive check for route.params
   if (!route.params) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-        <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 20 }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: colors.background }}>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 20, color: colors.text }}>
           Missing floorplan information
         </Text>
-        <Text style={{ textAlign: 'center', marginBottom: 20 }}>
+        <Text style={{ textAlign: 'center', marginBottom: 20, color: colors.text }}>
           Please select a floorplan from the edit screen or make sure you've initialized the pre-bundled floorplans.
         </Text>
         <AppButton 
           title="Go Back" 
-          onPress={() => navigation.goBack()} 
+          onPress={() => navigation.goBack()}
+          style={{ backgroundColor: colors.primary }}
         />
       </View>
     );
@@ -46,11 +50,11 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
   // Additional safety check for each parameter
   if (!buildingId || !floorLabel || !imageUri) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-        <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 20 }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: colors.background }}>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 20, color: colors.text }}>
           Incomplete floorplan data
         </Text>
-        <Text style={{ textAlign: 'center', marginBottom: 20 }}>
+        <Text style={{ textAlign: 'center', marginBottom: 20, color: colors.text }}>
           {!buildingId ? "Missing building ID. " : ""}
           {!floorLabel ? "Missing floor label. " : ""}
           {!imageUri ? "Missing image URI. " : ""}
@@ -58,14 +62,13 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
         </Text>
         <AppButton 
           title="Go Back" 
-          onPress={() => navigation.goBack()} 
+          onPress={() => navigation.goBack()}
+          style={{ backgroundColor: colors.primary }}
         />
       </View>
     );
   }
   
-  const theme = useTheme();
-  const colors = getThemeColors(theme.dark);
   const webViewRef = useRef<WebView>(null);
   
   type RoomPOI = {
@@ -88,7 +91,7 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
     description: ''
   });
 
-  // Generate HTML for WebView
+  // Generate HTML for WebView with dark mode support
   const getHTML = () => {
     return `
       <!DOCTYPE html>
@@ -103,6 +106,8 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
             height: 100%; 
             overflow: hidden; 
             touch-action: manipulation;
+            background-color: ${isDarkMode ? '#121212' : '#ffffff'};
+            color: ${isDarkMode ? '#ffffff' : '#000000'};
           }
           #container { 
             position: relative; 
@@ -119,23 +124,30 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
             width: 100%; 
             height: auto; 
             display: block;
+            /* Add a subtle filter for dark mode to improve visibility */
+            filter: ${isDarkMode ? 'brightness(0.9) contrast(1.1)' : 'none'};
           }
           .marker { 
             position: absolute; 
             width: 20px; 
             height: 20px; 
-            background-color: red; 
+            background-color: ${colors.primary}; 
+            border: 2px solid ${isDarkMode ? '#ffffff' : '#000000'};
             border-radius: 50%; 
             transform: translate(-50%, -50%);
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
           }
           .marker-label { 
             position: absolute; 
             top: 20px; 
             left: 0; 
-            background: white; 
-            padding: 2px; 
-            font-size: 12px; 
+            background: ${isDarkMode ? '#333333' : 'white'}; 
+            color: ${isDarkMode ? '#ffffff' : '#000000'};
+            padding: 4px; 
+            font-size: 12px;
+            border-radius: 4px;
             white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
           }
         </style>
       </head>
@@ -150,6 +162,15 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
           const container = document.getElementById('container');
           const zoomableArea = document.getElementById('zoomable-area');
           const floorplan = document.getElementById('floorplan');
+          
+          // Theme info from React Native
+          const isDarkMode = ${isDarkMode};
+          const themeColors = {
+            background: "${colors.background}",
+            text: "${colors.text}",
+            border: "${colors.border}",
+            primary: "${colors.primary}"
+          };
           
           // Zoom variables
           let currentScale = 1;
@@ -410,6 +431,7 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
       setRoomData={setRoomData}
       saveRoomPOI={saveRoomPOI}
       goBack={() => navigation.goBack()}
+      isDarkMode={isDarkMode}
     />
   );
 }
