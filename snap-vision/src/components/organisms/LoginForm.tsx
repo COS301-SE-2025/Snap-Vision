@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useDeepLink } from '../../DeepLinkContext';
+import { useBadges } from '../../context/BadgeContext';
 
 export default function LoginForm() {
   const navigation = useNavigation<any>();
@@ -21,6 +22,7 @@ export default function LoginForm() {
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({ email: '', password: '' });
   const [successMessage, setSuccessMessage] = useState('');
+    const { unlock } = useBadges();
 
   const handleLogin = async () => {
     setSuccessMessage('');
@@ -36,6 +38,8 @@ export default function LoginForm() {
 
     try {
       await auth().signInWithEmailAndPassword(email, password);
+      unlock('first-login');
+      // Alert.alert('Success', 'Logged in!');
       setSuccessMessage('Login successful!');
       setTimeout(() => {
         if (coords && coords.lat && coords.lng) {

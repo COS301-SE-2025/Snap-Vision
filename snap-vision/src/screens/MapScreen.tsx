@@ -22,6 +22,8 @@ import TextToSpeech from '../components/molecules/TextToSpeech';
 import { useRoute } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 
+import { useBadges } from '../context/BadgeContext'; 
+
 type MapScreenParams = {
   lat?: string;
   lng?: string;
@@ -77,6 +79,13 @@ const MapScreen = () => {
   const route = useRoute();
   const params = route.params as MapScreenParams;
   const [hasHandledDeepLink, setHasHandledDeepLink] = useState(false);
+  
+  const { unlock, incrementRoutes } = useBadges();  
+  const { state, clearJustUnlocked } = useBadges();
+  const { setNavigationStartTime } = useBadges();
+  const { maybeUnlockFastFinisher, incrementCheckIns } = useBadges();
+const [popupBadge, setPopupBadge] = useState<string | null>(null);
+
 
   // crowd reports
   const [selectedPOI, setSelectedPOI] = useState<any>(null);
@@ -180,10 +189,20 @@ const MapScreen = () => {
       const message = `Check out my location: ${url}`;
       await Share.share({ message, url, title: 'Share Location' });
       setStatus('Location shared successfully');
+      unlock('share-location');
     } catch {
       setError('Failed to share location');
     }
   };
+
+  // const submitCrowdReport = () => {
+  //   if (!currentLocation) return;
+  //   const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${currentLocation.latitude}, ${currentLocation.longitude}, '${selectedDensity}');`;
+  //   webViewRef.current?.injectJavaScript(jsCrowdCode);
+  //   setShowCrowdPopup(false);
+  //   setStatus(`Crowd density reported: ${selectedDensity}`);
+  //   unlock('reported-crowd');
+  // };
 
   const handleDestinationSearch = () => {
     if (!currentLocation || !destinationCoords) {
@@ -264,8 +283,7 @@ const MapScreen = () => {
     setIsNavigating(true);
     setStatus('Navigation started');
     setRouteProgress(0);
-    webViewRef.current?.injectJavaScript('window.setNavigationState && window.setNavigationState(true);');
-    
+    setNavigationStartTime(Date.now());
     // Start watching position with higher frequency
     if (watchIdRef.current) {
       Geolocation.clearWatch(watchIdRef.current);
@@ -424,9 +442,16 @@ const MapScreen = () => {
   };
   
   // Add this new function to handle reaching the destination
-  const destinationReached = () => {
+  const destinationReached = async() => {
     if (!isNavigating) return; // Only handle if actually navigating
     
+     try {
+    await unlock('destination-reached');
+    await incrementRoutes();
+  } catch (e) {
+    console.warn('Failed to update badge state:', e);
+  }
+
     // Stop navigation
     stopNavigation();
     

@@ -16,6 +16,10 @@ import { DeepLinkProvider, useDeepLink } from './src/DeepLinkContext';
 import auth from '@react-native-firebase/auth';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 import { LandingProvider } from './src/context/LandingContext';
+import { UserProvider } from './src/context/UserContext';
+import { BadgeProvider } from './src/context/BadgeContext';
+import BadgeUnlockNotifier from './src/components/organisms/BadgeUnlockNotifier';
+import ShopScreen from './src/screens/ShopScreen';
 import { initializePreBundledFloorplans } from './src/utils/floorplanUtils';
 
 const Stack = createNativeStackNavigator();
@@ -92,15 +96,20 @@ function AppInner() {
     }, []);
 
   return (
+    <BadgeProvider>
     <ThemeProvider>
+      
       <NavigationContainer ref={navigationRef}>
+        <BadgeUnlockNotifier /> 
         {authReady && (
+        
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           {initialRoute === 'Tabs' ? (
             <Stack.Screen name="Tabs" component={BottomTabs} />
           ) : (
             <Stack.Screen name="Login" component={LoginScreen} />
           )}
+          
           <Stack.Screen name="Register" component={RegistrationScreen} />
           <Stack.Screen name="AdminLoadFloorplans" component={AdminLoadFloorplansScreen} />
           <Stack.Screen name="AdminFloorplanEditor" component={AdminFloorplanEditorScreen} />
@@ -108,18 +117,22 @@ function AppInner() {
           <Stack.Screen name="AdminSettings" component={AdminSettingsFrom} />
           <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
           <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+          <Stack.Screen name="ShopScreen" component={ShopScreen} />
         </Stack.Navigator>
       )}
       </NavigationContainer>
     </ThemeProvider>
+    </BadgeProvider>
   );
 }
 
 export default function App() {
   return (
     <DeepLinkProvider>
-      <LandingProvider> {/* add this */}
-        <AppInner />
+      <LandingProvider>
+        <UserProvider>
+          <AppInner />
+        </UserProvider>
       </LandingProvider>
     </DeepLinkProvider>
   );

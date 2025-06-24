@@ -1,46 +1,56 @@
-import React from 'react';
-import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
+// src/screens/AchievementsScreen.tsx
+import React, { useEffect } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  Alert
+} from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
+
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
-import TopBar from '../components/molecules/TopBar';
+import { useBadges } from '../context/BadgeContext';
+import { BADGES, BadgeId } from '../types/badges';
+
+import WelcomeHeader from '../components/molecules/WelcomeHeader';
+import ProgressCard from '../components/atoms/ProgressCard';
+import RewardCard from '../components/molecules/RewardCard';
+import BadgeUnlockNotifier from '../components/organisms/BadgeUnlockNotifier';
+import { BadgeProvider } from '../context/BadgeContext';
 import AchievementsForm from '../components/organisms/AchievementsForm';
 
-const AchievementsScreen = () => {
+export default function AchievementsScreen() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
+  const { state, clearJustUnlocked } = useBadges();
+  const unlockedArray = Array.from(state.unlocked);
 
-  const handleBackPress = () => {
-    // Navigation back logic
-    console.log('Back pressed');
-  };
+  useEffect(() => {
+    console.log('Unlocked badges:', Array.from(state.unlocked));
+
+  }, [state.justUnlocked]);
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.primary }]}>
-        <Text style={styles.headerText}>Badges and Achievements</Text>
-      </View>
-
-      
-      {/* Main Content */}
+    <View style={{ flex: 1 }}>
+    
+    <BadgeUnlockNotifier />
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       <AchievementsForm />
-    </SafeAreaView>
+      <View style={styles.bottomSpacing} />
+      
+    </ScrollView>
+    
+    </View>
   );
-};
-
-export default AchievementsScreen;
+}
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-  header: {
-    padding: 16,
-    justifyContent: 'center',
-  },
-  headerText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
+  container: { flex: 1, paddingHorizontal: 16 },
+  section: { marginBottom: 24 },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 4 },
+  sectionSubtitle: { fontSize: 14, opacity: 0.7, marginBottom: 16 },
+  progressRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  bottomSpacing: { height: 20 },
 });
