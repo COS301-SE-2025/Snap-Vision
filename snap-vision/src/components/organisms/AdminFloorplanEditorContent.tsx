@@ -72,7 +72,7 @@ export default function AdminFloorplanEditorContent({
         <Text style={[styles.footerText, { color: colors.text }]}>
           {roomMarkers.length} rooms added
         </Text>
-        <AppButton 
+        <AppSecondaryButton 
           title="Done" 
           onPress={goBack}
         />
@@ -127,7 +127,7 @@ export default function AdminFloorplanEditorContent({
               onPress={() => setIsModalVisible(false)}
               style={{ flex: 1, marginRight: 8 }}
             />
-            <AppButton 
+            <AppSecondaryButton 
               title="Save"
               onPress={saveRoomPOI}
               style={{ 
