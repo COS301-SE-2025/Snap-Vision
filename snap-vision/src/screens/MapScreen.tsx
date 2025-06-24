@@ -266,7 +266,7 @@ const MapScreen = () => {
     setIsNavigating(true);
     setStatus('Navigation started');
     setRouteProgress(0);
-        webViewRef.current?.injectJavaScript('window.setNavigationState && window.setNavigationState(true);');
+    webViewRef.current?.injectJavaScript('window.setNavigationState && window.setNavigationState(true);');
     
     // Start watching position with higher frequency
     if (watchIdRef.current) {
@@ -284,7 +284,7 @@ const MapScreen = () => {
       { 
         enableHighAccuracy: true, 
         distanceFilter: 5, // Update every 5 meters
-        interval: 1000 // Update every 2 seconds
+        interval: 1000 // Update every second
       }
     );
   };
@@ -370,24 +370,25 @@ const MapScreen = () => {
       // At the last point
       progressValue = 100;
     }
-     if (steps.length > 0) {
-    let stepIndex = 0;
-    let minDist = Infinity;
-    for (let i = 0; i < steps.length; i++) {
-      const step = steps[i];
-      const [lon, lat] = step.way_points
-        ? lastRoute.current[step.way_points[0]]
-        : lastRoute.current[0];
-      const dist = getDistanceMeters(latitude, longitude, lat, lon);
-      if (dist < minDist) {
-        minDist = dist;
-        stepIndex = i;
+    
+    if (steps.length > 0) {
+      let stepIndex = 0;
+      let minDist = Infinity;
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        const [lon, lat] = step.way_points
+          ? lastRoute.current[step.way_points[0]]
+          : lastRoute.current[0];
+        const dist = getDistanceMeters(latitude, longitude, lat, lon);
+        if (dist < minDist) {
+          minDist = dist;
+          stepIndex = i;
+        }
+      }
+      if (stepIndex !== currentStep) {
+        setCurrentStep(stepIndex);
       }
     }
-    if (stepIndex !== currentStep) {
-      setCurrentStep(stepIndex);
-    }
-  }
     
     // Update progress with a more precise value
     const newProgress = Math.min(Math.round(progressValue), 100);
@@ -520,7 +521,7 @@ const MapScreen = () => {
     } catch (error) {
       console.error('Error fetching crowd reports:', error);
       // More informative error handling
-      if (error.code === 'firestore/permission-denied') {
+      if (typeof error === 'object' && error !== null && 'code' in error && (error as any).code === 'firestore/permission-denied') {
         setError('Crowd reports feature unavailable: Permission error');
       }
     }
@@ -559,35 +560,35 @@ const MapScreen = () => {
     setShowCrowdPopup(true);
   };
 
-useEffect(() => {
-  if (isNavigating && shouldStartTTS && steps.length > 0 && currentStep < steps.length) {
-    const instruction = steps[currentStep]?.instruction;
-    if (instruction) {
-      console.log('TTS should speak:', instruction);
-      try {
+  useEffect(() => {
+    if (isNavigating && shouldStartTTS && steps.length > 0 && currentStep < steps.length) {
+      const instruction = steps[currentStep]?.instruction;
+      if (instruction) {
+        console.log('TTS should speak:', instruction);
+        try {
+          Tts.stop();
+          setTimeout(() => {
+            Tts.speak(instruction);
+          }, 500);
+        } catch (e) {
+          console.error('TTS Error:', e);
+          setError('Voice guidance is not available.');
+        }
+      }
+    }
+  }, [isNavigating, shouldStartTTS, steps, currentStep]);
+
+  useEffect(() => {
+    if (isNavigating && steps.length > 0 && currentStep < steps.length) {
+      const instruction = steps[currentStep]?.instruction;
+      if (instruction) {
         Tts.stop();
         setTimeout(() => {
           Tts.speak(instruction);
         }, 500);
-      } catch (e) {
-        console.error('TTS Error:', e);
-        setError('Voice guidance is not available.');
       }
     }
-  }
-}, [isNavigating, shouldStartTTS, steps, currentStep]);
-
-useEffect(() => {
-  if (isNavigating && steps.length > 0 && currentStep < steps.length) {
-    const instruction = steps[currentStep]?.instruction;
-    if (instruction) {
-      Tts.stop();
-      setTimeout(() => {
-        Tts.speak(instruction);
-      }, 500);
-    }
-  }
-}, [isNavigating, steps, currentStep]);
+  }, [isNavigating, steps, currentStep]);
 
   useEffect(() => {
     const fetchPOIs = async () => {
@@ -804,7 +805,7 @@ useEffect(() => {
     };
   }, []);
 
-    // Add this new useEffect after your other useEffects
+  // Add this new useEffect after your other useEffects
   useEffect(() => {
     // Only run when navigating
     if (!isNavigating || !currentLocation) return;
@@ -853,96 +854,7 @@ useEffect(() => {
     };
   }, []);
 
-  interface Floorplan {
-    buildingId: string;
-    floorLabel: string;
-    uri: string;
-    [key: string]: any;
-  }
-
-  // Add state for floorplans and floor selector modal
-  const [floorplans, setFloorplans] = useState<Floorplan[]>([]);
-  const [showFloorSelector, setShowFloorSelector] = useState(false);
-
-  const handleEnterBuilding = async (buildingId: string): Promise<void> => {
-    try {
-      // Check if we have floorplans for this building
-      const keys: string[] = Array.from(await AsyncStorage.getAllKeys());
-      const floorplanKeys: string[] = keys.filter(key =>
-        key.startsWith(`floorplan_${buildingId}`)
-      );
-      
-      if (floorplanKeys.length > 0) {
-        // Show floor selector
-        const floorplans: Floorplan[] = await Promise.all(
-          floorplanKeys.map(async (key: string) => {
-            const data = await AsyncStorage.getItem(key);
-            return JSON.parse(data as string) as Floorplan;
-          })
-        );
-        
-        setFloorplans(floorplans);
-        setShowFloorSelector(true);
-      } else {
-        setError('No indoor maps available for this building');
-      }
-    } catch (error) {
-      console.error('Error loading indoor maps:', error);
-    }
-  };
-  
-  //load a specific floor
-  interface RoomPOI {
-    id?: string;
-    name?: string;
-    buildingId: string;
-    floorId: string;
-    [key: string]: any;
-  }
-
-  // State for room POIs on the current floor
-  const [roomPOIs, setRoomPOIs] = useState<RoomPOI[]>([]);
-
-  interface LoadFloorPlanProps {
-    buildingId: string;
-    floorLabel: string;
-    uri: string;
-    [key: string]: any;
-  }
-
-  function setIsIndoorMode(arg0: boolean) {
-  throw new Error('Function not implemented.');
-  }
-  function setCurrentFloorplan(floorplan: LoadFloorPlanProps) {
-    throw new Error('Function not implemented.');
-  }
-
-  const loadFloorPlan = async (floorplan: LoadFloorPlanProps): Promise<void> => {
-    try {
-      setIsIndoorMode(true);
-      setCurrentFloorplan(floorplan);
-
-      // Load room POIs for this floor
-      const snapshot = await firestore()
-        .collection('RoomPOIs')
-        .where('buildingId', '==', floorplan.buildingId)
-        .where('floorId', '==', floorplan.floorLabel)
-        .get();
-
-      const roomPOIs: RoomPOI[] = snapshot.docs.map(doc => doc.data() as RoomPOI);
-      setRoomPOIs(roomPOIs);
-
-      // Switch to indoor map view
-      webViewRef.current?.injectJavaScript(`
-        showIndoorMap("${floorplan.uri}", ${JSON.stringify(roomPOIs)});
-      `);
-    } catch (error) {
-      console.error('Error loading floor plan:', error);
-    }
-  };
-
-
- return (
+  return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {showCrowdPopup && (
         <CrowdReportModal
@@ -997,22 +909,20 @@ useEffect(() => {
       </View>
 
       {destination && destinationCoords && (
-       <NavigationPanel
-  isNavigating={isNavigating}
-  isLoading={isRouteLoading}
-  onStartNavigation={startNavigation}
-  onStopNavigation={stopNavigation}
-  progress={routeProgress}
-  distance={distanceToDestination}
-  time={estimatedTime}
-  destination={destination}
-  isVoiceEnabled={isVoiceEnabled}
-  onToggleVoice={() => setIsVoiceEnabled(!isVoiceEnabled)}
-  currentInstruction={steps[currentStep]?.instruction}
-  onSpeakingChange={setIsSpeaking}
-/>
-
-
+        <NavigationPanel
+          isNavigating={isNavigating}
+          isLoading={isRouteLoading}
+          onStartNavigation={startNavigation}
+          onStopNavigation={stopNavigation}
+          progress={routeProgress}
+          distance={distanceToDestination}
+          time={estimatedTime}
+          destination={destination}
+          isVoiceEnabled={isVoiceEnabled}
+          onToggleVoice={() => setIsVoiceEnabled(!isVoiceEnabled)}
+          currentInstruction={steps[currentStep]?.instruction}
+          onSpeakingChange={setIsSpeaking}
+        />
       )}
 
       <MapActionsPanel
@@ -1027,27 +937,27 @@ useEffect(() => {
         onReportOut={() => setShowReportTooltip(false)}
         color={colors.primary}
       />
-{isNavigating && steps.length > 0 && (
-  <Pressable
-    onPress={() => setShowDirectionsSheet(true)}
-    style={{
-      position: 'absolute',
-      top: 59,
-      left: 20,
-      right: 20,
-      backgroundColor: colors.card,
-      borderRadius: 8,
-      padding: 12,
-      alignItems: 'center',
-      elevation: 4,
-      zIndex: 1001,
-    }}
-  >
-    <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 16 }}>
-      {steps[currentStep]?.instruction}
-    </Text>
-  </Pressable>
-)}
+      {isNavigating && steps.length > 0 && (
+        <Pressable
+          onPress={() => setShowDirectionsSheet(true)}
+          style={{
+            position: 'absolute',
+            top: 59,
+            left: 20,
+            right: 20,
+            backgroundColor: colors.card,
+            borderRadius: 8,
+            padding: 12,
+            alignItems: 'center',
+            elevation: 4,
+            zIndex: 1001,
+          }}
+        >
+          <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 16 }}>
+            {steps[currentStep]?.instruction}
+          </Text>
+        </Pressable>
+      )}
       <CrowdReportModal
         visible={showCrowdPopup}
         selectedDensity={selectedDensity}
@@ -1064,4 +974,3 @@ useEffect(() => {
 };
 
 export default MapScreen;
-
