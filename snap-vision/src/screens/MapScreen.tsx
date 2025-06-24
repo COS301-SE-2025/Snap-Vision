@@ -195,14 +195,14 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
     }
   };
 
-  const submitCrowdReport = () => {
-    if (!currentLocation) return;
-    const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${currentLocation.latitude}, ${currentLocation.longitude}, '${selectedDensity}');`;
-    webViewRef.current?.injectJavaScript(jsCrowdCode);
-    setShowCrowdPopup(false);
-    setStatus(`Crowd density reported: ${selectedDensity}`);
-    unlock('reported-crowd');
-  };
+  // const submitCrowdReport = () => {
+  //   if (!currentLocation) return;
+  //   const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${currentLocation.latitude}, ${currentLocation.longitude}, '${selectedDensity}');`;
+  //   webViewRef.current?.injectJavaScript(jsCrowdCode);
+  //   setShowCrowdPopup(false);
+  //   setStatus(`Crowd density reported: ${selectedDensity}`);
+  //   unlock('reported-crowd');
+  // };
 
   const handleDestinationSearch = () => {
     if (!currentLocation || !destinationCoords) {
