@@ -11,6 +11,8 @@ type BadgeState = {
   points         : number;
   checkIns       : number;
   routesCompleted: number;
+  purchases      : { itemId: string; [key: string]: any }[]; // 👈 Add this
+
 };
 
 type Ctx = {
@@ -31,6 +33,7 @@ const empty: BadgeState = {
   points         : 0,
   checkIns       : 0,
   routesCompleted: 0,
+  purchases      : [],
 };
 
 
@@ -58,6 +61,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
           points         : snap.points || 0,
           checkIns       : snap.checkIns || 0,
           routesCompleted: snap.routesCompleted || 0,
+          purchases      : snap.purchases || [], 
         });
       } catch (e) {
         console.warn('Badge sync failed', e);
@@ -87,6 +91,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
         points         : snap.points,
         checkIns       : snap.checkIns,
         routesCompleted: snap.routesCompleted,
+        purchases      : snap.purchases || [],
       });
     } catch (e) {
       console.error('unlock failed, reverting', e);
