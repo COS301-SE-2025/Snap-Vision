@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, Alert } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { useRoute, RouteProp } from '@react-navigation/native';
-import { useTheme } from '@react-navigation/native';
+import { useRoute, RouteProp, useTheme } from '@react-navigation/native';
 import { getThemeColors } from '../theme';
 import AppButton from '../components/atoms/AppButton';
 import firestore from '@react-native-firebase/firestore';
@@ -19,12 +18,81 @@ type FloorplanEditorScreenProps = {
   navigation: StackNavigationProp<any>;
 };
 
+type RoomPOI = {
+  id: string;
+  name: string;
+  buildingId: string;
+  floorId: string;
+  coordinates: { x: number; y: number };
+  type: string;
+  description: string | null;
+};
+
+type Point = { x: number; y: number } | null;
+
 export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScreenProps) {
   const route = useRoute<RouteProp<{ params: FloorplanEditorScreenRouteParams }, 'params'>>();
   const theme = useTheme();
   const colors = getThemeColors(theme.dark);
   const isDarkMode = theme.dark;
   
+  // Define all hooks at the top level before any conditional returns
+  const webViewRef = useRef<WebView>(null);
+  const [roomMarkers, setRoomMarkers] = useState<RoomPOI[]>([]);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [currentPoint, setCurrentPoint] = useState<Point>(null);
+  const [roomData, setRoomData] = useState({
+    name: '',
+    type: 'classroom',
+    description: ''
+  });
+  const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  
+  // Get route params with a safe default
+  const { buildingId, floorLabel, imageUri } = route.params || { buildingId: '', floorLabel: '', imageUri: '' };
+  
+  // IMPORTANT: Place all useEffect hooks before any conditional returns
+  // Load existing room POIs
+  useEffect(() => {
+    // Only load POIs if we have valid parameters
+    if (!route.params || !buildingId || !floorLabel) {
+      return; // Skip loading if we don't have valid params
+    }
+    
+    const loadRoomPOIs = async () => {
+      try {
+        const snapshot = await firestore()
+          .collection('RoomPOIs')
+          .where('buildingId', '==', buildingId)
+          .where('floorId', '==', floorLabel)
+          .get();
+          
+        const markers = snapshot.docs.map(doc => ({
+          ...(doc.data() as RoomPOI)
+        }));
+        setRoomMarkers(markers as RoomPOI[]);
+        
+        // Add markers to WebView when it's ready
+        if (markers.length > 0) {
+          setTimeout(() => {
+            markers.forEach(marker => {
+              webViewRef.current?.injectJavaScript(`
+                addMarker("${marker.id}", ${marker.coordinates.x}, ${marker.coordinates.y}, "${marker.name}");
+                true;
+              `);
+            });
+          }, 1000); // Wait for WebView to load
+        }
+      } catch (error) {
+        console.error('Error loading room POIs:', error);
+      }
+    };
+    
+    loadRoomPOIs();
+  }, [buildingId, floorLabel, route.params]);
+  
+  // After all hooks, we can have conditional returns
   // Add defensive check for route.params
   if (!route.params) {
     return (
@@ -33,7 +101,7 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
           Missing floorplan information
         </Text>
         <Text style={{ textAlign: 'center', marginBottom: 20, color: colors.text }}>
-          Please select a floorplan from the edit screen or make sure you've initialized the pre-bundled floorplans.
+          Please select a floorplan from the edit screen or make sure you&apos;ve initialized the pre-bundled floorplans.
         </Text>
         <AppButton 
           title="Go Back" 
@@ -43,9 +111,6 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
       </View>
     );
   }
-  
-  // Now we can safely access route.params
-  const { buildingId, floorLabel, imageUri } = route.params;
   
   // Additional safety check for each parameter
   if (!buildingId || !floorLabel || !imageUri) {
@@ -68,30 +133,6 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
       </View>
     );
   }
-  
-  const webViewRef = useRef<WebView>(null);
-  
-  type RoomPOI = {
-    id: string;
-    name: string;
-    buildingId: string;
-    floorId: string;
-    coordinates: { x: number; y: number };
-    type: string;
-    description: string | null;
-  };
-  
-  const [roomMarkers, setRoomMarkers] = useState<RoomPOI[]>([]);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  type Point = { x: number; y: number } | null;
-  const [currentPoint, setCurrentPoint] = useState<Point>(null);
-  const [roomData, setRoomData] = useState({
-    name: '',
-    type: 'classroom',
-    description: ''
-  });
-  const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
 
   // Generate HTML for WebView with dark mode support
   const getHTML = () => {
@@ -550,40 +591,6 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
       ]
     );
   };
-  
-  // Load existing room POIs
-  useEffect(() => {
-    const loadRoomPOIs = async () => {
-      try {
-        const snapshot = await firestore()
-          .collection('RoomPOIs')
-          .where('buildingId', '==', buildingId)
-          .where('floorId', '==', floorLabel)
-          .get();
-          
-        const markers = snapshot.docs.map(doc => ({
-          ...(doc.data() as RoomPOI)
-        }));
-        setRoomMarkers(markers as RoomPOI[]);
-        
-        // Add markers to WebView when it's ready
-        if (markers.length > 0) {
-          setTimeout(() => {
-            markers.forEach(marker => {
-              webViewRef.current?.injectJavaScript(`
-                addMarker("${marker.id}", ${marker.coordinates.x}, ${marker.coordinates.y}, "${marker.name}");
-                true;
-              `);
-            });
-          }, 1000); // Wait for WebView to load
-        }
-      } catch (error) {
-        console.error('Error loading room POIs:', error);
-      }
-    };
-    
-    loadRoomPOIs();
-  }, [buildingId, floorLabel]);
   
   return (
     <AdminFloorplanEditorContent

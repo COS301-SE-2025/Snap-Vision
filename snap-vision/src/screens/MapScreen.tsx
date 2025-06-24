@@ -6,7 +6,7 @@ import { PermissionsAndroid } from 'react-native';
 import { WebView as WebViewType } from 'react-native-webview';
 import { useEffect } from 'react';
 import firestore from '@react-native-firebase/firestore';
-import { Modal, FlatList, Pressable } from 'react-native';
+import { Pressable } from 'react-native';
 import Tts from 'react-native-tts';
 import MapWebView from '../components/organisms/MapWebView';
 import CrowdReportModal from '../components/molecules/CrowdReportModal';
@@ -21,8 +21,6 @@ import DirectionsModal from '../components/organisms/DirectionsModal';
 import TextToSpeech from '../components/molecules/TextToSpeech';
 import { useRoute } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 
 type MapScreenParams = {
   lat?: string;
