@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,8 @@ import { getThemeColors } from '../theme';
 import { useBadges } from '../context/BadgeContext';
 import { purchaseItem } from '../api/badgeApi';
 import auth from '@react-native-firebase/auth';
-
+import PurchasePopup from '../components/molecules/PurchasePopup'; // Adjust the path as needed
+ 
 const SHOP_ITEMS = [
   { id: 'arrow-classic', title: 'Classic Arrow', description: 'Standard AR direction arrow', icon: 'arrow-forward', cost: 50 },
   { id: 'arrow-flame', title: 'Flame Arrow', description: 'Burning animated arrow', icon: 'flame', cost: 100 },
@@ -42,6 +43,7 @@ export default function ShopScreen({ navigation }: { navigation: any }) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const { state, setState } = useBadges();
+  const [popupItem, setPopupItem] = useState<{ title: string; cost: number } | null>(null);
 
   const handlePurchase = async (item: any) => {
     const uid = auth().currentUser?.uid;
@@ -65,7 +67,7 @@ export default function ShopScreen({ navigation }: { navigation: any }) {
         purchases: updatedData.purchases,
       }));
 
-      Alert.alert('Purchase Confirmed', `You bought: ${item.title}`);
+      setPopupItem({ title: item.title, cost: item.cost });
     } catch (err: any) {
       console.error('Purchase error:', err);
       Alert.alert('Error', err.message || 'Purchase failed');
@@ -116,6 +118,15 @@ export default function ShopScreen({ navigation }: { navigation: any }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 16 }}
       />
+
+      {popupItem && (
+      <PurchasePopup
+        itemTitle={popupItem.title}
+        cost={popupItem.cost}
+        onClose={() => setPopupItem(null)}
+      />
+    )}
+
     </View>
   );
 }

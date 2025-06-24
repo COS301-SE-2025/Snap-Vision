@@ -29,7 +29,7 @@ export default function AchievementsForm() {
   const colors = getThemeColors(isDark);
   type NavigationProp = StackNavigationProp<RootStackParamList, 'Dashboard'>;
 
-  const { state, clearJustUnlocked, getChallenges } = useBadges();
+  const { state, clearJustUnlocked, getChallenges,  } = useBadges();
   const unlockedArray = Array.from(state.unlocked);
   const currentChallenges = getChallenges();
   const Stack = createStackNavigator<RootStackParamList>();
