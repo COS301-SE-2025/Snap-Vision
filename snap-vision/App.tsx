@@ -6,6 +6,7 @@ import RegistrationScreen from './src/screens/RegistrationScreen';
 import BottomTabs from './src/navigation/BottomTabs';
 import AdminLoadFloorplansScreen from './src/screens/AdminLoadFloorplansScreen';
 import AdminEditFloorplansScreen from './src/screens/AdminEditFloorplansScreen';
+import AdminFloorplanEditorScreen from './src/screens/AdminFloorplanEditorScreen';
 import AdminSettingsFrom from './src/components/organisms/AdminSettingsForm';
 import { ThemeProvider } from './src/theme/ThemeContext';
 import ManageUsersScreen from './src/screens/ManageUsersScreen';
@@ -19,6 +20,7 @@ import { UserProvider } from './src/context/UserContext';
 import { BadgeProvider } from './src/context/BadgeContext';
 import BadgeUnlockNotifier from './src/components/organisms/BadgeUnlockNotifier';
 import ShopScreen from './src/screens/ShopScreen';
+import { initializePreBundledFloorplans } from './src/utils/floorplanUtils';
 
 const Stack = createNativeStackNavigator();
 
@@ -88,6 +90,11 @@ function AppInner() {
       setPendingDeepLink(null);
     }, [authReady, pendingDeepLink, setCoords]);
 
+    useEffect(() => {
+      // Initialize pre-bundled floorplans
+      initializePreBundledFloorplans();
+    }, []);
+
   return (
     <BadgeProvider>
     <ThemeProvider>
@@ -105,6 +112,7 @@ function AppInner() {
           
           <Stack.Screen name="Register" component={RegistrationScreen} />
           <Stack.Screen name="AdminLoadFloorplans" component={AdminLoadFloorplansScreen} />
+          <Stack.Screen name="AdminFloorplanEditor" component={AdminFloorplanEditorScreen} />
           <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
           <Stack.Screen name="AdminSettings" component={AdminSettingsFrom} />
           <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
