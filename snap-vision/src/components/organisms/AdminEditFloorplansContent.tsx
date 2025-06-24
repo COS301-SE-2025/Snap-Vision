@@ -110,7 +110,7 @@ export default function AdminEditFloorplansContent({
               Floorplan Actions
             </Text>
             
-            <View style={styles.selectedDetails}>
+            <View style={[styles.selectedDetails, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}>
               {floorplans.find(fp => fp.id === selectedFloorplan) && (
                 <>
                   <Text style={[styles.detailText, { color: colors.text }]}>
@@ -135,17 +135,29 @@ export default function AdminEditFloorplansContent({
               style={{ marginTop: 16 }}
             />
             
+            {/* Improved visibility for dark mode */}
             <AppButton
               title="Edit Room POIs"
               onPress={handleEditRooms}
-              style={{ marginTop: 16 }}
+              style={{ 
+                marginTop: 16,
+                backgroundColor: colors.primary, // Ensure consistent background
+              }}
             />
             
             <TouchableOpacity
-              style={[styles.deleteButton, { backgroundColor: colors.error }]}
+              style={[styles.deleteButton, { 
+                backgroundColor: colors.error,
+                borderWidth: 1,
+                borderColor: 'rgba(255,255,255,0.2)', // Add subtle border for dark mode visibility
+                marginTop: 24,
+                padding: 12,
+                borderRadius: 8,
+                alignItems: 'center'
+              }]}
               onPress={handleDelete}
             >
-              <Text style={styles.deleteButtonText}>Delete Floorplan</Text>
+              <Text style={[styles.deleteButtonText, { color: '#FFFFFF' }]}>Delete Floorplan</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -190,21 +202,18 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 12,
     borderRadius: 8,
-    backgroundColor: 'rgba(0,0,0,0.05)'
+    // Background color will be set dynamically using colors.card
   },
   detailText: {
     marginBottom: 4,
     fontSize: 14
   },
   deleteButton: {
-    marginTop: 24,
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center'
+    // Styles moved directly into component for better dark mode support
   },
   deleteButtonText: {
-    color: 'white',
     fontWeight: 'bold'
+    // Color will be set explicitly in the component
   },
   errorContainer: {
     padding: 12,
