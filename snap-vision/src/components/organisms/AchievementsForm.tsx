@@ -34,8 +34,7 @@ export default function AchievementsForm() {
   const currentChallenges = getChallenges();
   const Stack = createStackNavigator<RootStackParamList>();
   const navigation = useNavigation<NavigationProp>();
-
-
+  
   useEffect(() => {
     if (state.justUnlocked.length) {
       const names = state.justUnlocked
@@ -54,6 +53,8 @@ export default function AchievementsForm() {
   const handleCategoryPress  = (title: string)  => console.log(`${title} category pressed`);
   const handleChallengePress = (c: Challenge)   => console.log(`Challenge ${c.title} pressed`);
   const handleActionPress    = (a: string)      => console.log(`${a} button pressed`);
+
+
 
   return (
     <ScrollView
@@ -134,21 +135,25 @@ export default function AchievementsForm() {
         </View>
       </View> */}
 
+            
       {/* Dynamic Challenges */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.primary}]}>Current Challenges</Text>
+        <Text style={[styles.sectionTitle, { color: colors.primary }]}>Current Challenges</Text>
         <Text style={[styles.sectionSubtitle, { color: colors.text }]}>
           Complete these to earn points!
         </Text>
-        {currentChallenges.map((challenge) => (
-        <ChallengeItem
-        key={challenge.id}
-        challenge={challenge}
-        onPress={() => handleChallengePress(challenge)}
-      />
 
+        {currentChallenges.map(challenge => (
+          <ChallengeItem
+            key={challenge.id}
+            challenge={challenge}
+            onPress={() => handleChallengePress(challenge)}
+          />
         ))}
       </View>
+
+
+
 
 
       {/* Action Buttons */}

@@ -1,15 +1,14 @@
-// src/components/molecules/ChallengeItem.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { Challenge } from '../../types/achievements';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
+import { Challenge } from '../../types/achievements';
 
-interface Props {
+type Props = {
   challenge: Challenge;
-  onPress?: () => void;
-}
+  onPress: () => void;
+};
 
 export default function ChallengeItem({ challenge, onPress }: Props) {
   const { isDark } = useTheme();
@@ -17,16 +16,20 @@ export default function ChallengeItem({ challenge, onPress }: Props) {
 
   const getStatusIcon = () => {
     if (challenge.isCompleted) {
-      return <Icon name="checkmark-circle" size={24} color={colors.statusActive} />;
+      return <Icon name="checkmark-circle" size={24} color={colors.statusActive || colors.primary} />;
     }
     return <Icon name={challenge.icon} size={24} color={colors.text} />;
   };
 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[
-        styles.container, 
-        { backgroundColor: colors.card, borderColor: colors.border }
+        styles.container,
+        {
+          backgroundColor: colors.card,
+          borderColor: challenge.isCompleted ? colors.statusActive || colors.primary : colors.border,
+          opacity: challenge.isCompleted ? 0.5 : 1,
+        },
       ]}
       onPress={onPress}
     >
@@ -47,12 +50,12 @@ export default function ChallengeItem({ challenge, onPress }: Props) {
 
 const styles = StyleSheet.create({
   container: {
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    marginVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
+    marginBottom: 12,
   },
   iconContainer: {
     marginRight: 12,
@@ -61,11 +64,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   description: {
-    fontSize: 14,
+    fontSize: 12,
+    marginTop: 2,
   },
 });
