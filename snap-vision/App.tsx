@@ -16,6 +16,7 @@ import { DeepLinkProvider, useDeepLink } from './src/DeepLinkContext';
 import auth from '@react-native-firebase/auth';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 import { LandingProvider } from './src/context/LandingContext';
+import { initializePreBundledFloorplans } from './src/utils/floorplanUtils';
 
 const Stack = createNativeStackNavigator();
 
@@ -84,6 +85,11 @@ function AppInner() {
       }
       setPendingDeepLink(null);
     }, [authReady, pendingDeepLink, setCoords]);
+
+    useEffect(() => {
+      // Initialize pre-bundled floorplans
+      initializePreBundledFloorplans();
+    }, []);
 
   return (
     <ThemeProvider>
