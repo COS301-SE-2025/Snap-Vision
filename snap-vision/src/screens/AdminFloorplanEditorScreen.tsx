@@ -90,6 +90,8 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
     type: 'classroom',
     description: ''
   });
+  const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Generate HTML for WebView with dark mode support
   const getHTML = () => {
@@ -136,6 +138,13 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
             border-radius: 50%; 
             transform: translate(-50%, -50%);
             box-shadow: 0 0 5px rgba(0,0,0,0.5);
+            cursor: pointer;
+            z-index: 10;
+          }
+          .marker.selected {
+            background-color: #ff9800;
+            transform: translate(-50%, -50%) scale(1.2);
+            box-shadow: 0 0 8px rgba(255,152,0,0.8);
           }
           .marker-label { 
             position: absolute; 
@@ -148,6 +157,7 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
             border-radius: 4px;
             white-space: nowrap;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            pointer-events: none;
           }
         </style>
       </head>
@@ -180,6 +190,9 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
           let lastX = 0;
           let lastY = 0;
           let isDragging = false;
+          let clickStartTime = 0;
+          let clickStartX = 0;
+          let clickStartY = 0;
           
           // Handle pinch zoom
           document.addEventListener('touchstart', function(e) {
@@ -197,6 +210,13 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
               lastY = e.touches[0].clientY;
               isDragging = true;
               e.preventDefault();
+            }
+            
+            // For click detection
+            if (e.touches.length === 1) {
+              clickStartTime = Date.now();
+              clickStartX = e.touches[0].clientX;
+              clickStartY = e.touches[0].clientY;
             }
           }, { passive: false });
           
@@ -235,6 +255,16 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
               lastX = e.touches[0].clientX;
               lastY = e.touches[0].clientY;
               
+              // Check if we've moved too far (prevents click after pan)
+              const moveDistance = Math.sqrt(
+                Math.pow(e.touches[0].clientX - clickStartX, 2) +
+                Math.pow(e.touches[0].clientY - clickStartY, 2)
+              );
+              
+              if (moveDistance > 10) {
+                clickStartTime = 0; // Cancel the click
+              }
+              
               e.preventDefault();
             }
           }, { passive: false });
@@ -246,6 +276,15 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
             
             if (e.touches.length === 0) {
               isDragging = false;
+              
+              // Check if this was a tap/click
+              const clickDuration = Date.now() - clickStartTime;
+              if (clickDuration < 300 && clickStartTime > 0) {
+                // This was a quick tap, process as click
+                handleTap(clickStartX, clickStartY);
+              }
+              
+              clickStartTime = 0;
             }
           });
           
@@ -266,23 +305,30 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
             lastTap = currentTime;
           });
           
-          // Handle tap on floorplan
-          container.addEventListener('click', function(event) {
-            // Only handle clicks when not zoomed or dragging
+          // Function to handle taps on the container
+          function handleTap(x, y) {
+            // First check if we tapped on a marker (markers have their own event handlers)
+            const element = document.elementFromPoint(x, y);
+            if (element && element.classList.contains('marker')) {
+              // Marker click handled by the marker's own click handler
+              return;
+            }
+            
+            // If we're not on a marker, this is a tap on the floorplan to add a new point
             if (currentScale === 1 || !isDragging) {
               const rect = floorplan.getBoundingClientRect();
               
               // Convert coordinates to match the unzoomed image
-              const x = (event.clientX - rect.left) / (rect.width * currentScale);
-              const y = (event.clientY - rect.top) / (rect.height * currentScale);
+              const relX = (x - rect.left) / (rect.width * currentScale);
+              const relY = (y - rect.top) / (rect.height * currentScale);
               
               window.ReactNativeWebView.postMessage(JSON.stringify({
                 type: 'add_marker',
-                x: x,
-                y: y
+                x: relX,
+                y: relY
               }));
             }
-          });
+          }
           
           // Helper function to calculate distance between two points
           function getDistance(x1, y1, x2, y2) {
@@ -298,9 +344,17 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
           
           // Function to add marker to the floorplan
           window.addMarker = function(id, x, y, label) {
+            // Remove any existing marker with the same ID (for updates)
+            const existingMarker = document.getElementById('marker-' + id);
+            if (existingMarker) {
+              existingMarker.remove();
+            }
+            
+            // Create the marker element
             const marker = document.createElement('div');
             marker.className = 'marker';
             marker.id = 'marker-' + id;
+            marker.dataset.id = id;
             marker.style.left = (x * 100) + '%';
             marker.style.top = (y * 100) + '%';
             
@@ -309,7 +363,39 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
             labelEl.textContent = label;
             marker.appendChild(labelEl);
             
+            // Add click handler to the marker for editing
+            marker.addEventListener('click', function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              
+              // Clear any selected state from other markers
+              document.querySelectorAll('.marker.selected').forEach(m => {
+                m.classList.remove('selected');
+              });
+              
+              // Add selected state to this marker
+              marker.classList.add('selected');
+              
+              // Send message to React Native to edit this marker
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'edit_marker',
+                id: id
+              }));
+            });
+            
             zoomableArea.appendChild(marker);
+          };
+          
+          // Function to highlight a marker when it's being edited
+          window.highlightMarker = function(id) {
+            document.querySelectorAll('.marker.selected').forEach(m => {
+              m.classList.remove('selected');
+            });
+            
+            const marker = document.getElementById('marker-' + id);
+            if (marker) {
+              marker.classList.add('selected');
+            }
           };
         </script>
       </body>
@@ -323,15 +409,38 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
       const data = JSON.parse(event.nativeEvent.data);
       
       if (data.type === 'add_marker') {
+        // Adding a new marker
         setCurrentPoint({ x: data.x, y: data.y });
+        setIsEditing(false);
+        setEditingRoomId(null);
+        setRoomData({
+          name: '',
+          type: 'classroom',
+          description: ''
+        });
         setIsModalVisible(true);
+      }
+      else if (data.type === 'edit_marker') {
+        // Editing an existing marker
+        const roomToEdit = roomMarkers.find(room => room.id === data.id);
+        if (roomToEdit) {
+          setEditingRoomId(data.id);
+          setIsEditing(true);
+          setCurrentPoint(roomToEdit.coordinates);
+          setRoomData({
+            name: roomToEdit.name,
+            type: roomToEdit.type,
+            description: roomToEdit.description || ''
+          });
+          setIsModalVisible(true);
+        }
       }
     } catch (e) {
       console.error('Error parsing WebView message:', e);
     }
   };
   
-  // Save room POI
+  // Save or update room POI
   const saveRoomPOI = async () => {
     if (!roomData.name.trim()) {
       Alert.alert('Error', 'Room name is required');
@@ -343,12 +452,16 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
     }
     
     try {
-      // Create unique ID
-      const roomId = `room_${buildingId.replace(/\//g, '_')}_${floorLabel.replace(/\s/g, '_')}_${Date.now()}`;
+      let roomId = editingRoomId;
       
-      // Create room POI object
+      if (!isEditing) {
+        // Create a new room POI
+        roomId = `room_${buildingId.replace(/\//g, '_')}_${floorLabel.replace(/\s/g, '_')}_${Date.now()}`;
+      }
+      
+      // Create/update room POI object
       const roomPOI = {
-        id: roomId,
+        id: roomId as string,
         name: roomData.name,
         buildingId: buildingId,
         floorId: floorLabel,
@@ -361,12 +474,20 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
       };
       
       // Save to Firestore
-      await firestore().collection('RoomPOIs').doc(roomId).set(roomPOI);
+      await firestore().collection('RoomPOIs').doc(roomId as string).set(roomPOI);
       
-      // Add to local state
-      setRoomMarkers([...roomMarkers, roomPOI]);
+      // Update local state
+      if (isEditing) {
+        // Replace the edited room in the array
+        setRoomMarkers(roomMarkers.map(room => 
+          room.id === roomId ? roomPOI : room
+        ));
+      } else {
+        // Add the new room to the array
+        setRoomMarkers([...roomMarkers, roomPOI]);
+      }
       
-      // Add marker to WebView
+      // Add/update marker on WebView
       webViewRef.current?.injectJavaScript(`
         addMarker("${roomId}", ${currentPoint.x}, ${currentPoint.y}, "${roomData.name}");
         true;
@@ -374,12 +495,60 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
       
       // Reset form
       setRoomData({ name: '', type: 'classroom', description: '' });
+      setIsEditing(false);
+      setEditingRoomId(null);
       setIsModalVisible(false);
       
     } catch (error) {
       console.error('Error saving room POI:', error);
       Alert.alert('Error', 'Failed to save room POI');
     }
+  };
+  
+  // Delete room POI
+  const deleteRoomPOI = async () => {
+    if (!editingRoomId) {
+      console.error('No room selected for deletion');
+      return;
+    }
+    
+    try {
+      await firestore().collection('RoomPOIs').doc(editingRoomId).delete();
+      
+      // Remove from local state
+      setRoomMarkers(roomMarkers.filter(room => room.id !== editingRoomId));
+      
+      // Remove marker from WebView
+      webViewRef.current?.injectJavaScript(`
+        const markerToRemove = document.getElementById('marker-${editingRoomId}');
+        if (markerToRemove) {
+          markerToRemove.remove();
+        }
+        true;
+      `);
+      
+      // Reset form and close modal
+      setRoomData({ name: '', type: 'classroom', description: '' });
+      setIsEditing(false);
+      setEditingRoomId(null);
+      setIsModalVisible(false);
+      
+    } catch (error) {
+      console.error('Error deleting room POI:', error);
+      Alert.alert('Error', 'Failed to delete room POI');
+    }
+  };
+  
+  // Show delete confirmation
+  const confirmDelete = () => {
+    Alert.alert(
+      'Delete Room',
+      `Are you sure you want to delete ${roomData.name}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', onPress: deleteRoomPOI, style: 'destructive' },
+      ]
+    );
   };
   
   // Load existing room POIs
@@ -432,6 +601,8 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
       saveRoomPOI={saveRoomPOI}
       goBack={() => navigation.goBack()}
       isDarkMode={isDarkMode}
+      isEditing={isEditing}
+      deleteRoom={confirmDelete}
     />
   );
 }

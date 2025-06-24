@@ -33,7 +33,9 @@ interface AdminFloorplanEditorContentProps {
   setRoomData: (data: any) => void;
   saveRoomPOI: () => void;
   goBack: () => void;
-  isDarkMode?: boolean; // Add this prop to pass theme info to WebView
+  isDarkMode?: boolean; 
+  isEditing?: boolean;
+  deleteRoom?: () => void;
 }
 
 export default function AdminFloorplanEditorContent({
@@ -49,7 +51,9 @@ export default function AdminFloorplanEditorContent({
   setRoomData,
   saveRoomPOI,
   goBack,
-  isDarkMode = false // Default to light mode if not provided
+  isDarkMode = false,
+  isEditing = false,
+  deleteRoom
 }: AdminFloorplanEditorContentProps) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -58,7 +62,7 @@ export default function AdminFloorplanEditorContent({
           Add Room POIs - {floorLabel}
         </Text>
         <Text style={[styles.headerSubtitle, { color: colors.text }]}>
-          Tap on the floorplan to add rooms
+          Tap on the floorplan to add rooms or tap existing markers to edit
         </Text>
       </View>
       
@@ -68,7 +72,6 @@ export default function AdminFloorplanEditorContent({
         source={{ html: getHTML() }}
         onMessage={handleMessage}
         style={styles.webview}
-        // Add theme color overrides for WebView content
         injectedJavaScriptBeforeContentLoaded={`
           window.isDarkMode = ${isDarkMode};
           window.themeColors = {
@@ -85,7 +88,6 @@ export default function AdminFloorplanEditorContent({
         <Text style={[styles.footerText, { color: colors.text }]}>
           {roomMarkers.length} rooms added
         </Text>
-        {/* Use TouchableOpacity instead of AppButton for Done button */}
         <TouchableOpacity 
           onPress={goBack}
           style={[styles.doneButton, { backgroundColor: colors.primary }]}
@@ -101,7 +103,9 @@ export default function AdminFloorplanEditorContent({
         avoidKeyboard
       >
         <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-          <Text style={[styles.modalTitle, { color: colors.text }]}>Add Room Details</Text>
+          <Text style={[styles.modalTitle, { color: colors.text }]}>
+            {isEditing ? 'Edit Room Details' : 'Add Room Details'}
+          </Text>
           
           <TextInput
             placeholder="Room Name/Number"
@@ -153,10 +157,23 @@ export default function AdminFloorplanEditorContent({
           />
           
           <View style={styles.modalButtons}>
+            {/* Show delete button when editing */}
+            {isEditing && deleteRoom && (
+              <TouchableOpacity
+                onPress={deleteRoom}
+                style={[styles.deleteButton]}
+              >
+                <Text style={{ color: '#FFFFFF' }}>Delete</Text>
+              </TouchableOpacity>
+            )}
+            
             {/* Use TouchableOpacity for Cancel button */}
             <TouchableOpacity
               onPress={() => setIsModalVisible(false)}
-              style={[styles.cancelButton, { borderColor: colors.border }]}
+              style={[styles.cancelButton, { 
+                borderColor: colors.border,
+                flex: isEditing ? 0.4 : 1  // Adjust flex based on whether there's a delete button
+              }]}
             >
               <Text style={{ color: colors.text }}>Cancel</Text>
             </TouchableOpacity>
@@ -164,7 +181,10 @@ export default function AdminFloorplanEditorContent({
             {/* Use TouchableOpacity for Save button */}
             <TouchableOpacity
               onPress={saveRoomPOI}
-              style={[styles.saveButton, { backgroundColor: colors.primary }]}
+              style={[styles.saveButton, { 
+                backgroundColor: colors.primary,
+                flex: isEditing ? 0.4 : 1  // Adjust flex based on whether there's a delete button
+              }]}
             >
               <Text style={{ color: '#FFFFFF' }}>Save</Text>
             </TouchableOpacity>
@@ -254,7 +274,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between'
   },
   cancelButton: {
-    flex: 1,
     padding: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -263,10 +282,18 @@ const styles = StyleSheet.create({
     borderRadius: 4
   },
   saveButton: {
-    flex: 1,
     padding: 12,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 4
+  },
+  deleteButton: {
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 4,
+    backgroundColor: '#D32F2F',
+    marginRight: 8,
+    flex: 0.4
   }
 });
