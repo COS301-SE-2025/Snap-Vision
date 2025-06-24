@@ -181,16 +181,18 @@ describe('LoginForm', () => {
     expect(mockNavigate).toHaveBeenCalledWith('Register');
   });
 
-  it('toggles Remember Me', () => {
-    const { getByText } = render(
-      <BadgeProvider>
-      <ThemeProviderWrapper>
-        <LoginForm />
-      </ThemeProviderWrapper>
-      </BadgeProvider>
-    );
-    const rememberMe = getByText(/Remember Me/);
-    fireEvent.press(rememberMe);
-    expect(rememberMe.props.children).toContain('◉');
-  });
+
+  //We don't use Remember Me anymore
+  // it('toggles Remember Me', () => {
+  //   const { getByText } = render(
+  //     <BadgeProvider>
+  //     <ThemeProviderWrapper>
+  //       <LoginForm />
+  //     </ThemeProviderWrapper>
+  //     </BadgeProvider>
+  //   );
+  //   const rememberMe = getByText(/Remember Me/);
+  //   fireEvent.press(rememberMe);
+  //   expect(rememberMe.props.children).toContain('◉');
+  // });
 });
