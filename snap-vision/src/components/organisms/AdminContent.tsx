@@ -62,12 +62,6 @@ export default function AdminScreenContent({
           title="Manage Users" 
           onPress={onManageUsers}
         />
-        {onFloorplanEditor && (
-          <AppButton 
-            title="Floorplan Editor" 
-            onPress={onFloorplanEditor}
-          />
-        )}
       </View>
     </View>
   );

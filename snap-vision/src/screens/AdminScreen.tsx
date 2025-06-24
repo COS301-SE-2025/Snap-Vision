@@ -32,9 +32,6 @@ const AdminScreen = () => {
   const handleManageUsers = () => {
     navigation.navigate('AdminManageUsers');
   };
-  const handleFloorplanEditor = () => {
-    navigation.navigate('AdminFloorplanEditor');
-  };
 
   return (
     <AdminContent
@@ -43,7 +40,6 @@ const AdminScreen = () => {
       onEditFloorplans={handleEditFloorplans}
       onSettings={handleSettings}
       onManageUsers={handleManageUsers}
-      onFloorplanEditor={handleFloorplanEditor}
     />
   );
 };
