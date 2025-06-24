@@ -3,7 +3,7 @@ const express = require('express');
 const router  = express.Router();
 const {
   unlockBadgeForUser,
-  getUserBadgeData,purchaseItemForUser} = require('../../scripts/badgeService');     
+  getUserBadgeData,purchaseItemForUser, completeChallengeForUser} = require('../../scripts/badgeService');     
                                                  
 // POST /api/badges/unlock   { uid, badgeId }
 router.post('/unlock', async (req, res) => {
@@ -46,5 +46,17 @@ router.post('/purchase', async (req, res) => {
   }
 });
 
+router.post('/challenges/complete', async (req, res) => {
+  const { uid, challengeId } = req.body;
+  if (!uid || !challengeId)
+    return res.status(400).json({ error: 'uid & challengeId required' });
+
+  try {
+    const updatedData = await completeChallengeForUser(uid, challengeId);
+    res.json(updatedData);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 module.exports = router;

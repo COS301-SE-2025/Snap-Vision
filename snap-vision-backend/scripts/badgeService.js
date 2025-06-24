@@ -165,10 +165,43 @@ async function purchaseItemForUser(userId, item) {
   return updatedDoc.data();
 }
 
+async function completeChallengeForUser(userId, challengeId) {
+  const userRef = db.collection('users').doc(userId);
+
+  await db.runTransaction(async (transaction) => {
+    const userDoc = await transaction.get(userRef);
+
+    if (!userDoc.exists) {
+      throw new Error('User not found');
+    }
+
+    const userData = userDoc.data();
+    const completedChallenges = userData.completedChallenges || [];
+
+    if (completedChallenges.includes(challengeId)) {
+      return;
+    }
+
+    completedChallenges.push(challengeId);
+
+    let points = userData.points || 0;
+    points += 20; 
+
+    transaction.update(userRef, {
+      completedChallenges,
+      points,
+    });
+  });
+
+  const updatedDoc = await userRef.get();
+  return updatedDoc.data();
+}
+
 module.exports = {
   unlockBadgeForUser,
   getUserBadgeData,
-  purchaseItemForUser, // ← export the new function
+  purchaseItemForUser, 
+  completeChallengeForUser
 };
 
 

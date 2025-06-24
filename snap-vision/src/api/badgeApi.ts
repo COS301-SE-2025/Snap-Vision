@@ -36,3 +36,13 @@ export async function purchaseItem(uid: string, item: PurchaseItem) {
   if (!res.ok) throw new Error('Unable to purchase item');
   return res.json(); // Updated user data
 }
+
+export async function completeChallenge(uid: string, challengeId: string) {
+  const res = await fetch(`${BASE}/challenges/complete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ uid, challengeId }),
+  });
+  if (!res.ok) throw new Error('Unable to complete challenge');
+  return res.json(); // Updated user data with challenges, points, etc.
+}
