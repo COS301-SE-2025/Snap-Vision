@@ -8,15 +8,20 @@ import AdminScreen from '../screens/AdminScreen';
 import TabBarIcon from '../components/molecules/TabBarIcon';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
+import { useUser } from '../context/UserContext';
 
 const Tab = createBottomTabNavigator();
 
 export default function BottomTabs() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
+  const { role, loading } = useUser();
+
+  if(loading) return null; 
 
   return (
     <Tab.Navigator
+      initialRouteName="Home"
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size }) => (
           <TabBarIcon routeName={route.name} color={color} size={size} />
@@ -34,7 +39,9 @@ export default function BottomTabs() {
       <Tab.Screen name="Map" component={MapScreen} />
       <Tab.Screen name="Achievements" component={AchievementsScreen} />
       <Tab.Screen name="Settings" component={SettingsNavigator} />
-      <Tab.Screen name="Admin" component={AdminScreen} />
+       {role === 'admin' && (
+        <Tab.Screen name="Admin" component={AdminScreen} />
+      )}
     </Tab.Navigator>
   );
 }

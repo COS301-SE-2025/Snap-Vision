@@ -3,6 +3,7 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import LoginForm from '../src/components/organisms/LoginForm';
 import { Alert } from 'react-native';
 import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
+import { DeepLinkProvider } from '../src/DeepLinkContext';
 import { BadgeProvider } from '../src/context/BadgeContext';
 
 // Mock Firebase auth
@@ -13,13 +14,51 @@ jest.mock('@react-native-firebase/auth', () => {
   }));
 });
 
-// Mock navigation
-const mockNavigate = jest.fn();
+// Mock navigation with replace method
+const mockReplace = jest.fn();
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
-    navigate: mockNavigate,
+    navigate: jest.fn(),
+    replace: mockReplace,
   }),
 }));
+
+jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => 'Icon');
+jest.mock('react-native-vector-icons/Ionicons', () => 'Icon');
+jest.mock('react-native-vector-icons/FontAwesome', () => 'Icon');
+jest.mock('react-native-vector-icons/FontAwesome5', () => 'Icon');
+
+jest.mock('expo-font', () => ({
+  esModule: true,
+  loadAsync: jest.fn().mockResolvedValue(true),
+  isLoaded: jest.fn().mockReturnValue(true),
+  Font: {
+    loadAsync: jest.fn().mockResolvedValue(true),
+    isLoaded: jest.fn().mockReturnValue(true),
+  },
+}));
+
+// Mock @expo/vector-icons
+jest.mock('@expo/vector-icons', () => ({
+  MaterialCommunityIcons: 'MockedMaterialCommunityIcons',
+  Ionicons: 'MockedIonicons',
+  FontAwesome: 'MockedFontAwesome',
+  FontAwesome5: 'MockedFontAwesome5',
+  createIconSet: () => 'MockedIcon',
+}));
+
+
+// Mock DeepLinkContext
+jest.mock('../src/DeepLinkContext', () => {
+  const originalModule = jest.requireActual('../src/DeepLinkContext');
+  return {
+    ...originalModule,
+    useDeepLink: () => ({
+      coords: null,
+      setCoords: jest.fn(),
+    }),
+  };
+});
 
 // Spy on Alert.alert
 const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
@@ -37,7 +76,7 @@ describe('LoginForm', () => {
     jest.clearAllMocks();
     alertSpy.mockClear();
     mockSignIn.mockClear();
-    mockNavigate.mockClear();
+    mockReplace.mockClear();
   });
 
   it('shows error when fields are empty', async () => {
@@ -79,7 +118,9 @@ describe('LoginForm', () => {
     const { getByPlaceholderText, getByTestId, getByText } = render(
       <BadgeProvider>
       <ThemeProviderWrapper>
-        <LoginForm />
+        <DeepLinkProvider>
+          <LoginForm />
+        </DeepLinkProvider>
       </ThemeProviderWrapper>
       </BadgeProvider>
     );
@@ -88,13 +129,17 @@ describe('LoginForm', () => {
     fireEvent.changeText(getByPlaceholderText('Enter your password'), 'password123');
     fireEvent.press(getByTestId('login-button'));
 
-    // Advance timers if navigation is delayed
-    jest.runAllTimers();
-    
+    // Wait for the async actions to complete
     await waitFor(() => {
       expect(mockSignIn).toHaveBeenCalledWith('test@example.com', 'password123');
+    });
+
+    // Advance timers for the setTimeout in the component
+    jest.advanceTimersByTime(500);
+    
+    await waitFor(() => {
       expect(getByText('Login successful!')).toBeTruthy();
-      expect(mockNavigate).toHaveBeenCalledWith('Tabs');
+      expect(mockReplace).toHaveBeenCalledWith('Tabs');
     });
   });
 
@@ -118,6 +163,12 @@ describe('LoginForm', () => {
   });
 
   it('navigates to Register screen', () => {
+    const mockNavigate = jest.fn();
+    jest.spyOn(require('@react-navigation/native'), 'useNavigation').mockReturnValue({
+      navigate: mockNavigate,
+      replace: jest.fn(),
+    });
+
     const { getByText } = render(
      <BadgeProvider>
       <ThemeProviderWrapper>
@@ -125,6 +176,7 @@ describe('LoginForm', () => {
       </ThemeProviderWrapper>
       </BadgeProvider>
     );
+    
     fireEvent.press(getByText(/SIGN UP/i));
     expect(mockNavigate).toHaveBeenCalledWith('Register');
   });

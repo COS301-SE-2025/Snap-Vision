@@ -20,6 +20,8 @@ import { TextIcon } from '../components/atoms/TextIcon';
 import DirectionsModal from '../components/organisms/DirectionsModal';
 import TextToSpeech from '../components/molecules/TextToSpeech';
 import { useRoute } from '@react-navigation/native';
+import auth from '@react-native-firebase/auth';
+
 import { useBadges } from '../context/BadgeContext'; 
 
 type MapScreenParams = {
@@ -27,9 +29,12 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = "http://192.168.0.133:3000"; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = "http://10.0.2.2:3000"; // <-- Use your correct backend IP here
 // emulator: 10.0.2.2
 // T home: 192.168.0.133
+//L wifi: 192.168.0.127
+// T data: 192.168.43.155
+// B home:  192.168.56.1
 
 const MapScreen = () => {
   const lastRoute = useRef<any[]>([]);
@@ -82,7 +87,11 @@ const MapScreen = () => {
 const [popupBadge, setPopupBadge] = useState<string | null>(null);
 
 
-    
+  // crowd reports
+  const [selectedPOI, setSelectedPOI] = useState<any>(null);
+  const [crowdReports, setCrowdReports] = useState<Record<string, any>>({});
+  const [selectedFeature, setSelectedFeature] = useState<any>(null);
+
   const sendLocationToWebView = (lat: number, lon: number, centerMap = false) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
     const jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap});`;
@@ -154,6 +163,10 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
           setDestination(selectedPOI.name);
           setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
           setStatus(`Selected: ${selectedPOI.name}`);
+          
+          // Save the selected feature for crowd reporting
+          setSelectedFeature(selectedPOI);
+          setSelectedPOI(selectedPOI);
           
           // Automatically fetch route when POI is selected
           if (currentLocation) {
@@ -301,6 +314,7 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
     
     setIsNavigating(false);
     setStatus('Navigation stopped');
+    webViewRef.current?.injectJavaScript('window.setNavigationState && window.setNavigationState(false);');
     
     // Clear progress line
     webViewRef.current?.injectJavaScript('if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }');
@@ -372,6 +386,24 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
       // At the last point
       progressValue = 100;
     }
+     if (steps.length > 0) {
+    let stepIndex = 0;
+    let minDist = Infinity;
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      const [lon, lat] = step.way_points
+        ? lastRoute.current[step.way_points[0]]
+        : lastRoute.current[0];
+      const dist = getDistanceMeters(latitude, longitude, lat, lon);
+      if (dist < minDist) {
+        minDist = dist;
+        stepIndex = i;
+      }
+    }
+    if (stepIndex !== currentStep) {
+      setCurrentStep(stepIndex);
+    }
+  }
     
     // Update progress with a more precise value
     const newProgress = Math.min(Math.round(progressValue), 100);
@@ -444,7 +476,111 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
     );
   };
 
-  // Fetch POIs from Firestoreconst [showDirectionsSheet, setShowDirectionsSheet] = useState(false);
+  // Add this function to handle report submission
+  const submitCrowdReport = async () => {
+    if (!selectedPOI || !selectedDensity) {
+      setError('Please select a building and density level');
+      return;
+    }
+    
+    try {
+      // Save report to Firestore
+      await firestore().collection('crowdReports').add({
+        buildingId: selectedPOI.id,
+        buildingName: selectedPOI.name,
+        density: selectedDensity,
+        timestamp: firestore.FieldValue.serverTimestamp(),
+        reportedBy: auth().currentUser?.uid || 'anonymous',
+        centroid: selectedPOI.centroid,
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000) // 1 hour from now
+      });
+      
+      // Update UI
+      const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${selectedPOI.centroid.latitude}, ${selectedPOI.centroid.longitude}, '${selectedDensity}', '${selectedPOI.id}');`;
+      webViewRef.current?.injectJavaScript(jsCrowdCode);
+      setShowCrowdPopup(false);
+      setStatus(`Crowd density reported for ${selectedPOI.name}`);
+    } catch (error) {
+      console.error('Error saving crowd report:', error);
+      setError('Failed to submit crowd report');
+    }
+  };
+
+  // Add function to fetch recent crowd reports
+  const fetchRecentCrowdReports = async () => {
+    try {
+      const oneHourAgo = new Date();
+      oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+      
+      const snapshot = await firestore()
+        .collection('crowdReports')
+        .where('timestamp', '>', oneHourAgo)
+        .get();
+      
+      const reports: Record<string, any> = {};
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        // If multiple reports exist for the same building, take the most recent
+        if (!reports[data.buildingId] || 
+            reports[data.buildingId].timestamp < data.timestamp) {
+          reports[data.buildingId] = data;
+        }
+      });
+      
+      setCrowdReports(reports);
+      
+      // Update crowd indicators on map
+      if (isMapReady && webViewRef.current) {
+        Object.values(reports).forEach(report => {
+          if (report.centroid) {
+            const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${report.centroid.latitude}, ${report.centroid.longitude}, '${report.density}', '${report.buildingId}');`;
+            if (webViewRef.current) {
+              webViewRef.current.injectJavaScript(jsCrowdCode);
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching crowd reports:', error);
+      // More informative error handling
+      if (error.code === 'firestore/permission-denied') {
+        setError('Crowd reports feature unavailable: Permission error');
+      }
+    }
+  };
+
+  // Add useEffect to fetch crowd reports periodically
+  useEffect(() => {
+    if (isMapReady) {
+      fetchRecentCrowdReports();
+      const interval = setInterval(fetchRecentCrowdReports, 5 * 60 * 1000); // Refresh every 5 minutes
+      
+      return () => clearInterval(interval);
+    }
+  }, [isMapReady]);
+
+  // Add a function to handle opening the crowd report modal
+  const openCrowdReportModal = () => {
+    // If user has selected a POI on map, use that as default
+    if (selectedFeature) {
+      setSelectedPOI(selectedFeature);
+    } else if (destination && destinationCoords) {
+      // If user has a destination set in the search bar but no selected feature,
+      // find the corresponding POI
+      const matchingPOI = pois.find(poi => 
+        poi.name === destination || 
+        (poi.centroid && 
+         poi.centroid.longitude === destinationCoords[0] && 
+         poi.centroid.latitude === destinationCoords[1])
+      );
+      
+      if (matchingPOI) {
+        setSelectedPOI(matchingPOI);
+      }
+    }
+    
+    setShowCrowdPopup(true);
+  };
 
 useEffect(() => {
   if (isNavigating && shouldStartTTS && steps.length > 0 && currentStep < steps.length) {
@@ -463,6 +599,18 @@ useEffect(() => {
     }
   }
 }, [isNavigating, shouldStartTTS, steps, currentStep]);
+
+useEffect(() => {
+  if (isNavigating && steps.length > 0 && currentStep < steps.length) {
+    const instruction = steps[currentStep]?.instruction;
+    if (instruction) {
+      Tts.stop();
+      setTimeout(() => {
+        Tts.speak(instruction);
+      }, 500);
+    }
+  }
+}, [isNavigating, steps, currentStep]);
 
   useEffect(() => {
     const fetchPOIs = async () => {
@@ -517,12 +665,16 @@ useEffect(() => {
     setDestinationCoords([poi.centroid.longitude, poi.centroid.latitude]);
     setPOISuggestions([]);
     
+    // Update selected POI and feature for crowd reporting
+    setSelectedFeature(poi);
+    setSelectedPOI(poi);
+    
     // Automatically fetch route when POI is selected from search
     if (currentLocation) {
       fetchRoute([poi.centroid.longitude, poi.centroid.latitude]);
     }
   };
-
+  
   // Dynamically request location updates
   useEffect(() => {
     let watchId: number | null = null;
@@ -652,17 +804,17 @@ useEffect(() => {
       setIsRouteLoading(false);
     }
   };
-
+  
+  // Handle deep link params if they exist
   useEffect(() => {
-    if (!hasHandledDeepLink && params && params.lat && params.lng) {
+    // Only process params once and if they exist
+    if (!hasHandledDeepLink && params && params.lat && params.lng && currentLocation) {
       const lat = parseFloat(params.lat);
       const lng = parseFloat(params.lng);
       setDestination("Friend's Location");
       setDestinationCoords([lng, lat]);
-      if (currentLocation) {
-        fetchRoute([lng, lat]);
-      }
-      setHasHandledDeepLink(true); // Mark as handled
+      fetchRoute([lng, lat]);
+      setHasHandledDeepLink(true);
     }
   }, [params, currentLocation, hasHandledDeepLink]);
 
@@ -690,8 +842,55 @@ useEffect(() => {
     return () => clearInterval(progressInterval);
   }, [isNavigating, currentLocation]);
 
+
+  // Dynamically request location updates every 3 seconds
+  useEffect(() => {
+    let watchId: number | null = null;
+  
+    const startWatchingLocation = async () => {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        watchId = Geolocation.watchPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            sendLocationToWebView(latitude, longitude);
+          },
+          (error) => {
+            setError('Failed to get location');
+          },
+          { enableHighAccuracy: true, distanceFilter: 0, interval: 3000, fastestInterval: 3000 }
+        );
+      } else {
+        setError('Location permission denied');
+      }
+    };
+  
+    startWatchingLocation();
+  
+    return () => {
+      if (watchId !== null) {
+        Geolocation.clearWatch(watchId);
+      }
+    };
+  }, []);
+
+
  return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
+      {showCrowdPopup && (
+        <CrowdReportModal
+          visible={showCrowdPopup}
+          selectedDensity={selectedDensity}
+          selectedPOI={selectedPOI}
+          availablePOIs={pois}
+          onChangeDensity={setSelectedDensity}
+          onChangePOI={setSelectedPOI}
+          onSubmit={submitCrowdReport}
+          onCancel={() => setShowCrowdPopup(false)}
+        />
+      )}
       <DirectionsModal
         visible={showDirectionsSheet}
         onClose={() => setShowDirectionsSheet(false)}
@@ -705,28 +904,28 @@ useEffect(() => {
         destination={destination}
         steps={steps}
         currentStep={currentStep}
+        isNavigating={isNavigating}
       />
-      {/* Rest of your components remain the same */}
-      <DestinationSearch
-        value={destination}
-        onChange={text => {
-          setDestination(text);
-          filterPOIs(text);
-          
-          // Stop navigation and clear route if text field is cleared
-          if (!text.trim()) {
-            if (isNavigating) {
-              stopNavigation();
+      {!isNavigating && (
+        <DestinationSearch
+          value={destination}
+          onChange={text => {
+            setDestination(text);
+            filterPOIs(text);
+            if (!text.trim()) {
+              if (isNavigating) {
+                stopNavigation();
+              }
+              webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+              lastRoute.current = [];
+              setDestinationCoords(null);
             }
-            webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
-            lastRoute.current = [];
-            setDestinationCoords(null);
-          }
-        }}
-        onSearch={handleDestinationSearch}
-        suggestions={poiSuggestions}
-        onSelectSuggestion={handleSelectPOI}
-      />
+          }}
+          onSearch={handleDestinationSearch}
+          suggestions={poiSuggestions}
+          onSelectSuggestion={handleSelectPOI}
+        />
+      )}
       
       <View style={{ flex: 1 }}>
         <MapWebView ref={webViewRef} onMessage={handleWebViewMessage} />
@@ -754,7 +953,7 @@ useEffect(() => {
       <MapActionsPanel
         currentLocation={!!currentLocation}
         onShare={shareLocation}
-        onReport={() => setShowCrowdPopup(true)}
+        onReport={openCrowdReportModal}
         shareTooltip={showShareTooltip}
         reportTooltip={showReportTooltip}
         onShareIn={() => setShowShareTooltip(true)}
@@ -763,40 +962,38 @@ useEffect(() => {
         onReportOut={() => setShowReportTooltip(false)}
         color={colors.primary}
       />
-
-     {isNavigating && (
-  <>
- 
-    
-    <Pressable
-      style={{
-        position: 'absolute',
-        bottom: 171,
-        right: 22,
-        backgroundColor: colors.primary,
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        alignItems: 'center',
-        justifyContent: 'center',
-        elevation: 4,
-      }}
-      onPress={() => setShowDirectionsSheet(true)}
-    >
-      <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 24 }}>🧭</Text>
-    </Pressable>
-  </>
+{isNavigating && steps.length > 0 && (
+  <Pressable
+    onPress={() => setShowDirectionsSheet(true)}
+    style={{
+      position: 'absolute',
+      top: 59,
+      left: 20,
+      right: 20,
+      backgroundColor: colors.card,
+      borderRadius: 8,
+      padding: 12,
+      alignItems: 'center',
+      elevation: 4,
+      zIndex: 1001,
+    }}
+  >
+    <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 16 }}>
+      {steps[currentStep]?.instruction}
+    </Text>
+  </Pressable>
 )}
       <CrowdReportModal
         visible={showCrowdPopup}
         selectedDensity={selectedDensity}
+        selectedPOI={selectedPOI}
+        availablePOIs={pois}
         onChangeDensity={setSelectedDensity}
+        onChangePOI={setSelectedPOI}
         onSubmit={submitCrowdReport}
         onCancel={() => setShowCrowdPopup(false)}
       />
-
-      {status && <StatusOverlay status={status} />}
-      {error && <StatusOverlay status={error} isError={true} onDismiss={() => setError(null)} />}
+      {error && <StatusOverlay status={error} />}
     </View>
   );
 };

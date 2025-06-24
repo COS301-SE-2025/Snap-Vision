@@ -1,5 +1,11 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import {
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  View,
+} from 'react-native';
 import RegisterForm from '../components/organisms/RegisterForm';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
@@ -9,16 +15,30 @@ export default function RegistrationScreen() {
   const colors = getThemeColors(isDark);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <RegisterForm />
-    </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView
+        contentContainerStyle={[styles.scrollContainer, { backgroundColor: colors.background }]}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.innerWrapper}>
+          <RegisterForm />
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scrollContainer: {
+    flexGrow: 1,
+    paddingTop: 60,
+    paddingBottom: 40,
+  },
+  innerWrapper: {
     flex: 1,
-    justifyContent: 'center',
     paddingHorizontal: 24,
   },
 });
