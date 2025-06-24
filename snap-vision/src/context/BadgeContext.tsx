@@ -15,6 +15,7 @@ type BadgeState = {
 
 type Ctx = {
   state             : BadgeState;
+  setState          : React.Dispatch<React.SetStateAction<BadgeState>>;
   unlock            : (id: BadgeId) => Promise<void>;
   incrementRoutes   : () => Promise<void>; 
   incrementCheckIns : () => Promise<void>;
@@ -143,6 +144,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
 
   const value: Ctx = {
     state,
+    setState,
     unlock,
     incrementRoutes  : async () => {},
     incrementCheckIns: async () => {},
@@ -158,6 +160,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
     },
   };
 
+  
 
   return <BadgeContext.Provider value={value}>{children}</BadgeContext.Provider>;
 };

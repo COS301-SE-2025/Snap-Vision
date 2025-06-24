@@ -86,3 +86,89 @@ module.exports = {
   unlockBadgeForUser,
   getUserBadgeData,
 };
+
+async function purchaseItemForUser(userId, item) {
+  const userRef = db.collection('users').doc(userId);
+
+  try {
+    await db.runTransaction(async (transaction) => {
+      const userDoc = await transaction.get(userRef);
+      if (!userDoc.exists) throw new Error('User not found');
+
+      const data = userDoc.data();
+      const currentPoints = data.points || 0;
+      const cost = item.cost || 100;
+
+      if (currentPoints < cost)
+        throw new Error('Not enough points to purchase item');
+
+      const updatedPoints = currentPoints - cost;
+      const purchases = data.purchases || [];
+
+      const alreadyOwned = purchases.some(p => p.itemId === item.itemId);
+      if (alreadyOwned) throw new Error('Item already purchased');
+
+      purchases.push({
+        itemId: item.itemId,
+        name: item.name,
+        type: item.type,
+        boughtAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      transaction.update(userRef, {
+        points: updatedPoints,
+        purchases,
+      });
+    });
+
+    console.log(`Item ${item.itemId} purchased for user ${userId}`);
+  } catch (error) {
+    console.error('Purchase failed:', error);
+    throw error;
+  }
+}
+
+
+// New purchase logic
+async function purchaseItemForUser(userId, item) {
+  const userRef = db.collection('users').doc(userId);
+
+  await db.runTransaction(async (transaction) => {
+    const userDoc = await transaction.get(userRef);
+
+    if (!userDoc.exists) {
+      throw new Error('User not found');
+    }
+
+    const userData = userDoc.data();
+    const currentPoints = userData.points || 0;
+
+    if (currentPoints < item.cost) {
+      throw new Error('Not enough points');
+    }
+
+    const updatedPoints = currentPoints - item.cost;
+    const previousPurchases = userData.purchases || [];
+
+    const newPurchase = {
+      ...item,
+      boughtAt: admin.firestore.Timestamp.now(),
+    };
+
+    transaction.update(userRef, {
+      points: updatedPoints,
+      purchases: [...previousPurchases, newPurchase],
+    });
+  });
+
+  const updatedDoc = await userRef.get();
+  return updatedDoc.data();
+}
+
+module.exports = {
+  unlockBadgeForUser,
+  getUserBadgeData,
+  purchaseItemForUser, // ← export the new function
+};
+
+

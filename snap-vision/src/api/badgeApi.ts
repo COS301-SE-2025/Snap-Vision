@@ -19,3 +19,20 @@ export async function unlockBadge(uid: string, badgeId: BadgeId) {
   if (!res.ok) throw new Error('Unable to unlock badge');
   return res.json();              
 }
+
+interface PurchaseItem {
+  itemId: string;
+  name: string;
+  type: string;
+  cost: number;
+}
+
+export async function purchaseItem(uid: string, item: PurchaseItem) {
+  const res = await fetch(`${BASE}/purchase`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ uid, item }),
+  });
+  if (!res.ok) throw new Error('Unable to purchase item');
+  return res.json(); // Updated user data
+}
