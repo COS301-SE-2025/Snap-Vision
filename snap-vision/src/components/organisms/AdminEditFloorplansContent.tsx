@@ -129,36 +129,27 @@ export default function AdminEditFloorplansContent({
               )}
             </View>
             
-            <AppSecondaryButton
-              title="Upload Updated Floorplan"
-              onPress={handleUploadUpdated}
-              style={{ marginTop: 16 }}
-            />
+            {/* Removed the Upload Updated Floorplan button as requested */}
             
-            {/* Improved visibility for dark mode */}
+            {/* Edit Room POIs button */}
             <AppButton
               title="Edit Room POIs"
               onPress={handleEditRooms}
               style={{ 
                 marginTop: 16,
-                backgroundColor: colors.primary, // Ensure consistent background
+                backgroundColor: colors.primary,
               }}
             />
             
-            <TouchableOpacity
-              style={[styles.deleteButton, { 
-                backgroundColor: colors.error,
-                borderWidth: 1,
-                borderColor: 'rgba(255,255,255,0.2)', // Add subtle border for dark mode visibility
-                marginTop: 24,
-                padding: 12,
-                borderRadius: 8,
-                alignItems: 'center'
-              }]}
+            {/* Replaced TouchableOpacity with AppSecondaryButton */}
+            <AppSecondaryButton
+              title="Delete Floorplan"
               onPress={handleDelete}
-            >
-              <Text style={[styles.deleteButtonText, { color: '#FFFFFF' }]}>Delete Floorplan</Text>
-            </TouchableOpacity>
+              style={{ 
+                marginTop: 16,
+                backgroundColor: colors.error
+              }}
+            />
           </View>
         )}
       </ScrollView>
@@ -202,18 +193,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 12,
     borderRadius: 8,
-    // Background color will be set dynamically using colors.card
   },
   detailText: {
     marginBottom: 4,
     fontSize: 14
-  },
-  deleteButton: {
-    // Styles moved directly into component for better dark mode support
-  },
-  deleteButtonText: {
-    fontWeight: 'bold'
-    // Color will be set explicitly in the component
   },
   errorContainer: {
     padding: 12,

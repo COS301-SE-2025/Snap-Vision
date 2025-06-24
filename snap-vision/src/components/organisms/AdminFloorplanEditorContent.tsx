@@ -1,5 +1,5 @@
 import React, { RefObject } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TextInput } from 'react-native';
 import { WebView } from 'react-native-webview';
 import AppButton from '../atoms/AppButton';
 import AppSecondaryButton from '../atoms/AppSecondaryButton';
@@ -75,6 +75,7 @@ export default function AdminFloorplanEditorContent({
         <AppButton 
           title="Done" 
           onPress={goBack}
+          style={{ backgroundColor: colors.primary }}
         />
       </View>
       
@@ -99,21 +100,15 @@ export default function AdminFloorplanEditorContent({
             <Text style={[{ color: colors.text }]}>Room Type:</Text>
             <View style={styles.typeOptions}>
               {['classroom', 'office', 'lab', 'restroom', 'stairs', 'elevator'].map(type => (
-                <TouchableOpacity 
+                <AppSecondaryButton 
                   key={type}
+                  title={type.charAt(0).toUpperCase() + type.slice(1)}
+                  onPress={() => setRoomData({...roomData, type})}
                   style={[
                     styles.typeOption,
-                    roomData.type === type && { backgroundColor: colors.primary },
-                    { borderColor: colors.border, borderWidth: 1 }
+                    roomData.type === type ? { backgroundColor: colors.primary } : { backgroundColor: colors.card },
                   ]}
-                  onPress={() => setRoomData({...roomData, type})}
-                >
-                  <Text style={{ 
-                    color: roomData.type === type ? '#FFFFFF' : colors.text 
-                  }}>
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
-                  </Text>
-                </TouchableOpacity>
+                />
               ))}
             </View>
           </View>
@@ -138,7 +133,7 @@ export default function AdminFloorplanEditorContent({
               onPress={saveRoomPOI}
               style={{ 
                 flex: 1,
-                backgroundColor: colors.primary  // Ensure visibility in dark mode
+                backgroundColor: colors.primary
               }}
             />
           </View>
@@ -207,6 +202,8 @@ const styles = StyleSheet.create({
   typeOption: {
     padding: 8,
     borderRadius: 4,
+    marginBottom: 4,
+    marginRight: 4,
   },
   modalButtons: {
     flexDirection: 'row',
