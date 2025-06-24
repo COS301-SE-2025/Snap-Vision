@@ -16,6 +16,9 @@ import auth from '@react-native-firebase/auth';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 import { LandingProvider } from './src/context/LandingContext';
 import { UserProvider } from './src/context/UserContext';
+import { BadgeProvider } from './src/context/BadgeContext';
+import BadgeUnlockNotifier from './src/components/organisms/BadgeUnlockNotifier';
+import ShopScreen from './src/screens/ShopScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -86,25 +89,32 @@ function AppInner() {
     }, [authReady, pendingDeepLink, setCoords]);
 
   return (
+    <BadgeProvider>
     <ThemeProvider>
+      
       <NavigationContainer ref={navigationRef}>
+        <BadgeUnlockNotifier /> 
         {authReady && (
+        
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           {initialRoute === 'Tabs' ? (
             <Stack.Screen name="Tabs" component={BottomTabs} />
           ) : (
             <Stack.Screen name="Login" component={LoginScreen} />
           )}
+          
           <Stack.Screen name="Register" component={RegistrationScreen} />
           <Stack.Screen name="AdminLoadFloorplans" component={AdminLoadFloorplansScreen} />
           <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
           <Stack.Screen name="AdminSettings" component={AdminSettingsFrom} />
           <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
           <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+          <Stack.Screen name="ShopScreen" component={ShopScreen} />
         </Stack.Navigator>
       )}
       </NavigationContainer>
     </ThemeProvider>
+    </BadgeProvider>
   );
 }
 

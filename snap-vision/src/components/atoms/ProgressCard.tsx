@@ -1,29 +1,33 @@
 // src/components/atoms/ProgressCard.tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
 
 interface Props {
   title: string;
   value: string | number;
   backgroundColor?: string;
-  textColor?: string;
   borderColor?: string;
 }
 
 export default function ProgressCard({ 
   title, 
   value, 
-  backgroundColor = '#fff', 
-  textColor = '#333',
-  borderColor = '#ddd'
+  backgroundColor, 
+  borderColor
 }: Props) {
-  return (
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
+  const bgColor = backgroundColor ?? colors.card;
+  const bColor = borderColor ?? colors.border;
+   return (
     <View style={[
       styles.container, 
-      { backgroundColor, borderColor }
+      { backgroundColor: bgColor, borderColor: bColor }
     ]}>
-      <Text style={[styles.title, { color: textColor }]}>{title}</Text>
-      <Text style={[styles.value, { color: textColor }]}>{value}</Text>
+      <Text style={[styles.title, { color: colors.primary }]}>{title}</Text>
+      <Text style={[styles.value, { color: colors.text }]}>{value}</Text>
     </View>
   );
 }
