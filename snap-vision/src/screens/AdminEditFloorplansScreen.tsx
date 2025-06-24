@@ -19,12 +19,10 @@ interface Floorplan {
   localUri?: string;
 }
 
-// Define your stack param list for navigation typing
 type RootStackParamList = {
   AdminEditFloorplansScreen: undefined;
   AdminLoadFloorplansScreen: undefined;
-  FloorplanEditor: { buildingId: string; floorLabel: string; imageUri?: string };
-  // Add other screens as needed
+  AdminFloorplanEditor: { buildingId: string; floorLabel: string; imageUri?: string };
 };
 
 export default function AdminEditFloorplansScreen() {
@@ -162,7 +160,7 @@ export default function AdminEditFloorplansScreen() {
     }
     
     // Navigate to the floorplan editor
-    navigation.navigate('FloorplanEditor', {
+    navigation.navigate('AdminFloorplanEditor', {
       buildingId: floorplan.buildingId,
       floorLabel: floorplan.floorLabel,
       imageUri: floorplan.localUri

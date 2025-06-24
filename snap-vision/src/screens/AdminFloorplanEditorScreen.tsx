@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Alert, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { useTheme } from '@react-navigation/native';
@@ -24,7 +24,49 @@ type FloorplanEditorScreenProps = {
 
 export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScreenProps) {
   const route = useRoute<RouteProp<{ params: FloorplanEditorScreenRouteParams }, 'params'>>();
+  
+  // Add defensive check for route.params
+  if (!route.params) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 20 }}>
+          Missing floorplan information
+        </Text>
+        <Text style={{ textAlign: 'center', marginBottom: 20 }}>
+          Please select a floorplan from the edit screen or make sure you've initialized the pre-bundled floorplans.
+        </Text>
+        <AppButton 
+          title="Go Back" 
+          onPress={() => navigation.goBack()} 
+        />
+      </View>
+    );
+  }
+  
+  // Now we can safely access route.params
   const { buildingId, floorLabel, imageUri } = route.params;
+  
+  // Additional safety check for each parameter
+  if (!buildingId || !floorLabel || !imageUri) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 20 }}>
+          Incomplete floorplan data
+        </Text>
+        <Text style={{ textAlign: 'center', marginBottom: 20 }}>
+          {!buildingId ? "Missing building ID. " : ""}
+          {!floorLabel ? "Missing floor label. " : ""}
+          {!imageUri ? "Missing image URI. " : ""}
+          Please go back and try again.
+        </Text>
+        <AppButton 
+          title="Go Back" 
+          onPress={() => navigation.goBack()} 
+        />
+      </View>
+    );
+  }
+  
   const theme = useTheme();
   const colors = getThemeColors(theme.dark);
   const webViewRef = useRef<WebView>(null);
@@ -48,6 +90,9 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
     description: ''
   });
   
+  // Rest of your component remains unchanged
+  // ...
+
   // Generate HTML for WebView
   const getHTML = () => {
     return `
@@ -65,7 +110,7 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
       </head>
       <body>
         <div id="container">
-          <img id="floorplan" src="${imageUri}" />
+          <img id="floorplan" src="${imageUri}" onerror="console.error('Failed to load image: ' + this.src);" />
         </div>
         
         <script>
