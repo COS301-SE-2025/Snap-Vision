@@ -14,16 +14,17 @@ interface Props {
 export default function ProgressCard({ 
   title, 
   value, 
-  backgroundColor = '#fff', 
-  borderColor = '#ddd'
+  backgroundColor, 
+  borderColor
 }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-
-  return (
+  const bgColor = backgroundColor ?? colors.card;
+  const bColor = borderColor ?? colors.border;
+   return (
     <View style={[
       styles.container, 
-      { backgroundColor, borderColor }
+      { backgroundColor: bgColor, borderColor: bColor }
     ]}>
       <Text style={[styles.title, { color: colors.primary }]}>{title}</Text>
       <Text style={[styles.value, { color: colors.text }]}>{value}</Text>

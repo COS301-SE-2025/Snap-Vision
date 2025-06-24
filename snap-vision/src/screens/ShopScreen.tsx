@@ -22,7 +22,7 @@ const SHOP_ITEMS = [
   { id: 'double-points', title: 'Double Points', description: 'Earn double points for next route', icon: 'rocket', cost: 200 },
 
   { id: 'stealth-arrow', title: 'Stealth Arrow', description: 'Invisible until fired', icon: 'eye-off', cost: 180 },
-  { id: 'ice-arrow', title: 'Ice Arrow ❄️', description: 'Freezes targets', icon: 'snow', cost: 160 },
+  { id: 'ice-arrow', title: 'Ice Arrow', description: 'Freezes targets', icon: 'snow', cost: 160 },
   { id: 'lightning-arrow', title: 'Lightning Bolt', description: 'Shocking strike', icon: 'flash-outline', cost: 175 },
   { id: 'golden-arrow', title: 'Golden Arrow', description: 'Premium gold look', icon: 'star', cost: 220 },
   { id: 'laser-pointer', title: 'Laser Pointer', description: 'Precision targeting', icon: 'laser', cost: 210 },

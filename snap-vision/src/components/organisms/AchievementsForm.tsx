@@ -63,15 +63,16 @@ export default function AchievementsForm() {
       <WelcomeHeader userName="User" />
 
       {/* Progress (live data) */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.primary}]}>Your Progress</Text>
-        <Text style={[styles.sectionSubtitle, { color: colors.text }]}>Keep track of your achievements</Text>
-        <View style={styles.progressRow}>
-          <ProgressCard title="Points Earned"    value={state.points}         />
-          <ProgressCard title="Badges Unlocked" value={state.unlocked.size}      />
-          <ProgressCard title="Check‑ins"        value={state.checkIns}    />
-        </View>
+      <View style={[styles.section, { backgroundColor: colors.background }]}>
+      <Text style={[styles.sectionTitle, { color: colors.primary }]}>Your Progress</Text>
+      <Text style={[styles.sectionSubtitle, { color: colors.text }]}>Keep track of your achievements</Text>
+      <View style={styles.progressRow}>
+        <ProgressCard title="Points Earned" value={state.points} />
+        <ProgressCard title="Badges Unlocked" value={state.unlocked.size} />
+        <ProgressCard title="Check‑ins" value={state.checkIns} />
       </View>
+    </View>
+
 
       {/* Your Badges */}
       <View style={styles.section}>
