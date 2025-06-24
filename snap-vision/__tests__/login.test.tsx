@@ -3,6 +3,7 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import LoginForm from '../src/components/organisms/LoginForm';
 import { Alert } from 'react-native';
 import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
+import { BadgeProvider } from '../src/context/BadgeContext';
 
 // Mock Firebase auth
 const mockSignIn = jest.fn();
@@ -41,9 +42,11 @@ describe('LoginForm', () => {
 
   it('shows error when fields are empty', async () => {
     const { getByTestId } = render(
+      <BadgeProvider>
       <ThemeProviderWrapper>
         <LoginForm />
       </ThemeProviderWrapper>
+      </BadgeProvider>
     );
     
     fireEvent.press(getByTestId('login-button'));
@@ -55,9 +58,11 @@ describe('LoginForm', () => {
 
   it('shows error for invalid email', async () => {
     const { getByPlaceholderText, getByTestId } = render(
+     <BadgeProvider>
       <ThemeProviderWrapper>
         <LoginForm />
       </ThemeProviderWrapper>
+      </BadgeProvider>
     );
     
     fireEvent.changeText(getByPlaceholderText('Enter your email'), 'invalid-email');
@@ -72,9 +77,11 @@ describe('LoginForm', () => {
   it('logs in and navigates on valid credentials', async () => {
     mockSignIn.mockResolvedValueOnce({});
     const { getByPlaceholderText, getByTestId, getByText } = render(
+      <BadgeProvider>
       <ThemeProviderWrapper>
         <LoginForm />
       </ThemeProviderWrapper>
+      </BadgeProvider>
     );
     
     fireEvent.changeText(getByPlaceholderText('Enter your email'), 'test@example.com');
@@ -94,9 +101,11 @@ describe('LoginForm', () => {
   it('shows specific error message on login failure', async () => {
     mockSignIn.mockRejectedValueOnce({ code: 'auth/wrong-password' });
     const { getByPlaceholderText, getByTestId } = render(
+     <BadgeProvider>
       <ThemeProviderWrapper>
         <LoginForm />
       </ThemeProviderWrapper>
+      </BadgeProvider>
     );
     
     fireEvent.changeText(getByPlaceholderText('Enter your email'), 'test@example.com');
@@ -110,9 +119,11 @@ describe('LoginForm', () => {
 
   it('navigates to Register screen', () => {
     const { getByText } = render(
+     <BadgeProvider>
       <ThemeProviderWrapper>
         <LoginForm />
       </ThemeProviderWrapper>
+      </BadgeProvider>
     );
     fireEvent.press(getByText(/SIGN UP/i));
     expect(mockNavigate).toHaveBeenCalledWith('Register');
@@ -120,9 +131,11 @@ describe('LoginForm', () => {
 
   it('toggles Remember Me', () => {
     const { getByText } = render(
+      <BadgeProvider>
       <ThemeProviderWrapper>
         <LoginForm />
       </ThemeProviderWrapper>
+      </BadgeProvider>
     );
     const rememberMe = getByText(/Remember Me/);
     fireEvent.press(rememberMe);
