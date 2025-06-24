@@ -1,16 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, Alert } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { useTheme } from '@react-navigation/native';
 import { getThemeColors } from '../theme';
 import AppButton from '../components/atoms/AppButton';
-import AppSecondaryButton from '../components/atoms/AppSecondaryButton';
 import firestore from '@react-native-firebase/firestore';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import Modal from 'react-native-modal';
-
 import type { StackNavigationProp } from '@react-navigation/stack';
+import AdminFloorplanEditorContent from '../components/organisms/AdminFloorplanEditorContent';
 
 type FloorplanEditorScreenRouteParams = {
   buildingId: string;
@@ -80,6 +77,7 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
     type: string;
     description: string | null;
   };
+  
   const [roomMarkers, setRoomMarkers] = useState<RoomPOI[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   type Point = { x: number; y: number } | null;
@@ -89,9 +87,6 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
     type: 'classroom',
     description: ''
   });
-  
-  // Rest of your component remains unchanged
-  // ...
 
   // Generate HTML for WebView
   const getHTML = () => {
@@ -99,36 +94,186 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
       <!DOCTYPE html>
       <html>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=10.0">
         <style>
-          body, html { margin: 0; padding: 0; width: 100%; height: 100%; }
-          #container { position: relative; width: 100%; height: 100%; }
-          #floorplan { width: 100%; height: auto; display: block; }
-          .marker { position: absolute; width: 20px; height: 20px; background-color: red; border-radius: 50%; transform: translate(-50%, -50%); }
-          .marker-label { position: absolute; top: 20px; left: 0; background: white; padding: 2px; font-size: 12px; white-space: nowrap; }
+          body, html { 
+            margin: 0; 
+            padding: 0; 
+            width: 100%; 
+            height: 100%; 
+            overflow: hidden; 
+            touch-action: manipulation;
+          }
+          #container { 
+            position: relative; 
+            width: 100%; 
+            height: 100%; 
+            overflow: hidden;
+          }
+          #zoomable-area {
+            position: absolute;
+            transform-origin: 0 0;
+            transition: transform 0.1s ease-out;
+          }
+          #floorplan { 
+            width: 100%; 
+            height: auto; 
+            display: block;
+          }
+          .marker { 
+            position: absolute; 
+            width: 20px; 
+            height: 20px; 
+            background-color: red; 
+            border-radius: 50%; 
+            transform: translate(-50%, -50%);
+          }
+          .marker-label { 
+            position: absolute; 
+            top: 20px; 
+            left: 0; 
+            background: white; 
+            padding: 2px; 
+            font-size: 12px; 
+            white-space: nowrap;
+          }
         </style>
       </head>
       <body>
         <div id="container">
-          <img id="floorplan" src="${imageUri}" onerror="console.error('Failed to load image: ' + this.src);" />
+          <div id="zoomable-area">
+            <img id="floorplan" src="${imageUri}" onerror="console.error('Failed to load image: ' + this.src);" />
+          </div>
         </div>
         
         <script>
           const container = document.getElementById('container');
+          const zoomableArea = document.getElementById('zoomable-area');
           const floorplan = document.getElementById('floorplan');
+          
+          // Zoom variables
+          let currentScale = 1;
+          let startDistance = 0;
+          let originX = 0;
+          let originY = 0;
+          let lastX = 0;
+          let lastY = 0;
+          let isDragging = false;
+          
+          // Handle pinch zoom
+          document.addEventListener('touchstart', function(e) {
+            if (e.touches.length === 2) {
+              // Pinch zoom start
+              startDistance = getDistance(
+                e.touches[0].clientX, e.touches[0].clientY,
+                e.touches[1].clientX, e.touches[1].clientY
+              );
+              
+              e.preventDefault();
+            } else if (e.touches.length === 1 && currentScale > 1) {
+              // Pan start
+              lastX = e.touches[0].clientX;
+              lastY = e.touches[0].clientY;
+              isDragging = true;
+              e.preventDefault();
+            }
+          }, { passive: false });
+          
+          document.addEventListener('touchmove', function(e) {
+            if (e.touches.length === 2) {
+              // Pinch zoom
+              const distance = getDistance(
+                e.touches[0].clientX, e.touches[0].clientY,
+                e.touches[1].clientX, e.touches[1].clientY
+              );
+              
+              const scale = Math.min(Math.max(currentScale * (distance / startDistance), 1), 5);
+              const pinchCenter = {
+                x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+                y: (e.touches[0].clientY + e.touches[1].clientY) / 2
+              };
+              
+              // Set the origin based on pinch center
+              zoomableArea.style.transformOrigin = '0 0';
+              zoomableArea.style.transform = calculateTransform(scale, originX, originY);
+              
+              currentScale = scale;
+              startDistance = distance;
+              
+              e.preventDefault();
+            } else if (e.touches.length === 1 && isDragging) {
+              // Panning
+              const deltaX = e.touches[0].clientX - lastX;
+              const deltaY = e.touches[0].clientY - lastY;
+              
+              originX += deltaX / currentScale;
+              originY += deltaY / currentScale;
+              
+              zoomableArea.style.transform = calculateTransform(currentScale, originX, originY);
+              
+              lastX = e.touches[0].clientX;
+              lastY = e.touches[0].clientY;
+              
+              e.preventDefault();
+            }
+          }, { passive: false });
+          
+          document.addEventListener('touchend', function(e) {
+            if (e.touches.length < 2) {
+              startDistance = 0;
+            }
+            
+            if (e.touches.length === 0) {
+              isDragging = false;
+            }
+          });
+          
+          // Double tap to reset zoom
+          let lastTap = 0;
+          document.addEventListener('touchend', function(e) {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            
+            if (tapLength < 300 && tapLength > 0 && e.touches.length === 0) {
+              // Reset zoom
+              currentScale = 1;
+              originX = 0;
+              originY = 0;
+              zoomableArea.style.transform = calculateTransform(currentScale, originX, originY);
+            }
+            
+            lastTap = currentTime;
+          });
           
           // Handle tap on floorplan
           container.addEventListener('click', function(event) {
-            const rect = container.getBoundingClientRect();
-            const x = (event.clientX - rect.left) / rect.width;
-            const y = (event.clientY - rect.top) / floorplan.offsetHeight * (rect.height / floorplan.offsetHeight);
-            
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-              type: 'add_marker',
-              x: x,
-              y: y
-            }));
+            // Only handle clicks when not zoomed or dragging
+            if (currentScale === 1 || !isDragging) {
+              const rect = floorplan.getBoundingClientRect();
+              
+              // Convert coordinates to match the unzoomed image
+              const x = (event.clientX - rect.left) / (rect.width * currentScale);
+              const y = (event.clientY - rect.top) / (rect.height * currentScale);
+              
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'add_marker',
+                x: x,
+                y: y
+              }));
+            }
           });
+          
+          // Helper function to calculate distance between two points
+          function getDistance(x1, y1, x2, y2) {
+            const xDiff = x2 - x1;
+            const yDiff = y2 - y1;
+            return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+          }
+          
+          // Calculate transform with current scale and origin
+          function calculateTransform(scale, originX, originY) {
+            return \`scale(\${scale}) translate(\${originX}px, \${originY}px)\`;
+          }
           
           // Function to add marker to the floorplan
           window.addMarker = function(id, x, y, label) {
@@ -143,7 +288,7 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
             labelEl.textContent = label;
             marker.appendChild(labelEl);
             
-            container.appendChild(marker);
+            zoomableArea.appendChild(marker);
           };
         </script>
       </body>
@@ -251,163 +396,20 @@ export default function FloorplanEditorScreen({ navigation }: FloorplanEditorScr
   }, [buildingId, floorLabel]);
   
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>
-          Add Room POIs - {floorLabel}
-        </Text>
-        <Text style={[styles.headerSubtitle, { color: colors.text }]}>
-          Tap on the floorplan to add rooms
-        </Text>
-      </View>
-      
-      <WebView
-        ref={webViewRef}
-        originWhitelist={['*']}
-        source={{ html: getHTML() }}
-        onMessage={handleMessage}
-        style={styles.webview}
-      />
-      
-      <View style={styles.footer}>
-        <Text style={[styles.footerText, { color: colors.text }]}>
-          {roomMarkers.length} rooms added
-        </Text>
-        <AppButton 
-          title="Done" 
-          onPress={() => navigation.goBack()}
-        />
-      </View>
-      
-      {/* Modal for room details */}
-      <Modal 
-        isVisible={isModalVisible}
-        onBackdropPress={() => setIsModalVisible(false)}
-        avoidKeyboard
-      >
-        <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-          <Text style={[styles.modalTitle, { color: colors.text }]}>Add Room Details</Text>
-          
-          <TextInput
-            placeholder="Room Name/Number"
-            value={roomData.name}
-            onChangeText={(text) => setRoomData({...roomData, name: text})}
-            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
-            placeholderTextColor={colors.secondary}
-          />
-          
-          <View style={styles.typeSelector}>
-            <Text style={[{ color: colors.text }]}>Room Type:</Text>
-            <View style={styles.typeOptions}>
-              {['classroom', 'office', 'lab', 'restroom', 'stairs', 'elevator'].map(type => (
-                <TouchableOpacity 
-                  key={type}
-                  style={[
-                    styles.typeOption,
-                    roomData.type === type && { backgroundColor: colors.primary }
-                  ]}
-                  onPress={() => setRoomData({...roomData, type})}
-                >
-                  <Text style={{ 
-                    color: roomData.type === type ? colors.text : colors.text 
-                  }}>
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-          
-          <TextInput
-            placeholder="Description (optional)"
-            value={roomData.description}
-            onChangeText={(text) => setRoomData({...roomData, description: text})}
-            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
-            placeholderTextColor={colors.secondary}
-            multiline
-          />
-          
-          <View style={styles.modalButtons}>
-            <AppSecondaryButton 
-              title="Cancel"
-              onPress={() => setIsModalVisible(false)}
-              style={{ flex: 1, marginRight: 8 }}
-            />
-            <AppButton 
-              title="Save"
-              onPress={saveRoomPOI}
-              style={{ flex: 1 }}
-            />
-          </View>
-        </View>
-      </Modal>
-    </View>
+    <AdminFloorplanEditorContent
+      colors={colors}
+      buildingId={buildingId}
+      floorLabel={floorLabel}
+      webViewRef={webViewRef as React.RefObject<WebView>}
+      getHTML={getHTML}
+      handleMessage={handleMessage}
+      roomMarkers={roomMarkers}
+      isModalVisible={isModalVisible}
+      setIsModalVisible={setIsModalVisible}
+      roomData={roomData}
+      setRoomData={setRoomData}
+      saveRoomPOI={saveRoomPOI}
+      goBack={() => navigation.goBack()}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    marginTop: 4,
-  },
-  webview: {
-    flex: 1,
-  },
-  footer: {
-    padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#ddd',
-  },
-  footerText: {
-    fontSize: 16,
-  },
-  modalContent: {
-    padding: 20,
-    borderRadius: 8,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  input: {
-    padding: 10,
-    borderWidth: 1,
-    borderRadius: 4,
-    marginBottom: 12,
-  },
-  typeSelector: {
-    marginBottom: 12,
-  },
-  typeOptions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 8,
-    gap: 8,
-  },
-  typeOption: {
-    padding: 8,
-    borderRadius: 4,
-    backgroundColor: '#f0f0f0',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    marginTop: 16,
-  }
-});
