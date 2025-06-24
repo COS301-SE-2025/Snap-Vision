@@ -1,3 +1,4 @@
+//Snap-Vision\snap-vision\src\types\badges.ts
 // 1. Badge ID types
 export type BadgeId =
   | 'first-login'  //done
@@ -90,6 +91,8 @@ export const BADGES: Record<BadgeId, Badge> = {
     title: 'Speed Runner',
     description: 'Reached your destination in under 5 minutes!',
   },
+
+  
 
 };
 

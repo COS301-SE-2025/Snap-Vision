@@ -16,18 +16,25 @@ import ChallengeItem from '../molecules/ChallengeItem';
 import ProgressCard from '../atoms/ProgressCard';
 import RewardCard from '../molecules/RewardCard';
 import ActionButton from '../molecules/ActionButton';
-
 import { useBadges } from '../../context/BadgeContext';
 import { BADGES, BadgeId } from '../../types/badges';      
 import { Challenge, Reward, ExploreCategory } from '../../types/achievements';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../../navigation/types'; // Adjust path if needed
+import { createStackNavigator } from '@react-navigation/stack';
 
 export default function AchievementsForm() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
+  type NavigationProp = StackNavigationProp<RootStackParamList, 'Dashboard'>;
 
   const { state, clearJustUnlocked, getChallenges } = useBadges();
   const unlockedArray = Array.from(state.unlocked);
   const currentChallenges = getChallenges();
+  const Stack = createStackNavigator<RootStackParamList>();
+  const navigation = useNavigation<NavigationProp>();
+
 
   useEffect(() => {
     if (state.justUnlocked.length) {
@@ -147,7 +154,14 @@ export default function AchievementsForm() {
       <View style={styles.actionButtons}>
         {/* <ActionButton title="View Badges"   variant="outline" borderColor={colors.text} textColor={colors.text} onPress={() => handleActionPress('View Badges')} />
         <ActionButton title="Check Points"  variant="outline" borderColor={colors.text} textColor={colors.text} onPress={() => handleActionPress('Check Points')} /> */}
-        <ActionButton title="Start Challenge" variant="primary" backgroundColor={colors.primary} textColor="#fff" onPress={() => handleActionPress('Start Challenge')} />
+        <ActionButton
+          title="SHOP"
+          variant="primary"
+          backgroundColor={colors.primary}
+          textColor="#fff"
+          onPress={() => navigation.navigate('ShopScreen')}
+        />
+
       </View>
 
       

@@ -14,6 +14,7 @@ import queryString from 'query-string'; // npm install query-strin
 import { NavigationContainerRef } from '@react-navigation/native';
 import { BadgeProvider } from './src/context/BadgeContext';
 import BadgeUnlockNotifier from './src/components/organisms/BadgeUnlockNotifier';
+import ShopScreen from './src/screens/ShopScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -62,6 +63,7 @@ export default function App() {
           <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
           <Stack.Screen name="AdminSettings" component={AdminSettingsFrom} />
           <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
+          <Stack.Screen name="ShopScreen" component={ShopScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </ThemeProvider>
