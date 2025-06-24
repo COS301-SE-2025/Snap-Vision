@@ -75,7 +75,6 @@ export default function AdminFloorplanEditorContent({
         <AppButton 
           title="Done" 
           onPress={goBack}
-          style={{ backgroundColor: colors.primary }}
         />
       </View>
       
@@ -132,8 +131,7 @@ export default function AdminFloorplanEditorContent({
               title="Save"
               onPress={saveRoomPOI}
               style={{ 
-                flex: 1,
-                backgroundColor: colors.primary
+                flex: 1
               }}
             />
           </View>

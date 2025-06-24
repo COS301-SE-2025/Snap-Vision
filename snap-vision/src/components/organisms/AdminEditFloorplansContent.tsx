@@ -137,7 +137,6 @@ export default function AdminEditFloorplansContent({
               onPress={handleEditRooms}
               style={{ 
                 marginTop: 16,
-                backgroundColor: colors.primary,
               }}
             />
             
@@ -147,7 +146,6 @@ export default function AdminEditFloorplansContent({
               onPress={handleDelete}
               style={{ 
                 marginTop: 16,
-                backgroundColor: colors.error
               }}
             />
           </View>
