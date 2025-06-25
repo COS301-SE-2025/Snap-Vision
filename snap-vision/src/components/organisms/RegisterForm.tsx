@@ -92,7 +92,7 @@ export default function RegisterForm() {
                 role: 'user', 
               });
 
-              //unlock('first-login');
+              unlock('first-login');
       Alert.alert('Success', 'Account created!');
               setSuccessMessage('Account created!');
 
