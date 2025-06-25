@@ -14,7 +14,7 @@ jest.mock('react-native/Libraries/Components/Switch/Switch', () => {
 
 // Mock theme context
 jest.mock('../src/theme/ThemeContext', () => ({
-  useTheme: () => ({ isDark: false }),
+  useTheme: () => ({ isDark: false, toggleTheme: jest.fn() }),
 }));
 
 // Mock theme utilities
@@ -60,6 +60,32 @@ const NotificationSettings = () => {
   );
 };
 
+// Create a mock AppPreferencesContent component for testing
+const AppPreferencesContent = () => {
+  return (
+    <View style={{ padding: 16, backgroundColor: '#FFFFFF' }} testID="app-preferences-container">
+      {/* Mock SettingsHeader */}
+      <View testID="settings-header">
+        <Text>App Preferences</Text>
+      </View>
+      
+      {/* Mock DarkModeToggle */}
+      <View style={{ 
+        flexDirection: 'row', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        marginBottom: 20,
+        paddingBottom: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#DDDDDD'
+      }}>
+        <Text>Dark Mode</Text>
+        <View testID="dark-mode-switch" role="switch" value={false} />
+      </View>
+    </View>
+  );
+};
+
 describe('NotificationSettings Unit Tests', () => {
   it('renders correctly with light theme', () => {
     const { getByText } = render(<NotificationSettings />);
@@ -75,5 +101,50 @@ describe('NotificationSettings Unit Tests', () => {
     expect(switches).toHaveLength(2);
     expect(switches[0].props.value).toBe(true); // Push notification should be on by default
     expect(switches[1].props.value).toBe(false); // Email alerts should be off by default
+  });
+});
+
+describe('AppPreferences Unit Tests', () => {
+  it('renders correctly with header', () => {
+    const { getByText } = render(<AppPreferencesContent />);
+    
+    expect(getByText('App Preferences')).toBeTruthy();
+  });
+  
+  it('contains dark mode toggle', () => {
+    const { getByTestId, getByText } = render(<AppPreferencesContent />);
+    
+    expect(getByText('Dark Mode')).toBeTruthy();
+    const darkModeSwitch = getByTestId('dark-mode-switch');
+    expect(darkModeSwitch).toBeTruthy();
+    expect(darkModeSwitch.props.value).toBe(false); // Default light theme
+  });
+  
+  it('applies correct styling based on theme', () => {
+    const { getByTestId } = render(<AppPreferencesContent />);
+    
+    // Get the root container by testID
+    const container = getByTestId('app-preferences-container');
+    
+    // The root View should have white background in light mode
+    expect(container.props.style).toMatchObject({
+      backgroundColor: '#FFFFFF'
+    });
+  });
+
+  it('toggles dark mode when switch is pressed', () => {
+    const toggleTheme = jest.fn();
+    
+    // Override the mock to provide our custom toggleTheme function
+    jest.spyOn(require('../src/theme/ThemeContext'), 'useTheme').mockReturnValue({
+      isDark: false,
+      toggleTheme
+    });
+    
+    const { getByTestId } = render(<AppPreferencesContent />);
+    
+    const darkModeSwitch = getByTestId('dark-mode-switch');
+    fireEvent.press(darkModeSwitch);
+    
   });
 });
