@@ -1,6 +1,6 @@
 // src/screens/MapScreen.tsx
 import React, { useState, useRef } from 'react';
-import { View, Alert, Share, Text, TextInput, TouchableOpacity } from 'react-native';
+import { View, Alert, Share, Text, TextInput, TouchableOpacity, Modal } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import { PermissionsAndroid } from 'react-native';
 import { WebView as WebViewType } from 'react-native-webview';
