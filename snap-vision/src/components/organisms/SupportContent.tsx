@@ -6,7 +6,11 @@ import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useNavigation } from '@react-navigation/native';
 
-export default function SupportContent() {
+interface Props {
+  navigationBack: any;
+}
+
+export default function SupportContent({ navigationBack }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const navigation = useNavigation<any>();

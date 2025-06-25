@@ -4,8 +4,13 @@ import SettingsHeader from '../molecules/SettingsHeader';
 import DarkModeToggle from '../molecules/DarkModeToggle';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
+import { StackNavigationProp } from '@react-navigation/stack/lib/typescript/src';
 
-export default function AppPreferencesContent() {
+interface Props {
+  navigation: any;
+}
+
+export default function AppPreferencesContent({ navigation }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 

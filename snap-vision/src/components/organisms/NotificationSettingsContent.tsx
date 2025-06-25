@@ -5,7 +5,11 @@ import NotificationSettings from '../molecules/NotificationSettings';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
-export default function NotificationSettingsContent() {
+interface Props {
+  navigation: any;
+}
+
+export default function NotificationSettingsContent({ navigation }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 

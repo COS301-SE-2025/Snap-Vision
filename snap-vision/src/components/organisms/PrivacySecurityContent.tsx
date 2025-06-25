@@ -5,7 +5,11 @@ import PrivacySettings from '../molecules/PrivacySettings';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
-export default function PrivacySecurityContent() {
+interface Props {
+  navigation: any;
+}
+
+export default function PrivacySecurityContent({ navigation }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 

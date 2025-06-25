@@ -32,7 +32,7 @@ const TutorialSlider = ({ onFinish }) => {
 
   const handleScroll = (event) => {
     const contentOffset = event.nativeEvent.contentOffset;
-    const index = Math.round(contentOffset.x / width);
+    const index = Math.floor(contentOffset.x / width + 0.5); // More accurate index calculation
     setActiveIndex(index);
   };
 
@@ -68,30 +68,35 @@ const TutorialSlider = ({ onFinish }) => {
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={handleScroll}
         keyExtractor={(_, index) => index.toString()}
+        decelerationRate="fast" // Smoother paging
+        snapToInterval={width} // Ensure proper page snapping
+        snapToAlignment="center"
       />
 
-      <View style={styles.pagination}>
-        {tutorialData.map((_, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[
-              styles.paginationDot,
-              { backgroundColor: index === activeIndex ? colors.primary : colors.text + '40' }
-            ]}
-            onPress={() => goToSlide(index)}
-          />
-        ))}
-      </View>
+      <View style={styles.footer}>
+        <View style={styles.pagination}>
+          {tutorialData.map((_, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[
+                styles.paginationDot,
+                { backgroundColor: index === activeIndex ? colors.primary : colors.text + '40' }
+              ]}
+              onPress={() => goToSlide(index)}
+            />
+          ))}
+        </View>
 
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: colors.primary }]}
-          onPress={handleNext}
-        >
-          <Text style={styles.buttonText}>
-            {activeIndex === tutorialData.length - 1 ? 'Finish' : 'Next'}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: colors.primary }]}
+            onPress={handleNext}
+          >
+            <Text style={styles.buttonText}>
+              {activeIndex === tutorialData.length - 1 ? 'Finish' : 'Next'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -100,6 +105,10 @@ const TutorialSlider = ({ onFinish }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'space-between',
+  },
+  footer: {
+    paddingBottom: 20,
   },
   pagination: {
     flexDirection: 'row',
@@ -115,7 +124,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 20,
   },
   button: {
     paddingVertical: 12,
