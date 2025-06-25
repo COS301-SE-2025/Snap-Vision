@@ -38,7 +38,7 @@ export default function LoginForm() {
 
     try {
       await auth().signInWithEmailAndPassword(email, password);
-      unlock('first-login');
+      //unlock('first-login');
       // Alert.alert('Success', 'Logged in!');
       setSuccessMessage('Login successful!');
       setTimeout(() => {

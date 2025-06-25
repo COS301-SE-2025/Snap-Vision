@@ -1,7 +1,7 @@
 //Snap-Vision\snap-vision\src\types\badges.ts
 // 1. Badge ID types
 export type BadgeId =
-  | 'first-login'  //done
+ // | 'first-login'  //done
   | 'qr-scan'      
   | 'destination-reached'  //done 
   | 'share-location' //done
@@ -26,11 +26,11 @@ export interface Badge {
 
 // 3. Badge dictionary
 export const BADGES: Record<BadgeId, Badge> = {
-  'first-login': {
-    id: 'first-login',
-    title: 'First Login',
-    description: 'You signed up for the first time!',
-  },
+  // 'first-login': {
+  //   id: 'first-login',
+  //   title: 'First Login',
+  //   description: 'You signed up for the first time!',
+  // },
   'qr-scan': {
     id: 'qr-scan',
     title: 'QR Code Scanned',
