@@ -14,14 +14,27 @@ interface Props {
   onSelectSuggestion: (feature: any) => void;
 }
 
-const DestinationSearch = ({ value, onChange, onSearch, suggestions, onSelectSuggestion }: Props) => {
+const DestinationSearch = ({
+  value,
+  onChange,
+  onSearch,
+  suggestions,
+  onSelectSuggestion,
+}: Props) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+    <View
+      style={[styles.container, { backgroundColor: colors.card, borderBottomColor: colors.border }]}
+    >
       <Text style={[styles.label, { color: colors.text }]}>Where to?</Text>
-      <View style={[styles.searchBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
+      <View
+        style={[
+          styles.searchBox,
+          { backgroundColor: colors.background, borderColor: colors.border },
+        ]}
+      >
         <TextInput
           style={[styles.input, { color: colors.text }]}
           value={value}
@@ -29,18 +42,29 @@ const DestinationSearch = ({ value, onChange, onSearch, suggestions, onSelectSug
           placeholder="Search destination..."
           placeholderTextColor={isDark ? '#999' : '#666'}
         />
-        <TouchableOpacity onPress={onSearch} style={[styles.button, { backgroundColor: colors.primary }]}>
+        <TouchableOpacity
+          onPress={onSearch}
+          style={[styles.button, { backgroundColor: colors.primary }]}
+        >
           <Icon name="search" size={30} color="white" />
         </TouchableOpacity>
       </View>
 
       {suggestions.length > 0 && (
-        <View style={[styles.dropdown, { backgroundColor: colors.background, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.dropdown,
+            { backgroundColor: colors.background, borderColor: colors.border },
+          ]}
+        >
           <FlatList
             data={suggestions}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => onSelectSuggestion(item)} style={styles.suggestionItem}>
+              <TouchableOpacity
+                onPress={() => onSelectSuggestion(item)}
+                style={styles.suggestionItem}
+              >
                 <Text style={{ color: colors.text }}>{item.name}</Text>
               </TouchableOpacity>
             )}

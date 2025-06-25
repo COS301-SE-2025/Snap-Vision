@@ -11,8 +11,8 @@ export default function NotificationSettings() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.row, { borderBottomColor: colors.border || colors.border }]}>
         <Text style={[styles.label, { color: colors.text }]}>Push Notifications</Text>
-        <Switch 
-          value={true} 
+        <Switch
+          value={true}
           trackColor={{ false: '#767577', true: colors.primary }}
           thumbColor={isDark ? '#f4f3f4' : '#ffffff'}
           ios_backgroundColor="#3e3e3e"
@@ -21,8 +21,8 @@ export default function NotificationSettings() {
       </View>
       <View style={[styles.row, { borderBottomColor: colors.border || colors.border }]}>
         <Text style={[styles.label, { color: colors.text }]}>Email Alerts</Text>
-        <Switch 
-          value={false} 
+        <Switch
+          value={false}
           trackColor={{ false: '#767577', true: colors.primary }}
           thumbColor={isDark ? '#f4f3f4' : '#ffffff'}
           ios_backgroundColor="#3e3e3e"
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
   },
   switch: {
     // Add a subtle shadow to the switch
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 1,
@@ -58,5 +58,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 1.41,
     elevation: 2,
-  }
+  },
 });

@@ -27,17 +27,20 @@ export default function ForgotPasswordScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.header, {
-        fontFamily: 'PermanentMarkerRegular',
-        color: colors.primary,
-        transform: [{ rotate: '-3deg' }],
-      }]}>
+      <Text
+        style={[
+          styles.header,
+          {
+            fontFamily: 'PermanentMarkerRegular',
+            color: colors.primary,
+            transform: [{ rotate: '-3deg' }],
+          },
+        ]}
+      >
         RESET PASSWORD
       </Text>
 
-      <Text style={[styles.label, { color: colors.secondary }]}>
-        Email
-      </Text>
+      <Text style={[styles.label, { color: colors.secondary }]}>Email</Text>
       <AppInput
         placeholder="Enter your email"
         value={email}

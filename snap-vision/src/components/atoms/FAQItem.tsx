@@ -16,18 +16,11 @@ const FAQItem = ({ question, answer }: FAQItemProps) => {
 
   return (
     <View style={[styles.container, { borderBottomColor: colors.border || '#e1e1e1' }]}>
-      <TouchableOpacity 
-        style={styles.questionContainer}
-        onPress={() => setExpanded(!expanded)}
-      >
+      <TouchableOpacity style={styles.questionContainer} onPress={() => setExpanded(!expanded)}>
         <Text style={[styles.question, { color: colors.primary }]}>{question}</Text>
-        <Icon 
-          name={expanded ? 'chevron-up' : 'chevron-down'} 
-          size={24} 
-          color={colors.primary} 
-        />
+        <Icon name={expanded ? 'chevron-up' : 'chevron-down'} size={24} color={colors.primary} />
       </TouchableOpacity>
-      
+
       {expanded && (
         <View style={styles.answerContainer}>
           <Text style={[styles.answer, { color: colors.secondary }]}>{answer}</Text>
@@ -62,7 +55,7 @@ const styles = StyleSheet.create({
   answer: {
     fontSize: 14,
     lineHeight: 20,
-  }
+  },
 });
 
 export default FAQItem;

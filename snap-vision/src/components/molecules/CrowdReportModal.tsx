@@ -50,9 +50,9 @@ const CrowdReportModal: React.FC<CrowdReportModalProps> = ({
   ];
 
   // Filter POIs based on search text
-  const filteredPOIs = buildingSearchText.trim() 
-    ? availablePOIs.filter(poi => 
-        poi.name && poi.name.toLowerCase().includes(buildingSearchText.toLowerCase())
+  const filteredPOIs = buildingSearchText.trim()
+    ? availablePOIs.filter(
+        (poi) => poi.name && poi.name.toLowerCase().includes(buildingSearchText.toLowerCase()),
       )
     : [];
 
@@ -68,31 +68,33 @@ const CrowdReportModal: React.FC<CrowdReportModalProps> = ({
     if (!showBuildingSuggestions || filteredPOIs.length === 0) {
       return null;
     }
-  
+
     return (
-      <View 
+      <View
         style={[
-          styles.suggestionsOverlay, 
-          { top: 180 } // Position below the search box
+          styles.suggestionsOverlay,
+          { top: 180 }, // Position below the search box
         ]}
       >
-        <View style={[styles.dropdown, { backgroundColor: colors.background, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.dropdown,
+            { backgroundColor: colors.background, borderColor: colors.border },
+          ]}
+        >
           <FlatList
             data={filteredPOIs}
             keyExtractor={(item) => item.id}
             keyboardShouldPersistTaps="always"
             renderItem={({ item }) => (
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => {
                   onChangePOI(item);
                   setBuildingSearchText(item.name);
                   setShowBuildingSuggestions(false);
                   Keyboard.dismiss(); // Dismiss keyboard immediately
-                }} 
-                style={[
-                  styles.suggestionItem, 
-                  { borderBottomColor: colors.border }
-                ]}
+                }}
+                style={[styles.suggestionItem, { borderBottomColor: colors.border }]}
               >
                 <Text style={{ color: colors.text }}>{item.name}</Text>
               </TouchableOpacity>
@@ -105,38 +107,34 @@ const CrowdReportModal: React.FC<CrowdReportModalProps> = ({
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onCancel}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.overlay}>
         <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.title, { color: colors.text }]}>
-              Report Crowd Density
-            </Text>
+            <Text style={[styles.title, { color: colors.text }]}>Report Crowd Density</Text>
             <Text style={[styles.subtitle, { color: colors.text }]}>
               Help others by sharing current crowd levels
             </Text>
           </View>
 
           {/* Scrollable Content */}
-          <ScrollView 
+          <ScrollView
             style={styles.scrollView}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={true}
           >
             {/* Building Selection */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Select Building
-              </Text>
-              
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Select Building</Text>
+
               {/* Search box - styled like DestinationSearch */}
-              <View style={[styles.searchBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <View
+                style={[
+                  styles.searchBox,
+                  { backgroundColor: colors.background, borderColor: colors.border },
+                ]}
+              >
                 <TextInput
                   style={[styles.input, { color: colors.text }]}
                   value={buildingSearchText}
@@ -148,7 +146,7 @@ const CrowdReportModal: React.FC<CrowdReportModalProps> = ({
                   placeholderTextColor={isDark ? '#999' : '#666'}
                   onFocus={() => setShowBuildingSuggestions(true)}
                 />
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.searchButton, { backgroundColor: colors.primary }]}
                   onPress={() => setShowBuildingSuggestions(true)}
                 >
@@ -162,58 +160,51 @@ const CrowdReportModal: React.FC<CrowdReportModalProps> = ({
                   Currently selected: {selectedPOI.name}
                 </Text>
               )}
-              
             </View>
 
             {/* Density Options */}
             <View style={styles.optionsContainer}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Select Crowd Level
-              </Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Select Crowd Level</Text>
               {densityOptions.map((option) => (
                 <TouchableOpacity
                   key={option.value}
                   style={[
                     styles.optionButton,
                     {
-                      backgroundColor: selectedDensity === option.value 
-                        ? colors.primary 
-                        : colors.card,
-                      borderColor: selectedDensity === option.value 
-                        ? colors.primary 
-                        : colors.border,
-                    }
+                      backgroundColor:
+                        selectedDensity === option.value ? colors.primary : colors.card,
+                      borderColor:
+                        selectedDensity === option.value ? colors.primary : colors.border,
+                    },
                   ]}
                   onPress={() => onChangeDensity(option.value)}
                 >
                   <View style={styles.optionContent}>
                     <Text style={styles.optionIcon}>{option.icon}</Text>
                     <View style={styles.optionTextContainer}>
-                      <Text style={[
-                        styles.optionLabel,
-                        {
-                          color: selectedDensity === option.value 
-                            ? '#ffffff' 
-                            : colors.text
-                        }
-                      ]}>
+                      <Text
+                        style={[
+                          styles.optionLabel,
+                          {
+                            color: selectedDensity === option.value ? '#ffffff' : colors.text,
+                          },
+                        ]}
+                      >
                         {option.label}
                       </Text>
-                      <Text style={[
-                        styles.optionDescription,
-                        {
-                          color: selectedDensity === option.value 
-                            ? '#ffffff' 
-                            : colors.text,
-                          opacity: 0.7
-                        }
-                      ]}>
+                      <Text
+                        style={[
+                          styles.optionDescription,
+                          {
+                            color: selectedDensity === option.value ? '#ffffff' : colors.text,
+                            opacity: 0.7,
+                          },
+                        ]}
+                      >
                         {option.description}
                       </Text>
                     </View>
-                    {selectedDensity === option.value && (
-                      <Text style={styles.checkmark}>✓</Text>
-                    )}
+                    {selectedDensity === option.value && <Text style={styles.checkmark}>✓</Text>}
                   </View>
                 </TouchableOpacity>
               ))}
@@ -224,38 +215,36 @@ const CrowdReportModal: React.FC<CrowdReportModalProps> = ({
           {renderBuildingSuggestions()}
 
           {/* Action Buttons - Keep outside ScrollView so they're always visible */}
-          <View style={[styles.buttonContainer, { borderTopWidth: 1, borderTopColor: colors.border }]}>
+          <View
+            style={[styles.buttonContainer, { borderTopWidth: 1, borderTopColor: colors.border }]}
+          >
             <TouchableOpacity
               style={[
                 styles.actionButton,
                 styles.cancelButton,
-                { 
+                {
                   backgroundColor: 'transparent',
                   borderColor: colors.border,
-                }
+                },
               ]}
               onPress={onCancel}
             >
-              <Text style={[styles.buttonText, { color: colors.text }]}>
-                Cancel
-              </Text>
+              <Text style={[styles.buttonText, { color: colors.text }]}>Cancel</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
                 styles.actionButton,
                 styles.submitButton,
-                { 
+                {
                   backgroundColor: colors.primary,
-                  opacity: !selectedPOI || !selectedDensity ? 0.5 : 1 
-                }
+                  opacity: !selectedPOI || !selectedDensity ? 0.5 : 1,
+                },
               ]}
               onPress={onSubmit}
               disabled={!selectedPOI || !selectedDensity}
             >
-              <Text style={[styles.buttonText, { color: '#ffffff' }]}>
-                Submit Report
-              </Text>
+              <Text style={[styles.buttonText, { color: '#ffffff' }]}>Submit Report</Text>
             </TouchableOpacity>
           </View>
         </View>

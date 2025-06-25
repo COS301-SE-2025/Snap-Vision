@@ -35,12 +35,7 @@ export default function FilterButton({ title, iconName, isSelected, onPress }: P
         color={isSelected ? selectedText : colors.secondary}
         style={styles.icon}
       />
-      <Text
-        style={[
-          styles.text,
-          { color: isSelected ? selectedText : colors.secondary },
-        ]}
-      >
+      <Text style={[styles.text, { color: isSelected ? selectedText : colors.secondary }]}>
         {title}
       </Text>
     </TouchableOpacity>

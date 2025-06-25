@@ -13,12 +13,7 @@ interface Props {
   onPress?: () => void;
 }
 
-export default function RewardCard({ 
-  reward, 
-  backgroundColor,
-  borderColor,
-  onPress 
-}: Props) {
+export default function RewardCard({ reward, backgroundColor, borderColor, onPress }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
@@ -33,37 +28,32 @@ export default function RewardCard({
   };
 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[
-        styles.container, 
-        { 
-          backgroundColor: backgroundColor ?? colors.card, 
-          borderColor: borderColor ?? colors.border, 
-          opacity: isUnlocked ? 1 : 0.4 
-        }
+        styles.container,
+        {
+          backgroundColor: backgroundColor ?? colors.card,
+          borderColor: borderColor ?? colors.border,
+          opacity: isUnlocked ? 1 : 0.4,
+        },
       ]}
       onPress={onPress}
       disabled={!isUnlocked}
     >
       <View style={[styles.tag, { backgroundColor: getStatusColor() }]}>
-        <Text style={styles.tagText}>
-          {isUnlocked ? 'Unlocked' : 'Locked'}
-        </Text>
+        <Text style={styles.tagText}>{isUnlocked ? 'Unlocked' : 'Locked'}</Text>
       </View>
-      
+
       <View style={styles.iconContainer}>
         <Icon name={getStatusIcon()} size={32} color={colors.text} />
       </View>
-      
-      <Text style={[styles.title, { color: colors.primary }]}>
-  {reward.title}
-</Text>
 
-      
+      <Text style={[styles.title, { color: colors.primary }]}>{reward.title}</Text>
+
       <Text style={[styles.description, { color: colors.text, opacity: 0.7 }]}>
         {reward.description}
       </Text>
-      
+
       <Text style={[styles.condition, { color: colors.text, opacity: 0.8 }]}>
         {reward.unlockCondition}
       </Text>

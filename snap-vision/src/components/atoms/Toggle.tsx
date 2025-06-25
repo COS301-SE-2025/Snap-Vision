@@ -34,16 +34,24 @@ const Toggle = ({ value, onValueChange }: Props) => {
   };
 
   return (
-    <TouchableOpacity 
-      style={[styles.container, { 
-        backgroundColor: value ? colors.primary : colors.border,
-      }]}
+    <TouchableOpacity
+      style={[
+        styles.container,
+        {
+          backgroundColor: value ? colors.primary : colors.border,
+        },
+      ]}
       onPress={() => onValueChange(!value)}
     >
-      <View style={[styles.toggle, { 
-        backgroundColor: colors.background,
-        transform: [{ translateX: value ? 18 : 0 }],
-      }]} />
+      <View
+        style={[
+          styles.toggle,
+          {
+            backgroundColor: colors.background,
+            transform: [{ translateX: value ? 18 : 0 }],
+          },
+        ]}
+      />
       <ThemedText size="sm" style={onTextStyle}>
         On
       </ThemedText>

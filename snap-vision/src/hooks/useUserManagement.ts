@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { User, UserFilters } from '../types/User';
 import firestore from '@react-native-firebase/firestore';
 
-
 export const useUserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -14,33 +13,32 @@ export const useUserManagement = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-  const unsubscribe = firestore()
-    .collection('userInformation')
-    .onSnapshot(
-      snapshot => {
-        if (!snapshot) return;
+    const unsubscribe = firestore()
+      .collection('userInformation')
+      .onSnapshot(
+        (snapshot) => {
+          if (!snapshot) return;
 
-        const data: User[] = snapshot.docs.map(doc => {
-          const d = doc.data();
-          return {
-            id: doc.id,
-            name: d.name || '',
-            email: d.email || '',
-            role: d.role === 'admin' ? 'Admin' : 'Viewer',
-          };
-        });
-        setUsers(data);
-        setLoading(false);
-      },
-      error => {
-        console.error('Firestore error:', error);
-        setLoading(false);
-      }
-    );
+          const data: User[] = snapshot.docs.map((doc) => {
+            const d = doc.data();
+            return {
+              id: doc.id,
+              name: d.name || '',
+              email: d.email || '',
+              role: d.role === 'admin' ? 'Admin' : 'Viewer',
+            };
+          });
+          setUsers(data);
+          setLoading(false);
+        },
+        (error) => {
+          console.error('Firestore error:', error);
+          setLoading(false);
+        },
+      );
 
-  return unsubscribe;
-}, []);
-
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     applyFilters();
@@ -51,15 +49,15 @@ export const useUserManagement = () => {
 
     // Filter by role
     if (filters.role !== 'All') {
-      filtered = filtered.filter(user => user.role === filters.role);
+      filtered = filtered.filter((user) => user.role === filters.role);
     }
 
     // Filter by search query
     if (filters.searchQuery.trim()) {
       const query = filters.searchQuery.toLowerCase();
-      filtered = filtered.filter(user =>
-        user.name.toLowerCase().includes(query) ||
-        user.email.toLowerCase().includes(query)
+      filtered = filtered.filter(
+        (user) =>
+          user.name.toLowerCase().includes(query) || user.email.toLowerCase().includes(query),
       );
     }
 
@@ -67,11 +65,11 @@ export const useUserManagement = () => {
   };
 
   const updateSearchQuery = (query: string) => {
-    setFilters(prev => ({ ...prev, searchQuery: query }));
+    setFilters((prev) => ({ ...prev, searchQuery: query }));
   };
 
   const updateRoleFilter = (role: 'All' | 'Admin' | 'Viewer') => {
-    setFilters(prev => ({ ...prev, role }));
+    setFilters((prev) => ({ ...prev, role }));
   };
 
   const editUser = async (user: User) => {
@@ -85,7 +83,6 @@ export const useUserManagement = () => {
     }
   };
 
-
   const deleteUser = async (user: User) => {
     try {
       await firestore().collection('userInformation').doc(user.id).delete();
@@ -93,7 +90,6 @@ export const useUserManagement = () => {
       console.error('Failed to delete user:', err);
     }
   };
-
 
   return {
     users: filteredUsers,

@@ -19,9 +19,7 @@ export default function WelcomeHeader({ userName = 'User' }: Props) {
         <Icon name="person-circle" size={40} color={colors.text} />
       </View>
       <View style={styles.textContainer}>
-        <Text style={[styles.welcomeText, { color: colors.primary }]}>
-          Welcome, {userName}!
-        </Text>
+        <Text style={[styles.welcomeText, { color: colors.primary }]}>Welcome, {userName}!</Text>
         <Text style={[styles.subText, { color: colors.text, opacity: 0.7 }]}>
           Explore and unlock achievements
         </Text>

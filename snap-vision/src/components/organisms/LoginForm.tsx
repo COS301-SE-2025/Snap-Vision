@@ -22,7 +22,7 @@ export default function LoginForm() {
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({ email: '', password: '' });
   const [successMessage, setSuccessMessage] = useState('');
-    const { unlock } = useBadges();
+  const { unlock } = useBadges();
 
   const handleLogin = async () => {
     setSuccessMessage('');

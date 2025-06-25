@@ -7,7 +7,12 @@ interface Props extends TouchableOpacityProps {
   title: string;
 }
 
-export default function AppSecondaryButton({ title, testID, style, ...rest }: Props & { testID?: string }) {
+export default function AppSecondaryButton({
+  title,
+  testID,
+  style,
+  ...rest
+}: Props & { testID?: string }) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 

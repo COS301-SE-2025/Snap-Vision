@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useUserManagement } from '../../hooks/useUserManagement';
@@ -24,15 +17,8 @@ export default function ManageUsersForm({ navigation }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
-  const {
-    users,
-    loading,
-    filters,
-    updateSearchQuery,
-    updateRoleFilter,
-    editUser,
-    deleteUser,
-  } = useUserManagement();
+  const { users, loading, filters, updateSearchQuery, updateRoleFilter, editUser, deleteUser } =
+    useUserManagement();
 
   if (loading) {
     return (
@@ -60,16 +46,11 @@ export default function ManageUsersForm({ navigation }: Props) {
         </View>
 
         {/* Role Filter */}
-        <RoleFilter
-          selectedRole={filters.role}
-          onRoleChange={updateRoleFilter}
-        />
+        <RoleFilter selectedRole={filters.role} onRoleChange={updateRoleFilter} />
 
         {/* User Accounts Section */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            User Accounts
-          </Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>User Accounts</Text>
 
           {users.length === 0 ? (
             <View style={styles.emptyState}>
@@ -93,25 +74,20 @@ export default function ManageUsersForm({ navigation }: Props) {
                         text: 'Confirm',
                         onPress: () => editUser({ ...u, role: newRole }),
                       },
-                    ]
+                    ],
                   );
                 }}
                 onDelete={(u) => {
-                  Alert.alert(
-                    'Confirm Deletion',
-                    `Are you sure you want to delete ${u.name}?`,
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Delete',
-                        style: 'destructive',
-                        onPress: () => deleteUser(u),
-                      },
-                    ]
-                  );
+                  Alert.alert('Confirm Deletion', `Are you sure you want to delete ${u.name}?`, [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Delete',
+                      style: 'destructive',
+                      onPress: () => deleteUser(u),
+                    },
+                  ]);
                 }}
               />
-
             ))
           )}
         </View>

@@ -23,9 +23,7 @@ const ActionButtonWithTooltip = ({
   tooltipText,
 }: Props) => (
   <View style={styles.buttonWithTooltip}>
-    {showTooltip && (
-      <Tooltip text={tooltipText} />
-    )}
+    {showTooltip && <Tooltip text={tooltipText} />}
     <TouchableOpacity
       style={[styles.actionButton, { backgroundColor }]}
       onPress={onPress}

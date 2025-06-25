@@ -1,12 +1,6 @@
 // src/screens/AchievementsScreen.tsx
 import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  Alert
-} from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 import { useTheme } from '../theme/ThemeContext';
@@ -29,19 +23,15 @@ export default function AchievementsScreen() {
 
   useEffect(() => {
     console.log('Unlocked badges:', Array.from(state.unlocked));
-
   }, [state.justUnlocked]);
 
   return (
     <View style={{ flex: 1 }}>
-    
-    <BadgeUnlockNotifier />
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
-      <AchievementsForm />
-      <View style={styles.bottomSpacing} />
-      
-    </ScrollView>
-    
+      <BadgeUnlockNotifier />
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+        <AchievementsForm />
+        <View style={styles.bottomSpacing} />
+      </ScrollView>
     </View>
   );
 }

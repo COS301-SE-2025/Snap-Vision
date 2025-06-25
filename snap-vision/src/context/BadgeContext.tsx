@@ -74,7 +74,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
   const unlock = async (id: BadgeId) => {
     if (!uid) return;
 
-    setState(prev => {
+    setState((prev) => {
       if (prev.unlocked.has(id)) return prev;
       const unlocked = new Set(prev.unlocked).add(id);
       return {
@@ -101,8 +101,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const clearJustUnlocked = () =>
-    setState(prev => ({ ...prev, justUnlocked: [] }));
+  const clearJustUnlocked = () => setState((prev) => ({ ...prev, justUnlocked: [] }));
 
   const completeChallenge = async (challengeId: string) => {
     if (!uid) return;
@@ -110,21 +109,23 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
     try {
       const updatedData = await completeChallengeApi(uid, challengeId);
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         points: updatedData.points,
-        completedChallenges: new Set<string>(updatedData.completedChallenges || [...prev.completedChallenges, challengeId]),
+        completedChallenges: new Set<string>(
+          updatedData.completedChallenges || [...prev.completedChallenges, challengeId],
+        ),
       }));
     } catch (e) {
       console.error('Complete challenge failed', e);
     }
   };
-const getChallenges = (): Challenge[] => [
+  const getChallenges = (): Challenge[] => [
     {
       id: 'earn_150_pts',
       title: 'Earn 150 Points',
       description: 'Unlock the Point Collector badge',
-      isCompleted: state.completedChallenges.has('earn_150_pts'),  // <-- only completedChallenges
+      isCompleted: state.completedChallenges.has('earn_150_pts'), // <-- only completedChallenges
       icon: 'wallet',
       type: 'current',
     },
@@ -167,7 +168,7 @@ const getChallenges = (): Challenge[] => [
 
     const updated = new Set(state.completedChallenges);
     updated.add(challengeId);
-    setState(prev => ({ ...prev, completedChallenges: updated }));
+    setState((prev) => ({ ...prev, completedChallenges: updated }));
 
     try {
       await fetch(`http://10.0.2.2:3000/api/badges/complete-challenge`, {

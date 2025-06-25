@@ -13,13 +13,13 @@ interface Props {
   variant?: 'primary' | 'secondary' | 'outline';
 }
 
-export default function ActionButton({ 
-  title, 
+export default function ActionButton({
+  title,
   onPress,
   backgroundColor,
   textColor,
   borderColor,
-  variant = 'primary'
+  variant = 'primary',
 }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
@@ -57,16 +57,8 @@ export default function ActionButton({
   };
 
   return (
-    <TouchableOpacity 
-      style={[
-        styles.container, 
-        getButtonStyle()
-      ]}
-      onPress={onPress}
-    >
-      <Text style={[styles.text, { color: getTextColor() }]}>
-        {title}
-      </Text>
+    <TouchableOpacity style={[styles.container, getButtonStyle()]} onPress={onPress}>
+      <Text style={[styles.text, { color: getTextColor() }]}>{title}</Text>
     </TouchableOpacity>
   );
 }

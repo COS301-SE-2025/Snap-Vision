@@ -9,12 +9,12 @@ import { getThemeColors } from '../../theme';
 export default function AccountDetails() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  
+
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState({
     email: '',
     name: '',
-    role: ''
+    role: '',
   });
 
   useEffect(() => {
@@ -22,33 +22,33 @@ export default function AccountDetails() {
       setLoading(true);
       try {
         const currentUser = auth().currentUser;
-        
+
         if (!currentUser) {
           console.log('No user is currently logged in');
           setLoading(false);
           return;
         }
-        
+
         // Default user info from Auth
         let userInfo = {
           email: currentUser.email || '',
           name: '',
-          role: ''
+          role: '',
         };
-        
+
         // Get additional info from Firestore
         try {
           const userDoc = await firestore()
             .collection('userInformation')
             .where('email', '==', currentUser.email)
             .get();
-          
+
           if (!userDoc.empty) {
             const firestoreData = userDoc.docs[0].data();
             userInfo = {
               ...userInfo,
               name: firestoreData.name || '',
-              role: firestoreData.role || ''
+              role: firestoreData.role || '',
             };
           } else {
             console.log('No matching document found in userInformation collection');
@@ -56,7 +56,7 @@ export default function AccountDetails() {
         } catch (firestoreError) {
           console.error('Error fetching from Firestore:', firestoreError);
         }
-        
+
         setUserData(userInfo);
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -71,7 +71,7 @@ export default function AccountDetails() {
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} testID='loading-indicator'/>
+        <ActivityIndicator size="large" color={colors.primary} testID="loading-indicator" />
       </View>
     );
   }

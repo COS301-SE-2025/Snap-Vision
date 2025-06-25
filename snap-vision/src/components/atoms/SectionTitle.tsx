@@ -10,11 +10,7 @@ interface Props {
 }
 
 export default function SectionTitle({ children, color = '#000', fontFamily, style }: Props) {
-  return (
-    <Text style={[styles.title, { color, fontFamily }, style]}>
-      {children}
-    </Text>
-  );
+  return <Text style={[styles.title, { color, fontFamily }, style]}>{children}</Text>;
 }
 
 const styles = StyleSheet.create({

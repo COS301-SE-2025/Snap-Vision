@@ -1,5 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, Dimensions, ImageSourcePropType, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  Dimensions,
+  ImageSourcePropType,
+  ScrollView,
+} from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
@@ -16,15 +24,15 @@ const TutorialSlide = ({ image, title, description }: TutorialSlideProps) => {
   const colors = getThemeColors(isDark);
 
   return (
-    <ScrollView 
+    <ScrollView
       style={{ width }}
       contentContainerStyle={[styles.slideContent, { backgroundColor: colors.background }]}
       showsVerticalScrollIndicator={true}
     >
       <View style={styles.imageContainer}>
-        <Image 
-          source={image} 
-          style={styles.image} 
+        <Image
+          source={image}
+          style={styles.image}
           resizeMode="contain" // Changed to contain to show full image without cropping
         />
       </View>
