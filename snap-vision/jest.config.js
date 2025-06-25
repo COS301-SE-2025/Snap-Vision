@@ -18,9 +18,7 @@ module.exports = {
   setupFilesAfterEnv: ['@testing-library/jest-native/extend-expect'],
   moduleNameMapper: {
     '^~/(.*)$': '<rootDir>/src/$1',         // supports paths like `~/screens/...`
-    '^app/\\(tabs\\)/(.*)$': '<rootDir>/app/(tabs)/$1', 
    '^@expo/vector-icons/?(.*)$': 'react-native-vector-icons/$1',
-    //'^expo-font$': '<rootDir>/__mocks__/expo-font.js',
   },
   testMatch: ['**/__tests__/**/*.test.ts?(x)'],
 
