@@ -1,20 +1,19 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
-// import TopBar from '../molecules/TopBar';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import AppInput from '../atoms/AppInput';
 import AppButton from '../atoms/AppButton';
 import AppSecondaryButton from '../atoms/AppSecondaryButton';
-import FloorplanListItem from '../molecules/FloorplanListItem';
 import SettingsHeader from '../molecules/SettingsHeader';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-
-interface FloorplanItem {
+// Interface for building data
+interface Building {
   id: string;
-  buildingName: string;
-  floorLabel: string;
-  status: 'active' | 'draft';
-  uploadDate: string;
-  icon: string;
+  name: string;
+  centroid?: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 interface Props {
@@ -24,12 +23,15 @@ interface Props {
   setBuildingName: (v: string) => void;
   floorLabel: string;
   setFloorLabel: (v: string) => void;
-  mockFloorplans: FloorplanItem[];
+  buildings: Building[];
+  selectedBuilding: Building | null;
+  onBuildingSelect: (building: Building) => void;
+  fileUri: string | null;
+  fileName: string;
+  onPickFile: () => void;
   handleUpload: () => void;
-  handleSaveChanges: () => void;
-  handleView: (id: string) => void;
-  handleEdit: (id: string) => void;
-  handleDelete: (id: string) => void;
+  isLoading: boolean;
+  error: string | null;
 }
 
 export default function AdminLoadFloorplansContent({
@@ -39,83 +41,148 @@ export default function AdminLoadFloorplansContent({
   setBuildingName,
   floorLabel,
   setFloorLabel,
-  mockFloorplans,
+  buildings,
+  selectedBuilding,
+  onBuildingSelect,
+  fileUri,
+  fileName,
+  onPickFile,
   handleUpload,
-  handleSaveChanges,
-  handleView,
-  handleEdit,
-  handleDelete,
+  isLoading,
+  error,
 }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <SettingsHeader title="Load Floorplans" />
+      <SettingsHeader title="Upload Floorplan" />
+      
+      {isLoading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={{ color: colors.text, marginTop: 16 }}>Processing...</Text>
+        </View>
+      )}
+      
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Building Name Input */}
-        <View style={styles.inputSection}>
-          <Text style={[styles.inputTitle, { color: colors.primary }]}>Building Name</Text>
-          <AppInput
-            placeholder="Enter the building's name"
-            value={buildingName}
-            onChangeText={setBuildingName}
-            style={[
-              styles.textField,
-              { borderColor: colors.primary, color: colors.secondary, backgroundColor: colors.background }
-            ]}
-            placeholderTextColor={colors.secondary}
-          />
-          <Text style={[styles.infoText, { color: colors.secondary}]}>e.g. Science Hall</Text>
-        </View>
-
-        {/* Floor Label Input */}
-        <View style={styles.inputSection}>
-          <Text style={[styles.inputTitle, { color: colors.primary }]}>Floor Number / Label</Text>
-          <AppInput
-            placeholder="e.g., Floor 2, Basement"
-            value={floorLabel}
-            onChangeText={setFloorLabel}
-            style={[
-              styles.textField,
-              { borderColor: colors.primary, color: colors.text, backgroundColor: colors.background }
-            ]}
-            placeholderTextColor={colors.secondary}
-          />
-          <Text style={[styles.infoText, { color: colors.secondary }]}>Specify the floor designation</Text>
-        </View>
-
-        {/* Upload Button */}
-        <View style={styles.buttonSection}>
-          <AppSecondaryButton
-            title="Click to Upload"
-            onPress={handleUpload}
-          />
-        </View>
-
-        {/* Save Changes Button */}
-        <View style={styles.buttonSection}>
-          <AppButton title="Save Changes" onPress={handleSaveChanges} />
-        </View>
-
-        {/* Previously Uploaded Floorplans */}
-        <View style={styles.listSection}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.headerText}>
-              <Text style={[styles.sectionTitle, { color: colors.primary }]}>
-                Previously Uploaded Floorplans
-              </Text>
-              <Text style={[styles.sectionSubtitle, { color: colors.secondary }]}>Manage your uploads</Text>
-            </View>
+        {/* Error message */}
+        {error && (
+          <View style={[styles.errorContainer, { backgroundColor: colors.error }]}>
+            <Text style={styles.errorText}>{error}</Text>
           </View>
+        )}
 
-          {mockFloorplans.map((item) => (
-            <FloorplanListItem
-              key={item.id}
-              item={item}
-              onView={() => handleView(item.id)}
-              onEdit={() => handleEdit(item.id)}
-              onDelete={() => handleDelete(item.id)}
-              colors={colors}
+        {/* Step 1: Select Building */}
+        <View style={styles.sectionContainer}>
+          <Text style={[styles.sectionTitle, { color: colors.primary }]}>Step 1: Select Building</Text>
+          
+          {/* Building Selection */}
+          {buildings.length === 0 ? (
+            <Text style={[styles.infoText, { color: colors.secondary }]}>
+              No buildings available. Please check your connection.
+            </Text>
+          ) : (
+            <View style={styles.buildingSelector}>
+              <Text style={[styles.inputTitle, { color: colors.primary }]}>Select a Building</Text>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.buildingList}
+              >
+                {buildings.map((building) => (
+                  <TouchableOpacity
+                    key={building.id}
+                    style={[
+                      styles.buildingItem,
+                      {
+                        backgroundColor: selectedBuilding?.id === building.id 
+                          ? colors.primary 
+                          : colors.card
+                      }
+                    ]}
+                    onPress={() => onBuildingSelect(building)}
+                  >
+                    <Text style={{
+                      color: selectedBuilding?.id === building.id ? colors.cardText : colors.text
+                    }}>
+                      {building.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          {/* Or manually enter building name */}
+          <Text style={[styles.orText, { color: colors.text }]}>OR</Text>
+          
+          <View style={styles.inputSection}>
+            <Text style={[styles.inputTitle, { color: colors.primary }]}>Building Name</Text>
+            <AppInput
+              placeholder="Enter the building's name"
+              value={buildingName}
+              onChangeText={setBuildingName}
+              style={[
+                styles.textField,
+                { borderColor: colors.primary, color: colors.text, backgroundColor: colors.card }
+              ]}
+              placeholderTextColor={colors.secondary}
             />
-          ))}
+            <Text style={[styles.infoText, { color: colors.secondary }]}>e.g. Science Hall</Text>
+          </View>
+        </View>
+
+        {/* Step 2: Floor Label */}
+        <View style={styles.sectionContainer}>
+          <Text style={[styles.sectionTitle, { color: colors.primary }]}>Step 2: Floor Information</Text>
+          
+          <View style={styles.inputSection}>
+            <Text style={[styles.inputTitle, { color: colors.primary }]}>Floor Number / Label</Text>
+            <AppInput
+              placeholder="e.g., Floor 2, Basement"
+              value={floorLabel}
+              onChangeText={setFloorLabel}
+              style={[
+                styles.textField,
+                { borderColor: colors.primary, color: colors.text, backgroundColor: colors.card }
+              ]}
+              placeholderTextColor={colors.secondary}
+            />
+            <Text style={[styles.infoText, { color: colors.secondary }]}>Specify the floor designation</Text>
+          </View>
+        </View>
+
+        {/* Step 3: Upload Floorplan */}
+        <View style={styles.sectionContainer}>
+          <Text style={[styles.sectionTitle, { color: colors.primary }]}>Step 3: Select Floorplan File</Text>
+          
+          {/* File Upload Button */}
+          <View style={styles.fileUploadContainer}>
+            <AppSecondaryButton
+              title={fileUri ? "Change Image" : "Select Floorplan Image"}
+              onPress={onPickFile}
+              icon="file-image"
+            />
+            <Text style={[styles.infoText, { color: colors.secondary }]}>
+              Select a PNG or JPG floorplan image
+            </Text>
+            
+            {fileUri && (
+              <View style={[styles.fileInfoContainer, { backgroundColor: colors.card }]}>
+                <Icon name="file-document" size={24} color={colors.primary} />
+                <Text style={[styles.fileName, { color: colors.text }]} numberOfLines={1}>
+                  {fileName}
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Submit Button */}
+        <View style={styles.submitContainer}>
+          <AppButton 
+            title="Upload Floorplan" 
+            onPress={handleUpload}
+            disabled={!fileUri || (!selectedBuilding && !buildingName) || !floorLabel} 
+          />
         </View>
       </ScrollView>
     </View>
@@ -128,11 +195,55 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  errorContainer: {
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 16,
+  },
+  errorText: {
+    color: 'white',
+    fontWeight: '500',
+  },
+  sectionContainer: {
+    marginBottom: 24,
+    padding: 16,
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    borderRadius: 8,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  buildingSelector: {
+    marginBottom: 16,
+  },
+  buildingList: {
+    paddingVertical: 8,
+  },
+  buildingItem: {
+    padding: 12,
+    borderRadius: 8,
+    marginRight: 8,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  orText: {
+    textAlign: 'center',
+    fontWeight: 'bold',
+    marginVertical: 8,
   },
   inputSection: {
-    marginBottom: 20,
-    paddingTop: 12,
+    marginBottom: 16,
   },
   inputTitle: {
     fontSize: 14,
@@ -145,25 +256,22 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 12,
   },
-  buttonSection: {
-    marginBottom: 16,
+  fileUploadContainer: {
+    marginTop: 8,
   },
-  listSection: {
-    marginTop: 20,
+  fileInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
   },
-  sectionHeader: {
-    paddingTop: 16,
-    marginBottom: 12,
-  },
-  headerText: {
+  fileName: {
+    marginLeft: 8,
     flex: 1,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  sectionSubtitle: {
-    fontSize: 12,
+  submitContainer: {
+    marginTop: 8,
+    marginBottom: 32,
   },
 });

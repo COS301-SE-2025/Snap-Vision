@@ -467,6 +467,45 @@
         opacity: 0.8
       }).addTo(map);
     };
+    
+    // Function to show indoor map with room POIs
+    window.showIndoorMap = function(imageUrl, roomPOIs) {
+      // Hide outdoor map
+      map.removeLayer(tileLayer);
+      
+      // Show indoor map
+      const bounds = [[0, 0], [1, 1]];
+      const image = L.imageOverlay(imageUrl, bounds).addTo(map);
+      map.fitBounds(bounds);
+      
+      // Add room POIs
+      if (roomPOIs && Array.isArray(roomPOIs)) {
+        roomPOIs.forEach(poi => {
+          const marker = L.marker([poi.coordinates.y, poi.coordinates.x], {
+            icon: L.divIcon({
+              className: 'room-marker',
+              html: `<div class="room-marker-inner" style="background-color: ${getColorForType(poi.type)}"></div>`,
+              iconSize: [12, 12]
+            })
+          }).addTo(map);
+          
+          marker.bindPopup(`<b>${poi.name}</b><br>${poi.type || ''}<br>${poi.description || ''}`);
+        });
+      }
+    };
+    
+    // Helper function to get color based on room type
+    function getColorForType(type) {
+      switch(type) {
+        case 'classroom': return '#3388ff';
+        case 'office': return '#33cc33';
+        case 'lab': return '#ff8800';
+        case 'restroom': return '#cc33ff';
+        case 'stairs': return '#ffcc00';
+        case 'elevator': return '#ff3333';
+        default: return '#3388ff';
+      }
+    }
 
     //Get co-ords when admin taps the map
     window.enableAdminPOICreation = function () {

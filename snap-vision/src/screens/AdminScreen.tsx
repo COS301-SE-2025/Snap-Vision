@@ -10,6 +10,7 @@ type AdminStackParamList = {
   AdminEditFloorplans: undefined;
   AdminSettings: undefined;
   AdminManageUsers: undefined;
+  AdminFloorplanEditor: undefined;
 };
 
 type AdminNavigationProp = NavigationProp<AdminStackParamList>;

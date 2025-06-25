@@ -6,7 +6,7 @@ import { PermissionsAndroid } from 'react-native';
 import { WebView as WebViewType } from 'react-native-webview';
 import { useEffect } from 'react';
 import firestore from '@react-native-firebase/firestore';
-import { Modal, FlatList, Pressable } from 'react-native';
+import { Pressable } from 'react-native';
 import Tts from 'react-native-tts';
 import MapWebView from '../components/organisms/MapWebView';
 import CrowdReportModal from '../components/molecules/CrowdReportModal';
@@ -22,6 +22,7 @@ import TextToSpeech from '../components/molecules/TextToSpeech';
 import { useRoute } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 
+import { useBadges } from '../context/BadgeContext'; 
 
 type MapScreenParams = {
   lat?: string;
@@ -79,6 +80,13 @@ const MapScreen = () => {
   const route = useRoute();
   const params = route.params as MapScreenParams;
   const [hasHandledDeepLink, setHasHandledDeepLink] = useState(false);
+  
+  const { unlock, incrementRoutes } = useBadges();  
+  const { state, clearJustUnlocked } = useBadges();
+  const { setNavigationStartTime } = useBadges();
+  const { maybeUnlockFastFinisher, incrementCheckIns } = useBadges();
+const [popupBadge, setPopupBadge] = useState<string | null>(null);
+
 
   // crowd reports
   const [selectedPOI, setSelectedPOI] = useState<any>(null);
@@ -395,10 +403,20 @@ const MapScreen = () => {
       const message = `Check out my location: ${url}`;
       await Share.share({ message, url, title: 'Share Location' });
       setStatus('Location shared successfully');
+      unlock('share-location');
     } catch {
       setError('Failed to share location');
     }
   };
+
+  // const submitCrowdReport = () => {
+  //   if (!currentLocation) return;
+  //   const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${currentLocation.latitude}, ${currentLocation.longitude}, '${selectedDensity}');`;
+  //   webViewRef.current?.injectJavaScript(jsCrowdCode);
+  //   setShowCrowdPopup(false);
+  //   setStatus(`Crowd density reported: ${selectedDensity}`);
+  //   unlock('reported-crowd');
+  // };
 
   const handleDestinationSearch = () => {
     if (!currentLocation || !destinationCoords) {
@@ -479,8 +497,7 @@ const MapScreen = () => {
     setIsNavigating(true);
     setStatus('Navigation started');
     setRouteProgress(0);
-        webViewRef.current?.injectJavaScript('window.setNavigationState && window.setNavigationState(true);');
-    
+    setNavigationStartTime(Date.now());
     // Start watching position with higher frequency
     if (watchIdRef.current) {
       Geolocation.clearWatch(watchIdRef.current);
@@ -497,7 +514,7 @@ const MapScreen = () => {
       { 
         enableHighAccuracy: true, 
         distanceFilter: 5, // Update every 5 meters
-        interval: 1000 // Update every 2 seconds
+        interval: 1000 // Update every second
       }
     );
   };
@@ -583,24 +600,25 @@ const MapScreen = () => {
       // At the last point
       progressValue = 100;
     }
-     if (steps.length > 0) {
-    let stepIndex = 0;
-    let minDist = Infinity;
-    for (let i = 0; i < steps.length; i++) {
-      const step = steps[i];
-      const [lon, lat] = step.way_points
-        ? lastRoute.current[step.way_points[0]]
-        : lastRoute.current[0];
-      const dist = getDistanceMeters(latitude, longitude, lat, lon);
-      if (dist < minDist) {
-        minDist = dist;
-        stepIndex = i;
+    
+    if (steps.length > 0) {
+      let stepIndex = 0;
+      let minDist = Infinity;
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        const [lon, lat] = step.way_points
+          ? lastRoute.current[step.way_points[0]]
+          : lastRoute.current[0];
+        const dist = getDistanceMeters(latitude, longitude, lat, lon);
+        if (dist < minDist) {
+          minDist = dist;
+          stepIndex = i;
+        }
+      }
+      if (stepIndex !== currentStep) {
+        setCurrentStep(stepIndex);
       }
     }
-    if (stepIndex !== currentStep) {
-      setCurrentStep(stepIndex);
-    }
-  }
     
     // Update progress with a more precise value
     const newProgress = Math.min(Math.round(progressValue), 100);
@@ -638,9 +656,16 @@ const MapScreen = () => {
   };
   
   // Add this new function to handle reaching the destination
-  const destinationReached = () => {
+  const destinationReached = async() => {
     if (!isNavigating) return; // Only handle if actually navigating
     
+     try {
+    await unlock('destination-reached');
+    await incrementRoutes();
+  } catch (e) {
+    console.warn('Failed to update badge state:', e);
+  }
+
     // Stop navigation
     stopNavigation();
     
@@ -733,7 +758,7 @@ const MapScreen = () => {
     } catch (error) {
       console.error('Error fetching crowd reports:', error);
       // More informative error handling
-      if (error.code === 'firestore/permission-denied') {
+      if (typeof error === 'object' && error !== null && 'code' in error && (error as any).code === 'firestore/permission-denied') {
         setError('Crowd reports feature unavailable: Permission error');
       }
     }
@@ -772,35 +797,35 @@ const MapScreen = () => {
     setShowCrowdPopup(true);
   };
 
-useEffect(() => {
-  if (isNavigating && shouldStartTTS && steps.length > 0 && currentStep < steps.length) {
-    const instruction = steps[currentStep]?.instruction;
-    if (instruction) {
-      console.log('TTS should speak:', instruction);
-      try {
+  useEffect(() => {
+    if (isNavigating && shouldStartTTS && steps.length > 0 && currentStep < steps.length) {
+      const instruction = steps[currentStep]?.instruction;
+      if (instruction) {
+        console.log('TTS should speak:', instruction);
+        try {
+          Tts.stop();
+          setTimeout(() => {
+            Tts.speak(instruction);
+          }, 500);
+        } catch (e) {
+          console.error('TTS Error:', e);
+          setError('Voice guidance is not available.');
+        }
+      }
+    }
+  }, [isNavigating, shouldStartTTS, steps, currentStep]);
+
+  useEffect(() => {
+    if (isNavigating && steps.length > 0 && currentStep < steps.length) {
+      const instruction = steps[currentStep]?.instruction;
+      if (instruction) {
         Tts.stop();
         setTimeout(() => {
           Tts.speak(instruction);
         }, 500);
-      } catch (e) {
-        console.error('TTS Error:', e);
-        setError('Voice guidance is not available.');
       }
     }
-  }
-}, [isNavigating, shouldStartTTS, steps, currentStep]);
-
-useEffect(() => {
-  if (isNavigating && steps.length > 0 && currentStep < steps.length) {
-    const instruction = steps[currentStep]?.instruction;
-    if (instruction) {
-      Tts.stop();
-      setTimeout(() => {
-        Tts.speak(instruction);
-      }, 500);
-    }
-  }
-}, [isNavigating, steps, currentStep]);
+  }, [isNavigating, steps, currentStep]);
 
 
   const fetchPOIs = async () => {
@@ -1033,7 +1058,7 @@ useEffect(() => {
     };
   }, []);
 
-    // Add this new useEffect after your other useEffects
+  // Add this new useEffect after your other useEffects
   useEffect(() => {
     // Only run when navigating
     if (!isNavigating || !currentLocation) return;
@@ -1082,8 +1107,7 @@ useEffect(() => {
     };
   }, []);
 
-
- return (
+  return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {showCrowdPopup && (
         <CrowdReportModal
