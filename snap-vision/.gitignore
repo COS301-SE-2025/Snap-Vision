@@ -45,6 +45,16 @@ yarn-error.*
 /android/build/
 **/.idea/
 
+# Floorplan directories
+src/assets/floorplans/
+android/app/src/main/assets/floorplans/
+
+# Or ignore all floorplan images regardless of location
+**/floorplans/*.jpg
+**/floorplans/*.png
+**/floorplans/*.jpeg
+**/floorplans/*.webp
+
 app-example
 
 package.json 

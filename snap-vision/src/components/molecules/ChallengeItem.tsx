@@ -1,36 +1,35 @@
-// src/components/molecules/ChallengeItem.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
 import { Challenge } from '../../types/achievements';
 
-interface Props {
+type Props = {
   challenge: Challenge;
-  textColor?: string;
-  backgroundColor?: string;
-  borderColor?: string;
-  onPress?: () => void;
-}
+  onPress: () => void;
+};
 
-export default function ChallengeItem({ 
-  challenge, 
-  textColor = '#333',
-  backgroundColor = '#fff',
-  borderColor = '#ddd',
-  onPress 
-}: Props) {
+export default function ChallengeItem({ challenge, onPress }: Props) {
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
+
   const getStatusIcon = () => {
     if (challenge.isCompleted) {
-      return <Icon name="checkmark-circle" size={24} color="#4CAF50" />;
+      return <Icon name="checkmark-circle" size={24} color={colors.statusActive || colors.primary} />;
     }
-    return <Icon name={challenge.icon} size={24} color={textColor} />;
+    return <Icon name={challenge.icon} size={24} color={colors.text} />;
   };
 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[
-        styles.container, 
-        { backgroundColor, borderColor }
+        styles.container,
+        {
+          backgroundColor: colors.card,
+          borderColor: challenge.isCompleted ? colors.statusActive || colors.primary : colors.border,
+          opacity: challenge.isCompleted ? 0.5 : 1,
+        },
       ]}
       onPress={onPress}
     >
@@ -38,10 +37,10 @@ export default function ChallengeItem({
         {getStatusIcon()}
       </View>
       <View style={styles.contentContainer}>
-        <Text style={[styles.title, { color: textColor }]}>
+        <Text style={[styles.title, { color: colors.primary }]}>
           {challenge.title}
         </Text>
-        <Text style={[styles.description, { color: textColor, opacity: 0.7 }]}>
+        <Text style={[styles.description, { color: colors.text, opacity: 0.7 }]}>
           {challenge.description}
         </Text>
       </View>
@@ -51,12 +50,12 @@ export default function ChallengeItem({
 
 const styles = StyleSheet.create({
   container: {
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    marginVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
+    marginBottom: 12,
   },
   iconContainer: {
     marginRight: 12,
@@ -65,11 +64,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   description: {
-    fontSize: 14,
+    fontSize: 12,
+    marginTop: 2,
   },
 });
