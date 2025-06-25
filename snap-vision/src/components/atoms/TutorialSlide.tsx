@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, Dimensions, ImageSourcePropType } from 'react-native';
+import { View, Text, StyleSheet, Image, Dimensions, ImageSourcePropType, ScrollView } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
@@ -9,35 +9,46 @@ interface TutorialSlideProps {
   description: string;
 }
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const TutorialSlide = ({ image, title, description }: TutorialSlideProps) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
   return (
-    <View style={[styles.slide, { backgroundColor: colors.background, width }]}>
+    <ScrollView 
+      style={{ width }}
+      contentContainerStyle={[styles.slideContent, { backgroundColor: colors.background }]}
+      showsVerticalScrollIndicator={true}
+    >
       <View style={styles.imageContainer}>
-        <Image source={image} style={styles.image} resizeMode="contain" />
+        <Image 
+          source={image} 
+          style={styles.image} 
+          resizeMode="contain" // Changed to contain to show full image without cropping
+        />
       </View>
       <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
       <Text style={[styles.description, { color: colors.text }]}>{description}</Text>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  slide: {
-    flex: 1,
+  slideContent: {
     alignItems: 'center',
     padding: 20,
+    minHeight: height - 160, // Account for header and bottom buttons
   },
   imageContainer: {
-    width: width * 0.8,
-    height: width * 1.2, // Adjust for aspect ratio of phone screenshots
+    width: width * 0.9,
+    height: height * 0.5, // Use percentage of screen height instead of fixed aspect ratio
     marginBottom: 24,
     borderRadius: 12,
     overflow: 'hidden',
+    backgroundColor: '#f0f0f0', // Light background for images with transparency
+    justifyContent: 'center', // Center image vertically
+    alignItems: 'center', // Center image horizontally
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -59,6 +70,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 20,
     lineHeight: 24,
+    marginBottom: 20,
   },
 });
 
