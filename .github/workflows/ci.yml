@@ -18,6 +18,9 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Run Prettier check
+        run: cd snap-vision && npm run format:check
+
       - name: Install dependencies
         run: cd snap-vision && npm install
 
