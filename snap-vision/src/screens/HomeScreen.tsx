@@ -1,5 +1,5 @@
 // src/screens/HomeScreen.tsx
-import React, { useState } from 'react';
+import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import MapHomeContent from '../components/organisms/HomeContent';
 import LandingOverlay from '../components/organisms/LandingOverlay';

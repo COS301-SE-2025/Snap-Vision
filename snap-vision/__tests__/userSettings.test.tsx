@@ -1,4 +1,3 @@
-import { waitFor } from '@testing-library/react-native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 
@@ -16,8 +15,6 @@ jest.mock('react-native', () => {
   };
 });
 
-// Import after mocking
-import { Alert } from 'react-native';
 
 // Mock the Firebase modules
 jest.mock('@react-native-firebase/auth', () => {

@@ -4,7 +4,6 @@ import SettingsHeader from '../molecules/SettingsHeader';
 import DarkModeToggle from '../molecules/DarkModeToggle';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
-import { StackNavigationProp } from '@react-navigation/stack/lib/typescript/src';
 
 interface Props {
   navigation: any;
