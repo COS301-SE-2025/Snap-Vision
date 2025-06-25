@@ -1,8 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
-import { render, act, fireEvent, waitFor } from '@testing-library/react-native';
-import MapScreen from '../src/screens/MapScreen';
-import Geolocation from '@react-native-community/geolocation';
+import { render, act, fireEvent } from '@testing-library/react-native';
 import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
 import fetchMock from 'jest-fetch-mock';
 
