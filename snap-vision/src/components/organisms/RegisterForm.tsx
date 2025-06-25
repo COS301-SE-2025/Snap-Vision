@@ -10,6 +10,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useDeepLink } from '../../DeepLinkContext';
 import firestore from '@react-native-firebase/firestore';
+import { useBadges } from '../../context/BadgeContext';
 
 type RootStackParamList = {
   Login: undefined;
@@ -35,6 +36,7 @@ export default function RegisterForm() {
     username: '', email: '', password: '', confirmPassword: ''
   });
   const [successMessage, setSuccessMessage] = useState('');
+  const { unlock } = useBadges();
 
   const handleRegister = async () => {
     const newErrors = { username: '', email: '', password: '', confirmPassword: '' };
@@ -91,6 +93,9 @@ export default function RegisterForm() {
               });
 
               Alert.alert('Success', 'Account created!');
+              unlock('first-login');
+      Alert.alert('Success', 'Account created!');
+
               setSuccessMessage('Account created!');
 
               setTimeout(() => {

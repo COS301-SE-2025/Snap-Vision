@@ -4,7 +4,7 @@ import RegisterForm from '../src/components/organisms/RegisterForm';
 import { Alert } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
-
+import { BadgeProvider } from '../src/context/BadgeContext'; 
 const mockCreateUser = jest.fn();
 
 jest.mock('@react-native-firebase/auth', () => () => ({
@@ -75,11 +75,13 @@ jest.spyOn(Alert, 'alert');
 describe('RegisterForm', () => {
   const setup = () =>
     render(
+       <BadgeProvider>
       <ThemeProviderWrapper>
         <NavigationContainer>
           <RegisterForm />
         </NavigationContainer>
       </ThemeProviderWrapper>
+    </BadgeProvider>
     );
 
   beforeEach(() => {
