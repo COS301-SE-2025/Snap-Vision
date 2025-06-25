@@ -59,6 +59,12 @@
 
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
   <script>
+
+      window.isAdmin = false; // default
+  window.setAdminMode = function (flag) {
+    window.isAdmin = flag;
+  };
+
     let map;
     let userMarker = null;
     let destinationMarker = null;
@@ -200,6 +206,16 @@
           </div>
         `;
       }
+
+      let adminButtons = '';
+        if (window.isAdmin) {
+          adminButtons = `
+            <div style="margin-top: 8px;">
+              <button onclick="window.editPOI('${buildingId}')" style="margin-right:6px;background-color:orange;">Edit</button>
+              <button onclick="window.deletePOI('${buildingId}')" style="background-color:red;">Delete</button>
+            </div>
+          `;
+        }
       
       return `
         <div style="text-align: center;">
@@ -215,6 +231,7 @@
             cursor: pointer;
             font-size: 12px;
           ">Navigate Here</button>
+          ${adminButtons}
         </div>
       `;
     }
@@ -489,6 +506,20 @@
         default: return '#3388ff';
       }
     }
+
+    //Get co-ords when admin taps the map
+    window.enableAdminPOICreation = function () {
+      map.once('click', (e) => {
+        const lat = e.latlng.lat;
+        const lon = e.latlng.lng;
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'ADMIN_ADD_POI',
+          lat,
+          lon
+        }));
+      });
+    };
+
   </script>
 </body>
 </html>
