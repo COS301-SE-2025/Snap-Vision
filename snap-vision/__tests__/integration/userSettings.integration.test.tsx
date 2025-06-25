@@ -32,8 +32,12 @@ jest.mock('react-native/Libraries/Components/ScrollView/ScrollView', () => {
 });
 
 // --- Mock Theme ---
+const mockToggleTheme = jest.fn();
 jest.mock('../../src/theme/ThemeContext', () => ({
-  useTheme: () => ({ isDark: false }),
+  useTheme: () => ({ 
+    isDark: false,
+    toggleTheme: mockToggleTheme
+  }),
 }));
 
 jest.mock('../../src/theme', () => ({
@@ -67,6 +71,43 @@ jest.mock('../../src/components/molecules/NotificationSettings', () => {
   };
 });
 
+// --- Mock DarkModeToggle ---
+jest.mock('../../src/components/molecules/DarkModeToggle', () => {
+  const React = require('react');
+  const { View, Text, TouchableOpacity } = require('react-native');
+  return function MockDarkModeToggle() {
+    const { useTheme } = require('../../src/theme/ThemeContext');
+    const { toggleTheme, isDark } = useTheme();
+    return (
+      <View testID="dark-mode-toggle" style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text>Dark Mode</Text>
+        <TouchableOpacity 
+          testID="dark-mode-switch" 
+          onPress={toggleTheme}
+          style={{
+            width: 40,
+            height: 24,
+            borderRadius: 12,
+            backgroundColor: isDark ? '#4CAF50' : '#DDDDDD',
+            justifyContent: 'center',
+            paddingHorizontal: 4
+          }}
+        >
+          <View 
+            style={{
+              width: 18,
+              height: 18,
+              borderRadius: 9,
+              backgroundColor: 'white',
+              alignSelf: isDark ? 'flex-end' : 'flex-start'
+            }}
+          />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+});
+
 // --- Mock SettingsHeader ---
 jest.mock('../../src/components/molecules/SettingsHeader', () => {
   const React = require('react');
@@ -80,9 +121,33 @@ jest.mock('../../src/components/molecules/SettingsHeader', () => {
   };
 });
 
+// --- Mock AppPreferencesScreen ---
+// Add this mock before importing the real components
+jest.mock('../../src/screens/AppPreferences', () => {
+  const React = require('react');
+  const { View, SafeAreaView, ScrollView } = require('react-native');
+  
+  // Import AppPreferencesContent here to avoid circular reference
+  const AppPreferencesContent = require('../../src/components/organisms/AppPreferencesContent').default;
+  
+  return function MockAppPreferencesScreen() {
+    return (
+      <SafeAreaView style={{ backgroundColor: '#FFFFFF' }}>
+        <ScrollView style={{ backgroundColor: '#FFFFFF' }}>
+          <AppPreferencesContent />
+        </ScrollView>
+      </SafeAreaView>
+    );
+  };
+});
+
 // --- Import Real Components ---
-// Now that we've mocked all dependencies, import the organism we want to test
+// Now that we've mocked all dependencies, import the organisms we want to test
 import NotificationSettingsContent from '../../src/components/organisms/NotificationSettingsContent';
+import AppPreferencesContent from '../../src/components/organisms/AppPreferencesContent';
+
+// Import the entire screen component for more complete integration testing
+import AppPreferencesScreen from '../../src/screens/AppPreferences';
 
 describe('Notification Settings Integration Tests', () => {
   it('renders notification settings content with header', () => {
@@ -116,4 +181,40 @@ describe('Notification Settings Integration Tests', () => {
     // Verify the text is present
     expect(pushNotificationsLabel).toBeTruthy();
   });
+});
+
+describe('App Preferences Integration Tests', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockToggleTheme.mockClear();
+  });
+  
+  it('renders app preferences content with header', () => {
+    const { getByTestId, getByText } = render(<AppPreferencesContent />);
+    
+    // Verify header is displayed with correct title
+    expect(getByTestId('settings-header')).toBeTruthy();
+    expect(getByText('App Preferences')).toBeTruthy();
+  });
+
+  it('displays dark mode toggle', () => {
+    const { getByTestId, getByText } = render(<AppPreferencesContent />);
+    
+    // Verify dark mode toggle is displayed
+    expect(getByTestId('dark-mode-toggle')).toBeTruthy();
+    expect(getByText('Dark Mode')).toBeTruthy();
+    expect(getByTestId('dark-mode-switch')).toBeTruthy();
+  });
+
+  it('toggles dark mode when switch is pressed', () => {
+    const { getByTestId } = render(<AppPreferencesContent />);
+    
+    // Find and press the dark mode toggle
+    const darkModeSwitch = getByTestId('dark-mode-switch');
+    fireEvent.press(darkModeSwitch);
+    
+    // Verify toggleTheme was called
+    expect(mockToggleTheme).toHaveBeenCalledTimes(1);
+  });
+
 });
