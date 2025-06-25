@@ -5,12 +5,10 @@ module.exports = {
   ],
   setupFilesAfterEnv: ['@testing-library/jest-native/extend-expect'],
   setupFiles: ['<rootDir>/__tests__/helpers/setup-jest.js'],
-  moduleNameMapper: {
-    '^~/(.*)$': '<rootDir>/src/$1',
-    '^app/\\(tabs\\)/(.*)$': '<rootDir>/app/(tabs)/$1', 
-    '^@expo/vector-icons$': '<rootDir>/__mocks__/@expo/vector-icons/index.js',
-    '^@expo/vector-icons/(.*)$': '<rootDir>/__mocks__/@expo/vector-icons/$1',
-    '^react-native-vector-icons/(.*)$': '<rootDir>/__mocks__/react-native-vector-icons/$1'
+  moduleNameMapper: {   
+  '^~/(.*)$': '<rootDir>/src/$1',
+  '^app/\\(tabs\\)/(.*)$': '<rootDir>/app/(tabs)/$1', 
+  '^@expo/vector-icons/?(.*)$': 'react-native-vector-icons/$1',
   },
   testMatch: ['**/__tests__/**/*.test.ts?(x)', '<rootDir>/detox/tests/**/*.test.js'],
   collectCoverage: false,
