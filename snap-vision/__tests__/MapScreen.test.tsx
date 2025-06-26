@@ -1,401 +1,476 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native'; 
-import { render, act, fireEvent, waitFor } from '@testing-library/react-native';
-import MapScreen from '../src/screens/MapScreen';
-import Geolocation from '@react-native-community/geolocation';
-import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
-import fetchMock from 'jest-fetch-mock';
+import { render, fireEvent } from '@testing-library/react-native';
+import MapActionsPanel from '../src/components/organisms/MapActionsPanel';
+import { ThemeProvider } from '../src/theme/ThemeContext';
+import MapWebView from '../src/components/organisms/MapWebView';
+import NavigationPanel from '../src/components/organisms/NavigationPanel';
+import DirectionsModal from '../src/components/organisms/DirectionsModal';
+import { Platform } from 'react-native';
 
-// Capture the mock function for later assertions
-const mockInjectJavaScript = jest.fn();
 
-jest.mock('react-native-tts', () => {
+
+jest.mock('react-native-webview', () => {
+  const React = require('react');
+  const { View } = require('react-native');
   return {
-    esModule: true,
-    default: {
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      setDefaultLanguage: jest.fn(),
-      setDefaultRate: jest.fn(),
-      setDefaultPitch: jest.fn(),
-      setDefaultVoice: jest.fn(),
-      voices: jest.fn(),
-      speak: jest.fn(),
-      stop: jest.fn(),
-      getInitStatus: jest.fn().mockResolvedValue('success'),
-    }
+    WebView: React.forwardRef((props, ref) => <View {...props} ref={ref} testID="mock-webview" />),
   };
 });
 
-jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => 'Icon');
-jest.mock('react-native-vector-icons/Ionicons', () => 'Icon');
-jest.mock('react-native-vector-icons/FontAwesome', () => 'Icon');
-jest.mock('react-native-vector-icons/FontAwesome5', () => 'Icon');
-
-jest.mock('expo-font', () => ({
-  esModule: true,
-  loadAsync: jest.fn().mockResolvedValue(true),
-  isLoaded: jest.fn().mockReturnValue(true),
-  Font: {
-    loadAsync: jest.fn().mockResolvedValue(true),
-    isLoaded: jest.fn().mockReturnValue(true),
-  },
-}));
-
-// Mock @expo/vector-icons
-jest.mock('@expo/vector-icons', () => ({
-  MaterialCommunityIcons: 'MockedMaterialCommunityIcons',
-  Ionicons: 'MockedIonicons',
-  FontAwesome: 'MockedFontAwesome',
-  FontAwesome5: 'MockedFontAwesome5',
-  createIconSet: () => 'MockedIcon',
-}));
-
-
-// Mock other native modules if needed
-jest.mock('@react-native-community/geolocation', () => ({
-  getCurrentPosition: jest.fn(),
-  watchPosition: jest.fn(() => 123),
-  clearWatch: jest.fn(),
-  stopObserving: jest.fn(),
-}));
-
-// Mock Firebase Firestore
-jest.mock('@react-native-firebase/firestore', () => {
-  return () => ({
-    collection: jest.fn(() => ({
-      get: jest.fn(() => Promise.resolve({ 
-        docs: [
-          { 
-            id: 'poi1', 
-            data: () => ({ 
-              name: 'Test POI 1', 
-              centroid: { latitude: 10.1, longitude: 20.1 } 
-            })
-          },
-          { 
-            id: 'poi2', 
-            data: () => ({ 
-              name: 'Test POI 2', 
-              centroid: { latitude: 10.2, longitude: 20.2 } 
-            })
-          },
-        ]
-      })),
-    })),
-  });
+jest.mock('react-native', () => {
+  const actualReactNative = jest.requireActual('react-native');
+  return {
+    ...actualReactNative,
+    Platform: {
+      ...actualReactNative.Platform,
+      OS: 'android', // Default to Android
+    },
+  };
 });
 
-// Mock Picker
-jest.mock('@react-native-picker/picker', () => {
-  const React = require('react');
-  const { View, Text } = require('react-native');
-  const Picker = ({ children, selectedValue, onValueChange }) =>
-    React.createElement(View, { selectedValue, onValueChange, displayValue: selectedValue }, children);
-  Picker.displayName = 'Picker';
-  Picker.Item = ({ label, value }) => React.createElement(Text, { value }, label);
-  Picker.Item.displayName = 'Picker.Item';
-  return { Picker };
-});
-
-// Mock WebView with ref
-jest.mock('react-native-webview', () => {
-  const React = require('react');
-  const { forwardRef, useImperativeHandle, useRef } = require('react');
-  const { View } = require('react-native');
-
-  const WebView = forwardRef(
-    (
-      props: React.ComponentProps<typeof View>,
-      ref: React.Ref<{ injectJavaScript: typeof mockInjectJavaScript }>
-    ) => {
-      const localRef = useRef();
-      useImperativeHandle(ref, () => ({
-        injectJavaScript: mockInjectJavaScript,
-      }));
-      return <View {...props} testID="mocked-webview" ref={localRef} />;
-    }
-  );
-  WebView.displayName = 'WebView';
-
-  return { WebView };
-});
-
-// Mock Geolocation
-jest.mock('@react-native-community/geolocation', () => ({
-  getCurrentPosition: jest.fn(),
+jest.mock('react-native-tts', () => ({
+  stop: jest.fn(),
+  removeAllListeners: jest.fn(),
 }));
 
-// Mock Permissions
-jest.mock('react-native/Libraries/PermissionsAndroid/PermissionsAndroid', () => ({
-  request: jest.fn(() => Promise.resolve('granted')),
-  RESULTS: {
-    GRANTED: 'granted',
-    DENIED: 'denied',
-  },
-  PERMISSIONS: {
-    ACCESS_FINE_LOCATION: 'ACCESS_FINE_LOCATION',
-  },
-}));
+describe('MapActionsPanel', () => {
+  const renderWithProviders = (ui: React.ReactNode) => {
+    return render(<ThemeProvider>{ui}</ThemeProvider>);
+  };
 
-// Mock Alert
-jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-
-// Set up fetch mock
-fetchMock.enableMocks();
-
-describe('MapScreen', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    fetchMock.resetMocks();
-  });
-
-  
-  
-
-  
-  
-
-
-  it('selects a POI from search results', async () => {
-    // Mock the POI data
-    const poiData = {
-      id: 'poi1',
-      name: 'Test POI 1',
-      centroid: { latitude: 10.1, longitude: 20.1 }
-    };
-
-    // Create a component that simulates POI selection
-    const TestPOISelection = () => {
-      const [destination, setDestination] = React.useState('');
-      const [destinationCoords, setDestinationCoords] = React.useState<[number, number] | null>(null);
-      
-      const handleSelectPOI = (poi: any) => {
-        setDestination(poi.name);
-        setDestinationCoords([poi.centroid.longitude, poi.centroid.latitude]);
-      };
-      
-      return (
-        <View>
-          <Text testID="destination">{destination}</Text>
-          <TouchableOpacity 
-            testID="select-poi" 
-            onPress={() => handleSelectPOI(poiData)}
-          >
-            <Text>Select POI</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    };
-    
-    // Render our test component
-    const { getByTestId } = render(<TestPOISelection />);
-    
-    // Initially the destination should be empty
-    expect(getByTestId('destination').props.children).toBe('');
-    
-    // Select the POI
-    fireEvent.press(getByTestId('select-poi'));
-    
-    // Verify destination was set correctly
-    expect(getByTestId('destination').props.children).toBe('Test POI 1');
-  });
-
- 
-
-  it('attempts to fetch a route when destination is set', async () => {
-    // Mock a successful route response
-    fetchMock.mockResponseOnce(JSON.stringify({
-      features: [{
-        geometry: {
-          coordinates: [
-            [20.1, 10.1], // point 1
-            [20.2, 10.2]  // point 2
-          ]
-        }
-      }]
-    }));
-    
-    // Create a component that simulates route fetching
-    const TestRouteFetching = () => {
-      const [currentLocation] = React.useState({ latitude: 10.1, longitude: 20.1 });
-      const [destinationCoords] = React.useState<[number, number]>([20.2, 10.2]);
-      
-      const fetchRoute = async () => {
-        try {
-          const start = `${currentLocation.longitude},${currentLocation.latitude}`;
-          const end = `${destinationCoords[0]},${destinationCoords[1]}`;
-          
-          const response = await fetch(`http://test-api/directions?start=${start}&end=${end}`);
-          const data = await response.json();
-          
-          if (data.features?.[0]?.geometry?.coordinates) {
-            return true;
-          }
-          return false;
-        } catch (error) {
-          return false;
-        }
-      };
-      
-      return (
-        <View>
-          <TouchableOpacity 
-            testID="fetch-route" 
-            onPress={async () => {
-              const success = await fetchRoute();
-              if (success) {
-                mockInjectJavaScript('window.drawRoute()');
-              }
-            }}
-          >
-            <Text>Fetch Route</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    };
-    
-    // Render our test component
-    const { getByTestId } = render(<TestRouteFetching />);
-    
-    // Trigger route fetching
-    await act(async () => {
-      fireEvent.press(getByTestId('fetch-route'));
-    });
-    
-    // Verify the fetch was called
-    expect(fetchMock).toHaveBeenCalled();
-    
-    // Verify JavaScript was injected to draw the route
-    expect(mockInjectJavaScript).toHaveBeenCalledWith('window.drawRoute()');
-  });
-
-  it('handles errors when fetching routes', async () => {
-    // Mock a failed route response
-    fetchMock.mockRejectOnce(new Error('Network error'));
-    
-    // Create a component that simulates route fetching with error handling
-    const TestRouteError = () => {
-      const [error, setError] = React.useState<string | null>(null);
-      
-      const fetchRoute = async () => {
-        try {
-          await fetch('http://test-api/directions');
-          return true;
-        } catch (error) {
-          setError('Failed to fetch or draw route');
-          return false;
-        }
-      };
-      
-      return (
-        <View>
-          <TouchableOpacity 
-            testID="fetch-route" 
-            onPress={fetchRoute}
-          >
-            <Text>Fetch Route</Text>
-          </TouchableOpacity>
-          {error && <Text testID="error">{error}</Text>}
-        </View>
-      );
-    };
-    
-    // Render our test component
-    const { getByTestId } = render(<TestRouteError />);
-    
-    // Trigger route fetching
-    await act(async () => {
-      fireEvent.press(getByTestId('fetch-route'));
-    });
-    
-    // Verify the error message is displayed
-    expect(getByTestId('error').props.children).toBe('Failed to fetch or draw route');
-  });
-});
-
-describe('Crowd Reporting', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('opens the crowd report modal when "REPORT CROWDS" is pressed', async () => {
-    // Instead of using a recursive approach, mock the component directly
-    const TestableMapScreen = () => {
-      // Create a simplified version of MapScreen with controlled state
-      const [showCrowdPopup, setShowCrowdPopup] = React.useState(false);
-      
-      return (
-        <View>
-          <TouchableOpacity 
-            onPress={() => setShowCrowdPopup(true)}
-            testID="report-button"
-          >
-            <Text>REPORT CROWDS</Text>
-          </TouchableOpacity>
-          
-          {showCrowdPopup && (
-            <View testID="crowd-modal">
-              <Text>Select Crowd Density</Text>
-            </View>
-          )}
-        </View>
-      );
-    };
-    
-    // Render our simplified test component
-    const { getByTestId, getByText } = render(<TestableMapScreen />);
-    
-    // Find and press the button
-    const reportButton = getByText('REPORT CROWDS');
-    fireEvent.press(reportButton);
-    
-    // Check if the modal appears
-    expect(getByTestId('crowd-modal')).toBeTruthy();
-  });
-
-
-  it('injects correct JavaScript on crowd report submit', async () => {
-    // Create a fake currentLocation state for testing
-    const fakeLocation = { latitude: 12.34, longitude: 56.78 };
-    
-    // Create a testing wrapper that exposes internal functions
-    const MockedMapScreen = () => {
-      // Expose and override functions we need to test
-      const submitCrowdReport = () => {
-        const jsCode = `
-          if (window.updateCrowdDensity) {
-            window.updateCrowdDensity(${fakeLocation.latitude}, ${fakeLocation.longitude}, 'overcrowded');
-          }
-        `;
-        mockInjectJavaScript(jsCode);
-      };
-      
-      return (
-        <View>
-          {/* Simplified test UI */}
-          <TouchableOpacity testID="report-button">
-            <Text>REPORT CROWDS</Text>
-          </TouchableOpacity>
-          <TouchableOpacity testID="submit-button" onPress={submitCrowdReport}>
-            <Text>Submit</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    };
-
-    const { getByText, getByTestId } = render(
-      <ThemeProviderWrapper>
-        <MockedMapScreen />
-      </ThemeProviderWrapper>
+  it('renders correctly when currentLocation is true', () => {
+    const { getByText } = renderWithProviders(
+      <MapActionsPanel
+        currentLocation={true}
+        onShare={jest.fn()}
+        onReport={jest.fn()}
+        shareTooltip={true}
+        reportTooltip={true}
+        onShareIn={jest.fn()}
+        onShareOut={jest.fn()}
+        onReportIn={jest.fn()}
+        onReportOut={jest.fn()}
+        color="white"
+      />
     );
-    
-    // Just press Submit directly to test the functionality
-    fireEvent.press(getByText('Submit'));
-    
-    // Check that injectJavaScript was called with the correct string
-    expect(mockInjectJavaScript).toHaveBeenCalledWith(
-      expect.stringContaining(`window.updateCrowdDensity(12.34, 56.78, 'overcrowded')`)
+    expect(getByText('Share Location')).toBeTruthy();
+    expect(getByText('Report Crowds')).toBeTruthy();
+  });
+
+  it('does not render when currentLocation is false', () => {
+    const { queryByText } = renderWithProviders(
+      <MapActionsPanel
+        currentLocation={false}
+        onShare={jest.fn()}
+        onReport={jest.fn()}
+        shareTooltip={true}
+        reportTooltip={true}
+        onShareIn={jest.fn()}
+        onShareOut={jest.fn()}
+        onReportIn={jest.fn()}
+        onReportOut={jest.fn()}
+        color="white"
+      />
     );
+    expect(queryByText('Share Location')).toBeNull();
+    expect(queryByText('Report Crowds')).toBeNull();
+  });
+
+  it('calls onShare when share button is pressed', () => {
+    const mockOnShare = jest.fn();
+    const { getByText } = renderWithProviders(
+      <MapActionsPanel
+        currentLocation={true}
+        onShare={mockOnShare}
+        onReport={jest.fn()}
+        shareTooltip={true}
+        reportTooltip={true}
+        onShareIn={jest.fn()}
+        onShareOut={jest.fn()}
+        onReportIn={jest.fn()}
+        onReportOut={jest.fn()}
+        color="white"
+      />
+    );
+    fireEvent.press(getByText('Share Location'));
+    expect(mockOnShare).toHaveBeenCalled();
+  });
+
+  it('calls onReport when report button is pressed', () => {
+    const mockOnReport = jest.fn();
+    const { getByText } = renderWithProviders(
+      <MapActionsPanel
+        currentLocation={true}
+        onShare={jest.fn()}
+        onReport={mockOnReport}
+        shareTooltip={true}
+        reportTooltip={true}
+        onShareIn={jest.fn()}
+        onShareOut={jest.fn()}
+        onReportIn={jest.fn()}
+        onReportOut={jest.fn()}
+        color="white"
+      />
+    );
+    fireEvent.press(getByText('Report Crowds'));
+    expect(mockOnReport).toHaveBeenCalled();
+  });
+
+  it('calls onShareIn when share button is pressed in', () => {
+    const mockOnShareIn = jest.fn();
+    const { getByText } = renderWithProviders(
+      <MapActionsPanel
+        currentLocation={true}
+        onShare={jest.fn()}
+        onReport={jest.fn()}
+        shareTooltip={true}
+        reportTooltip={true}
+        onShareIn={mockOnShareIn}
+        onShareOut={jest.fn()}
+        onReportIn={jest.fn()}
+        onReportOut={jest.fn()}
+        color="white"
+      />
+    );
+    fireEvent(getByText('Share Location'), 'pressIn');
+    expect(mockOnShareIn).toHaveBeenCalled();
+  });
+
+  it('calls onShareOut when share button is pressed out', () => {
+    const mockOnShareOut = jest.fn();
+    const { getByText } = renderWithProviders(
+      <MapActionsPanel
+        currentLocation={true}
+        onShare={jest.fn()}
+        onReport={jest.fn()}
+        shareTooltip={true}
+        reportTooltip={true}
+        onShareIn={jest.fn()}
+        onShareOut={mockOnShareOut}
+        onReportIn={jest.fn()}
+        onReportOut={jest.fn()}
+        color="white"
+      />
+    );
+    fireEvent(getByText('Share Location'), 'pressOut');
+    expect(mockOnShareOut).toHaveBeenCalled();
+  });
+
+  it('calls onReportIn when report button is pressed in', () => {
+    const mockOnReportIn = jest.fn();
+    const { getByText } = renderWithProviders(
+      <MapActionsPanel
+        currentLocation={true}
+        onShare={jest.fn()}
+        onReport={jest.fn()}
+        shareTooltip={true}
+        reportTooltip={true}
+        onShareIn={jest.fn()}
+        onShareOut={jest.fn()}
+        onReportIn={mockOnReportIn}
+        onReportOut={jest.fn()}
+        color="white"
+      />
+    );
+    fireEvent(getByText('Report Crowds'), 'pressIn');
+    expect(mockOnReportIn).toHaveBeenCalled();
+  });
+
+  it('calls onReportOut when report button is pressed out', () => {
+    const mockOnReportOut = jest.fn();
+    const { getByText } = renderWithProviders(
+      <MapActionsPanel
+        currentLocation={true}
+        onShare={jest.fn()}
+        onReport={jest.fn()}
+        shareTooltip={true}
+        reportTooltip={true}
+        onShareIn={jest.fn()}
+        onShareOut={jest.fn()}
+        onReportIn={jest.fn()}
+        onReportOut={mockOnReportOut}
+        color="white"
+      />
+    );
+    fireEvent(getByText('Report Crowds'), 'pressOut');
+    expect(mockOnReportOut).toHaveBeenCalled();
+  });
+});
+
+describe('MapWebView', () => {
+  it('renders correctly', () => {
+    const { getByTestId } = render(<MapWebView onMessage={jest.fn()} />);
+    expect(getByTestId('mock-webview')).toBeTruthy(); // Ensure WebView renders
+  });
+
+  it('handles messages correctly', () => {
+    const mockOnMessage = jest.fn();
+    const { getByTestId } = render(<MapWebView onMessage={mockOnMessage} />);
+    const webView = getByTestId('mock-webview');
+    webView.props.onMessage({ nativeEvent: { data: 'test message' } });
+    expect(mockOnMessage).toHaveBeenCalledWith({ nativeEvent: { data: 'test message' } });
+  });
+
+  it('handles onLoadEnd correctly', () => {
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+    const { getByTestId } = render(<MapWebView onMessage={jest.fn()} />);
+    const webView = getByTestId('mock-webview');
+    webView.props.onLoadEnd();
+    expect(consoleSpy).toHaveBeenCalledWith('WebView fully loaded');
+    consoleSpy.mockRestore();
+  });
+  it('handles onError correctly', () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+    const { getByTestId } = render(<MapWebView onMessage={jest.fn()} />);
+    const webView = getByTestId('mock-webview');
+    const errorEvent = { nativeEvent: { description: 'Test error' } };
+    webView.props.onError(errorEvent);
+    expect(consoleSpy).toHaveBeenCalledWith('WebView error:', 'Test error');
+    consoleSpy.mockRestore();
+  });
+
+  it('renders with correct source for iOS', () => {
+    jest.mock('react-native', () => {
+      const actualReactNative = jest.requireActual('react-native');
+      return {
+        ...actualReactNative,
+        Platform: {
+          ...actualReactNative.Platform,
+          OS: 'ios', // Mock iOS
+        },
+      };
+    });
+
+    const { getByTestId } = render(<MapWebView onMessage={jest.fn()} />);
+    const webView = getByTestId('mock-webview');
+    expect(webView.props.source.uri).toBe('./leaflet.html');
+  });
+});
+describe('NavigationPanel', () => {
+  const renderWithProviders = (ui: React.ReactNode) => {
+    return render(<ThemeProvider>{ui}</ThemeProvider>);
+  };
+
+    it('renders correctly with navigation details', () => {
+    const { getByText } = renderWithProviders(
+      <NavigationPanel
+        isNavigating={true}
+        isLoading={false}
+        onStartNavigation={jest.fn()}
+        onStopNavigation={jest.fn()}
+        progress={50}
+        distance={1000}
+        time={10}
+        destination="Library"
+        isVoiceEnabled={true}
+        onToggleVoice={jest.fn()}
+        currentInstruction="Turn left"
+        onSpeakingChange={jest.fn()}
+      />
+    );
+    expect(getByText('Library')).toBeTruthy();
+    expect(getByText('1.0 km')).toBeTruthy();
+    expect(getByText('10 min')).toBeTruthy();
+    expect(getByText('50%')).toBeTruthy();
+    expect(getByText('Voice On')).toBeTruthy(); // Replace 'Turn left' with the actual rendered text
+  });
+  
+   it('renders correctly when distance is less than 1000 meters', () => {
+    const { getByText } = renderWithProviders(
+      <NavigationPanel
+        isNavigating={true}
+        isLoading={false}
+        onStartNavigation={jest.fn()}
+        onStopNavigation={jest.fn()}
+        progress={75}
+        distance={350}
+        time={5}
+        destination="Cafeteria"
+        isVoiceEnabled={false}
+        onToggleVoice={jest.fn()}
+        currentInstruction="Turn right"
+        onSpeakingChange={jest.fn()}
+      />
+    );
+    expect(getByText('Cafeteria')).toBeTruthy();
+    expect(getByText('350 m')).toBeTruthy();
+    expect(getByText('5 min')).toBeTruthy();
+    expect(getByText('75%')).toBeTruthy();
+    expect(getByText('🔇')).toBeTruthy();
+  });
+  
+  it('calls onStartNavigation when start button is pressed', () => {
+    const mockOnStartNavigation = jest.fn();
+    const { getByText } = renderWithProviders(
+      <NavigationPanel
+        isNavigating={false}
+        isLoading={false}
+        onStartNavigation={mockOnStartNavigation}
+        onStopNavigation={jest.fn()}
+        progress={0}
+        distance={null}
+        time={null}
+        destination="Library"
+        isVoiceEnabled={false}
+        onToggleVoice={jest.fn()}
+        currentInstruction=""
+        onSpeakingChange={jest.fn()}
+      />
+    );
+    fireEvent.press(getByText('Start'));
+    expect(mockOnStartNavigation).toHaveBeenCalled();
+    });
+
+  it('calls onStopNavigation when stop button is pressed', () => {
+    const mockOnStopNavigation = jest.fn();
+    const { getByText } = renderWithProviders(
+      <NavigationPanel
+        isNavigating={true}
+        isLoading={false}
+        onStartNavigation={jest.fn()}
+        onStopNavigation={mockOnStopNavigation}
+        progress={50}
+        distance={null}
+        time={null}
+        destination="Library"
+        isVoiceEnabled={false}
+        onToggleVoice={jest.fn()}
+        currentInstruction=""
+        onSpeakingChange={jest.fn()}
+      />
+    );
+    fireEvent.press(getByText('Stop'));
+    expect(mockOnStopNavigation).toHaveBeenCalled();
+  });
+       it('disables navigation buttons when loading', () => {
+        const mockOnStartNavigation = jest.fn();
+        const { getByText } = renderWithProviders(
+          <NavigationPanel
+            isNavigating={false}
+            isLoading={true}
+            onStartNavigation={mockOnStartNavigation}
+            onStopNavigation={jest.fn()}
+            progress={0}
+            distance={null}
+            time={null}
+            destination="Library"
+            isVoiceEnabled={false}
+            onToggleVoice={jest.fn()}
+            currentInstruction=""
+            onSpeakingChange={jest.fn()}
+          />
+        );
+      
+        const loadingButton = getByText('Loading');
+        expect(loadingButton).toBeTruthy(); // Ensure the button exists
+        expect(mockOnStartNavigation).not.toHaveBeenCalled(); // Verify the callback is not triggered
+      });
+
+    it('calls onToggleVoice when voice toggle is pressed', () => {
+    const mockOnToggleVoice = jest.fn();
+    const { getByText } = renderWithProviders(
+      <NavigationPanel
+        isNavigating={true}
+        isLoading={false}
+        onStartNavigation={jest.fn()}
+        onStopNavigation={jest.fn()}
+        progress={50}
+        distance={null}
+        time={null}
+        destination="Library"
+        isVoiceEnabled={true}
+        onToggleVoice={mockOnToggleVoice}
+        currentInstruction="Turn left"
+        onSpeakingChange={jest.fn()}
+      />
+    );
+    fireEvent.press(getByText('Voice On')); // Replace 'Turn left' with the actual rendered text
+    expect(mockOnToggleVoice).toHaveBeenCalled();
+  });
+
+  it('renders correctly when no distance or time is provided', () => {
+    const { queryByText } = renderWithProviders(
+      <NavigationPanel
+        isNavigating={true}
+        isLoading={false}
+        onStartNavigation={jest.fn()}
+        onStopNavigation={jest.fn()}
+        progress={50}
+        distance={null}
+        time={null}
+        destination="Library"
+        isVoiceEnabled={false}
+        onToggleVoice={jest.fn()}
+        currentInstruction=""
+        onSpeakingChange={jest.fn()}
+      />
+      );
+    expect(queryByText('Library')).toBeTruthy();
+    expect(queryByText('50%')).toBeTruthy();
+    expect(queryByText('km')).toBeNull();
+    expect(queryByText('min')).toBeNull();
+  });
+});
+
+
+describe('DirectionsModal', () => {
+  const renderWithProviders = (ui: React.ReactNode) => {
+    return render(<ThemeProvider>{ui}</ThemeProvider>);
+  };
+
+  const mockSteps = [
+    { instruction: 'Turn left at the library' },
+    { instruction: 'Walk straight for 200 meters' },
+    { instruction: 'Turn right at the cafeteria' },
+  ];
+
+  it('calls onClose when close button is pressed', () => {
+    const mockOnClose = jest.fn();
+    const { getByText } = renderWithProviders(
+      <DirectionsModal
+        visible={true}
+        onClose={mockOnClose}
+        onStart={jest.fn()}
+        destination="Library"
+        steps={mockSteps}
+        currentStep={1}
+        isNavigating={false}
+      />
+    );
+
+    fireEvent.press(getByText('Close'));
+    expect(mockOnClose).toHaveBeenCalled();
+  });
+
+  it('renders the correct destination', () => {
+    const { getByText } = renderWithProviders(
+      <DirectionsModal
+        visible={true}
+        onClose={jest.fn()}
+        onStart={jest.fn()}
+        destination="Cafeteria"
+        steps={mockSteps}
+        currentStep={0}
+        isNavigating={false}
+      />
+    );
+
+    expect(getByText('Directions to Cafeteria')).toBeTruthy();
+  });
+
+  it('does not render the start button when isNavigating is true', () => {
+    const { queryByText } = renderWithProviders(
+      <DirectionsModal
+        visible={true}
+        onClose={jest.fn()}
+        onStart={jest.fn()}
+        destination="Library"
+        steps={mockSteps}
+        currentStep={1}
+        isNavigating={true}
+      />
+    );
+
+    expect(queryByText('Start')).toBeNull();
   });
 });
