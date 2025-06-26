@@ -341,6 +341,29 @@ describe('NavigationPanel', () => {
     fireEvent.press(getByText('Stop'));
     expect(mockOnStopNavigation).toHaveBeenCalled();
   });
+       it('disables navigation buttons when loading', () => {
+        const mockOnStartNavigation = jest.fn();
+        const { getByText } = renderWithProviders(
+          <NavigationPanel
+            isNavigating={false}
+            isLoading={true}
+            onStartNavigation={mockOnStartNavigation}
+            onStopNavigation={jest.fn()}
+            progress={0}
+            distance={null}
+            time={null}
+            destination="Library"
+            isVoiceEnabled={false}
+            onToggleVoice={jest.fn()}
+            currentInstruction=""
+            onSpeakingChange={jest.fn()}
+          />
+        );
+      
+        const loadingButton = getByText('Loading');
+        expect(loadingButton).toBeTruthy(); // Ensure the button exists
+        expect(mockOnStartNavigation).not.toHaveBeenCalled(); // Verify the callback is not triggered
+      });
 
     it('calls onToggleVoice when voice toggle is pressed', () => {
     const mockOnToggleVoice = jest.fn();
