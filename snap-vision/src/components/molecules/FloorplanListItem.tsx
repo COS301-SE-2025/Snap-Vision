@@ -26,18 +26,23 @@ export default function FloorplanListItem({ item, onView, onEdit, onDelete, colo
       <View style={[styles.iconContainer, { backgroundColor: colors.secondary + '22' }]}>
         <Text style={[styles.icon, { color: colors.primary }]}>{item.icon}</Text>
       </View>
-      
+
       <View style={styles.content}>
         <Text style={[styles.title, { color: colors.primary }]}>
           {item.buildingName} - {item.floorLabel}
         </Text>
-        <Text style={[styles.status, { color: item.status === 'active' ? colors.secondary : colors.secondary }]}>
+        <Text
+          style={[
+            styles.status,
+            { color: item.status === 'active' ? colors.secondary : colors.secondary },
+          ]}
+        >
           {item.status}
         </Text>
       </View>
-      
+
       <Text style={[styles.date, { color: colors.primary }]}>Uploaded on: {item.uploadDate}</Text>
-      
+
       <View style={styles.actionButtons}>
         <TouchableOpacity onPress={onView} style={styles.actionButton}>
           <Icon name="eye-outline" size={16} color={colors.secondary} />

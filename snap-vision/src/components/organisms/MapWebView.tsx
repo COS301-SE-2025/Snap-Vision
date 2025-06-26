@@ -12,9 +12,7 @@ const MapWebView = forwardRef<WebViewType, Props>(({ onMessage }, ref) => {
     <WebView
       ref={ref}
       source={{
-        uri: Platform.OS === 'android'
-          ? 'file:///android_asset/leaflet.html'
-          : './leaflet.html',
+        uri: Platform.OS === 'android' ? 'file:///android_asset/leaflet.html' : './leaflet.html',
       }}
       javaScriptEnabled
       domStorageEnabled

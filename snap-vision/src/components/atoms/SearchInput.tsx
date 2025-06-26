@@ -16,7 +16,12 @@ export default function SearchInput({ placeholder, value, onChangeText, onSearch
   const colors = getThemeColors(isDark);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, borderColor: colors.primary }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.background, borderColor: colors.primary },
+      ]}
+    >
       <TextInput
         style={[styles.input, { color: colors.secondary }]}
         placeholder={placeholder}

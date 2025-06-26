@@ -14,21 +14,21 @@ const ContactMethods = () => {
       <Text style={[styles.description, { color: colors.text }]}>
         Our support team is available to help you.
       </Text>
-      
+
       <View style={styles.methodsContainer}>
-        <ContactMethod 
-          email="bltscapstone@gmail.com" 
-          label="Email Support" 
-        />
+        <ContactMethod email="bltscapstone@gmail.com" label="Email Support" />
       </View>
-      
-      <View style={[styles.infoBox, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)' }]}>
+
+      <View
+        style={[
+          styles.infoBox,
+          { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)' },
+        ]}
+      >
         <Text style={[styles.infoText, { color: colors.text }]}>
           When contacting support, please include:
         </Text>
-        <Text style={[styles.bulletPoint, { color: colors.text }]}>
-          • Your account email
-        </Text>
+        <Text style={[styles.bulletPoint, { color: colors.text }]}>• Your account email</Text>
         <Text style={[styles.bulletPoint, { color: colors.text }]}>
           • Device type and OS version
         </Text>

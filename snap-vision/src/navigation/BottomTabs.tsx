@@ -17,7 +17,7 @@ export default function BottomTabs() {
   const colors = getThemeColors(isDark);
   const { role, loading } = useUser();
 
-  if(loading) return null; 
+  if (loading) return null;
 
   return (
     <Tab.Navigator
@@ -39,9 +39,7 @@ export default function BottomTabs() {
       <Tab.Screen name="Map" component={MapScreen} />
       <Tab.Screen name="Achievements" component={AchievementsScreen} />
       <Tab.Screen name="Settings" component={SettingsNavigator} />
-       {role === 'admin' && (
-        <Tab.Screen name="Admin" component={AdminScreen} />
-      )}
+      {role === 'admin' && <Tab.Screen name="Admin" component={AdminScreen} />}
     </Tab.Navigator>
   );
 }

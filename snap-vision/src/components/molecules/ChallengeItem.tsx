@@ -16,7 +16,9 @@ export default function ChallengeItem({ challenge, onPress }: Props) {
 
   const getStatusIcon = () => {
     if (challenge.isCompleted) {
-      return <Icon name="checkmark-circle" size={24} color={colors.statusActive || colors.primary} />;
+      return (
+        <Icon name="checkmark-circle" size={24} color={colors.statusActive || colors.primary} />
+      );
     }
     return <Icon name={challenge.icon} size={24} color={colors.text} />;
   };
@@ -27,19 +29,17 @@ export default function ChallengeItem({ challenge, onPress }: Props) {
         styles.container,
         {
           backgroundColor: colors.card,
-          borderColor: challenge.isCompleted ? colors.statusActive || colors.primary : colors.border,
+          borderColor: challenge.isCompleted
+            ? colors.statusActive || colors.primary
+            : colors.border,
           opacity: challenge.isCompleted ? 0.5 : 1,
         },
       ]}
       onPress={onPress}
     >
-      <View style={styles.iconContainer}>
-        {getStatusIcon()}
-      </View>
+      <View style={styles.iconContainer}>{getStatusIcon()}</View>
       <View style={styles.contentContainer}>
-        <Text style={[styles.title, { color: colors.primary }]}>
-          {challenge.title}
-        </Text>
+        <Text style={[styles.title, { color: colors.primary }]}>{challenge.title}</Text>
         <Text style={[styles.description, { color: colors.text, opacity: 0.7 }]}>
           {challenge.description}
         </Text>

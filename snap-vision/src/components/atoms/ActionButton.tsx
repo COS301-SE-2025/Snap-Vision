@@ -13,14 +13,7 @@ export default function ActionButton({ title, onPress, variant = 'primary', styl
   const backgroundColor = variant === 'primary' ? '#824713' : '#B78459';
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.container,
-        { backgroundColor },
-        style,
-      ]}
-      onPress={onPress}
-    >
+    <TouchableOpacity style={[styles.container, { backgroundColor }, style]} onPress={onPress}>
       <Text style={styles.text}>{title}</Text>
     </TouchableOpacity>
   );

@@ -10,7 +10,13 @@ interface Props {
   borderColor: string;
 }
 
-export default function SearchInput({ placeholder, onSearch, textColor, backgroundColor, borderColor }: Props) {
+export default function SearchInput({
+  placeholder,
+  onSearch,
+  textColor,
+  backgroundColor,
+  borderColor,
+}: Props) {
   return (
     <View style={styles.container}>
       <TextInput

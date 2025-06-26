@@ -1,24 +1,16 @@
 // src/components/forms/AchievementsForm.tsx
 import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  Alert
-} from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import WelcomeHeader from '../molecules/WelcomeHeader';
-import CategoryButton from '../atoms/CategoryButton';
 import ChallengeItem from '../molecules/ChallengeItem';
 import ProgressCard from '../atoms/ProgressCard';
 import RewardCard from '../molecules/RewardCard';
 import ActionButton from '../molecules/ActionButton';
 import { useBadges } from '../../context/BadgeContext';
-import { BADGES, BadgeId } from '../../types/badges';      
-import { Challenge, Reward, ExploreCategory } from '../../types/achievements';
+import { BADGES, BadgeId } from '../../types/badges';
+import { Challenge } from '../../types/achievements';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../navigation/types'; // Adjust path if needed
@@ -31,32 +23,26 @@ export default function AchievementsForm() {
   const colors = getThemeColors(isDark);
   type NavigationProp = StackNavigationProp<RootStackParamList, 'Dashboard'>;
 
-  const { state, clearJustUnlocked, getChallenges,  } = useBadges();
+  const { state, clearJustUnlocked, getChallenges } = useBadges();
   const unlockedArray = Array.from(state.unlocked);
   const currentChallenges = getChallenges();
-  const Stack = createStackNavigator<RootStackParamList>();
   const navigation = useNavigation<NavigationProp>();
-  
+
   useEffect(() => {
     if (state.justUnlocked.length) {
-      const names = state.justUnlocked
-        .map(id => BADGES[id].title)
-        .join(', ');
-      
+      const names = state.justUnlocked.map((id) => BADGES[id].title).join(', ');
     }
   }, [state.justUnlocked]);
 
-  const exploreCategories: ExploreCategory[] = [
-    { id: '1', title: 'Shops',   icon: 'storefront', color: colors.secondary },
-    { id: '2', title: 'Classes', icon: 'library',    color: colors.secondary },
-    { id: '3', title: 'Parks',   icon: 'leaf',       color: colors.secondary },
-  ];
+  // const exploreCategories: ExploreCategory[] = [
+  //   { id: '1', title: 'Shops', icon: 'storefront', color: colors.secondary },
+  //   { id: '2', title: 'Classes', icon: 'library', color: colors.secondary },
+  //   { id: '3', title: 'Parks', icon: 'leaf', color: colors.secondary },
+  // ];
 
-  const handleCategoryPress  = (title: string)  => console.log(`${title} category pressed`);
-  const handleChallengePress = (c: Challenge)   => console.log(`Challenge ${c.title} pressed`);
-  const handleActionPress    = (a: string)      => console.log(`${a} button pressed`);
-
-
+  // const handleCategoryPress = (title: string) => console.log(`${title} category pressed`);
+  const handleChallengePress = (c: Challenge) => console.log(`Challenge ${c.title} pressed`);
+  // const handleActionPress = (a: string) => console.log(`${a} button pressed`);
 
   return (
     <ScrollView
@@ -112,7 +98,6 @@ export default function AchievementsForm() {
         </View>
       </View> */}
 
-            
       {/* Dynamic Challenges */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.primary }]}>Current Challenges</Text>
@@ -120,7 +105,7 @@ export default function AchievementsForm() {
           Complete these to earn points!
         </Text>
 
-        {currentChallenges.map(challenge => (
+        {currentChallenges.map((challenge) => (
           <ChallengeItem
             key={challenge.id}
             challenge={challenge}
@@ -128,10 +113,6 @@ export default function AchievementsForm() {
           />
         ))}
       </View>
-
-
-
-
 
       {/* Action Buttons */}
       <View style={styles.actionButtons}>
@@ -144,10 +125,7 @@ export default function AchievementsForm() {
           textColor="#fff"
           onPress={() => navigation.navigate('ShopScreen')}
         />
-
       </View>
-
-      
 
       <View style={styles.bottomSpacing} />
     </ScrollView>
@@ -163,7 +141,12 @@ const styles = StyleSheet.create({
   progressRow: { flexDirection: 'row', justifyContent: 'space-between' },
   rewardsRow: { flexDirection: 'row', justifyContent: 'space-between' },
   exploreRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  exploreSection: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
+  exploreSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
   exploreText: { fontSize: 16, marginLeft: 8 },
   actionButtons: { gap: 8 },
   bottomSpacing: { height: 20 },

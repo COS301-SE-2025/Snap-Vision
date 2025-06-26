@@ -16,18 +16,20 @@ const TutorialSlider = ({ onFinish }) => {
     {
       image: require('../../assets/images/search-destination.jpg'),
       title: 'Search for a Destination',
-      description: 'Enter your destination in the search bar at the top of the screen to find locations on campus.'
+      description:
+        'Enter your destination in the search bar at the top of the screen to find locations on campus.',
     },
     {
       image: require('../../assets/images/directions.jpg'),
       title: 'View Turn-by-Turn Directions',
-      description: 'Get detailed step-by-step directions to help you navigate to your destination.'
+      description: 'Get detailed step-by-step directions to help you navigate to your destination.',
     },
     {
       image: require('../../assets/images/route.jpg'),
       title: 'Follow Your Route',
-      description: 'Once you press Start, follow the highlighted route on the map to reach your destination.'
-    }
+      description:
+        'Once you press Start, follow the highlighted route on the map to reach your destination.',
+    },
   ];
 
   const handleScroll = (event) => {
@@ -39,7 +41,7 @@ const TutorialSlider = ({ onFinish }) => {
   const goToSlide = (index) => {
     flatListRef.current?.scrollToIndex({
       index,
-      animated: true
+      animated: true,
     });
   };
 
@@ -57,11 +59,7 @@ const TutorialSlider = ({ onFinish }) => {
         ref={flatListRef}
         data={tutorialData}
         renderItem={({ item }) => (
-          <TutorialSlide
-            image={item.image}
-            title={item.title}
-            description={item.description}
-          />
+          <TutorialSlide image={item.image} title={item.title} description={item.description} />
         )}
         horizontal
         pagingEnabled
@@ -80,7 +78,7 @@ const TutorialSlider = ({ onFinish }) => {
               key={index}
               style={[
                 styles.paginationDot,
-                { backgroundColor: index === activeIndex ? colors.primary : colors.text + '40' }
+                { backgroundColor: index === activeIndex ? colors.primary : colors.text + '40' },
               ]}
               onPress={() => goToSlide(index)}
             />

@@ -6,11 +6,11 @@ import { getThemeColors } from '../../theme';
 export default function PrivacySettings() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  
+
   const [locationEnabled, setLocationEnabled] = useState(true);
   const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
   const [biometricsEnabled, setBiometricsEnabled] = useState(false);
-  
+
   // Better contrast colors for the switch
   const trackColorOff = isDark ? '#444444' : '#cccccc';
   const trackColorOn = isDark ? '#61dafb' : colors.primary; // Light blue for dark mode
@@ -21,27 +21,25 @@ export default function PrivacySettings() {
       <Text style={[styles.introText, { color: colors.text }]}>
         Manage your privacy and security preferences here.
       </Text>
-      
+
       <View style={styles.settingsSection}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          Privacy Settings
-        </Text>
-        
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Privacy Settings</Text>
+
         <View style={[styles.row, { borderBottomColor: colors.border || '#e1e1e1' }]}>
           <Text style={[styles.label, { color: colors.text }]}>Location Services</Text>
-          <Switch 
-            value={locationEnabled} 
+          <Switch
+            value={locationEnabled}
             onValueChange={setLocationEnabled}
             trackColor={{ false: trackColorOff, true: trackColorOn }}
             thumbColor={thumbColor}
             ios_backgroundColor={trackColorOff}
           />
         </View>
-        
+
         <View style={[styles.row, { borderBottomColor: colors.border || '#e1e1e1' }]}>
           <Text style={[styles.label, { color: colors.text }]}>Analytics</Text>
-          <Switch 
-            value={analyticsEnabled} 
+          <Switch
+            value={analyticsEnabled}
             onValueChange={setAnalyticsEnabled}
             trackColor={{ false: trackColorOff, true: trackColorOn }}
             thumbColor={thumbColor}
@@ -49,16 +47,14 @@ export default function PrivacySettings() {
           />
         </View>
       </View>
-      
+
       <View style={styles.settingsSection}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          Security Settings
-        </Text>
-        
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Security Settings</Text>
+
         <View style={[styles.row, { borderBottomColor: colors.border || '#e1e1e1' }]}>
           <Text style={[styles.label, { color: colors.text }]}>Biometric Authentication</Text>
-          <Switch 
-            value={biometricsEnabled} 
+          <Switch
+            value={biometricsEnabled}
             onValueChange={setBiometricsEnabled}
             trackColor={{ false: trackColorOff, true: trackColorOn }}
             thumbColor={thumbColor}

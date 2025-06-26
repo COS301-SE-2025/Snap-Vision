@@ -36,7 +36,7 @@ export default function BadgePopup({ badgeId, onClose }: BadgePopupProps) {
   const badge = BADGES[badgeId];
 
   return (
-     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <View style={[styles.popup, { backgroundColor: colors.card }]}>
         <Icon name="medal-outline" size={32} color={colors.primary} />
         <View style={styles.textContainer}>

@@ -12,38 +12,32 @@ export interface Props {
   descriptionStyle?: any;
 }
 
-const SettingItem = ({ 
-  title, 
-  description, 
+const SettingItem = ({
+  title,
+  description,
   rightComponent,
   titleStyle,
-  descriptionStyle
+  descriptionStyle,
 }: Props) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  
+
   return (
     <View style={[styles.container, { borderBottomColor: colors.border }]}>
       <View style={styles.textContainer}>
-        <ThemedText 
-          size="md" 
-          weight="600"
-          style={[{ color: colors.text }, titleStyle]}
-        >
+        <ThemedText size="md" weight="600" style={[{ color: colors.text }, titleStyle]}>
           {title}
         </ThemedText>
         {description && (
-          <ThemedText 
-            size="sm" 
+          <ThemedText
+            size="sm"
             style={[{ color: colors.secondary, marginTop: 4 }, descriptionStyle]}
           >
             {description}
           </ThemedText>
         )}
       </View>
-      <View style={styles.rightComponent}>
-        {rightComponent}
-      </View>
+      <View style={styles.rightComponent}>{rightComponent}</View>
     </View>
   );
 };

@@ -9,7 +9,7 @@ export default function AchievementsContent() {
   const colors = getThemeColors(isDark);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}> 
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title="Achievements" />
       <Text style={{ color: colors.primary, padding: 20 }}>Achievements will be shown here.</Text>
     </View>

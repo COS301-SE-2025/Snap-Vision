@@ -18,6 +18,12 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Run Prettier check (non-blocking)
+        run: |
+          cd snap-vision
+          echo "Running Prettier check..."
+          npx prettier --check . || echo "⚠️ Prettier formatting issues found, but build will continue."
+
       - name: Install dependencies
         run: cd snap-vision && npm install
 

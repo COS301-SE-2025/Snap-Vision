@@ -231,25 +231,29 @@ export default function AdminEditFloorplansContent() {
   
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
+        ]}
+      >
         <ActivityIndicator size="large" color={colors.primary} />
         <Text style={{ color: colors.text, marginTop: 16 }}>Loading floorplans...</Text>
       </View>
     );
   }
-  
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title="Edit Floorplans" />
       <ScrollView contentContainerStyle={{ padding: 16 }}>
-        
         {/* Error Display */}
         {error && (
           <View style={[styles.errorContainer, { backgroundColor: colors.danger }]}>
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
-        
+
         {/* Add New Floorplan Button */}
         <AppButton
           title="Add New Floorplan"
@@ -265,53 +269,62 @@ export default function AdminEditFloorplansContent() {
           </Text>
         ) : (
           <View style={styles.floorplanList}>
-            {floorplans.map(fp => (
+            {floorplans.map((fp) => (
               <TouchableOpacity
                 key={fp.id}
                 style={[
                   styles.floorplanItem,
-                  { backgroundColor: selectedFloorplan === fp.id ? colors.primary : colors.card }
+                  { backgroundColor: selectedFloorplan === fp.id ? colors.primary : colors.card },
                 ]}
                 onPress={() => setSelectedFloorplan(fp.id)}
               >
-                <Text style={{ 
-                  color: selectedFloorplan === fp.id ? colors.background : colors.text,
-                  fontWeight: '500'
-                }}>
+                <Text
+                  style={{
+                    color: selectedFloorplan === fp.id ? colors.background : colors.text,
+                    fontWeight: '500',
+                  }}
+                >
                   {fp.buildingName}
                 </Text>
-                <Text style={{ 
-                  color: selectedFloorplan === fp.id ? colors.background : colors.text,
-                  fontSize: 12
-                }}>
+                <Text
+                  style={{
+                    color: selectedFloorplan === fp.id ? colors.background : colors.text,
+                    fontSize: 12,
+                  }}
+                >
                   {fp.floorLabel}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
         )}
-        
+
         {/* Action Buttons for Selected Floorplan */}
         {selectedFloorplan && (
           <View style={styles.actionContainer}>
-            <Text style={[styles.sectionHeader, { color: colors.primary }]}>
-              Floorplan Actions
-            </Text>
-            
-            <View style={[styles.selectedDetails, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}>
-              {floorplans.find(fp => fp.id === selectedFloorplan) && (
+            <Text style={[styles.sectionHeader, { color: colors.primary }]}>Floorplan Actions</Text>
+
+            <View
+              style={[
+                styles.selectedDetails,
+                { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 },
+              ]}
+            >
+              {floorplans.find((fp) => fp.id === selectedFloorplan) && (
                 <>
                   <Text style={[styles.detailText, { color: colors.text }]}>
                     <Text style={{ fontWeight: 'bold' }}>Building: </Text>
-                    {floorplans.find(fp => fp.id === selectedFloorplan)?.buildingName}
+                    {floorplans.find((fp) => fp.id === selectedFloorplan)?.buildingName}
                   </Text>
                   <Text style={[styles.detailText, { color: colors.text }]}>
                     <Text style={{ fontWeight: 'bold' }}>Floor: </Text>
-                    {floorplans.find(fp => fp.id === selectedFloorplan)?.floorLabel}
+                    {floorplans.find((fp) => fp.id === selectedFloorplan)?.floorLabel}
                   </Text>
                   <Text style={[styles.detailText, { color: colors.text }]}>
                     <Text style={{ fontWeight: 'bold' }}>Last Modified: </Text>
-                    {new Date(floorplans.find(fp => fp.id === selectedFloorplan)?.lastModified || '').toLocaleString()}
+                    {new Date(
+                      floorplans.find((fp) => fp.id === selectedFloorplan)?.lastModified || '',
+                    ).toLocaleString()}
                   </Text>
                 </>
               )}
@@ -321,7 +334,7 @@ export default function AdminEditFloorplansContent() {
             <AppSecondaryButton
               title="Edit Room POIs"
               onPress={handleEditRooms}
-              style={{ 
+              style={{
                 marginTop: 16,
               }}
             />
@@ -342,23 +355,23 @@ export default function AdminEditFloorplansContent() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1 
+  container: {
+    flex: 1,
   },
-  label: { 
-    fontSize: 16, 
-    fontWeight: '500', 
-    marginBottom: 8 
+  label: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 8,
   },
   sectionHeader: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 16
+    marginBottom: 16,
   },
-  floorplanList: { 
-    flexDirection: 'row', 
-    flexWrap: 'wrap', 
-    marginBottom: 24 
+  floorplanList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 24,
   },
   floorplanItem: {
     padding: 12,
@@ -371,7 +384,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#ddd'
+    borderTopColor: '#ddd',
   },
   selectedDetails: {
     marginBottom: 16,
@@ -380,15 +393,15 @@ const styles = StyleSheet.create({
   },
   detailText: {
     marginBottom: 4,
-    fontSize: 14
+    fontSize: 14,
   },
   errorContainer: {
     padding: 12,
     borderRadius: 8,
-    marginBottom: 16
+    marginBottom: 16,
   },
   errorText: {
     color: 'white',
-    fontWeight: '500'
-  }
+    fontWeight: '500',
+  },
 });

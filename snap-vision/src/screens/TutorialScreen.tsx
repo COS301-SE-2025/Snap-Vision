@@ -10,9 +10,9 @@ const TutorialScreen = () => {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <StatusBar 
+      <StatusBar
         backgroundColor={colors.background}
-        barStyle={isDark ? 'light-content' : 'dark-content'} 
+        barStyle={isDark ? 'light-content' : 'dark-content'}
       />
       <TutorialContent />
     </SafeAreaView>

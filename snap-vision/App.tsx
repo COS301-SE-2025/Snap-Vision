@@ -29,7 +29,9 @@ function AppInner() {
   const { setCoords } = useDeepLink();
   const [authReady, setAuthReady] = useState(false);
   const [initialRoute, setInitialRoute] = useState<'Login' | 'Tabs'>('Login');
-  const [pendingDeepLink, setPendingDeepLink] = useState<{ lat?: string; lng?: string } | null>(null);
+  const [pendingDeepLink, setPendingDeepLink] = useState<{ lat?: string; lng?: string } | null>(
+    null,
+  );
 
   // Listen for auth state
   useEffect(() => {
@@ -65,63 +67,61 @@ function AppInner() {
       linkingListener.remove();
     };
   }, []);
-  
-    // When auth is ready and there's a pending deep link, handle navigation
-    useEffect(() => {
-      if (!authReady || !pendingDeepLink) return;
-  
-      if (auth().currentUser) {
-        // User is already logged in, navigate directly to Map with coordinates
-        navigationRef.current?.navigate('Tabs', {
-          screen: 'Map',
-          params: {
-            lat: pendingDeepLink.lat,
-            lng: pendingDeepLink.lng,
-          },
-        });
-      } else {
-        // User is not logged in, save coords and go to Login screen
-        setCoords({ lat: pendingDeepLink.lat, lng: pendingDeepLink.lng });
-        navigationRef.current?.reset({
-          index: 0,
-          routes: [{ name: 'Login' }],
-        });
-      }
-      setPendingDeepLink(null);
-    }, [authReady, pendingDeepLink, setCoords]);
 
-    useEffect(() => {
-      // Initialize pre-bundled floorplans
-      initializePreBundledFloorplans();
-    }, []);
+  // When auth is ready and there's a pending deep link, handle navigation
+  useEffect(() => {
+    if (!authReady || !pendingDeepLink) return;
+
+    if (auth().currentUser) {
+      // User is already logged in, navigate directly to Map with coordinates
+      navigationRef.current?.navigate('Tabs', {
+        screen: 'Map',
+        params: {
+          lat: pendingDeepLink.lat,
+          lng: pendingDeepLink.lng,
+        },
+      });
+    } else {
+      // User is not logged in, save coords and go to Login screen
+      setCoords({ lat: pendingDeepLink.lat, lng: pendingDeepLink.lng });
+      navigationRef.current?.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    }
+    setPendingDeepLink(null);
+  }, [authReady, pendingDeepLink, setCoords]);
+
+  useEffect(() => {
+    // Initialize pre-bundled floorplans
+    initializePreBundledFloorplans();
+  }, []);
 
   return (
     <BadgeProvider>
-    <ThemeProvider>
-      
-      <NavigationContainer ref={navigationRef}>
-        <BadgeUnlockNotifier /> 
-        {authReady && (
-        
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          {initialRoute === 'Tabs' ? (
-            <Stack.Screen name="Tabs" component={BottomTabs} />
-          ) : (
-            <Stack.Screen name="Login" component={LoginScreen} />
+      <ThemeProvider>
+        <NavigationContainer ref={navigationRef}>
+          <BadgeUnlockNotifier />
+          {authReady && (
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
+              {initialRoute === 'Tabs' ? (
+                <Stack.Screen name="Tabs" component={BottomTabs} />
+              ) : (
+                <Stack.Screen name="Login" component={LoginScreen} />
+              )}
+
+              <Stack.Screen name="Register" component={RegistrationScreen} />
+              <Stack.Screen name="AdminLoadFloorplans" component={AdminLoadFloorplansScreen} />
+              <Stack.Screen name="AdminFloorplanEditor" component={AdminFloorplanEditorScreen} />
+              <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
+              <Stack.Screen name="AdminSettings" component={AdminSettingsFrom} />
+              <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
+              <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+              <Stack.Screen name="ShopScreen" component={ShopScreen} />
+            </Stack.Navigator>
           )}
-          
-          <Stack.Screen name="Register" component={RegistrationScreen} />
-          <Stack.Screen name="AdminLoadFloorplans" component={AdminLoadFloorplansScreen} />
-          <Stack.Screen name="AdminFloorplanEditor" component={AdminFloorplanEditorScreen} />
-          <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
-          <Stack.Screen name="AdminSettings" component={AdminSettingsFrom} />
-          <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
-          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-          <Stack.Screen name="ShopScreen" component={ShopScreen} />
-        </Stack.Navigator>
-      )}
-      </NavigationContainer>
-    </ThemeProvider>
+        </NavigationContainer>
+      </ThemeProvider>
     </BadgeProvider>
   );
 }

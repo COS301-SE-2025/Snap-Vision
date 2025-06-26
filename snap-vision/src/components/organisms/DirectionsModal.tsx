@@ -1,9 +1,8 @@
 // src/components/organisms/DirectionsModal.tsx
 import React from 'react';
-import { Modal, View, FlatList, Pressable, Text } from 'react-native';
+import { Modal, View, FlatList, Pressable, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
-import { StyleSheet } from 'react-native';
 
 interface DirectionsModalProps {
   visible: boolean;
@@ -27,59 +26,52 @@ const DirectionsModal: React.FC<DirectionsModalProps> = ({
   const colors = getThemeColors(isDark);
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
       {/* Semi-transparent overlay that allows map to be visible */}
       <View style={styles.overlay}>
         {/* Empty view that allows touches to pass through to the map */}
-        <Pressable 
-          style={styles.mapArea} 
-          onPress={onClose}
-        />
-        
+        <Pressable style={styles.mapArea} onPress={onClose} />
+
         {/* Modal content */}
         <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
           <View style={styles.header}>
             <View style={styles.handle} />
-            <Text style={[styles.title, { color: colors.text }]}>
-              Directions to {destination}
-            </Text>
+            <Text style={[styles.title, { color: colors.text }]}>Directions to {destination}</Text>
           </View>
-          
+
           <FlatList
             data={steps}
             keyExtractor={(_, idx) => idx.toString()}
             renderItem={({ item, index }) => (
-              <View style={[
-                styles.stepContainer,
-                index === currentStep && { backgroundColor: colors.primary + '20' }
-              ]}>
-                <Text style={[
-                  styles.stepNumber,
-                  { color: index === currentStep ? colors.primary : colors.text }
-                ]}>
+              <View
+                style={[
+                  styles.stepContainer,
+                  index === currentStep && { backgroundColor: colors.primary + '20' },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.stepNumber,
+                    { color: index === currentStep ? colors.primary : colors.text },
+                  ]}
+                >
                   {index + 1}.
                 </Text>
-                <Text style={[
-                  styles.stepText,
-                  { color: index === currentStep ? colors.primary : colors.text }
-                ]}>
+                <Text
+                  style={[
+                    styles.stepText,
+                    { color: index === currentStep ? colors.primary : colors.text },
+                  ]}
+                >
                   {item.instruction}
                 </Text>
               </View>
             )}
           />
-          
+
           {/* Button container */}
-                    <View style={styles.buttonContainer}>
-            <Pressable
-              style={[styles.button, { borderColor: colors.border }]}
-              onPress={onClose}
-            >
+          <View style={styles.buttonContainer}>
+            <Pressable style={[styles.button, { borderColor: colors.border }]} onPress={onClose}>
               <Text style={[styles.buttonText, { color: colors.text }]}>Close</Text>
             </Pressable>
           </View>
@@ -93,7 +85,7 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.4)' // Semi-transparent dark overlay
+    backgroundColor: 'rgba(0,0,0,0.4)', // Semi-transparent dark overlay
   },
   mapArea: {
     flex: 1,

@@ -33,7 +33,10 @@ export default function RegisterForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({
-    username: '', email: '', password: '', confirmPassword: ''
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
   });
   const [successMessage, setSuccessMessage] = useState('');
   const { unlock } = useBadges();
@@ -58,7 +61,8 @@ export default function RegisterForm() {
 
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
     if (!passwordRegex.test(password)) {
-      newErrors.password = 'Password must be at least 8 characters, include a capital letter, number, and special character.';
+      newErrors.password =
+        'Password must be at least 8 characters, include a capital letter, number, and special character.';
       hasError = true;
     }
 
@@ -81,58 +85,63 @@ export default function RegisterForm() {
       return;
     }
 
-          try {
-              const userCredential = await auth().createUserWithEmailAndPassword(email, password);
-              const uid = userCredential.user.uid;
+    try {
+      const userCredential = await auth().createUserWithEmailAndPassword(email, password);
+      const uid = userCredential.user.uid;
 
-              // Automatically create a Firestore entry for this user
-              await firestore().collection('userInformation').doc(uid).set({
-                email,
-                name: username.trim(),
-                role: 'user', 
-              });
+      // Automatically create a Firestore entry for this user
+      await firestore().collection('userInformation').doc(uid).set({
+        email,
+        name: username.trim(),
+        role: 'user',
+      });
 
-              unlock('first-login');
+      unlock('first-login');
       Alert.alert('Success', 'Account created!');
-              setSuccessMessage('Account created!');
+      setSuccessMessage('Account created!');
 
-              setTimeout(() => {
-                if (coords && coords.lat && coords.lng) {
-                  navigation.replace('Tabs', {
-                    screen: 'Map',
-                    params: { lat: coords.lat, lng: coords.lng },
-                  });
-                  setCoords(null);
-                } else {
-                  navigation.replace('Tabs');
-                }
-              }, 1000);
-            } catch (error: any) {
-              const errorMessages: { [key: string]: string } = {
-                'auth/email-already-in-use': 'This email is already registered.',
-                'auth/invalid-email': 'Invalid email address.',
-                'auth/weak-password': 'Password is too weak.',
-              };
-              const msg = errorMessages[error?.code] || 'Registration failed.';
-              if (error?.code === 'auth/email-already-in-use') {
-                Alert.alert('Registration Error', 'This email is already registered.');
-              } else {
-                Alert.alert('Error', msg);
-              }
-              setErrors({
-                ...newErrors,
-                email: msg,
-              });
-            }
-        };
+      setTimeout(() => {
+        if (coords && coords.lat && coords.lng) {
+          navigation.replace('Tabs', {
+            screen: 'Map',
+            params: { lat: coords.lat, lng: coords.lng },
+          });
+          setCoords(null);
+        } else {
+          navigation.replace('Tabs');
+        }
+      }, 1000);
+    } catch (error: any) {
+      const errorMessages: { [key: string]: string } = {
+        'auth/email-already-in-use': 'This email is already registered.',
+        'auth/invalid-email': 'Invalid email address.',
+        'auth/weak-password': 'Password is too weak.',
+      };
+      const msg = errorMessages[error?.code] || 'Registration failed.';
+      if (error?.code === 'auth/email-already-in-use') {
+        Alert.alert('Registration Error', 'This email is already registered.');
+      } else {
+        Alert.alert('Error', msg);
+      }
+      setErrors({
+        ...newErrors,
+        email: msg,
+      });
+    }
+  };
 
   return (
     <View>
-      <Text style={[styles.header, {
-        fontFamily: 'PermanentMarkerRegular',
-        color: colors.primary,
-        transform: [{ rotate: '-3deg' }],
-      }]}>
+      <Text
+        style={[
+          styles.header,
+          {
+            fontFamily: 'PermanentMarkerRegular',
+            color: colors.primary,
+            transform: [{ rotate: '-3deg' }],
+          },
+        ]}
+      >
         REGISTER
       </Text>
 
@@ -172,7 +181,7 @@ export default function RegisterForm() {
           setErrors((prev) => ({ ...prev, password: '' }));
         }}
         rightIcon={showPassword ? 'eye-off' : 'eye'}
-        onRightIconPress={() => setShowPassword(prev => !prev)}
+        onRightIconPress={() => setShowPassword((prev) => !prev)}
         style={[styles.input, { borderColor: colors.primary }]}
       />
       {errors.password ? <Text style={styles.error}>{errors.password}</Text> : null}
@@ -187,7 +196,7 @@ export default function RegisterForm() {
           setErrors((prev) => ({ ...prev, confirmPassword: '' }));
         }}
         rightIcon={showConfirmPassword ? 'eye-off' : 'eye'}
-        onRightIconPress={() => setShowConfirmPassword(prev => !prev)}
+        onRightIconPress={() => setShowConfirmPassword((prev) => !prev)}
         style={[styles.input, { borderColor: colors.primary }]}
       />
       {errors.confirmPassword ? <Text style={styles.error}>{errors.confirmPassword}</Text> : null}
@@ -198,15 +207,14 @@ export default function RegisterForm() {
         onForgotPassword={() => navigation.navigate('ForgotPassword')}
       />
 
-      <AppButton
-        title="REGISTER"
-        onPress={handleRegister}
-        testID="register-button"
-      />
+      <AppButton title="REGISTER" onPress={handleRegister} testID="register-button" />
 
       {successMessage ? <Text style={styles.success}>{successMessage}</Text> : null}
 
-      <Text style={[styles.signUpText, { color: colors.secondary }]} onPress={() => navigation.navigate('Login')}>
+      <Text
+        style={[styles.signUpText, { color: colors.secondary }]}
+        onPress={() => navigation.navigate('Login')}
+      >
         Already have an account? <Text style={styles.signUpBold}>LOGIN</Text>
       </Text>
 
