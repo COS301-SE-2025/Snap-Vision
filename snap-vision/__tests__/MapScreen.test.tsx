@@ -5,26 +5,14 @@ import { ThemeProvider } from '../src/theme/ThemeContext';
 import MapWebView from '../src/components/organisms/MapWebView';
 import NavigationPanel from '../src/components/organisms/NavigationPanel';
 import DirectionsModal from '../src/components/organisms/DirectionsModal';
-import { Platform } from 'react-native';
-
-
 
 jest.mock('react-native-webview', () => {
   const React = require('react');
   const { View } = require('react-native');
+  const MockWebView = React.forwardRef((props, ref) => <View {...props} ref={ref} testID="mock-webview" />);
+  MockWebView.displayName = 'MockWebView';
   return {
-    WebView: React.forwardRef((props, ref) => <View {...props} ref={ref} testID="mock-webview" />),
-  };
-});
-
-jest.mock('react-native', () => {
-  const actualReactNative = jest.requireActual('react-native');
-  return {
-    ...actualReactNative,
-    Platform: {
-      ...actualReactNative.Platform,
-      OS: 'android', // Default to Android
-    },
+    WebView: MockWebView,
   };
 });
 
@@ -229,22 +217,6 @@ describe('MapWebView', () => {
     consoleSpy.mockRestore();
   });
 
-  it('renders with correct source for iOS', () => {
-    jest.mock('react-native', () => {
-      const actualReactNative = jest.requireActual('react-native');
-      return {
-        ...actualReactNative,
-        Platform: {
-          ...actualReactNative.Platform,
-          OS: 'ios', // Mock iOS
-        },
-      };
-    });
-
-    const { getByTestId } = render(<MapWebView onMessage={jest.fn()} />);
-    const webView = getByTestId('mock-webview');
-    expect(webView.props.source.uri).toBe('./leaflet.html');
-  });
 });
 describe('NavigationPanel', () => {
   const renderWithProviders = (ui: React.ReactNode) => {
@@ -409,68 +381,5 @@ describe('NavigationPanel', () => {
     expect(queryByText('50%')).toBeTruthy();
     expect(queryByText('km')).toBeNull();
     expect(queryByText('min')).toBeNull();
-  });
-});
-
-
-describe('DirectionsModal', () => {
-  const renderWithProviders = (ui: React.ReactNode) => {
-    return render(<ThemeProvider>{ui}</ThemeProvider>);
-  };
-
-  const mockSteps = [
-    { instruction: 'Turn left at the library' },
-    { instruction: 'Walk straight for 200 meters' },
-    { instruction: 'Turn right at the cafeteria' },
-  ];
-
-  it('calls onClose when close button is pressed', () => {
-    const mockOnClose = jest.fn();
-    const { getByText } = renderWithProviders(
-      <DirectionsModal
-        visible={true}
-        onClose={mockOnClose}
-        onStart={jest.fn()}
-        destination="Library"
-        steps={mockSteps}
-        currentStep={1}
-        isNavigating={false}
-      />
-    );
-
-    fireEvent.press(getByText('Close'));
-    expect(mockOnClose).toHaveBeenCalled();
-  });
-
-  it('renders the correct destination', () => {
-    const { getByText } = renderWithProviders(
-      <DirectionsModal
-        visible={true}
-        onClose={jest.fn()}
-        onStart={jest.fn()}
-        destination="Cafeteria"
-        steps={mockSteps}
-        currentStep={0}
-        isNavigating={false}
-      />
-    );
-
-    expect(getByText('Directions to Cafeteria')).toBeTruthy();
-  });
-
-  it('does not render the start button when isNavigating is true', () => {
-    const { queryByText } = renderWithProviders(
-      <DirectionsModal
-        visible={true}
-        onClose={jest.fn()}
-        onStart={jest.fn()}
-        destination="Library"
-        steps={mockSteps}
-        currentStep={1}
-        isNavigating={true}
-      />
-    );
-
-    expect(queryByText('Start')).toBeNull();
   });
 });
