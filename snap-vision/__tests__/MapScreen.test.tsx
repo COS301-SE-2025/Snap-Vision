@@ -250,7 +250,54 @@ describe('NavigationPanel', () => {
     return render(<ThemeProvider>{ui}</ThemeProvider>);
   };
 
-    
+    it('renders correctly with navigation details', () => {
+    const { getByText } = renderWithProviders(
+      <NavigationPanel
+        isNavigating={true}
+        isLoading={false}
+        onStartNavigation={jest.fn()}
+        onStopNavigation={jest.fn()}
+        progress={50}
+        distance={1000}
+        time={10}
+        destination="Library"
+        isVoiceEnabled={true}
+        onToggleVoice={jest.fn()}
+        currentInstruction="Turn left"
+        onSpeakingChange={jest.fn()}
+      />
+    );
+    expect(getByText('Library')).toBeTruthy();
+    expect(getByText('1.0 km')).toBeTruthy();
+    expect(getByText('10 min')).toBeTruthy();
+    expect(getByText('50%')).toBeTruthy();
+    expect(getByText('Voice On')).toBeTruthy(); // Replace 'Turn left' with the actual rendered text
+  });
+  
+   it('renders correctly when distance is less than 1000 meters', () => {
+    const { getByText } = renderWithProviders(
+      <NavigationPanel
+        isNavigating={true}
+        isLoading={false}
+        onStartNavigation={jest.fn()}
+        onStopNavigation={jest.fn()}
+        progress={75}
+        distance={350}
+        time={5}
+        destination="Cafeteria"
+        isVoiceEnabled={false}
+        onToggleVoice={jest.fn()}
+        currentInstruction="Turn right"
+        onSpeakingChange={jest.fn()}
+      />
+    );
+    expect(getByText('Cafeteria')).toBeTruthy();
+    expect(getByText('350 m')).toBeTruthy();
+    expect(getByText('5 min')).toBeTruthy();
+    expect(getByText('75%')).toBeTruthy();
+    expect(getByText('🔇')).toBeTruthy();
+  });
+
   it('calls onStartNavigation when start button is pressed', () => {
     const mockOnStartNavigation = jest.fn();
     const { getByText } = renderWithProviders(
