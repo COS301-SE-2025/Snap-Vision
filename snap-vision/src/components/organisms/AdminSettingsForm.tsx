@@ -5,7 +5,6 @@ import SettingItem from '../molecules/SettingItem';
 import ThemedText from '../atoms/ThemedText';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
-import { useNavigation } from '@react-navigation/native';
 import SettingsHeader from '../molecules/SettingsHeader';
 
 const SectionHeader = ({ title }: { title: string }) => {

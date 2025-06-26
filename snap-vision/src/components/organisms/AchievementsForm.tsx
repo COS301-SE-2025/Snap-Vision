@@ -1,22 +1,19 @@
 // src/components/forms/AchievementsForm.tsx
 import React, { useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import WelcomeHeader from '../molecules/WelcomeHeader';
-import CategoryButton from '../atoms/CategoryButton';
 import ChallengeItem from '../molecules/ChallengeItem';
 import ProgressCard from '../atoms/ProgressCard';
 import RewardCard from '../molecules/RewardCard';
 import ActionButton from '../molecules/ActionButton';
 import { useBadges } from '../../context/BadgeContext';
 import { BADGES, BadgeId } from '../../types/badges';
-import { Challenge, Reward, ExploreCategory } from '../../types/achievements';
+import { Challenge } from '../../types/achievements';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../../navigation/types'; // Adjust path if needed
-import { createStackNavigator } from '@react-navigation/stack';
+import { RootStackParamList } from '../../navigation/types';
 
 export default function AchievementsForm() {
   const { isDark } = useTheme();
@@ -26,7 +23,6 @@ export default function AchievementsForm() {
   const { state, clearJustUnlocked, getChallenges } = useBadges();
   const unlockedArray = Array.from(state.unlocked);
   const currentChallenges = getChallenges();
-  const Stack = createStackNavigator<RootStackParamList>();
   const navigation = useNavigation<NavigationProp>();
 
   useEffect(() => {
@@ -35,15 +31,15 @@ export default function AchievementsForm() {
     }
   }, [state.justUnlocked]);
 
-  const exploreCategories: ExploreCategory[] = [
-    { id: '1', title: 'Shops', icon: 'storefront', color: colors.secondary },
-    { id: '2', title: 'Classes', icon: 'library', color: colors.secondary },
-    { id: '3', title: 'Parks', icon: 'leaf', color: colors.secondary },
-  ];
+  // const exploreCategories: ExploreCategory[] = [
+  //   { id: '1', title: 'Shops', icon: 'storefront', color: colors.secondary },
+  //   { id: '2', title: 'Classes', icon: 'library', color: colors.secondary },
+  //   { id: '3', title: 'Parks', icon: 'leaf', color: colors.secondary },
+  // ];
 
-  const handleCategoryPress = (title: string) => console.log(`${title} category pressed`);
+  // const handleCategoryPress = (title: string) => console.log(`${title} category pressed`);
   const handleChallengePress = (c: Challenge) => console.log(`Challenge ${c.title} pressed`);
-  const handleActionPress = (a: string) => console.log(`${a} button pressed`);
+  // const handleActionPress = (a: string) => console.log(`${a} button pressed`);
 
   return (
     <ScrollView

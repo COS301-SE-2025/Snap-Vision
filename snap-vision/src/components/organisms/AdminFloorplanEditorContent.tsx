@@ -1,8 +1,6 @@
 import React, { RefObject } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { WebView } from 'react-native-webview';
-import AppButton from '../atoms/AppButton';
-import AppSecondaryButton from '../atoms/AppSecondaryButton';
 import Modal from 'react-native-modal';
 
 interface RoomPOI {

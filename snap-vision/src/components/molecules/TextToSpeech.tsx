@@ -1,10 +1,9 @@
 // src/components/molecules/TextToSpeech.tsx
 import React, { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Text, StyleSheet } from 'react-native';
 import Tts from 'react-native-tts';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
-import { StyleSheet } from 'react-native';
 
 interface TextToSpeechProps {
   isActive: boolean;
