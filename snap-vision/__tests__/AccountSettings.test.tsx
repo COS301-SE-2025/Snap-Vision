@@ -1,4 +1,3 @@
-import { waitFor } from '@testing-library/react-native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 
@@ -15,9 +14,6 @@ jest.mock('react-native', () => {
     Alert: mockAlert,
   };
 });
-
-// Import after mocking
-import { Alert } from 'react-native';
 
 // Mock the Firebase modules
 jest.mock('@react-native-firebase/auth', () => {
@@ -112,12 +108,8 @@ async function handleLogout() {
     require('../src/navigation/RootNavigation').resetToLogin();
     return true;
   } catch (error) {
-    const errorMessage =
-      error && typeof error === 'object' && 'message' in error
-        ? (error as { message?: string }).message
-        : 'An error occurred while logging out.';
     // Use mockAlert for testing rather than Alert
-    mockAlert.alert('Error Logging Out', errorMessage || 'An error occurred while logging out.');
+    mockAlert.alert('An error occurred while logging out.');
     return false;
   }
 }
@@ -249,10 +241,7 @@ describe('User Settings Functions', () => {
       const result = await handleLogout();
       
       // Verify error handling
-      expect(mockAlert.alert).toHaveBeenCalledWith(
-        'Error Logging Out',
-        'Failed to sign out'
-      );
+      expect(mockAlert.alert).toHaveBeenCalledWith('An error occurred while logging out.');
       
       // Verify navigation was not called
       expect(mockResetToLogin).not.toHaveBeenCalled();

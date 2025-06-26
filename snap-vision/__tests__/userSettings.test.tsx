@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
-import { View, Text, Switch } from 'react-native';
+import { View, Text } from 'react-native';
 
 // Mock the Switch component 
 jest.mock('react-native/Libraries/Components/Switch/Switch', () => {
@@ -24,6 +24,7 @@ jest.mock('../src/theme', () => ({
     text: '#000000',
     primary: '#1E88E5',
     border: '#DDDDDD',
+    secondary: '#4CAF50',
   }),
 }));
 
@@ -126,23 +127,46 @@ jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => 'Icon');
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
     navigate: jest.fn(),
+    goBack: jest.fn(),
   }),
 }));
 
+// Mock SettingItem and SearchInput for SettingsContent
+jest.mock('../src/components/molecules/SettingsItem', () => {
+  const React = require('react');
+  const { Text, TouchableOpacity } = require('react-native');
+  return function MockSettingsItem({ icon, label, onPress }) {
+    return (
+      <TouchableOpacity onPress={onPress} testID={`settings-item-${label.replace(/\s/g, '-')}`}>
+        <Text>{icon}</Text>
+        <Text>{label}</Text>
+      </TouchableOpacity>
+    );
+  };
+});
+jest.mock('../src/components/atoms/SettingsSearch', () => {
+  const React = require('react');
+  const { TextInput } = require('react-native');
+  return function MockSettingsSearch(props) {
+    return <TextInput testID="settings-search-input" {...props} />;
+  };
+});
+
+// --- Imports ---
 import PrivacySecurityContent from '../src/components/organisms/PrivacySecurityContent';
 import SupportContent from '../src/components/organisms/SupportContent';
+import SettingsContent from '../src/components/organisms/SettingsContent';
+import SettingsScreen from '../src/screens/SettingsScreen';
 
 describe('NotificationSettings Unit Tests', () => {
   it('renders correctly with light theme', () => {
     const { getByText } = render(<NotificationSettings />);
-    
     expect(getByText('Push Notifications')).toBeTruthy();
     expect(getByText('Email Alerts')).toBeTruthy();
   });
   
   it('contains switches for notification options', () => {
     const { getAllByTestId } = render(<NotificationSettings />);
-    
     const switches = getAllByTestId('mock-switch');
     expect(switches).toHaveLength(2);
     expect(switches[0].props.value).toBe(true); // Push notification should be on by default
@@ -153,13 +177,11 @@ describe('NotificationSettings Unit Tests', () => {
 describe('AppPreferences Unit Tests', () => {
   it('renders correctly with header', () => {
     const { getByText } = render(<AppPreferencesContent />);
-    
     expect(getByText('App Preferences')).toBeTruthy();
   });
   
   it('contains dark mode toggle', () => {
     const { getByTestId, getByText } = render(<AppPreferencesContent />);
-    
     expect(getByText('Dark Mode')).toBeTruthy();
     const darkModeSwitch = getByTestId('dark-mode-switch');
     expect(darkModeSwitch).toBeTruthy();
@@ -168,11 +190,7 @@ describe('AppPreferences Unit Tests', () => {
   
   it('applies correct styling based on theme', () => {
     const { getByTestId } = render(<AppPreferencesContent />);
-    
-    // Get the root container by testID
     const container = getByTestId('app-preferences-container');
-    
-    // The root View should have white background in light mode
     expect(container.props.style).toMatchObject({
       backgroundColor: '#FFFFFF'
     });
@@ -180,15 +198,11 @@ describe('AppPreferences Unit Tests', () => {
 
   it('toggles dark mode when switch is pressed', () => {
     const toggleTheme = jest.fn();
-    
-    // Override the mock to provide custom toggleTheme function
     jest.spyOn(require('../src/theme/ThemeContext'), 'useTheme').mockReturnValue({
       isDark: false,
       toggleTheme
     });
-    
     const { getByTestId } = render(<AppPreferencesContent />);
-    
     const darkModeSwitch = getByTestId('dark-mode-switch');
     fireEvent.press(darkModeSwitch);
   });
@@ -253,5 +267,39 @@ describe('SupportContent Unit Tests', () => {
     expect(mockNavigate).toHaveBeenCalledWith('FAQ');
     expect(mockNavigate).toHaveBeenCalledWith('ContactSupport');
     expect(mockNavigate).toHaveBeenCalledWith('Tutorial');
+  });
+});
+
+// SettingsContent and SettingsScreen unit tests
+describe('SettingsContent Unit Tests', () => {
+  it('renders all settings items', () => {
+    const navigation = { navigate: jest.fn() };
+    const { getByText } = render(<SettingsContent isDark={false} navigation={navigation} />);
+    expect(getByText('Account')).toBeTruthy();
+    expect(getByText('Privacy and Security')).toBeTruthy();
+    expect(getByText('Notifications')).toBeTruthy();
+    expect(getByText('App Preferences')).toBeTruthy();
+    expect(getByText('Support')).toBeTruthy();
+  });
+
+  it('calls navigation.navigate with correct screen when item is pressed', () => {
+    const navigation = { navigate: jest.fn() };
+    const { getByTestId } = render(<SettingsContent isDark={false} navigation={navigation} />);
+    fireEvent.press(getByTestId('settings-item-Account'));
+    fireEvent.press(getByTestId('settings-item-Privacy-and-Security'));
+    fireEvent.press(getByTestId('settings-item-Notifications'));
+    fireEvent.press(getByTestId('settings-item-App-Preferences'));
+    fireEvent.press(getByTestId('settings-item-Support'));
+    expect(navigation.navigate).toHaveBeenCalledWith('AccountSettings');
+    expect(navigation.navigate).toHaveBeenCalledWith('PrivacySecurity');
+    expect(navigation.navigate).toHaveBeenCalledWith('NotificationSettings');
+    expect(navigation.navigate).toHaveBeenCalledWith('AppPreferences');
+    expect(navigation.navigate).toHaveBeenCalledWith('Support');
+  });
+
+  it('renders the search input', () => {
+    const navigation = { navigate: jest.fn() };
+    const { getByTestId } = render(<SettingsContent isDark={false} navigation={navigation} />);
+    expect(getByTestId('settings-search-input')).toBeTruthy();
   });
 });

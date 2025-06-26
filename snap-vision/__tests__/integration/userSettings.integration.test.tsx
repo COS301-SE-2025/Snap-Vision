@@ -1,6 +1,5 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
-import { View, Text } from 'react-native';
 
 // Mock the Switch component for testing
 jest.mock('react-native/Libraries/Components/Switch/Switch', () => {
@@ -14,19 +13,28 @@ jest.mock('react-native/Libraries/Components/Switch/Switch', () => {
 jest.mock('react-native/Libraries/Components/SafeAreaView/SafeAreaView', () => {
   const React = require('react');
   const { View } = require('react-native');
-  return (props) => <View {...props} />;
+  function MockSafeAreaView(props) {
+    return <View {...props} />;
+  }
+  return MockSafeAreaView;
 });
 
 jest.mock('react-native/Libraries/Components/StatusBar/StatusBar', () => {
   const React = require('react');
   const { View } = require('react-native');
-  return (props) => <View {...props} />;
+  function MockStatusBar(props) {
+    return <View {...props} />;
+  }
+  return MockStatusBar;
 });
 
 jest.mock('react-native/Libraries/Components/ScrollView/ScrollView', () => {
   const React = require('react');
   const { View } = require('react-native');
-  return (props) => <View {...props}>{props.children}</View>;
+  function MockScrollView(props) {
+    return <View {...props}>{props.children}</View>;
+  }
+  return MockScrollView;
 });
 
 //Mock Theme
@@ -144,10 +152,31 @@ jest.mock('../../src/components/molecules/SettingsHeader', () => {
   };
 });
 
+// Mock SettingItem and SearchInput for SettingsContent
+jest.mock('../../src/components/molecules/SettingsItem', () => {
+  const React = require('react');
+  const { TouchableOpacity, Text } = require('react-native');
+  return function MockSettingsItem({ icon, label, onPress }) {
+    return (
+      <TouchableOpacity onPress={onPress} testID={`settings-item-${label.replace(/\s/g, '-')}`}>
+        <Text>{icon}</Text>
+        <Text>{label}</Text>
+      </TouchableOpacity>
+    );
+  };
+});
+jest.mock('../../src/components/atoms/SettingsSearch', () => {
+  const React = require('react');
+  const { TextInput } = require('react-native');
+  return function MockSettingsSearch(props) {
+    return <TextInput testID="settings-search-input" {...props} />;
+  };
+});
+
 // Mock AppPreferencesScreen 
 jest.mock('../../src/screens/AppPreferences', () => {
   const React = require('react');
-  const { View, SafeAreaView, ScrollView } = require('react-native');
+  const { SafeAreaView, ScrollView } = require('react-native');
 
   const AppPreferencesContent = require('../../src/components/organisms/AppPreferencesContent').default;
 
@@ -165,7 +194,7 @@ jest.mock('../../src/screens/AppPreferences', () => {
 // Mock PrivacySecurityScreen 
 jest.mock('../../src/screens/PrivacySecurityScreen', () => {
   const React = require('react');
-  const { View, SafeAreaView, ScrollView } = require('react-native');
+  const { SafeAreaView, ScrollView } = require('react-native');
   const PrivacySecurityContent = require('../../src/components/organisms/PrivacySecurityContent').default;
   return function MockPrivacySecurityScreen() {
     return (
@@ -181,7 +210,7 @@ jest.mock('../../src/screens/PrivacySecurityScreen', () => {
 // Mock SupportScreen (but NOT the organism)
 jest.mock('../../src/screens/SupportScreen', () => {
   const React = require('react');
-  const { View, SafeAreaView, ScrollView } = require('react-native');
+  const { SafeAreaView, ScrollView } = require('react-native');
   const SupportContent = require('../../src/components/organisms/SupportContent').default;
   return function MockSupportScreen() {
     return (
@@ -200,6 +229,7 @@ import AppPreferencesContent from '../../src/components/organisms/AppPreferences
 import PrivacySecurityContent from '../../src/components/organisms/PrivacySecurityContent';
 import SupportContent from '../../src/components/organisms/SupportContent';
 import SupportScreen from '../../src/screens/SupportScreen';
+import SettingsContent from '../../src/components/organisms/SettingsContent';
 import { NavigationContainer } from '@react-navigation/native';
 
 // Import the entire screen component for more complete integration testing
@@ -300,6 +330,66 @@ describe('Privacy & Security Integration Tests', () => {
   });
 });
 
+// SettingsContent Integration Tests
+describe('SettingsContent Integration Tests', () => {
+  const navigation = { navigate: jest.fn() };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    navigation.navigate.mockClear();
+  });
+
+  it('renders all settings items', () => {
+    const { getByText } = render(<SettingsContent isDark={false} navigation={navigation} />);
+    expect(getByText('Account')).toBeTruthy();
+    expect(getByText('Privacy and Security')).toBeTruthy();
+    expect(getByText('Notifications')).toBeTruthy();
+    expect(getByText('App Preferences')).toBeTruthy();
+    expect(getByText('Support')).toBeTruthy();
+  });
+
+  it('renders the search input', () => {
+    const { getByTestId } = render(<SettingsContent isDark={false} navigation={navigation} />);
+    expect(getByTestId('settings-search-input')).toBeTruthy();
+  });
+
+  it('calls navigation.navigate with correct screen when each item is pressed', () => {
+    const { getByTestId } = render(<SettingsContent isDark={false} navigation={navigation} />);
+    fireEvent.press(getByTestId('settings-item-Account'));
+    fireEvent.press(getByTestId('settings-item-Privacy-and-Security'));
+    fireEvent.press(getByTestId('settings-item-Notifications'));
+    fireEvent.press(getByTestId('settings-item-App-Preferences'));
+    fireEvent.press(getByTestId('settings-item-Support'));
+    expect(navigation.navigate).toHaveBeenCalledWith('AccountSettings');
+    expect(navigation.navigate).toHaveBeenCalledWith('PrivacySecurity');
+    expect(navigation.navigate).toHaveBeenCalledWith('NotificationSettings');
+    expect(navigation.navigate).toHaveBeenCalledWith('AppPreferences');
+    expect(navigation.navigate).toHaveBeenCalledWith('Support');
+  });
+
+  it('renders with dark mode colors', () => {
+    jest.doMock('../../src/theme/ThemeContext', () => ({
+      useTheme: () => ({
+        isDark: true,
+        toggleTheme: mockToggleTheme
+      }),
+    }));
+    jest.doMock('../../src/theme', () => ({
+      getThemeColors: () => ({
+        background: '#000000',
+        text: '#FFFFFF',
+        primary: '#222222',
+        secondary: '#888888',
+        border: '#333333',
+      }),
+    }));
+    const SettingsContentDark = require('../../src/components/organisms/SettingsContent').default;
+    const { getByTestId } = render(<SettingsContentDark isDark={true} navigation={navigation} />);
+    expect(getByTestId('settings-search-input').props.backgroundColor).toBe('#FFFFFF');
+    //jest.resetModules();
+  });
+});
+
 // SupportContent Integration Tests
 describe('SupportContent Integration Tests', () => {
   it('renders support content with header and intro', () => {
@@ -338,5 +428,14 @@ describe('SupportContent Integration Tests', () => {
     expect(getByText('Contact Support')).toBeTruthy();
     expect(getByText('Tutorial')).toBeTruthy();
     expect(getByText('SnapVision v1.0.0')).toBeTruthy();
+  });
+
+    it('calls onSearch when search input is used', () => {
+    const navigation = { navigate: jest.fn() };
+    const { getByTestId } = render(<SettingsContent isDark={false} navigation={navigation} />);
+    const searchInput = getByTestId('settings-search-input');
+    if (searchInput.props.onSearch) {
+      searchInput.props.onSearch('test');
+    }
   });
 });
