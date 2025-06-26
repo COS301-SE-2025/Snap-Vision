@@ -1,12 +1,19 @@
 // src/screens/MapScreen.tsx
-import React, { useState, useRef } from 'react';
-import { View, Alert, Share, Text, TextInput, TouchableOpacity, Modal } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  View,
+  Alert,
+  Share,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Modal,
+  PermissionsAndroid,
+  Pressable,
+} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
-import { PermissionsAndroid } from 'react-native';
 import { WebView as WebViewType } from 'react-native-webview';
-import { useEffect } from 'react';
 import firestore from '@react-native-firebase/firestore';
-import { Pressable } from 'react-native';
 import Tts from 'react-native-tts';
 import MapWebView from '../components/organisms/MapWebView';
 import CrowdReportModal from '../components/molecules/CrowdReportModal';
@@ -16,9 +23,7 @@ import MapActionsPanel from '../components/organisms/MapActionsPanel';
 import NavigationPanel from '../components/organisms/NavigationPanel';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
-import { TextIcon } from '../components/atoms/TextIcon';
 import DirectionsModal from '../components/organisms/DirectionsModal';
-import TextToSpeech from '../components/molecules/TextToSpeech';
 import { useRoute } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 
@@ -82,10 +87,7 @@ const MapScreen = () => {
   const [hasHandledDeepLink, setHasHandledDeepLink] = useState(false);
 
   const { unlock, incrementRoutes } = useBadges();
-  const { state, clearJustUnlocked } = useBadges();
   const { setNavigationStartTime } = useBadges();
-  const { maybeUnlockFastFinisher, incrementCheckIns } = useBadges();
-  const [popupBadge, setPopupBadge] = useState<string | null>(null);
 
   // crowd reports
   const [selectedPOI, setSelectedPOI] = useState<any>(null);
@@ -341,34 +343,6 @@ const MapScreen = () => {
     } catch {
       setError('Failed to update');
     }
-  };
-
-  //Admin delete building
-  const confirmDeleteBuilding = (poi: any) => {
-    Alert.alert('Confirm Delete', `Delete ${poi.name}?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await firestore().collection('UPcampusPOIs').doc(poi.id).delete();
-            fetchPOIs();
-            setStatus('Deleted!');
-          } catch {
-            setError('Failed to delete');
-          }
-        },
-      },
-    ]);
-  };
-
-  // Open modal to add new building
-  const openEditBuildingModal = (poi: any) => {
-    setEditingPOI(poi);
-    setNewName(poi.name || '');
-    setNewFloors(poi.floors?.toString() || '');
-    setShowEditPOIModal(true);
   };
 
   const shareLocation = async () => {
