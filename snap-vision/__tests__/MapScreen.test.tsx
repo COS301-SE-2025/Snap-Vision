@@ -55,6 +55,42 @@ describe('MapActionsPanel', () => {
     fireEvent.press(getByText('Report Crowds')); // Match tooltip text
     expect(mockOnReport).toHaveBeenCalled();
   });
+                it('displays share tooltip when shareTooltip is true', () => {
+          const { getByText } = renderWithProviders(
+            <MapActionsPanel
+              currentLocation={true}
+              onShare={jest.fn()}
+              onReport={jest.fn()}
+              shareTooltip={true}
+              reportTooltip={false}
+              onShareIn={jest.fn()}
+              onShareOut={jest.fn()}
+              onReportIn={jest.fn()}
+              onReportOut={jest.fn()}
+              color="white"
+            />
+          );
+          expect(getByText('Share Location')).toBeTruthy();
+        });
+        
+        it('displays report tooltip when reportTooltip is true', () => {
+          const { getByText } = renderWithProviders(
+            <MapActionsPanel
+              currentLocation={true}
+              onShare={jest.fn()}
+              onReport={jest.fn()}
+              shareTooltip={false}
+              reportTooltip={true}
+              onShareIn={jest.fn()}
+              onShareOut={jest.fn()}
+              onReportIn={jest.fn()}
+              onReportOut={jest.fn()}
+              color="white"
+            />
+          );
+          expect(getByText('Report Crowds')).toBeTruthy();
+        });
+        
 });
 
 describe('MapWebView', () => {
