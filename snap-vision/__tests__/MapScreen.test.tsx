@@ -442,7 +442,35 @@ describe('DirectionsModal', () => {
     expect(mockOnClose).toHaveBeenCalled();
   });
 
- 
+  it('renders the correct destination', () => {
+    const { getByText } = renderWithProviders(
+      <DirectionsModal
+        visible={true}
+        onClose={jest.fn()}
+        onStart={jest.fn()}
+        destination="Cafeteria"
+        steps={mockSteps}
+        currentStep={0}
+        isNavigating={false}
+      />
+    );
 
-  
+    expect(getByText('Directions to Cafeteria')).toBeTruthy();
+  });
+
+  it('does not render the start button when isNavigating is true', () => {
+    const { queryByText } = renderWithProviders(
+      <DirectionsModal
+        visible={true}
+        onClose={jest.fn()}
+        onStart={jest.fn()}
+        destination="Library"
+        steps={mockSteps}
+        currentStep={1}
+        isNavigating={true}
+      />
+    );
+
+    expect(queryByText('Start')).toBeNull();
+  });
 });
