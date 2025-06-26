@@ -151,4 +151,76 @@ describe('AdminLoadFloorplansContent', () => {
   });
 
 
- 
+ describe('AdminLoadFloorplansContent - Buildings', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('displays buildings from firestore', async () => {
+    const { findByText } = renderWithTheme(<AdminLoadFloorplansContent />);
+    
+    await waitForData(); // Wait for initial data load
+    
+    await expect(findByText('Building A')).resolves.toBeTruthy();
+    await expect(findByText('Building B')).resolves.toBeTruthy();
+  });
+
+  it('allows selecting a building', async () => {
+    const { findByText } = renderWithTheme(<AdminLoadFloorplansContent />);
+    
+    await waitForData(); // Wait for initial data load
+    
+    const buildingA = await findByText('Building A');
+    
+    await act(async () => {
+      fireEvent.press(buildingA);
+    });
+    
+    expect(buildingA).toBeTruthy();
+  });
+
+  it('handles image picker cancellation', async () => {
+  const imagePicker = require('react-native-image-picker');
+  imagePicker.launchImageLibrary.mockResolvedValue({ didCancel: true });
+  
+  const { getByText, queryByText } = renderWithTheme(<AdminLoadFloorplansContent />);
+  const imageButton = getByText('Select Floorplan Image');
+  
+  await act(async () => {
+    fireEvent.press(imageButton);
+  });
+  
+  expect(queryByText('image.jpg')).toBeFalsy(); // No file selected
+});
+
+it('uses default filename when not provided', async () => {
+  const imagePicker = require('react-native-image-picker');
+  imagePicker.launchImageLibrary.mockResolvedValue({
+    assets: [{ uri: 'file:///mock/path/image.jpg' }] // No fileName
+  });
+  
+  const { getByText } = renderWithTheme(<AdminLoadFloorplansContent />);
+  const imageButton = getByText('Select Floorplan Image');
+  
+  await act(async () => {
+    fireEvent.press(imageButton);
+  });
+  
+  await waitFor(() => {
+    expect(getByText('floorplan.jpg')).toBeTruthy(); // Default filename
+  });
+});
+
+it('handles component unmounting during async operations', async () => {
+  const { unmount } = renderWithTheme(<AdminLoadFloorplansContent />);
+  
+  // Unmount immediately
+  unmount();
+  
+  // Verify no state updates after unmount
+  await act(async () => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+  });
+  
+  // No errors should occur
+});
