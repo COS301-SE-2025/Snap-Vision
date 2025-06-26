@@ -3,6 +3,7 @@ import { render, fireEvent } from '@testing-library/react-native';
 import MapActionsPanel from '../src/components/organisms/MapActionsPanel';
 import { ThemeProvider } from '../src/theme/ThemeContext';
 import MapWebView from '../src/components/organisms/MapWebView';
+import NavigationPanel from '../src/components/organisms/NavigationPanel';
 import { Platform } from 'react-native'; // Add this import
 
 
@@ -25,6 +26,11 @@ jest.mock('react-native', () => {
     },
   };
 });
+
+jest.mock('react-native-tts', () => ({
+  stop: jest.fn(),
+  removeAllListeners: jest.fn(),
+}));
 
 describe('MapActionsPanel', () => {
   const renderWithProviders = (ui: React.ReactNode) => {
@@ -237,5 +243,55 @@ describe('MapWebView', () => {
     const { getByTestId } = render(<MapWebView onMessage={jest.fn()} />);
     const webView = getByTestId('mock-webview');
     expect(webView.props.source.uri).toBe('./leaflet.html');
+  });
+});
+describe('NavigationPanel', () => {
+  const renderWithProviders = (ui: React.ReactNode) => {
+    return render(<ThemeProvider>{ui}</ThemeProvider>);
+  };
+
+    
+  it('calls onStartNavigation when start button is pressed', () => {
+    const mockOnStartNavigation = jest.fn();
+    const { getByText } = renderWithProviders(
+      <NavigationPanel
+        isNavigating={false}
+        isLoading={false}
+        onStartNavigation={mockOnStartNavigation}
+        onStopNavigation={jest.fn()}
+        progress={0}
+        distance={null}
+        time={null}
+        destination="Library"
+        isVoiceEnabled={false}
+        onToggleVoice={jest.fn()}
+        currentInstruction=""
+        onSpeakingChange={jest.fn()}
+      />
+    );
+    fireEvent.press(getByText('Start'));
+    expect(mockOnStartNavigation).toHaveBeenCalled();
+    });
+
+  it('calls onStopNavigation when stop button is pressed', () => {
+    const mockOnStopNavigation = jest.fn();
+    const { getByText } = renderWithProviders(
+      <NavigationPanel
+        isNavigating={true}
+        isLoading={false}
+        onStartNavigation={jest.fn()}
+        onStopNavigation={mockOnStopNavigation}
+        progress={50}
+        distance={null}
+        time={null}
+        destination="Library"
+        isVoiceEnabled={false}
+        onToggleVoice={jest.fn()}
+        currentInstruction=""
+        onSpeakingChange={jest.fn()}
+      />
+    );
+    fireEvent.press(getByText('Stop'));
+    expect(mockOnStopNavigation).toHaveBeenCalled();
   });
 });
