@@ -81,41 +81,48 @@ jest.mock('../src/theme', () => ({
     }),
 }));
 
-// Mock Ionicons
 jest.mock('react-native-vector-icons/Ionicons', () => {
     const React = require('react');
     const { Text } = require('react-native');
-    return ({ name, size, color, ...props }: any) => 
+    const IconComponent = ({ name, size, color, ...props }: any) => 
         React.createElement(Text, { ...props, testID: `icon-${name}` }, name);
+    IconComponent.displayName = 'MockedIonicons';
+    return IconComponent;
 });
 
-// Mock components
 jest.mock('../src/components/molecules/SettingsHeader', () => {
     const React = require('react');
     const { Text } = require('react-native');
-    return ({ title }: any) => React.createElement(Text, { testID: 'settings-header' }, title);
+    const SettingsHeaderComponent = ({ title }: any) => 
+        React.createElement(Text, { testID: 'settings-header' }, title);
+    SettingsHeaderComponent.displayName = 'MockedSettingsHeader';
+    return SettingsHeaderComponent;
 }, { virtual: true });
 
 jest.mock('../src/components/atoms/AppButton', () => {
     const React = require('react');
     const { TouchableOpacity, Text } = require('react-native');
-    return ({ title, onPress, style }: any) =>
+    const AppButtonComponent = ({ title, onPress, style }: any) =>
         React.createElement(
             TouchableOpacity,
             { onPress, style, testID: `button-${title.replace(/\s+/g, '-').toLowerCase()}` },
             React.createElement(Text, null, title)
         );
+    AppButtonComponent.displayName = 'MockedAppButton';
+    return AppButtonComponent;
 }, { virtual: true });
 
 jest.mock('../src/components/atoms/AppSecondaryButton', () => {
     const React = require('react');
     const { TouchableOpacity, Text } = require('react-native');
-    return ({ title, onPress, style }: any) =>
+    const AppSecondaryButtonComponent = ({ title, onPress, style }: any) =>
         React.createElement(
             TouchableOpacity,
             { onPress, style, testID: `secondary-button-${title.replace(/\s+/g, '-').toLowerCase()}` },
             React.createElement(Text, null, title)
         );
+    AppSecondaryButtonComponent.displayName = 'MockedAppSecondaryButton';
+    return AppSecondaryButtonComponent;
 }, { virtual: true });
 
 import React from 'react';
@@ -255,52 +262,6 @@ describe('AdminEditFloorplansContent', () => {
             expect(getByText('No floorplans available. Add a new floorplan to get started.')).toBeTruthy();
         });
     });
-
-    // it('handles delete floorplan with confirmation', async () => {
-    //     const { getByText, getByTestId } = render(<AdminEditFloorplansContent />);
-        
-    //     await waitFor(() => {
-    //         expect(getByText('Main Building')).toBeTruthy();
-    //     });
-
-    //     // Select a floorplan
-    //     await act(async () => {
-    //         fireEvent.press(getByText('Main Building'));
-    //     });
-
-    //     await waitFor(() => {
-    //         expect(getByTestId('secondary-button-delete-floorplan')).toBeTruthy();
-    //     });
-
-    //     // Mock Alert.alert to simulate user confirming deletion
-    //     mockAlert.alert.mockImplementation((title, message, buttons) => {
-    //         // Simulate pressing the "Delete" button
-    //         const deleteButton = buttons?.find((btn: any) => btn.text === 'Delete');
-    //         if (deleteButton?.onPress) {
-    //             deleteButton.onPress();
-    //         }
-    //     });
-
-    //     // Trigger delete
-    //     await act(async () => {
-    //         fireEvent.press(getByTestId('secondary-button-delete-floorplan'));
-    //     });
-
-    //     // Verify the alert was called
-    //     expect(mockAlert.alert).toHaveBeenCalledWith(
-    //         'Delete Floorplan',
-    //         'Are you sure you want to delete this floorplan? This will also delete all associated room POIs.',
-    //         expect.any(Array)
-    //     );
-
-    //     // Wait for async operations to complete
-    //     await waitFor(() => {
-    //         expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith('floorplan_building1_Floor 1');
-    //         expect(mockCollection).toHaveBeenCalledWith('RoomPOIs');
-    //         expect(mockBatch.commit).toHaveBeenCalled();
-    //         expect(mockRNFS.unlink).toHaveBeenCalledWith('path/to/floorplan1.jpg');
-    //     });
-    // });
 
     it('handles delete floorplan cancellation', async () => {
         const { getByText, getByTestId } = render(<AdminEditFloorplansContent />);
