@@ -51,12 +51,12 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 
 ### Demo 2 Documentation
 
-|---------|
-| Software Requirements Specification| 
+| Software Requirements Specification | 
 | Architectural Requirements Document  | 
 | Coding Standards Document  | 
 | User Manual Document |
 | [Wireframes](https://drive.google.com/file/d/1a_7AzWcia41O58lXFiizQpyJt3ljBOdw/view?usp=drive_link)|
+
 ---
 
 ## All Documentation Links
