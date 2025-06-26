@@ -35,6 +35,7 @@ type MapScreenParams = {
 };
 
 const ROUTING_API_BASE = 'http://10.0.2.2:3000'; // <-- Use your correct backend IP here
+
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
 // L wifi: 192.168.0.127
@@ -81,7 +82,7 @@ const MapScreen = () => {
   const [pois, setPOIs] = useState<any[]>([]);
   const [poiSuggestions, setPOISuggestions] = useState<any[]>([]);
 
-  // share location things
+  // share location
   const route = useRoute();
   const params = route.params as MapScreenParams;
   const [hasHandledDeepLink, setHasHandledDeepLink] = useState(false);

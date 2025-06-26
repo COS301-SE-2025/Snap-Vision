@@ -13,7 +13,10 @@ import { BADGES, BadgeId } from '../../types/badges';
 import { Challenge } from '../../types/achievements';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../../navigation/types';
+import { RootStackParamList } from '../../navigation/types'; // Adjust path if needed
+import { createStackNavigator } from '@react-navigation/stack';
+import ProgressSection from '../molecules/ProgressSection';
+import BadgesSection from '../molecules/BadgeSection';
 
 export default function AchievementsForm() {
   const { isDark } = useTheme();
@@ -49,43 +52,18 @@ export default function AchievementsForm() {
       <WelcomeHeader userName="User" />
 
       {/* Progress (live data) */}
-      <View style={[styles.section, { backgroundColor: colors.background }]}>
-        <Text style={[styles.sectionTitle, { color: colors.primary }]}>Your Progress</Text>
-        <Text style={[styles.sectionSubtitle, { color: colors.text }]}>
-          Keep track of your achievements
-        </Text>
-        <View style={styles.progressRow}>
-          <ProgressCard title="Points Earned" value={state.points} />
-          <ProgressCard title="Badges Unlocked" value={state.unlocked.size} />
-          <ProgressCard title="Check‑ins" value={state.checkIns} />
-        </View>
-      </View>
+      <ProgressSection 
+  points={state.points} 
+  badgeCount={state.unlocked.size} 
+  checkIns={state.checkIns} 
+/>
+
+
 
       {/* Your Badges */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.primary }]}>Your Badges</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {(Object.keys(BADGES) as BadgeId[]).map((id) => {
-            const badge = BADGES[id];
-            return (
-              <RewardCard
-                key={id}
-                reward={{
-                  id,
-                  title: badge.title,
-                  description: badge.description,
-                  type: 'limited',
-                  unlockCondition: '',
-                  isUnlocked: unlockedArray.includes(id),
-                }}
-                //textColor={unlockedArray.includes(id) ? colors.text : colors.subtleText}
-                backgroundColor={colors.card}
-                borderColor={colors.border}
-              />
-            );
-          })}
-        </ScrollView>
-      </View>
+      <BadgesSection unlockedIds={unlockedArray} />
+
+
 
       {/* Category Buttons
       <View style={styles.categoryRow}>
