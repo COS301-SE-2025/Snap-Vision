@@ -2,7 +2,6 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 import AchievementsContent from '../src/components/organisms/AchievementsContent';
 import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
-import { BADGES } from '../src/types/badges';
 
 // Mock all necessary native modules
 jest.mock('@react-native-firebase/auth', () => () => ({
@@ -16,12 +15,16 @@ jest.mock('@expo/vector-icons/Ionicons', () => 'Icon');
 // Mock SettingsHeader component to actually render its title prop
 jest.mock('../src/components/molecules/SettingsHeader', () => {
   const { Text, View } = require('react-native');
-  return ({ title }: { title: string }) => (
+  const MockSettingsHeader = ({ title }: { title: string }) => (
     <View>
       <Text testID="settings-header">{title}</Text>
     </View>
   );
+  MockSettingsHeader.displayName = 'MockSettingsHeader';
+  return MockSettingsHeader;
 });
+
+
 
 // Mock BadgeContext with TypeScript support
 jest.mock('../src/context/BadgeContext', () => {
