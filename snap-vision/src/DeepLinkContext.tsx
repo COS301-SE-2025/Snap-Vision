@@ -13,9 +13,7 @@ const DeepLinkContext = createContext<{
 export const DeepLinkProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [coords, setCoords] = useState<DeepLinkCoords>(null);
   return (
-    <DeepLinkContext.Provider value={{ coords, setCoords }}>
-      {children}
-    </DeepLinkContext.Provider>
+    <DeepLinkContext.Provider value={{ coords, setCoords }}>{children}</DeepLinkContext.Provider>
   );
 };
 

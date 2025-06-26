@@ -1,26 +1,15 @@
 import React from 'react';
-import {
-  View,
-  TextInput,
-  StyleSheet,
-  TextInputProps,
-  TouchableOpacity,
-} from 'react-native';
+import { View, TextInput, StyleSheet, TextInputProps, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeContext';
 
 type AppInputProps = TextInputProps & {
   style?: any;
-  rightIcon?: string; 
+  rightIcon?: string;
   onRightIconPress?: () => void;
 };
 
-export default function AppInput({
-  style,
-  rightIcon,
-  onRightIconPress,
-  ...props
-}: AppInputProps) {
+export default function AppInput({ style, rightIcon, onRightIconPress, ...props }: AppInputProps) {
   const { isDark } = useTheme();
   const borderColor = isDark ? '#824713' : '#B78459';
   const textColor = isDark ? '#ffffff' : '#000000';
@@ -55,7 +44,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 15,
-    padding: 0, 
+    padding: 0,
   },
   icon: {
     marginLeft: 10,

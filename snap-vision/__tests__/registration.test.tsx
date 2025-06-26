@@ -4,7 +4,7 @@ import RegisterForm from '../src/components/organisms/RegisterForm';
 import { Alert } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
-
+import { BadgeProvider } from '../src/context/BadgeContext';
 const mockCreateUser = jest.fn();
 
 jest.mock('@react-native-firebase/auth', () => () => ({
@@ -45,17 +45,40 @@ jest.mock('@expo/vector-icons', () => ({
   createIconSet: () => 'MockedIcon',
 }));
 
+jest.mock('@react-native-firebase/firestore', () => () => ({
+  collection: jest.fn(() => ({
+    doc: jest.fn(() => ({
+      set: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    })),
+    onSnapshot: jest.fn(),
+  })),
+}));
+
+jest.mock('@react-navigation/native', () => {
+  const actualNav = jest.requireActual('@react-navigation/native');
+  return {
+    ...actualNav,
+    useNavigation: () => ({
+      navigate: jest.fn(),
+      replace: jest.fn(), // <-- Add this line
+    }),
+  };
+});
 
 jest.spyOn(Alert, 'alert');
 
 describe('RegisterForm', () => {
   const setup = () =>
     render(
-      <ThemeProviderWrapper>
-        <NavigationContainer>
-          <RegisterForm />
-        </NavigationContainer>
-      </ThemeProviderWrapper>
+      <BadgeProvider>
+        <ThemeProviderWrapper>
+          <NavigationContainer>
+            <RegisterForm />
+          </NavigationContainer>
+        </ThemeProviderWrapper>
+      </BadgeProvider>,
     );
 
   beforeEach(() => {
@@ -103,7 +126,7 @@ describe('RegisterForm', () => {
 
     expect(Alert.alert).toHaveBeenCalledWith(
       'Error',
-      expect.stringContaining('Password must be at least 8 characters')
+      expect.stringContaining('Password must be at least 8 characters'),
     );
   });
 
@@ -121,7 +144,7 @@ describe('RegisterForm', () => {
   });
 
   it('calls Firebase auth and navigates on success', async () => {
-    mockCreateUser.mockResolvedValueOnce({});
+    mockCreateUser.mockResolvedValueOnce({ user: { uid: 'test123' } });
 
     const { getByPlaceholderText, getByTestId } = setup();
 
@@ -153,7 +176,7 @@ describe('RegisterForm', () => {
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith(
         'Registration Error',
-        'This email is already registered.'
+        'This email is already registered.',
       );
     });
   });

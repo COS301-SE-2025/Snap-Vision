@@ -18,7 +18,7 @@ const ContactMethod = ({ email, label }: ContactMethodProps) => {
   };
 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[styles.container, { borderColor: colors.border || '#e1e1e1' }]}
       onPress={handlePress}
     >

@@ -4,6 +4,7 @@ import LoginForm from '../src/components/organisms/LoginForm';
 import { Alert } from 'react-native';
 import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
 import { DeepLinkProvider } from '../src/DeepLinkContext';
+import { BadgeProvider } from '../src/context/BadgeContext';
 
 // Mock Firebase auth
 const mockSignIn = jest.fn();
@@ -46,7 +47,6 @@ jest.mock('@expo/vector-icons', () => ({
   createIconSet: () => 'MockedIcon',
 }));
 
-
 // Mock DeepLinkContext
 jest.mock('../src/DeepLinkContext', () => {
   const originalModule = jest.requireActual('../src/DeepLinkContext');
@@ -80,13 +80,15 @@ describe('LoginForm', () => {
 
   it('shows error when fields are empty', async () => {
     const { getByTestId } = render(
-      <ThemeProviderWrapper>
-        <LoginForm />
-      </ThemeProviderWrapper>
+      <BadgeProvider>
+        <ThemeProviderWrapper>
+          <LoginForm />
+        </ThemeProviderWrapper>
+      </BadgeProvider>,
     );
-    
+
     fireEvent.press(getByTestId('login-button'));
-    
+
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith('Error', 'Please fill in all fields');
     });
@@ -94,15 +96,17 @@ describe('LoginForm', () => {
 
   it('shows error for invalid email', async () => {
     const { getByPlaceholderText, getByTestId } = render(
-      <ThemeProviderWrapper>
-        <LoginForm />
-      </ThemeProviderWrapper>
+      <BadgeProvider>
+        <ThemeProviderWrapper>
+          <LoginForm />
+        </ThemeProviderWrapper>
+      </BadgeProvider>,
     );
-    
+
     fireEvent.changeText(getByPlaceholderText('Enter your email'), 'invalid-email');
     fireEvent.changeText(getByPlaceholderText('Enter your password'), '123456');
     fireEvent.press(getByTestId('login-button'));
-    
+
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith('Error', 'Please enter a valid email address');
     });
@@ -111,13 +115,15 @@ describe('LoginForm', () => {
   it('logs in and navigates on valid credentials', async () => {
     mockSignIn.mockResolvedValueOnce({});
     const { getByPlaceholderText, getByTestId, getByText } = render(
-      <ThemeProviderWrapper>
-        <DeepLinkProvider>
-          <LoginForm />
-        </DeepLinkProvider>
-      </ThemeProviderWrapper>
+      <BadgeProvider>
+        <ThemeProviderWrapper>
+          <DeepLinkProvider>
+            <LoginForm />
+          </DeepLinkProvider>
+        </ThemeProviderWrapper>
+      </BadgeProvider>,
     );
-    
+
     fireEvent.changeText(getByPlaceholderText('Enter your email'), 'test@example.com');
     fireEvent.changeText(getByPlaceholderText('Enter your password'), 'password123');
     fireEvent.press(getByTestId('login-button'));
@@ -129,7 +135,7 @@ describe('LoginForm', () => {
 
     // Advance timers for the setTimeout in the component
     jest.advanceTimersByTime(500);
-    
+
     await waitFor(() => {
       expect(getByText('Login successful!')).toBeTruthy();
       expect(mockReplace).toHaveBeenCalledWith('Tabs');
@@ -139,15 +145,17 @@ describe('LoginForm', () => {
   it('shows specific error message on login failure', async () => {
     mockSignIn.mockRejectedValueOnce({ code: 'auth/wrong-password' });
     const { getByPlaceholderText, getByTestId } = render(
-      <ThemeProviderWrapper>
-        <LoginForm />
-      </ThemeProviderWrapper>
+      <BadgeProvider>
+        <ThemeProviderWrapper>
+          <LoginForm />
+        </ThemeProviderWrapper>
+      </BadgeProvider>,
     );
-    
+
     fireEvent.changeText(getByPlaceholderText('Enter your email'), 'test@example.com');
-    fireEvent.changeText(getByPlaceholderText('Enter your password'), 'wrongpass');    
+    fireEvent.changeText(getByPlaceholderText('Enter your password'), 'wrongpass');
     fireEvent.press(getByTestId('login-button'));
-    
+
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith('Login Error', 'Incorrect password.');
     });
@@ -161,14 +169,28 @@ describe('LoginForm', () => {
     });
 
     const { getByText } = render(
-      <ThemeProviderWrapper>
-        <LoginForm />
-      </ThemeProviderWrapper>
+      <BadgeProvider>
+        <ThemeProviderWrapper>
+          <LoginForm />
+        </ThemeProviderWrapper>
+      </BadgeProvider>,
     );
-    
+
     fireEvent.press(getByText(/SIGN UP/i));
     expect(mockNavigate).toHaveBeenCalledWith('Register');
   });
 
-  
+  //We don't use Remember Me anymore
+  // it('toggles Remember Me', () => {
+  //   const { getByText } = render(
+  //     <BadgeProvider>
+  //     <ThemeProviderWrapper>
+  //       <LoginForm />
+  //     </ThemeProviderWrapper>
+  //     </BadgeProvider>
+  //   );
+  //   const rememberMe = getByText(/Remember Me/);
+  //   fireEvent.press(rememberMe);
+  //   expect(rememberMe.props.children).toContain('◉');
+  // });
 });

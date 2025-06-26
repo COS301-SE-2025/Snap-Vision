@@ -16,30 +16,32 @@ const TutorialSlider = ({ onFinish }) => {
     {
       image: require('../../assets/images/search-destination.jpg'),
       title: 'Search for a Destination',
-      description: 'Enter your destination in the search bar at the top of the screen to find locations on campus.'
+      description:
+        'Enter your destination in the search bar at the top of the screen to find locations on campus.',
     },
     {
       image: require('../../assets/images/directions.jpg'),
       title: 'View Turn-by-Turn Directions',
-      description: 'Get detailed step-by-step directions to help you navigate to your destination.'
+      description: 'Get detailed step-by-step directions to help you navigate to your destination.',
     },
     {
       image: require('../../assets/images/route.jpg'),
       title: 'Follow Your Route',
-      description: 'Once you press Start, follow the highlighted route on the map to reach your destination.'
-    }
+      description:
+        'Once you press Start, follow the highlighted route on the map to reach your destination.',
+    },
   ];
 
   const handleScroll = (event) => {
     const contentOffset = event.nativeEvent.contentOffset;
-    const index = Math.round(contentOffset.x / width);
+    const index = Math.floor(contentOffset.x / width + 0.5); // More accurate index calculation
     setActiveIndex(index);
   };
 
   const goToSlide = (index) => {
     flatListRef.current?.scrollToIndex({
       index,
-      animated: true
+      animated: true,
     });
   };
 
@@ -57,41 +59,42 @@ const TutorialSlider = ({ onFinish }) => {
         ref={flatListRef}
         data={tutorialData}
         renderItem={({ item }) => (
-          <TutorialSlide
-            image={item.image}
-            title={item.title}
-            description={item.description}
-          />
+          <TutorialSlide image={item.image} title={item.title} description={item.description} />
         )}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={handleScroll}
         keyExtractor={(_, index) => index.toString()}
+        decelerationRate="fast" // Smoother paging
+        snapToInterval={width} // Ensure proper page snapping
+        snapToAlignment="center"
       />
 
-      <View style={styles.pagination}>
-        {tutorialData.map((_, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[
-              styles.paginationDot,
-              { backgroundColor: index === activeIndex ? colors.primary : colors.text + '40' }
-            ]}
-            onPress={() => goToSlide(index)}
-          />
-        ))}
-      </View>
+      <View style={styles.footer}>
+        <View style={styles.pagination}>
+          {tutorialData.map((_, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[
+                styles.paginationDot,
+                { backgroundColor: index === activeIndex ? colors.primary : colors.text + '40' },
+              ]}
+              onPress={() => goToSlide(index)}
+            />
+          ))}
+        </View>
 
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: colors.primary }]}
-          onPress={handleNext}
-        >
-          <Text style={styles.buttonText}>
-            {activeIndex === tutorialData.length - 1 ? 'Finish' : 'Next'}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: colors.primary }]}
+            onPress={handleNext}
+          >
+            <Text style={styles.buttonText}>
+              {activeIndex === tutorialData.length - 1 ? 'Finish' : 'Next'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -100,6 +103,10 @@ const TutorialSlider = ({ onFinish }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'space-between',
+  },
+  footer: {
+    paddingBottom: 20,
   },
   pagination: {
     flexDirection: 'row',
@@ -115,7 +122,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 20,
   },
   button: {
     paddingVertical: 12,

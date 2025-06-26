@@ -12,47 +12,45 @@ export default function SupportContent() {
   const navigation = useNavigation<any>();
 
   const supportOptions = [
-    { 
-      title: 'FAQ', 
+    {
+      title: 'FAQ',
       icon: 'frequently-asked-questions',
       description: 'View frequently asked questions',
-      onPress: () => navigation.navigate('FAQ')
+      onPress: () => navigation.navigate('FAQ'),
     },
-    { 
-      title: 'Contact Support', 
+    {
+      title: 'Contact Support',
       icon: 'email-outline',
       description: 'Send us an email with your question',
-      onPress: () => navigation.navigate('ContactSupport')
+      onPress: () => navigation.navigate('ContactSupport'),
     },
-    { 
-      title: 'Tutorial', 
+    {
+      title: 'Tutorial',
       icon: 'book-open-page-variant-outline',
       description: 'View the tutorial to learn how to use SnapVision',
-      onPress: () => navigation.navigate('Tutorial')
-    }
+      onPress: () => navigation.navigate('Tutorial'),
+    },
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}> 
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title="Support" />
-      
+
       <Text style={[styles.introText, { color: colors.text }]}>
         Need help? Choose from the options below:
       </Text>
-      
+
       {supportOptions.map((option, index) => (
-        <TouchableOpacity 
+        <TouchableOpacity
           key={index}
-          style={[styles.optionContainer, { borderBottomColor: colors.border || '#e1e1e1' }]}
-          onPress={option.onPress}  // Use the onPress property from each option
+          style={[styles.optionContainer, { borderBottomColor: colors.border }]}
+          onPress={option.onPress} // Use the onPress property from each option
         >
           <View style={styles.iconContainer}>
             <Icon name={option.icon} size={24} color={colors.primary} />
           </View>
           <View style={styles.textContainer}>
-            <Text style={[styles.optionTitle, { color: colors.text }]}>
-              {option.title}
-            </Text>
+            <Text style={[styles.optionTitle, { color: colors.text }]}>{option.title}</Text>
             <Text style={[styles.optionDescription, { color: colors.text + '99' }]}>
               {option.description}
             </Text>
@@ -60,11 +58,9 @@ export default function SupportContent() {
           <Icon name="chevron-right" size={24} color={colors.text + '80'} />
         </TouchableOpacity>
       ))}
-      
+
       <View style={styles.versionContainer}>
-        <Text style={[styles.versionText, { color: colors.text + '80' }]}>
-          SnapVision v1.0.0
-        </Text>
+        <Text style={[styles.versionText, { color: colors.text + '80' }]}>SnapVision v1.0.0</Text>
       </View>
     </View>
   );
@@ -109,5 +105,5 @@ const styles = StyleSheet.create({
   },
   versionText: {
     fontSize: 14,
-  }
+  },
 });

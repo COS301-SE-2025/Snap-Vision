@@ -12,20 +12,17 @@ interface Props {
   onPress?: () => void;
 }
 
-export default function CategoryButton({ 
-  title, 
-  iconName, 
+export default function CategoryButton({
+  title,
+  iconName,
   backgroundColor = '#fff',
   textColor = '#333',
   borderColor = '#ddd',
-  onPress 
+  onPress,
 }: Props) {
   return (
-    <TouchableOpacity 
-      style={[
-        styles.container, 
-        { backgroundColor, borderColor }
-      ]}
+    <TouchableOpacity
+      style={[styles.container, { backgroundColor, borderColor }]}
       onPress={onPress}
     >
       <Icon name={iconName} size={24} color={textColor} style={styles.icon} />

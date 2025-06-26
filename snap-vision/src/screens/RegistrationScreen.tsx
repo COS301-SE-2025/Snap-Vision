@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { ScrollView, KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import RegisterForm from '../components/organisms/RegisterForm';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';

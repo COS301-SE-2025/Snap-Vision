@@ -1,18 +1,11 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useUserManagement } from '../../hooks/useUserManagement';
 import SearchInput from '../atoms/SearchInput';
 import RoleFilter from '../molecules/RoleFilter';
 import UserCard from '../molecules/UserCard';
-import ActionButton from '../atoms/ActionButton';
 import SettingsHeader from '../molecules/SettingsHeader';
 
 interface Props {
@@ -23,18 +16,8 @@ export default function ManageUsersForm({ navigation }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
-  const {
-    users,
-    loading,
-    filters,
-    updateSearchQuery,
-    updateRoleFilter,
-    editUser,
-    deleteUser,
-    toggleUserStatus,
-    bulkDeactivate,
-    addNewUser,
-  } = useUserManagement();
+  const { users, loading, filters, updateSearchQuery, updateRoleFilter, editUser, deleteUser } =
+    useUserManagement();
 
   if (loading) {
     return (
@@ -48,7 +31,7 @@ export default function ManageUsersForm({ navigation }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title="Manage Users" />
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={true}>
         {/* Search */}
         <View style={styles.searchContainer}>
           <SearchInput
@@ -62,16 +45,11 @@ export default function ManageUsersForm({ navigation }: Props) {
         </View>
 
         {/* Role Filter */}
-        <RoleFilter
-          selectedRole={filters.role}
-          onRoleChange={updateRoleFilter}
-        />
+        <RoleFilter selectedRole={filters.role} onRoleChange={updateRoleFilter} />
 
         {/* User Accounts Section */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            User Accounts
-          </Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>User Accounts</Text>
 
           {users.length === 0 ? (
             <View style={styles.emptyState}>
@@ -84,16 +62,37 @@ export default function ManageUsersForm({ navigation }: Props) {
               <UserCard
                 key={user.id}
                 user={user}
-                onEdit={editUser}
-                onDelete={deleteUser}
-                onToggleStatus={toggleUserStatus}
+                onEdit={(u) => {
+                  const newRole = u.role === 'Admin' ? 'Viewer' : 'Admin';
+                  Alert.alert(
+                    'Confirm Role Change',
+                    `Are you sure you want to make this user a ${newRole}?`,
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Confirm',
+                        onPress: () => editUser({ ...u, role: newRole }),
+                      },
+                    ],
+                  );
+                }}
+                onDelete={(u) => {
+                  Alert.alert('Confirm Deletion', `Are you sure you want to delete ${u.name}?`, [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Delete',
+                      style: 'destructive',
+                      onPress: () => deleteUser(u),
+                    },
+                  ]);
+                }}
               />
             ))
           )}
         </View>
 
         {/* Action Buttons */}
-        <View style={styles.actionButtonsContainer}>
+        {/* <View style={styles.actionButtonsContainer}>
           <ActionButton
             title="Bulk Deactivate"
             onPress={bulkDeactivate}
@@ -106,7 +105,7 @@ export default function ManageUsersForm({ navigation }: Props) {
             variant="primary"
             style={styles.actionButton}
           />
-        </View>
+        </View> */}
       </ScrollView>
     </View>
   );

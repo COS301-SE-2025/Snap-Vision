@@ -15,7 +15,7 @@ export default function AccountInfoField({ label, value }: AccountInfoFieldProps
   return (
     <View style={[styles.container, { borderColor: colors.border || '#e1e1e1' }]}>
       <Text style={[styles.label, { color: colors.secondary }]}>{label}</Text>
-      <Text style={[styles.value, { color: colors.text }]}>{value}</Text>
+      <Text style={[styles.value, { color: colors.text }]}>{value || 'Not available'}</Text>
     </View>
   );
 }

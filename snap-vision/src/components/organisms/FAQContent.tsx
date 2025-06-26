@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     paddingHorizontal: 16,
     marginBottom: 16,
-  }
+  },
 });
 
 export default FAQContent;

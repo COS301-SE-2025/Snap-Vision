@@ -1,121 +1,325 @@
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
-// import TopBar from '../molecules/TopBar';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import AppInput from '../atoms/AppInput';
 import AppButton from '../atoms/AppButton';
 import AppSecondaryButton from '../atoms/AppSecondaryButton';
-import FloorplanListItem from '../molecules/FloorplanListItem';
 import SettingsHeader from '../molecules/SettingsHeader';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useNavigation } from '@react-navigation/native';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
+import RNFS from 'react-native-fs';
+import * as ImagePicker from 'react-native-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import firestore from '@react-native-firebase/firestore';
 
-
-interface FloorplanItem {
+// Interface for building data from UPcampusPOIs
+interface Building {
   id: string;
-  buildingName: string;
-  floorLabel: string;
-  status: 'active' | 'draft';
-  uploadDate: string;
-  icon: string;
+  name: string;
+  centroid?: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
-interface Props {
-  colors: any;
-  navigation: any;
-  buildingName: string;
-  setBuildingName: (v: string) => void;
-  floorLabel: string;
-  setFloorLabel: (v: string) => void;
-  mockFloorplans: FloorplanItem[];
-  handleUpload: () => void;
-  handleSaveChanges: () => void;
-  handleView: (id: string) => void;
-  handleEdit: (id: string) => void;
-  handleDelete: (id: string) => void;
-}
+export default function AdminLoadFloorplansContent() {
+  const navigation = useNavigation<any>();
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
 
-export default function AdminLoadFloorplansContent({
-  colors,
-  navigation,
-  buildingName,
-  setBuildingName,
-  floorLabel,
-  setFloorLabel,
-  mockFloorplans,
-  handleUpload,
-  handleSaveChanges,
-  handleView,
-  handleEdit,
-  handleDelete,
-}: Props) {
+  // Form state
+  const [buildingName, setBuildingName] = useState('');
+  const [floorLabel, setFloorLabel] = useState('');
+  const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
+  const [fileUri, setFileUri] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string>('');
+
+  // Data state
+  const [buildings, setBuildings] = useState<Building[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch all buildings from UPcampusPOIs collection
+  useEffect(() => {
+    const fetchBuildings = async () => {
+      try {
+        setIsLoading(true);
+        const snapshot = await firestore()
+          .collection('UPcampusPOIs')
+          .where('type', '==', 'building')
+          .get();
+
+        const buildingsData = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name || 'Unnamed Building',
+            centroid: data.centroid,
+          };
+        });
+
+        setBuildings(buildingsData);
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Error fetching buildings:', err);
+        setError('Failed to load buildings. Please try again.');
+        setIsLoading(false);
+      }
+    };
+
+    fetchBuildings();
+  }, []);
+
+  // Handle file selection
+  const handlePickDocument = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibrary({
+        mediaType: 'photo',
+        quality: 0.8,
+      });
+
+      if (result.assets && result.assets[0]) {
+        setFileUri(result.assets[0].uri ?? null);
+        setFileName(result.assets[0].fileName || 'floorplan.jpg');
+      }
+    } catch (err) {
+      console.error('Error picking image:', err);
+      setError('Failed to select image');
+    }
+  };
+
+  // Handle floorplan upload
+  const handleUpload = async () => {
+    if (!selectedBuilding) {
+      setError('Please select a building');
+      return;
+    }
+
+    if (!floorLabel) {
+      setError('Please enter a floor label');
+      return;
+    }
+
+    if (!fileUri) {
+      setError('Please select a floorplan file');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      // Create directory if it doesn't exist
+      const dirPath = `${RNFS.DocumentDirectoryPath}/floorplans`;
+      await RNFS.mkdir(dirPath, { NSURLIsExcludedFromBackupKey: true });
+
+      // Generate safe filename
+      const fileExt = fileName.substring(fileName.lastIndexOf('.'));
+      const safeFileName = `${selectedBuilding.id}_${floorLabel.replace(/\s+/g, '_')}${fileExt}`;
+      const destPath = `${dirPath}/${safeFileName}`;
+
+      // Copy file to app documents directory
+      await RNFS.copyFile(fileUri, destPath);
+
+      // Create floorplan metadata
+      const floorplanId = `${selectedBuilding.id}_${floorLabel.replace(/\s+/g, '_')}`;
+      const floorplanData = {
+        id: floorplanId,
+        buildingId: selectedBuilding.id,
+        buildingName: selectedBuilding.name,
+        floorLabel: floorLabel,
+        uri: `file://${destPath}`,
+        timestamp: new Date().toISOString(),
+        status: 'active',
+      };
+
+      // Save to AsyncStorage
+      await AsyncStorage.setItem(`floorplan_${floorplanId}`, JSON.stringify(floorplanData));
+
+      setIsLoading(false);
+      Alert.alert(
+        'Success',
+        'Floorplan uploaded successfully. Would you like to add room POIs now?',
+        [
+          { text: 'Later', style: 'cancel' },
+          {
+            text: 'Add POIs',
+            onPress: () =>
+              navigation.navigate('FloorplanEditor', {
+                buildingId: selectedBuilding.id,
+                floorLabel: floorLabel,
+                imageUri: `file://${destPath}`,
+              }),
+          },
+        ],
+      );
+
+      // Reset form
+      setBuildingName('');
+      setFloorLabel('');
+      setSelectedBuilding(null);
+      setFileUri(null);
+      setFileName('');
+    } catch (err) {
+      console.error('Error uploading floorplan:', err);
+      setError('Failed to upload floorplan');
+      setIsLoading(false);
+    }
+  };
+
+  // Handle building selection
+  const handleBuildingSelect = (building: Building) => {
+    setSelectedBuilding(building);
+    setBuildingName(building.name);
+  };
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <SettingsHeader title="Load Floorplans" />
+      <SettingsHeader title="Upload Floorplan" />
+
+      {isLoading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={{ color: colors.text, marginTop: 16 }}>Processing...</Text>
+        </View>
+      )}
+
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Building Name Input */}
-        <View style={styles.inputSection}>
-          <Text style={[styles.inputTitle, { color: colors.primary }]}>Building Name</Text>
-          <AppInput
-            placeholder="Enter the building's name"
-            value={buildingName}
-            onChangeText={setBuildingName}
-            style={[
-              styles.textField,
-              { borderColor: colors.primary, color: colors.secondary, backgroundColor: colors.background }
-            ]}
-            placeholderTextColor={colors.secondary}
-          />
-          <Text style={[styles.infoText, { color: colors.secondary}]}>e.g. Science Hall</Text>
-        </View>
-
-        {/* Floor Label Input */}
-        <View style={styles.inputSection}>
-          <Text style={[styles.inputTitle, { color: colors.primary }]}>Floor Number / Label</Text>
-          <AppInput
-            placeholder="e.g., Floor 2, Basement"
-            value={floorLabel}
-            onChangeText={setFloorLabel}
-            style={[
-              styles.textField,
-              { borderColor: colors.primary, color: colors.text, backgroundColor: colors.background }
-            ]}
-            placeholderTextColor={colors.secondary}
-          />
-          <Text style={[styles.infoText, { color: colors.secondary }]}>Specify the floor designation</Text>
-        </View>
-
-        {/* Upload Button */}
-        <View style={styles.buttonSection}>
-          <AppSecondaryButton
-            title="Click to Upload"
-            onPress={handleUpload}
-          />
-        </View>
-
-        {/* Save Changes Button */}
-        <View style={styles.buttonSection}>
-          <AppButton title="Save Changes" onPress={handleSaveChanges} />
-        </View>
-
-        {/* Previously Uploaded Floorplans */}
-        <View style={styles.listSection}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.headerText}>
-              <Text style={[styles.sectionTitle, { color: colors.primary }]}>
-                Previously Uploaded Floorplans
-              </Text>
-              <Text style={[styles.sectionSubtitle, { color: colors.secondary }]}>Manage your uploads</Text>
-            </View>
+        {/* Error message */}
+        {error && (
+          <View style={[styles.errorContainer, { backgroundColor: colors.danger }]}>
+            <Text style={styles.errorText}>{error}</Text>
           </View>
+        )}
 
-          {mockFloorplans.map((item) => (
-            <FloorplanListItem
-              key={item.id}
-              item={item}
-              onView={() => handleView(item.id)}
-              onEdit={() => handleEdit(item.id)}
-              onDelete={() => handleDelete(item.id)}
-              colors={colors}
+        {/* Step 1: Select Building */}
+        <View style={styles.sectionContainer}>
+          <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+            Step 1: Select Building
+          </Text>
+
+          {/* Building Selection */}
+          {buildings.length === 0 ? (
+            <Text style={[styles.infoText, { color: colors.secondary }]}>
+              No buildings available. Please check your connection.
+            </Text>
+          ) : (
+            <View style={styles.buildingSelector}>
+              <Text style={[styles.inputTitle, { color: colors.primary }]}>Select a Building</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.buildingList}
+              >
+                {buildings.map((building) => (
+                  <TouchableOpacity
+                    key={building.id}
+                    style={[
+                      styles.buildingItem,
+                      {
+                        backgroundColor:
+                          selectedBuilding?.id === building.id ? colors.primary : colors.card,
+                      },
+                    ]}
+                    onPress={() => handleBuildingSelect(building)}
+                  >
+                    <Text
+                      style={{
+                        color: selectedBuilding?.id === building.id ? '#FFFFFF' : colors.text,
+                      }}
+                    >
+                      {building.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          {/* Or manually enter building name */}
+          <Text style={[styles.orText, { color: colors.text }]}>OR</Text>
+
+          <View style={styles.inputSection}>
+            <Text style={[styles.inputTitle, { color: colors.primary }]}>Building Name</Text>
+            <AppInput
+              placeholder="Enter the building's name"
+              value={buildingName}
+              onChangeText={setBuildingName}
+              style={[
+                styles.textField,
+                { borderColor: colors.primary, color: colors.text, backgroundColor: colors.card },
+              ]}
+              placeholderTextColor={colors.secondary}
             />
-          ))}
+            <Text style={[styles.infoText, { color: colors.secondary }]}>e.g. Science Hall</Text>
+          </View>
+        </View>
+
+        {/* Step 2: Floor Label */}
+        <View style={styles.sectionContainer}>
+          <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+            Step 2: Floor Information
+          </Text>
+
+          <View style={styles.inputSection}>
+            <Text style={[styles.inputTitle, { color: colors.primary }]}>Floor Number / Label</Text>
+            <AppInput
+              placeholder="e.g., Floor 2, Basement"
+              value={floorLabel}
+              onChangeText={setFloorLabel}
+              style={[
+                styles.textField,
+                { borderColor: colors.primary, color: colors.text, backgroundColor: colors.card },
+              ]}
+              placeholderTextColor={colors.secondary}
+            />
+            <Text style={[styles.infoText, { color: colors.secondary }]}>
+              Specify the floor designation
+            </Text>
+          </View>
+        </View>
+
+        {/* Step 3: Upload Floorplan */}
+        <View style={styles.sectionContainer}>
+          <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+            Step 3: Select Floorplan File
+          </Text>
+
+          {/* File Upload Button */}
+          <View style={styles.fileUploadContainer}>
+            <AppSecondaryButton
+              title={fileUri ? 'Change Image' : 'Select Floorplan Image'}
+              onPress={handlePickDocument}
+            />
+            <Text style={[styles.infoText, { color: colors.secondary }]}>
+              Select a PNG or JPG floorplan image
+            </Text>
+
+            {fileUri && (
+              <View style={[styles.fileInfoContainer, { backgroundColor: colors.card }]}>
+                <Icon name="file-document" size={24} color={colors.primary} />
+                <Text style={[styles.fileName, { color: colors.text }]} numberOfLines={1}>
+                  {fileName}
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Submit Button */}
+        <View style={styles.submitContainer}>
+          <AppButton
+            title="Upload Floorplan"
+            onPress={handleUpload}
+            disabled={!fileUri || (!selectedBuilding && !buildingName) || !floorLabel}
+          />
         </View>
       </ScrollView>
     </View>
@@ -128,11 +332,55 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  errorContainer: {
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 16,
+  },
+  errorText: {
+    color: 'white',
+    fontWeight: '500',
+  },
+  sectionContainer: {
+    marginBottom: 24,
+    padding: 16,
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    borderRadius: 8,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  buildingSelector: {
+    marginBottom: 16,
+  },
+  buildingList: {
+    paddingVertical: 8,
+  },
+  buildingItem: {
+    padding: 12,
+    borderRadius: 8,
+    marginRight: 8,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  orText: {
+    textAlign: 'center',
+    fontWeight: 'bold',
+    marginVertical: 8,
   },
   inputSection: {
-    marginBottom: 20,
-    paddingTop: 12,
+    marginBottom: 16,
   },
   inputTitle: {
     fontSize: 14,
@@ -145,25 +393,22 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 12,
   },
-  buttonSection: {
-    marginBottom: 16,
+  fileUploadContainer: {
+    marginTop: 8,
   },
-  listSection: {
-    marginTop: 20,
+  fileInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
   },
-  sectionHeader: {
-    paddingTop: 16,
-    marginBottom: 12,
-  },
-  headerText: {
+  fileName: {
+    marginLeft: 8,
     flex: 1,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  sectionSubtitle: {
-    fontSize: 12,
+  submitContainer: {
+    marginTop: 8,
+    marginBottom: 32,
   },
 });

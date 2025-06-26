@@ -9,15 +9,13 @@ interface Props {
   user: User;
   onEdit: (user: User) => void;
   onDelete: (user: User) => void;
-  onToggleStatus: (user: User) => void;
 }
 
-export default function UserCard({ user, onEdit, onDelete, onToggleStatus }: Props) {
+export default function UserCard({ user, onEdit, onDelete }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
   const roleColor = user.role === 'Admin' ? colors.secondary : colors.roleSecondary;
-  const statusColor = user.status === 'Active' ? colors.statusActive : colors.statusInactive;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -28,13 +26,12 @@ export default function UserCard({ user, onEdit, onDelete, onToggleStatus }: Pro
           <Text style={[styles.userEmail, { color: colors.secondary }]}>{user.email}</Text>
         </View>
       </View>
-      
+
       <View style={styles.rightSection}>
         <View style={styles.roleStatusContainer}>
           <Text style={[styles.roleText, { color: roleColor }]}>{user.role}</Text>
-          <Text style={[styles.statusText, { color: statusColor }]}>{user.status}</Text>
         </View>
-        
+
         <View style={styles.actionsContainer}>
           <TouchableOpacity style={styles.actionButton} onPress={() => onEdit(user)}>
             <Icon name="create-outline" size={20} color={colors.primary} />
@@ -42,10 +39,6 @@ export default function UserCard({ user, onEdit, onDelete, onToggleStatus }: Pro
 
           <TouchableOpacity style={styles.actionButton} onPress={() => onDelete(user)}>
             <Icon name="close" size={20} color={colors.danger} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionButton} onPress={() => onToggleStatus(user)}>
-            <Icon name="lock-closed" size={20} color={colors.warning} />
           </TouchableOpacity>
         </View>
       </View>

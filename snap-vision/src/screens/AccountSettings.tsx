@@ -12,14 +12,14 @@ type AccountSettingsScreenProps = {
 export default function AccountSettingsScreen({ navigation }: AccountSettingsScreenProps) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  
+
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <StatusBar 
+      <StatusBar
         backgroundColor={colors.background}
-        barStyle={isDark ? 'light-content' : 'dark-content'} 
+        barStyle={isDark ? 'light-content' : 'dark-content'}
       />
-      <ScrollView 
+      <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
         contentContainerStyle={{ backgroundColor: colors.background, flexGrow: 1 }}
       >

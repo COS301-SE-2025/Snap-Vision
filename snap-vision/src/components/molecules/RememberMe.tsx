@@ -21,9 +21,7 @@ export default function RememberMe({ rememberMe, onToggle, onForgotPassword }: P
         </Text>
       </TouchableOpacity> */}
       <TouchableOpacity onPress={onForgotPassword}>
-        <Text style={[styles.linkText, { color: colors.secondary }]}>
-          Forgot Password?
-        </Text>
+        <Text style={[styles.linkText, { color: colors.secondary }]}>Forgot Password?</Text>
       </TouchableOpacity>
     </View>
   );

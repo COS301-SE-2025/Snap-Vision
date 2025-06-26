@@ -24,11 +24,7 @@ export default function AccountSettingsContent({ navigation }: Props) {
       Alert.alert('Logged Out', 'You have been logged out successfully.');
       resetToLogin();
     } catch (error) {
-      const errorMessage =
-        error && typeof error === 'object' && 'message' in error
-          ? (error as { message?: string }).message
-          : 'An error occurred while logging out.';
-      Alert.alert('Error Logging Out', errorMessage || 'An error occurred while logging out.');
+      Alert.alert('An error occurred while logging out.');
     } finally {
       setIsLoggingOut(false);
     }

@@ -6,7 +6,7 @@ import { getThemeColors } from '../../theme';
 const Divider = () => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  
+
   return <View style={[styles.divider, { backgroundColor: colors.border }]} />;
 };
 
