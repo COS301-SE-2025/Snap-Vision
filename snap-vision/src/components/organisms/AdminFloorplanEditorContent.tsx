@@ -32,7 +32,7 @@ export default function AdminFloorplanEditorContent() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const isDarkMode = isDark;
-  
+
   // Define all hooks at the top level before any conditional returns
   const webViewRef = useRef<WebView>(null);
   const [roomMarkers, setRoomMarkers] = useState<RoomPOI[]>([]);
@@ -41,14 +41,18 @@ export default function AdminFloorplanEditorContent() {
   const [roomData, setRoomData] = useState({
     name: '',
     type: 'classroom',
-    description: ''
+    description: '',
   });
   const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  
+
   // Get route params with a safe default
-  const { buildingId, floorLabel, imageUri } = route.params || { buildingId: '', floorLabel: '', imageUri: '' };
-  
+  const { buildingId, floorLabel, imageUri } = route.params || {
+    buildingId: '',
+    floorLabel: '',
+    imageUri: '',
+  };
+
   // IMPORTANT: Place all useEffect hooks before any conditional returns
   // Load existing room POIs
   useEffect(() => {
@@ -56,7 +60,7 @@ export default function AdminFloorplanEditorContent() {
     if (!route.params || !buildingId || !floorLabel) {
       return; // Skip loading if we don't have valid params
     }
-    
+
     const loadRoomPOIs = async () => {
       try {
         const snapshot = await firestore()
@@ -64,16 +68,16 @@ export default function AdminFloorplanEditorContent() {
           .where('buildingId', '==', buildingId)
           .where('floorId', '==', floorLabel)
           .get();
-          
-        const markers = snapshot.docs.map(doc => ({
-          ...(doc.data() as RoomPOI)
+
+        const markers = snapshot.docs.map((doc) => ({
+          ...(doc.data() as RoomPOI),
         }));
         setRoomMarkers(markers as RoomPOI[]);
-        
+
         // Add markers to WebView when it's ready
         if (markers.length > 0) {
           setTimeout(() => {
-            markers.forEach(marker => {
+            markers.forEach((marker) => {
               webViewRef.current?.injectJavaScript(`
                 addMarker("${marker.id}", ${marker.coordinates.x}, ${marker.coordinates.y}, "${marker.name}");
                 true;
@@ -85,45 +89,62 @@ export default function AdminFloorplanEditorContent() {
         console.error('Error loading room POIs:', error);
       }
     };
-    
+
     loadRoomPOIs();
   }, [buildingId, floorLabel, route.params]);
-  
+
   // After all hooks, we can have conditional returns
   // Add defensive check for route.params
   if (!route.params) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: colors.background }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 20,
+          backgroundColor: colors.background,
+        }}
+      >
         <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 20, color: colors.text }}>
           Missing floorplan information
         </Text>
         <Text style={{ textAlign: 'center', marginBottom: 20, color: colors.text }}>
-          Please select a floorplan from the edit screen or make sure you&apos;ve initialized the pre-bundled floorplans.
+          Please select a floorplan from the edit screen or make sure you&apos;ve initialized the
+          pre-bundled floorplans.
         </Text>
-        <AppButton 
-          title="Go Back" 
+        <AppButton
+          title="Go Back"
           onPress={() => navigation.goBack()}
           style={{ backgroundColor: colors.primary }}
         />
       </View>
     );
   }
-  
+
   // Additional safety check for each parameter
   if (!buildingId || !floorLabel || !imageUri) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: colors.background }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 20,
+          backgroundColor: colors.background,
+        }}
+      >
         <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 20, color: colors.text }}>
           Incomplete floorplan data
         </Text>
         <Text style={{ textAlign: 'center', marginBottom: 20, color: colors.text }}>
-          {!buildingId ? "Missing building ID. " : ""}
-          {!floorLabel ? "Missing floor label. " : ""}
-          {!imageUri ? "Missing image URI. " : ""}
+          {!buildingId ? 'Missing building ID. ' : ''}
+          {!floorLabel ? 'Missing floor label. ' : ''}
+          {!imageUri ? 'Missing image URI. ' : ''}
           Please go back and try again.
         </Text>
-        <AppButton 
-          title="Go Back" 
+        <AppButton
+          title="Go Back"
           onPress={() => navigation.goBack()}
           style={{ backgroundColor: colors.primary }}
         />
@@ -440,12 +461,12 @@ export default function AdminFloorplanEditorContent() {
       </html>
     `;
   };
-  
+
   // Handle messages from WebView
-  const handleMessage = (event: { nativeEvent: { data: string; }; }) => {
+  const handleMessage = (event: { nativeEvent: { data: string } }) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
-      
+
       if (data.type === 'add_marker') {
         // Adding a new marker
         setCurrentPoint({ x: data.x, y: data.y });
@@ -454,13 +475,12 @@ export default function AdminFloorplanEditorContent() {
         setRoomData({
           name: '',
           type: 'classroom',
-          description: ''
+          description: '',
         });
         setIsModalVisible(true);
-      }
-      else if (data.type === 'edit_marker') {
+      } else if (data.type === 'edit_marker') {
         // Editing an existing marker
-        const roomToEdit = roomMarkers.find(room => room.id === data.id);
+        const roomToEdit = roomMarkers.find((room) => room.id === data.id);
         if (roomToEdit) {
           setEditingRoomId(data.id);
           setIsEditing(true);
@@ -468,7 +488,7 @@ export default function AdminFloorplanEditorContent() {
           setRoomData({
             name: roomToEdit.name,
             type: roomToEdit.type,
-            description: roomToEdit.description || ''
+            description: roomToEdit.description || '',
           });
           setIsModalVisible(true);
         }
@@ -477,7 +497,7 @@ export default function AdminFloorplanEditorContent() {
       console.error('Error parsing WebView message:', e);
     }
   };
-  
+
   // Save or update room POI
   const saveRoomPOI = async () => {
     if (!roomData.name.trim()) {
@@ -488,15 +508,15 @@ export default function AdminFloorplanEditorContent() {
       Alert.alert('Error', 'No location selected for the room.');
       return;
     }
-    
+
     try {
       let roomId = editingRoomId;
-      
+
       if (!isEditing) {
         // Create a new room POI
         roomId = `room_${buildingId.replace(/\//g, '_')}_${floorLabel.replace(/\s/g, '_')}_${Date.now()}`;
       }
-      
+
       // Create/update room POI object
       const roomPOI = {
         id: roomId as string,
@@ -505,57 +525,57 @@ export default function AdminFloorplanEditorContent() {
         floorId: floorLabel,
         coordinates: {
           x: currentPoint.x,
-          y: currentPoint.y
+          y: currentPoint.y,
         },
         type: roomData.type,
         description: roomData.description || null,
       };
-      
+
       // Save to Firestore
-      await firestore().collection('RoomPOIs').doc(roomId as string).set(roomPOI);
-      
+      await firestore()
+        .collection('RoomPOIs')
+        .doc(roomId as string)
+        .set(roomPOI);
+
       // Update local state
       if (isEditing) {
         // Replace the edited room in the array
-        setRoomMarkers(roomMarkers.map(room => 
-          room.id === roomId ? roomPOI : room
-        ));
+        setRoomMarkers(roomMarkers.map((room) => (room.id === roomId ? roomPOI : room)));
       } else {
         // Add the new room to the array
         setRoomMarkers([...roomMarkers, roomPOI]);
       }
-      
+
       // Add/update marker on WebView
       webViewRef.current?.injectJavaScript(`
         addMarker("${roomId}", ${currentPoint.x}, ${currentPoint.y}, "${roomData.name}");
         true;
       `);
-      
+
       // Reset form
       setRoomData({ name: '', type: 'classroom', description: '' });
       setIsEditing(false);
       setEditingRoomId(null);
       setIsModalVisible(false);
-      
     } catch (error) {
       console.error('Error saving room POI:', error);
       Alert.alert('Error', 'Failed to save room POI');
     }
   };
-  
+
   // Delete room POI
   const deleteRoomPOI = async () => {
     if (!editingRoomId) {
       console.error('No room selected for deletion');
       return;
     }
-    
+
     try {
       await firestore().collection('RoomPOIs').doc(editingRoomId).delete();
-      
+
       // Remove from local state
-      setRoomMarkers(roomMarkers.filter(room => room.id !== editingRoomId));
-      
+      setRoomMarkers(roomMarkers.filter((room) => room.id !== editingRoomId));
+
       // Remove marker from WebView
       webViewRef.current?.injectJavaScript(`
         const markerToRemove = document.getElementById('marker-${editingRoomId}');
@@ -564,29 +584,24 @@ export default function AdminFloorplanEditorContent() {
         }
         true;
       `);
-      
+
       // Reset form and close modal
       setRoomData({ name: '', type: 'classroom', description: '' });
       setIsEditing(false);
       setEditingRoomId(null);
       setIsModalVisible(false);
-      
     } catch (error) {
       console.error('Error deleting room POI:', error);
       Alert.alert('Error', 'Failed to delete room POI');
     }
   };
-  
+
   // Show delete confirmation
   const confirmDelete = () => {
-    Alert.alert(
-      'Delete Room',
-      `Are you sure you want to delete ${roomData.name}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', onPress: deleteRoomPOI, style: 'destructive' },
-      ]
-    );
+    Alert.alert('Delete Room', `Are you sure you want to delete ${roomData.name}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', onPress: deleteRoomPOI, style: 'destructive' },
+    ]);
   };
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -621,7 +636,7 @@ export default function AdminFloorplanEditorContent() {
         <Text style={[styles.footerText, { color: colors.text }]}>
           {roomMarkers.length} rooms added
         </Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={[styles.doneButton, { backgroundColor: colors.primary }]}
         >
@@ -704,10 +719,7 @@ export default function AdminFloorplanEditorContent() {
           <View style={styles.modalButtons}>
             {/* Show delete button when editing */}
             {isEditing && (
-              <TouchableOpacity
-                onPress={confirmDelete}
-                style={[styles.deleteButton]}
-              >
+              <TouchableOpacity onPress={confirmDelete} style={[styles.deleteButton]}>
                 <Text style={{ color: '#FFFFFF' }}>Delete</Text>
               </TouchableOpacity>
             )}

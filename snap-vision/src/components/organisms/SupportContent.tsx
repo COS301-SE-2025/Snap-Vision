@@ -44,7 +44,7 @@ export default function SupportContent() {
         <TouchableOpacity
           key={index}
           style={[styles.optionContainer, { borderBottomColor: colors.border }]}
-          onPress={option.onPress}  // Use the onPress property from each option
+          onPress={option.onPress} // Use the onPress property from each option
         >
           <View style={styles.iconContainer}>
             <Icon name={option.icon} size={24} color={colors.primary} />

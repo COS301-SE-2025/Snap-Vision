@@ -10,13 +10,10 @@ jest.mock('../src/components/atoms/ProgressCard', () => () => null);
 jest.mock('../src/components/molecules/ChallengeItem', () => jest.fn(() => null));
 jest.mock('../src/components/molecules/RewardCard', () => () => null);
 jest.mock('../src/components/molecules/ActionButton', () => {
-  const ActionButtonMock = (props: any) => (
-    <button onClick={props.onPress}>{props.title}</button>
-  );
+  const ActionButtonMock = (props: any) => <button onClick={props.onPress}>{props.title}</button>;
   ActionButtonMock.displayName = 'ActionButtonMock';
   return ActionButtonMock;
 });
-
 
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: mockNavigate }),
@@ -28,7 +25,6 @@ jest.mock('@react-navigation/stack', () => ({
   })),
   StackNavigationProp: jest.fn(),
 }));
-
 
 const mockState = {
   unlocked: new Set(['first-login', 'qr-scan']),
@@ -49,7 +45,6 @@ jest.mock('../src/context/BadgeContext', () => ({
     getChallenges: jest.fn(() => mockChallenges),
   }),
 }));
-
 
 describe('AchievementsForm Functional Logic Only', () => {
   it('converts unlocked badge set to array', () => {

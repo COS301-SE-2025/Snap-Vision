@@ -7,11 +7,7 @@ import { BADGES, BadgeId } from '../../types/badges';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
-export default function BadgesSection({ 
-  unlockedIds 
-}: {
-  unlockedIds: BadgeId[];
-}) {
+export default function BadgesSection({ unlockedIds }: { unlockedIds: BadgeId[] }) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
@@ -19,7 +15,7 @@ export default function BadgesSection({
     <View style={styles.section}>
       <SectionHeader title="Your Badges" />
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {(Object.keys(BADGES) as BadgeId[]).map(id => (
+        {(Object.keys(BADGES) as BadgeId[]).map((id) => (
           <RewardCard
             key={id}
             reward={{
@@ -40,5 +36,5 @@ export default function BadgesSection({
 }
 
 const styles = StyleSheet.create({
-  section: { marginBottom: 24 }
+  section: { marginBottom: 24 },
 });

@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import AppInput from '../atoms/AppInput';
 import AppButton from '../atoms/AppButton';
 import AppSecondaryButton from '../atoms/AppSecondaryButton';
@@ -27,14 +35,14 @@ export default function AdminLoadFloorplansContent() {
   const navigation = useNavigation<any>();
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  
+
   // Form state
   const [buildingName, setBuildingName] = useState('');
   const [floorLabel, setFloorLabel] = useState('');
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
   const [fileUri, setFileUri] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string>('');
-  
+
   // Data state
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,16 +57,16 @@ export default function AdminLoadFloorplansContent() {
           .collection('UPcampusPOIs')
           .where('type', '==', 'building')
           .get();
-        
-        const buildingsData = snapshot.docs.map(doc => {
+
+        const buildingsData = snapshot.docs.map((doc) => {
           const data = doc.data();
           return {
             id: doc.id,
             name: data.name || 'Unnamed Building',
-            centroid: data.centroid
+            centroid: data.centroid,
           };
         });
-        
+
         setBuildings(buildingsData);
         setIsLoading(false);
       } catch (err) {
@@ -67,10 +75,10 @@ export default function AdminLoadFloorplansContent() {
         setIsLoading(false);
       }
     };
-    
+
     fetchBuildings();
   }, []);
-  
+
   // Handle file selection
   const handlePickDocument = async () => {
     try {
@@ -78,7 +86,7 @@ export default function AdminLoadFloorplansContent() {
         mediaType: 'photo',
         quality: 0.8,
       });
-      
+
       if (result.assets && result.assets[0]) {
         setFileUri(result.assets[0].uri ?? null);
         setFileName(result.assets[0].fileName || 'floorplan.jpg');
@@ -88,39 +96,39 @@ export default function AdminLoadFloorplansContent() {
       setError('Failed to select image');
     }
   };
-  
+
   // Handle floorplan upload
   const handleUpload = async () => {
     if (!selectedBuilding) {
       setError('Please select a building');
       return;
     }
-    
+
     if (!floorLabel) {
       setError('Please enter a floor label');
       return;
     }
-    
+
     if (!fileUri) {
       setError('Please select a floorplan file');
       return;
     }
-    
+
     try {
       setIsLoading(true);
-      
+
       // Create directory if it doesn't exist
       const dirPath = `${RNFS.DocumentDirectoryPath}/floorplans`;
       await RNFS.mkdir(dirPath, { NSURLIsExcludedFromBackupKey: true });
-      
+
       // Generate safe filename
       const fileExt = fileName.substring(fileName.lastIndexOf('.'));
       const safeFileName = `${selectedBuilding.id}_${floorLabel.replace(/\s+/g, '_')}${fileExt}`;
       const destPath = `${dirPath}/${safeFileName}`;
-      
+
       // Copy file to app documents directory
       await RNFS.copyFile(fileUri, destPath);
-      
+
       // Create floorplan metadata
       const floorplanId = `${selectedBuilding.id}_${floorLabel.replace(/\s+/g, '_')}`;
       const floorplanData = {
@@ -130,36 +138,36 @@ export default function AdminLoadFloorplansContent() {
         floorLabel: floorLabel,
         uri: `file://${destPath}`,
         timestamp: new Date().toISOString(),
-        status: 'active'
+        status: 'active',
       };
-      
+
       // Save to AsyncStorage
       await AsyncStorage.setItem(`floorplan_${floorplanId}`, JSON.stringify(floorplanData));
-      
+
       setIsLoading(false);
       Alert.alert(
         'Success',
         'Floorplan uploaded successfully. Would you like to add room POIs now?',
         [
           { text: 'Later', style: 'cancel' },
-          { 
-            text: 'Add POIs', 
-            onPress: () => navigation.navigate('FloorplanEditor', {
-              buildingId: selectedBuilding.id,
-              floorLabel: floorLabel,
-              imageUri: `file://${destPath}`
-            })
-          }
-        ]
+          {
+            text: 'Add POIs',
+            onPress: () =>
+              navigation.navigate('FloorplanEditor', {
+                buildingId: selectedBuilding.id,
+                floorLabel: floorLabel,
+                imageUri: `file://${destPath}`,
+              }),
+          },
+        ],
       );
-      
+
       // Reset form
       setBuildingName('');
       setFloorLabel('');
       setSelectedBuilding(null);
       setFileUri(null);
       setFileName('');
-      
     } catch (err) {
       console.error('Error uploading floorplan:', err);
       setError('Failed to upload floorplan');
@@ -222,9 +230,11 @@ export default function AdminLoadFloorplansContent() {
                     ]}
                     onPress={() => handleBuildingSelect(building)}
                   >
-                    <Text style={{
-                      color: selectedBuilding?.id === building.id ? '#FFFFFF' : colors.text
-                    }}>
+                    <Text
+                      style={{
+                        color: selectedBuilding?.id === building.id ? '#FFFFFF' : colors.text,
+                      }}
+                    >
                       {building.name}
                     </Text>
                   </TouchableOpacity>
@@ -285,7 +295,7 @@ export default function AdminLoadFloorplansContent() {
           {/* File Upload Button */}
           <View style={styles.fileUploadContainer}>
             <AppSecondaryButton
-              title={fileUri ? "Change Image" : "Select Floorplan Image"}
+              title={fileUri ? 'Change Image' : 'Select Floorplan Image'}
               onPress={handlePickDocument}
             />
             <Text style={[styles.infoText, { color: colors.secondary }]}>

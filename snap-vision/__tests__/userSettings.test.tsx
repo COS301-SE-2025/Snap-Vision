@@ -2,7 +2,7 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { View, Text } from 'react-native';
 
-// Mock the Switch component 
+// Mock the Switch component
 jest.mock('react-native/Libraries/Components/Switch/Switch', () => {
   const React = require('react');
   const { View } = require('react-native');
@@ -28,31 +28,35 @@ jest.mock('../src/theme', () => ({
   }),
 }));
 
-// Mock NotificationSettings component 
+// Mock NotificationSettings component
 const NotificationSettings = () => {
   return (
     <View style={{ padding: 16, backgroundColor: '#FFFFFF' }}>
-      <View style={{ 
-        flexDirection: 'row', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: 20,
-        paddingBottom: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#DDDDDD'
-      }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 20,
+          paddingBottom: 10,
+          borderBottomWidth: 1,
+          borderBottomColor: '#DDDDDD',
+        }}
+      >
         <Text>Push Notifications</Text>
         <View testID="mock-switch" role="switch" value={true} />
       </View>
-      <View style={{ 
-        flexDirection: 'row', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: 20,
-        paddingBottom: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#DDDDDD'
-      }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 20,
+          paddingBottom: 10,
+          borderBottomWidth: 1,
+          borderBottomColor: '#DDDDDD',
+        }}
+      >
         <Text>Email Alerts</Text>
         <View testID="mock-switch" role="switch" value={false} />
       </View>
@@ -67,16 +71,18 @@ const AppPreferencesContent = () => {
       <View testID="settings-header">
         <Text>App Preferences</Text>
       </View>
-      
-      <View style={{ 
-        flexDirection: 'row', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: 20,
-        paddingBottom: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#DDDDDD'
-      }}>
+
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 20,
+          paddingBottom: 10,
+          borderBottomWidth: 1,
+          borderBottomColor: '#DDDDDD',
+        }}
+      >
         <Text>Dark Mode</Text>
         <View testID="dark-mode-switch" role="switch" value={false} />
       </View>
@@ -92,16 +98,22 @@ jest.mock('../src/components/molecules/PrivacySettings', () => {
     return (
       <View testID="privacy-settings-mock">
         <Text>Privacy Settings Section</Text>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View
+          style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+        >
           <Text>Location Services</Text>
           <View testID="mock-switch" role="switch" value={true} />
         </View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View
+          style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+        >
           <Text>Analytics</Text>
           <View testID="mock-switch" role="switch" value={true} />
         </View>
         <Text>Security Settings</Text>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View
+          style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+        >
           <Text>Biometric Authentication</Text>
           <View testID="mock-switch" role="switch" value={false} />
         </View>
@@ -164,7 +176,7 @@ describe('NotificationSettings Unit Tests', () => {
     expect(getByText('Push Notifications')).toBeTruthy();
     expect(getByText('Email Alerts')).toBeTruthy();
   });
-  
+
   it('contains switches for notification options', () => {
     const { getAllByTestId } = render(<NotificationSettings />);
     const switches = getAllByTestId('mock-switch');
@@ -179,7 +191,7 @@ describe('AppPreferences Unit Tests', () => {
     const { getByText } = render(<AppPreferencesContent />);
     expect(getByText('App Preferences')).toBeTruthy();
   });
-  
+
   it('contains dark mode toggle', () => {
     const { getByTestId, getByText } = render(<AppPreferencesContent />);
     expect(getByText('Dark Mode')).toBeTruthy();
@@ -187,12 +199,12 @@ describe('AppPreferences Unit Tests', () => {
     expect(darkModeSwitch).toBeTruthy();
     expect(darkModeSwitch.props.value).toBe(false); // Default light theme
   });
-  
+
   it('applies correct styling based on theme', () => {
     const { getByTestId } = render(<AppPreferencesContent />);
     const container = getByTestId('app-preferences-container');
     expect(container.props.style).toMatchObject({
-      backgroundColor: '#FFFFFF'
+      backgroundColor: '#FFFFFF',
     });
   });
 
@@ -200,7 +212,7 @@ describe('AppPreferences Unit Tests', () => {
     const toggleTheme = jest.fn();
     jest.spyOn(require('../src/theme/ThemeContext'), 'useTheme').mockReturnValue({
       isDark: false,
-      toggleTheme
+      toggleTheme,
     });
     const { getByTestId } = render(<AppPreferencesContent />);
     const darkModeSwitch = getByTestId('dark-mode-switch');

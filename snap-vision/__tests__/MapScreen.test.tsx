@@ -9,7 +9,9 @@ import DirectionsModal from '../src/components/organisms/DirectionsModal';
 jest.mock('react-native-webview', () => {
   const React = require('react');
   const { View } = require('react-native');
-  const MockWebView = React.forwardRef((props, ref) => <View {...props} ref={ref} testID="mock-webview" />);
+  const MockWebView = React.forwardRef((props, ref) => (
+    <View {...props} ref={ref} testID="mock-webview" />
+  ));
   MockWebView.displayName = 'MockWebView';
   return {
     WebView: MockWebView,
@@ -39,7 +41,7 @@ describe('MapActionsPanel', () => {
         onReportIn={jest.fn()}
         onReportOut={jest.fn()}
         color="white"
-      />
+      />,
     );
     expect(getByText('Share Location')).toBeTruthy();
     expect(getByText('Report Crowds')).toBeTruthy();
@@ -58,7 +60,7 @@ describe('MapActionsPanel', () => {
         onReportIn={jest.fn()}
         onReportOut={jest.fn()}
         color="white"
-      />
+      />,
     );
     expect(queryByText('Share Location')).toBeNull();
     expect(queryByText('Report Crowds')).toBeNull();
@@ -78,7 +80,7 @@ describe('MapActionsPanel', () => {
         onReportIn={jest.fn()}
         onReportOut={jest.fn()}
         color="white"
-      />
+      />,
     );
     fireEvent.press(getByText('Share Location'));
     expect(mockOnShare).toHaveBeenCalled();
@@ -98,7 +100,7 @@ describe('MapActionsPanel', () => {
         onReportIn={jest.fn()}
         onReportOut={jest.fn()}
         color="white"
-      />
+      />,
     );
     fireEvent.press(getByText('Report Crowds'));
     expect(mockOnReport).toHaveBeenCalled();
@@ -118,7 +120,7 @@ describe('MapActionsPanel', () => {
         onReportIn={jest.fn()}
         onReportOut={jest.fn()}
         color="white"
-      />
+      />,
     );
     fireEvent(getByText('Share Location'), 'pressIn');
     expect(mockOnShareIn).toHaveBeenCalled();
@@ -138,7 +140,7 @@ describe('MapActionsPanel', () => {
         onReportIn={jest.fn()}
         onReportOut={jest.fn()}
         color="white"
-      />
+      />,
     );
     fireEvent(getByText('Share Location'), 'pressOut');
     expect(mockOnShareOut).toHaveBeenCalled();
@@ -158,7 +160,7 @@ describe('MapActionsPanel', () => {
         onReportIn={mockOnReportIn}
         onReportOut={jest.fn()}
         color="white"
-      />
+      />,
     );
     fireEvent(getByText('Report Crowds'), 'pressIn');
     expect(mockOnReportIn).toHaveBeenCalled();
@@ -178,7 +180,7 @@ describe('MapActionsPanel', () => {
         onReportIn={jest.fn()}
         onReportOut={mockOnReportOut}
         color="white"
-      />
+      />,
     );
     fireEvent(getByText('Report Crowds'), 'pressOut');
     expect(mockOnReportOut).toHaveBeenCalled();
@@ -216,14 +218,13 @@ describe('MapWebView', () => {
     expect(consoleSpy).toHaveBeenCalledWith('WebView error:', 'Test error');
     consoleSpy.mockRestore();
   });
-
 });
 describe('NavigationPanel', () => {
   const renderWithProviders = (ui: React.ReactNode) => {
     return render(<ThemeProvider>{ui}</ThemeProvider>);
   };
 
-    it('renders correctly with navigation details', () => {
+  it('renders correctly with navigation details', () => {
     const { getByText } = renderWithProviders(
       <NavigationPanel
         isNavigating={true}
@@ -238,7 +239,7 @@ describe('NavigationPanel', () => {
         onToggleVoice={jest.fn()}
         currentInstruction="Turn left"
         onSpeakingChange={jest.fn()}
-      />
+      />,
     );
     expect(getByText('Library')).toBeTruthy();
     expect(getByText('1.0 km')).toBeTruthy();
@@ -246,8 +247,8 @@ describe('NavigationPanel', () => {
     expect(getByText('50%')).toBeTruthy();
     expect(getByText('Voice On')).toBeTruthy(); // Replace 'Turn left' with the actual rendered text
   });
-  
-   it('renders correctly when distance is less than 1000 meters', () => {
+
+  it('renders correctly when distance is less than 1000 meters', () => {
     const { getByText } = renderWithProviders(
       <NavigationPanel
         isNavigating={true}
@@ -262,7 +263,7 @@ describe('NavigationPanel', () => {
         onToggleVoice={jest.fn()}
         currentInstruction="Turn right"
         onSpeakingChange={jest.fn()}
-      />
+      />,
     );
     expect(getByText('Cafeteria')).toBeTruthy();
     expect(getByText('350 m')).toBeTruthy();
@@ -270,7 +271,7 @@ describe('NavigationPanel', () => {
     expect(getByText('75%')).toBeTruthy();
     expect(getByText('🔇')).toBeTruthy();
   });
-  
+
   it('calls onStartNavigation when start button is pressed', () => {
     const mockOnStartNavigation = jest.fn();
     const { getByText } = renderWithProviders(
@@ -287,11 +288,11 @@ describe('NavigationPanel', () => {
         onToggleVoice={jest.fn()}
         currentInstruction=""
         onSpeakingChange={jest.fn()}
-      />
+      />,
     );
     fireEvent.press(getByText('Start'));
     expect(mockOnStartNavigation).toHaveBeenCalled();
-    });
+  });
 
   it('calls onStopNavigation when stop button is pressed', () => {
     const mockOnStopNavigation = jest.fn();
@@ -309,36 +310,36 @@ describe('NavigationPanel', () => {
         onToggleVoice={jest.fn()}
         currentInstruction=""
         onSpeakingChange={jest.fn()}
-      />
+      />,
     );
     fireEvent.press(getByText('Stop'));
     expect(mockOnStopNavigation).toHaveBeenCalled();
   });
-       it('disables navigation buttons when loading', () => {
-        const mockOnStartNavigation = jest.fn();
-        const { getByText } = renderWithProviders(
-          <NavigationPanel
-            isNavigating={false}
-            isLoading={true}
-            onStartNavigation={mockOnStartNavigation}
-            onStopNavigation={jest.fn()}
-            progress={0}
-            distance={null}
-            time={null}
-            destination="Library"
-            isVoiceEnabled={false}
-            onToggleVoice={jest.fn()}
-            currentInstruction=""
-            onSpeakingChange={jest.fn()}
-          />
-        );
-      
-        const loadingButton = getByText('Loading');
-        expect(loadingButton).toBeTruthy(); // Ensure the button exists
-        expect(mockOnStartNavigation).not.toHaveBeenCalled(); // Verify the callback is not triggered
-      });
+  it('disables navigation buttons when loading', () => {
+    const mockOnStartNavigation = jest.fn();
+    const { getByText } = renderWithProviders(
+      <NavigationPanel
+        isNavigating={false}
+        isLoading={true}
+        onStartNavigation={mockOnStartNavigation}
+        onStopNavigation={jest.fn()}
+        progress={0}
+        distance={null}
+        time={null}
+        destination="Library"
+        isVoiceEnabled={false}
+        onToggleVoice={jest.fn()}
+        currentInstruction=""
+        onSpeakingChange={jest.fn()}
+      />,
+    );
 
-    it('calls onToggleVoice when voice toggle is pressed', () => {
+    const loadingButton = getByText('Loading');
+    expect(loadingButton).toBeTruthy(); // Ensure the button exists
+    expect(mockOnStartNavigation).not.toHaveBeenCalled(); // Verify the callback is not triggered
+  });
+
+  it('calls onToggleVoice when voice toggle is pressed', () => {
     const mockOnToggleVoice = jest.fn();
     const { getByText } = renderWithProviders(
       <NavigationPanel
@@ -354,7 +355,7 @@ describe('NavigationPanel', () => {
         onToggleVoice={mockOnToggleVoice}
         currentInstruction="Turn left"
         onSpeakingChange={jest.fn()}
-      />
+      />,
     );
     fireEvent.press(getByText('Voice On')); // Replace 'Turn left' with the actual rendered text
     expect(mockOnToggleVoice).toHaveBeenCalled();
@@ -375,8 +376,8 @@ describe('NavigationPanel', () => {
         onToggleVoice={jest.fn()}
         currentInstruction=""
         onSpeakingChange={jest.fn()}
-      />
-      );
+      />,
+    );
     expect(queryByText('Library')).toBeTruthy();
     expect(queryByText('50%')).toBeTruthy();
     expect(queryByText('km')).toBeNull();

@@ -42,7 +42,7 @@ const mockToggleTheme = jest.fn();
 jest.mock('../../src/theme/ThemeContext', () => ({
   useTheme: () => ({
     isDark: false,
-    toggleTheme: mockToggleTheme
+    toggleTheme: mockToggleTheme,
   }),
 }));
 
@@ -63,11 +63,15 @@ jest.mock('../../src/components/molecules/NotificationSettings', () => {
   return function MockNotificationSettings() {
     return (
       <View testID="notification-settings">
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View
+          style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+        >
           <Text>Push Notifications</Text>
           <View testID="mock-switch" role="switch" value={true} />
         </View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View
+          style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+        >
           <Text>Email Alerts</Text>
           <View testID="mock-switch" role="switch" value={false} />
         </View>
@@ -84,16 +88,22 @@ jest.mock('../../src/components/molecules/PrivacySettings', () => {
     return (
       <View testID="privacy-settings-mock">
         <Text>Privacy Settings Section</Text>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View
+          style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+        >
           <Text>Location Services</Text>
           <View testID="mock-switch" role="switch" value={true} />
         </View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View
+          style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+        >
           <Text>Analytics</Text>
           <View testID="mock-switch" role="switch" value={true} />
         </View>
         <Text>Security Settings</Text>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View
+          style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+        >
           <Text>Biometric Authentication</Text>
           <View testID="mock-switch" role="switch" value={false} />
         </View>
@@ -110,7 +120,10 @@ jest.mock('../../src/components/molecules/DarkModeToggle', () => {
     const { useTheme } = require('../../src/theme/ThemeContext');
     const { toggleTheme, isDark } = useTheme();
     return (
-      <View testID="dark-mode-toggle" style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+      <View
+        testID="dark-mode-toggle"
+        style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+      >
         <Text>Dark Mode</Text>
         <TouchableOpacity
           testID="dark-mode-switch"
@@ -121,7 +134,7 @@ jest.mock('../../src/components/molecules/DarkModeToggle', () => {
             borderRadius: 12,
             backgroundColor: isDark ? '#4CAF50' : '#DDDDDD',
             justifyContent: 'center',
-            paddingHorizontal: 4
+            paddingHorizontal: 4,
           }}
         >
           <View
@@ -130,7 +143,7 @@ jest.mock('../../src/components/molecules/DarkModeToggle', () => {
               height: 18,
               borderRadius: 9,
               backgroundColor: 'white',
-              alignSelf: isDark ? 'flex-end' : 'flex-start'
+              alignSelf: isDark ? 'flex-end' : 'flex-start',
             }}
           />
         </TouchableOpacity>
@@ -173,12 +186,13 @@ jest.mock('../../src/components/atoms/SettingsSearch', () => {
   };
 });
 
-// Mock AppPreferencesScreen 
+// Mock AppPreferencesScreen
 jest.mock('../../src/screens/AppPreferences', () => {
   const React = require('react');
   const { SafeAreaView, ScrollView } = require('react-native');
 
-  const AppPreferencesContent = require('../../src/components/organisms/AppPreferencesContent').default;
+  const AppPreferencesContent =
+    require('../../src/components/organisms/AppPreferencesContent').default;
 
   return function MockAppPreferencesScreen() {
     return (
@@ -191,11 +205,12 @@ jest.mock('../../src/screens/AppPreferences', () => {
   };
 });
 
-// Mock PrivacySecurityScreen 
+// Mock PrivacySecurityScreen
 jest.mock('../../src/screens/PrivacySecurityScreen', () => {
   const React = require('react');
   const { SafeAreaView, ScrollView } = require('react-native');
-  const PrivacySecurityContent = require('../../src/components/organisms/PrivacySecurityContent').default;
+  const PrivacySecurityContent =
+    require('../../src/components/organisms/PrivacySecurityContent').default;
   return function MockPrivacySecurityScreen() {
     return (
       <SafeAreaView style={{ backgroundColor: '#FFFFFF' }}>
@@ -371,7 +386,7 @@ describe('SettingsContent Integration Tests', () => {
     jest.doMock('../../src/theme/ThemeContext', () => ({
       useTheme: () => ({
         isDark: true,
-        toggleTheme: mockToggleTheme
+        toggleTheme: mockToggleTheme,
       }),
     }));
     jest.doMock('../../src/theme', () => ({
@@ -396,7 +411,7 @@ describe('SupportContent Integration Tests', () => {
     const { getByTestId, getByText } = render(
       <NavigationContainer>
         <SupportContent />
-      </NavigationContainer>
+      </NavigationContainer>,
     );
     expect(getByTestId('settings-header')).toBeTruthy();
     expect(getByText('Support')).toBeTruthy();
@@ -407,7 +422,7 @@ describe('SupportContent Integration Tests', () => {
     const { getByTestId, getByText } = render(
       <NavigationContainer>
         <SupportContent />
-      </NavigationContainer>
+      </NavigationContainer>,
     );
     expect(getByText('FAQ')).toBeTruthy();
     expect(getByText('Contact Support')).toBeTruthy();
@@ -419,7 +434,7 @@ describe('SupportContent Integration Tests', () => {
     const { getByTestId, getByText } = render(
       <NavigationContainer>
         <SupportContent />
-      </NavigationContainer>
+      </NavigationContainer>,
     );
     expect(getByTestId('settings-header')).toBeTruthy();
     expect(getByText('Support')).toBeTruthy();
@@ -430,7 +445,7 @@ describe('SupportContent Integration Tests', () => {
     expect(getByText('SnapVision v1.0.0')).toBeTruthy();
   });
 
-    it('calls onSearch when search input is used', () => {
+  it('calls onSearch when search input is used', () => {
     const navigation = { navigate: jest.fn() };
     const { getByTestId } = render(<SettingsContent isDark={false} navigation={navigation} />);
     const searchInput = getByTestId('settings-search-input');

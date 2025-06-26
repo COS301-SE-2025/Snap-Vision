@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import AppButton from '../atoms/AppButton';
 import AppSecondaryButton from '../atoms/AppSecondaryButton';
 import SettingsHeader from '../molecules/SettingsHeader';
@@ -43,26 +51,24 @@ export default function AdminEditFloorplansContent() {
         setIsLoading(true);
         // Get floorplan metadata from AsyncStorage
         const keys = await AsyncStorage.getAllKeys();
-        const floorplanKeys = keys.filter(key => key.startsWith('floorplan_'));
-        
+        const floorplanKeys = keys.filter((key) => key.startsWith('floorplan_'));
+
         const floorplanData = await Promise.all(
           floorplanKeys.map(async (key) => {
             const data = await AsyncStorage.getItem(key);
             return data ? JSON.parse(data) : null;
-          })
+          }),
         );
 
         // Filter out null values and format data
-        const validFloorplans = floorplanData
-          .filter(Boolean)
-          .map(fp => ({
-            id: `${fp.buildingId}_${fp.floorLabel}`,
-            buildingId: fp.buildingId,
-            buildingName: fp.buildingName || fp.buildingId,
-            floorLabel: fp.floorLabel,
-            lastModified: fp.timestamp || new Date().toISOString(),
-            localUri: fp.uri
-          }));
+        const validFloorplans = floorplanData.filter(Boolean).map((fp) => ({
+          id: `${fp.buildingId}_${fp.floorLabel}`,
+          buildingId: fp.buildingId,
+          buildingName: fp.buildingName || fp.buildingId,
+          floorLabel: fp.floorLabel,
+          lastModified: fp.timestamp || new Date().toISOString(),
+          localUri: fp.uri,
+        }));
 
         setFloorplans(validFloorplans);
       } catch (err) {
@@ -78,7 +84,7 @@ export default function AdminEditFloorplansContent() {
 
   const handleUploadUpdated = async () => {
     if (!selectedFloorplan) return;
-    
+
     try {
       // Using launchImageLibrary instead of DocumentPicker
       const result = await launchImageLibrary({
@@ -86,55 +92,57 @@ export default function AdminEditFloorplansContent() {
         quality: 0.8,
         selectionLimit: 1,
       });
-      
+
       // Check if user canceled or if there are no assets
       if (result.didCancel || !result.assets || result.assets.length === 0) {
         return;
       }
-      
+
       const selectedImage = result.assets[0];
       if (!selectedImage.uri) {
         throw new Error('Selected image has no URI');
       }
-      
+
       // Get selected floorplan data
-      const floorplan = floorplans.find(fp => fp.id === selectedFloorplan);
+      const floorplan = floorplans.find((fp) => fp.id === selectedFloorplan);
       if (!floorplan) return;
-      
+
       // Create directory if it doesn't exist
       const dirPath = `${RNFS.DocumentDirectoryPath}/floorplans`;
       await RNFS.mkdir(dirPath, { NSURLIsExcludedFromBackupKey: true });
-      
+
       // Generate file name and path
       const fileExtension = selectedImage.type?.includes('png') ? '.png' : '.jpg';
       const fileName = `${floorplan.buildingId}_${floorplan.floorLabel.replace(/\s+/g, '_')}${fileExtension}`;
       const destPath = `${dirPath}/${fileName}`;
-      
+
       // Copy file to app's documents directory
       await RNFS.copyFile(selectedImage.uri, destPath);
-      
+
       // Update AsyncStorage with new URI
       const storageKey = `floorplan_${floorplan.buildingId}_${floorplan.floorLabel}`;
       const existingData = await AsyncStorage.getItem(storageKey);
       const updatedData = existingData ? JSON.parse(existingData) : {};
       updatedData.uri = `file://${destPath}`;
       updatedData.timestamp = new Date().toISOString();
-      
+
       await AsyncStorage.setItem(storageKey, JSON.stringify(updatedData));
-      
+
       // Update UI
-      setFloorplans(prev => 
-        prev.map(fp => 
-          fp.id === selectedFloorplan 
-            ? {...fp, localUri: `file://${destPath}`, lastModified: new Date().toISOString()} 
-            : fp
-        )
+      setFloorplans((prev) =>
+        prev.map((fp) =>
+          fp.id === selectedFloorplan
+            ? { ...fp, localUri: `file://${destPath}`, lastModified: new Date().toISOString() }
+            : fp,
+        ),
       );
-      
+
       Alert.alert('Success', 'Floorplan updated successfully');
     } catch (err) {
       console.error('Error updating floorplan:', err);
-      setError(`Failed to update floorplan: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setError(
+        `Failed to update floorplan: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      );
     }
   };
 
@@ -148,60 +156,62 @@ export default function AdminEditFloorplansContent() {
       setError('Please select a floorplan first');
       return;
     }
-    
-    const floorplan = floorplans.find(fp => fp.id === selectedFloorplan);
+
+    const floorplan = floorplans.find((fp) => fp.id === selectedFloorplan);
     if (!floorplan) {
       setError('Selected floorplan not found');
       return;
     }
-    
+
     if (!floorplan.localUri) {
       setError('Floorplan image not found. Please update the floorplan first');
       return;
     }
-    
+
     // Navigate to the floorplan editor
     navigation.navigate('AdminFloorplanEditor', {
       buildingId: floorplan.buildingId,
       floorLabel: floorplan.floorLabel,
-      imageUri: floorplan.localUri
+      imageUri: floorplan.localUri,
     });
   };
 
   const handleDeleteFloorplan = async () => {
     if (!selectedFloorplan) return;
-    
+
     Alert.alert(
       'Delete Floorplan',
       'Are you sure you want to delete this floorplan? This will also delete all associated room POIs.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
+        {
+          text: 'Delete',
           style: 'destructive',
           onPress: async () => {
             try {
               setIsLoading(true);
-              const floorplan = floorplans.find(fp => fp.id === selectedFloorplan);
+              const floorplan = floorplans.find((fp) => fp.id === selectedFloorplan);
               if (!floorplan) return;
-              
+
               // Delete from AsyncStorage
-              await AsyncStorage.removeItem(`floorplan_${floorplan.buildingId}_${floorplan.floorLabel}`);
-              
+              await AsyncStorage.removeItem(
+                `floorplan_${floorplan.buildingId}_${floorplan.floorLabel}`,
+              );
+
               // Delete associated room POIs from Firestore
               const snapshot = await firestore()
                 .collection('RoomPOIs')
                 .where('buildingId', '==', floorplan.buildingId)
                 .where('floorId', '==', floorplan.floorLabel)
                 .get();
-                
+
               const batch = firestore().batch();
-              snapshot.docs.forEach(doc => {
+              snapshot.docs.forEach((doc) => {
                 batch.delete(doc.ref);
               });
-              
+
               await batch.commit();
-              
+
               // Remove from local file system
               if (floorplan.localUri) {
                 try {
@@ -211,24 +221,24 @@ export default function AdminEditFloorplansContent() {
                   // Continue with deletion even if file removal fails
                 }
               }
-              
+
               // Update UI
-              setFloorplans(prev => prev.filter(fp => fp.id !== selectedFloorplan));
+              setFloorplans((prev) => prev.filter((fp) => fp.id !== selectedFloorplan));
               setSelectedFloorplan(null);
               setIsLoading(false);
-              
+
               Alert.alert('Success', 'Floorplan and associated POIs deleted');
             } catch (err) {
               setIsLoading(false);
               console.error('Error deleting floorplan:', err);
               setError('Failed to delete floorplan');
             }
-          }
-        }
-      ]
+          },
+        },
+      ],
     );
   };
-  
+
   if (isLoading) {
     return (
       <View
@@ -260,7 +270,7 @@ export default function AdminEditFloorplansContent() {
           onPress={handleAddNewFloorplan}
           style={{ marginBottom: 24 }}
         />
-        
+
         {/* Step 1: Select Floorplan */}
         <Text style={[styles.label, { color: colors.primary }]}>Select Existing Floorplan</Text>
         {floorplans.length === 0 ? (
@@ -329,7 +339,7 @@ export default function AdminEditFloorplansContent() {
                 </>
               )}
             </View>
-            
+
             {/* Edit Room POIs button */}
             <AppSecondaryButton
               title="Edit Room POIs"
@@ -338,12 +348,12 @@ export default function AdminEditFloorplansContent() {
                 marginTop: 16,
               }}
             />
-            
+
             {/* Delete Floorplan button */}
             <AppSecondaryButton
               title="Delete Floorplan"
               onPress={handleDeleteFloorplan}
-              style={{ 
+              style={{
                 marginTop: 16,
               }}
             />

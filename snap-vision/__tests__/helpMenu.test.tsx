@@ -107,7 +107,9 @@ describe('FAQContent', () => {
     const { getByTestId, getByText, getAllByTestId } = render(<FAQContent />);
     expect(getByTestId('settings-header')).toBeTruthy();
     expect(getByText('Frequently Asked Questions')).toBeTruthy();
-    expect(getByText('Find answers to common questions about using SnapVision below:')).toBeTruthy();
+    expect(
+      getByText('Find answers to common questions about using SnapVision below:'),
+    ).toBeTruthy();
     // Should render all FAQ items
     expect(getAllByTestId('faq-item').length).toBeGreaterThan(0);
     expect(getByText('How do I navigate to a building?')).toBeTruthy();

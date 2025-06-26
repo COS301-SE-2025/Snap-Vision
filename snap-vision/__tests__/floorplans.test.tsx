@@ -19,26 +19,28 @@ jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
 const mockFirestore = {
   collection: jest.fn(() => ({
     where: jest.fn(() => ({
-      get: jest.fn(() => Promise.resolve({ 
-        docs: [
-          { 
-            id: 'building1', 
-            data: () => ({ 
-              name: 'Science Hall',
-              type: 'building',
-              centroid: { latitude: 10.1, longitude: 20.1 } 
-            })
-          },
-          { 
-            id: 'building2', 
-            data: () => ({ 
-              name: 'Engineering Building',
-              type: 'building',
-              centroid: { latitude: 10.2, longitude: 20.2 } 
-            })
-          },
-        ]
-      })),
+      get: jest.fn(() =>
+        Promise.resolve({
+          docs: [
+            {
+              id: 'building1',
+              data: () => ({
+                name: 'Science Hall',
+                type: 'building',
+                centroid: { latitude: 10.1, longitude: 20.1 },
+              }),
+            },
+            {
+              id: 'building2',
+              data: () => ({
+                name: 'Engineering Building',
+                type: 'building',
+                centroid: { latitude: 10.2, longitude: 20.2 },
+              }),
+            },
+          ],
+        }),
+      ),
     })),
     doc: jest.fn(() => ({
       set: jest.fn(() => Promise.resolve()),
@@ -109,7 +111,7 @@ jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => 'Icon');
 jest.mock('react-native-modal', () => {
   const React = require('react');
   const { View } = require('react-native');
-  
+
   const Modal = ({ isVisible, children, ...props }: any) => {
     if (!isVisible) return null;
     return React.createElement(View, { ...props, testID: 'modal' }, children);
@@ -125,29 +127,33 @@ describe('AdminEditFloorplansContent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     alertSpy.mockClear();
-    
+
     mockAsyncStorage.getAllKeys.mockResolvedValue([
       'floorplan_building1_Floor_1',
       'floorplan_building2_Floor_2',
     ]);
     mockAsyncStorage.getItem.mockImplementation((key) => {
       if (key === 'floorplan_building1_Floor_1') {
-        return Promise.resolve(JSON.stringify({
-          buildingId: 'building1',
-          buildingName: 'Science Hall',
-          floorLabel: 'Floor 1',
-          uri: 'file:///mock/floorplan1.jpg',
-          timestamp: '2024-01-01T00:00:00.000Z',
-        }));
+        return Promise.resolve(
+          JSON.stringify({
+            buildingId: 'building1',
+            buildingName: 'Science Hall',
+            floorLabel: 'Floor 1',
+            uri: 'file:///mock/floorplan1.jpg',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          }),
+        );
       }
       if (key === 'floorplan_building2_Floor_2') {
-        return Promise.resolve(JSON.stringify({
-          buildingId: 'building2',
-          buildingName: 'Engineering Building',
-          floorLabel: 'Floor 2',
-          uri: 'file:///mock/floorplan2.jpg',
-          timestamp: '2024-01-02T00:00:00.000Z',
-        }));
+        return Promise.resolve(
+          JSON.stringify({
+            buildingId: 'building2',
+            buildingName: 'Engineering Building',
+            floorLabel: 'Floor 2',
+            uri: 'file:///mock/floorplan2.jpg',
+            timestamp: '2024-01-02T00:00:00.000Z',
+          }),
+        );
       }
       return Promise.resolve(null);
     });
@@ -157,7 +163,7 @@ describe('AdminEditFloorplansContent', () => {
     const { getByText } = render(
       <ThemeProviderWrapper>
         <AdminEditFloorplansContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     await waitFor(() => {
@@ -179,7 +185,7 @@ describe('AdminLoadFloorplansContent', () => {
     const { getByText, getByPlaceholderText } = render(
       <ThemeProviderWrapper>
         <AdminLoadFloorplansContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     await waitFor(() => {
@@ -195,7 +201,7 @@ describe('AdminLoadFloorplansContent', () => {
     const { getByText } = render(
       <ThemeProviderWrapper>
         <AdminLoadFloorplansContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     await waitFor(() => {
@@ -208,7 +214,7 @@ describe('AdminLoadFloorplansContent', () => {
     const { getByPlaceholderText } = render(
       <ThemeProviderWrapper>
         <AdminLoadFloorplansContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     const buildingInput = getByPlaceholderText("Enter the building's name");
@@ -221,7 +227,7 @@ describe('AdminLoadFloorplansContent', () => {
     const { getByPlaceholderText } = render(
       <ThemeProviderWrapper>
         <AdminLoadFloorplansContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     const floorInput = getByPlaceholderText('e.g., Floor 2, Basement');
@@ -235,7 +241,7 @@ describe('AdminFloorplanEditorContent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     alertSpy.mockClear();
-    
+
     const mockGet = jest.fn().mockResolvedValue({
       docs: [
         {
@@ -251,16 +257,16 @@ describe('AdminFloorplanEditorContent', () => {
         },
       ],
     });
-    
+
     const mockWhere = jest.fn().mockReturnValue({
       get: mockGet,
     });
-    
+
     const mockDoc = jest.fn(() => ({
       set: jest.fn(() => Promise.resolve()),
       delete: jest.fn(() => Promise.resolve()),
     }));
-    
+
     mockFirestore.collection = jest.fn(() => ({
       where: mockWhere,
       doc: mockDoc,
@@ -271,12 +277,14 @@ describe('AdminFloorplanEditorContent', () => {
     const { getByText } = render(
       <ThemeProviderWrapper>
         <AdminFloorplanEditorContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     await waitFor(() => {
       expect(getByText('Add Room POIs - Floor 1')).toBeTruthy();
-      expect(getByText('Tap on the floorplan to add rooms or tap existing markers to edit')).toBeTruthy();
+      expect(
+        getByText('Tap on the floorplan to add rooms or tap existing markers to edit'),
+      ).toBeTruthy();
       expect(getByText('Done')).toBeTruthy();
     });
   });
@@ -285,11 +293,11 @@ describe('AdminFloorplanEditorContent', () => {
     const { getByTestId } = render(
       <ThemeProviderWrapper>
         <AdminFloorplanEditorContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     const webView = getByTestId('mocked-webview');
-    
+
     await act(async () => {
       fireEvent(webView, 'message', {
         nativeEvent: {
@@ -311,11 +319,11 @@ describe('AdminFloorplanEditorContent', () => {
     const { getByTestId, getByText } = render(
       <ThemeProviderWrapper>
         <AdminFloorplanEditorContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     const webView = getByTestId('mocked-webview');
-    
+
     await act(async () => {
       fireEvent(webView, 'message', {
         nativeEvent: {
@@ -344,7 +352,7 @@ describe('AdminFloorplanEditorContent', () => {
     const { getByText } = render(
       <ThemeProviderWrapper>
         <AdminFloorplanEditorContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     await waitFor(() => {
@@ -363,7 +371,7 @@ describe('AdminFloorplanEditorContent', () => {
     const { getByText } = render(
       <ThemeProviderWrapper>
         <AdminFloorplanEditorContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     expect(getByText('Missing floorplan information')).toBeTruthy();
