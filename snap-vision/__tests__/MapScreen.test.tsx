@@ -4,7 +4,8 @@ import MapActionsPanel from '../src/components/organisms/MapActionsPanel';
 import { ThemeProvider } from '../src/theme/ThemeContext';
 import MapWebView from '../src/components/organisms/MapWebView';
 import NavigationPanel from '../src/components/organisms/NavigationPanel';
-import { Platform } from 'react-native'; // Add this import
+import DirectionsModal from '../src/components/organisms/DirectionsModal';
+import { Platform } from 'react-native';
 
 
 
@@ -409,4 +410,37 @@ describe('NavigationPanel', () => {
     expect(queryByText('km')).toBeNull();
     expect(queryByText('min')).toBeNull();
   });
+});
+
+
+describe('DirectionsModal', () => {
+  const renderWithProviders = (ui: React.ReactNode) => {
+    return render(<ThemeProvider>{ui}</ThemeProvider>);
+  };
+
+  const mockSteps = [
+    { instruction: 'Turn left at the library' },
+    { instruction: 'Walk straight for 200 meters' },
+    { instruction: 'Turn right at the cafeteria' },
+  ];
+
+  it('calls onClose when close button is pressed', () => {
+    const mockOnClose = jest.fn();
+    const { getByText } = renderWithProviders(
+      <DirectionsModal
+        visible={true}
+        onClose={mockOnClose}
+        onStart={jest.fn()}
+        destination="Library"
+        steps={mockSteps}
+        currentStep={1}
+        isNavigating={false}
+      />
+    );
+
+    fireEvent.press(getByText('Close'));
+    expect(mockOnClose).toHaveBeenCalled();
+  });
+
+  
 });
