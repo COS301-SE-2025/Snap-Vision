@@ -41,9 +41,7 @@ export default function PurchasePopup({ itemTitle, cost, onClose }: PurchasePopu
         <View style={styles.textContainer}>
           <Text style={[styles.title, { color: colors.primary }]}>Purchase Successful!</Text>
           <Text style={[styles.badgeTitle, { color: colors.text }]}>{itemTitle}</Text>
-          <Text style={[styles.description, { color: colors.secondary }]}>
-            Cost: {cost} points
-          </Text>
+          <Text style={[styles.description, { color: colors.secondary }]}>Cost: {cost} points</Text>
         </View>
         <TouchableOpacity onPress={onClose} style={styles.closeButton}>
           <Text style={[styles.closeText, { color: colors.subtleText }]}>✕</Text>

@@ -35,10 +35,7 @@ export default function HomeContent() {
         <View style={styles.actionRow}>
           <View style={styles.mapButtonWrapper}>
             <View style={styles.mapButtonBox}>
-              <AppButton
-                title="GO TO MAPS"
-                onPress={() => navigation.navigate('Map')}
-              />
+              <AppButton title="GO TO MAPS" onPress={() => navigation.navigate('Map')} />
             </View>
           </View>
 
@@ -111,10 +108,10 @@ const styles = StyleSheet.create({
     flex: 1.1,
     marginRight: 8,
   },
- mapButtonBox: {
-  justifyContent: 'center',
-  alignItems: 'stretch', // optional for button alignment
-},
+  mapButtonBox: {
+    justifyContent: 'center',
+    alignItems: 'stretch', // optional for button alignment
+  },
 
   qrWrapper: {
     flex: 1,

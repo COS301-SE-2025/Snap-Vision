@@ -8,7 +8,7 @@ import NotificationSettingsScreen from '../screens/NotificationSettingsScreen';
 import AppPreferencesScreen from '../screens/AppPreferences';
 import SupportScreen from '../screens/SupportScreen';
 import PrivacySecurityScreen from '../screens/PrivacySecurityScreen';
-import FAQScreen from '../screens/FAQScreen'; 
+import FAQScreen from '../screens/FAQScreen';
 import ContactSupportScreen from '../screens/ContactSupportScreen';
 import TutorialScreen from '../screens/TutorialScreen';
 

@@ -10,8 +10,8 @@ export default function PrivacySecurityContent() {
   const colors = getThemeColors(isDark);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}> 
-      <SettingsHeader title="Privacy & Security"/>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <SettingsHeader title="Privacy & Security" />
       <PrivacySettings />
     </View>
   );

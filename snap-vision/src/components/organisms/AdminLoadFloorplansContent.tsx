@@ -1,5 +1,12 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import AppInput from '../atoms/AppInput';
 import AppButton from '../atoms/AppButton';
 import AppSecondaryButton from '../atoms/AppSecondaryButton';
@@ -54,14 +61,14 @@ export default function AdminLoadFloorplansContent({
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title="Upload Floorplan" />
-      
+
       {isLoading && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={{ color: colors.text, marginTop: 16 }}>Processing...</Text>
         </View>
       )}
-      
+
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Error message */}
         {error && (
@@ -72,8 +79,10 @@ export default function AdminLoadFloorplansContent({
 
         {/* Step 1: Select Building */}
         <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionTitle, { color: colors.primary }]}>Step 1: Select Building</Text>
-          
+          <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+            Step 1: Select Building
+          </Text>
+
           {/* Building Selection */}
           {buildings.length === 0 ? (
             <Text style={[styles.infoText, { color: colors.secondary }]}>
@@ -82,8 +91,8 @@ export default function AdminLoadFloorplansContent({
           ) : (
             <View style={styles.buildingSelector}>
               <Text style={[styles.inputTitle, { color: colors.primary }]}>Select a Building</Text>
-              <ScrollView 
-                horizontal 
+              <ScrollView
+                horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.buildingList}
               >
@@ -93,16 +102,17 @@ export default function AdminLoadFloorplansContent({
                     style={[
                       styles.buildingItem,
                       {
-                        backgroundColor: selectedBuilding?.id === building.id 
-                          ? colors.primary 
-                          : colors.card
-                      }
+                        backgroundColor:
+                          selectedBuilding?.id === building.id ? colors.primary : colors.card,
+                      },
                     ]}
                     onPress={() => onBuildingSelect(building)}
                   >
-                    <Text style={{
-                      color: selectedBuilding?.id === building.id ? colors.cardText : colors.text
-                    }}>
+                    <Text
+                      style={{
+                        color: selectedBuilding?.id === building.id ? colors.cardText : colors.text,
+                      }}
+                    >
                       {building.name}
                     </Text>
                   </TouchableOpacity>
@@ -113,7 +123,7 @@ export default function AdminLoadFloorplansContent({
 
           {/* Or manually enter building name */}
           <Text style={[styles.orText, { color: colors.text }]}>OR</Text>
-          
+
           <View style={styles.inputSection}>
             <Text style={[styles.inputTitle, { color: colors.primary }]}>Building Name</Text>
             <AppInput
@@ -122,7 +132,7 @@ export default function AdminLoadFloorplansContent({
               onChangeText={setBuildingName}
               style={[
                 styles.textField,
-                { borderColor: colors.primary, color: colors.text, backgroundColor: colors.card }
+                { borderColor: colors.primary, color: colors.text, backgroundColor: colors.card },
               ]}
               placeholderTextColor={colors.secondary}
             />
@@ -132,8 +142,10 @@ export default function AdminLoadFloorplansContent({
 
         {/* Step 2: Floor Label */}
         <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionTitle, { color: colors.primary }]}>Step 2: Floor Information</Text>
-          
+          <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+            Step 2: Floor Information
+          </Text>
+
           <View style={styles.inputSection}>
             <Text style={[styles.inputTitle, { color: colors.primary }]}>Floor Number / Label</Text>
             <AppInput
@@ -142,29 +154,33 @@ export default function AdminLoadFloorplansContent({
               onChangeText={setFloorLabel}
               style={[
                 styles.textField,
-                { borderColor: colors.primary, color: colors.text, backgroundColor: colors.card }
+                { borderColor: colors.primary, color: colors.text, backgroundColor: colors.card },
               ]}
               placeholderTextColor={colors.secondary}
             />
-            <Text style={[styles.infoText, { color: colors.secondary }]}>Specify the floor designation</Text>
+            <Text style={[styles.infoText, { color: colors.secondary }]}>
+              Specify the floor designation
+            </Text>
           </View>
         </View>
 
         {/* Step 3: Upload Floorplan */}
         <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionTitle, { color: colors.primary }]}>Step 3: Select Floorplan File</Text>
-          
+          <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+            Step 3: Select Floorplan File
+          </Text>
+
           {/* File Upload Button */}
           <View style={styles.fileUploadContainer}>
             <AppSecondaryButton
-              title={fileUri ? "Change Image" : "Select Floorplan Image"}
+              title={fileUri ? 'Change Image' : 'Select Floorplan Image'}
               onPress={onPickFile}
               icon="file-image"
             />
             <Text style={[styles.infoText, { color: colors.secondary }]}>
               Select a PNG or JPG floorplan image
             </Text>
-            
+
             {fileUri && (
               <View style={[styles.fileInfoContainer, { backgroundColor: colors.card }]}>
                 <Icon name="file-document" size={24} color={colors.primary} />
@@ -178,10 +194,10 @@ export default function AdminLoadFloorplansContent({
 
         {/* Submit Button */}
         <View style={styles.submitContainer}>
-          <AppButton 
-            title="Upload Floorplan" 
+          <AppButton
+            title="Upload Floorplan"
             onPress={handleUpload}
-            disabled={!fileUri || (!selectedBuilding && !buildingName) || !floorLabel} 
+            disabled={!fileUri || (!selectedBuilding && !buildingName) || !floorLabel}
           />
         </View>
       </ScrollView>

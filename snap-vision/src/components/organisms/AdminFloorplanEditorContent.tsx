@@ -1,8 +1,6 @@
 import React, { RefObject } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { WebView } from 'react-native-webview';
-import AppButton from '../atoms/AppButton';
-import AppSecondaryButton from '../atoms/AppSecondaryButton';
 import Modal from 'react-native-modal';
 
 interface RoomPOI {
@@ -33,7 +31,7 @@ interface AdminFloorplanEditorContentProps {
   setRoomData: (data: any) => void;
   saveRoomPOI: () => void;
   goBack: () => void;
-  isDarkMode?: boolean; 
+  isDarkMode?: boolean;
   isEditing?: boolean;
   deleteRoom?: () => void;
 }
@@ -53,7 +51,7 @@ export default function AdminFloorplanEditorContent({
   goBack,
   isDarkMode = false,
   isEditing = false,
-  deleteRoom
+  deleteRoom,
 }: AdminFloorplanEditorContentProps) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -65,7 +63,7 @@ export default function AdminFloorplanEditorContent({
           Tap on the floorplan to add rooms or tap existing markers to edit
         </Text>
       </View>
-      
+
       <WebView
         ref={webViewRef}
         originWhitelist={['*']}
@@ -83,21 +81,21 @@ export default function AdminFloorplanEditorContent({
           true;
         `}
       />
-      
+
       <View style={[styles.footer, { borderTopColor: colors.border }]}>
         <Text style={[styles.footerText, { color: colors.text }]}>
           {roomMarkers.length} rooms added
         </Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={goBack}
           style={[styles.doneButton, { backgroundColor: colors.primary }]}
         >
           <Text style={styles.doneButtonText}>Done</Text>
         </TouchableOpacity>
       </View>
-      
+
       {/* Modal for room details */}
-      <Modal 
+      <Modal
         isVisible={isModalVisible}
         onBackdropPress={() => setIsModalVisible(false)}
         avoidKeyboard
@@ -106,85 +104,100 @@ export default function AdminFloorplanEditorContent({
           <Text style={[styles.modalTitle, { color: colors.text }]}>
             {isEditing ? 'Edit Room Details' : 'Add Room Details'}
           </Text>
-          
+
           <TextInput
             placeholder="Room Name/Number"
             value={roomData.name}
-            onChangeText={(text) => setRoomData({...roomData, name: text})}
-            style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.background }]}
+            onChangeText={(text) => setRoomData({ ...roomData, name: text })}
+            style={[
+              styles.input,
+              {
+                borderColor: colors.border,
+                color: colors.text,
+                backgroundColor: colors.background,
+              },
+            ]}
             placeholderTextColor={colors.secondary}
           />
-          
+
           <View style={styles.typeSelector}>
             <Text style={{ color: colors.text, marginBottom: 8 }}>Room Type:</Text>
             <View style={styles.typeOptions}>
-              {['classroom', 'office', 'lab', 'restroom', 'stairs', 'elevator'].map(type => (
-                <TouchableOpacity 
+              {['classroom', 'office', 'lab', 'restroom', 'stairs', 'elevator'].map((type) => (
+                <TouchableOpacity
                   key={type}
-                  onPress={() => setRoomData({...roomData, type})}
+                  onPress={() => setRoomData({ ...roomData, type })}
                   style={[
                     styles.typeOption,
-                    { 
+                    {
                       backgroundColor: roomData.type === type ? colors.primary : colors.card,
                       borderColor: colors.border,
-                      borderWidth: 1
+                      borderWidth: 1,
                     },
                   ]}
                 >
-                  <Text style={{ 
-                    color: roomData.type === type ? '#FFFFFF' : colors.text,
-                    fontSize: 14
-                  }}>
+                  <Text
+                    style={{
+                      color: roomData.type === type ? '#FFFFFF' : colors.text,
+                      fontSize: 14,
+                    }}
+                  >
                     {type.charAt(0).toUpperCase() + type.slice(1)}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
-          
+
           <TextInput
             placeholder="Description (optional)"
             value={roomData.description}
-            onChangeText={(text) => setRoomData({...roomData, description: text})}
-            style={[styles.input, { 
-              borderColor: colors.border, 
-              color: colors.text,
-              backgroundColor: colors.background,
-              minHeight: 80
-            }]}
+            onChangeText={(text) => setRoomData({ ...roomData, description: text })}
+            style={[
+              styles.input,
+              {
+                borderColor: colors.border,
+                color: colors.text,
+                backgroundColor: colors.background,
+                minHeight: 80,
+              },
+            ]}
             placeholderTextColor={colors.secondary}
             multiline
           />
-          
+
           <View style={styles.modalButtons}>
             {/* Show delete button when editing */}
             {isEditing && deleteRoom && (
-              <TouchableOpacity
-                onPress={deleteRoom}
-                style={[styles.deleteButton]}
-              >
+              <TouchableOpacity onPress={deleteRoom} style={[styles.deleteButton]}>
                 <Text style={{ color: '#FFFFFF' }}>Delete</Text>
               </TouchableOpacity>
             )}
-            
+
             {/* Use TouchableOpacity for Cancel button */}
             <TouchableOpacity
               onPress={() => setIsModalVisible(false)}
-              style={[styles.cancelButton, { 
-                borderColor: colors.border,
-                flex: isEditing ? 0.4 : 1  // Adjust flex based on whether there's a delete button
-              }]}
+              style={[
+                styles.cancelButton,
+                {
+                  borderColor: colors.border,
+                  flex: isEditing ? 0.4 : 1, // Adjust flex based on whether there's a delete button
+                },
+              ]}
             >
               <Text style={{ color: colors.text }}>Cancel</Text>
             </TouchableOpacity>
-            
+
             {/* Use TouchableOpacity for Save button */}
             <TouchableOpacity
               onPress={saveRoomPOI}
-              style={[styles.saveButton, { 
-                backgroundColor: colors.primary,
-                flex: isEditing ? 0.4 : 1  // Adjust flex based on whether there's a delete button
-              }]}
+              style={[
+                styles.saveButton,
+                {
+                  backgroundColor: colors.primary,
+                  flex: isEditing ? 0.4 : 1, // Adjust flex based on whether there's a delete button
+                },
+              ]}
             >
               <Text style={{ color: '#FFFFFF' }}>Save</Text>
             </TouchableOpacity>
@@ -230,12 +243,12 @@ const styles = StyleSheet.create({
     minWidth: 140,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 8
+    borderRadius: 8,
   },
   doneButtonText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF'
+    color: '#FFFFFF',
   },
   modalContent: {
     padding: 20,
@@ -266,12 +279,12 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 4,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   modalButtons: {
     flexDirection: 'row',
     marginTop: 16,
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
   },
   cancelButton: {
     padding: 12,
@@ -279,13 +292,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 8,
     borderWidth: 1,
-    borderRadius: 4
+    borderRadius: 4,
   },
   saveButton: {
     padding: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 4
+    borderRadius: 4,
   },
   deleteButton: {
     padding: 12,
@@ -294,6 +307,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#D32F2F',
     marginRight: 8,
-    flex: 0.4
-  }
+    flex: 0.4,
+  },
 });

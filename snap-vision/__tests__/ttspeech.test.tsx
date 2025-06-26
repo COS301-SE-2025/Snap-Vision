@@ -15,8 +15,7 @@ jest.mock('react-native-tts', () => ({
 }));
 
 // Helper to wrap components in ThemeProvider
-const renderWithTheme = (ui: React.ReactElement) =>
-  render(<ThemeProvider>{ui}</ThemeProvider>);
+const renderWithTheme = (ui: React.ReactElement) => render(<ThemeProvider>{ui}</ThemeProvider>);
 
 describe('TextToSpeech', () => {
   beforeEach(() => {
@@ -25,12 +24,7 @@ describe('TextToSpeech', () => {
 
   it('renders Voice On when active', () => {
     const { getByText } = renderWithTheme(
-      <TextToSpeech
-        isActive={true}
-        onToggle={() => {}}
-        text="Hello"
-        onSpeakingChange={() => {}}
-      />
+      <TextToSpeech isActive={true} onToggle={() => {}} text="Hello" onSpeakingChange={() => {}} />,
     );
     expect(getByText('Voice On')).toBeTruthy();
   });
@@ -38,12 +32,7 @@ describe('TextToSpeech', () => {
   it('calls onToggle when pressed', () => {
     const onToggle = jest.fn();
     const { getByText } = renderWithTheme(
-      <TextToSpeech
-        isActive={true}
-        onToggle={onToggle}
-        text="Hello"
-        onSpeakingChange={() => {}}
-      />
+      <TextToSpeech isActive={true} onToggle={onToggle} text="Hello" onSpeakingChange={() => {}} />,
     );
     fireEvent.press(getByText('Voice On'));
     expect(onToggle).toHaveBeenCalled();
@@ -56,18 +45,13 @@ describe('TextToSpeech', () => {
         onToggle={() => {}}
         text="Hello"
         onSpeakingChange={() => {}}
-      />
+      />,
     );
     expect(queryByText('Voice On')).toBeNull();
   });
   it('renders speaker icon when active', () => {
     const { getByText } = renderWithTheme(
-      <TextToSpeech
-        isActive={true}
-        onToggle={() => {}}
-        text="Hello"
-        onSpeakingChange={() => {}}
-      />
+      <TextToSpeech isActive={true} onToggle={() => {}} text="Hello" onSpeakingChange={() => {}} />,
     );
     expect(getByText('🔊')).toBeTruthy();
   });
@@ -78,7 +62,7 @@ describe('TextToSpeech', () => {
         onToggle={() => {}}
         text="Hello"
         onSpeakingChange={() => {}}
-      />
+      />,
     );
     expect(getByText('🔇')).toBeTruthy();
   });
@@ -91,7 +75,7 @@ describe('TextToSpeech', () => {
         onToggle={onToggle}
         text="Hello"
         onSpeakingChange={() => {}}
-      />
+      />,
     );
     fireEvent.press(getByText('🔇'));
     expect(onToggle).toHaveBeenCalled();
@@ -104,7 +88,7 @@ describe('TextToSpeech', () => {
         onToggle={() => {}}
         text="Hello world"
         onSpeakingChange={() => {}}
-      />
+      />,
     );
     expect(Tts.speak).toHaveBeenCalledWith('Hello world');
   });
@@ -116,7 +100,7 @@ describe('TextToSpeech', () => {
         onToggle={() => {}}
         text="Hello world"
         onSpeakingChange={() => {}}
-      />
+      />,
     );
     expect(Tts.stop).toHaveBeenCalled();
   });
@@ -127,18 +111,14 @@ describe('TextToSpeech', () => {
         onToggle={() => {}}
         text="Hello world"
         onSpeakingChange={() => {}}
-      />
+      />,
     );
     expect(Tts.speak).not.toHaveBeenCalled();
   });
 
   it('does not call Tts.speak when no text provided', () => {
     renderWithTheme(
-      <TextToSpeech
-        isActive={true}
-        onToggle={() => {}}
-        onSpeakingChange={() => {}}
-      />
+      <TextToSpeech isActive={true} onToggle={() => {}} onSpeakingChange={() => {}} />,
     );
     expect(Tts.speak).not.toHaveBeenCalled();
   });
@@ -149,7 +129,7 @@ describe('TextToSpeech', () => {
         onToggle={() => {}}
         text="Walk 5 m forward"
         onSpeakingChange={() => {}}
-      />
+      />,
     );
     expect(Tts.speak).toHaveBeenCalledWith('Walk 5 meters forward');
   });
@@ -160,7 +140,7 @@ describe('TextToSpeech', () => {
         onToggle={() => {}}
         text="Drive 2 km north"
         onSpeakingChange={() => {}}
-      />
+      />,
     );
     expect(Tts.speak).toHaveBeenCalledWith('Drive 2 kilometers north');
   });
@@ -172,7 +152,7 @@ describe('TextToSpeech', () => {
         onToggle={() => {}}
         text="Go 10 ft ahead"
         onSpeakingChange={() => {}}
-      />
+      />,
     );
     expect(Tts.speak).toHaveBeenCalledWith('Go 10 feet ahead');
   });
@@ -183,7 +163,7 @@ describe('TextToSpeech', () => {
         onToggle={() => {}}
         text="Turn after 3 yd"
         onSpeakingChange={() => {}}
-      />
+      />,
     );
     expect(Tts.speak).toHaveBeenCalledWith('Turn after 3 yards');
   });
@@ -195,30 +175,22 @@ describe('TextToSpeech', () => {
         onToggle={() => {}}
         text="Walk 5 m then 2 km then 10 ft then 3 yd"
         onSpeakingChange={() => {}}
-      />
+      />,
     );
-    expect(Tts.speak).toHaveBeenCalledWith('Walk 5 meters then 2 kilometers then 10 feet then 3 yards');
+    expect(Tts.speak).toHaveBeenCalledWith(
+      'Walk 5 meters then 2 kilometers then 10 feet then 3 yards',
+    );
   });
 
   it('works without onSpeakingChange callback', () => {
     expect(() => {
-      renderWithTheme(
-        <TextToSpeech
-          isActive={true}
-          onToggle={() => {}}
-          text="Hello"
-        />
-      );
+      renderWithTheme(<TextToSpeech isActive={true} onToggle={() => {}} text="Hello" />);
     }).not.toThrow();
   });
   it('works without text prop', () => {
     expect(() => {
       renderWithTheme(
-        <TextToSpeech
-          isActive={true}
-          onToggle={() => {}}
-          onSpeakingChange={() => {}}
-        />
+        <TextToSpeech isActive={true} onToggle={() => {}} onSpeakingChange={() => {}} />,
       );
     }).not.toThrow();
   });
@@ -229,11 +201,11 @@ describe('TextToSpeech', () => {
         onToggle={() => {}}
         text="Hello"
         onSpeakingChange={() => {}}
-      />
+      />,
     );
-    
+
     expect(getByText('🔇')).toBeTruthy();
-    
+
     rerender(
       <ThemeProvider>
         <TextToSpeech
@@ -242,9 +214,9 @@ describe('TextToSpeech', () => {
           text="Hello"
           onSpeakingChange={() => {}}
         />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
-    
+
     expect(getByText('🔊')).toBeTruthy();
     expect(getByText('Voice On')).toBeTruthy();
   });
@@ -255,7 +227,7 @@ describe('TextToSpeech', () => {
         onToggle={() => {}}
         text="The gym has equipment"
         onSpeakingChange={() => {}}
-      />
+      />,
     );
     expect(Tts.speak).toHaveBeenCalledWith('The gym has equipment');
   });
@@ -266,7 +238,7 @@ describe('TextToSpeech', () => {
         onToggle={() => {}}
         text="camera vs 5 m distance"
         onSpeakingChange={() => {}}
-      />
+      />,
     );
     expect(Tts.speak).toHaveBeenCalledWith('camera vs 5 meters distance');
   });

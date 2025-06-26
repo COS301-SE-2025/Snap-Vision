@@ -1,9 +1,12 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { BADGES, BadgeId } from '../types/badges';
-import { fetchBadgeSnapshot, unlockBadge as unlockViaApi } from '../api/badgeApi';
+import { BadgeId } from '../types/badges';
+import {
+  fetchBadgeSnapshot,
+  unlockBadge as unlockViaApi,
+  completeChallenge as completeChallengeApi,
+} from '../api/badgeApi';
 import auth from '@react-native-firebase/auth';
 import { Challenge } from '../types/achievements';
-import { completeChallenge as completeChallengeApi } from '../api/badgeApi';
 
 type BadgeState = {
   unlocked: Set<BadgeId>;
@@ -74,7 +77,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
   const unlock = async (id: BadgeId) => {
     if (!uid) return;
 
-    setState(prev => {
+    setState((prev) => {
       if (prev.unlocked.has(id)) return prev;
       const unlocked = new Set(prev.unlocked).add(id);
       return {
@@ -101,8 +104,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const clearJustUnlocked = () =>
-    setState(prev => ({ ...prev, justUnlocked: [] }));
+  const clearJustUnlocked = () => setState((prev) => ({ ...prev, justUnlocked: [] }));
 
   const completeChallenge = async (challengeId: string) => {
     if (!uid) return;
@@ -110,21 +112,23 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
     try {
       const updatedData = await completeChallengeApi(uid, challengeId);
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         points: updatedData.points,
-        completedChallenges: new Set<string>(updatedData.completedChallenges || [...prev.completedChallenges, challengeId]),
+        completedChallenges: new Set<string>(
+          updatedData.completedChallenges || [...prev.completedChallenges, challengeId],
+        ),
       }));
     } catch (e) {
       console.error('Complete challenge failed', e);
     }
   };
-const getChallenges = (): Challenge[] => [
+  const getChallenges = (): Challenge[] => [
     {
       id: 'earn_150_pts',
       title: 'Earn 150 Points',
       description: 'Unlock the Point Collector badge',
-      isCompleted: state.completedChallenges.has('earn_150_pts'),  // <-- only completedChallenges
+      isCompleted: state.completedChallenges.has('earn_150_pts'), // <-- only completedChallenges
       icon: 'wallet',
       type: 'current',
     },
@@ -162,23 +166,23 @@ const getChallenges = (): Challenge[] => [
     },
   ];
 
-  const markChallengeCompleted = async (challengeId: string) => {
-    if (!uid || state.completedChallenges.has(challengeId)) return;
+  // const markChallengeCompleted = async (challengeId: string) => {
+  //   if (!uid || state.completedChallenges.has(challengeId)) return;
 
-    const updated = new Set(state.completedChallenges);
-    updated.add(challengeId);
-    setState(prev => ({ ...prev, completedChallenges: updated }));
+  //   const updated = new Set(state.completedChallenges);
+  //   updated.add(challengeId);
+  //   setState((prev) => ({ ...prev, completedChallenges: updated }));
 
-    try {
-      await fetch(`http://10.0.2.2:3000/api/badges/complete-challenge`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uid, challengeId }),
-      });
-    } catch (e) {
-      console.error('Failed to store completed challenge:', e);
-    }
-  };
+  //   try {
+  //     await fetch(`http://10.0.2.2:3000/api/badges/complete-challenge`, {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({ uid, challengeId }),
+  //     });
+  //   } catch (e) {
+  //     console.error('Failed to store completed challenge:', e);
+  //   }
+  // };
 
   const value: Ctx = {
     state,

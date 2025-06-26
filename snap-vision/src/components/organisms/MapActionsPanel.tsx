@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import ActionButtonWithTooltip from '../molecules/ActionButtonWithTooltip';
-import { TextIcon } from '../atoms/TextIcon';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';

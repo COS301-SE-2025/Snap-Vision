@@ -12,7 +12,7 @@ export default function BadgeUnlockNotifier() {
   // Queue new badges when justUnlocked changes
   useEffect(() => {
     if (state.justUnlocked.length > 0) {
-      setQueue(prevQueue => [...prevQueue, ...state.justUnlocked]);
+      setQueue((prevQueue) => [...prevQueue, ...state.justUnlocked]);
       clearJustUnlocked();
     }
   }, [state.justUnlocked]);
@@ -21,7 +21,7 @@ export default function BadgeUnlockNotifier() {
   useEffect(() => {
     if (!currentBadge && queue.length > 0) {
       setCurrentBadge(queue[0]);
-      setQueue(q => q.slice(1));
+      setQueue((q) => q.slice(1));
     }
   }, [queue, currentBadge]);
 
@@ -29,7 +29,5 @@ export default function BadgeUnlockNotifier() {
     setCurrentBadge(null);
   };
 
-  return currentBadge ? (
-    <BadgePopup badgeId={currentBadge} onClose={handleClose} />
-  ) : null;
+  return currentBadge ? <BadgePopup badgeId={currentBadge} onClose={handleClose} /> : null;
 }

@@ -27,11 +27,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     return unsubscribe;
   }, []);
 
-  return (
-    <UserContext.Provider value={{ role, loading }}>
-      {children}
-    </UserContext.Provider>
-  );
+  return <UserContext.Provider value={{ role, loading }}>{children}</UserContext.Provider>;
 };
 
 export const useUser = () => useContext(UserContext);

@@ -1,12 +1,19 @@
 // src/screens/MapScreen.tsx
-import React, { useState, useRef } from 'react';
-import { View, Alert, Share, Text, TextInput, TouchableOpacity, Modal } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  View,
+  Alert,
+  Share,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Modal,
+  PermissionsAndroid,
+  Pressable,
+} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
-import { PermissionsAndroid } from 'react-native';
 import { WebView as WebViewType } from 'react-native-webview';
-import { useEffect } from 'react';
 import firestore from '@react-native-firebase/firestore';
-import { Pressable } from 'react-native';
 import Tts from 'react-native-tts';
 import MapWebView from '../components/organisms/MapWebView';
 import CrowdReportModal from '../components/molecules/CrowdReportModal';
@@ -16,20 +23,18 @@ import MapActionsPanel from '../components/organisms/MapActionsPanel';
 import NavigationPanel from '../components/organisms/NavigationPanel';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
-import { TextIcon } from '../components/atoms/TextIcon';
 import DirectionsModal from '../components/organisms/DirectionsModal';
-import TextToSpeech from '../components/molecules/TextToSpeech';
 import { useRoute } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 
-import { useBadges } from '../context/BadgeContext'; 
+import { useBadges } from '../context/BadgeContext';
 
 type MapScreenParams = {
   lat?: string;
   lng?: string;
 };
 
-const ROUTING_API_BASE = "http://10.0.2.2:3000"; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = 'http://10.0.2.2:3000'; // <-- Use your correct backend IP here
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
 // L wifi: 192.168.0.127
@@ -65,7 +70,7 @@ const MapScreen = () => {
   const [isRouteLoading, setIsRouteLoading] = useState(false);
   const [shouldStartTTS, setShouldStartTTS] = useState(false);
   const [showDirectionsSheet, setShowDirectionsSheet] = useState(false);
-  
+
   // Navigation state
   const [isNavigating, setIsNavigating] = useState(false);
   const [routeProgress, setRouteProgress] = useState(0);
@@ -80,13 +85,9 @@ const MapScreen = () => {
   const route = useRoute();
   const params = route.params as MapScreenParams;
   const [hasHandledDeepLink, setHasHandledDeepLink] = useState(false);
-  
-  const { unlock, incrementRoutes } = useBadges();  
-  const { state, clearJustUnlocked } = useBadges();
-  const { setNavigationStartTime } = useBadges();
-  const { maybeUnlockFastFinisher, incrementCheckIns } = useBadges();
-const [popupBadge, setPopupBadge] = useState<string | null>(null);
 
+  const { unlock, incrementRoutes } = useBadges();
+  const { setNavigationStartTime } = useBadges();
 
   // crowd reports
   const [selectedPOI, setSelectedPOI] = useState<any>(null);
@@ -118,17 +119,17 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
 
   // Inject admin handlers into the WebView
   useEffect(() => {
-  if (isMapReady && webViewRef.current) {
-    // Set admin mode in the WebView
-    const setAdminJS = `window.setAdminMode && window.setAdminMode(${isAdmin ? 'true' : 'false'});`;
-    webViewRef.current.injectJavaScript(setAdminJS);
+    if (isMapReady && webViewRef.current) {
+      // Set admin mode in the WebView
+      const setAdminJS = `window.setAdminMode && window.setAdminMode(${isAdmin ? 'true' : 'false'});`;
+      webViewRef.current.injectJavaScript(setAdminJS);
 
-    // Re-display POIs to update popups/buttons
-    const jsPOICode = `window.displayPOIs && window.displayPOIs(${JSON.stringify(pois)});`;
-    webViewRef.current.injectJavaScript(jsPOICode);
+      // Re-display POIs to update popups/buttons
+      const jsPOICode = `window.displayPOIs && window.displayPOIs(${JSON.stringify(pois)});`;
+      webViewRef.current.injectJavaScript(jsPOICode);
 
-    // (Optional) Re-inject admin handlers if needed
-    const injectedJS = `
+      // (Optional) Re-inject admin handlers if needed
+      const injectedJS = `
         window.editPOI = function(poiId) {
           window.ReactNativeWebView.postMessage(JSON.stringify({
             type: 'EDIT_POI',
@@ -146,20 +147,16 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
     }
   }, [isAdmin, isMapReady, pois]);
 
-
-
-
-
   const sendLocationToWebView = (lat: number, lon: number, centerMap = false) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
     const jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap});`;
     webViewRef.current?.injectJavaScript(jsCode);
-    
+
     // Always update progress when navigating - force this to run
     if (isNavigating && lastRoute.current && lastRoute.current.length > 0) {
       // Add visual feedback that we're updating
       setStatus(`Updating location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
-      
+
       // Call updateNavigationProgress directly
       updateNavigationProgress(lat, lon);
     }
@@ -168,7 +165,7 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
   const requestLocation = async () => {
     try {
       const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
       );
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
         setStatus('Getting your location...');
@@ -181,7 +178,7 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
           (error) => {
             setError('Failed to get location');
           },
-          { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
         );
       } else {
         setError('Location permission denied');
@@ -192,29 +189,26 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
   };
 
   const handleWebViewMessage = (event: any) => {
-  try {
-    const data = event.nativeEvent.data;
+    try {
+      const data = event.nativeEvent.data;
 
-    // Helper: Open modal to add new POI
-    const openAddBuildingModal = (lat: number, lon: number) => {
-      setAddPOICoords({ lat, lon });
-      setShowAddPOIModal(true);
-    };
+      // Helper: Open modal to add new POI
+      const openAddBuildingModal = (lat: number, lon: number) => {
+        setAddPOICoords({ lat, lon });
+        setShowAddPOIModal(true);
+      };
 
-    // Helper: Open modal to edit existing POI
-    const openEditBuildingModal = (poi: any) => {
-      setEditingPOI(poi);
-      setNewName(poi.name || '');
-      setNewFloors(poi.floors?.toString() || '');
-      setShowEditPOIModal(true);
-    };
+      // Helper: Open modal to edit existing POI
+      const openEditBuildingModal = (poi: any) => {
+        setEditingPOI(poi);
+        setNewName(poi.name || '');
+        setNewFloors(poi.floors?.toString() || '');
+        setShowEditPOIModal(true);
+      };
 
-    // Helper: Confirm delete
-    const confirmDeleteBuilding = (poi: any) => {
-      Alert.alert(
-        'Delete Building',
-        `Are you sure you want to delete "${poi.name}"?`,
-        [
+      // Helper: Confirm delete
+      const confirmDeleteBuilding = (poi: any) => {
+        Alert.alert('Delete Building', `Are you sure you want to delete "${poi.name}"?`, [
           { text: 'Cancel', style: 'cancel' },
           {
             text: 'Delete',
@@ -222,95 +216,86 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
             onPress: async () => {
               await firestore().collection('UPcampusPOIs').doc(poi.id).delete();
               fetchPOIs(); // refresh POI list
-            }
-          }
-        ]
-      );
-    };
+            },
+          },
+        ]);
+      };
 
-    // === Handle simple message ===
-    if (data === 'MAP_READY') {
-      setStatus('Map loaded');
-      setIsMapReady(true);
-      requestLocation();
+      // === Handle simple message ===
+      if (data === 'MAP_READY') {
+        setStatus('Map loaded');
+        setIsMapReady(true);
+        requestLocation();
 
-      if (lastRoute.current.length > 0) {
-        const reinject = `window.drawRoute && window.drawRoute(${JSON.stringify(lastRoute.current)});`;
-        webViewRef.current?.injectJavaScript(reinject);
+        if (lastRoute.current.length > 0) {
+          const reinject = `window.drawRoute && window.drawRoute(${JSON.stringify(lastRoute.current)});`;
+          webViewRef.current?.injectJavaScript(reinject);
+        }
+        return;
       }
-      return;
-    }
 
-    // === Handle JSON message ===
-    const parsed = JSON.parse(data);
+      // === Handle JSON message ===
+      const parsed = JSON.parse(data);
 
-    switch (parsed.type) {
-      case 'ERROR':
-        setError(parsed.message);
-        break;
+      switch (parsed.type) {
+        case 'ERROR':
+          setError(parsed.message);
+          break;
 
-      case 'POI_SELECTED':
-        const selectedPOI = parsed.poi;
+        case 'POI_SELECTED':
+          const selectedPOI = parsed.poi;
 
-        if (isAdmin) {
-          Alert.alert(
-            `Building: ${selectedPOI.name}`,
-            'Admin Actions',
-            [
+          if (isAdmin) {
+            Alert.alert(`Building: ${selectedPOI.name}`, 'Admin Actions', [
               { text: 'Edit', onPress: () => openEditBuildingModal(selectedPOI) },
               { text: 'Delete', onPress: () => confirmDeleteBuilding(selectedPOI) },
               { text: 'Cancel', style: 'cancel' },
-            ]
-          );
-        }
+            ]);
+          }
 
-        
+          if (isNavigating) {
+            stopNavigation();
+          }
 
-        if (isNavigating) {
-          stopNavigation();
-        }
+          webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+          lastRoute.current = [];
 
-        webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
-        lastRoute.current = [];
+          setDestination(selectedPOI.name);
+          setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
+          setStatus(`Selected: ${selectedPOI.name}`);
+          setSelectedFeature(selectedPOI);
+          setSelectedPOI(selectedPOI);
 
-        setDestination(selectedPOI.name);
-        setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
-        setStatus(`Selected: ${selectedPOI.name}`);
-        setSelectedFeature(selectedPOI);
-        setSelectedPOI(selectedPOI);
+          if (currentLocation) {
+            fetchRoute([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
+          }
+          break;
 
-        if (currentLocation) {
-          fetchRoute([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
-        }
-        break;
+        case 'ADMIN_ADD_POI':
+          openAddBuildingModal(parsed.lat, parsed.lon);
+          break;
 
-      case 'ADMIN_ADD_POI':
-        openAddBuildingModal(parsed.lat, parsed.lon);
-        break;
+        case 'EDIT_POI':
+          const poiToEdit = pois.find((p) => p.id === parsed.poiId);
+          if (poiToEdit) {
+            openEditBuildingModal(poiToEdit);
+          }
+          break;
 
-      case 'EDIT_POI':
-        const poiToEdit = pois.find(p => p.id === parsed.poiId);
-        if (poiToEdit) {
-          openEditBuildingModal(poiToEdit);
-        }
-        break;
+        case 'DELETE_POI':
+          const poiToDelete = pois.find((p) => p.id === parsed.poiId);
+          if (poiToDelete) {
+            confirmDeleteBuilding(poiToDelete);
+          }
+          break;
 
-      case 'DELETE_POI':
-        const poiToDelete = pois.find(p => p.id === parsed.poiId);
-        if (poiToDelete) {
-          confirmDeleteBuilding(poiToDelete);
-        }
-        break;
-
-      default:
-        console.log('Unknown message type from WebView:', parsed.type);
+        default:
+          console.log('Unknown message type from WebView:', parsed.type);
+      }
+    } catch (e) {
+      console.log('WebView message error:', event.nativeEvent.data);
     }
-
-  } catch (e) {
-    console.log('WebView message error:', event.nativeEvent.data);
-  }
-};
-
+  };
 
   //Add building (admin only)
   const submitNewBuilding = async () => {
@@ -327,8 +312,8 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
         },
         floors: Number(numberOfFloors),
         tags: {
-          building: "yes"
-        }
+          building: 'yes',
+        },
       };
       await firestore().collection('UPcampusPOIs').add(newDoc);
       setShowAddPOIModal(false);
@@ -345,10 +330,13 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
     if (!newFloors.trim() || isNaN(Number(numberOfFloors)))
       return Alert.alert('Please enter a valid number of floors');
     try {
-      await firestore().collection('UPcampusPOIs').doc(editingPOI.id).update({
-        name: newName,
-        floors: Number(newFloors),
-      });
+      await firestore()
+        .collection('UPcampusPOIs')
+        .doc(editingPOI.id)
+        .update({
+          name: newName,
+          floors: Number(newFloors),
+        });
       setShowEditPOIModal(false);
       fetchPOIs();
       setStatus('Building updated!');
@@ -356,42 +344,6 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
       setError('Failed to update');
     }
   };
-
-  //Admin delete building
-  const confirmDeleteBuilding = (poi: any) => {
-    Alert.alert(
-      'Confirm Delete',
-      `Delete ${poi.name}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await firestore().collection('UPcampusPOIs').doc(poi.id).delete();
-              fetchPOIs();
-              setStatus('Deleted!');
-            } catch {
-              setError('Failed to delete');
-            }
-          }
-        }
-      ]
-    );
-  };
-
-  // Open modal to add new building
-  const openEditBuildingModal = (poi: any) => {
-    setEditingPOI(poi);
-    setNewName(poi.name || '');
-    setNewFloors(poi.floors?.toString() || '');
-    setShowEditPOIModal(true);
-  };
-
-
-
-
 
   const shareLocation = async () => {
     if (!currentLocation) {
@@ -431,17 +383,17 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
       setError('Your location is not available yet');
       return;
     }
-    
+
     setIsRouteLoading(true);
     setStatus('Calculating route...');
-    
+
     try {
       const start = `${currentLocation.longitude},${currentLocation.latitude}`;
       const end = `${destCoords[0]},${destCoords[1]}`;
-      
+
       // Clear any existing route first
       webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
-      
+
       const url = `${ROUTING_API_BASE}/api/directions?start=${start}&end=${end}`;
       const response = await fetch(url);
       const data = await response.json();
@@ -456,15 +408,12 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
       for (let i = 0; i < coordinates.length - 1; i++) {
         const point1 = coordinates[i];
         const point2 = coordinates[i + 1];
-        totalDistance += getDistanceMeters(
-          point1[1], point1[0], 
-          point2[1], point2[0]
-        );
+        totalDistance += getDistanceMeters(point1[1], point1[0], point2[1], point2[0]);
       }
-      
+
       // Set the total distance
       setDistanceToDestination(totalDistance);
-      
+
       // Estimate time (assuming average walking speed of 5 km/h = 1.4 m/s)
       const timeMinutes = Math.round(totalDistance / (1.4 * 60));
       setEstimatedTime(timeMinutes);
@@ -476,7 +425,7 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
       setSteps(stepsArr);
       setCurrentStep(0);
       setShowDirectionsSheet(true);
-      
+
       // Reset progress
       setRouteProgress(0);
     } catch (error) {
@@ -493,7 +442,7 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
       setError('Cannot start navigation without a route');
       return;
     }
-    
+
     setIsNavigating(true);
     setStatus('Navigation started');
     setRouteProgress(0);
@@ -502,7 +451,7 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
     if (watchIdRef.current) {
       Geolocation.clearWatch(watchIdRef.current);
     }
-    
+
     watchIdRef.current = Geolocation.watchPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
@@ -511,11 +460,11 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
       (error) => {
         setError('Failed to track location');
       },
-      { 
-        enableHighAccuracy: true, 
+      {
+        enableHighAccuracy: true,
         distanceFilter: 5, // Update every 5 meters
-        interval: 1000 // Update every second
-      }
+        interval: 1000, // Update every second
+      },
     );
   };
 
@@ -525,70 +474,76 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
       Geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
     }
-    
+
     setIsNavigating(false);
     setStatus('Navigation stopped');
-    webViewRef.current?.injectJavaScript('window.setNavigationState && window.setNavigationState(false);');
-    
+    webViewRef.current?.injectJavaScript(
+      'window.setNavigationState && window.setNavigationState(false);',
+    );
+
     // Clear progress line
-    webViewRef.current?.injectJavaScript('if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }');
+    webViewRef.current?.injectJavaScript(
+      'if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }',
+    );
   };
 
   // Update the updateNavigationProgress function to check for destination arrival
-  
+
   const updateNavigationProgress = (latitude: number, longitude: number) => {
     if (!lastRoute.current || lastRoute.current.length === 0) {
       return;
     }
-  
+
     // Find closest point on the route
     let minDist = Infinity;
     let closestPointIndex = 0;
-  
+
     for (let i = 0; i < lastRoute.current.length; i++) {
       const routePoint = lastRoute.current[i];
       const distance = getDistanceMeters(
         latitude,
         longitude,
         routePoint[1], // Latitude
-        routePoint[0]  // Longitude
+        routePoint[0], // Longitude
       );
-  
+
       if (distance < minDist) {
         minDist = distance;
         closestPointIndex = i;
       }
     }
-  
+
     // Calculate a more precise progress
     // Consider not just the closest point, but also the percentage between points
     let progressValue;
-    
+
     if (closestPointIndex < lastRoute.current.length - 1) {
       // Calculate distance between current point and next point
       const currentPoint = lastRoute.current[closestPointIndex];
       const nextPoint = lastRoute.current[closestPointIndex + 1];
-      
+
       // Distance from user to closest point
       const distToClosest = getDistanceMeters(
-        latitude, longitude,
-        currentPoint[1], currentPoint[0]
+        latitude,
+        longitude,
+        currentPoint[1],
+        currentPoint[0],
       );
-      
+
       // Distance from user to next point
-      const distToNext = getDistanceMeters(
-        latitude, longitude,
-        nextPoint[1], nextPoint[0]
-      );
-      
+      const distToNext = getDistanceMeters(latitude, longitude, nextPoint[1], nextPoint[0]);
+
       // Distance between closest and next point
       const segmentLength = getDistanceMeters(
-        currentPoint[1], currentPoint[0],
-        nextPoint[1], nextPoint[0]
+        currentPoint[1],
+        currentPoint[0],
+        nextPoint[1],
+        nextPoint[0],
       );
-      
+
       // If we're between two points, calculate the fractional position
-      if (distToClosest + distToNext <= segmentLength * 1.2) { // Allow some margin
+      if (distToClosest + distToNext <= segmentLength * 1.2) {
+        // Allow some margin
         const segmentProgress = distToClosest / (distToClosest + distToNext);
         const fractionalIndex = closestPointIndex + segmentProgress;
         progressValue = (fractionalIndex / (lastRoute.current.length - 1)) * 100;
@@ -600,7 +555,7 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
       // At the last point
       progressValue = 100;
     }
-    
+
     if (steps.length > 0) {
       let stepIndex = 0;
       let minDist = Infinity;
@@ -619,24 +574,26 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
         setCurrentStep(stepIndex);
       }
     }
-    
+
     // Update progress with a more precise value
     const newProgress = Math.min(Math.round(progressValue), 100);
     setRouteProgress(newProgress);
-    
+
     // Check if we've reached the destination point
     const destinationPoint = lastRoute.current[lastRoute.current.length - 1];
     const distanceToEnd = getDistanceMeters(
-      latitude, longitude,
-      destinationPoint[1], destinationPoint[0]
+      latitude,
+      longitude,
+      destinationPoint[1],
+      destinationPoint[0],
     );
-    
+
     // Update distance to destination
     setDistanceToDestination(distanceToEnd);
-    
+
     // Keep status update brief to avoid UI clutter
     setStatus(`Progress: ${newProgress}%`);
-  
+
     // Update route progress visually
     if (webViewRef.current) {
       const jsProgressCode = `
@@ -646,7 +603,7 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
       `;
       webViewRef.current.injectJavaScript(jsProgressCode);
     }
-  
+
     // Check destination arrival based on either:
     // 1. Progress is 100%
     // 2. Distance to destination is less than 20 meters
@@ -654,27 +611,27 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
       destinationReached();
     }
   };
-  
+
   // Add this new function to handle reaching the destination
-  const destinationReached = async() => {
+  const destinationReached = async () => {
     if (!isNavigating) return; // Only handle if actually navigating
-    
-     try {
-    await unlock('destination-reached');
-    await incrementRoutes();
-  } catch (e) {
-    console.warn('Failed to update badge state:', e);
-  }
+
+    try {
+      await unlock('destination-reached');
+      await incrementRoutes();
+    } catch (e) {
+      console.warn('Failed to update badge state:', e);
+    }
 
     // Stop navigation
     stopNavigation();
-    
+
     // Show destination reached message
     setStatus('You have reached your destination!');
-    
+
     // Ensure progress is set to 100%
     setRouteProgress(100);
-    
+
     // Speak the arrival message if voice is enabled
     if (isVoiceEnabled) {
       Tts.stop();
@@ -682,13 +639,11 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
         Tts.speak('You have reached your destination');
       }, 500);
     }
-    
+
     // Optional: Show a congratulatory alert
-    Alert.alert(
-      'Destination Reached',
-      'You have arrived at your destination!',
-      [{ text: 'OK', onPress: () => console.log('Destination reached acknowledged') }]
-    );
+    Alert.alert('Destination Reached', 'You have arrived at your destination!', [
+      { text: 'OK', onPress: () => console.log('Destination reached acknowledged') },
+    ]);
   };
 
   // Add this function to handle report submission
@@ -697,19 +652,21 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
       setError('Please select a building and density level');
       return;
     }
-    
+
     try {
       // Save report to Firestore
-      await firestore().collection('crowdReports').add({
-        buildingId: selectedPOI.id,
-        buildingName: selectedPOI.name,
-        density: selectedDensity,
-        timestamp: firestore.FieldValue.serverTimestamp(),
-        reportedBy: auth().currentUser?.uid || 'anonymous',
-        centroid: selectedPOI.centroid,
-        expiresAt: new Date(Date.now() + 60 * 60 * 1000) // 1 hour from now
-      });
-      
+      await firestore()
+        .collection('crowdReports')
+        .add({
+          buildingId: selectedPOI.id,
+          buildingName: selectedPOI.name,
+          density: selectedDensity,
+          timestamp: firestore.FieldValue.serverTimestamp(),
+          reportedBy: auth().currentUser?.uid || 'anonymous',
+          centroid: selectedPOI.centroid,
+          expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
+        });
+
       // Update UI
       const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${selectedPOI.centroid.latitude}, ${selectedPOI.centroid.longitude}, '${selectedDensity}', '${selectedPOI.id}');`;
       webViewRef.current?.injectJavaScript(jsCrowdCode);
@@ -726,27 +683,26 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
     try {
       const oneHourAgo = new Date();
       oneHourAgo.setHours(oneHourAgo.getHours() - 1);
-      
+
       const snapshot = await firestore()
         .collection('crowdReports')
         .where('timestamp', '>', oneHourAgo)
         .get();
-      
+
       const reports: Record<string, any> = {};
-      snapshot.docs.forEach(doc => {
+      snapshot.docs.forEach((doc) => {
         const data = doc.data();
         // If multiple reports exist for the same building, take the most recent
-        if (!reports[data.buildingId] || 
-            reports[data.buildingId].timestamp < data.timestamp) {
+        if (!reports[data.buildingId] || reports[data.buildingId].timestamp < data.timestamp) {
           reports[data.buildingId] = data;
         }
       });
-      
+
       setCrowdReports(reports);
-      
+
       // Update crowd indicators on map
       if (isMapReady && webViewRef.current) {
-        Object.values(reports).forEach(report => {
+        Object.values(reports).forEach((report) => {
           if (report.centroid) {
             const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${report.centroid.latitude}, ${report.centroid.longitude}, '${report.density}', '${report.buildingId}');`;
             if (webViewRef.current) {
@@ -758,7 +714,12 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
     } catch (error) {
       console.error('Error fetching crowd reports:', error);
       // More informative error handling
-      if (typeof error === 'object' && error !== null && 'code' in error && (error as any).code === 'firestore/permission-denied') {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        (error as any).code === 'firestore/permission-denied'
+      ) {
         setError('Crowd reports feature unavailable: Permission error');
       }
     }
@@ -769,7 +730,7 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
     if (isMapReady) {
       fetchRecentCrowdReports();
       const interval = setInterval(fetchRecentCrowdReports, 5 * 60 * 1000); // Refresh every 5 minutes
-      
+
       return () => clearInterval(interval);
     }
   }, [isMapReady]);
@@ -782,18 +743,19 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
     } else if (destination && destinationCoords) {
       // If user has a destination set in the search bar but no selected feature,
       // find the corresponding POI
-      const matchingPOI = pois.find(poi => 
-        poi.name === destination || 
-        (poi.centroid && 
-         poi.centroid.longitude === destinationCoords[0] && 
-         poi.centroid.latitude === destinationCoords[1])
+      const matchingPOI = pois.find(
+        (poi) =>
+          poi.name === destination ||
+          (poi.centroid &&
+            poi.centroid.longitude === destinationCoords[0] &&
+            poi.centroid.latitude === destinationCoords[1]),
       );
-      
+
       if (matchingPOI) {
         setSelectedPOI(matchingPOI);
       }
     }
-    
+
     setShowCrowdPopup(true);
   };
 
@@ -827,11 +789,10 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
     }
   }, [isNavigating, steps, currentStep]);
 
-
   const fetchPOIs = async () => {
     try {
       const snapshot = await firestore().collection('UPcampusPOIs').get();
-      const poiList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const poiList = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       setPOIs(poiList);
     } catch (e) {
       console.error('Failed to fetch POIs:', e);
@@ -860,11 +821,11 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
   useEffect(() => {
     if (isMapReady && pois.length > 0 && webViewRef.current) {
       // Modify the POI data to set labels to empty by default
-      const poisWithHiddenLabels = pois.map(poi => ({
+      const poisWithHiddenLabels = pois.map((poi) => ({
         ...poi,
-        showLabel: false // Add property to control label visibility
+        showLabel: false, // Add property to control label visibility
       }));
-      
+
       const jsPOICode = `window.displayPOIs && window.displayPOIs(${JSON.stringify(poisWithHiddenLabels)});`;
       webViewRef.current.injectJavaScript(jsPOICode);
     }
@@ -875,8 +836,8 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
       setPOISuggestions([]);
       return;
     }
-    const filtered = pois.filter(poi =>
-      poi.name && poi.name.toLowerCase().includes(query.toLowerCase())
+    const filtered = pois.filter(
+      (poi) => poi.name && poi.name.toLowerCase().includes(query.toLowerCase()),
     );
     setPOISuggestions(filtered);
   };
@@ -887,32 +848,32 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
     if (isNavigating) {
       stopNavigation();
     }
-    
+
     // Clear any existing route
     webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
     lastRoute.current = [];
-    
+
     setDestination(poi.name);
     setDestinationCoords([poi.centroid.longitude, poi.centroid.latitude]);
     setPOISuggestions([]);
-    
+
     // Update selected POI and feature for crowd reporting
     setSelectedFeature(poi);
     setSelectedPOI(poi);
-    
+
     // Automatically fetch route when POI is selected from search
     if (currentLocation) {
       fetchRoute([poi.centroid.longitude, poi.centroid.latitude]);
     }
   };
-  
+
   // Dynamically request location updates
   useEffect(() => {
     let watchId: number | null = null;
 
     const startWatchingLocation = async () => {
       const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
       );
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
         watchId = Geolocation.watchPosition(
@@ -923,7 +884,7 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
           (error) => {
             setError('Failed to get location');
           },
-          { enableHighAccuracy: true, distanceFilter: 5, interval: 2000 }
+          { enableHighAccuracy: true, distanceFilter: 5, interval: 2000 },
         );
       } else {
         setError('Location permission denied');
@@ -947,10 +908,7 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
     const dLon = toRad(lon2 - lon1);
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRad(lat1)) *
-        Math.cos(toRad(lat2)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   }
@@ -964,7 +922,8 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
       !lastRoute.current ||
       lastRoute.current.length === 0 ||
       isRouteLoading
-    ) return;
+    )
+      return;
 
     // Find nearest point on route
     let minDist = Infinity;
@@ -974,7 +933,7 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
         currentLocation.latitude,
         currentLocation.longitude,
         coord[1],
-        coord[0]
+        coord[0],
       );
       if (dist < minDist) minDist = dist;
     }
@@ -990,16 +949,16 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
   // Reroute function
   const rerouteFromCurrentLocation = async () => {
     if (!currentLocation || !destinationCoords || isRouteLoading) return;
-    
+
     setIsRouteLoading(true);
-    
+
     try {
       const start = `${currentLocation.longitude},${currentLocation.latitude}`;
       const end = `${destinationCoords[0]},${destinationCoords[1]}`;
-      
+
       // Clear any existing route first
       webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
-      
+
       const url = `${ROUTING_API_BASE}/api/directions?start=${start}&end=${end}`;
       const response = await fetch(url);
       const data = await response.json();
@@ -1014,12 +973,9 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
       for (let i = 0; i < coordinates.length - 1; i++) {
         const point1 = coordinates[i];
         const point2 = coordinates[i + 1];
-        totalDistance += getDistanceMeters(
-          point1[1], point1[0], 
-          point2[1], point2[0]
-        );
+        totalDistance += getDistanceMeters(point1[1], point1[0], point2[1], point2[0]);
       }
-      
+
       setDistanceToDestination(totalDistance);
       // Estimate time (assuming average walking speed of 5 km/h = 1.4 m/s)
       const timeMinutes = Math.round(totalDistance / (1.4 * 60));
@@ -1035,7 +991,7 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
       setIsRouteLoading(false);
     }
   };
-  
+
   // Handle deep link params if they exist
   useEffect(() => {
     // Only process params once and if they exist
@@ -1062,25 +1018,24 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
   useEffect(() => {
     // Only run when navigating
     if (!isNavigating || !currentLocation) return;
-    
+
     // Force update progress every 2 seconds
     const progressInterval = setInterval(() => {
       if (currentLocation && lastRoute.current && lastRoute.current.length > 0) {
         updateNavigationProgress(currentLocation.latitude, currentLocation.longitude);
       }
     }, 500);
-    
+
     return () => clearInterval(progressInterval);
   }, [isNavigating, currentLocation]);
-
 
   // Dynamically request location updates every 3 seconds
   useEffect(() => {
     let watchId: number | null = null;
-  
+
     const startWatchingLocation = async () => {
       const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
       );
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
         watchId = Geolocation.watchPosition(
@@ -1091,15 +1046,15 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
           (error) => {
             setError('Failed to get location');
           },
-          { enableHighAccuracy: true, distanceFilter: 0, interval: 3000, fastestInterval: 3000 }
+          { enableHighAccuracy: true, distanceFilter: 0, interval: 3000, fastestInterval: 3000 },
         );
       } else {
         setError('Location permission denied');
       }
     };
-  
+
     startWatchingLocation();
-  
+
     return () => {
       if (watchId !== null) {
         Geolocation.clearWatch(watchId);
@@ -1124,12 +1079,14 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
 
       {showAddPOIModal && (
         <Modal transparent visible animationType="slide">
-          <View style={{
-            flex: 1,
-            justifyContent: 'center',
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            padding: 20
-          }}>
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              padding: 20,
+            }}
+          >
             <View style={{ backgroundColor: 'white', borderRadius: 10, padding: 20 }}>
               <Text style={{ fontWeight: 'bold' }}>Add Building</Text>
               <Text>Name:</Text>
@@ -1162,12 +1119,14 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
 
       {showEditPOIModal && (
         <Modal transparent visible animationType="slide">
-          <View style={{
-            flex: 1,
-            justifyContent: 'center',
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            padding: 20
-          }}>
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              padding: 20,
+            }}
+          >
             <View style={{ backgroundColor: 'white', borderRadius: 10, padding: 20 }}>
               <Text style={{ fontWeight: 'bold' }}>Edit Building</Text>
               <Text>Name:</Text>
@@ -1216,7 +1175,7 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
       {!isNavigating && (
         <DestinationSearch
           value={destination}
-          onChange={text => {
+          onChange={(text) => {
             setDestination(text);
             filterPOIs(text);
             if (!text.trim()) {
@@ -1233,7 +1192,7 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
           onSelectSuggestion={handleSelectPOI}
         />
       )}
-      
+
       <View style={{ flex: 1 }}>
         <MapWebView ref={webViewRef} onMessage={handleWebViewMessage} />
       </View>
@@ -1252,7 +1211,7 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
           onToggleVoice={() => setIsVoiceEnabled(!isVoiceEnabled)}
           currentInstruction={steps[currentStep]?.instruction}
           onSpeakingChange={setIsSpeaking}
-          />
+        />
       )}
 
       <MapActionsPanel
@@ -1268,61 +1227,60 @@ const [popupBadge, setPopupBadge] = useState<string | null>(null);
         color={colors.primary}
       />
 
-    {isNavigating && steps.length > 0 && (
-      <Pressable
-        onPress={() => setShowDirectionsSheet(true)}
-        style={{
-          position: 'absolute',
-          top: 59,
-          left: 20,
-          right: 20,
-          backgroundColor: colors.card,
-          borderRadius: 8,
-          padding: 12,
-          alignItems: 'center',
-          elevation: 4,
-          zIndex: 1001,
-        }}
-      >
-        <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 16 }}>
-          {steps[currentStep]?.instruction}
-        </Text>
-      </Pressable>
-    )}
-          <CrowdReportModal
-            visible={showCrowdPopup}
-            selectedDensity={selectedDensity}
-            selectedPOI={selectedPOI}
-            availablePOIs={pois}
-            onChangeDensity={setSelectedDensity}
-            onChangePOI={setSelectedPOI}
-            onSubmit={submitCrowdReport}
-            onCancel={() => setShowCrowdPopup(false)}
-          />
-          {error && <StatusOverlay status={error} />}
+      {isNavigating && steps.length > 0 && (
+        <Pressable
+          onPress={() => setShowDirectionsSheet(true)}
+          style={{
+            position: 'absolute',
+            top: 59,
+            left: 20,
+            right: 20,
+            backgroundColor: colors.card,
+            borderRadius: 8,
+            padding: 12,
+            alignItems: 'center',
+            elevation: 4,
+            zIndex: 1001,
+          }}
+        >
+          <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 16 }}>
+            {steps[currentStep]?.instruction}
+          </Text>
+        </Pressable>
+      )}
+      <CrowdReportModal
+        visible={showCrowdPopup}
+        selectedDensity={selectedDensity}
+        selectedPOI={selectedPOI}
+        availablePOIs={pois}
+        onChangeDensity={setSelectedDensity}
+        onChangePOI={setSelectedPOI}
+        onSubmit={submitCrowdReport}
+        onCancel={() => setShowCrowdPopup(false)}
+      />
+      {error && <StatusOverlay status={error} />}
 
-          {isAdmin && (
-            <TouchableOpacity
-              style={{
-                position: 'absolute',
-                bottom: 100,
-                right: 20,
-                backgroundColor: '#007bff',
-                paddingVertical: 10,
-                paddingHorizontal: 16,
-                borderRadius: 8,
-                elevation: 4,
-              }}
-              onPress={() => {
-                webViewRef.current?.injectJavaScript(`window.enableAdminPOICreation();`);
-              }}
-            >
-              <Text style={{ color: 'white', fontWeight: 'bold' }}>+ Add POI</Text>
-            </TouchableOpacity>
-          )}
-
-        </View>
-      );
-    };
+      {isAdmin && (
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            bottom: 100,
+            right: 20,
+            backgroundColor: '#007bff',
+            paddingVertical: 10,
+            paddingHorizontal: 16,
+            borderRadius: 8,
+            elevation: 4,
+          }}
+          onPress={() => {
+            webViewRef.current?.injectJavaScript(`window.enableAdminPOICreation();`);
+          }}
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>+ Add POI</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+};
 
 export default MapScreen;

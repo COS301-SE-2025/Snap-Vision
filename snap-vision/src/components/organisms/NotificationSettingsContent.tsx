@@ -10,7 +10,7 @@ export default function NotificationSettingsContent() {
   const colors = getThemeColors(isDark);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}> 
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title="Notifications" />
       <NotificationSettings />
     </View>

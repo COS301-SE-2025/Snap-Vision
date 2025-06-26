@@ -1,10 +1,9 @@
 // src/components/molecules/TextToSpeech.tsx
 import React, { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Text, StyleSheet } from 'react-native';
 import Tts from 'react-native-tts';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
-import { StyleSheet } from 'react-native';
 
 interface TextToSpeechProps {
   isActive: boolean;
@@ -30,17 +29,17 @@ const TextToSpeech: React.FC<TextToSpeechProps> = ({
         await Tts.getInitStatus();
         Tts.setDefaultRate(0.5);
         Tts.setDefaultPitch(1.0);
-        
+
         Tts.addEventListener('tts-start', () => {
           setIsSpeaking(true);
           onSpeakingChange?.(true);
         });
-        
+
         Tts.addEventListener('tts-finish', () => {
           setIsSpeaking(false);
           onSpeakingChange?.(false);
         });
-        
+
         Tts.addEventListener('tts-cancel', () => {
           setIsSpeaking(false);
           onSpeakingChange?.(false);
@@ -69,7 +68,7 @@ const TextToSpeech: React.FC<TextToSpeechProps> = ({
 
   const speakText = (textToSpeak: string) => {
     if (!isActive) return;
-    
+
     try {
       Tts.stop();
       const cleanText = textToSpeak
@@ -92,36 +91,31 @@ const TextToSpeech: React.FC<TextToSpeechProps> = ({
 
   return (
     <Pressable
-      style={[
-        styles.container,
-        { backgroundColor: isActive ? colors.primary : colors.card }
-      ]}
+      style={[styles.container, { backgroundColor: isActive ? colors.primary : colors.card }]}
       onPress={handlePress}
     >
       <Text style={[styles.icon, { color: colors.text }]}>
         {isSpeaking ? '🛑' : isActive ? '🔊' : '🔇'}
       </Text>
       {isActive && (
-        <Text style={[styles.label, { color:'#fff' }]}>
-          {isSpeaking ? 'Stop' : 'Voice On'}
-        </Text>
+        <Text style={[styles.label, { color: '#fff' }]}>{isSpeaking ? 'Stop' : 'Voice On'}</Text>
       )}
     </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
- container: {
- flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'center',
-  paddingVertical: 4, // reduced
-  paddingHorizontal: 8, // reduced
-  borderRadius: 6,
-  height: 36, // fixed height
-  width: 100, // fixed width to match both buttons
-  backgroundColor: '#222',
-},
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 4, // reduced
+    paddingHorizontal: 8, // reduced
+    borderRadius: 6,
+    height: 36, // fixed height
+    width: 100, // fixed width to match both buttons
+    backgroundColor: '#222',
+  },
 
   icon: {
     fontSize: 16,

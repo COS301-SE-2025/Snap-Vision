@@ -46,22 +46,10 @@ export default function AdminScreenContent({
         DASHBOARD
       </Text>
       <View style={styles.buttonContainer}>
-        <AppButton 
-          title="Load Floorplans" 
-          onPress={onLoadFloorplans}
-        />
-        <AppButton 
-          title="Edit Floorplans" 
-          onPress={onEditFloorplans}
-        />
-        <AppButton 
-          title="Settings" 
-          onPress={onSettings}
-        />
-        <AppButton 
-          title="Manage Users" 
-          onPress={onManageUsers}
-        />
+        <AppButton title="Load Floorplans" onPress={onLoadFloorplans} />
+        <AppButton title="Edit Floorplans" onPress={onEditFloorplans} />
+        <AppButton title="Settings" onPress={onSettings} />
+        <AppButton title="Manage Users" onPress={onManageUsers} />
       </View>
     </View>
   );
@@ -77,5 +65,5 @@ const styles = StyleSheet.create({
   buttonContainer: {
     width: '100%',
     maxWidth: 300,
-  }
+  },
 });

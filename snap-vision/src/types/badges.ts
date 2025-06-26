@@ -1,10 +1,9 @@
 //Snap-Vision\snap-vision\src\types\badges.ts
 // 1. Badge ID types
 export type BadgeId =
- 
-| 'first-login'  //done
-  | 'qr-scan'      
-  | 'destination-reached'  //done 
+  | 'first-login' //done
+  | 'qr-scan'
+  | 'destination-reached' //done
   | 'share-location' //done
   | '10-destinations'
   | '50-destinations'
@@ -12,11 +11,9 @@ export type BadgeId =
   | '150-destinations'
   | '200-destinations'
   | 'enabled-notifications'
-  | 'reported-crowd'   //done
-  | 'points-150'   //done
-  | 'fast-finisher';      
-
-
+  | 'reported-crowd' //done
+  | 'points-150' //done
+  | 'fast-finisher';
 
 // 2. Badge shape
 export interface Badge {
@@ -87,13 +84,9 @@ export const BADGES: Record<BadgeId, Badge> = {
     title: 'Points Collector',
     description: 'Earned 150 points.',
   },
-   'fast-finisher': {
+  'fast-finisher': {
     id: 'fast-finisher',
     title: 'Speed Runner',
     description: 'Reached your destination in under 5 minutes!',
   },
-
-  
-
 };
-

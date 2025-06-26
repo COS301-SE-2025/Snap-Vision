@@ -11,7 +11,7 @@ interface Props {
   onDelete: (user: User) => void;
 }
 
-export default function UserCard({ user, onEdit, onDelete}: Props) {
+export default function UserCard({ user, onEdit, onDelete }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
@@ -26,16 +26,12 @@ export default function UserCard({ user, onEdit, onDelete}: Props) {
           <Text style={[styles.userEmail, { color: colors.secondary }]}>{user.email}</Text>
         </View>
       </View>
-      
-      <View style={styles.rightSection}>
 
+      <View style={styles.rightSection}>
         <View style={styles.roleStatusContainer}>
-          <Text style={[styles.roleText, { color: roleColor }]}>
-            {user.role}
-          </Text>
+          <Text style={[styles.roleText, { color: roleColor }]}>{user.role}</Text>
         </View>
 
-        
         <View style={styles.actionsContainer}>
           <TouchableOpacity style={styles.actionButton} onPress={() => onEdit(user)}>
             <Icon name="create-outline" size={20} color={colors.primary} />
@@ -44,7 +40,6 @@ export default function UserCard({ user, onEdit, onDelete}: Props) {
           <TouchableOpacity style={styles.actionButton} onPress={() => onDelete(user)}>
             <Icon name="close" size={20} color={colors.danger} />
           </TouchableOpacity>
-
         </View>
       </View>
     </View>

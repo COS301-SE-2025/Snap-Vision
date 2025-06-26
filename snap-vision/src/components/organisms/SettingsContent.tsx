@@ -7,7 +7,7 @@ import { getThemeColors } from '../../theme';
 
 interface Props {
   isDark: boolean;
-  navigation: any; 
+  navigation: any;
 }
 
 export default function SettingsContent({ isDark, navigation }: Props) {

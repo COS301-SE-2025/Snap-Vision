@@ -5,14 +5,12 @@ import SettingItem from '../molecules/SettingItem';
 import ThemedText from '../atoms/ThemedText';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
-import TopBar from '../molecules/TopBar';
-import { useNavigation } from '@react-navigation/native';
 import SettingsHeader from '../molecules/SettingsHeader';
 
 const SectionHeader = ({ title }: { title: string }) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  
+
   return (
     <View style={styles.sectionHeaderContainer}>
       <ThemedText size="lg" weight="bold" style={{ color: colors.primary }}>
@@ -25,14 +23,13 @@ const SectionHeader = ({ title }: { title: string }) => {
 const Divider = () => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  
+
   return <View style={[styles.divider, { backgroundColor: colors.secondary }]} />;
 };
 
 const AdminSettingsForm = () => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  const navigation = useNavigation();
 
   const [enable2FA, setEnable2FA] = useState(false);
   const [sessionTimeout] = useState('15 minutes');
@@ -56,11 +53,10 @@ const AdminSettingsForm = () => {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <SettingsHeader title="App Settings" />
-      <ScrollView 
+      <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
         contentContainerStyle={styles.contentContainer}
       >
-        
         {/* Security Settings */}
         <SectionHeader title="Security Settings" />
         <SettingItem
@@ -99,10 +95,12 @@ const AdminSettingsForm = () => {
         <SettingItem
           title="Enable accessibility routes"
           titleStyle={{ color: colors.primary }}
-          rightComponent={<Toggle value={accessibilityRoutes} onValueChange={setAccessibilityRoutes} />}
+          rightComponent={
+            <Toggle value={accessibilityRoutes} onValueChange={setAccessibilityRoutes} />
+          }
         />
         <Divider />
-       
+
         {/* Positioning Settings */}
         <SectionHeader title="Positioning Settings" />
         <SettingItem
@@ -159,12 +157,15 @@ const AdminSettingsForm = () => {
         <Divider />
 
         {/* Reset to Defaults Button */}
-        <TouchableOpacity 
-          style={[styles.buttonContainer, { 
-            backgroundColor: colors.card,
-            borderColor: colors.secondary,
-            borderWidth: 1,
-          }]}
+        <TouchableOpacity
+          style={[
+            styles.buttonContainer,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.secondary,
+              borderWidth: 1,
+            },
+          ]}
           onPress={resetToDefaults}
         >
           <ThemedText size="md" weight="bold" style={{ color: colors.secondary }}>
@@ -173,7 +174,7 @@ const AdminSettingsForm = () => {
         </TouchableOpacity>
 
         {/* Save Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.buttonContainer, { backgroundColor: colors.primary }]}
           onPress={() => console.log('Settings saved')}
         >

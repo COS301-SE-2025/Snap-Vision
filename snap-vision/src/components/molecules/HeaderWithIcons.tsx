@@ -12,15 +12,20 @@ export default function HeaderWithIcons() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const navigation = useNavigation<any>();
-  const { setHasSeenLanding } = useLanding(); 
+  const { setHasSeenLanding } = useLanding();
 
   return (
     <View style={styles.header}>
-      <Text style={[styles.title, {
-        fontFamily: 'PermanentMarkerRegular',
-        color: colors.primary,
-        transform: [{ rotate: '-3deg' }],
-      }]}>
+      <Text
+        style={[
+          styles.title,
+          {
+            fontFamily: 'PermanentMarkerRegular',
+            color: colors.primary,
+            transform: [{ rotate: '-3deg' }],
+          },
+        ]}
+      >
         GOING SOMEWHERE?
       </Text>
 
@@ -54,7 +59,6 @@ export default function HeaderWithIcons() {
         style={styles.info}
         onPress={() => setHasSeenLanding(true)} // Update this if needed
       />
-
     </View>
   );
 }
@@ -73,12 +77,12 @@ const styles = StyleSheet.create({
   },
   notification: {
     position: 'absolute',
-    top: -50,   
+    top: -50,
     right: 55,
   },
   profile: {
     position: 'absolute',
-    top: -50,   
+    top: -50,
     right: 15,
   },
   info: {
@@ -86,5 +90,4 @@ const styles = StyleSheet.create({
     top: -50,
     left: 25, // Adjust spacing as needed
   },
-
 });

@@ -12,7 +12,6 @@ export const lightColors = {
   danger: '#F44336',
   warning: '#FF9800',
   secondary: '#3E5650',
-  
 };
 
 export const darkColors = {

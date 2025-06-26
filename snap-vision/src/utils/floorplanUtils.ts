@@ -12,12 +12,12 @@ export const initializePreBundledFloorplans = async () => {
     floorLabel: 'Floor 2',
     uri: 'file:///android_asset/floorplans/it_building_floor2.jpg',
     timestamp: new Date().toISOString(),
-    status: 'active'
+    status: 'active',
   };
-  
+
   // Save to AsyncStorage with the same key format used by the upload functionality
   const storageKey = `floorplan_${IT_BUILDING_ID}_Floor_2`;
-  
+
   try {
     // Check if already exists
     const existing = await AsyncStorage.getItem(storageKey);

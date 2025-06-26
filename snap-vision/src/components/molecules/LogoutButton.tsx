@@ -13,8 +13,8 @@ export default function LogoutButton({ onLogout, isLoading = false }: LogoutButt
   const colors = getThemeColors(isDark);
 
   return (
-    <TouchableOpacity 
-      style={[styles.button, { backgroundColor: colors.danger }]} 
+    <TouchableOpacity
+      style={[styles.button, { backgroundColor: colors.danger }]}
       onPress={onLogout}
       disabled={isLoading}
     >
