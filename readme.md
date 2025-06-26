@@ -51,7 +51,7 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 
 ### Demo 2 Documentation
 
-|---------|------------|
+|---------|
 | Software Requirements Specification| 
 | Architectural Requirements Document  | 
 | Coding Standards Document  | 
