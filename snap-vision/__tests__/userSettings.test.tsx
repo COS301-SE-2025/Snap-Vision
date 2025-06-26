@@ -27,7 +27,7 @@ jest.mock('../src/theme', () => ({
   }),
 }));
 
-// Create a mock NotificationSettings component for testing
+// Mock NotificationSettings component 
 const NotificationSettings = () => {
   return (
     <View style={{ padding: 16, backgroundColor: '#FFFFFF' }}>
@@ -59,16 +59,14 @@ const NotificationSettings = () => {
   );
 };
 
-// Create a mock AppPreferencesContent component for testing
+//  Mock AppPreferencesContent component + mock SettingsHeader + Dark Mode
 const AppPreferencesContent = () => {
   return (
     <View style={{ padding: 16, backgroundColor: '#FFFFFF' }} testID="app-preferences-container">
-      {/* Mock SettingsHeader */}
       <View testID="settings-header">
         <Text>App Preferences</Text>
       </View>
       
-      {/* Mock DarkModeToggle */}
       <View style={{ 
         flexDirection: 'row', 
         justifyContent: 'space-between', 
@@ -85,7 +83,7 @@ const AppPreferencesContent = () => {
   );
 };
 
-// --- PrivacySecurityContent organism tests ---
+// PrivacySecurityContent organism tests
 jest.mock('../src/components/molecules/PrivacySettings', () => {
   const React = require('react');
   const { View, Text } = require('react-native');
@@ -174,7 +172,7 @@ describe('AppPreferences Unit Tests', () => {
   it('toggles dark mode when switch is pressed', () => {
     const toggleTheme = jest.fn();
     
-    // Override the mock to provide our custom toggleTheme function
+    // Override the mock to provide custom toggleTheme function
     jest.spyOn(require('../src/theme/ThemeContext'), 'useTheme').mockReturnValue({
       isDark: false,
       toggleTheme
@@ -187,7 +185,7 @@ describe('AppPreferences Unit Tests', () => {
   });
 });
 
-// --- PrivacySecurityContent organism unit tests ---
+// PrivacySecurityContent organism unit tests
 describe('PrivacySecurityContent Unit Tests', () => {
   it('renders SettingsHeader and PrivacySettings', () => {
     const { getByTestId, getByText } = render(<PrivacySecurityContent />);
@@ -203,8 +201,7 @@ describe('PrivacySecurityContent Unit Tests', () => {
 
   it('contains switches for privacy and security options', () => {
     const { getAllByTestId } = render(<PrivacySecurityContent />);
-    const switches = getAllByTestId('mock-switch');
-    // 2 privacy + 1 security = 3 switches
+    const switches = getAllByTestId('mock-switch'); // 3 switches
     expect(switches).toHaveLength(3);
     expect(switches[0].props.value).toBe(true); // Location Services
     expect(switches[1].props.value).toBe(true); // Analytics
