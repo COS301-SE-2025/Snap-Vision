@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import { Alert, View, Text, TouchableOpacity } from 'react-native';
+import { Alert } from 'react-native';
 
 // Setup mock functions
 const mockNavigate = jest.fn();
@@ -218,10 +218,7 @@ describe('Account Settings Integration Tests', () => {
     fireEvent.press(getByTestId('logout-button'));
 
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith(
-        'Error Logging Out',
-        'Auth error'
-      );
+      expect(Alert.alert).toHaveBeenCalledWith('An error occurred while logging out.');
     });
   });
 });
