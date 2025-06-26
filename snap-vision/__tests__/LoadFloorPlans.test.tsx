@@ -224,3 +224,173 @@ it('handles component unmounting during async operations', async () => {
   
   // No errors should occur
 });
+
+describe('AdminLoadFloorplansContent Error Handling', () => {
+  
+  it('handles building selection from horizontal list', async () => {
+    const { getByText, findByText } = renderWithTheme(<AdminLoadFloorplansContent />);
+    
+    await waitForData();
+    
+    const buildingB = await findByText('Building B');
+    
+    await act(async () => {
+      fireEvent.press(buildingB);
+    });
+    
+    const buildingNameInput = getByText("Building Name").parent.parent.children[1];
+    expect(buildingNameInput.props.value).toBe('Building B');
+  });
+
+  it('handles firestore fetch error', async () => {
+    const firestore = require('@react-native-firebase/firestore');
+    firestore.default().collection().where().get.mockRejectedValue(new Error('Network error'));
+    
+    const { findByText } = renderWithTheme(<AdminLoadFloorplansContent />);
+    
+    expect(await findByText('Failed to load buildings. Please try again.')).toBeTruthy();
+  });
+
+  it('handles image picker error', async () => {
+    const imagePicker = require('react-native-image-picker');
+    imagePicker.launchImageLibrary.mockRejectedValue(new Error('Picker error'));
+    
+    const { getByText, findByText } = renderWithTheme(<AdminLoadFloorplansContent />);
+    const imageButton = getByText('Select Floorplan Image');
+    
+    await act(async () => {
+      fireEvent.press(imageButton);
+    });
+    
+    expect(await findByText('Failed to select image')).toBeTruthy();
+  });
+
+});
+
+describe('AdminLoadFloorplansContent - handleUpload', () => {
+  const mockBuilding = {
+    id: 'bldg1',
+    name: 'Science Hall',
+    centroid: { latitude: 0, longitude: 0 }
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // Reset all mock implementations to default
+    require('@react-native-firebase/firestore').default().collection().where().get.mockResolvedValue({
+      docs: [{
+        id: 'bldg1',
+        data: () => mockBuilding
+      }]
+    });
+  });
+
+  it('shows success alert after upload', async () => {
+    const Alert = require('react-native').Alert;
+    jest.spyOn(Alert, 'alert');
+    
+    const { getByText, getAllByText, getByPlaceholderText } = renderWithTheme(<AdminLoadFloorplansContent />);
+    
+    await waitForData();
+    
+    // Fill out form
+    fireEvent.press(getByText('Science Hall'));
+    fireEvent.changeText(getByPlaceholderText('e.g., Floor 2, Basement'), 'Floor 1');
+    
+    // Mock file selection
+    require('react-native-image-picker').launchImageLibrary.mockResolvedValue({
+      assets: [{
+        uri: 'file:///mock/image.jpg',
+        fileName: 'floorplan.jpg'
+      }]
+    });
+    
+    fireEvent.press(getByText('Select Floorplan Image'));
+    await waitFor(() => expect(getByText('floorplan.jpg')).toBeTruthy());
+    
+    // Upload
+    const uploadButton = getAllByText('Upload Floorplan')[1];
+    await act(async () => {
+      fireEvent.press(uploadButton);
+    });
+    
+    await waitFor(() => {
+      expect(Alert.alert).toHaveBeenCalledWith(
+        'Success',
+        'Floorplan uploaded successfully. Would you like to add room POIs now?',
+        expect.any(Array)
+      );
+    });
+  });
+
+  it('resets form after successful upload', async () => {
+    const { getByText, getAllByText, getByPlaceholderText, queryByText } = renderWithTheme(<AdminLoadFloorplansContent />);
+    
+    await waitForData();
+    
+    // Fill out form
+    fireEvent.press(getByText('Science Hall'));
+    const floorInput = getByPlaceholderText('e.g., Floor 2, Basement');
+    fireEvent.changeText(floorInput, 'Floor 1');
+    
+    // Mock file selection
+    require('react-native-image-picker').launchImageLibrary.mockResolvedValue({
+      assets: [{
+        uri: 'file:///mock/image.jpg',
+        fileName: 'floorplan.jpg'
+      }]
+    });
+    
+    fireEvent.press(getByText('Select Floorplan Image'));
+    await waitFor(() => expect(getByText('floorplan.jpg')).toBeTruthy());
+    
+    // Upload
+    const uploadButton = getAllByText('Upload Floorplan')[1];
+    await act(async () => {
+      fireEvent.press(uploadButton);
+    });
+    
+    await waitFor(() => {
+      expect(floorInput.props.value).toBe('');
+      expect(queryByText('floorplan.jpg')).toBeNull();
+    });
+  });
+
+  it('handles upload errors gracefully', async () => {
+    const RNFS = require('react-native-fs');
+    RNFS.copyFile.mockRejectedValue(new Error('Copy failed'));
+    
+    const { getByText, getAllByText, getByPlaceholderText } = renderWithTheme(<AdminLoadFloorplansContent />);
+    
+    await waitForData();
+    
+    // Fill out form
+    fireEvent.press(getByText('Science Hall'));
+    fireEvent.changeText(getByPlaceholderText('e.g., Floor 2, Basement'), 'Floor 1');
+    
+    // Mock file selection
+    require('react-native-image-picker').launchImageLibrary.mockResolvedValue({
+      assets: [{
+        uri: 'file:///mock/image.jpg',
+        fileName: 'floorplan.jpg'
+      }]
+    });
+    
+    fireEvent.press(getByText('Select Floorplan Image'));
+    await waitFor(() => expect(getByText('floorplan.jpg')).toBeTruthy());
+    
+    // Upload
+    const uploadButton = getAllByText('Upload Floorplan')[1];
+    await act(async () => {
+      fireEvent.press(uploadButton);
+    });
+    
+    await waitFor(() => {
+      expect(getByText('Failed to upload floorplan')).toBeTruthy();
+    });
+  });
+
+
+});
+});
+});
