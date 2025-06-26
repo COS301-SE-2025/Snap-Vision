@@ -29,10 +29,7 @@ jest.mock('../src/components/molecules/BadgePopup', () => {
 });
 
 describe('BadgeUnlockNotifier', () => {
-  const mockUseBadges = jest.spyOn(
-    require('../src/context/BadgeContext'), 
-    'useBadges'
-  );
+  const mockUseBadges = jest.spyOn(require('../src/context/BadgeContext'), 'useBadges');
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -63,7 +60,7 @@ describe('BadgeUnlockNotifier', () => {
     const { queryByTestId } = render(
       <ThemeProviderWrapper>
         <BadgeUnlockNotifier />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     expect(queryByTestId('badge-popup')).toBeNull();
@@ -94,7 +91,7 @@ describe('BadgeUnlockNotifier', () => {
     const { getByTestId } = render(
       <ThemeProviderWrapper>
         <BadgeUnlockNotifier />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     expect(getByTestId('badge-popup')).toBeTruthy();
@@ -102,7 +99,7 @@ describe('BadgeUnlockNotifier', () => {
 
   it('clears justUnlocked after showing popup', () => {
     const mockClearJustUnlocked = jest.fn();
-    
+
     mockUseBadges.mockReturnValue({
       state: {
         justUnlocked: ['first-login'],
@@ -127,7 +124,7 @@ describe('BadgeUnlockNotifier', () => {
     render(
       <ThemeProviderWrapper>
         <BadgeUnlockNotifier />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     expect(mockClearJustUnlocked).toHaveBeenCalled();

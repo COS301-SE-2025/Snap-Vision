@@ -7,7 +7,7 @@ import SectionHeader from '../atoms/SectionHeader';
 export default function ProgressSection({
   points,
   badgeCount,
-  checkIns
+  checkIns,
 }: {
   points: number;
   badgeCount: number;
@@ -15,10 +15,7 @@ export default function ProgressSection({
 }) {
   return (
     <View style={styles.section}>
-      <SectionHeader 
-        title="Your Progress" 
-        subtitle="Keep track of your achievements" 
-      />
+      <SectionHeader title="Your Progress" subtitle="Keep track of your achievements" />
       <View style={styles.progressRow}>
         <ProgressCard title="Points Earned" value={points} />
         <ProgressCard title="Badges Unlocked" value={badgeCount} />
@@ -30,8 +27,8 @@ export default function ProgressSection({
 
 const styles = StyleSheet.create({
   section: { marginBottom: 24 },
-  progressRow: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between' 
-  }
+  progressRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
 });

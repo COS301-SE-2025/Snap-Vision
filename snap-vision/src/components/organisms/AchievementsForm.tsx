@@ -52,18 +52,14 @@ export default function AchievementsForm() {
       <WelcomeHeader userName="User" />
 
       {/* Progress (live data) */}
-      <ProgressSection 
-  points={state.points} 
-  badgeCount={state.unlocked.size} 
-  checkIns={state.checkIns} 
-/>
-
-
+      <ProgressSection
+        points={state.points}
+        badgeCount={state.unlocked.size}
+        checkIns={state.checkIns}
+      />
 
       {/* Your Badges */}
       <BadgesSection unlockedIds={unlockedArray} />
-
-
 
       {/* Category Buttons
       <View style={styles.categoryRow}>

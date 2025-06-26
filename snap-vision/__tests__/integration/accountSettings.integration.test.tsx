@@ -34,7 +34,7 @@ jest.mock('@react-native-firebase/firestore', () => {
               email: 'tony@example.com',
               profilePicture: 'https://example.com/profile.jpg',
             }),
-          })
+          }),
         ),
         update: jest.fn(() => Promise.resolve()),
       })),
@@ -52,7 +52,7 @@ jest.mock('@react-native-firebase/firestore', () => {
                 }),
               },
             ],
-          })
+          }),
         ),
       })),
     })),
@@ -175,7 +175,7 @@ describe('Account Settings Integration Tests', () => {
     const { getByTestId, getByText } = render(
       <TestWrapper>
         <AccountSettingsScreen navigation={{ navigate: mockNavigate }} />
-      </TestWrapper>
+      </TestWrapper>,
     );
 
     expect(getByTestId('settings-header')).toBeTruthy();
@@ -191,7 +191,7 @@ describe('Account Settings Integration Tests', () => {
     const { getByTestId } = render(
       <TestWrapper>
         <AccountSettingsScreen navigation={{ navigate: mockNavigate }} />
-      </TestWrapper>
+      </TestWrapper>,
     );
 
     fireEvent.press(getByTestId('logout-button'));
@@ -200,7 +200,7 @@ describe('Account Settings Integration Tests', () => {
       expect(mockSignOut).toHaveBeenCalled();
       expect(Alert.alert).toHaveBeenCalledWith(
         'Logged Out',
-        'You have been logged out successfully.'
+        'You have been logged out successfully.',
       );
       //expect(mockResetToLogin).toHaveBeenCalled();
     });
@@ -212,7 +212,7 @@ describe('Account Settings Integration Tests', () => {
     const { getByTestId } = render(
       <TestWrapper>
         <AccountSettingsScreen navigation={{ navigate: mockNavigate }} />
-      </TestWrapper>
+      </TestWrapper>,
     );
 
     fireEvent.press(getByTestId('logout-button'));

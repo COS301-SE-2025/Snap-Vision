@@ -24,8 +24,6 @@ jest.mock('../src/components/molecules/SettingsHeader', () => {
   return MockSettingsHeader;
 });
 
-
-
 // Mock BadgeContext with TypeScript support
 jest.mock('../src/context/BadgeContext', () => {
   const actual = jest.requireActual('../src/context/BadgeContext');
@@ -63,7 +61,7 @@ describe('AchievementsContent', () => {
     const { getByText, getByTestId } = render(
       <ThemeProviderWrapper>
         <AchievementsContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     expect(getByTestId('settings-header').props.children).toBe('Achievements');
@@ -74,7 +72,7 @@ describe('AchievementsContent', () => {
     const { getByTestId } = render(
       <ThemeProviderWrapper>
         <AchievementsContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     // Verify the component is receiving context by checking if SettingsHeader renders
@@ -107,7 +105,7 @@ describe('AchievementsContent', () => {
     const { getByText } = render(
       <ThemeProviderWrapper>
         <AchievementsContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     expect(getByText('Achievements will be shown here.')).toBeTruthy();

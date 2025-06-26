@@ -5,8 +5,8 @@ module.exports = {
   ],
   setupFilesAfterEnv: ['@testing-library/jest-native/extend-expect'],
   //setupFiles: ['<rootDir>/__tests__/helpers/setup-jest.js'],
-  moduleNameMapper: {   
-    '^~/(.*)$': '<rootDir>/src/$1', 
+  moduleNameMapper: {
+    '^~/(.*)$': '<rootDir>/src/$1',
     '^@expo/vector-icons/?(.*)$': 'react-native-vector-icons/$1',
   },
   testMatch: ['**/__tests__/**/*.test.ts?(x)', '<rootDir>/detox/tests/**/*.test.js'],
@@ -16,7 +16,7 @@ module.exports = {
     '!**/__tests__/**',
     '!**/index.{ts,tsx}',
     '!**/*.d.ts',
-    'src/screens/MapScreen.tsx', 
+    'src/screens/MapScreen.tsx',
   ],
   coverageDirectory: 'coverage',
 };
