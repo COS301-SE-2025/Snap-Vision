@@ -49,9 +49,14 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 
 ---
 
-## Functional Requirements
+### Documentation Links
 
-📎 [Software Requirements Specification (SRS)](https://drive.google.com/file/d/1PjbgsJOFsjdsjYa_vm__W2UnuMKIfOYw/view?usp=sharing)
+| Demo    | Demo Slides | Documentation | Demo Video |
+|---------|-------------|---------------|------------|
+| Demo 1  | [Slides 1](#) | [Docs 1](#)    | [Video 1](#) |
+| Demo 2  | [Slides 2](#) | [Docs 2](#)    | [Video 2](#) |
+| Demo 3  | [Slides 3](#) | [Docs 3](#)    | [Video 3](#) |
+| Demo 4  | [Slides 4](#) | [Docs 4](#)    | [Video 4](#) |
 
 ---
 
