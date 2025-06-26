@@ -28,7 +28,6 @@ jest.mock('../src/theme', () => ({
 }));
 
 // Create a mock NotificationSettings component for testing
-// This avoids import path issues while providing the functionality we need to test
 const NotificationSettings = () => {
   return (
     <View style={{ padding: 16, backgroundColor: '#FFFFFF' }}>
@@ -85,6 +84,46 @@ const AppPreferencesContent = () => {
     </View>
   );
 };
+
+// --- PrivacySecurityContent organism tests ---
+jest.mock('../src/components/molecules/PrivacySettings', () => {
+  const React = require('react');
+  const { View, Text } = require('react-native');
+  return function MockPrivacySettings() {
+    return (
+      <View testID="privacy-settings-mock">
+        <Text>Privacy Settings Section</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text>Location Services</Text>
+          <View testID="mock-switch" role="switch" value={true} />
+        </View>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text>Analytics</Text>
+          <View testID="mock-switch" role="switch" value={true} />
+        </View>
+        <Text>Security Settings</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text>Biometric Authentication</Text>
+          <View testID="mock-switch" role="switch" value={false} />
+        </View>
+      </View>
+    );
+  };
+});
+
+jest.mock('../src/components/molecules/SettingsHeader', () => {
+  const React = require('react');
+  const { View, Text } = require('react-native');
+  return function MockSettingsHeader({ title }) {
+    return (
+      <View testID="settings-header">
+        <Text>{title}</Text>
+      </View>
+    );
+  };
+});
+
+import PrivacySecurityContent from '../src/components/organisms/PrivacySecurityContent';
 
 describe('NotificationSettings Unit Tests', () => {
   it('renders correctly with light theme', () => {
@@ -145,6 +184,30 @@ describe('AppPreferences Unit Tests', () => {
     
     const darkModeSwitch = getByTestId('dark-mode-switch');
     fireEvent.press(darkModeSwitch);
-    
+  });
+});
+
+// --- PrivacySecurityContent organism unit tests ---
+describe('PrivacySecurityContent Unit Tests', () => {
+  it('renders SettingsHeader and PrivacySettings', () => {
+    const { getByTestId, getByText } = render(<PrivacySecurityContent />);
+    expect(getByTestId('settings-header')).toBeTruthy();
+    expect(getByText('Privacy & Security')).toBeTruthy();
+    expect(getByTestId('privacy-settings-mock')).toBeTruthy();
+    expect(getByText('Privacy Settings Section')).toBeTruthy();
+    expect(getByText('Location Services')).toBeTruthy();
+    expect(getByText('Analytics')).toBeTruthy();
+    expect(getByText('Security Settings')).toBeTruthy();
+    expect(getByText('Biometric Authentication')).toBeTruthy();
+  });
+
+  it('contains switches for privacy and security options', () => {
+    const { getAllByTestId } = render(<PrivacySecurityContent />);
+    const switches = getAllByTestId('mock-switch');
+    // 2 privacy + 1 security = 3 switches
+    expect(switches).toHaveLength(3);
+    expect(switches[0].props.value).toBe(true); // Location Services
+    expect(switches[1].props.value).toBe(true); // Analytics
+    expect(switches[2].props.value).toBe(false); // Biometric Authentication
   });
 });
