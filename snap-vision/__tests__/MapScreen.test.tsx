@@ -90,7 +90,46 @@ describe('MapActionsPanel', () => {
           );
           expect(getByText('Report Crowds')).toBeTruthy();
         });
+                it('calls onShare when share button is pressed', () => {
+          const mockOnShare = jest.fn();
+          const { getByText } = renderWithProviders(
+            <MapActionsPanel
+              currentLocation={true}
+              onShare={mockOnShare}
+              onReport={jest.fn()}
+              shareTooltip={true}
+              reportTooltip={true}
+              onShareIn={jest.fn()}
+              onShareOut={jest.fn()}
+              onReportIn={jest.fn()}
+              onReportOut={jest.fn()}
+              color="white"
+            />
+          );
+          fireEvent.press(getByText('Share Location'));
+          expect(mockOnShare).toHaveBeenCalled();
+        });
         
+        it('calls onReport when report button is pressed', () => {
+          const mockOnReport = jest.fn();
+          const { getByText } = renderWithProviders(
+            <MapActionsPanel
+              currentLocation={true}
+              onShare={jest.fn()}
+              onReport={mockOnReport}
+              shareTooltip={true}
+              reportTooltip={true}
+              onShareIn={jest.fn()}
+              onShareOut={jest.fn()}
+              onReportIn={jest.fn()}
+              onReportOut={jest.fn()}
+              color="white"
+            />
+          );
+          fireEvent.press(getByText('Report Crowds'));
+          expect(mockOnReport).toHaveBeenCalled();
+        });
+
 });
 
 describe('MapWebView', () => {
