@@ -3,6 +3,13 @@ import { render, fireEvent } from '@testing-library/react-native';
 import MapActionsPanel from '../src/components/organisms/MapActionsPanel';
 import { ThemeProvider } from '../src/theme/ThemeContext'; // Import ThemeProvider
 import MapWebView from '../src/components/organisms/MapWebView';
+jest.mock('react-native-webview', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return {
+    WebView: React.forwardRef((props, ref) => <View {...props} ref={ref} testID="mock-webview" />),
+  };
+});
 
 describe('MapActionsPanel', () => {
   const renderWithProviders = (ui: React.ReactNode) => {
@@ -47,5 +54,20 @@ describe('MapActionsPanel', () => {
     );
     fireEvent.press(getByText('Report Crowds')); // Match tooltip text
     expect(mockOnReport).toHaveBeenCalled();
+  });
+});
+
+describe('MapWebView', () => {
+  it('renders correctly', () => {
+    const { getByTestId } = render(<MapWebView />);
+    expect(getByTestId('mock-webview')).toBeTruthy(); // Match the correct testID
+  });
+
+  it('handles messages correctly', () => {
+    const mockOnMessage = jest.fn();
+    const { getByTestId } = render(<MapWebView onMessage={mockOnMessage} />);
+    const webView = getByTestId('mock-webview'); // Match the correct testID
+    webView.props.onMessage({ nativeEvent: { data: 'test message' } });
+    expect(mockOnMessage).toHaveBeenCalledWith({ nativeEvent: { data: 'test message' } });
   });
 });
