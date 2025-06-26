@@ -1,32 +1,139 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useEffect, useRef, useState } from 'react';
+import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import LoginScreen from './src/screens/LoginScreen';
+import RegistrationScreen from './src/screens/RegistrationScreen';
+import BottomTabs from './src/navigation/BottomTabs';
+import AdminLoadFloorplansScreen from './src/screens/AdminLoadFloorplansScreen';
+import AdminEditFloorplansScreen from './src/screens/AdminEditFloorplansScreen';
+import AdminFloorplanEditorScreen from './src/screens/AdminFloorplanEditorScreen';
+import AdminSettingsFrom from './src/components/organisms/AdminSettingsForm';
+import { ThemeProvider } from './src/theme/ThemeContext';
+import ManageUsersScreen from './src/screens/ManageUsersScreen';
+import { Linking } from 'react-native';
+import queryString from 'query-string';
+import { DeepLinkProvider, useDeepLink } from './src/DeepLinkContext';
+import auth from '@react-native-firebase/auth';
+import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
+import { LandingProvider } from './src/context/LandingContext';
+import { UserProvider } from './src/context/UserContext';
+import { BadgeProvider } from './src/context/BadgeContext';
+import BadgeUnlockNotifier from './src/components/organisms/BadgeUnlockNotifier';
+import ShopScreen from './src/screens/ShopScreen';
+import { initializePreBundledFloorplans } from './src/utils/floorplanUtils';
 
-import LoginScreen from './app/(tabs)/login';
-import RegistrationScreen from './app/(tabs)/registration';
-import BottomTabs from './app/(tabs)/BottomTabs';
+const Stack = createNativeStackNavigator();
 
-import { ThemeProvider } from './app/(tabs)/ThemeContext';
+function AppInner() {
+  const navigationRef = useRef<NavigationContainerRef<any>>(null);
+  const { setCoords } = useDeepLink();
+  const [authReady, setAuthReady] = useState(false);
+  const [initialRoute, setInitialRoute] = useState<'Login' | 'Tabs'>('Login');
+  const [pendingDeepLink, setPendingDeepLink] = useState<{ lat?: string; lng?: string } | null>(
+    null,
+  );
 
-export type RootStackParamList = {
-  Login: undefined;
-  Register: undefined;
-  Tabs: undefined; 
-};
+  // Listen for auth state
+  useEffect(() => {
+    const unsubscribe = auth().onAuthStateChanged((user) => {
+      setInitialRoute(user ? 'Tabs' : 'Login');
+      setAuthReady(true); // Only render navigator after this
+    });
+    return unsubscribe;
+  }, []);
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+  // if(!authReady) return null;
+
+  // Handle deep link only after auth is ready
+  useEffect(() => {
+    const handleDeepLink = (event: { url: string }) => {
+      const url = event.url;
+      if (url.includes('/location')) {
+        const [, query = ''] = url.split('?');
+        const params = queryString.parse(query);
+
+        // Save the deep link params until auth is ready
+        setPendingDeepLink({ lat: params.lat as string, lng: params.lng as string });
+      }
+    };
+
+    const linkingListener = Linking.addEventListener('url', handleDeepLink);
+
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink({ url });
+    });
+
+    return () => {
+      linkingListener.remove();
+    };
+  }, []);
+
+  // When auth is ready and there's a pending deep link, handle navigation
+  useEffect(() => {
+    if (!authReady || !pendingDeepLink) return;
+
+    if (auth().currentUser) {
+      // User is already logged in, navigate directly to Map with coordinates
+      navigationRef.current?.navigate('Tabs', {
+        screen: 'Map',
+        params: {
+          lat: pendingDeepLink.lat,
+          lng: pendingDeepLink.lng,
+        },
+      });
+    } else {
+      // User is not logged in, save coords and go to Login screen
+      setCoords({ lat: pendingDeepLink.lat, lng: pendingDeepLink.lng });
+      navigationRef.current?.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    }
+    setPendingDeepLink(null);
+  }, [authReady, pendingDeepLink, setCoords]);
+
+  useEffect(() => {
+    // Initialize pre-bundled floorplans
+    initializePreBundledFloorplans();
+  }, []);
+
+  return (
+    <BadgeProvider>
+      <ThemeProvider>
+        <NavigationContainer ref={navigationRef}>
+          <BadgeUnlockNotifier />
+          {authReady && (
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
+              {initialRoute === 'Tabs' ? (
+                <Stack.Screen name="Tabs" component={BottomTabs} />
+              ) : (
+                <Stack.Screen name="Login" component={LoginScreen} />
+              )}
+
+              <Stack.Screen name="Register" component={RegistrationScreen} />
+              <Stack.Screen name="AdminLoadFloorplans" component={AdminLoadFloorplansScreen} />
+              <Stack.Screen name="AdminFloorplanEditor" component={AdminFloorplanEditorScreen} />
+              <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
+              <Stack.Screen name="AdminSettings" component={AdminSettingsFrom} />
+              <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
+              <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+              <Stack.Screen name="ShopScreen" component={ShopScreen} />
+            </Stack.Navigator>
+          )}
+        </NavigationContainer>
+      </ThemeProvider>
+    </BadgeProvider>
+  );
+}
 
 export default function App() {
   return (
-    <ThemeProvider>
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Register" component={RegistrationScreen} />
-        <Stack.Screen name="Tabs" component={BottomTabs} /> 
-      </Stack.Navigator>
-    </NavigationContainer>
-    </ThemeProvider>
-
+    <DeepLinkProvider>
+      <LandingProvider>
+        <UserProvider>
+          <AppInner />
+        </UserProvider>
+      </LandingProvider>
+    </DeepLinkProvider>
   );
 }

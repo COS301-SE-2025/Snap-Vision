@@ -1,0 +1,13 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "src/assets/fonts/LICENSE.txt",
+      "sha1": "47b573e3824cd5e02a1a3ae99e2735b49e0256e4"
+    },
+    {
+      "path": "src/assets/fonts/PermanentMarkerRegular.ttf",
+      "sha1": "bc40bfbc7eb7715af82b136429848a3c7a83a2b3"
+    }
+  ]
+}
