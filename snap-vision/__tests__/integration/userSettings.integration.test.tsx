@@ -178,10 +178,29 @@ jest.mock('../../src/screens/PrivacySecurityScreen', () => {
   };
 });
 
+// Mock SupportScreen (but NOT the organism)
+jest.mock('../../src/screens/SupportScreen', () => {
+  const React = require('react');
+  const { View, SafeAreaView, ScrollView } = require('react-native');
+  const SupportContent = require('../../src/components/organisms/SupportContent').default;
+  return function MockSupportScreen() {
+    return (
+      <SafeAreaView>
+        <ScrollView>
+          <SupportContent />
+        </ScrollView>
+      </SafeAreaView>
+    );
+  };
+});
+
 // --- Import Real Components ---
 import NotificationSettingsContent from '../../src/components/organisms/NotificationSettingsContent';
 import AppPreferencesContent from '../../src/components/organisms/AppPreferencesContent';
 import PrivacySecurityContent from '../../src/components/organisms/PrivacySecurityContent';
+import SupportContent from '../../src/components/organisms/SupportContent';
+import SupportScreen from '../../src/screens/SupportScreen';
+import { NavigationContainer } from '@react-navigation/native';
 
 // Import the entire screen component for more complete integration testing
 import AppPreferencesScreen from '../../src/screens/AppPreferences';
@@ -278,5 +297,46 @@ describe('Privacy & Security Integration Tests', () => {
     expect(switches[0].props.value).toBe(true); // Location Services
     expect(switches[1].props.value).toBe(true); // Analytics
     expect(switches[2].props.value).toBe(false); // Biometric Authentication
+  });
+});
+
+// SupportContent Integration Tests
+describe('SupportContent Integration Tests', () => {
+  it('renders support content with header and intro', () => {
+    const { getByTestId, getByText } = render(
+      <NavigationContainer>
+        <SupportContent />
+      </NavigationContainer>
+    );
+    expect(getByTestId('settings-header')).toBeTruthy();
+    expect(getByText('Support')).toBeTruthy();
+    expect(getByText('Need help? Choose from the options below:')).toBeTruthy();
+  });
+
+  it('renders all support options and version', () => {
+    const { getByTestId, getByText } = render(
+      <NavigationContainer>
+        <SupportContent />
+      </NavigationContainer>
+    );
+    expect(getByText('FAQ')).toBeTruthy();
+    expect(getByText('Contact Support')).toBeTruthy();
+    expect(getByText('Tutorial')).toBeTruthy();
+    expect(getByText('SnapVision v1.0.0')).toBeTruthy();
+  });
+
+  it('renders inside SupportScreen', () => {
+    const { getByTestId, getByText } = render(
+      <NavigationContainer>
+        <SupportContent />
+      </NavigationContainer>
+    );
+    expect(getByTestId('settings-header')).toBeTruthy();
+    expect(getByText('Support')).toBeTruthy();
+    expect(getByText('Need help? Choose from the options below:')).toBeTruthy();
+    expect(getByText('FAQ')).toBeTruthy();
+    expect(getByText('Contact Support')).toBeTruthy();
+    expect(getByText('Tutorial')).toBeTruthy();
+    expect(getByText('SnapVision v1.0.0')).toBeTruthy();
   });
 });

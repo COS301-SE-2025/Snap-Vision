@@ -121,7 +121,16 @@ jest.mock('../src/components/molecules/SettingsHeader', () => {
   };
 });
 
+// --- SupportContent organism tests ---
+jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => 'Icon');
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({
+    navigate: jest.fn(),
+  }),
+}));
+
 import PrivacySecurityContent from '../src/components/organisms/PrivacySecurityContent';
+import SupportContent from '../src/components/organisms/SupportContent';
 
 describe('NotificationSettings Unit Tests', () => {
   it('renders correctly with light theme', () => {
@@ -206,5 +215,43 @@ describe('PrivacySecurityContent Unit Tests', () => {
     expect(switches[0].props.value).toBe(true); // Location Services
     expect(switches[1].props.value).toBe(true); // Analytics
     expect(switches[2].props.value).toBe(false); // Biometric Authentication
+  });
+});
+
+// SupportContent organism unit tests
+describe('SupportContent Unit Tests', () => {
+  it('renders header and intro text', () => {
+    const { getByTestId, getByText } = render(<SupportContent />);
+    expect(getByTestId('settings-header')).toBeTruthy();
+    expect(getByText('Support')).toBeTruthy();
+    expect(getByText('Need help? Choose from the options below:')).toBeTruthy();
+  });
+
+  it('renders all support options', () => {
+    const { getByText } = render(<SupportContent />);
+    expect(getByText('FAQ')).toBeTruthy();
+    expect(getByText('Contact Support')).toBeTruthy();
+    expect(getByText('Tutorial')).toBeTruthy();
+  });
+
+  it('renders version text', () => {
+    const { getByText } = render(<SupportContent />);
+    expect(getByText('SnapVision v1.0.0')).toBeTruthy();
+  });
+
+  it('calls navigation when a support option is pressed', () => {
+    const mockNavigate = jest.fn();
+    jest.spyOn(require('@react-navigation/native'), 'useNavigation').mockReturnValue({
+      navigate: mockNavigate,
+    });
+
+    const { getByText } = render(<SupportContent />);
+    fireEvent.press(getByText('FAQ'));
+    fireEvent.press(getByText('Contact Support'));
+    fireEvent.press(getByText('Tutorial'));
+
+    expect(mockNavigate).toHaveBeenCalledWith('FAQ');
+    expect(mockNavigate).toHaveBeenCalledWith('ContactSupport');
+    expect(mockNavigate).toHaveBeenCalledWith('Tutorial');
   });
 });
