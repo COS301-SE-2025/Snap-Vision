@@ -297,7 +297,7 @@ describe('NavigationPanel', () => {
     expect(getByText('75%')).toBeTruthy();
     expect(getByText('🔇')).toBeTruthy();
   });
-
+  
   it('calls onStartNavigation when start button is pressed', () => {
     const mockOnStartNavigation = jest.fn();
     const { getByText } = renderWithProviders(
@@ -340,5 +340,50 @@ describe('NavigationPanel', () => {
     );
     fireEvent.press(getByText('Stop'));
     expect(mockOnStopNavigation).toHaveBeenCalled();
+  });
+
+    it('calls onToggleVoice when voice toggle is pressed', () => {
+    const mockOnToggleVoice = jest.fn();
+    const { getByText } = renderWithProviders(
+      <NavigationPanel
+        isNavigating={true}
+        isLoading={false}
+        onStartNavigation={jest.fn()}
+        onStopNavigation={jest.fn()}
+        progress={50}
+        distance={null}
+        time={null}
+        destination="Library"
+        isVoiceEnabled={true}
+        onToggleVoice={mockOnToggleVoice}
+        currentInstruction="Turn left"
+        onSpeakingChange={jest.fn()}
+      />
+    );
+    fireEvent.press(getByText('Voice On')); // Replace 'Turn left' with the actual rendered text
+    expect(mockOnToggleVoice).toHaveBeenCalled();
+  });
+
+  it('renders correctly when no distance or time is provided', () => {
+    const { queryByText } = renderWithProviders(
+      <NavigationPanel
+        isNavigating={true}
+        isLoading={false}
+        onStartNavigation={jest.fn()}
+        onStopNavigation={jest.fn()}
+        progress={50}
+        distance={null}
+        time={null}
+        destination="Library"
+        isVoiceEnabled={false}
+        onToggleVoice={jest.fn()}
+        currentInstruction=""
+        onSpeakingChange={jest.fn()}
+      />
+      );
+    expect(queryByText('Library')).toBeTruthy();
+    expect(queryByText('50%')).toBeTruthy();
+    expect(queryByText('km')).toBeNull();
+    expect(queryByText('min')).toBeNull();
   });
 });
