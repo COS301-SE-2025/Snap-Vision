@@ -3,6 +3,7 @@ import { render, fireEvent } from '@testing-library/react-native';
 import MapActionsPanel from '../src/components/organisms/MapActionsPanel';
 import { ThemeProvider } from '../src/theme/ThemeContext';
 import MapWebView from '../src/components/organisms/MapWebView';
+import { Platform } from 'react-native'; // Add this import
 
 
 
@@ -11,6 +12,17 @@ jest.mock('react-native-webview', () => {
   const { View } = require('react-native');
   return {
     WebView: React.forwardRef((props, ref) => <View {...props} ref={ref} testID="mock-webview" />),
+  };
+});
+
+jest.mock('react-native', () => {
+  const actualReactNative = jest.requireActual('react-native');
+  return {
+    ...actualReactNative,
+    Platform: {
+      ...actualReactNative.Platform,
+      OS: 'android', // Default to Android
+    },
   };
 });
 
@@ -180,15 +192,50 @@ describe('MapActionsPanel', () => {
 
 describe('MapWebView', () => {
   it('renders correctly', () => {
-    const { getByTestId } = render(<MapWebView />);
-    expect(getByTestId('mock-webview')).toBeTruthy(); // Match the correct testID
+    const { getByTestId } = render(<MapWebView onMessage={jest.fn()} />);
+    expect(getByTestId('mock-webview')).toBeTruthy(); // Ensure WebView renders
   });
 
   it('handles messages correctly', () => {
     const mockOnMessage = jest.fn();
     const { getByTestId } = render(<MapWebView onMessage={mockOnMessage} />);
-    const webView = getByTestId('mock-webview'); // Match the correct testID
+    const webView = getByTestId('mock-webview');
     webView.props.onMessage({ nativeEvent: { data: 'test message' } });
     expect(mockOnMessage).toHaveBeenCalledWith({ nativeEvent: { data: 'test message' } });
+  });
+
+  it('handles onLoadEnd correctly', () => {
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+    const { getByTestId } = render(<MapWebView onMessage={jest.fn()} />);
+    const webView = getByTestId('mock-webview');
+    webView.props.onLoadEnd();
+    expect(consoleSpy).toHaveBeenCalledWith('WebView fully loaded');
+    consoleSpy.mockRestore();
+  });
+  it('handles onError correctly', () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+    const { getByTestId } = render(<MapWebView onMessage={jest.fn()} />);
+    const webView = getByTestId('mock-webview');
+    const errorEvent = { nativeEvent: { description: 'Test error' } };
+    webView.props.onError(errorEvent);
+    expect(consoleSpy).toHaveBeenCalledWith('WebView error:', 'Test error');
+    consoleSpy.mockRestore();
+  });
+
+  it('renders with correct source for iOS', () => {
+    jest.mock('react-native', () => {
+      const actualReactNative = jest.requireActual('react-native');
+      return {
+        ...actualReactNative,
+        Platform: {
+          ...actualReactNative.Platform,
+          OS: 'ios', // Mock iOS
+        },
+      };
+    });
+
+    const { getByTestId } = render(<MapWebView onMessage={jest.fn()} />);
+    const webView = getByTestId('mock-webview');
+    expect(webView.props.source.uri).toBe('./leaflet.html');
   });
 });
