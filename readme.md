@@ -1,6 +1,7 @@
 <div align="center">
   <img src="https://github.com/COS301-SE-2025/Snap-Vision/blob/main/docs/img/Screenshot%202025-06-26%20213732.png" alt="Snap Vision Logo" width="300"/>
-  <h1>BLT’S – Snap Vision – AR Navigation for Indoor & Outdoor Spaces</h1>
+  <h1>BLT’S</h1>
+  <h2>BLT’S  Snap Vision – AR Navigation for Indoor & Outdoor Spaces</h2>
 </div>
 
 ---
