@@ -84,12 +84,6 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 
 ---
 
-## Video Demo 1
-
-📎 [Video Upload](https://drive.google.com/file/d/1rTIKg24IbTOZThUpLjTd6B59khP-cZaL/view?usp=sharing)
-
----
-
 <details>
 <summary><strong>Meet the Team</strong></summary>
 
