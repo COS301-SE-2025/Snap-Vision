@@ -30,5 +30,10 @@ jobs:
       - name: Run lint
         run: cd snap-vision && npm run lint
 
-      - name: Run tests
-        run: cd snap-vision && npm test
+      - name: Run tests with coverage
+        run: cd snap-vision && npm test -- --coverage
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          directory: ./snap-vision
