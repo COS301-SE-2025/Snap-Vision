@@ -1,7 +1,7 @@
 // src/api/badgeApi.ts
 import { BadgeId } from '../types/badges';
 
-// Android emulator uses 10.0.2.2 
+// Android emulator uses 10.0.2.2 to access localhost on your PC
 const BASE = 'http://10.0.2.2:3000/api/badges';
 
 export async function fetchBadgeSnapshot(uid: string) {
