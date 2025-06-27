@@ -56,8 +56,8 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 
 | Links |
 |----------|
-| Software Requirements Specification | 
-| Architectural Requirements Document  | 
+| [Software Requirements Specification](https://drive.google.com/file/d/1ZwdJ4slAG9rBswc-FJ1uZZKdij2qLxT6/view?usp=drive_link) | 
+| [Architectural Requirements Document](https://drive.google.com/file/d/1ZwdJ4slAG9rBswc-FJ1uZZKdij2qLxT6/view?usp=drive_link)  | 
 | [Coding Standards Document](https://drive.google.com/file/d/1UnVcH-iDmQy6fTr2APq-fl1N_pfToWLM/view?usp=drive_link)  | 
 | [User Manual Document](https://drive.google.com/file/d/15NznNY6MGvb_iEyiwZGN0bEE6kgJazXO/view?usp=drive_link) |
 | [Wireframes](https://drive.google.com/file/d/1a_7AzWcia41O58lXFiizQpyJt3ljBOdw/view?usp=drive_link)|
