@@ -52,14 +52,14 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 ---
 <div align="center">
 
-### Demo 2 Documentation
+## Demo 2 Documentation
 
 | Links |
 |----------|
 | Software Requirements Specification | 
 | Architectural Requirements Document  | 
-| Coding Standards Document  | 
-| User Manual Document |
+| [Coding Standards Document](https://drive.google.com/file/d/1UnVcH-iDmQy6fTr2APq-fl1N_pfToWLM/view?usp=drive_link)  | 
+| [User Manual Document](https://drive.google.com/file/d/15NznNY6MGvb_iEyiwZGN0bEE6kgJazXO/view?usp=drive_link) |
 | [Wireframes](https://drive.google.com/file/d/1a_7AzWcia41O58lXFiizQpyJt3ljBOdw/view?usp=drive_link)|
 
 ---
@@ -69,9 +69,9 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 | Demo    | Demo Slides | Documentation | Demo Video |
 |---------|-------------|---------------|------------|
 | Demo 1  | [Slides 1](https://drive.google.com/file/d/1e_UbI8kLICTHZ9I2SDv51N_GJ24E8VHI/view?usp=drive_link) | [Docs 1](https://drive.google.com/file/d/1PjbgsJOFsjdsjYa_vm__W2UnuMKIfOYw/view?usp=drive_link)  | [Video 1](https://drive.google.com/file/d/1rTIKg24IbTOZThUpLjTd6B59khP-cZaL/view?usp=drive_link)
-| Demo 2  | [Slides 2](#) | [Docs 2](#)    | [Video 2]([#](https://drive.google.com/drive/folders/1W0pwZVRu3pbmjdsxxD0Oh9XtvxBT7a7-?usp=drive_link)) |
-| Demo 3  | [Slides 3](#) | [Docs 3](#)    | [Video 3](#) |
-| Demo 4  | [Slides 4](#) | [Docs 4](#)    | [Video 4](#) |
+| Demo 2  | [Slides 2] | [Docs 2](https://drive.google.com/drive/folders/1paIiMCL94TNsxWsi4ypYfgUZSIqwxIns?usp=drive_link)    | [Video 2]([#](https://drive.google.com/drive/folders/1W0pwZVRu3pbmjdsxxD0Oh9XtvxBT7a7-?usp=drive_link)) |
+| Demo 3  | [Slides 3] | [Docs 3]   | [Video 3] |
+| Demo 4  | [Slides 4] | [Docs 4]    | [Video 4] |
 
 ---
 </div>
@@ -138,7 +138,8 @@ Hey there, Saalihah here! I'm a CS student who loves solving problems, delving i
 
 ## Technologies Used
 
-- React Native  
+- React Native
+- Express.js
 - Firebase (Auth, Firestore, Hosting)  
 - ARCore  
 - OpenStreetMap LeafLet & MapTiler  
@@ -156,6 +157,7 @@ We follow the **Gitflow branching model**:
 - `dev` – ongoing development  
 - `feature/*` – new features  
 - `hotfix/*` – emergency bug fixes
+- `test/*` - unit and integration testing
 
 ---
 
