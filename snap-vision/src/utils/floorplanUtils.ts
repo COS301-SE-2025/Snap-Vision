@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Building IDs should match those in your UPcampusPOIs collection
 const IT_BUILDING_ID = 'way/1301530915';
 
 export const initializePreBundledFloorplans = async () => {

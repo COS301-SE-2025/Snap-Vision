@@ -12,14 +12,13 @@ const db = admin.firestore();
 
 async function addTestCrowdReport() {
   try {
-    // Add a test crowd report that matches your POI structure
     const result = await db.collection('crowdReports').add({
-      buildingId: "relation/7131952", // Using the same ID format as your POIs
-      buildingName: "Nerina Residence", // Using the same name as in your POIs
+      buildingId: "relation/7131952", 
+      buildingName: "Nerina Residence", 
       density: "moderate",
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
       reportedBy: "system-test",
-      centroid: { // Using the same structure for coordinates as your POIs
+      centroid: { 
         longitude: 28.235757040714713,
         latitude: -25.75676259758456
       },

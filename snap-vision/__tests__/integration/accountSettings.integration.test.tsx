@@ -60,7 +60,7 @@ jest.mock('@react-native-firebase/firestore', () => {
   }));
 });
 
-// --- Native Components Mocks ---
+// Native Components Mocks
 jest.mock('react-native/Libraries/Components/SafeAreaView/SafeAreaView', () => {
   const React = require('react');
   const { View } = require('react-native');
@@ -88,7 +88,7 @@ jest.mock('react-native/Libraries/Components/ScrollView/ScrollView', () => {
   return MockScrollView;
 });
 
-// --- Theme and Navigation Mocks ---
+// Theme and Navigation Mocks
 jest.mock('../../src/navigation/RootNavigation', () => ({
   resetToLogin: mockResetToLogin,
 }));
@@ -107,7 +107,7 @@ jest.mock('../../src/theme', () => ({
   }),
 }));
 
-// --- UI Component Mocks ---
+// UI Component Mocks
 jest.mock('../../src/components/molecules/SettingsHeader', () => {
   const React = require('react');
   const { View, Text } = require('react-native');
@@ -146,7 +146,7 @@ jest.mock('../../src/components/molecules/LogoutButton', () => {
   };
 });
 
-// --- Real Component Import ---
+// Real Component Import
 import AccountSettingsContent from '../../src/components/organisms/AccountSettingsContent';
 
 // Inject real component into screen
@@ -202,7 +202,6 @@ describe('Account Settings Integration Tests', () => {
         'Logged Out',
         'You have been logged out successfully.',
       );
-      //expect(mockResetToLogin).toHaveBeenCalled();
     });
   });
 
