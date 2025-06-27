@@ -48,6 +48,7 @@ Snap Vision is a mobile application designed to help users navigate complex indo
 This project was developed by Team BLT’S for the COS301 Capstone Module at the University of Pretoria.
 
 ---
+<div align="center">
 
 ### Demo 2 Documentation
 
@@ -71,6 +72,7 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 | Demo 4  | [Slides 4](#) | [Docs 4](#)    | [Video 4](#) |
 
 ---
+</div>
 
 ## Project Board
 
