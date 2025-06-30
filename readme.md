@@ -156,7 +156,7 @@ We follow the **Gitflow branching model**:
 - `main` – production-ready  
 - `dev` – ongoing development  
 - `feature/*` – new features  
-- `hotfix/*` – emergency bug fixes
+- `fix/*` – emergency bug fixes
 - `test/*` - unit and integration testing
 
 ---
