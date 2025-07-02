@@ -26,6 +26,8 @@ import { getThemeColors } from '../theme';
 import DirectionsModal from '../components/organisms/DirectionsModal';
 import { useRoute } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
+import { getFirestore, collection, doc, updateDoc } from '@react-native-firebase/firestore';
+import { getApp } from '@react-native-firebase/app';
 
 import { useBadges } from '../context/BadgeContext';
 
@@ -205,11 +207,7 @@ const MapScreen = () => {
         setShowEditPOIModal(true);
       };
 
-  const handleWebViewMessage = (event: any) => {
-    try {
-      const data = event.nativeEvent.data;
-
-      // Helper: Confirm delete
+            // Helper: Confirm delete
       const confirmDeleteBuilding = (poi: any) => {
         Alert.alert('Delete Building', `Are you sure you want to delete "${poi.name}"?`, [
           { text: 'Cancel', style: 'cancel' },
@@ -223,6 +221,10 @@ const MapScreen = () => {
           },
         ]);
       };
+
+  const handleWebViewMessage = (event: any) => {
+    try {
+      const data = event.nativeEvent.data;
 
       // === Handle simple message ===
       if (data === 'MAP_READY') {
@@ -324,24 +326,76 @@ const MapScreen = () => {
     }
   };
 
-  //Edit Building(name and floors)
   const submitEditBuilding = async () => {
+    console.log(editingPOI.id);
     if (!newName.trim()) return Alert.alert('Building name required');
     if (!newFloors.trim() || isNaN(Number(newFloors)))
       return Alert.alert('Please enter a valid number of floors');
+    
+    // Check if we have a valid POI ID
+    if (!editingPOI || !editingPOI.id) {
+      console.error("No valid POI ID found:", editingPOI);
+      setError('Invalid building data');
+      return;
+    }
+  
     try {
-      await firestore()
-        .collection('UPcampusPOIs')
-        .doc(editingPOI.id)
-        .update({
-          name: newName,
-          floors: Number(newFloors),
-        });
+      //console.log("Attempting to update building with ID:", editingPOI.id);
+      
+      // First, try to get the actual document ID if editingPOI.id is a centroid ID
+      const docId = await getPOIDocIdByCentroidId(editingPOI.id);
+      
+      if (docId) {
+        // If we found a document ID, use it
+        //console.log("Found document ID:", docId);
+        await firestore()
+          .collection('UPcampusPOIs')
+          .doc(docId)
+          .update({
+            name: newName,
+            floors: Number(newFloors),
+          });
+      } else {
+        // Fall back to trying with the original ID
+        //console.log("Using original ID as document ID:", editingPOI.id);
+        await firestore()
+          .doc(`UPcampusPOIs/${editingPOI.id}`)
+          .update({
+            name: newName,
+            floors: Number(newFloors),
+          });
+      }
+      
       setShowEditPOIModal(false);
       fetchPOIs();
       setStatus('Building updated!');
-    } catch {
+      Alert.alert('Success', 'Building information updated successfully.');
+    } catch (error) {
+      console.error('Error updating building:', error);
       setError('Failed to update');
+    }
+  };
+  
+  // Helper function to get document ID from centroid ID
+  const getPOIDocIdByCentroidId = async (buildingId) => {
+    try {
+      const querySnapshot = await firestore()
+        .collection('UPcampusPOIs')
+        .where('id', '==', buildingId)
+        .get();
+  
+      if (querySnapshot.empty) {
+        console.warn('No building found for this centroid id:', centroidId);
+        return null;
+      }
+  
+      // Assuming only one document matches
+      const doc = querySnapshot.docs[0];
+      //console.log("doc: "+ doc.id);
+      return doc.id;
+    } catch (error) {
+      console.error('Error querying POI by centroid id:', error);
+      return null;
     }
   };
 
