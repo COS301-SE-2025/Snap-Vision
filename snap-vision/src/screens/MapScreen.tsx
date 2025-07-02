@@ -105,6 +105,8 @@ const MapScreen = () => {
   const [editingPOI, setEditingPOI] = useState<any>(null);
   const [newName, setNewName] = useState('');
   const [newFloors, setNewFloors] = useState('');
+  const [showAdminActions, setShowAdminActions] = useState(false);
+  const [adminActionPOI, setAdminActionPOI] = useState<any>(null);
 
   //Check if user is admin
   useEffect(() => {
@@ -189,11 +191,7 @@ const MapScreen = () => {
     }
   };
 
-  const handleWebViewMessage = (event: any) => {
-    try {
-      const data = event.nativeEvent.data;
-
-      // Helper: Open modal to add new POI
+        // Helper: Open modal to add new POI
       const openAddBuildingModal = (lat: number, lon: number) => {
         setAddPOICoords({ lat, lon });
         setShowAddPOIModal(true);
@@ -206,6 +204,10 @@ const MapScreen = () => {
         setNewFloors(poi.floors?.toString() || '');
         setShowEditPOIModal(true);
       };
+
+  const handleWebViewMessage = (event: any) => {
+    try {
+      const data = event.nativeEvent.data;
 
       // Helper: Confirm delete
       const confirmDeleteBuilding = (poi: any) => {
@@ -247,11 +249,8 @@ const MapScreen = () => {
           const selectedPOI = parsed.poi;
 
           if (isAdmin) {
-            Alert.alert(`Building: ${selectedPOI.name}`, 'Admin Actions', [
-              { text: 'Edit', onPress: () => openEditBuildingModal(selectedPOI) },
-              { text: 'Delete', onPress: () => confirmDeleteBuilding(selectedPOI) },
-              { text: 'Cancel', style: 'cancel' },
-            ]);
+            setAdminActionPOI(selectedPOI);
+            setShowAdminActions(true);
           }
 
           if (isNavigating) {
@@ -328,7 +327,7 @@ const MapScreen = () => {
   //Edit Building(name and floors)
   const submitEditBuilding = async () => {
     if (!newName.trim()) return Alert.alert('Building name required');
-    if (!newFloors.trim() || isNaN(Number(numberOfFloors)))
+    if (!newFloors.trim() || isNaN(Number(newFloors)))
       return Alert.alert('Please enter a valid number of floors');
     try {
       await firestore()
@@ -1219,6 +1218,10 @@ const MapScreen = () => {
         currentLocation={!!currentLocation}
         onShare={shareLocation}
         onReport={openCrowdReportModal}
+        isAdmin={isAdmin}
+        onAddPOI={() => {
+          webViewRef.current?.injectJavaScript(`window.enableAdminPOICreation();`);
+        }}
         shareTooltip={showShareTooltip}
         reportTooltip={showReportTooltip}
         onShareIn={() => setShowShareTooltip(true)}
@@ -1261,7 +1264,7 @@ const MapScreen = () => {
       />
       {error && <StatusOverlay status={error} />}
 
-      {isAdmin && (
+      {/* {isAdmin && (
         <TouchableOpacity
           style={{
             position: 'absolute',
@@ -1279,6 +1282,90 @@ const MapScreen = () => {
         >
           <Text style={{ color: 'white', fontWeight: 'bold' }}>+ Add POI</Text>
         </TouchableOpacity>
+      )} */}
+      {/* Admin Actions Modal */}
+      {showAdminActions && adminActionPOI && (
+        <Modal 
+          transparent 
+          visible={true}
+          animationType="fade" 
+          statusBarTranslucent={true}
+          onRequestClose={() => setShowAdminActions(false)}
+        >
+          <View style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 24,
+            zIndex: 9999,
+          }}>
+            <View style={{
+              backgroundColor: '#fff',
+              borderRadius: 12,
+              padding: 24,
+              alignItems: 'center',
+              minWidth: 250,
+            }}>
+              <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 16 }}>
+                Building: {adminActionPOI.name}
+              </Text>
+              
+              {/* Edit Building Button */}
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#FF9800',
+                  paddingVertical: 10,
+                  paddingHorizontal: 20,
+                  borderRadius: 8,
+                  marginBottom: 12,
+                  width: 200,
+                  alignItems: 'center'
+                }}
+                onPress={() => {
+                  openEditBuildingModal(adminActionPOI);
+                  setShowAdminActions(false);
+                }}
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>Edit</Text>
+              </TouchableOpacity>
+              
+              {/* Delete Building Button */}
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#D32F2F',
+                  paddingVertical: 10,
+                  paddingHorizontal: 20,
+                  borderRadius: 8,
+                  marginBottom: 12,
+                  width: 200,
+                  alignItems: 'center'
+                }}
+                onPress={() => {
+                  confirmDeleteBuilding(adminActionPOI);
+                  setShowAdminActions(false);
+                }}
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>Delete</Text>
+              </TouchableOpacity>
+              
+              {/* Cancel Button */}
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#B0B0B0',
+                  paddingVertical: 10,
+                  paddingHorizontal: 20,
+                  borderRadius: 8,
+                  width: 200,
+                  alignItems: 'center'
+                }}
+                onPress={() => setShowAdminActions(false)}
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       )}
     </View>
   );

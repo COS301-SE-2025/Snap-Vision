@@ -217,8 +217,15 @@
         if (window.isAdmin) {
           adminButtons = `
             <div style="margin-top: 8px;">
-              <button onclick="window.editPOI('${buildingId}')" style="margin-right:6px;background-color:orange;">Edit</button>
-              <button onclick="window.deletePOI('${buildingId}')" style="background-color:red;">Delete</button>
+              <button onclick="window.selectPOI('${buildingId}')" style="
+                margin-right: 6px;
+                padding: 6px 12px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+              ">Admin Actions</button>
             </div>
           `;
         }
