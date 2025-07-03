@@ -26,8 +26,6 @@ import { getThemeColors } from '../theme';
 import DirectionsModal from '../components/organisms/DirectionsModal';
 import { useRoute } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
-import { getFirestore, collection, doc, updateDoc } from '@react-native-firebase/firestore';
-import { getApp } from '@react-native-firebase/app';
 
 import { useBadges } from '../context/BadgeContext';
 
@@ -194,75 +192,74 @@ const MapScreen = () => {
     }
   };
 
-        // Helper: Open modal to add new POI
-      const openAddBuildingModal = (lat: number, lon: number) => {
-        setAddPOICoords({ lat, lon });
-        setShowAddPOIModal(true);
-      };
+  // Helper: Open modal to add new POI
+  const openAddBuildingModal = (lat: number, lon: number) => {
+    setAddPOICoords({ lat, lon });
+    setShowAddPOIModal(true);
+  };
 
-      // Helper: Open modal to edit existing POI
-      const openEditBuildingModal = (poi: any) => {
-        setEditingPOI(poi);
-        setNewName(poi.name || '');
-        setNewFloors(poi.floors?.toString() || '');
-        setShowEditPOIModal(true);
-      };
-      
-      const confirmDeleteBuilding = (poi: any) => {
-        Alert.alert('Delete Building', `Are you sure you want to delete "${poi.name}"?`, [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Delete',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                // Store POI ID before deletion for cleanup
-                const deletedPoiId = poi.id;
-                
-                // First handle document IDs that might contain slashes
-                await firestore().doc(`UPcampusPOIs/${poi.id}`).delete();
-                
-                // Direct removal of the specific marker
-                if (webViewRef.current && isMapReady) {
-                  // First try direct removal
-                  webViewRef.current.injectJavaScript(`
+  // Helper: Open modal to edit existing POI
+  const openEditBuildingModal = (poi: any) => {
+    setEditingPOI(poi);
+    setNewName(poi.name || '');
+    setNewFloors(poi.floors?.toString() || '');
+    setShowEditPOIModal(true);
+  };
+
+  const confirmDeleteBuilding = (poi: any) => {
+    Alert.alert('Delete Building', `Are you sure you want to delete "${poi.name}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            // Store POI ID before deletion for cleanup
+            const deletedPoiId = poi.id;
+
+            // First handle document IDs that might contain slashes
+            await firestore().doc(`UPcampusPOIs/${poi.id}`).delete();
+
+            // Direct removal of the specific marker
+            if (webViewRef.current && isMapReady) {
+              // First try direct removal
+              webViewRef.current.injectJavaScript(`
                     window.removePOIById("${deletedPoiId}");
                     map.closePopup();
                   `);
-                  
-                  // Clear route if it exists
-                  webViewRef.current.injectJavaScript('window.clearRoute && window.clearRoute();');
-                  
-                  // Update state
-                  await fetchPOIs();
-                  setStatus(`Building "${poi.name}" deleted`);
-                  
-                  // Clear UI elements related to the deleted POI
-                  if (destination === poi.name) {
-                    setDestination('');
-                    setDestinationCoords(null);
-                    setRouteProgress(0);
-                    
-                    // Stop navigation if currently navigating
-                    if (isNavigating) {
-                      stopNavigation();
-                    }
-                    
-                    // Clear any stored route
-                    lastRoute.current = [];
-                  }
-                }
-              } 
-              catch (error) {
-                console.error('Error deleting building:', error);
-                setError('Failed to delete building');
-              }
-            },
-          },
-        ]);
-      };
 
-  const handleWebViewMessage = (event: any) => {
+              // Clear route if it exists
+              webViewRef.current.injectJavaScript('window.clearRoute && window.clearRoute();');
+
+              // Update state
+              await fetchPOIs();
+              setStatus(`Building "${poi.name}" deleted`);
+
+              // Clear UI elements related to the deleted POI
+              if (destination === poi.name) {
+                setDestination('');
+                setDestinationCoords(null);
+                setRouteProgress(0);
+
+                // Stop navigation if currently navigating
+                if (isNavigating) {
+                  stopNavigation();
+                }
+
+                // Clear any stored route
+                lastRoute.current = [];
+              }
+            }
+          } catch (error) {
+            console.error('Error deleting building:', error);
+            setError('Failed to delete building');
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleWebViewMessage = async (event: any) => {
     try {
       const data = event.nativeEvent.data;
 
@@ -293,9 +290,7 @@ const MapScreen = () => {
           if (isAdmin) {
             setAdminActionPOI(selectedPOI);
             setShowAdminActions(true);
-          }
-
-          else {
+          } else {
             if (isNavigating) {
               stopNavigation();
             }
@@ -333,6 +328,21 @@ const MapScreen = () => {
             webViewRef.current?.injectJavaScript('map.closePopup();');
           }
           break;
+
+        case 'MAP_READY':
+          setStatus('Map loaded');
+          setIsMapReady(true);
+          
+          // Refresh POIs after WebView reload (important for edit operations)
+          await fetchPOIs();
+          
+          requestLocation();
+        
+          if (lastRoute.current.length > 0) {
+            const reinject = `window.drawRoute && window.drawRoute(${JSON.stringify(lastRoute.current)});`;
+            webViewRef.current?.injectJavaScript(reinject);
+          }
+          return;
 
         default:
           console.log('Unknown message type from WebView:', parsed.type);
@@ -373,9 +383,9 @@ const MapScreen = () => {
     if (!newName.trim()) return Alert.alert('Building name required');
     if (!newFloors.trim() || isNaN(Number(newFloors)))
       return Alert.alert('Please enter a valid number of floors');
-    
+  
     if (!editingPOI || !editingPOI.id) {
-      console.error("No valid POI ID found:", editingPOI);
+      console.error('No valid POI ID found:', editingPOI);
       setError('Invalid building data');
       return;
     }
@@ -383,7 +393,7 @@ const MapScreen = () => {
     try {
       // Update the document in Firestore
       const docId = await getPOIDocIdByCentroidId(editingPOI.id);
-      
+  
       if (docId) {
         await firestore()
           .collection('UPcampusPOIs')
@@ -400,29 +410,32 @@ const MapScreen = () => {
             floors: Number(newFloors),
           });
       }
-      
+  
       setShowEditPOIModal(false);
+      setStatus('Building updated!');
+      
+      // Refresh POIs immediately after Firestore update
+      await fetchPOIs();
       
       // Nuclear option: Force complete WebView reload
       setIsMapReady(false);
       setStatus('Refreshing map...');
-      
-      // Small delay to ensure the modal closes
+  
+      // Small delay to ensure the modal closes and POIs are updated
       setTimeout(() => {
         // Force WebView to reload completely
         if (webViewRef.current) {
           webViewRef.current.reload();
         }
       }, 100);
-      
-      setStatus('Building updated!');
+  
       Alert.alert('Success', 'Building information updated successfully.');
     } catch (error) {
       console.error('Error updating building:', error);
       setError('Failed to update');
     }
   };
-  
+
   // Helper function to get document ID from centroid ID
   const getPOIDocIdByCentroidId = async (buildingId) => {
     try {
@@ -430,12 +443,12 @@ const MapScreen = () => {
         .collection('UPcampusPOIs')
         .where('id', '==', buildingId)
         .get();
-  
+
       if (querySnapshot.empty) {
         console.warn('No building found for this centroid id:', buildingId);
         return null;
       }
-  
+
       // Assuming only one document matches
       const doc = querySnapshot.docs[0];
       //console.log("doc: "+ doc.id);
@@ -707,13 +720,13 @@ const MapScreen = () => {
 
     // Check destination arrival based on either:
     // 1. Progress is 100%
-    // 2. Distance to destination is less than 20 meters
-    if (newProgress >= 100 || distanceToEnd < 20) {
+    // 2. Distance to destination is less than 3 meters
+    if (newProgress >= 100 || distanceToEnd < 3) {
       destinationReached();
     }
   };
 
-  // Add this new function to handle reaching the destination
+  // function to handle reaching the destination
   const destinationReached = async () => {
     if (!isNavigating) return; // Only handle if actually navigating
 
@@ -741,13 +754,13 @@ const MapScreen = () => {
       }, 500);
     }
 
-    // Optional: Show a congratulatory alert
+    // congratulatory alert
     Alert.alert('Destination Reached', 'You have arrived at your destination!', [
       { text: 'OK', onPress: () => console.log('Destination reached acknowledged') },
     ]);
   };
 
-  // Add this function to handle report submission
+  //  function to handle report submission
   const submitCrowdReport = async () => {
     if (!selectedPOI || !selectedDensity) {
       setError('Please select a building and density level');
@@ -779,7 +792,7 @@ const MapScreen = () => {
     }
   };
 
-  // Add function to fetch recent crowd reports
+  //  function to fetch recent crowd reports
   const fetchRecentCrowdReports = async () => {
     try {
       const oneHourAgo = new Date();
@@ -826,7 +839,7 @@ const MapScreen = () => {
     }
   };
 
-  // Add useEffect to fetch crowd reports periodically
+  // ] useEffect to fetch crowd reports periodically
   useEffect(() => {
     if (isMapReady) {
       fetchRecentCrowdReports();
@@ -836,7 +849,7 @@ const MapScreen = () => {
     }
   }, [isMapReady]);
 
-  // Add a function to handle opening the crowd report modal
+  //  a function to handle opening the crowd report modal
   const openCrowdReportModal = () => {
     // If user has selected a POI on map, use that as default
     if (selectedFeature) {
@@ -861,13 +874,13 @@ const MapScreen = () => {
   };
 
   useEffect(() => {
-  if (tempMessage) {
-    const timer = setTimeout(() => {
-      setTempMessage('');
-    }, 2000);
-    return () => clearTimeout(timer);
-  }
-}, [tempMessage]);
+    if (tempMessage) {
+      const timer = setTimeout(() => {
+        setTempMessage('');
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [tempMessage]);
 
   useEffect(() => {
     if (isNavigating && shouldStartTTS && steps.length > 0 && currentStep < steps.length) {
@@ -1331,7 +1344,7 @@ const MapScreen = () => {
         isAdmin={isAdmin}
         onAddPOI={() => {
           webViewRef.current?.injectJavaScript(`window.enableAdminPOICreation();`);
-          setTempMessage("Click on the map to add a new POI");
+          setTempMessage('Click on the map to add a new POI');
         }}
         shareTooltip={showShareTooltip}
         reportTooltip={showReportTooltip}
@@ -1396,32 +1409,36 @@ const MapScreen = () => {
       )} */}
       {/* Admin Actions Modal */}
       {showAdminActions && adminActionPOI && (
-        <Modal 
-          transparent 
+        <Modal
+          transparent
           visible={true}
-          animationType="fade" 
+          animationType="fade"
           statusBarTranslucent={true}
           onRequestClose={() => setShowAdminActions(false)}
         >
-          <View style={{
-            flex: 1,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: 24,
-            zIndex: 9999,
-          }}>
-            <View style={{
-              backgroundColor: '#fff',
-              borderRadius: 12,
-              padding: 24,
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              justifyContent: 'center',
               alignItems: 'center',
-              minWidth: 250,
-            }}>
+              padding: 24,
+              zIndex: 9999,
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: '#fff',
+                borderRadius: 12,
+                padding: 24,
+                alignItems: 'center',
+                minWidth: 250,
+              }}
+            >
               <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 16 }}>
                 Building: {adminActionPOI.name}
               </Text>
-              
+
               {/* Edit Building Button */}
               <TouchableOpacity
                 style={{
@@ -1431,7 +1448,7 @@ const MapScreen = () => {
                   borderRadius: 8,
                   marginBottom: 12,
                   width: 200,
-                  alignItems: 'center'
+                  alignItems: 'center',
                 }}
                 onPress={() => {
                   openEditBuildingModal(adminActionPOI);
@@ -1440,7 +1457,7 @@ const MapScreen = () => {
               >
                 <Text style={{ color: 'white', fontWeight: 'bold' }}>Edit</Text>
               </TouchableOpacity>
-              
+
               {/* Delete Building Button */}
               <TouchableOpacity
                 style={{
@@ -1450,7 +1467,7 @@ const MapScreen = () => {
                   borderRadius: 8,
                   marginBottom: 12,
                   width: 200,
-                  alignItems: 'center'
+                  alignItems: 'center',
                 }}
                 onPress={() => {
                   confirmDeleteBuilding(adminActionPOI);
@@ -1459,7 +1476,7 @@ const MapScreen = () => {
               >
                 <Text style={{ color: 'white', fontWeight: 'bold' }}>Delete</Text>
               </TouchableOpacity>
-              
+
               {/* Cancel Button */}
               <TouchableOpacity
                 style={{
@@ -1468,7 +1485,7 @@ const MapScreen = () => {
                   paddingHorizontal: 20,
                   borderRadius: 8,
                   width: 200,
-                  alignItems: 'center'
+                  alignItems: 'center',
                 }}
                 onPress={() => setShowAdminActions(false)}
               >
