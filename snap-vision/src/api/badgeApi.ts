@@ -46,3 +46,14 @@ export async function completeChallenge(uid: string, challengeId: string) {
   if (!res.ok) throw new Error('Unable to complete challenge');
   return res.json(); // Updated user data with challenges, points, etc.
 }
+
+export async function incrementRoutesCompleted(uid: string) {
+  const res = await fetch(`${BASE}/increment-routes`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ uid }),
+  });
+  if (!res.ok) throw new Error('Unable to increment routes completed');
+  return res.json();
+}
+
