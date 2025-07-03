@@ -34,7 +34,7 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'http://192.168.0.127:3000'; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = 'http://192.168.1.93:3000'; // <-- Use your correct backend IP here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
@@ -42,6 +42,7 @@ const ROUTING_API_BASE = 'http://192.168.0.127:3000'; // <-- Use your correct ba
 // T home: 192.168.0.133
 // T data: 192.168.43.155
 // Th home: 10.0.0.9
+// T Durban: 192.168.1.93
 
 const MapScreen = () => {
   const lastRoute = useRef<any[]>([]);
