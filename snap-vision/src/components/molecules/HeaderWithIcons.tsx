@@ -57,7 +57,7 @@ export default function HeaderWithIcons() {
         size={24}
         color={colors.secondary}
         style={styles.info}
-        onPress={() => setHasSeenLanding(true)} // Update this if needed
+        onPress={() => setHasSeenLanding(true)} 
       />
     </View>
   );

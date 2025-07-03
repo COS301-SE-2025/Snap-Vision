@@ -9,8 +9,11 @@ import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useDeepLink } from '../../DeepLinkContext';
 import { useBadges } from '../../context/BadgeContext';
+import { useLanding } from '../../context/LandingContext';
 
 export default function LoginForm() {
+  const { setHasSeenLanding } = useLanding();
+  // existing state and logic here
   const navigation = useNavigation<any>();
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
@@ -38,6 +41,7 @@ export default function LoginForm() {
 
     try {
       await auth().signInWithEmailAndPassword(email, password);
+      setHasSeenLanding(false); // triggers Landing screen on login
       unlock('first-login');
       // Alert.alert('Success', 'Logged in!');
       setSuccessMessage('Login successful!');
