@@ -26,7 +26,7 @@ export default function AppInput({ style, rightIcon, onRightIconPress, ...props 
     <View style={[styles.container, { borderColor: colors.primary }, style]}>
       <TextInput
         {...props}
-        style={[styles.input, { color: colors.text }]}
+        style={[styles.input, { color: colors.secondary }]}
         placeholderTextColor={colors.secondary}
       />
       {rightIcon && (
