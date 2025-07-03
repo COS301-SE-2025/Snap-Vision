@@ -1,3 +1,10 @@
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  setItem: jest.fn(() => Promise.resolve(null)),
+  getItem: jest.fn(() => Promise.resolve(null)),
+  removeItem: jest.fn(() => Promise.resolve(null)),
+  clear: jest.fn(() => Promise.resolve(null)),
+}));
+
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import LoginForm from '../src/components/organisms/LoginForm';
@@ -6,12 +13,16 @@ import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
 import { DeepLinkProvider } from '../src/DeepLinkContext';
 import { BadgeProvider } from '../src/context/BadgeContext';
 
-// Mock Firebase auth
 const mockSignIn = jest.fn();
+
 jest.mock('@react-native-firebase/auth', () => {
-  return jest.fn(() => ({
+  return () => ({
     signInWithEmailAndPassword: mockSignIn,
-  }));
+    onAuthStateChanged: jest.fn((callback) => {
+      callback(null);
+      return jest.fn();
+    }),
+  });
 });
 
 // Mock navigation with replace method

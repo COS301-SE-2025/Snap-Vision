@@ -8,17 +8,17 @@ import { getThemeColors } from '../theme';
 import { useLanding } from '../context/LandingContext';
 
 const HomeScreen = () => {
+  // const [showLanding, setShowLanding] = useState(true);
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  const { hasSeenLanding, setHasSeenLanding } = useLanding();
+  const { hasSeenLanding, setHasSeenLanding, loading } = useLanding();
+
+  if (loading) return null;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {hasSeenLanding ? (
-        <MapHomeContent />
-      ) : (
-        <LandingOverlay onDismiss={() => setHasSeenLanding(true)} />
-      )}
+      {!hasSeenLanding && <LandingOverlay onDismiss={() => setHasSeenLanding(true)} />}
+      {hasSeenLanding && <MapHomeContent />}
     </View>
   );
 };
