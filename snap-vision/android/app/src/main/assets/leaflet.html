@@ -159,18 +159,25 @@
       }
 
       // Function to update user location
-      window.updateUserLocation = function (lat, lon) {
-        const coords = [lat, lon];
-        if (!map) return;
+      window.updateUserLocation = function (lat, lon, centerMap = false, zoomLevel = null) {
+          const coords = [lat, lon];
+          if (!map) return;
 
-        map.setView(coords, 16);
+          if (centerMap) {
+            if (zoomLevel !== null) {
+              map.setView(coords, zoomLevel);
+            } else {
+              map.setView(coords, 16);
+            }
+          }
 
-        if (userMarker) {
-          userMarker.setLatLng(coords);
-        } else {
-          userMarker = L.marker(coords).addTo(map).bindPopup('📍 You are here!').openPopup();
-        }
-      };
+          if (userMarker) {
+            userMarker.setLatLng(coords);
+          } else {
+            userMarker = L.marker(coords).addTo(map).bindPopup('📍 You are here!').openPopup();
+          }
+        };
+
 
       // Updated function to store crowd data without adding markers
       window.updateCrowdDensity = function (lat, lon, density, buildingId) {
