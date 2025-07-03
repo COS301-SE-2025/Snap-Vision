@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet} from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import Toggle from '../atoms/Toggle';
 import SettingItem from '../molecules/SettingItem';
 import ThemedText from '../atoms/ThemedText';
@@ -163,7 +163,6 @@ const AdminSettingsForm = () => {
 
         {/* Save Button */}
         <AppButton title="Save Settings" onPress={() => console.log('Settings saved')} />
-
       </ScrollView>
     </View>
   );

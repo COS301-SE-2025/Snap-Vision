@@ -21,6 +21,8 @@ import { BadgeProvider } from './src/context/BadgeContext';
 import BadgeUnlockNotifier from './src/components/organisms/BadgeUnlockNotifier';
 import ShopScreen from './src/screens/ShopScreen';
 import { initializePreBundledFloorplans } from './src/utils/floorplanUtils';
+import Toast from 'react-native-toast-message';
+import { toastConfig } from './src/toastConfig';
 
 const Stack = createNativeStackNavigator();
 
@@ -132,6 +134,7 @@ export default function App() {
       <LandingProvider>
         <UserProvider>
           <AppInner />
+          <Toast config={toastConfig} />
         </UserProvider>
       </LandingProvider>
     </DeepLinkProvider>
