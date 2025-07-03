@@ -197,6 +197,43 @@
         crowdData = {};
       };
 
+      // Function to remove a POI marker by ID
+      window.removePOIById = function(poiId) {
+        // Exit if no map
+        if (!map) return;
+        
+        console.log("Attempting to remove POI marker with ID:", poiId);
+        
+        // Find the marker by ID
+        let markerToRemove = null;
+        let markerIndex = -1;
+        
+        for (let i = 0; i < poiMarkers.length; i++) {
+          const marker = poiMarkers[i];
+          if (marker && marker.poiId === poiId) {
+            markerToRemove = marker;
+            markerIndex = i;
+            break;
+          }
+        }
+        
+        // Remove the marker if found
+        if (markerToRemove) {
+          console.log("Found marker to remove at index:", markerIndex);
+          if (map.hasLayer(markerToRemove)) {
+            map.removeLayer(markerToRemove);
+          }
+          // Remove from arrays
+          poiMarkers.splice(markerIndex, 1);
+          poiData = poiData.filter(p => p.id !== poiId);
+          
+          return true;
+        }
+        
+        console.log("Marker not found for removal");
+        return false;
+      };
+
       // Helper function to create popup content with crowd info
       function getPopupContent(poi) {
         const buildingId = poi.id;
@@ -305,6 +342,20 @@
         if (map.getZoom() >= 16 && !isNavigating) {
           showAllPOIMarkers();
         }
+      };
+
+      window.clearAllPOIMarkers = function() {
+        if (!map) return;
+        
+        // Remove all existing POI markers
+        poiMarkers.forEach((marker) => {
+          if (map.hasLayer(marker)) {
+            map.removeLayer(marker);
+          }
+        });
+        poiMarkers = [];
+        poiData = [];
+        map.invalidateSize();
       };
 
       function showAllPOIMarkers() {

@@ -109,6 +109,7 @@ const MapScreen = () => {
   const [newFloors, setNewFloors] = useState('');
   const [showAdminActions, setShowAdminActions] = useState(false);
   const [adminActionPOI, setAdminActionPOI] = useState<any>(null);
+  const [tempMessage, setTempMessage] = useState<string>('');
 
   //Check if user is admin
   useEffect(() => {
@@ -206,8 +207,7 @@ const MapScreen = () => {
         setNewFloors(poi.floors?.toString() || '');
         setShowEditPOIModal(true);
       };
-
-            // Helper: Confirm delete
+      
       const confirmDeleteBuilding = (poi: any) => {
         Alert.alert('Delete Building', `Are you sure you want to delete "${poi.name}"?`, [
           { text: 'Cancel', style: 'cancel' },
@@ -215,8 +215,48 @@ const MapScreen = () => {
             text: 'Delete',
             style: 'destructive',
             onPress: async () => {
-              await firestore().collection('UPcampusPOIs').doc(poi.id).delete();
-              fetchPOIs(); // refresh POI list
+              try {
+                // Store POI ID before deletion for cleanup
+                const deletedPoiId = poi.id;
+                
+                // First handle document IDs that might contain slashes
+                await firestore().doc(`UPcampusPOIs/${poi.id}`).delete();
+                
+                // Direct removal of the specific marker
+                if (webViewRef.current && isMapReady) {
+                  // First try direct removal
+                  webViewRef.current.injectJavaScript(`
+                    window.removePOIById("${deletedPoiId}");
+                    map.closePopup();
+                  `);
+                  
+                  // Clear route if it exists
+                  webViewRef.current.injectJavaScript('window.clearRoute && window.clearRoute();');
+                  
+                  // Update state
+                  await fetchPOIs();
+                  setStatus(`Building "${poi.name}" deleted`);
+                  
+                  // Clear UI elements related to the deleted POI
+                  if (destination === poi.name) {
+                    setDestination('');
+                    setDestinationCoords(null);
+                    setRouteProgress(0);
+                    
+                    // Stop navigation if currently navigating
+                    if (isNavigating) {
+                      stopNavigation();
+                    }
+                    
+                    // Clear any stored route
+                    lastRoute.current = [];
+                  }
+                }
+              } 
+              catch (error) {
+                console.error('Error deleting building:', error);
+                setError('Failed to delete building');
+              }
             },
           },
         ]);
@@ -288,6 +328,7 @@ const MapScreen = () => {
           const poiToDelete = pois.find((p) => p.id === parsed.poiId);
           if (poiToDelete) {
             confirmDeleteBuilding(poiToDelete);
+            webViewRef.current?.injectJavaScript('map.closePopup();');
           }
           break;
 
@@ -814,6 +855,15 @@ const MapScreen = () => {
   };
 
   useEffect(() => {
+  if (tempMessage) {
+    const timer = setTimeout(() => {
+      setTempMessage('');
+    }, 2000);
+    return () => clearTimeout(timer);
+  }
+}, [tempMessage]);
+
+  useEffect(() => {
     if (isNavigating && shouldStartTTS && steps.length > 0 && currentStep < steps.length) {
       const instruction = steps[currentStep]?.instruction;
       if (instruction) {
@@ -1275,6 +1325,7 @@ const MapScreen = () => {
         isAdmin={isAdmin}
         onAddPOI={() => {
           webViewRef.current?.injectJavaScript(`window.enableAdminPOICreation();`);
+          setTempMessage("Click on the map to add a new POI");
         }}
         shareTooltip={showShareTooltip}
         reportTooltip={showReportTooltip}
@@ -1421,6 +1472,23 @@ const MapScreen = () => {
           </View>
         </Modal>
       )}
+      {tempMessage ? (
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 20,
+            left: 20,
+            right: 20,
+            backgroundColor: colors.card,
+            padding: 10,
+            borderRadius: 8,
+            alignItems: 'center',
+            elevation: 4,
+          }}
+        >
+          <Text style={{ color: colors.text, fontWeight: 'bold' }}>{tempMessage}</Text>
+        </View>
+      ) : null}
     </View>
   );
 };
