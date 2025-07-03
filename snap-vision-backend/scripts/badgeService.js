@@ -197,11 +197,51 @@ async function completeChallengeForUser(userId, challengeId) {
   return updatedDoc.data();
 }
 
+async function incrementRoutesCompletedForUser(userId) {
+  const userRef = db.collection('users').doc(userId);
+
+  await db.runTransaction(async (transaction) => {
+    const userDoc = await transaction.get(userRef);
+    if (!userDoc.exists) throw new Error('User not found');
+
+    const data = userDoc.data();
+    let routesCompleted = data.routesCompleted || 0;
+    let badges = data.badges || [];
+
+    routesCompleted += 1;
+
+    const MILESTONES = {
+      10: '10-destinations',
+      50: '50-destinations',
+      100: '100-destinations',
+      150: '150-destinations',
+      200: '200-destinations',
+    };
+
+    const badgeToUnlock = MILESTONES[routesCompleted];
+    const newBadges = [...badges];
+
+    if (badgeToUnlock && !badges.includes(badgeToUnlock)) {
+      newBadges.push(badgeToUnlock);
+    }
+
+    transaction.update(userRef, {
+      routesCompleted,
+      badges: newBadges,
+    });
+  });
+
+  const updatedUser = await userRef.get();
+  return updatedUser.data();
+}
+
+
 module.exports = {
   unlockBadgeForUser,
   getUserBadgeData,
   purchaseItemForUser, 
-  completeChallengeForUser
+  completeChallengeForUser,
+  incrementRoutesCompletedForUser,
 };
 
 
