@@ -6,8 +6,9 @@ import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import LogoutButton from '../molecules/LogoutButton';
 import auth from '@react-native-firebase/auth';
-import { resetToLogin } from '../../navigation/RootNavigation';
+// import { resetToLogin } from '../../navigation/RootNavigation';
 import Toast from 'react-native-toast-message';
+import { resetToAuthResolver } from '../../navigation/RootNavigation';
 
 interface Props {
   navigation: any;
@@ -34,7 +35,7 @@ export default function AccountSettingsContent({ navigation }: Props) {
         },
       });
 
-      resetToLogin();
+      resetToAuthResolver();
     } catch (error) {
       Toast.show({
         type: 'default',
