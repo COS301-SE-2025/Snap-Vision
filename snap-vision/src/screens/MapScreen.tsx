@@ -759,9 +759,12 @@ const MapScreen = () => {
   };
 
   useEffect(() => {
-    if (isNavigating && shouldStartTTS && steps.length > 0 && currentStep < steps.length) {
+    if (isNavigating && steps.length > 0 && currentStep < steps.length) {
       const instruction = steps[currentStep]?.instruction;
       if (instruction) {
+        // Trigger haptic feedback for new direction
+        ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+        
         console.log('TTS should speak:', instruction);
         try {
           Tts.stop();
@@ -774,7 +777,8 @@ const MapScreen = () => {
         }
       }
     }
-  }, [isNavigating, shouldStartTTS, steps, currentStep]);
+  }, [isNavigating, steps, currentStep]);
+
 
   useEffect(() => {
     if (isNavigating && steps.length > 0 && currentStep < steps.length) {
@@ -801,20 +805,6 @@ const MapScreen = () => {
   useEffect(() => {
     fetchPOIs();
   }, []);
-
-  //Old version, took it out of useEffect for reusability
-  // useEffect(() => {
-  //   const fetchPOIs = async () => {
-  //     try {
-  //       const snapshot = await firestore().collection('UPcampusPOIs').get();
-  //       const poiList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  //       setPOIs(poiList);
-  //     } catch (e) {
-  //       console.error('Failed to fetch POIs:', e);
-  //     }
-  //   };
-  //   fetchPOIs();
-  // }, []);
 
   // Send POIs to WebView when they change and WebView is ready
   useEffect(() => {
@@ -1060,6 +1050,108 @@ const MapScreen = () => {
       }
     };
   }, []);
+
+  // Add haptic feedback when step changes (new direction)
+  useEffect(() => {
+    if (isNavigating && steps.length > 0 && currentStep < steps.length) {
+      const instruction = steps[currentStep]?.instruction;
+      if (instruction) {
+        // Trigger haptic feedback for new direction
+        ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+        
+        Tts.stop();
+        setTimeout(() => {
+          Tts.speak(instruction);
+        }, 500);
+      }
+    }
+  }, [isNavigating, steps, currentStep]);
+
+  // Reroute function with haptic feedback
+  const rerouteFromCurrentLocation = async () => {
+    if (!currentLocation || !destinationCoords || isRouteLoading) return;
+
+    setIsRouteLoading(true);
+
+    try {
+      // Trigger haptic feedback when rerouting
+      ReactNativeHapticFeedback.trigger('impactHeavy', hapticOptions);
+
+      const start = `${currentLocation.longitude},${currentLocation.latitude}`;
+      const end = `${destinationCoords[0]},${destinationCoords[1]}`;
+
+      // Clear any existing route first
+      webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+
+      const url = `${ROUTING_API_BASE}/api/directions?start=${start}&end=${end}`;
+      const response = await fetch(url);
+      const data = await response.json();
+
+      const coordinates = data.features?.[0]?.geometry?.coordinates;
+      if (!coordinates || coordinates.length === 0) throw new Error('No route found');
+
+      lastRoute.current = coordinates;
+
+      // Calculate distance and time for the new route
+      let totalDistance = 0;
+      for (let i = 0; i < coordinates.length - 1; i++) {
+        const point1 = coordinates[i];
+        const point2 = coordinates[i + 1];
+        totalDistance += getDistanceMeters(point1[1], point1[0], point2[1], point2[0]);
+      }
+
+      setDistanceToDestination(totalDistance);
+      // Estimate time (assuming average walking speed of 5 km/h = 1.4 m/s)
+      const timeMinutes = Math.round(totalDistance / (1.4 * 60));
+      setEstimatedTime(timeMinutes);
+
+      const jsRouteCode = `window.drawRoute && window.drawRoute(${JSON.stringify(coordinates)});`;
+      webViewRef.current?.injectJavaScript(jsRouteCode);
+      setStatus('Route updated!');
+    } catch (error) {
+      console.error('Route fetch error:', error);
+      setError('Failed to fetch or draw route');
+    } finally {
+      setIsRouteLoading(false);
+    }
+  };
+
+  // Add haptic feedback when destination is reached
+  const destinationReached = async () => {
+    if (!isNavigating) return; // Only handle if actually navigating
+
+    try {
+      // Trigger success haptic feedback
+      ReactNativeHapticFeedback.trigger('notificationSuccess', hapticOptions);
+      
+      await unlock('destination-reached');
+      await incrementRoutes();
+    } catch (e) {
+      console.warn('Failed to update badge state:', e);
+    }
+
+    // Stop navigation
+    stopNavigation();
+
+    // Show destination reached message
+    setStatus('You have reached your destination!');
+
+    // Ensure progress is set to 100%
+    setRouteProgress(100);
+
+    // Speak the arrival message if voice is enabled
+    if (isVoiceEnabled) {
+      Tts.stop();
+      setTimeout(() => {
+        Tts.speak('You have reached your destination');
+      }, 500);
+    }
+
+    // Optional: Show a congratulatory alert
+    Alert.alert('Destination Reached', 'You have arrived at your destination!', [
+      { text: 'OK', onPress: () => console.log('Destination reached acknowledged') },
+    ]);
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
