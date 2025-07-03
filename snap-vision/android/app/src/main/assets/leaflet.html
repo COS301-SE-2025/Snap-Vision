@@ -238,7 +238,7 @@
       function getPopupContent(poi) {
         const buildingId = poi.id;
         const crowdInfo = crowdData[buildingId];
-
+      
         let crowdHtml = '';
         if (crowdInfo) {
           crowdHtml = `
@@ -247,43 +247,48 @@
             <strong>Crowd: ${crowdInfo.label}</strong><br>
             <small>Updated recently • Expires in 1 hour</small>
           </div>
-        `;
+          `;
         }
-
+      
         let adminButtons = '';
         if (window.isAdmin) {
           adminButtons = `
             <div style="margin-top: 8px;">
               <button onclick="window.selectPOI('${buildingId}')" style="
-                margin-right: 6px;
+                padding: 6px 12px;
+                background-color: #FF9800;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+                width: 100%;
+              ">Admin Actions</button>
+            </div>
+          `;
+        }
+      
+        return `
+          <div style="text-align: center; min-width: 150px;">
+            <div style="margin-bottom: 8px;">
+              <strong>🏢 ${poi.name || 'Unnamed Building'}</strong>
+            </div>
+            ${crowdHtml}
+            <div style="margin-top: 8px;">
+              <button onclick="window.selectPOI('${poi.id}')" style="
                 padding: 6px 12px;
                 background-color: #007bff;
                 color: white;
                 border: none;
                 border-radius: 4px;
                 cursor: pointer;
-              ">Admin Actions</button>
+                font-size: 12px;
+                width: 100%;
+              ">Navigate Here</button>
             </div>
-          `;
-        }
-
-        return `
-        <div style="text-align: center;">
-          <strong>🏢 ${poi.name || 'Unnamed Building'}</strong>
-          ${crowdHtml}
-          <button onclick="window.selectPOI('${poi.id}')" style="
-            margin-top: 8px;
-            padding: 6px 12px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-          ">Navigate Here</button>
-          ${adminButtons}
-        </div>
-      `;
+            ${adminButtons}
+          </div>
+        `;
       }
 
       // Function to update popup content with latest crowd data

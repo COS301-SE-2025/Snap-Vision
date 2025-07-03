@@ -381,7 +381,7 @@ const MapScreen = () => {
     }
   
     try {
-      // Update the document as before...
+      // Update the document in Firestore
       const docId = await getPOIDocIdByCentroidId(editingPOI.id);
       
       if (docId) {
@@ -403,59 +403,17 @@ const MapScreen = () => {
       
       setShowEditPOIModal(false);
       
-      // Much more aggressive reset approach - force reload the WebView
-      if (webViewRef.current) {
-        // 1. Store current center and zoom for restoration
-        const storeViewJS = `
-          window.storedView = {
-            center: map.getCenter(),
-            zoom: map.getZoom()
-          };
-        `;
-        webViewRef.current.injectJavaScript(storeViewJS);
-        
-        // 2. Clear EVERYTHING from the map
-        webViewRef.current.injectJavaScript(`
-          // Remove all markers and layers
-          map.eachLayer(function(layer) {
-            if (layer instanceof L.Marker || layer instanceof L.Circle || 
-                layer instanceof L.Polyline) {
-              map.removeLayer(layer);
-            }
-          });
-          
-          // Reset arrays
-          poiMarkers = [];
-          poiData = [];
-        `);
-        
-        // 3. Fetch fresh POI data
-        await fetchPOIs();
-        
-        // 4. Wait a moment for state updates to complete
-        setTimeout(() => {
-          if (webViewRef.current) {
-            // 5. Re-add markers with fresh data
-            const jsPOICode = `
-              // Restore view first
-              if (window.storedView) {
-                map.setView(window.storedView.center, window.storedView.zoom);
-              }
-              
-              // Clear any lingering markers again for safety
-              map.eachLayer(function(layer) {
-                if (layer instanceof L.Marker && layer !== userMarker) {
-                  map.removeLayer(layer);
-                }
-              });
-              
-              // Display fresh POIs
-              window.displayPOIs(${JSON.stringify(pois)});
-            `;
-            webViewRef.current.injectJavaScript(jsPOICode);
-          }
-        }, 500);
-      }
+      // Nuclear option: Force complete WebView reload
+      setIsMapReady(false);
+      setStatus('Refreshing map...');
+      
+      // Small delay to ensure the modal closes
+      setTimeout(() => {
+        // Force WebView to reload completely
+        if (webViewRef.current) {
+          webViewRef.current.reload();
+        }
+      }, 100);
       
       setStatus('Building updated!');
       Alert.alert('Success', 'Building information updated successfully.');
