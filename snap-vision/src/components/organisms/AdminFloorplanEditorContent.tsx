@@ -154,7 +154,7 @@ export default function AdminFloorplanEditorContent() {
     );
   }
 
-  // Generate HTML for WebView with dark mode support
+  // Generate HTML for WebView
   const getHTML = () => {
     return `
       <!DOCTYPE html>
@@ -187,7 +187,6 @@ export default function AdminFloorplanEditorContent() {
             width: 100%; 
             height: auto; 
             display: block;
-            /* Add a subtle filter for dark mode to improve visibility */
             filter: ${isDarkMode ? 'brightness(0.9) contrast(1.1)' : 'none'};
           }
           .marker { 
@@ -201,24 +200,26 @@ export default function AdminFloorplanEditorContent() {
             box-shadow: 0 0 5px rgba(0,0,0,0.5);
             cursor: pointer;
             z-index: 10;
+            transform-origin: center center;
           }
           .marker.selected {
             background-color: #ff9800;
-            transform: translate(-50%, -50%) scale(1.2);
             box-shadow: 0 0 8px rgba(255,152,0,0.8);
           }
           .marker-label { 
             position: absolute; 
-            top: 20px; 
-            left: 0; 
+            top: 25px; 
+            left: 50%;
+            transform: translateX(-50%);
             background: ${isDarkMode ? '#333333' : 'white'}; 
             color: ${isDarkMode ? '#ffffff' : '#000000'};
-            padding: 4px; 
+            padding: 4px 8px; 
             font-size: 12px;
             border-radius: 4px;
             white-space: nowrap;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             pointer-events: none;
+            transform-origin: center top;
           }
         </style>
       </head>
@@ -245,36 +246,57 @@ export default function AdminFloorplanEditorContent() {
           
           // Zoom variables
           let currentScale = 1;
+          let currentOffsetX = 0;
+          let currentOffsetY = 0;
           let startDistance = 0;
-          let originX = 0;
-          let originY = 0;
           let lastX = 0;
           let lastY = 0;
           let isDragging = false;
           let clickStartTime = 0;
           let clickStartX = 0;
           let clickStartY = 0;
+          let lastTapTime = 0;
+          let tapTimeout = null;
+          
+          // Update marker scales when zoom changes
+          function updateMarkerScales() {
+            const markers = document.querySelectorAll('.marker');
+            const labels = document.querySelectorAll('.marker-label');
+            
+            const inverseScale = 1 / currentScale;
+            
+            markers.forEach(marker => {
+              const isSelected = marker.classList.contains('selected');
+              const baseScale = isSelected ? 1.2 : 1;
+              marker.style.transform = \`translate(-50%, -50%) scale(\${baseScale * inverseScale})\`;
+            });
+            
+            labels.forEach(label => {
+              label.style.transform = \`translateX(-50%) scale(\${inverseScale})\`;
+            });
+          }
           
           // Handle pinch zoom
           document.addEventListener('touchstart', function(e) {
+            // Clear any pending tap timeout
+            if (tapTimeout) {
+              clearTimeout(tapTimeout);
+              tapTimeout = null;
+            }
+            
             if (e.touches.length === 2) {
-              // Pinch zoom start
               startDistance = getDistance(
                 e.touches[0].clientX, e.touches[0].clientY,
                 e.touches[1].clientX, e.touches[1].clientY
               );
+              e.preventDefault();
+            } else if (e.touches.length === 1) {
+              if (currentScale > 1) {
+                lastX = e.touches[0].clientX;
+                lastY = e.touches[0].clientY;
+                isDragging = true;
+              }
               
-              e.preventDefault();
-            } else if (e.touches.length === 1 && currentScale > 1) {
-              // Pan start
-              lastX = e.touches[0].clientX;
-              lastY = e.touches[0].clientY;
-              isDragging = true;
-              e.preventDefault();
-            }
-            
-            // For click detection
-            if (e.touches.length === 1) {
               clickStartTime = Date.now();
               clickStartX = e.touches[0].clientX;
               clickStartY = e.touches[0].clientY;
@@ -283,47 +305,52 @@ export default function AdminFloorplanEditorContent() {
           
           document.addEventListener('touchmove', function(e) {
             if (e.touches.length === 2) {
-              // Pinch zoom
               const distance = getDistance(
                 e.touches[0].clientX, e.touches[0].clientY,
                 e.touches[1].clientX, e.touches[1].clientY
               );
               
-              const scale = Math.min(Math.max(currentScale * (distance / startDistance), 1), 5);
-              const pinchCenter = {
-                x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
-                y: (e.touches[0].clientY + e.touches[1].clientY) / 2
-              };
-              
-              // Set the origin based on pinch center
-              zoomableArea.style.transformOrigin = '0 0';
-              zoomableArea.style.transform = calculateTransform(scale, originX, originY);
-              
-              currentScale = scale;
-              startDistance = distance;
+              if (startDistance > 0) {
+                const newScale = Math.min(Math.max(currentScale * (distance / startDistance), 0.5), 5);
+                
+                // Get pinch center
+                const pinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                const pinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                
+                // Calculate new offset to zoom around pinch center
+                const scaleDiff = newScale - currentScale;
+                const rect = container.getBoundingClientRect();
+                
+                currentOffsetX -= (pinchCenterX - rect.left - currentOffsetX) * scaleDiff / currentScale;
+                currentOffsetY -= (pinchCenterY - rect.top - currentOffsetY) * scaleDiff / currentScale;
+                
+                currentScale = newScale;
+                startDistance = distance;
+                
+                applyTransform();
+                updateMarkerScales();
+              }
               
               e.preventDefault();
-            } else if (e.touches.length === 1 && isDragging) {
-              // Panning
+            } else if (e.touches.length === 1 && isDragging && currentScale > 1) {
               const deltaX = e.touches[0].clientX - lastX;
               const deltaY = e.touches[0].clientY - lastY;
               
-              originX += deltaX / currentScale;
-              originY += deltaY / currentScale;
+              currentOffsetX += deltaX;
+              currentOffsetY += deltaY;
               
-              zoomableArea.style.transform = calculateTransform(currentScale, originX, originY);
+              applyTransform();
               
               lastX = e.touches[0].clientX;
               lastY = e.touches[0].clientY;
               
-              // Check if we've moved too far (prevents click after pan)
               const moveDistance = Math.sqrt(
                 Math.pow(e.touches[0].clientX - clickStartX, 2) +
                 Math.pow(e.touches[0].clientY - clickStartY, 2)
               );
               
               if (moveDistance > 10) {
-                clickStartTime = 0; // Cancel the click
+                clickStartTime = 0;
               }
               
               e.preventDefault();
@@ -338,84 +365,81 @@ export default function AdminFloorplanEditorContent() {
             if (e.touches.length === 0) {
               isDragging = false;
               
-              // Check if this was a tap/click
               const clickDuration = Date.now() - clickStartTime;
+              const currentTime = Date.now();
+              
+              // Handle single tap
               if (clickDuration < 300 && clickStartTime > 0) {
-                // This was a quick tap, process as click
-                handleTap(clickStartX, clickStartY);
+                // Check for double tap
+                if (currentTime - lastTapTime < 300) {
+                  // Double tap detected - reset zoom
+                  currentScale = 1;
+                  currentOffsetX = 0;
+                  currentOffsetY = 0;
+                  applyTransform();
+                  updateMarkerScales();
+                  lastTapTime = 0;
+                } else {
+                  // Single tap - set a timeout to handle it if no second tap comes
+                  tapTimeout = setTimeout(() => {
+                    handleTap(clickStartX, clickStartY);
+                    tapTimeout = null;
+                  }, 300);
+                  lastTapTime = currentTime;
+                }
               }
               
               clickStartTime = 0;
             }
           });
           
-          // Double tap to reset zoom
-          let lastTap = 0;
-          document.addEventListener('touchend', function(e) {
-            const currentTime = new Date().getTime();
-            const tapLength = currentTime - lastTap;
-            
-            if (tapLength < 300 && tapLength > 0 && e.touches.length === 0) {
-              // Reset zoom
-              currentScale = 1;
-              originX = 0;
-              originY = 0;
-              zoomableArea.style.transform = calculateTransform(currentScale, originX, originY);
-            }
-            
-            lastTap = currentTime;
-          });
+          function applyTransform() {
+            zoomableArea.style.transform = \`translate(\${currentOffsetX}px, \${currentOffsetY}px) scale(\${currentScale})\`;
+          }
           
-          // Function to handle taps on the container
           function handleTap(x, y) {
-            // First check if we tapped on a marker (markers have their own event handlers)
             const element = document.elementFromPoint(x, y);
             if (element && element.classList.contains('marker')) {
-              // Marker click handled by the marker's own click handler
               return;
             }
             
-            // If we're not on a marker, this is a tap on the floorplan to add a new point
-            if (currentScale === 1 || !isDragging) {
-              const rect = floorplan.getBoundingClientRect();
-              
-              // Convert coordinates to match the unzoomed image
-              const relX = (x - rect.left) / (rect.width * currentScale);
-              const relY = (y - rect.top) / (rect.height * currentScale);
-              
+            // Convert screen coordinates to image coordinates accounting for zoom and pan
+            const rect = container.getBoundingClientRect();
+            const imageRect = floorplan.getBoundingClientRect();
+            
+            // Calculate the position relative to the image
+            const imageX = (x - imageRect.left) / imageRect.width;
+            const imageY = (y - imageRect.top) / imageRect.height;
+            
+            // Ensure coordinates are within bounds
+            if (imageX >= 0 && imageX <= 1 && imageY >= 0 && imageY <= 1) {
               window.ReactNativeWebView.postMessage(JSON.stringify({
                 type: 'add_marker',
-                x: relX,
-                y: relY
+                x: imageX,
+                y: imageY
               }));
             }
           }
           
-          // Helper function to calculate distance between two points
           function getDistance(x1, y1, x2, y2) {
             const xDiff = x2 - x1;
             const yDiff = y2 - y1;
             return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
           }
           
-          // Calculate transform with current scale and origin
-          function calculateTransform(scale, originX, originY) {
-            return \`scale(\${scale}) translate(\${originX}px, \${originY}px)\`;
-          }
-          
           // Function to add marker to the floorplan
           window.addMarker = function(id, x, y, label) {
-            // Remove any existing marker with the same ID (for updates)
             const existingMarker = document.getElementById('marker-' + id);
             if (existingMarker) {
               existingMarker.remove();
             }
             
-            // Create the marker element
             const marker = document.createElement('div');
             marker.className = 'marker';
             marker.id = 'marker-' + id;
             marker.dataset.id = id;
+            
+            // Position markers using absolute positioning relative to the image
             marker.style.left = (x * 100) + '%';
             marker.style.top = (y * 100) + '%';
             
@@ -424,20 +448,17 @@ export default function AdminFloorplanEditorContent() {
             labelEl.textContent = label;
             marker.appendChild(labelEl);
             
-            // Add click handler to the marker for editing
             marker.addEventListener('click', function(e) {
               e.preventDefault();
               e.stopPropagation();
               
-              // Clear any selected state from other markers
               document.querySelectorAll('.marker.selected').forEach(m => {
                 m.classList.remove('selected');
               });
               
-              // Add selected state to this marker
               marker.classList.add('selected');
+              updateMarkerScales();
               
-              // Send message to React Native to edit this marker
               window.ReactNativeWebView.postMessage(JSON.stringify({
                 type: 'edit_marker',
                 id: id
@@ -445,9 +466,9 @@ export default function AdminFloorplanEditorContent() {
             });
             
             zoomableArea.appendChild(marker);
+            updateMarkerScales();
           };
           
-          // Function to highlight a marker when it's being edited
           window.highlightMarker = function(id) {
             document.querySelectorAll('.marker.selected').forEach(m => {
               m.classList.remove('selected');
@@ -456,13 +477,20 @@ export default function AdminFloorplanEditorContent() {
             const marker = document.getElementById('marker-' + id);
             if (marker) {
               marker.classList.add('selected');
+              updateMarkerScales();
             }
           };
+          
+          // Initialize marker scales when image loads
+          floorplan.addEventListener('load', function() {
+            updateMarkerScales();
+          });
         </script>
       </body>
       </html>
     `;
   };
+
 
   // Handle messages from WebView
   const handleMessage = (event: { nativeEvent: { data: string } }) => {
