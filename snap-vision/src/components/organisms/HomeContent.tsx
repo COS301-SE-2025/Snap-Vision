@@ -8,6 +8,10 @@ import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
+import RecentlyVisitedCarousel from '../molecules/RecentlyVisitedCarousel';
+import { useEffect, useState } from 'react';
 
 type RootStackParamList = {
   Map: undefined;
@@ -18,7 +22,7 @@ export default function HomeContent() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-
+ 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <HeaderWithIcons />
@@ -57,15 +61,7 @@ export default function HomeContent() {
         Recently Visited
       </Text>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.imageRow}
-      >
-        <Image source={require('../../assets/images/placeholder.jpg')} style={styles.image} />
-        <Image source={require('../../assets/images/placeholder.jpg')} style={styles.image} />
-        <Image source={require('../../assets/images/placeholder.jpg')} style={styles.image} />
-      </ScrollView>
+       <RecentlyVisitedCarousel pois={recentlyVisited} />
     </View>
   );
 }
