@@ -26,8 +26,8 @@ import { getThemeColors } from '../theme';
 import DirectionsModal from '../components/organisms/DirectionsModal';
 import { useRoute } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
-
 import { useBadges } from '../context/BadgeContext';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
 type MapScreenParams = {
   lat?: string;
@@ -96,7 +96,7 @@ const MapScreen = () => {
   const [crowdReports, setCrowdReports] = useState<Record<string, any>>({});
   const [selectedFeature, setSelectedFeature] = useState<any>(null);
 
-  //Admin stuff
+  //Admin
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAddPOIModal, setShowAddPOIModal] = useState(false);
   const [addPOICoords, setAddPOICoords] = useState<{ lat: number; lon: number } | null>(null);
@@ -106,6 +106,12 @@ const MapScreen = () => {
   const [editingPOI, setEditingPOI] = useState<any>(null);
   const [newName, setNewName] = useState('');
   const [newFloors, setNewFloors] = useState('');
+
+  //haptic feedback options
+  const hapticOptions = {
+    enableVibrateFallback: true,
+    ignoreAndroidSystemSettings: false,
+  };
 
   //Check if user is admin
   useEffect(() => {
@@ -362,15 +368,6 @@ const MapScreen = () => {
       setError('Failed to share location');
     }
   };
-
-  // const submitCrowdReport = () => {
-  //   if (!currentLocation) return;
-  //   const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${currentLocation.latitude}, ${currentLocation.longitude}, '${selectedDensity}');`;
-  //   webViewRef.current?.injectJavaScript(jsCrowdCode);
-  //   setShowCrowdPopup(false);
-  //   setStatus(`Crowd density reported: ${selectedDensity}`);
-  //   unlock('reported-crowd');
-  // };
 
   const handleDestinationSearch = () => {
     if (!currentLocation || !destinationCoords) {
