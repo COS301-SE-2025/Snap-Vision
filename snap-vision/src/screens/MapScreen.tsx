@@ -657,7 +657,24 @@ const MapScreen = () => {
       { text: 'OK', onPress: () => console.log('Destination reached acknowledged') },
     ]);
   };
- 
+  const fetchRecentlyVisited = async () => {
+  const userId = auth().currentUser?.uid;
+  if (!userId) return;
+
+  try {
+    const snapshot = await firestore()
+      .collection('recentlyVisited')
+      .where('userId', '==', userId)
+      .orderBy('timestamp', 'desc')
+      .limit(10) // Fetch the last 10 visited POIs
+      .get();
+
+    const visitedPOIs = snapshot.docs.map((doc) => doc.data());
+    setRecentlyVisited(visitedPOIs);
+  } catch (error) {
+    console.error('Failed to fetch recently visited POIs:', error);
+  }
+};
 
   //add this function to handle report submission
   const submitCrowdReport = async () => {
