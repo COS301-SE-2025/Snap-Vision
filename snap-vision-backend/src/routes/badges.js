@@ -3,7 +3,7 @@ const express = require('express');
 const router  = express.Router();
 const {
   unlockBadgeForUser,
-  getUserBadgeData,purchaseItemForUser, completeChallengeForUser} = require('../../scripts/badgeService');     
+  getUserBadgeData,purchaseItemForUser, completeChallengeForUser, incrementRoutesCompletedForUser} = require('../../scripts/badgeService');     
                                                  
 // POST /api/badges/unlock   { uid, badgeId }
 router.post('/unlock', async (req, res) => {
@@ -56,6 +56,19 @@ router.post('/challenges/complete', async (req, res) => {
     res.json(updatedData);
   } catch (e) {
     res.status(500).json({ error: e.message });
+  }
+});
+
+router.post('/increment-routes', async (req, res) => {
+  const { uid } = req.body;
+  if (!uid) return res.status(400).json({ error: 'Missing uid' });
+
+  try {
+    const updated = await incrementRoutesCompletedForUser(uid);
+    res.json(updated);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Failed to increment routes' });
   }
 });
 
