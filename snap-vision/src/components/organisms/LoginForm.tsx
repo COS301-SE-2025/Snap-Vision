@@ -25,9 +25,10 @@ export default function LoginForm() {
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({ email: '', password: '' });
   const [successMessage, setSuccessMessage] = useState('');
-  const { unlock } = useBadges();
+  const { unlock, state, uid, loading } = useBadges();
 
   const handleLogin = async () => {
+    console.log('handleLogin started');
     setSuccessMessage('');
 
     if (!email.trim() || !password) {
@@ -41,8 +42,16 @@ export default function LoginForm() {
 
     try {
       await auth().signInWithEmailAndPassword(email, password);
+      console.log('Login successful');
       setHasSeenLanding(false); // triggers Landing screen on login
-      await unlock('first-login');
+      console.log('Badge state unlocked:', state.unlocked.has('first-login'));
+      console.log('BadgeContext uid:', uid, 'loading:', loading);
+      // Removed unlock call here to wait for uid and loading to update
+      // if (!loading && uid && !state.unlocked.has('first-login')) {
+      //   console.log('Unlocking first-login badge');
+      //   await unlock('first-login');
+      //   console.log('Unlock call completed');
+      // }
       // Alert.alert('Success', 'Logged in!');
       setSuccessMessage('Login successful!');
       setTimeout(() => {
@@ -57,6 +66,7 @@ export default function LoginForm() {
         }
       }, 500);
     } catch (error: any) {
+      console.log('Login failed with error:', error);
       const errorMessages: Record<string, string> = {
         'auth/invalid-email': 'Invalid email address.',
         'auth/user-not-found': 'No account found.',
@@ -73,6 +83,15 @@ export default function LoginForm() {
       setErrors({ email: '', password: msg });
     }
   };
+
+  React.useEffect(() => {
+    if (!loading && uid && !state.unlocked.has('first-login')) {
+      console.log('Unlocking first-login badge from useEffect');
+      unlock('first-login').then(() => {
+        console.log('Unlock call completed from useEffect');
+      });
+    }
+  }, [loading, uid, state.unlocked, unlock]);
 
   return (
     <View>

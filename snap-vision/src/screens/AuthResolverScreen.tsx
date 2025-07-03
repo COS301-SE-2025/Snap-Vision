@@ -12,7 +12,8 @@ export default function AuthResolverScreen() {
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(async (user) => {
       if (user) {
-        await unlock('first-login');
+        // Removed unlock call to prevent repeated first-login badge unlocks
+        // await unlock('first-login');
       }
       navigation.reset({
         index: 0,

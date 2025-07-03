@@ -29,6 +29,8 @@ type Ctx = {
   setNavigationStartTime: (time: number) => void;
   maybeUnlockFastFinisher: () => Promise<void>;
   completeChallenge: (challengeId: string) => Promise<void>;
+  loading: boolean;
+  uid: string | null;
 };
 
 const empty: BadgeState = {
@@ -53,6 +55,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<BadgeState>(empty);
   const [navigationStartTime, setNavigationStartTime] = useState<number | null>(null);
   const [uid, setUid] = useState<string | null>(auth().currentUser?.uid || null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged((user) => {
@@ -64,6 +67,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!uid) return;
     (async () => {
+      setLoading(true);
       try {
         const snap = await fetchBadgeSnapshot(uid);
         setState({
@@ -77,6 +81,8 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
         });
       } catch (e) {
         console.warn('Badge sync failed', e);
+      } finally {
+        setLoading(false);
       }
     })();
   }, [uid]);
@@ -217,6 +223,8 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
         await unlock('fast-finisher');
       }
     },
+    loading,
+    uid,
   };
 
   return <BadgeContext.Provider value={value}>{children}</BadgeContext.Provider>;
