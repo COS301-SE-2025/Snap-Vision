@@ -22,7 +22,34 @@ export default function HomeContent() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
- 
+  const [recentlyVisited, setRecentlyVisited] = useState<any[]>([]);
+
+//fetch recently visited poi
+   useEffect(() => {
+    const fetchRecentlyVisited = async () => {
+      const userId = auth().currentUser?.uid;
+      if (!userId) {
+        console.warn('User not authenticated');
+        return;
+      }
+  
+      try {
+        const snapshot = await firestore()
+          .collection('recentlyVisited')
+          .where('userId', '==', userId)
+          .orderBy('timestamp', 'desc')
+          .limit(10)
+          .get();
+  
+        const visitedPOIs = snapshot.docs.map((doc) => doc.data());
+        setRecentlyVisited(visitedPOIs);
+      } catch (error) {
+        console.error('Failed to fetch recently visited POIs:', error);
+      }
+    };
+  
+    fetchRecentlyVisited();
+  }, []);
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <HeaderWithIcons />
