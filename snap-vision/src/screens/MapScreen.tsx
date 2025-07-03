@@ -34,7 +34,7 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'http://192.168.0.127:3000'; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = 'http://10.0.2.2:3000'; // <-- Use your correct backend IP here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
@@ -105,6 +105,7 @@ const MapScreen = () => {
   const [editingPOI, setEditingPOI] = useState<any>(null);
   const [newName, setNewName] = useState('');
   const [newFloors, setNewFloors] = useState('');
+  const [recentlyVisited, setRecentlyVisited] = useState<any[]>([]);
 
   //Check if user is admin
   useEffect(() => {
@@ -623,17 +624,27 @@ const MapScreen = () => {
     } catch (e) {
       console.warn('Failed to update badge state:', e);
     }
-
-    // Stop navigation
+  
+    const userId = auth().currentUser?.uid;  //save the poi to firestore under "recentlyVisited"
+    if (userId) {
+      await firestore().collection('recentlyVisited').add({
+        userId,
+        poiId: selectedPOI.id,
+        name: selectedPOI.name,
+        timestamp: firestore.FieldValue.serverTimestamp(),
+        centroid: selectedPOI.centroid,
+      });
+    }
+    //stop navigation
     stopNavigation();
 
-    // Show destination reached message
+    //show destination reached message
     setStatus('You have reached your destination!');
 
-    // Ensure progress is set to 100%
+    //ensure progress is set to 100%
     setRouteProgress(100);
 
-    // Speak the arrival message if voice is enabled
+    //speak the arrival message if voice is enabled
     if (isVoiceEnabled) {
       Tts.stop();
       setTimeout(() => {
@@ -641,13 +652,14 @@ const MapScreen = () => {
       }, 500);
     }
 
-    // Optional: Show a congratulatory alert
+    //optional: Show a congratulatory alert
     Alert.alert('Destination Reached', 'You have arrived at your destination!', [
       { text: 'OK', onPress: () => console.log('Destination reached acknowledged') },
     ]);
   };
+ 
 
-  // Add this function to handle report submission
+  //add this function to handle report submission
   const submitCrowdReport = async () => {
     if (!selectedPOI || !selectedDensity) {
       setError('Please select a building and density level');
@@ -736,6 +748,9 @@ const MapScreen = () => {
     }
   }, [isMapReady]);
 
+  useEffect(() => {
+  fetchRecentlyVisited();
+}, []);
   // Add a function to handle opening the crowd report modal
   const openCrowdReportModal = () => {
     // If user has selected a POI on map, use that as default
