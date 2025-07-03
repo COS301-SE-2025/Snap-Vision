@@ -329,21 +329,6 @@ const MapScreen = () => {
           }
           break;
 
-        case 'MAP_READY':
-          setStatus('Map loaded');
-          setIsMapReady(true);
-          
-          // Refresh POIs after WebView reload (important for edit operations)
-          await fetchPOIs();
-          
-          requestLocation();
-        
-          if (lastRoute.current.length > 0) {
-            const reinject = `window.drawRoute && window.drawRoute(${JSON.stringify(lastRoute.current)});`;
-            webViewRef.current?.injectJavaScript(reinject);
-          }
-          return;
-
         default:
           console.log('Unknown message type from WebView:', parsed.type);
       }
@@ -383,17 +368,17 @@ const MapScreen = () => {
     if (!newName.trim()) return Alert.alert('Building name required');
     if (!newFloors.trim() || isNaN(Number(newFloors)))
       return Alert.alert('Please enter a valid number of floors');
-  
+
     if (!editingPOI || !editingPOI.id) {
       console.error('No valid POI ID found:', editingPOI);
       setError('Invalid building data');
       return;
     }
-  
+
     try {
       // Update the document in Firestore
       const docId = await getPOIDocIdByCentroidId(editingPOI.id);
-  
+
       if (docId) {
         await firestore()
           .collection('UPcampusPOIs')
@@ -410,17 +395,17 @@ const MapScreen = () => {
             floors: Number(newFloors),
           });
       }
-  
+
       setShowEditPOIModal(false);
       setStatus('Building updated!');
-      
+
       // Refresh POIs immediately after Firestore update
       await fetchPOIs();
-      
+
       // Nuclear option: Force complete WebView reload
       setIsMapReady(false);
       setStatus('Refreshing map...');
-  
+
       // Small delay to ensure the modal closes and POIs are updated
       setTimeout(() => {
         // Force WebView to reload completely
@@ -428,7 +413,7 @@ const MapScreen = () => {
           webViewRef.current.reload();
         }
       }, 100);
-  
+
       Alert.alert('Success', 'Building information updated successfully.');
     } catch (error) {
       console.error('Error updating building:', error);
@@ -721,7 +706,7 @@ const MapScreen = () => {
     // Check destination arrival based on either:
     // 1. Progress is 100%
     // 2. Distance to destination is less than 3 meters
-    if (newProgress >= 100 || distanceToEnd < 3) {
+    if ((newProgress >= 100 || distanceToEnd < 3) && isNavigating) {
       destinationReached();
     }
   };
@@ -748,7 +733,7 @@ const MapScreen = () => {
     setEstimatedTime(null);
     setSelectedFeature(null);
     setSelectedPOI(null);
-    
+  
     // Clear the route from the map
     webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
     lastRoute.current = [];
