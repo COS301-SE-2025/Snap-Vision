@@ -52,7 +52,14 @@ export const useBadges = () => {
 export const BadgeProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<BadgeState>(empty);
   const [navigationStartTime, setNavigationStartTime] = useState<number | null>(null);
-  const uid = auth().currentUser?.uid;
+  const [uid, setUid] = useState<string | null>(auth().currentUser?.uid || null);
+
+  useEffect(() => {
+    const unsubscribe = auth().onAuthStateChanged((user) => {
+      setUid(user ? user.uid : null);
+    });
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     if (!uid) return;
@@ -75,11 +82,19 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
   }, [uid]);
 
   const unlock = async (id: BadgeId) => {
-    if (!uid) return;
+    console.log('unlock called with id:', id);
+    if (!uid) {
+      console.log('unlock aborted: no uid');
+      return;
+    }
 
     setState((prev) => {
-      if (prev.unlocked.has(id)) return prev;
+      if (prev.unlocked.has(id)) {
+        console.log('badge already unlocked:', id);
+        return prev;
+      }
       const unlocked = new Set(prev.unlocked).add(id);
+      console.log('unlocking badge locally:', id);
       return {
         ...prev,
         unlocked,
@@ -90,6 +105,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const snap = await unlockViaApi(uid, id);
+      console.log('unlock API success:', snap);
       setState({
         unlocked: new Set<BadgeId>(snap.badges || []),
         justUnlocked: [],
