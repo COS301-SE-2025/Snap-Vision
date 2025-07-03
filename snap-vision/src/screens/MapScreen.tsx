@@ -295,21 +295,23 @@ const MapScreen = () => {
             setShowAdminActions(true);
           }
 
-          if (isNavigating) {
-            stopNavigation();
-          }
+          else {
+            if (isNavigating) {
+              stopNavigation();
+            }
 
-          webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
-          lastRoute.current = [];
+            webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+            lastRoute.current = [];
 
-          setDestination(selectedPOI.name);
-          setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
-          setStatus(`Selected: ${selectedPOI.name}`);
-          setSelectedFeature(selectedPOI);
-          setSelectedPOI(selectedPOI);
+            setDestination(selectedPOI.name);
+            setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
+            setStatus(`Selected: ${selectedPOI.name}`);
+            setSelectedFeature(selectedPOI);
+            setSelectedPOI(selectedPOI);
 
-          if (currentLocation) {
-            fetchRoute([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
+            if (currentLocation) {
+              fetchRoute([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
+            }
           }
           break;
 
@@ -368,12 +370,10 @@ const MapScreen = () => {
   };
 
   const submitEditBuilding = async () => {
-    console.log(editingPOI.id);
     if (!newName.trim()) return Alert.alert('Building name required');
     if (!newFloors.trim() || isNaN(Number(newFloors)))
       return Alert.alert('Please enter a valid number of floors');
     
-    // Check if we have a valid POI ID
     if (!editingPOI || !editingPOI.id) {
       console.error("No valid POI ID found:", editingPOI);
       setError('Invalid building data');
@@ -381,14 +381,10 @@ const MapScreen = () => {
     }
   
     try {
-      //console.log("Attempting to update building with ID:", editingPOI.id);
-      
-      // First, try to get the actual document ID if editingPOI.id is a centroid ID
+      // Update the document as before...
       const docId = await getPOIDocIdByCentroidId(editingPOI.id);
       
       if (docId) {
-        // If we found a document ID, use it
-        //console.log("Found document ID:", docId);
         await firestore()
           .collection('UPcampusPOIs')
           .doc(docId)
@@ -397,8 +393,6 @@ const MapScreen = () => {
             floors: Number(newFloors),
           });
       } else {
-        // Fall back to trying with the original ID
-        //console.log("Using original ID as document ID:", editingPOI.id);
         await firestore()
           .doc(`UPcampusPOIs/${editingPOI.id}`)
           .update({
@@ -408,7 +402,61 @@ const MapScreen = () => {
       }
       
       setShowEditPOIModal(false);
-      fetchPOIs();
+      
+      // Much more aggressive reset approach - force reload the WebView
+      if (webViewRef.current) {
+        // 1. Store current center and zoom for restoration
+        const storeViewJS = `
+          window.storedView = {
+            center: map.getCenter(),
+            zoom: map.getZoom()
+          };
+        `;
+        webViewRef.current.injectJavaScript(storeViewJS);
+        
+        // 2. Clear EVERYTHING from the map
+        webViewRef.current.injectJavaScript(`
+          // Remove all markers and layers
+          map.eachLayer(function(layer) {
+            if (layer instanceof L.Marker || layer instanceof L.Circle || 
+                layer instanceof L.Polyline) {
+              map.removeLayer(layer);
+            }
+          });
+          
+          // Reset arrays
+          poiMarkers = [];
+          poiData = [];
+        `);
+        
+        // 3. Fetch fresh POI data
+        await fetchPOIs();
+        
+        // 4. Wait a moment for state updates to complete
+        setTimeout(() => {
+          if (webViewRef.current) {
+            // 5. Re-add markers with fresh data
+            const jsPOICode = `
+              // Restore view first
+              if (window.storedView) {
+                map.setView(window.storedView.center, window.storedView.zoom);
+              }
+              
+              // Clear any lingering markers again for safety
+              map.eachLayer(function(layer) {
+                if (layer instanceof L.Marker && layer !== userMarker) {
+                  map.removeLayer(layer);
+                }
+              });
+              
+              // Display fresh POIs
+              window.displayPOIs(${JSON.stringify(pois)});
+            `;
+            webViewRef.current.injectJavaScript(jsPOICode);
+          }
+        }, 500);
+      }
+      
       setStatus('Building updated!');
       Alert.alert('Success', 'Building information updated successfully.');
     } catch (error) {
@@ -426,7 +474,7 @@ const MapScreen = () => {
         .get();
   
       if (querySnapshot.empty) {
-        console.warn('No building found for this centroid id:', centroidId);
+        console.warn('No building found for this centroid id:', buildingId);
         return null;
       }
   
