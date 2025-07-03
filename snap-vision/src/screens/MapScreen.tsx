@@ -714,17 +714,17 @@ const MapScreen = () => {
   // function to handle reaching the destination
   const destinationReached = async () => {
     if (!isNavigating) return; // Only handle if actually navigating
-  
+
     // Stop navigation FIRST to prevent repeated calls
     stopNavigation();
-  
+
     try {
       await unlock('destination-reached');
       await incrementRoutes();
     } catch (e) {
       console.warn('Failed to update badge state:', e);
     }
-  
+
     // Clear destination and navigation state to hide the progress bar
     setDestination('');
     setDestinationCoords(null);
@@ -733,14 +733,14 @@ const MapScreen = () => {
     setEstimatedTime(null);
     setSelectedFeature(null);
     setSelectedPOI(null);
-  
+
     // Clear the route from the map
     webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
     lastRoute.current = [];
-  
+
     // Show destination reached message
     setStatus('You have reached your destination!');
-  
+
     // Speak the arrival message if voice is enabled
     if (isVoiceEnabled) {
       Tts.stop();
@@ -748,7 +748,7 @@ const MapScreen = () => {
         Tts.speak('You have reached your destination');
       }, 500);
     }
-  
+
     // Show alert only once
     Alert.alert('Destination Reached', 'You have arrived at your destination!', [
       { text: 'OK', onPress: () => setStatus('Ready for navigation') },
