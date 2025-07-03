@@ -149,19 +149,19 @@ const MapScreen = () => {
   }, [isAdmin, isMapReady, pois]);
 
   const sendLocationToWebView = (lat: number, lon: number, centerMap = false) => {
-    setCurrentLocation({ latitude: lat, longitude: lon });
-    const jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap});`;
-    webViewRef.current?.injectJavaScript(jsCode);
+  setCurrentLocation({ latitude: lat, longitude: lon });
 
-    // Always update progress when navigating - force this to run
-    if (isNavigating && lastRoute.current && lastRoute.current.length > 0) {
-      // Add visual feedback that we're updating
-      setStatus(`Updating location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
+  const zoomLevel = isNavigating ? 18 : 16;
 
-      // Call updateNavigationProgress directly
-      updateNavigationProgress(lat, lon);
-    }
-  };
+  const jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap}, ${zoomLevel});`;
+  webViewRef.current?.injectJavaScript(jsCode);
+
+  if (isNavigating && lastRoute.current && lastRoute.current.length > 0) {
+    setStatus(`Updating location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
+    updateNavigationProgress(lat, lon);
+  }
+};
+
 
   const requestLocation = async () => {
     try {
@@ -456,7 +456,7 @@ const MapScreen = () => {
     watchIdRef.current = Geolocation.watchPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        sendLocationToWebView(latitude, longitude);
+        sendLocationToWebView(latitude, longitude, true);
       },
       (error) => {
         setError('Failed to track location');
@@ -481,6 +481,10 @@ const MapScreen = () => {
     webViewRef.current?.injectJavaScript(
       'window.setNavigationState && window.setNavigationState(false);',
     );
+
+    if (currentLocation) {
+    sendLocationToWebView(currentLocation.latitude, currentLocation.longitude, true);
+  }
 
     // Clear progress line
     webViewRef.current?.injectJavaScript(
