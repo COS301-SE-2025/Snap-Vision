@@ -287,10 +287,6 @@ const MapScreen = () => {
         case 'POI_SELECTED':
           const selectedPOI = parsed.poi;
 
-          if (isAdmin) {
-            setAdminActionPOI(selectedPOI);
-            setShowAdminActions(true);
-          } else {
             if (isNavigating) {
               stopNavigation();
             }
@@ -307,7 +303,6 @@ const MapScreen = () => {
             if (currentLocation) {
               fetchRoute([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
             }
-          }
           break;
 
         case 'ADMIN_ADD_POI':
@@ -325,6 +320,15 @@ const MapScreen = () => {
           const poiToDelete = pois.find((p) => p.id === parsed.poiId);
           if (poiToDelete) {
             confirmDeleteBuilding(poiToDelete);
+            webViewRef.current?.injectJavaScript('map.closePopup();');
+          }
+          break;
+
+        case 'ADMIN_POI_SELECTED':
+          const adminPOI = pois.find((p) => p.id === parsed.poi.id);
+          if (adminPOI) {
+            setAdminActionPOI(adminPOI);
+            setShowAdminActions(true);
             webViewRef.current?.injectJavaScript('map.closePopup();');
           }
           break;

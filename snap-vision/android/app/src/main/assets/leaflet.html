@@ -238,7 +238,7 @@
       function getPopupContent(poi) {
         const buildingId = poi.id;
         const crowdInfo = crowdData[buildingId];
-
+      
         let crowdHtml = '';
         if (crowdInfo) {
           crowdHtml = `
@@ -249,12 +249,12 @@
           </div>
           `;
         }
-
+      
         let adminButtons = '';
         if (window.isAdmin) {
           adminButtons = `
             <div style="margin-top: 8px;">
-              <button onclick="window.selectPOI('${buildingId}')" style="
+              <button onclick="window.showAdminActions('${buildingId}')" style="
                 padding: 6px 12px;
                 background-color: #FF9800;
                 color: white;
@@ -267,7 +267,7 @@
             </div>
           `;
         }
-
+      
         return `
           <div style="text-align: center; min-width: 150px;">
             <div style="margin-bottom: 8px;">
@@ -275,7 +275,7 @@
             </div>
             ${crowdHtml}
             <div style="margin-top: 8px;">
-              <button onclick="window.selectPOI('${poi.id}')" style="
+              <button onclick="window.navigateToPOI('${poi.id}')" style="
                 padding: 6px 12px;
                 background-color: #007bff;
                 color: white;
@@ -290,6 +290,46 @@
           </div>
         `;
       }
+
+      // Function specifically for navigation
+      window.navigateToPOI = function (poiId) {
+        console.log('Navigating to POI with ID:', poiId);
+        const selectedMarker = poiMarkers.find(
+          (marker) => marker.poiData && marker.poiData.id === poiId,
+        );
+        if (selectedMarker) {
+          hideOtherPOIMarkers(selectedMarker);
+      
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(
+              JSON.stringify({
+                type: 'POI_SELECTED',
+                poi: selectedMarker.poiData,
+              }),
+            );
+          }
+        }
+      };
+      
+      // Function specifically for admin actions
+      window.showAdminActions = function (poiId) {
+        console.log('Showing admin actions for POI with ID:', poiId);
+        const selectedMarker = poiMarkers.find(
+          (marker) => marker.poiData && marker.poiData.id === poiId,
+        );
+        if (selectedMarker) {
+          hideOtherPOIMarkers(selectedMarker);
+      
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(
+              JSON.stringify({
+                type: 'ADMIN_POI_SELECTED',
+                poi: selectedMarker.poiData,
+              }),
+            );
+          }
+        }
+      };
 
       // Function to update popup content with latest crowd data
       function updatePopupContent(marker) {
@@ -391,6 +431,7 @@
       };
 
       window.selectPOI = function (poiId) {
+        console.log('Selecting POI with ID:', poiId);
         const selectedMarker = poiMarkers.find(
           (marker) => marker.poiData && marker.poiData.id === poiId,
         );
