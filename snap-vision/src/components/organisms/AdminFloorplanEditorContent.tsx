@@ -491,7 +491,6 @@ export default function AdminFloorplanEditorContent() {
     `;
   };
 
-
   // Handle messages from WebView
   const handleMessage = (event: { nativeEvent: { data: string } }) => {
     try {
