@@ -149,19 +149,18 @@ const MapScreen = () => {
   }, [isAdmin, isMapReady, pois]);
 
   const sendLocationToWebView = (lat: number, lon: number, centerMap = false) => {
-  setCurrentLocation({ latitude: lat, longitude: lon });
+    setCurrentLocation({ latitude: lat, longitude: lon });
 
-  const zoomLevel = isNavigating ? 18 : 16;
+    const zoomLevel = isNavigating ? 18 : 16;
 
-  const jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap}, ${zoomLevel});`;
-  webViewRef.current?.injectJavaScript(jsCode);
+    const jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap}, ${zoomLevel});`;
+    webViewRef.current?.injectJavaScript(jsCode);
 
-  if (isNavigating && lastRoute.current && lastRoute.current.length > 0) {
-    setStatus(`Updating location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
-    updateNavigationProgress(lat, lon);
-  }
-};
-
+    if (isNavigating && lastRoute.current && lastRoute.current.length > 0) {
+      setStatus(`Updating location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
+      updateNavigationProgress(lat, lon);
+    }
+  };
 
   const requestLocation = async () => {
     try {
@@ -483,8 +482,8 @@ const MapScreen = () => {
     );
 
     if (currentLocation) {
-    sendLocationToWebView(currentLocation.latitude, currentLocation.longitude, true);
-  }
+      sendLocationToWebView(currentLocation.latitude, currentLocation.longitude, true);
+    }
 
     // Clear progress line
     webViewRef.current?.injectJavaScript(

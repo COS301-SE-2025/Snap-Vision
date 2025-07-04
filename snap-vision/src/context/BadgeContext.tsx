@@ -113,15 +113,12 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
         ...prev,
         routesCompleted: updated.routesCompleted,
         unlocked: new Set(updated.badges || []),
-        justUnlocked: (updated.badges || []).filter(
-          (b: BadgeId) => !prev.unlocked.has(b)
-        ),
+        justUnlocked: (updated.badges || []).filter((b: BadgeId) => !prev.unlocked.has(b)),
       }));
     } catch (e) {
       console.error('Failed to increment routes:', e);
     }
   };
-
 
   const clearJustUnlocked = () => setState((prev) => ({ ...prev, justUnlocked: [] }));
 

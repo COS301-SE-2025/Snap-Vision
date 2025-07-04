@@ -9,7 +9,6 @@ import { getThemeColors } from '../../theme';
 export default function NotificationSettingsContent() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

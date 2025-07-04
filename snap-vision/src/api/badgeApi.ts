@@ -56,4 +56,3 @@ export async function incrementRoutesCompleted(uid: string) {
   if (!res.ok) throw new Error('Unable to increment routes completed');
   return res.json();
 }
-

@@ -1,6 +1,6 @@
 //Snap-Vision\snap-vision\src\components\molecules\NotificationSettings.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, Switch, StyleSheet} from 'react-native';
+import { View, Text, Switch, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useBadges } from '../../context/BadgeContext';
@@ -9,7 +9,7 @@ export default function NotificationSettings() {
   const colors = getThemeColors(isDark);
   const { unlock } = useBadges();
   const [pushEnabled, setPushEnabled] = useState(true);
-  
+
   useEffect(() => {
     if (pushEnabled) {
       unlock('enabled-notifications').catch(() => {
@@ -24,7 +24,6 @@ export default function NotificationSettings() {
       unlock('enabled-notifications').catch(() => {});
     }
   };
-
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
