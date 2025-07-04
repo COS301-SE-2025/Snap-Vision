@@ -707,6 +707,36 @@ const MapScreen = () => {
       setError('Failed to submit crowd report');
     }
   };
+  
+  //IMP: temp test to take out later
+  const simulateDestinationReached = async () => {
+  if (!selectedPOI) {
+    console.warn('No POI selected to simulate destination reached.');
+    return;
+  }
+
+  try {
+    const userId = auth().currentUser?.uid;
+    if (!userId) {
+      console.warn('User not authenticated.');
+      return;
+    }
+
+    // Simulate adding the selected POI to the recentlyVisited collection
+    await firestore().collection('recentlyVisited').add({
+      userId,
+      poiId: selectedPOI.id,
+      name: selectedPOI.name,
+      timestamp: firestore.FieldValue.serverTimestamp(),
+      centroid: selectedPOI.centroid,
+    });
+
+    console.log('Simulated destination reached and POI added to recentlyVisited:', selectedPOI.name);
+    Alert.alert('Test Successful', `Simulated reaching destination: ${selectedPOI.name}`);
+  } catch (error) {
+    console.error('Failed to simulate destination reached:', error);
+  }
+};
 
   // Add function to fetch recent crowd reports
   const fetchRecentCrowdReports = async () => {
@@ -1312,6 +1342,23 @@ const MapScreen = () => {
           <Text style={{ color: 'white', fontWeight: 'bold' }}>+ Add POI</Text>
         </TouchableOpacity>
       )}
+
+
+<TouchableOpacity //IMP: test to take out laters
+  style={{
+    position: 'absolute',
+    bottom: 50, // Adjust position to avoid overlap with the admin button
+    right: 20,
+    backgroundColor: 'blue',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    elevation: 4,
+  }}
+  onPress={simulateDestinationReached}
+>
+  <Text style={{ color: 'white', textAlign: 'center' }}>Simulate Destination Reached</Text>
+</TouchableOpacity>
     </View>
   );
 };
