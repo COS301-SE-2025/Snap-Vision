@@ -27,6 +27,7 @@ import DirectionsModal from '../components/organisms/DirectionsModal';
 import { useRoute } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import { useBadges } from '../context/BadgeContext';
+import { useAccessibility } from '../context/AccessibilityContext';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
 type MapScreenParams = {
@@ -49,6 +50,7 @@ const MapScreen = () => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const watchIdRef = useRef<number | null>(null);
+  const { isHapticFeedbackEnabled } = useAccessibility();
 
   const [status, setStatus] = useState('Loading map...');
   const [error, setError] = useState<string | null>(null);
@@ -443,13 +445,15 @@ const MapScreen = () => {
     }
 
     // Haptic feedback when starting navigation
-    ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
+    if (isHapticFeedbackEnabled) {
+      ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
+    }
 
     setIsNavigating(true);
     setStatus('Navigation started');
     setRouteProgress(0);
     setNavigationStartTime(Date.now());
-    
+
     // Start watching position with higher frequency
     if (watchIdRef.current) {
       Geolocation.clearWatch(watchIdRef.current);
@@ -479,7 +483,9 @@ const MapScreen = () => {
     }
 
     // Haptic feedback when stopping navigation
-    ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
+    if (isHapticFeedbackEnabled) {
+      ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
+    }
 
     setIsNavigating(false);
     setStatus('Navigation stopped');
@@ -623,8 +629,10 @@ const MapScreen = () => {
 
     try {
       // Trigger success haptic feedback
-      ReactNativeHapticFeedback.trigger('notificationSuccess', hapticOptions);
-      
+      if (isHapticFeedbackEnabled) {
+        ReactNativeHapticFeedback.trigger('notificationSuccess', hapticOptions);
+      }
+
       await unlock('destination-reached');
       await incrementRoutes();
     } catch (e) {
@@ -773,17 +781,21 @@ const MapScreen = () => {
       const instruction = steps[currentStep]?.instruction;
       if (instruction) {
         // Trigger haptic feedback for new direction
-        ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-        
+        if (isHapticFeedbackEnabled) {
+          ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+        }
+
         console.log('TTS should speak:', instruction);
-        try {
-          Tts.stop();
-          setTimeout(() => {
-            Tts.speak(instruction);
-          }, 500);
-        } catch (e) {
-          console.error('TTS Error:', e);
-          setError('Voice guidance is not available.');
+        if (isVoiceEnabled) {
+          try {
+            Tts.stop();
+            setTimeout(() => {
+              Tts.speak(instruction);
+            }, 500);
+          } catch (e) {
+            console.error('TTS Error:', e);
+            setError('Voice guidance is not available.');
+          }
         }
       }
     }
@@ -940,7 +952,9 @@ const MapScreen = () => {
 
     try {
       // Trigger haptic feedback when rerouting
-      ReactNativeHapticFeedback.trigger('impactHeavy', hapticOptions);
+      if (isHapticFeedbackEnabled) {
+        ReactNativeHapticFeedback.trigger('impactHeavy', hapticOptions);
+      }
 
       const start = `${currentLocation.longitude},${currentLocation.latitude}`;
       const end = `${destinationCoords[0]},${destinationCoords[1]}`;
