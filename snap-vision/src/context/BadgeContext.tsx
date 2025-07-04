@@ -4,6 +4,7 @@ import {
   fetchBadgeSnapshot,
   unlockBadge as unlockViaApi,
   completeChallenge as completeChallengeApi,
+  incrementRoutesCompleted,
 } from '../api/badgeApi';
 import auth from '@react-native-firebase/auth';
 import { Challenge } from '../types/achievements';
@@ -126,6 +127,21 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const incrementRoutes = async () => {
+    if (!uid) return;
+    try {
+      const updated = await incrementRoutesCompleted(uid);
+      setState((prev) => ({
+        ...prev,
+        routesCompleted: updated.routesCompleted,
+        unlocked: new Set(updated.badges || []),
+        justUnlocked: (updated.badges || []).filter((b: BadgeId) => !prev.unlocked.has(b)),
+      }));
+    } catch (e) {
+      console.error('Failed to increment routes:', e);
+    }
+  };
+
   const clearJustUnlocked = () => setState((prev) => ({ ...prev, justUnlocked: [] }));
 
   const completeChallenge = async (challengeId: string) => {
@@ -187,24 +203,6 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
       type: 'current',
     },
   ];
-
-  // const markChallengeCompleted = async (challengeId: string) => {
-  //   if (!uid || state.completedChallenges.has(challengeId)) return;
-
-  //   const updated = new Set(state.completedChallenges);
-  //   updated.add(challengeId);
-  //   setState((prev) => ({ ...prev, completedChallenges: updated }));
-
-  //   try {
-  //     await fetch(`http://10.0.2.2:3000/api/badges/complete-challenge`, {
-  //       method: 'POST',
-  //       headers: { 'Content-Type': 'application/json' },
-  //       body: JSON.stringify({ uid, challengeId }),
-  //     });
-  //   } catch (e) {
-  //     console.error('Failed to store completed challenge:', e);
-  //   }
-  // };
 
   const value: Ctx = {
     state,
