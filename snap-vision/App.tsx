@@ -98,7 +98,7 @@ export default function App() {
         <UserProvider>
           <AccessibilityProvider>
             <AppInner />
-          <Toast config={toastConfig} />
+            <Toast config={toastConfig} />
           </AccessibilityProvider>
         </UserProvider>
       </LandingProvider>
