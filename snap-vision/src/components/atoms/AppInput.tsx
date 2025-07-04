@@ -1,30 +1,37 @@
 import React from 'react';
-import { View, TextInput, StyleSheet, TextInputProps, TouchableOpacity } from 'react-native';
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  TextInputProps,
+  TouchableOpacity,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
 
 type AppInputProps = TextInputProps & {
-  style?: any;
+  style?: StyleProp<ViewStyle>;
   rightIcon?: string;
   onRightIconPress?: () => void;
 };
 
 export default function AppInput({ style, rightIcon, onRightIconPress, ...props }: AppInputProps) {
   const { isDark } = useTheme();
-  const borderColor = isDark ? '#824713' : '#B78459';
-  const textColor = isDark ? '#ffffff' : '#000000';
-  const placeholderColor = isDark ? '#90AFA8' : '#3E5650';
+  const colors = getThemeColors(isDark);
 
   return (
-    <View style={[styles.container, { borderColor }, style]}>
+    <View style={[styles.container, { borderColor: colors.primary }, style]}>
       <TextInput
         {...props}
-        style={[styles.input, { color: textColor }]}
-        placeholderTextColor={placeholderColor}
+        style={[styles.input, { color: colors.secondary }]}
+        placeholderTextColor={colors.secondary}
       />
       {rightIcon && (
         <TouchableOpacity onPress={onRightIconPress} style={styles.icon}>
-          <Icon name={rightIcon} size={20} color={placeholderColor} />
+          <Icon name={rightIcon} size={20} color={colors.secondary} />
         </TouchableOpacity>
       )}
     </View>

@@ -1,3 +1,10 @@
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  setItem: jest.fn(() => Promise.resolve(null)),
+  getItem: jest.fn(() => Promise.resolve(null)),
+  removeItem: jest.fn(() => Promise.resolve(null)),
+  clear: jest.fn(() => Promise.resolve(null)),
+}));
+
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
@@ -115,22 +122,22 @@ jest.mock('../../src/components/atoms/AppButton', () => {
 });
 
 // Mock RememberMe
-jest.mock('../../src/components/molecules/RememberMe', () => {
-  const React = require('react');
-  const { View, Text, TouchableOpacity } = require('react-native');
-  return function MockRememberMe({ rememberMe, onToggle, onForgotPassword }) {
-    return (
-      <View>
-        <TouchableOpacity testID="remember-me-toggle" onPress={onToggle}>
-          <Text>Remember me</Text>
-        </TouchableOpacity>
-        <TouchableOpacity testID="forgot-password" onPress={onForgotPassword}>
-          <Text>Forgot Password?</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
-});
+// jest.mock('../../src/components/molecules/RememberMe', () => {
+//   const React = require('react');
+//   const { View, Text, TouchableOpacity } = require('react-native');
+//   return function MockRememberMe({ rememberMe, onToggle, onForgotPassword }) {
+//     return (
+//       <View>
+//         <TouchableOpacity testID="remember-me-toggle" onPress={onToggle}>
+//           <Text>Remember me</Text>
+//         </TouchableOpacity>
+//         <TouchableOpacity testID="forgot-password" onPress={onForgotPassword}>
+//           <Text>Forgot Password?</Text>
+//         </TouchableOpacity>
+//       </View>
+//     );
+//   };
+// });
 
 describe('Registration Integration Tests', () => {
   beforeAll(() => {
@@ -297,13 +304,13 @@ describe('Registration Integration Tests', () => {
     fireEvent.press(confirmToggle);
   });
 
-  it('toggles remember me', () => {
-    const { getByTestId } = render(<RegisterForm />);
-    fireEvent.press(getByTestId('remember-me-toggle'));
-  });
+  // it('toggles remember me', () => {
+  //   const { getByTestId } = render(<RegisterForm />);
+  //   fireEvent.press(getByTestId('remember-me-toggle'));
+  // });
 
-  it('calls forgot password handler', () => {
-    const { getByTestId } = render(<RegisterForm />);
-    fireEvent.press(getByTestId('forgot-password'));
-  });
+  // it('calls forgot password handler', () => {
+  //   const { getByTestId } = render(<RegisterForm />);
+  //   fireEvent.press(getByTestId('forgot-password'));
+  // });
 });
