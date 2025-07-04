@@ -81,7 +81,12 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
 
           {distance !== null && (
             <View style={styles.detailsRow}>
-              <Icon name="map-marker-distance" size={16} color={colors.primary} style={styles.icon} />
+              <Icon
+                name="map-marker-distance"
+                size={16}
+                color={colors.primary}
+                style={styles.icon}
+              />
               <Text style={[styles.detailsText, { color: colors.text }]}>
                 {formatDistance(distance)}
               </Text>
@@ -90,7 +95,9 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
                 <>
                   <Text style={[styles.separator, { color: colors.text }]}>•</Text>
                   <Icon name="clock-outline" size={16} color={colors.primary} style={styles.icon} />
-                  <Text style={[styles.detailsText, { color: colors.text }]}>{formatTime(time)}</Text>
+                  <Text style={[styles.detailsText, { color: colors.text }]}>
+                    {formatTime(time)}
+                  </Text>
                 </>
               )}
             </View>

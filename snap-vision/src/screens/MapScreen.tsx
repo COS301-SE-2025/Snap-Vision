@@ -287,22 +287,22 @@ const MapScreen = () => {
         case 'POI_SELECTED':
           const selectedPOI = parsed.poi;
 
-            if (isNavigating) {
-              stopNavigation();
-            }
+          if (isNavigating) {
+            stopNavigation();
+          }
 
-            webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
-            lastRoute.current = [];
+          webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+          lastRoute.current = [];
 
-            setDestination(selectedPOI.name);
-            setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
-            setStatus(`Selected: ${selectedPOI.name}`);
-            setSelectedFeature(selectedPOI);
-            setSelectedPOI(selectedPOI);
+          setDestination(selectedPOI.name);
+          setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
+          setStatus(`Selected: ${selectedPOI.name}`);
+          setSelectedFeature(selectedPOI);
+          setSelectedPOI(selectedPOI);
 
-            if (currentLocation) {
-              fetchRoute([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
-            }
+          if (currentLocation) {
+            fetchRoute([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
+          }
           break;
 
         case 'ADMIN_ADD_POI':
@@ -450,10 +450,10 @@ const MapScreen = () => {
 
   const cancelRoute = () => {
     console.log('cancelRoute called');
-    
+
     // Stop any ongoing route loading
     setIsRouteLoading(false);
-    
+
     // Clear all route-related state
     setDestination('');
     setDestinationCoords(null);
@@ -464,22 +464,22 @@ const MapScreen = () => {
     setSelectedPOI(null);
     setSteps([]);
     setCurrentStep(0);
-    
+
     // Stop navigation if it's active
     if (isNavigating) {
       stopNavigation();
     }
-    
+
     // Clear route from map
     webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
     lastRoute.current = [];
-    
+
     // Reset status
     setStatus('Route cancelled');
-    
+
     // Clear any error messages
     setError(null);
-    
+
     // Hide POI markers and show all markers again
     webViewRef.current?.injectJavaScript('window.showAllPOIMarkers && window.showAllPOIMarkers();');
   };

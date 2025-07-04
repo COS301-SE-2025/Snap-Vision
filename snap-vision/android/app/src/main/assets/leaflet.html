@@ -238,7 +238,7 @@
       function getPopupContent(poi) {
         const buildingId = poi.id;
         const crowdInfo = crowdData[buildingId];
-      
+
         let crowdHtml = '';
         if (crowdInfo) {
           crowdHtml = `
@@ -249,7 +249,7 @@
           </div>
           `;
         }
-      
+
         let adminButtons = '';
         if (window.isAdmin) {
           adminButtons = `
@@ -267,7 +267,7 @@
             </div>
           `;
         }
-      
+
         return `
           <div style="text-align: center; min-width: 150px;">
             <div style="margin-bottom: 8px;">
@@ -299,7 +299,7 @@
         );
         if (selectedMarker) {
           hideOtherPOIMarkers(selectedMarker);
-      
+
           if (window.ReactNativeWebView) {
             window.ReactNativeWebView.postMessage(
               JSON.stringify({
@@ -310,7 +310,7 @@
           }
         }
       };
-      
+
       // Function specifically for admin actions
       window.showAdminActions = function (poiId) {
         console.log('Showing admin actions for POI with ID:', poiId);
@@ -319,7 +319,7 @@
         );
         if (selectedMarker) {
           hideOtherPOIMarkers(selectedMarker);
-      
+
           if (window.ReactNativeWebView) {
             window.ReactNativeWebView.postMessage(
               JSON.stringify({
