@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
 import AppInput from '../atoms/AppInput';
 import AppButton from '../atoms/AppButton';
-import RememberMe from '../molecules/RememberMe';
 import auth from '@react-native-firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -11,6 +10,7 @@ import { getThemeColors } from '../../theme';
 import { useDeepLink } from '../../DeepLinkContext';
 import firestore from '@react-native-firebase/firestore';
 import { useBadges } from '../../context/BadgeContext';
+import { useLanding } from '../../context/LandingContext';
 
 type RootStackParamList = {
   Login: undefined;
@@ -24,6 +24,7 @@ export default function RegisterForm() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const { coords, setCoords } = useDeepLink();
+  const { setHasSeenLanding } = useLanding();
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -96,6 +97,7 @@ export default function RegisterForm() {
         role: 'user',
       });
 
+      setHasSeenLanding(false); // triggers Landing screen on registration
       unlock('first-login');
       Alert.alert('Success', 'Account created!');
       setSuccessMessage('Account created!');
@@ -153,7 +155,7 @@ export default function RegisterForm() {
           setUsername(text);
           setErrors((prev) => ({ ...prev, username: '' }));
         }}
-        style={[styles.input, { borderColor: colors.primary }]}
+        style={[styles.input, { borderColor: colors.primary, color: colors.text }]}
       />
       {errors.username ? <Text style={styles.error}>{errors.username}</Text> : null}
 
@@ -200,12 +202,6 @@ export default function RegisterForm() {
         style={[styles.input, { borderColor: colors.primary }]}
       />
       {errors.confirmPassword ? <Text style={styles.error}>{errors.confirmPassword}</Text> : null}
-
-      <RememberMe
-        rememberMe={rememberMe}
-        onToggle={() => setRememberMe(!rememberMe)}
-        onForgotPassword={() => navigation.navigate('ForgotPassword')}
-      />
 
       <AppButton title="REGISTER" onPress={handleRegister} testID="register-button" />
 

@@ -1,3 +1,10 @@
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  setItem: jest.fn(() => Promise.resolve(null)),
+  getItem: jest.fn(() => Promise.resolve(null)),
+  removeItem: jest.fn(() => Promise.resolve(null)),
+  clear: jest.fn(() => Promise.resolve(null)),
+}));
+
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import RegisterForm from '../src/components/organisms/RegisterForm';
@@ -7,9 +14,15 @@ import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
 import { BadgeProvider } from '../src/context/BadgeContext';
 const mockCreateUser = jest.fn();
 
-jest.mock('@react-native-firebase/auth', () => () => ({
-  createUserWithEmailAndPassword: mockCreateUser,
-}));
+jest.mock('@react-native-firebase/auth', () => {
+  return jest.fn(() => ({
+    createUserWithEmailAndPassword: mockCreateUser,
+    onAuthStateChanged: jest.fn((callback) => {
+      callback(null);
+      return jest.fn();
+    }),
+  }));
+});
 
 jest.mock('@react-navigation/native', () => {
   const actualNav = jest.requireActual('@react-navigation/native');

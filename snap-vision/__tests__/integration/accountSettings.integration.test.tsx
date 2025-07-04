@@ -7,21 +7,41 @@ const mockNavigate = jest.fn();
 const mockResetToLogin = jest.fn();
 const mockSignOut = jest.fn(() => Promise.resolve());
 
+import Toast from 'react-native-toast-message';
+
+// --- Toast Mock ---
+const mockToastShow = jest.fn();
+jest.mock('react-native-toast-message', () => ({
+  show: (...args) => mockToastShow(...args),
+}));
+
 // Spy on Alert
 jest.spyOn(Alert, 'alert').mockImplementation(() => {});
 
-// --- Firebase Mocks ---
+// --- Navigation Mock ---
+jest.mock('../../src/navigation/RootNavigation', () => ({
+  resetToAuthResolver: jest.fn(),
+  resetToLogin: mockResetToLogin,
+}));
+
+import { resetToAuthResolver } from '../../src/navigation/RootNavigation';
+
+// --- Firebase Auth Mock ---
 jest.mock('@react-native-firebase/auth', () => {
   return jest.fn().mockImplementation(() => ({
     signOut: mockSignOut,
     currentUser: { uid: 'test-uid', email: 'tony@example.com' },
     useEmulator: jest.fn(),
+    onAuthStateChanged: jest.fn((callback) => {
+      callback({ uid: 'test-uid', email: 'tony@example.com' });
+      return jest.fn();
+    }),
   }));
 });
 
-// Import auth after mocking
 import auth from '@react-native-firebase/auth';
 
+// --- Firebase Firestore Mock ---
 jest.mock('@react-native-firebase/firestore', () => {
   return jest.fn().mockImplementation(() => ({
     collection: jest.fn(() => ({
@@ -60,39 +80,38 @@ jest.mock('@react-native-firebase/firestore', () => {
   }));
 });
 
-// --- Native Components Mocks ---
+// --- Native Component Mocks ---
 jest.mock('react-native/Libraries/Components/SafeAreaView/SafeAreaView', () => {
   const React = require('react');
   const { View } = require('react-native');
-  function MockSafeAreaView(props) {
-    return <View {...props} />;
-  }
+
+  const MockSafeAreaView = (props) => <View {...props} />;
+  MockSafeAreaView.displayName = 'MockSafeAreaView';
+
   return MockSafeAreaView;
 });
 
 jest.mock('react-native/Libraries/Components/StatusBar/StatusBar', () => {
   const React = require('react');
   const { View } = require('react-native');
-  function MockStatusBar(props) {
-    return <View {...props} />;
-  }
+
+  const MockStatusBar = (props) => <View {...props} />;
+  MockStatusBar.displayName = 'MockStatusBar';
+
   return MockStatusBar;
 });
 
 jest.mock('react-native/Libraries/Components/ScrollView/ScrollView', () => {
   const React = require('react');
   const { View } = require('react-native');
-  function MockScrollView(props) {
-    return <View {...props}>{props.children}</View>;
-  }
+
+  const MockScrollView = (props) => <View {...props}>{props.children}</View>;
+  MockScrollView.displayName = 'MockScrollView';
+
   return MockScrollView;
 });
 
-// --- Theme and Navigation Mocks ---
-jest.mock('../../src/navigation/RootNavigation', () => ({
-  resetToLogin: mockResetToLogin,
-}));
-
+// --- Theme and UI Component Mocks ---
 jest.mock('../../src/theme/ThemeContext', () => ({
   useTheme: () => ({ isDark: false }),
 }));
@@ -107,7 +126,6 @@ jest.mock('../../src/theme', () => ({
   }),
 }));
 
-// --- UI Component Mocks ---
 jest.mock('../../src/components/molecules/SettingsHeader', () => {
   const React = require('react');
   const { View, Text } = require('react-native');
@@ -146,10 +164,9 @@ jest.mock('../../src/components/molecules/LogoutButton', () => {
   };
 });
 
-// --- Real Component Import ---
+// --- Real Component Setup ---
 import AccountSettingsContent from '../../src/components/organisms/AccountSettingsContent';
 
-// Inject real component into screen
 jest.mock('../../src/screens/AccountSettings', () => {
   const React = require('react');
   const { View } = require('react-native');
@@ -198,11 +215,13 @@ describe('Account Settings Integration Tests', () => {
 
     await waitFor(() => {
       expect(mockSignOut).toHaveBeenCalled();
-      expect(Alert.alert).toHaveBeenCalledWith(
-        'Logged Out',
-        'You have been logged out successfully.',
+      expect(mockToastShow).toHaveBeenCalledWith(
+        expect.objectContaining({
+          text1: 'Logged Out',
+          text2: 'You have been logged out successfully.',
+        }),
       );
-      //expect(mockResetToLogin).toHaveBeenCalled();
+      expect(resetToAuthResolver).toHaveBeenCalled();
     });
   });
 
@@ -218,7 +237,12 @@ describe('Account Settings Integration Tests', () => {
     fireEvent.press(getByTestId('logout-button'));
 
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('An error occurred while logging out.');
+      expect(mockToastShow).toHaveBeenCalledWith(
+        expect.objectContaining({
+          text1: 'Logout Failed',
+          text2: 'An error occurred while logging out.',
+        }),
+      );
     });
   });
 });

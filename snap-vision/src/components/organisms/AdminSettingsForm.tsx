@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import Toggle from '../atoms/Toggle';
 import SettingItem from '../molecules/SettingItem';
 import ThemedText from '../atoms/ThemedText';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import SettingsHeader from '../molecules/SettingsHeader';
+import AppSecondaryButton from '../atoms/AppSecondaryButton';
+import AppButton from '../atoms/AppButton';
 
 const SectionHeader = ({ title }: { title: string }) => {
   const { isDark } = useTheme();
@@ -157,31 +159,10 @@ const AdminSettingsForm = () => {
         <Divider />
 
         {/* Reset to Defaults Button */}
-        <TouchableOpacity
-          style={[
-            styles.buttonContainer,
-            {
-              backgroundColor: colors.card,
-              borderColor: colors.secondary,
-              borderWidth: 1,
-            },
-          ]}
-          onPress={resetToDefaults}
-        >
-          <ThemedText size="md" weight="bold" style={{ color: colors.secondary }}>
-            Reset to Defaults
-          </ThemedText>
-        </TouchableOpacity>
+        <AppSecondaryButton title="Reset to Defaults" onPress={resetToDefaults} />
 
         {/* Save Button */}
-        <TouchableOpacity
-          style={[styles.buttonContainer, { backgroundColor: colors.primary }]}
-          onPress={() => console.log('Settings saved')}
-        >
-          <ThemedText size="md" weight="bold" style={{ color: colors.background }}>
-            Save Settings
-          </ThemedText>
-        </TouchableOpacity>
+        <AppButton title="Save Settings" onPress={() => console.log('Settings saved')} />
       </ScrollView>
     </View>
   );
