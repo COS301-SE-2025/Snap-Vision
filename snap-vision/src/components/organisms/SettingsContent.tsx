@@ -16,7 +16,7 @@ export default function SettingsContent({ isDark, navigation }: Props) {
   const items = [
     { icon: 'key', label: 'Account', screen: 'AccountSettings' },
     // { icon: 'star', label: 'Badges and Achievements', screen: 'Achievements' },
-    { icon: 'accessibility', label: 'Accessibility', screen: 'AccessibilitySettings' },
+    { icon: 'human-wheelchair', label: 'Accessibility', screen: 'AccessibilitySettings' },
     { icon: 'lock', label: 'Privacy and Security', screen: 'PrivacySecurity' },
     { icon: 'bell', label: 'Notifications', screen: 'NotificationSettings' },
     { icon: 'cog', label: 'App Preferences', screen: 'AppPreferences' },

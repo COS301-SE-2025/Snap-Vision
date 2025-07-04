@@ -16,7 +16,7 @@ export default function AccessibilitySettingsContent({ isDark }: Props) {
   const handleHapticFeedbackToggle = async (enabled: boolean) => {
     try {
       await setHapticFeedbackEnabled(enabled);
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to save haptic feedback setting. Please try again.');
     }
   };
@@ -34,7 +34,7 @@ export default function AccessibilitySettingsContent({ isDark }: Props) {
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Touch & Vibration</Text>
         <SettingsToggleItem
-          icon="vibrate"
+          icon="pulse"
           label="Haptic Feedback"
           description="Enable vibration feedback for navigation events and interactions"
           value={isHapticFeedbackEnabled}
