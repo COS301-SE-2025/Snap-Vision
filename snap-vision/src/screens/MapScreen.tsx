@@ -448,6 +448,42 @@ const MapScreen = () => {
     }
   };
 
+  const cancelRoute = () => {
+    console.log('cancelRoute called');
+    
+    // Stop any ongoing route loading
+    setIsRouteLoading(false);
+    
+    // Clear all route-related state
+    setDestination('');
+    setDestinationCoords(null);
+    setRouteProgress(0);
+    setDistanceToDestination(null);
+    setEstimatedTime(null);
+    setSelectedFeature(null);
+    setSelectedPOI(null);
+    setSteps([]);
+    setCurrentStep(0);
+    
+    // Stop navigation if it's active
+    if (isNavigating) {
+      stopNavigation();
+    }
+    
+    // Clear route from map
+    webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+    lastRoute.current = [];
+    
+    // Reset status
+    setStatus('Route cancelled');
+    
+    // Clear any error messages
+    setError(null);
+    
+    // Hide POI markers and show all markers again
+    webViewRef.current?.injectJavaScript('window.showAllPOIMarkers && window.showAllPOIMarkers();');
+  };
+
   const shareLocation = async () => {
     if (!currentLocation) {
       Alert.alert('No Location', 'Your location is not available yet.');
@@ -1325,6 +1361,7 @@ const MapScreen = () => {
           isLoading={isRouteLoading}
           onStartNavigation={startNavigation}
           onStopNavigation={stopNavigation}
+          onCancelRoute={cancelRoute}
           progress={routeProgress}
           distance={distanceToDestination}
           time={estimatedTime}
