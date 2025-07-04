@@ -18,6 +18,7 @@ import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 import { LandingProvider } from './src/context/LandingContext';
 import { UserProvider } from './src/context/UserContext';
 import { BadgeProvider } from './src/context/BadgeContext';
+import { AccessibilityProvider } from './src/context/AccessibilityContext';
 import BadgeUnlockNotifier from './src/components/organisms/BadgeUnlockNotifier';
 import ShopScreen from './src/screens/ShopScreen';
 import { initializePreBundledFloorplans } from './src/utils/floorplanUtils';
@@ -95,8 +96,10 @@ export default function App() {
     <DeepLinkProvider>
       <LandingProvider>
         <UserProvider>
-          <AppInner />
+          <AccessibilityProvider>
+            <AppInner />
           <Toast config={toastConfig} />
+          </AccessibilityProvider>
         </UserProvider>
       </LandingProvider>
     </DeepLinkProvider>

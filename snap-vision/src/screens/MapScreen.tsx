@@ -26,8 +26,9 @@ import { getThemeColors } from '../theme';
 import DirectionsModal from '../components/organisms/DirectionsModal';
 import { useRoute } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
-
 import { useBadges } from '../context/BadgeContext';
+import { useAccessibility } from '../context/AccessibilityContext';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
 type MapScreenParams = {
   lat?: string;
@@ -42,12 +43,14 @@ const ROUTING_API_BASE = 'http://10.0.2.2:3000'; // <-- Use your correct backend
 // T home: 192.168.0.133
 // T data: 192.168.43.155
 // Th home: 10.0.0.9
+// T Durban: 192.168.1.93
 
 const MapScreen = () => {
   const lastRoute = useRef<any[]>([]);
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const watchIdRef = useRef<number | null>(null);
+  const { isHapticFeedbackEnabled } = useAccessibility();
 
   const [status, setStatus] = useState('Loading map...');
   const [error, setError] = useState<string | null>(null);
@@ -95,7 +98,7 @@ const MapScreen = () => {
   const [crowdReports, setCrowdReports] = useState<Record<string, any>>({});
   const [selectedFeature, setSelectedFeature] = useState<any>(null);
 
-  //Admin stuff
+  //Admin
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAddPOIModal, setShowAddPOIModal] = useState(false);
   const [addPOICoords, setAddPOICoords] = useState<{ lat: number; lon: number } | null>(null);
@@ -105,6 +108,12 @@ const MapScreen = () => {
   const [editingPOI, setEditingPOI] = useState<any>(null);
   const [newName, setNewName] = useState('');
   const [newFloors, setNewFloors] = useState('');
+
+  //haptic feedback options
+  const hapticOptions = {
+    enableVibrateFallback: true,
+    ignoreAndroidSystemSettings: false,
+  };
 
   //Check if user is admin
   useEffect(() => {
@@ -328,7 +337,7 @@ const MapScreen = () => {
   //Edit Building(name and floors)
   const submitEditBuilding = async () => {
     if (!newName.trim()) return Alert.alert('Building name required');
-    if (!newFloors.trim() || isNaN(Number(numberOfFloors)))
+    if (!newFloors.trim() || isNaN(Number(newFloors)))
       return Alert.alert('Please enter a valid number of floors');
     try {
       await firestore()
@@ -361,15 +370,6 @@ const MapScreen = () => {
       setError('Failed to share location');
     }
   };
-
-  // const submitCrowdReport = () => {
-  //   if (!currentLocation) return;
-  //   const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${currentLocation.latitude}, ${currentLocation.longitude}, '${selectedDensity}');`;
-  //   webViewRef.current?.injectJavaScript(jsCrowdCode);
-  //   setShowCrowdPopup(false);
-  //   setStatus(`Crowd density reported: ${selectedDensity}`);
-  //   unlock('reported-crowd');
-  // };
 
   const handleDestinationSearch = () => {
     if (!currentLocation || !destinationCoords) {
@@ -437,17 +437,23 @@ const MapScreen = () => {
     }
   };
 
-  // Start navigation function
+  // Start navigation function with haptic feedback
   const startNavigation = () => {
     if (!currentLocation || !destinationCoords || lastRoute.current.length === 0) {
       setError('Cannot start navigation without a route');
       return;
     }
 
+    // Haptic feedback when starting navigation
+    if (isHapticFeedbackEnabled) {
+      ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
+    }
+
     setIsNavigating(true);
     setStatus('Navigation started');
     setRouteProgress(0);
     setNavigationStartTime(Date.now());
+
     // Start watching position with higher frequency
     if (watchIdRef.current) {
       Geolocation.clearWatch(watchIdRef.current);
@@ -469,11 +475,16 @@ const MapScreen = () => {
     );
   };
 
-  // Stop navigation function
+  // Stop navigation function with haptic feedback
   const stopNavigation = () => {
     if (watchIdRef.current) {
       Geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
+    }
+
+    // Haptic feedback when stopping navigation
+    if (isHapticFeedbackEnabled) {
+      ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
     }
 
     setIsNavigating(false);
@@ -489,7 +500,6 @@ const MapScreen = () => {
   };
 
   // Update the updateNavigationProgress function to check for destination arrival
-
   const updateNavigationProgress = (latitude: number, longitude: number) => {
     if (!lastRoute.current || lastRoute.current.length === 0) {
       return;
@@ -607,17 +617,22 @@ const MapScreen = () => {
 
     // Check destination arrival based on either:
     // 1. Progress is 100%
-    // 2. Distance to destination is less than 20 meters
-    if (newProgress >= 100 || distanceToEnd < 20) {
+    // 2. Distance to destination is less than 5 meters
+    if (newProgress >= 100 || distanceToEnd < 5) {
       destinationReached();
     }
   };
 
-  // Add this new function to handle reaching the destination
+  // Destination reached function with haptic feedback
   const destinationReached = async () => {
     if (!isNavigating) return; // Only handle if actually navigating
 
     try {
+      // Trigger success haptic feedback
+      if (isHapticFeedbackEnabled) {
+        ReactNativeHapticFeedback.trigger('notificationSuccess', hapticOptions);
+      }
+
       await unlock('destination-reached');
       await incrementRoutes();
     } catch (e) {
@@ -760,32 +775,28 @@ const MapScreen = () => {
     setShowCrowdPopup(true);
   };
 
-  useEffect(() => {
-    if (isNavigating && shouldStartTTS && steps.length > 0 && currentStep < steps.length) {
-      const instruction = steps[currentStep]?.instruction;
-      if (instruction) {
-        console.log('TTS should speak:', instruction);
-        try {
-          Tts.stop();
-          setTimeout(() => {
-            Tts.speak(instruction);
-          }, 500);
-        } catch (e) {
-          console.error('TTS Error:', e);
-          setError('Voice guidance is not available.');
-        }
-      }
-    }
-  }, [isNavigating, shouldStartTTS, steps, currentStep]);
-
+  //step changes with haptic feedback and TTS
   useEffect(() => {
     if (isNavigating && steps.length > 0 && currentStep < steps.length) {
       const instruction = steps[currentStep]?.instruction;
       if (instruction) {
-        Tts.stop();
-        setTimeout(() => {
-          Tts.speak(instruction);
-        }, 500);
+        // Trigger haptic feedback for new direction
+        if (isHapticFeedbackEnabled) {
+          ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+        }
+
+        console.log('TTS should speak:', instruction);
+        if (isVoiceEnabled) {
+          try {
+            Tts.stop();
+            setTimeout(() => {
+              Tts.speak(instruction);
+            }, 500);
+          } catch (e) {
+            console.error('TTS Error:', e);
+            setError('Voice guidance is not available.');
+          }
+        }
       }
     }
   }, [isNavigating, steps, currentStep]);
@@ -803,20 +814,6 @@ const MapScreen = () => {
   useEffect(() => {
     fetchPOIs();
   }, []);
-
-  //Old version, took it out of useEffect for reusability
-  // useEffect(() => {
-  //   const fetchPOIs = async () => {
-  //     try {
-  //       const snapshot = await firestore().collection('UPcampusPOIs').get();
-  //       const poiList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  //       setPOIs(poiList);
-  //     } catch (e) {
-  //       console.error('Failed to fetch POIs:', e);
-  //     }
-  //   };
-  //   fetchPOIs();
-  // }, []);
 
   // Send POIs to WebView when they change and WebView is ready
   useEffect(() => {
@@ -947,13 +944,18 @@ const MapScreen = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentLocation, isNavigating]);
 
-  // Reroute function
+  //Reroute function with haptic feedback
   const rerouteFromCurrentLocation = async () => {
     if (!currentLocation || !destinationCoords || isRouteLoading) return;
 
     setIsRouteLoading(true);
 
     try {
+      // Trigger haptic feedback when rerouting
+      if (isHapticFeedbackEnabled) {
+        ReactNativeHapticFeedback.trigger('impactHeavy', hapticOptions);
+      }
+
       const start = `${currentLocation.longitude},${currentLocation.latitude}`;
       const end = `${destinationCoords[0]},${destinationCoords[1]}`;
 
@@ -1020,7 +1022,7 @@ const MapScreen = () => {
     // Only run when navigating
     if (!isNavigating || !currentLocation) return;
 
-    // Force update progress every 2 seconds
+    // Force update progress every 0.5 seconds
     const progressInterval = setInterval(() => {
       if (currentLocation && lastRoute.current && lastRoute.current.length > 0) {
         updateNavigationProgress(currentLocation.latitude, currentLocation.longitude);
@@ -1249,16 +1251,7 @@ const MapScreen = () => {
           </Text>
         </Pressable>
       )}
-      <CrowdReportModal
-        visible={showCrowdPopup}
-        selectedDensity={selectedDensity}
-        selectedPOI={selectedPOI}
-        availablePOIs={pois}
-        onChangeDensity={setSelectedDensity}
-        onChangePOI={setSelectedPOI}
-        onSubmit={submitCrowdReport}
-        onCancel={() => setShowCrowdPopup(false)}
-      />
+
       {error && <StatusOverlay status={error} />}
 
       {isAdmin && (
