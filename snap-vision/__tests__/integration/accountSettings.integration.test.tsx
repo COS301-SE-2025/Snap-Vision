@@ -84,19 +84,31 @@ jest.mock('@react-native-firebase/firestore', () => {
 jest.mock('react-native/Libraries/Components/SafeAreaView/SafeAreaView', () => {
   const React = require('react');
   const { View } = require('react-native');
-  return (props) => <View {...props} />;
+
+  const MockSafeAreaView = (props) => <View {...props} />;
+  MockSafeAreaView.displayName = 'MockSafeAreaView';
+
+  return MockSafeAreaView;
 });
 
 jest.mock('react-native/Libraries/Components/StatusBar/StatusBar', () => {
   const React = require('react');
   const { View } = require('react-native');
-  return (props) => <View {...props} />;
+
+  const MockStatusBar = (props) => <View {...props} />;
+  MockStatusBar.displayName = 'MockStatusBar';
+
+  return MockStatusBar;
 });
 
 jest.mock('react-native/Libraries/Components/ScrollView/ScrollView', () => {
   const React = require('react');
   const { View } = require('react-native');
-  return (props) => <View {...props}>{props.children}</View>;
+
+  const MockScrollView = (props) => <View {...props}>{props.children}</View>;
+  MockScrollView.displayName = 'MockScrollView';
+
+  return MockScrollView;
 });
 
 // --- Theme and UI Component Mocks ---

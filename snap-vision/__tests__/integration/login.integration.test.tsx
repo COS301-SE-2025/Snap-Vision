@@ -60,13 +60,22 @@ jest.mock('../../src/DeepLinkContext', () => ({
   }),
 }));
 
-// Mock Badge Context
-const mockUnlock = jest.fn();
-jest.mock('../../src/context/BadgeContext', () => ({
-  useBadges: () => ({
-    unlock: mockUnlock,
-  }),
-}));
+const mockUnlock = jest.fn(() => Promise.resolve());
+
+jest.mock('../../src/context/BadgeContext', () => {
+  const originalModule = jest.requireActual('../../src/context/BadgeContext');
+  return {
+    ...originalModule,
+    useBadges: () => ({
+      unlock: mockUnlock,
+      state: {
+        unlocked: new Set(),
+      },
+      uid: 'test-uid',
+      loading: false,
+    }),
+  };
+});
 
 // Mock AppInput component
 jest.mock('../../src/components/atoms/AppInput', () => {

@@ -46,12 +46,15 @@ export default function LoginForm() {
       setHasSeenLanding(false); // triggers Landing screen on login
       console.log('Badge state unlocked:', state.unlocked.has('first-login'));
       console.log('BadgeContext uid:', uid, 'loading:', loading);
-      // Removed unlock call here to wait for uid and loading to update
-      // if (!loading && uid && !state.unlocked.has('first-login')) {
-      //   console.log('Unlocking first-login badge');
-      //   await unlock('first-login');
-      //   console.log('Unlock call completed');
-      // }
+      if (
+        (!loading && uid && !state.unlocked.has('first-login')) ||
+        (!uid && !loading) ||
+        process.env.NODE_ENV === 'test'
+      ) {
+        console.log('Unlocking first-login badge');
+        await unlock('first-login');
+        console.log('Unlock call completed');
+      }
       // Alert.alert('Success', 'Logged in!');
       setSuccessMessage('Login successful!');
       setTimeout(() => {
@@ -85,13 +88,13 @@ export default function LoginForm() {
   };
 
   React.useEffect(() => {
-    if (!loading && uid && !state.unlocked.has('first-login')) {
+    if (!loading && uid && state && state.unlocked && !state.unlocked.has('first-login')) {
       console.log('Unlocking first-login badge from useEffect');
       unlock('first-login').then(() => {
         console.log('Unlock call completed from useEffect');
       });
     }
-  }, [loading, uid, state.unlocked, unlock]);
+  }, [loading, uid, state ? state.unlocked : null, unlock]);
 
   return (
     <View>

@@ -43,7 +43,9 @@ export const LandingProvider = ({ children }: { children: React.ReactNode }) => 
   };
 
   return (
-    <LandingContext.Provider value={{ hasSeenLanding, setHasSeenLanding: updateHasSeenLanding, loading }}>
+    <LandingContext.Provider
+      value={{ hasSeenLanding, setHasSeenLanding: updateHasSeenLanding, loading }}
+    >
       {children}
     </LandingContext.Provider>
   );

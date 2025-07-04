@@ -31,7 +31,9 @@ import { navigationRef } from './src/navigation/RootNavigation';
 
 function AppInner() {
   const { setCoords } = useDeepLink();
-  const [pendingDeepLink, setPendingDeepLink] = useState<{ lat?: string; lng?: string } | null>(null);
+  const [pendingDeepLink, setPendingDeepLink] = useState<{ lat?: string; lng?: string } | null>(
+    null,
+  );
 
   // Handle deep link
   useEffect(() => {
