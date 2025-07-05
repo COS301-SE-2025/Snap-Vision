@@ -26,6 +26,8 @@ import { getThemeColors } from '../theme';
 import DirectionsModal from '../components/organisms/DirectionsModal';
 import { useRoute } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
+import { addRecentlyVisitedPOI, Visit } from '../services/firebase/recentlyVService';
+
 import { useBadges } from '../context/BadgeContext';
 import { useAccessibility } from '../context/AccessibilityContext';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -779,8 +781,25 @@ const MapScreen = () => {
 
       await unlock('destination-reached');
       await incrementRoutes();
-    } catch (e) {
-      console.warn('Failed to update badge state:', e);
+
+      const userId = auth().currentUser?.uid;
+      if (!userId) {
+        console.warn('User not authenticated.');
+        return;
+      }
+
+      const visit: Visit = {
+        userId,
+        poiId: selectedPOI.id,
+        name: selectedPOI.name,
+        timestamp: firestore.Timestamp.now(),
+        centroid: selectedPOI.centroid,
+      };
+
+      await addRecentlyVisitedPOI(visit);
+      console.log('Visit recorded:', selectedPOI.name);
+    } catch (error) {
+      console.error('Failed to record visit:', error);
     }
 
     // Clear destination and navigation state to hide the progress bar
@@ -798,8 +817,8 @@ const MapScreen = () => {
 
     // Show destination reached message
     setStatus('You have reached your destination!');
+    setRouteProgress(100);
 
-    // Speak the arrival message if voice is enabled
     if (isVoiceEnabled) {
       Tts.stop();
       setTimeout(() => {
@@ -813,7 +832,7 @@ const MapScreen = () => {
     ]);
   };
 
-  //  function to handle report submission
+  //add this function to handle report submission
   const submitCrowdReport = async () => {
     if (!selectedPOI || !selectedDensity) {
       setError('Please select a building and density level');
@@ -842,6 +861,35 @@ const MapScreen = () => {
     } catch (error) {
       console.error('Error saving crowd report:', error);
       setError('Failed to submit crowd report');
+    }
+  };
+
+ 
+  //IMP: temp test to take out later
+  const simulateDestinationReached = async () => {
+    if (!selectedPOI) {
+      console.warn('No POI selected to simulate destination reached.');
+      return;
+    }
+
+    try {
+      const userId = auth().currentUser?.uid;
+      if (!userId) return;
+
+      const visit: Visit = {
+        userId,
+        poiId: selectedPOI.id,
+        name: selectedPOI.name,
+        timestamp: firestore.Timestamp.now(),
+        centroid: selectedPOI.centroid,
+      };
+
+      await addRecentlyVisitedPOI(visit);
+      console.log('Simulated visit recorded:', selectedPOI.name);
+      Alert.alert('Test Successful', `Simulated visit to: ${selectedPOI.name}`);
+    } catch (error) {
+      console.error('Failed to simulate visit:', error);
+      Alert.alert('Error', 'Failed to simulate visit. Please try again.');
     }
   };
 
@@ -1544,6 +1592,22 @@ const MapScreen = () => {
           <Text style={{ color: colors.text, fontWeight: 'bold' }}>{tempMessage}</Text>
         </View>
       ) : null}
+
+      <TouchableOpacity //IMP: test to take out laters
+        style={{
+          position: 'absolute',
+          bottom: 50, // Adjust position to avoid overlap with the admin button
+          right: 20,
+          backgroundColor: 'blue',
+          paddingVertical: 10,
+          paddingHorizontal: 16,
+          borderRadius: 8,
+          elevation: 4,
+        }}
+        onPress={simulateDestinationReached}
+      >
+        <Text style={{ color: 'white', textAlign: 'center' }}>Simulate Destination Reached</Text>
+      </TouchableOpacity>
     </View>
   );
 };
