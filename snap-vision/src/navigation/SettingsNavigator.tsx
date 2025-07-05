@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import SettingsScreen from '../screens/SettingsScreen';
 import AccountSettingsScreen from '../screens/AccountSettings';
+import AccessibilitySettingsScreen from '../screens/AccessibilitySettingsScreen';
 import NotificationSettingsScreen from '../screens/NotificationSettingsScreen';
 import AppPreferencesScreen from '../screens/AppPreferences';
 import SupportScreen from '../screens/SupportScreen';
@@ -19,6 +20,7 @@ export default function SettingsNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
+      <Stack.Screen name="AccessibilitySettings" component={AccessibilitySettingsScreen} />
       <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
       <Stack.Screen name="AppPreferences" component={AppPreferencesScreen} />
       <Stack.Screen name="Support" component={SupportScreen} />

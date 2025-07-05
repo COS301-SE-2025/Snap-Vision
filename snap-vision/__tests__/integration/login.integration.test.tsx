@@ -1,3 +1,10 @@
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  setItem: jest.fn(() => Promise.resolve(null)),
+  getItem: jest.fn(() => Promise.resolve(null)),
+  removeItem: jest.fn(() => Promise.resolve(null)),
+  clear: jest.fn(() => Promise.resolve(null)),
+}));
+
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
@@ -53,13 +60,22 @@ jest.mock('../../src/DeepLinkContext', () => ({
   }),
 }));
 
-// Mock Badge Context
-const mockUnlock = jest.fn();
-jest.mock('../../src/context/BadgeContext', () => ({
-  useBadges: () => ({
-    unlock: mockUnlock,
-  }),
-}));
+const mockUnlock = jest.fn(() => Promise.resolve());
+
+jest.mock('../../src/context/BadgeContext', () => {
+  const originalModule = jest.requireActual('../../src/context/BadgeContext');
+  return {
+    ...originalModule,
+    useBadges: () => ({
+      unlock: mockUnlock,
+      state: {
+        unlocked: new Set(),
+      },
+      uid: 'test-uid',
+      loading: false,
+    }),
+  };
+});
 
 // Mock AppInput component
 jest.mock('../../src/components/atoms/AppInput', () => {
