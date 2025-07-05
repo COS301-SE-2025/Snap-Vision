@@ -1,14 +1,13 @@
 // src/services/firebase/recentlyVService.ts
-import firestore from '@react-native-firebase/firestore';
+import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
-import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
 export interface Visit {
   id?: string;
   userId: string;
   poiId: string;
   name: string;
-  timestamp: FirebaseFirestoreTypes.Timestamp; // Use Firestore's Timestamp type
+  timestamp: FirebaseFirestoreTypes.Timestamp;
   centroid: {
     latitude: number;
     longitude: number;
