@@ -633,7 +633,7 @@ const MapScreen = () => {
       userId,
       poiId: selectedPOI.id,
       name: selectedPOI.name,
-      timestamp: firestore.FieldValue.serverTimestamp(),
+      timestamp: firestore.Timestamp.now(),
       centroid: selectedPOI.centroid
     };
 
@@ -707,7 +707,7 @@ const simulateDestinationReached = async () => {
       userId,
       poiId: selectedPOI.id,
       name: selectedPOI.name,
-      timestamp: firestore.FieldValue.serverTimestamp(),
+      timestamp: firestore.Timestamp.now(),
       centroid: selectedPOI.centroid
     };
 

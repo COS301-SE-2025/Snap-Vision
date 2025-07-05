@@ -13,6 +13,7 @@ import auth from '@react-native-firebase/auth';
 import RecentlyVisitedCarousel from '../molecules/RecentlyVisitedCarousel';
 import { useEffect, useState } from 'react';
 import { getRecentlyVPOIs, Visit } from '../../services/firebase/recentlyVService';
+import { useFocusEffect } from '@react-navigation/native';
 
 type RootStackParamList = {
   Map: undefined;
@@ -26,23 +27,25 @@ export default function HomeContent() {
   const [recentlyVisited, setRecentlyVisited] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-  const fetchRecentlyVisited = async () => {
-    try {
-      const userId = auth().currentUser?.uid;
-      if (!userId) return;
-      
-      const visits = await getRecentlyVPOIs(userId);
-      setRecentlyVisited(visits);
-    } catch (error) {
-      console.error('Error fetching recently visited:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+   useFocusEffect(
+  React.useCallback(() => {
+    const fetchRecentlyVisited = async () => {
+      try {
+        const userId = auth().currentUser?.uid;
+        if (!userId) return;
 
-  fetchRecentlyVisited();
-}, []);
+        const visits = await getRecentlyVPOIs(userId);
+        setRecentlyVisited(visits);
+      } catch (error) {
+        console.error('Error fetching recently visited:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecentlyVisited();
+  }, [])
+);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

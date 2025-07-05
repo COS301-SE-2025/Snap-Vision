@@ -16,7 +16,7 @@ const RecentlyVisitedCarousel = ({ visits }: { visits: Visit[] }) => {
     <FlatList
       horizontal={true}
       data={visits}
-      keyExtractor={(item) => item.id!}
+      keyExtractor={(item, index) => item.id || item.poiId || index.toString()} // Ensure a unique key for each item
       renderItem={({ item }) => (
         <TouchableOpacity
           style={styles.card}
