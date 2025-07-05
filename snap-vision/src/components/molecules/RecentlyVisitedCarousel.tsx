@@ -6,9 +6,7 @@ const RecentlyVisitedCarousel = ({ visits }: { visits: Visit[] }) => {
   if (visits.length === 0) {
     return (
       <View style={{ padding: 10 }}>
-        <Text style={{ color: '#666', textAlign: 'center' }}>
-          No recently visited locations.
-        </Text>
+        <Text style={{ color: '#666', textAlign: 'center' }}>No recently visited locations.</Text>
       </View>
     );
   }
@@ -18,10 +16,7 @@ const RecentlyVisitedCarousel = ({ visits }: { visits: Visit[] }) => {
       data={visits}
       keyExtractor={(item, index) => item.id || item.poiId || index.toString()} // Ensure a unique key for each item
       renderItem={({ item }) => (
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => console.log('Selected:', item.name)}
-        >
+        <TouchableOpacity style={styles.card} onPress={() => console.log('Selected:', item.name)}>
           <Text style={styles.name}>{item.name}</Text>
           {item.timestamp && (
             <Text style={styles.timestamp}>

@@ -27,25 +27,25 @@ export default function HomeContent() {
   const [recentlyVisited, setRecentlyVisited] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
 
-   useFocusEffect(
-  React.useCallback(() => {
-    const fetchRecentlyVisited = async () => {
-      try {
-        const userId = auth().currentUser?.uid;
-        if (!userId) return;
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchRecentlyVisited = async () => {
+        try {
+          const userId = auth().currentUser?.uid;
+          if (!userId) return;
 
-        const visits = await getRecentlyVPOIs(userId);
-        setRecentlyVisited(visits);
-      } catch (error) {
-        console.error('Error fetching recently visited:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+          const visits = await getRecentlyVPOIs(userId);
+          setRecentlyVisited(visits);
+        } catch (error) {
+          console.error('Error fetching recently visited:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
 
-    fetchRecentlyVisited();
-  }, [])
-);
+      fetchRecentlyVisited();
+    }, []),
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -84,7 +84,7 @@ export default function HomeContent() {
       <Text style={[styles.recentlyVisitedLabel, { color: colors.secondary }]}>
         Recently Visited
       </Text>
-      
+
       {loading ? (
         <View style={{ padding: 20 }}>
           <Text style={{ color: colors.secondary, textAlign: 'center' }}>Loading...</Text>

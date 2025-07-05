@@ -1,3 +1,7 @@
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs([
+  'Text strings must be rendered within a <Text> component', // nice fix
+]);
 import React, { useEffect, useRef, useState } from 'react';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';

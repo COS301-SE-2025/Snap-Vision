@@ -106,7 +106,6 @@ const MapScreen = () => {
   const [editingPOI, setEditingPOI] = useState<any>(null);
   const [newName, setNewName] = useState('');
   const [newFloors, setNewFloors] = useState('');
-  
 
   //Check if user is admin
   useEffect(() => {
@@ -617,48 +616,47 @@ const MapScreen = () => {
 
   // Add this new function to handle reaching the destination
   const destinationReached = async () => {
-      if (!isNavigating) return;
-    
-      try {
-        await unlock('destination-reached');
-        await incrementRoutes();
-    
-        const userId = auth().currentUser?.uid;
-        if (!userId) {
-          console.warn('User not authenticated.');
-          return;
-        }
-    
-    const visit: Visit = {
-      userId,
-      poiId: selectedPOI.id,
-      name: selectedPOI.name,
-      timestamp: firestore.Timestamp.now(),
-      centroid: selectedPOI.centroid
-    };
+    if (!isNavigating) return;
 
-    await addRecentlyVisitedPOI(visit);
-    console.log('Visit recorded:', selectedPOI.name);
-  } catch (error) {
-    console.error('Failed to record visit:', error);
-  }
-    
-      stopNavigation();
-      setStatus('You have reached your destination!');
-      setRouteProgress(100);
-    
-      if (isVoiceEnabled) {
-        Tts.stop();
-        setTimeout(() => {
-          Tts.speak('You have reached your destination');
-        }, 500);
+    try {
+      await unlock('destination-reached');
+      await incrementRoutes();
+
+      const userId = auth().currentUser?.uid;
+      if (!userId) {
+        console.warn('User not authenticated.');
+        return;
       }
-    
-      Alert.alert('Destination Reached', 'You have arrived at your destination!', [
-        { text: 'OK', onPress: () => console.log('Destination reached acknowledged') },
-      ]);
-    };
-  
+
+      const visit: Visit = {
+        userId,
+        poiId: selectedPOI.id,
+        name: selectedPOI.name,
+        timestamp: firestore.Timestamp.now(),
+        centroid: selectedPOI.centroid,
+      };
+
+      await addRecentlyVisitedPOI(visit);
+      console.log('Visit recorded:', selectedPOI.name);
+    } catch (error) {
+      console.error('Failed to record visit:', error);
+    }
+
+    stopNavigation();
+    setStatus('You have reached your destination!');
+    setRouteProgress(100);
+
+    if (isVoiceEnabled) {
+      Tts.stop();
+      setTimeout(() => {
+        Tts.speak('You have reached your destination');
+      }, 500);
+    }
+
+    Alert.alert('Destination Reached', 'You have arrived at your destination!', [
+      { text: 'OK', onPress: () => console.log('Destination reached acknowledged') },
+    ]);
+  };
 
   //add this function to handle report submission
   const submitCrowdReport = async () => {
@@ -691,34 +689,34 @@ const MapScreen = () => {
       setError('Failed to submit crowd report');
     }
   };
-  
+
   //IMP: temp test to take out later
-const simulateDestinationReached = async () => {
-  if (!selectedPOI) {
-    console.warn('No POI selected to simulate destination reached.');
-    return;
-  }
+  const simulateDestinationReached = async () => {
+    if (!selectedPOI) {
+      console.warn('No POI selected to simulate destination reached.');
+      return;
+    }
 
-  try {
-    const userId = auth().currentUser?.uid;
-    if (!userId) return;
+    try {
+      const userId = auth().currentUser?.uid;
+      if (!userId) return;
 
-    const visit: Visit = {
-      userId,
-      poiId: selectedPOI.id,
-      name: selectedPOI.name,
-      timestamp: firestore.Timestamp.now(),
-      centroid: selectedPOI.centroid
-    };
+      const visit: Visit = {
+        userId,
+        poiId: selectedPOI.id,
+        name: selectedPOI.name,
+        timestamp: firestore.Timestamp.now(),
+        centroid: selectedPOI.centroid,
+      };
 
-    await addRecentlyVisitedPOI(visit);
-    console.log('Simulated visit recorded:', selectedPOI.name);
-    Alert.alert('Test Successful', `Simulated visit to: ${selectedPOI.name}`);
-  } catch (error) {
-    console.error('Failed to simulate visit:', error);
-    Alert.alert('Error', 'Failed to simulate visit. Please try again.');
-  }
-};
+      await addRecentlyVisitedPOI(visit);
+      console.log('Simulated visit recorded:', selectedPOI.name);
+      Alert.alert('Test Successful', `Simulated visit to: ${selectedPOI.name}`);
+    } catch (error) {
+      console.error('Failed to simulate visit:', error);
+      Alert.alert('Error', 'Failed to simulate visit. Please try again.');
+    }
+  };
 
   // Add function to fetch recent crowd reports
   const fetchRecentCrowdReports = async () => {
@@ -777,7 +775,6 @@ const simulateDestinationReached = async () => {
     }
   }, [isMapReady]);
 
-  
   // Add a function to handle opening the crowd report modal
   const openCrowdReportModal = () => {
     // If user has selected a POI on map, use that as default
@@ -1323,22 +1320,21 @@ const simulateDestinationReached = async () => {
         </TouchableOpacity>
       )}
 
-
-<TouchableOpacity //IMP: test to take out laters
-  style={{
-    position: 'absolute',
-    bottom: 50, // Adjust position to avoid overlap with the admin button
-    right: 20,
-    backgroundColor: 'blue',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    elevation: 4,
-  }}
-  onPress={simulateDestinationReached}
->
-  <Text style={{ color: 'white', textAlign: 'center' }}>Simulate Destination Reached</Text>
-</TouchableOpacity>
+      <TouchableOpacity //IMP: test to take out laters
+        style={{
+          position: 'absolute',
+          bottom: 50, // Adjust position to avoid overlap with the admin button
+          right: 20,
+          backgroundColor: 'blue',
+          paddingVertical: 10,
+          paddingHorizontal: 16,
+          borderRadius: 8,
+          elevation: 4,
+        }}
+        onPress={simulateDestinationReached}
+      >
+        <Text style={{ color: 'white', textAlign: 'center' }}>Simulate Destination Reached</Text>
+      </TouchableOpacity>
     </View>
   );
 };

@@ -44,7 +44,7 @@ export async function addRecentlyVisitedPOI(visit: Visit): Promise<void> {
     if (userDoc.exists()) {
       // Update the existing document
       const existingPOIs = userDoc.data()?.pois || [];
-      
+
       // Check if the POI already exists in the array
       const alreadyVisited = existingPOIs.some((poi: Visit) => poi.poiId === visit.poiId);
       if (alreadyVisited) {
