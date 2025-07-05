@@ -12,6 +12,7 @@ import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import RecentlyVisitedCarousel from '../molecules/RecentlyVisitedCarousel';
 import { useEffect, useState } from 'react';
+import { getRecentlyVPOIs, Visit } from '../../services/firebase/recentlyVService';
 
 type RootStackParamList = {
   Map: undefined;
@@ -22,34 +23,27 @@ export default function HomeContent() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const [recentlyVisited, setRecentlyVisited] = useState<any[]>([]);
+  const [recentlyVisited, setRecentlyVisited] = useState<Visit[]>([]);
+  const [loading, setLoading] = useState(true);
 
-//fetch recently visited poi
-   useEffect(() => {
-    const fetchRecentlyVisited = async () => {
+    useEffect(() => {
+  const fetchRecentlyVisited = async () => {
+    try {
       const userId = auth().currentUser?.uid;
-      if (!userId) {
-        console.warn('User not authenticated');
-        return;
-      }
-  
-      try {
-        const snapshot = await firestore()
-          .collection('recentlyVisited')
-          .where('userId', '==', userId)
-          .orderBy('timestamp', 'desc')
-          .limit(10)
-          .get();
-  
-        const visitedPOIs = snapshot.docs.map((doc) => doc.data());
-        setRecentlyVisited(visitedPOIs);
-      } catch (error) {
-        console.error('Failed to fetch recently visited POIs:', error);
-      }
-    };
-  
-    fetchRecentlyVisited();
-  }, []);
+      if (!userId) return;
+      
+      const visits = await getRecentlyVPOIs(userId);
+      setRecentlyVisited(visits);
+    } catch (error) {
+      console.error('Error fetching recently visited:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchRecentlyVisited();
+}, []);
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <HeaderWithIcons />
@@ -87,8 +81,14 @@ export default function HomeContent() {
       <Text style={[styles.recentlyVisitedLabel, { color: colors.secondary }]}>
         Recently Visited
       </Text>
-
-       <RecentlyVisitedCarousel pois={recentlyVisited} />
+      
+      {loading ? (
+        <View style={{ padding: 20 }}>
+          <Text style={{ color: colors.secondary, textAlign: 'center' }}>Loading...</Text>
+        </View>
+      ) : (
+        <RecentlyVisitedCarousel visits={recentlyVisited} />
+      )}
     </View>
   );
 }
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   actionBlock: {
-    marginTop: 20, // was 40, now slightly higher
+    marginTop: 20,
   },
   actionRow: {
     flexDirection: 'row',
@@ -133,9 +133,8 @@ const styles = StyleSheet.create({
   },
   mapButtonBox: {
     justifyContent: 'center',
-    alignItems: 'stretch', // optional for button alignment
+    alignItems: 'stretch',
   },
-
   qrWrapper: {
     flex: 1,
     marginLeft: 8,

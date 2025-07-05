@@ -1,40 +1,55 @@
 import React from 'react';
-import { FlatList, Image, TouchableOpacity, Text, View } from 'react-native';
+import { FlatList, Image, TouchableOpacity, Text, View, StyleSheet } from 'react-native';
+import { Visit } from '../../services/firebase/recentlyVService';
 
-const RecentlyVisitedCarousel = ({ pois }: { pois: any[] }) => {
-  if (pois.length === 0) {
+const RecentlyVisitedCarousel = ({ visits }: { visits: Visit[] }) => {
+  if (visits.length === 0) {
     return (
       <View style={{ padding: 10 }}>
-        <Text style={{ color: '#666', textAlign: 'center' }}>No recently visited locations.</Text>
+        <Text style={{ color: '#666', textAlign: 'center' }}>
+          No recently visited locations.
+        </Text>
       </View>
     );
   }
   return (
     <FlatList
       horizontal={true}
-      data={pois}
-      keyExtractor={(item: any) => item.poiId || item.id}
+      data={visits}
+      keyExtractor={(item) => item.id!}
       renderItem={({ item }) => (
         <TouchableOpacity
-          style={{
-            marginHorizontal: 10,
-            padding: 10,
-            backgroundColor: '#fff',
-            borderRadius: 8,
-            elevation: 4,
-          }}
-          onPress={() => {
-            console.log('Selected POI:', item.name);
-          }}
+          style={styles.card}
+          onPress={() => console.log('Selected:', item.name)}
         >
-          <Text style={{ fontWeight: 'bold' }}>{item.name}</Text>
-                 <Text style={{ color: '#666' }}>
-          {item.timestamp ? new Date(item.timestamp.toDate()).toLocaleString() : 'No timestamp available'}
-        </Text>
+          <Text style={styles.name}>{item.name}</Text>
+          {item.timestamp && (
+            <Text style={styles.timestamp}>
+              {new Date(item.timestamp.toDate()).toLocaleDateString()}
+            </Text>
+          )}
         </TouchableOpacity>
       )}
     />
   );
 };
+const styles = StyleSheet.create({
+  card: {
+    marginHorizontal: 10,
+    padding: 15,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    elevation: 3,
+    minWidth: 180,
+  },
+  name: {
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  timestamp: {
+    color: '#666',
+    fontSize: 12,
+  },
+});
 
 export default RecentlyVisitedCarousel;
