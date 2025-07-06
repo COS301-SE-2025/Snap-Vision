@@ -31,6 +31,7 @@ import { addRecentlyVisitedPOI, Visit } from '../services/firebase/recentlyVServ
 import { useBadges } from '../context/BadgeContext';
 import { useAccessibility } from '../context/AccessibilityContext';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import { useNavigation } from '@react-navigation/native';
 
 type MapScreenParams = {
   lat?: string;
@@ -113,6 +114,8 @@ const MapScreen = () => {
   const [showAdminActions, setShowAdminActions] = useState(false);
   const [adminActionPOI, setAdminActionPOI] = useState<any>(null);
   const [tempMessage, setTempMessage] = useState<string>('');
+
+  const navigation = useNavigation();
 
   //haptic feedback options
   const hapticOptions = {
@@ -1073,6 +1076,19 @@ const MapScreen = () => {
     }
   };
 
+  const startARNavigation = () => {
+    if (!destination || !destinationCoords || !steps.length) {
+      Alert.alert('Error', 'Please select a destination first');
+      return;
+    }
+
+    navigation.navigate('ARNavigation', {
+      destination,
+      coordinates: destinationCoords,
+      steps,
+    });
+  };
+
   // Dynamically request location updates
   useEffect(() => {
     let watchId: number | null = null;
@@ -1413,6 +1429,7 @@ const MapScreen = () => {
           isNavigating={isNavigating}
           isLoading={isRouteLoading}
           onStartNavigation={startNavigation}
+          onStartARNavigation={startARNavigation}
           onStopNavigation={stopNavigation}
           onCancelRoute={cancelRoute}
           progress={routeProgress}

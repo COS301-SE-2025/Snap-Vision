@@ -29,6 +29,7 @@ import { initializePreBundledFloorplans } from './src/utils/floorplanUtils';
 import Toast from 'react-native-toast-message';
 import { toastConfig } from './src/toastConfig';
 import AuthResolverScreen from './src/screens/AuthResolverScreen';
+import ARNavigationScreen from './src/screens/ARNavigationScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -88,6 +89,7 @@ function AppInner() {
             <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
             <Stack.Screen name="ShopScreen" component={ShopScreen} />
+            <Stack.Screen name="ARNavigation" component={ARNavigationScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </ThemeProvider>

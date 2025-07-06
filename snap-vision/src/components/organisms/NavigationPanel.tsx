@@ -4,6 +4,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import TextToSpeech from '../molecules/TextToSpeech';
+import AppButton from '../atoms/AppButton';
 
 interface NavigationPanelProps {
   isNavigating: boolean;
@@ -19,6 +20,7 @@ interface NavigationPanelProps {
   onToggleVoice: () => void;
   currentInstruction?: string;
   onSpeakingChange?: (isSpeaking: boolean) => void;
+  onStartARNavigation?: () => void;
 }
 
 const NavigationPanel: React.FC<NavigationPanelProps> = ({
@@ -35,6 +37,7 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
   onToggleVoice,
   currentInstruction,
   onSpeakingChange,
+  onStartARNavigation
 }) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
@@ -151,6 +154,13 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
           </View>
         </View>
       </View>
+      {!isNavigating && onStartARNavigation && (
+        <AppButton
+          title="Start AR Navigation"
+          onPress={onStartARNavigation}
+          style={[styles.button, { backgroundColor: '#FF6B35' }]}
+        />
+      )}
     </View>
   );
 };
