@@ -153,14 +153,14 @@ export default function AdminFloorplanEditorContent() {
 
   // Generate SVG path string from waypoints
   const generatePathSVG = (waypoints: { x: number; y: number }[]) => {
-  if (waypoints.length < 2) return '';
-  
-  // Convert relative coordinates (0-1) to percentage coordinates for SVG
-  let pathString = `M ${waypoints[0].x * 100}% ${waypoints[0].y * 100}%`;
-  for (let i = 1; i < waypoints.length; i++) {
-    pathString += ` L ${waypoints[i].x * 100}% ${waypoints[i].y * 100}%`;
-  }
-  return pathString;
+    if (waypoints.length < 2) return '';
+    
+    // Convert relative coordinates (0-1) to SVG coordinates (0-100)
+    let pathString = `M ${waypoints[0].x * 100} ${waypoints[0].y * 100}`;
+    for (let i = 1; i < waypoints.length; i++) {
+      pathString += ` L ${waypoints[i].x * 100} ${waypoints[i].y * 100}`;
+    }
+    return pathString;
   };
 
   // Calculate path distance
@@ -193,7 +193,7 @@ export default function AdminFloorplanEditorContent() {
       Alert.alert('Error', 'Please select two rooms and add waypoints to create a path');
       return;
     }
-
+  
     try {
       const pathId = `path_${buildingId.replace(/\//g, '_')}_${floorLabel.replace(/\s/g, '_')}_${Date.now()}`;
       
@@ -205,34 +205,34 @@ export default function AdminFloorplanEditorContent() {
         Alert.alert('Error', 'Selected rooms not found');
         return;
       }
-
+  
       // Create waypoints array including start and end room positions
       const waypoints = [
         startRoom.coordinates,
         ...currentPath,
         endRoom.coordinates
       ];
-
+  
       const pathPOI: PathPOI = {
         id: pathId,
         buildingId: buildingId,
         floorId: floorLabel,
         startRoomId: selectedRooms[0],
         endRoomId: selectedRooms[1],
-        waypoints: waypoints,
+        waypoints: waypoints, // This includes start, middle waypoints, and end
         distance: calculatePathDistance(waypoints),
-        accessible: true, // Default to accessible
+        accessible: true,
         createdAt: new Date().toISOString(),
       };
-
+  
       await firestore()
         .collection('PathPOIs')
         .doc(pathId)
         .set(pathPOI);
-
+  
       setPathMarkers([...pathMarkers, pathPOI]);
       
-      // Draw the new path
+      // Draw the new path - use the full waypoints array
       const pathData = {
         id: pathId,
         d: generatePathSVG(waypoints)
@@ -252,7 +252,7 @@ export default function AdminFloorplanEditorContent() {
         window.togglePathMode && window.togglePathMode(false);
         true;
       `);
-
+  
       Alert.alert('Success', 'Path created successfully');
     } catch (error) {
       console.error('Error saving path:', error);
