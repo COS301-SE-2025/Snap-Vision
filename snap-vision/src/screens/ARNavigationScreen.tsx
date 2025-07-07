@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Alert, PermissionsAndroid } from 'react-native';
-import { ViroARScene, ViroText, ViroARSceneNavigator, ViroBox, ViroAmbientLight } from 'react-viro';
+import { ViroARScene, ViroText, ViroARSceneNavigator, ViroBox, ViroAmbientLight } from '@viro-community/react-viro';
 
 interface Props {
   route: {

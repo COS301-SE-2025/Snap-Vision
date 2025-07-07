@@ -48,8 +48,11 @@
 
       </activity>
       <meta-data
-    android:name="com.google.android.geo.API_KEY"
-    android:value="DUMMY_KEY_NOT_USED" 
-    android:name="com.google.ar.core" android:value="required" />
+        android:name="com.google.android.geo.API_KEY"
+        android:value="DUMMY_KEY_NOT_USED" />
+
+    <meta-data
+        android:name="com.google.ar.core"
+        android:value="required" />
     </application>
 </manifest>
