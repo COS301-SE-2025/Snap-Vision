@@ -18,6 +18,7 @@ import firestore from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNFS from 'react-native-fs';
 import { launchImageLibrary } from 'react-native-image-picker';
+import { getAllFloorplans, clearDuplicateFloorplans } from '../../utils/floorplanUtils';
 
 interface Floorplan {
   id: string;
@@ -44,24 +45,20 @@ export default function AdminEditFloorplansContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch floorplans data from AsyncStorage and Firestore
+  // Fetch floorplans data from AsyncStorage using utility functions
   useEffect(() => {
     const fetchFloorplans = async () => {
       try {
         setIsLoading(true);
-        // Get floorplan metadata from AsyncStorage
-        const keys = await AsyncStorage.getAllKeys();
-        const floorplanKeys = keys.filter((key) => key.startsWith('floorplan_'));
+        
+        // Clear duplicates first
+        await clearDuplicateFloorplans();
+        
+        // Use the utility function to get unique floorplans
+        const floorplanData = await getAllFloorplans();
 
-        const floorplanData = await Promise.all(
-          floorplanKeys.map(async (key) => {
-            const data = await AsyncStorage.getItem(key);
-            return data ? JSON.parse(data) : null;
-          }),
-        );
-
-        // Filter out null values and format data
-        const validFloorplans = floorplanData.filter(Boolean).map((fp) => ({
+        // Format data for this component
+        const validFloorplans = floorplanData.map((fp) => ({
           id: `${fp.buildingId}_${fp.floorLabel}`,
           buildingId: fp.buildingId,
           buildingName: fp.buildingName || fp.buildingId,
@@ -279,12 +276,16 @@ export default function AdminEditFloorplansContent() {
           </Text>
         ) : (
           <View style={styles.floorplanList}>
-            {floorplans.map((fp) => (
+            {floorplans.map((fp, index) => (
               <TouchableOpacity
-                key={fp.id}
+                key={`${fp.id}_${index}`}
                 style={[
                   styles.floorplanItem,
-                  { backgroundColor: selectedFloorplan === fp.id ? colors.primary : colors.card },
+                  { 
+                    backgroundColor: selectedFloorplan === fp.id ? colors.primary : colors.card,
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                  },
                 ]}
                 onPress={() => setSelectedFloorplan(fp.id)}
               >
@@ -336,9 +337,22 @@ export default function AdminEditFloorplansContent() {
                       floorplans.find((fp) => fp.id === selectedFloorplan)?.lastModified || '',
                     ).toLocaleString()}
                   </Text>
+                  <Text style={[styles.detailText, { color: colors.text }]}>
+                    <Text style={{ fontWeight: 'bold' }}>Image URI: </Text>
+                    {floorplans.find((fp) => fp.id === selectedFloorplan)?.localUri || 'Not available'}
+                  </Text>
                 </>
               )}
             </View>
+
+            {/* Update Floorplan Image button */}
+            <AppSecondaryButton
+              title="Update Floorplan Image"
+              onPress={handleUploadUpdated}
+              style={{
+                marginTop: 16,
+              }}
+            />
 
             {/* Edit Room POIs button */}
             <AppSecondaryButton
