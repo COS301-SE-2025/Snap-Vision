@@ -109,6 +109,7 @@ export class NavigationGraph {
     });
   }
 
+    // Update the findShortestPath method in navigationUtils.ts
   findShortestPath(startRoomId: string, endRoomId: string): string[] | null {
     console.log('Finding path from', startRoomId, 'to', endRoomId);
   
@@ -131,79 +132,118 @@ export class NavigationGraph {
     const previous: Map<string, string | null> = new Map();
     const unvisited: Set<string> = new Set();
   
-    // Initialize
+    // Initialize - FIXED: Ensure proper initialization
     this.nodes.forEach((_, roomId) => {
-      distances.set(roomId, roomId === startRoomId ? 0 : Infinity);
+      const initialDistance = roomId === startRoomId ? 0 : Infinity;
+      distances.set(roomId, initialDistance);
       previous.set(roomId, null);
       unvisited.add(roomId);
+      console.log(`Initialized room ${roomId} with distance: ${initialDistance}`);
+    });
+  
+    console.log('Initial state:', {
+      startRoomExists: this.nodes.has(startRoomId),
+      startDistance: distances.get(startRoomId),
+      endDistance: distances.get(endRoomId),
+      unvisitedCount: unvisited.size
     });
   
     while (unvisited.size > 0) {
-      // Find unvisited node with minimum distance
+      // Find unvisited node with minimum distance - FIXED: Better selection logic
       let currentRoom: string | null = null;
       let minDistance = Infinity;
   
-      unvisited.forEach(roomId => {
-        const distance = distances.get(roomId) || Infinity;
-        if (distance < minDistance) {
+      for (const roomId of unvisited) {
+        const distance = distances.get(roomId);
+        if (distance !== undefined && distance < minDistance) {
           minDistance = distance;
           currentRoom = roomId;
         }
-      });
+      }
+  
+      console.log(`Selected current room: ${currentRoom} with distance: ${minDistance}`);
   
       if (!currentRoom || minDistance === Infinity) {
         console.warn('No path found - no reachable nodes');
-        break; // No path exists
+        break;
       }
   
       unvisited.delete(currentRoom);
   
-      if (currentRoom === endRoomId) {
-        console.log('Found path to destination');
-        break; // Found shortest path to destination
-      }
-  
-      // Check neighbors
+      // Process connections
       const currentNode = this.nodes.get(currentRoom);
       if (currentNode) {
-        console.log(`Checking ${currentNode.connections.length} connections from ${currentRoom}`);
+        console.log(`Processing ${currentNode.connections.length} connections from ${currentRoom}`);
         
         currentNode.connections.forEach(edge => {
+          console.log(`Checking connection to ${edge.targetRoomId}, is unvisited: ${unvisited.has(edge.targetRoomId)}`);
+          
           if (unvisited.has(edge.targetRoomId)) {
-            const altDistance = (distances.get(currentRoom!) || 0) + edge.distance;
-            const currentDistance = distances.get(edge.targetRoomId) || Infinity;
+            const currentDistance = distances.get(currentRoom!);
+            const targetDistance = distances.get(edge.targetRoomId);
+            
+            if (currentDistance !== undefined && targetDistance !== undefined) {
+              const altDistance = currentDistance + edge.distance;
   
-            if (altDistance < currentDistance) {
-              distances.set(edge.targetRoomId, altDistance);
-              previous.set(edge.targetRoomId, currentRoom);
-              console.log(`Updated distance to ${edge.targetRoomId}: ${altDistance}`);
+              console.log(`Distance calculation: ${currentRoom} to ${edge.targetRoomId}`);
+              console.log(`  Current: ${currentDistance}, Target: ${targetDistance}, Alt: ${altDistance}`);
+  
+              if (altDistance < targetDistance) {
+                distances.set(edge.targetRoomId, altDistance);
+                previous.set(edge.targetRoomId, currentRoom);
+                console.log(`Updated distance to ${edge.targetRoomId}: ${altDistance}, previous: ${currentRoom}`);
+              }
             }
           }
         });
       }
+  
+      // Check if we found the destination AFTER processing connections
+      if (currentRoom === endRoomId) {
+        console.log('Found path to destination');
+        break;
+      }
     }
+  
+    console.log('Final distances:', Array.from(distances.entries()));
+    console.log('Final previous map:', Array.from(previous.entries()));
   
     // Reconstruct path
     const path: string[] = [];
     let currentRoom: string | null = endRoomId;
   
+    console.log('Starting path reconstruction from:', endRoomId);
+  
     while (currentRoom !== null) {
+      console.log('Adding to path:', currentRoom);
       path.unshift(currentRoom);
-      currentRoom = previous.get(currentRoom) || null;
       
-      // safety check to prevent infinite loops
+      const prevRoom = previous.get(currentRoom);
+      console.log(`Previous room for ${currentRoom}:`, prevRoom);
+      
+      currentRoom = prevRoom || null;
+      
+      // Safety check to prevent infinite loops
       if (path.length > this.nodes.size) {
         console.error('Path reconstruction loop detected');
         return null;
       }
     }
   
-    // Check if we actually found a valid path
-    if (path.length > 0 && path[0] === startRoomId && path[path.length - 1] === endRoomId) {
-      console.log('Final path:', path);
+    console.log('Reconstructed path:', path);
+  
+    // Check if we found a valid path
+    if (path.length >= 1 && path[0] === startRoomId && path[path.length - 1] === endRoomId) {
+      console.log('Valid path found:', path);
       return path;
     } else {
-      console.warn('Invalid path reconstructed:', path);
+      console.warn('Invalid path reconstructed:', {
+        pathLength: path.length,
+        firstRoom: path[0],
+        lastRoom: path[path.length - 1],
+        expectedStart: startRoomId,
+        expectedEnd: endRoomId
+      });
       return null;
     }
   }
@@ -231,68 +271,7 @@ export class NavigationGraph {
   }
 }
 
-export const calculateRoute = (
-  startRoomId: string,
-  endRoomId: string,
-  roomPOIs: RoomPOI[],
-  pathPOIs: PathPOI[]
-): NavigationStep[] => {
-  console.log('calculateRoute called with:', {
-    startRoomId,
-    endRoomId,
-    roomCount: roomPOIs.length,
-    pathCount: pathPOIs.length
-  });
 
-  const graph = new NavigationGraph(roomPOIs, pathPOIs);
-  const roomPath = graph.findShortestPath(startRoomId, endRoomId);
-
-  if (!roomPath) {
-    console.error('No route found between rooms');
-    return [];
-  }
-
-  console.log('Route found:', roomPath);
-
-  const steps: NavigationStep[] = [];
-  const { waypoints, totalDistance } = graph.getPathDetails(roomPath);
-
-  // Find room details
-  const startRoom = roomPOIs.find(r => r.id === startRoomId);
-  const endRoom = roomPOIs.find(r => r.id === endRoomId);
-
-  if (!startRoom || !endRoom) {
-    console.error('Could not find room details');
-    return [];
-  }
-
-  // Start step
-  steps.push({
-    instruction: `Start at ${startRoom.name}`,
-    coordinates: startRoom.coordinates,
-    type: 'start'
-  });
-
-  // Add waypoint steps
-  waypoints.forEach((waypoint, index) => {
-    steps.push({
-      instruction: `Continue straight`,
-      coordinates: waypoint,
-      type: 'waypoint'
-    });
-  });
-
-  // Destination step
-  steps.push({
-    instruction: `Arrive at ${endRoom.name}`,
-    coordinates: endRoom.coordinates,
-    type: 'destination',
-    distance: totalDistance
-  });
-
-  console.log('Generated steps:', steps.length);
-  return steps;
-};
 
 // Helper function to calculate distance between two points
 export const calculateDistance = (
