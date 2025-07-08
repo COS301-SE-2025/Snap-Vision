@@ -109,10 +109,9 @@ export class NavigationGraph {
     });
   }
 
-    // Update the findShortestPath method in navigationUtils.ts
   findShortestPath(startRoomId: string, endRoomId: string): string[] | null {
     console.log('Finding path from', startRoomId, 'to', endRoomId);
-  
+
     if (!this.nodes.has(startRoomId)) {
       console.error('Start room not found in graph:', startRoomId);
       return null;
@@ -122,17 +121,17 @@ export class NavigationGraph {
       console.error('End room not found in graph:', endRoomId);
       return null;
     }
-  
+
     if (startRoomId === endRoomId) {
       return [startRoomId];
     }
-  
+
     // Dijkstra's algorithm
     const distances: Map<string, number> = new Map();
     const previous: Map<string, string | null> = new Map();
     const unvisited: Set<string> = new Set();
-  
-    // Initialize - FIXED: Ensure proper initialization
+
+    // Initialize
     this.nodes.forEach((_, roomId) => {
       const initialDistance = roomId === startRoomId ? 0 : Infinity;
       distances.set(roomId, initialDistance);
@@ -140,36 +139,37 @@ export class NavigationGraph {
       unvisited.add(roomId);
       console.log(`Initialized room ${roomId} with distance: ${initialDistance}`);
     });
-  
+
     console.log('Initial state:', {
       startRoomExists: this.nodes.has(startRoomId),
       startDistance: distances.get(startRoomId),
       endDistance: distances.get(endRoomId),
       unvisitedCount: unvisited.size
     });
-  
+
     while (unvisited.size > 0) {
-      // Find unvisited node with minimum distance - FIXED: Better selection logic
+      // Find unvisited node with minimum distance
       let currentRoom: string | null = null;
       let minDistance = Infinity;
-  
-      for (const roomId of unvisited) {
+
+      // FIXED: Use Array.from for proper iteration
+      Array.from(unvisited).forEach(roomId => {
         const distance = distances.get(roomId);
         if (distance !== undefined && distance < minDistance) {
           minDistance = distance;
           currentRoom = roomId;
         }
-      }
-  
+      });
+
       console.log(`Selected current room: ${currentRoom} with distance: ${minDistance}`);
-  
+
       if (!currentRoom || minDistance === Infinity) {
         console.warn('No path found - no reachable nodes');
         break;
       }
-  
+
       unvisited.delete(currentRoom);
-  
+
       // Process connections
       const currentNode = this.nodes.get(currentRoom);
       if (currentNode) {
@@ -184,10 +184,10 @@ export class NavigationGraph {
             
             if (currentDistance !== undefined && targetDistance !== undefined) {
               const altDistance = currentDistance + edge.distance;
-  
+
               console.log(`Distance calculation: ${currentRoom} to ${edge.targetRoomId}`);
               console.log(`  Current: ${currentDistance}, Target: ${targetDistance}, Alt: ${altDistance}`);
-  
+
               if (altDistance < targetDistance) {
                 distances.set(edge.targetRoomId, altDistance);
                 previous.set(edge.targetRoomId, currentRoom);
@@ -197,23 +197,23 @@ export class NavigationGraph {
           }
         });
       }
-  
+
       // Check if we found the destination AFTER processing connections
       if (currentRoom === endRoomId) {
         console.log('Found path to destination');
         break;
       }
     }
-  
+
     console.log('Final distances:', Array.from(distances.entries()));
     console.log('Final previous map:', Array.from(previous.entries()));
-  
+
     // Reconstruct path
     const path: string[] = [];
     let currentRoom: string | null = endRoomId;
-  
+
     console.log('Starting path reconstruction from:', endRoomId);
-  
+
     while (currentRoom !== null) {
       console.log('Adding to path:', currentRoom);
       path.unshift(currentRoom);
@@ -229,9 +229,9 @@ export class NavigationGraph {
         return null;
       }
     }
-  
+
     console.log('Reconstructed path:', path);
-  
+
     // Check if we found a valid path
     if (path.length >= 1 && path[0] === startRoomId && path[path.length - 1] === endRoomId) {
       console.log('Valid path found:', path);
@@ -271,7 +271,146 @@ export class NavigationGraph {
   }
 }
 
+// // Enhanced calculateRoute with proper turn-by-turn directions
+// export const calculateRoute = (
+//   startRoomId: string,
+//   endRoomId: string,
+//   roomPOIs: RoomPOI[],
+//   pathPOIs: PathPOI[]
+// ): NavigationStep[] => {
+//   console.log('calculateRoute called with:', {
+//     startRoomId,
+//     endRoomId,
+//     roomCount: roomPOIs.length,
+//     pathCount: pathPOIs.length
+//   });
 
+//   const graph = new NavigationGraph(roomPOIs, pathPOIs);
+//   const roomPath = graph.findShortestPath(startRoomId, endRoomId);
+
+//   if (!roomPath) {
+//     console.error('No route found between rooms');
+//     return [];
+//   }
+
+//   console.log('Route found:', roomPath);
+
+//   const steps: NavigationStep[] = [];
+//   const { waypoints, totalDistance } = graph.getPathDetails(roomPath);
+
+//   // Find room details
+//   const startRoom = roomPOIs.find(r => r.id === startRoomId);
+//   const endRoom = roomPOIs.find(r => r.id === endRoomId);
+
+//   if (!startRoom || !endRoom) {
+//     console.error('Could not find room details');
+//     return [];
+//   }
+
+//   // Start step
+//   steps.push({
+//     instruction: `Begin navigation from ${startRoom.name}`,
+//     coordinates: startRoom.coordinates,
+//     type: 'start'
+//   });
+
+//   // Process waypoints to create meaningful turn-by-turn instructions
+//   if (waypoints.length > 0) {
+//     for (let i = 0; i < waypoints.length; i++) {
+//       const currentPoint = waypoints[i];
+//       const prevPoint = i > 0 ? waypoints[i - 1] : startRoom.coordinates;
+//       const nextPoint = i < waypoints.length - 1 ? waypoints[i + 1] : endRoom.coordinates;
+
+//       // Calculate distance from previous point
+//       const distanceFromPrev = calculateDistance(prevPoint, currentPoint);
+      
+//       let instruction = '';
+//       let stepType: 'waypoint' | 'turn' = 'waypoint';
+
+//       if (i === 0) {
+//         // First waypoint - initial direction
+//         instruction = `Exit ${startRoom.name} and walk ${formatDistance(distanceFromPrev)} towards ${endRoom.name}`;
+//       } else {
+//         // Subsequent waypoints - check for turns
+//         const turnDirection = calculateTurnDirection(prevPoint, currentPoint, nextPoint);
+        
+//         if (turnDirection === 'left') {
+//           instruction = `Turn left and continue ${formatDistance(calculateDistance(currentPoint, nextPoint))}`;
+//           stepType = 'turn';
+//         } else if (turnDirection === 'right') {
+//           instruction = `Turn right and continue ${formatDistance(calculateDistance(currentPoint, nextPoint))}`;
+//           stepType = 'turn';
+//         } else {
+//           instruction = `Continue straight for ${formatDistance(calculateDistance(currentPoint, nextPoint))}`;
+//         }
+//       }
+
+//       steps.push({
+//         instruction,
+//         coordinates: currentPoint,
+//         type: stepType,
+//         distance: distanceFromPrev
+//       });
+//     }
+//   } else {
+//     // Direct path with no waypoints
+//     const directDistance = calculateDistance(startRoom.coordinates, endRoom.coordinates);
+//     steps.push({
+//       instruction: `Walk directly ${formatDistance(directDistance)} to ${endRoom.name}`,
+//       coordinates: endRoom.coordinates,
+//       type: 'waypoint',
+//       distance: directDistance
+//     });
+//   }
+
+//   // Final destination step
+//   steps.push({
+//     instruction: `You have arrived at ${endRoom.name}`,
+//     coordinates: endRoom.coordinates,
+//     type: 'destination',
+//     distance: totalDistance
+//   });
+
+//   console.log('Generated steps:', steps.length);
+//   return steps;
+// };
+
+// // Helper function to format distance for display
+// function formatDistance(distance: number): string {
+//   // Convert relative distance to approximate real-world distance
+//   // This is a rough approximation - may need to adjust based on your floorplan scale
+//   const approximateMeters = distance * 10; // Assuming 1 unit = 10 meters
+  
+//   if (approximateMeters < 1) {
+//     return `${Math.round(approximateMeters * 100)} cm`;
+//   } else if (approximateMeters < 10) {
+//     return `${Math.round(approximateMeters * 10) / 10} m`;
+//   } else {
+//     return `${Math.round(approximateMeters)} m`;
+//   }
+// }
+
+// Helper function to find the nearest room to a waypoint
+function findNearestRoom(
+  point: { x: number; y: number },
+  roomPOIs: RoomPOI[],
+  excludeRoomIds: string[]
+): RoomPOI | null {
+  let nearestRoom: RoomPOI | null = null;
+  let minDistance = Infinity;
+
+  roomPOIs.forEach(room => {
+    if (!excludeRoomIds.includes(room.id)) {
+      const distance = calculateDistance(point, room.coordinates);
+      if (distance < minDistance && distance < 0.3) { // Only consider rooms within reasonable distance
+        minDistance = distance;
+        nearestRoom = room;
+      }
+    }
+  });
+
+  return nearestRoom;
+}
 
 // Helper function to calculate distance between two points
 export const calculateDistance = (
@@ -283,32 +422,34 @@ export const calculateDistance = (
   return Math.sqrt(dx * dx + dy * dy);
 };
 
-// Generate turn-by-turn directions with better instructions
-// Add this function to navigationUtils.ts
+// Generate detailed turn-by-turn directions
 export const generateDetailedDirections = (steps: NavigationStep[]): NavigationStep[] => {
   if (steps.length === 0) {
     return [];
   }
 
-  // If we only have basic steps, enhance them with better instructions
   const detailedSteps: NavigationStep[] = [];
   
   steps.forEach((step, index) => {
     if (step.type === 'start') {
       detailedSteps.push({
         ...step,
-        instruction: `Begin navigation from ${step.instruction.replace('Start at ', '')}`
+        instruction: `🚶 ${step.instruction}`
       });
     } else if (step.type === 'destination') {
       detailedSteps.push({
         ...step,
-        instruction: `You have arrived at your destination: ${step.instruction.replace('Arrive at ', '')}`
+        instruction: `🎯 ${step.instruction}`
       });
-    } else {
-      // For waypoint steps, provide simple navigation instruction
+    } else if (step.type === 'turn') {
       detailedSteps.push({
         ...step,
-        instruction: `Continue following the path (Waypoint ${index})`
+        instruction: `🔄 ${step.instruction}`
+      });
+    } else {
+      detailedSteps.push({
+        ...step,
+        instruction: `➡️ ${step.instruction}`
       });
     }
   });
@@ -316,14 +457,122 @@ export const generateDetailedDirections = (steps: NavigationStep[]): NavigationS
   return detailedSteps;
 };
 
-// Helper function to calculate turn direction
+// Helper function to calculate turn direction using cross product
 function calculateTurnDirection(
   point1: { x: number; y: number },
   point2: { x: number; y: number },
   point3: { x: number; y: number }
 ): 'left' | 'right' | 'straight' {
-  const cross = (point2.x - point1.x) * (point3.y - point1.y) - (point2.y - point1.y) * (point3.x - point1.x);
+  // Calculate vectors
+  const vec1 = { x: point2.x - point1.x, y: point2.y - point1.y };
+  const vec2 = { x: point3.x - point2.x, y: point3.y - point2.y };
   
-  if (Math.abs(cross) < 0.001) return 'straight';
+  // Calculate cross product
+  const cross = vec1.x * vec2.y - vec1.y * vec2.x;
+  
+  // Determine turn direction
+  if (Math.abs(cross) < 0.01) return 'straight'; // Threshold for straight line
   return cross > 0 ? 'left' : 'right';
 }
+
+// Alternative calculateRoute with landmark references (for future use)
+export const calculateRoute = (
+  startRoomId: string,
+  endRoomId: string,
+  roomPOIs: RoomPOI[],
+  pathPOIs: PathPOI[]
+): NavigationStep[] => {
+  console.log('calculateRouteWithLandmarks called with:', {
+    startRoomId,
+    endRoomId,
+    roomCount: roomPOIs.length,
+    pathCount: pathPOIs.length
+  });
+
+  const graph = new NavigationGraph(roomPOIs, pathPOIs);
+  const roomPath = graph.findShortestPath(startRoomId, endRoomId);
+
+  if (!roomPath) {
+    console.error('No route found between rooms');
+    return [];
+  }
+
+  console.log('Route found:', roomPath);
+
+  const steps: NavigationStep[] = [];
+  const { waypoints, totalDistance } = graph.getPathDetails(roomPath);
+
+  // Find room details
+  const startRoom = roomPOIs.find(r => r.id === startRoomId);
+  const endRoom = roomPOIs.find(r => r.id === endRoomId);
+
+  if (!startRoom || !endRoom) {
+    console.error('Could not find room details');
+    return [];
+  }
+
+  // Start step
+  steps.push({
+    instruction: `Begin navigation from ${startRoom.name}`,
+    coordinates: startRoom.coordinates,
+    type: 'start'
+  });
+
+  // Process waypoints with landmark references
+  if (waypoints.length > 0) {
+    for (let i = 0; i < waypoints.length; i++) {
+      const currentPoint = waypoints[i];
+      const prevPoint = i > 0 ? waypoints[i - 1] : startRoom.coordinates;
+      const nextPoint = i < waypoints.length - 1 ? waypoints[i + 1] : endRoom.coordinates;
+
+      // Find nearest room to current waypoint for landmark reference
+      const nearestRoom = findNearestRoom(currentPoint, roomPOIs, [startRoomId, endRoomId]);
+      
+      let instruction = '';
+      let stepType: 'waypoint' | 'turn' = 'waypoint';
+
+      if (i === 0) {
+        if (nearestRoom) {
+          instruction = `Exit ${startRoom.name} and head towards ${nearestRoom.name}`;
+        } else {
+          instruction = `Exit ${startRoom.name} and head towards ${endRoom.name}`;
+        }
+      } else {
+        const turnDirection = calculateTurnDirection(prevPoint, currentPoint, nextPoint);
+        
+        if (turnDirection === 'left') {
+          instruction = nearestRoom 
+            ? `Turn left near ${nearestRoom.name}`
+            : `Turn left and continue`;
+          stepType = 'turn';
+        } else if (turnDirection === 'right') {
+          instruction = nearestRoom 
+            ? `Turn right near ${nearestRoom.name}`
+            : `Turn right and continue`;
+          stepType = 'turn';
+        } else {
+          instruction = nearestRoom 
+            ? `Continue straight past ${nearestRoom.name}`
+            : `Continue straight`;
+        }
+      }
+
+      steps.push({
+        instruction,
+        coordinates: currentPoint,
+        type: stepType
+      });
+    }
+  }
+
+  // Final approach
+  steps.push({
+    instruction: `You have arrived at ${endRoom.name}`,
+    coordinates: endRoom.coordinates,
+    type: 'destination',
+    distance: totalDistance
+  });
+
+  console.log('Generated steps:', steps.length);
+  return steps;
+};
