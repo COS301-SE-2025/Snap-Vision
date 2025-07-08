@@ -1,6 +1,6 @@
 import { LogBox } from 'react-native';
 LogBox.ignoreLogs([
-  'Text strings must be rendered within a <Text> component', // nice fix
+  'Text strings must be rendered within a <Text> component',
 ]);
 // App.tsx
 import React, { useEffect, useRef, useState } from 'react';
@@ -29,6 +29,9 @@ import { initializePreBundledFloorplans } from './src/utils/floorplanUtils';
 import Toast from 'react-native-toast-message';
 import { toastConfig } from './src/toastConfig';
 import AuthResolverScreen from './src/screens/AuthResolverScreen';
+import BuildingSelectionScreen from './src/screens/BuildingSelectionScreen';
+import IndoorNavigationInterfaceScreen from './src/screens/IndoorNavigationInterfaceScreen';
+import IndoorNavigationInstructionsScreen from './src/screens/IndoorNavigationInstructionsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -88,6 +91,9 @@ function AppInner() {
             <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
             <Stack.Screen name="ShopScreen" component={ShopScreen} />
+            <Stack.Screen name="BuildingSelection" component={BuildingSelectionScreen} options={{ title: 'Indoor Navigation' }} />
+            <Stack.Screen name="IndoorNavigationInterface" component={IndoorNavigationInterfaceScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="IndoorNavigationInstructions" component={IndoorNavigationInstructionsScreen} options={{ headerShown: false }} />
           </Stack.Navigator>
         </NavigationContainer>
       </ThemeProvider>
