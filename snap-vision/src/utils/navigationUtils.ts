@@ -576,3 +576,93 @@ export const calculateRoute = (
   console.log('Generated steps:', steps.length);
   return steps;
 };
+
+// AR Navigation utilities
+export interface ARNavigationData {
+  bearing: number;
+  distance: number;
+  nextWaypoint: { x: number; y: number } | null;
+  isAtDestination: boolean;
+}
+
+// Calculate bearing from current position to target in your coordinate system
+export const calculateARBearing = (
+  currentPos: { x: number; y: number },
+  targetPos: { x: number; y: number }
+): number => {
+  const dx = targetPos.x - currentPos.x;
+  const dy = targetPos.y - currentPos.y;
+  
+  // Calculate angle in radians, then convert to degrees
+  // Note: This assumes your coordinate system has Y increasing upward
+  const angle = Math.atan2(dx, -dy) * (180 / Math.PI);
+  
+  // Normalize to 0-360 degrees
+  return (angle + 360) % 360;
+};
+
+// Get the next waypoint for AR navigation
+export const getNextARWaypoint = (
+  currentPos: { x: number; y: number },
+  navigationSteps: NavigationStep[],
+  proximityThreshold: number = 0.1
+): { x: number; y: number } | null => {
+  if (!navigationSteps || navigationSteps.length === 0) {
+    return null;
+  }
+
+  // Find the closest upcoming waypoint
+  for (const step of navigationSteps) {
+    const distance = calculateDistance(currentPos, step.coordinates);
+    
+    // If we're not close to this waypoint yet, it's our target
+    if (distance > proximityThreshold) {
+      return step.coordinates;
+    }
+  }
+
+  // If we're close to all waypoints, target the last one (destination)
+  return navigationSteps[navigationSteps.length - 1]?.coordinates || null;
+};
+
+// Calculate AR navigation data for current position
+export const calculateARNavigationData = (
+  currentPos: { x: number; y: number },
+  navigationSteps: NavigationStep[],
+  destinationPos: { x: number; y: number }
+): ARNavigationData => {
+  const nextWaypoint = getNextARWaypoint(currentPos, navigationSteps);
+  const targetPos = nextWaypoint || destinationPos;
+  
+  const bearing = calculateARBearing(currentPos, targetPos);
+  const distance = calculateDistance(currentPos, targetPos);
+  const isAtDestination = distance < 0.05; // Very close to destination
+  
+  return {
+    bearing,
+    distance,
+    nextWaypoint,
+    isAtDestination
+  };
+};
+
+// Convert relative coordinates to screen direction for AR
+export const getARDirection = (
+  currentPos: { x: number; y: number },
+  targetPos: { x: number; y: number },
+  deviceHeading: number
+): number => {
+  const bearing = calculateARBearing(currentPos, targetPos);
+  
+  // Calculate direction relative to device heading
+  let arDirection = bearing - deviceHeading;
+  
+  // Normalize to -180 to 180 range for easier arrow positioning
+  if (arDirection > 180) {
+    arDirection -= 360;
+  } else if (arDirection < -180) {
+    arDirection += 360;
+  }
+  
+  return arDirection;
+};
