@@ -34,13 +34,14 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import ARNavigationOverlay from '../components/organisms/ARNavigationOverlay';
 import { useCompass } from '../hooks/useCompass';
 import { requestCameraPermission } from '../utils/cameraPermissions';
+import { useNavigation } from '@react-navigation/native';
 
 type MapScreenParams = {
   lat?: string;
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'http://192.168.1.93:3000'; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = 'http://192.168.1.60:3000'; //use your correct backend ip here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
@@ -117,9 +118,9 @@ const MapScreen = () => {
   const [adminActionPOI, setAdminActionPOI] = useState<any>(null);
   const [tempMessage, setTempMessage] = useState<string>('');
 
-  // AR Navigation state
   const [showAR, setShowAR] = useState(false);
   const deviceHeading = useCompass();
+  const navigation = useNavigation();
 
   //haptic feedback options
   const hapticOptions = {
@@ -1095,6 +1096,19 @@ const MapScreen = () => {
     }
   };
 
+  const startARNavigation = () => {
+    if (!destination || !destinationCoords || !steps.length) {
+      Alert.alert('Error', 'Please select a destination first');
+      return;
+    }
+
+    navigation.navigate('ARNavigation', {
+      destination,
+      coordinates: destinationCoords,
+      steps,
+    });
+  };
+
   // Dynamically request location updates
   useEffect(() => {
     let watchId: number | null = null;
@@ -1435,6 +1449,7 @@ const MapScreen = () => {
           isNavigating={isNavigating}
           isLoading={isRouteLoading}
           onStartNavigation={startNavigation}
+          onStartARNavigation={startARNavigation}
           onStopNavigation={stopNavigation}
           onCancelRoute={cancelRoute}
           progress={routeProgress}

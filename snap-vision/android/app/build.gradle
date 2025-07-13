@@ -119,6 +119,8 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+
+    implementation 'com.google.ar:core:1.34.0'
 }
 
 apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
