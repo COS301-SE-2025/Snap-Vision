@@ -7,7 +7,7 @@ const {
   purchaseItemForUser,
   completeChallengeForUser,
   incrementRoutesCompletedForUser,
-} = require("../../scripts/badgeService");
+} = require("../services/badgeService");
 
 // POST /api/badges/unlock   { uid, badgeId }
 router.post("/unlock", async (req, res) => {
