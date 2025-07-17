@@ -14,11 +14,6 @@
     ]
   },
   "emulators": {
-    "apphosting": {
-      "port": 5002,
-      "rootDirectory": "snap-vision",
-      "startCommand": "npx react-native start"
-    },
     "auth": {
       "port": 9099
     },
