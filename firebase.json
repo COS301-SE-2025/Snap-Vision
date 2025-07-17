@@ -1,12 +1,33 @@
 {
   "hosting": {
     "public": "web",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
     "rewrites": [
       {
         "source": "**",
         "destination": "/index.html"
       }
     ]
+  },
+  "emulators": {
+    "apphosting": {
+      "port": 5002,
+      "rootDirectory": "snap-vision",
+      "startCommand": "npx react-native start"
+    },
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "ui": {
+      "enabled": true
+    },
+    "singleProjectMode": true
   }
 }
