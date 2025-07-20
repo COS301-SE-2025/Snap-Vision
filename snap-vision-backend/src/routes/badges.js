@@ -1,4 +1,3 @@
-// snap-vision-backend/src/routes/badges.js
 const express = require("express");
 const router = express.Router();
 const {
