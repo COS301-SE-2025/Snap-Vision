@@ -1,5 +1,3 @@
-// __tests__/integration/badges.routes.integration.test.js
-
 process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
 process.env.FIREBASE_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
 
@@ -11,13 +9,11 @@ beforeAll(() => {
   if (!admin.apps.length) {
     admin.initializeApp({ projectId: "snap-vision-backend" });
   }
-  // this should be your index.js that does `const server = app.listen(...)` and `module.exports = server`
   server = require("../../index");
 });
 
 afterAll(async () => {
   await server.close();
-  // wipe users collection
   const db = admin.firestore();
   const docs = await db.collection("users").listDocuments();
   await Promise.all(docs.map((d) => d.delete()));
