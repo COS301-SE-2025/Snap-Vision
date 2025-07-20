@@ -1,6 +1,3 @@
-// __tests__/unit/badges.unit.test.js
-
-// 1) Mock firebase-admin at the top
 jest.mock("firebase-admin", () => {
   const apps = [];
   const firestoreMock = jest.fn();
@@ -24,14 +21,11 @@ describe("badgeService (unit)", () => {
   let mockUserDoc;
 
   beforeEach(() => {
-    // a) Clear module cache
+
     jest.resetModules();
 
-    // b) Re-require firebase-admin so our mock is fresh
     admin = require("firebase-admin");
 
-    // c) Prepare the transaction and userDoc mocks
-    // mockUserRef = {};
     mockUserDoc = { exists: false, data: () => ({}) };
     mockTransaction = {
       get:    jest.fn().mockResolvedValue(mockUserDoc),
@@ -39,7 +33,6 @@ describe("badgeService (unit)", () => {
       update: jest.fn(),
     };
 
-    // d) Build mockDb
     mockUserRef = {
   get: jest.fn().mockResolvedValue(mockUserDoc),
   set: jest.fn(),
@@ -53,10 +46,8 @@ mockDb = {
   runTransaction: jest.fn((cb) => cb(mockTransaction)),
 };
 
-    // e) Stub firestore() **before** loading badgeService
     admin.firestore.mockReturnValue(mockDb);
 
-    // f) Now load badgeService inside isolateModules to pick up our stub
     jest.isolateModules(() => {
       badgeService = require("../../src/services/badgeService");
     });
@@ -66,7 +57,6 @@ mockDb = {
     jest.clearAllMocks();
   });
 
-  // --- unlockBadgeForUser ---
   describe("unlockBadgeForUser", () => {
     it("creates a new user doc with starting points and badge", async () => {
       mockUserDoc.exists = false;
@@ -110,7 +100,6 @@ mockDb = {
     });
   });
 
-  // --- getUserBadgeData ---
   it("returns data if user exists", async () => {
   // Stub the top‑level mockDb.collection() → mockUserRef.get()
   mockDb.collection = jest.fn().mockReturnValue({
@@ -147,7 +136,6 @@ mockDb = {
   expect(result.purchases).toHaveLength(1);
 });
 
-  // --- completeChallengeForUser ---
   it("adds new challenge and increments points", async () => {
   mockUserDoc.exists = true;
   mockUserDoc.data = () => ({ completedChallenges: [], points: 0 });
@@ -162,7 +150,6 @@ mockDb = {
   expect(updated.completedChallenges).toContain("c2");
 });
 
-  // --- incrementRoutesCompletedForUser ---
   it("increments routes and unlocks milestone badge", async () => {
   mockUserDoc.exists = true;
   mockUserDoc.data = () => ({ routesCompleted: 9, badges: [] });
