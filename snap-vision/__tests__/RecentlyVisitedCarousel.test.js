@@ -90,5 +90,24 @@ describe('RecentlyVisitedCarousel', () => {
     fireEvent.press(item);
     expect(console.log).toHaveBeenCalledWith('Selected:', 'Building A');
   });
+
+    it('renders no items when visits array is empty', () => {
+    render(<RecentlyVisitedCarousel visits={[]} />);
+    expect(screen.queryByText('Building A')).toBeNull(); // Ensure no items are rendered
+  });
+
+    it('renders all items in the visits array', () => {
+    const visits = [
+      { id: '1', name: 'Building A', timestamp: { toDate: () => new Date('2023-07-01') } },
+      { id: '2', name: 'Building B', timestamp: { toDate: () => new Date('2023-07-02') } },
+      { id: '3', name: 'Building C', timestamp: { toDate: () => new Date('2023-07-03') } },
+    ];
+  
+    render(<RecentlyVisitedCarousel visits={visits} />);
+  
+    expect(screen.getByText('Building A')).toBeTruthy();
+    expect(screen.getByText('Building B')).toBeTruthy();
+    expect(screen.getByText('Building C')).toBeTruthy();
+  });
 });
 
