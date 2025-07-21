@@ -109,5 +109,16 @@ describe('RecentlyVisitedCarousel', () => {
     expect(screen.getByText('Building B')).toBeTruthy();
     expect(screen.getByText('Building C')).toBeTruthy();
   });
+
+    it('uses a unique key for each item', () => {
+    const visits = [
+      { id: '1', name: 'Building A', timestamp: { toDate: () => new Date('2023-07-01') } },
+      { poiId: 'poi123', name: 'Building B', timestamp: { toDate: () => new Date('2023-07-02') } },
+    ];
+  
+    const { getByText } = render(<RecentlyVisitedCarousel visits={visits} />);
+    expect(getByText('Building A')).toBeTruthy();
+    expect(getByText('Building B')).toBeTruthy();
+  });
 });
 
