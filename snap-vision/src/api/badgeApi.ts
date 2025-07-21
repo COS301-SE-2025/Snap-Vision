@@ -2,7 +2,7 @@
 import { BadgeId } from '../types/badges';
 
 // Android emulator uses 10.0.2.2 to access localhost on your PC
-const BASE = 'http://10.0.2.2:3000/api/badges';
+const BASE = 'http://192.168.38.203:3000/api/badges';
 
 export async function fetchBadgeSnapshot(uid: string) {
   const res = await fetch(`${BASE}/${uid}`);
@@ -45,4 +45,14 @@ export async function completeChallenge(uid: string, challengeId: string) {
   });
   if (!res.ok) throw new Error('Unable to complete challenge');
   return res.json(); // Updated user data with challenges, points, etc.
+}
+
+export async function incrementRoutesCompleted(uid: string) {
+  const res = await fetch(`${BASE}/increment-routes`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ uid }),
+  });
+  if (!res.ok) throw new Error('Unable to increment routes completed');
+  return res.json();
 }

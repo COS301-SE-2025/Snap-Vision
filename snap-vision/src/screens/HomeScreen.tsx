@@ -11,12 +11,14 @@ const HomeScreen = () => {
   // const [showLanding, setShowLanding] = useState(true);
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  const { hasSeenLanding, setHasSeenLanding } = useLanding();
+  const { hasSeenLanding, setHasSeenLanding, loading } = useLanding();
+
+  if (loading) return null;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {!hasSeenLanding && <MapHomeContent />}
-      {hasSeenLanding && <LandingOverlay onDismiss={() => setHasSeenLanding(false)} />}
+      {!hasSeenLanding && <LandingOverlay onDismiss={() => setHasSeenLanding(true)} />}
+      {hasSeenLanding && <MapHomeContent />}
     </View>
   );
 };

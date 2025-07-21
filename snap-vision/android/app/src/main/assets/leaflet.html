@@ -159,11 +159,17 @@
       }
 
       // Function to update user location
-      window.updateUserLocation = function (lat, lon) {
+      window.updateUserLocation = function (lat, lon, centerMap = false, zoomLevel = null) {
         const coords = [lat, lon];
         if (!map) return;
 
-        map.setView(coords, 16);
+        if (centerMap) {
+          if (zoomLevel !== null) {
+            map.setView(coords, zoomLevel);
+          } else {
+            map.setView(coords, 16);
+          }
+        }
 
         if (userMarker) {
           userMarker.setLatLng(coords);
@@ -197,6 +203,43 @@
         crowdData = {};
       };
 
+      // Function to remove a POI marker by ID
+      window.removePOIById = function (poiId) {
+        // Exit if no map
+        if (!map) return;
+
+        console.log('Attempting to remove POI marker with ID:', poiId);
+
+        // Find the marker by ID
+        let markerToRemove = null;
+        let markerIndex = -1;
+
+        for (let i = 0; i < poiMarkers.length; i++) {
+          const marker = poiMarkers[i];
+          if (marker && marker.poiId === poiId) {
+            markerToRemove = marker;
+            markerIndex = i;
+            break;
+          }
+        }
+
+        // Remove the marker if found
+        if (markerToRemove) {
+          console.log('Found marker to remove at index:', markerIndex);
+          if (map.hasLayer(markerToRemove)) {
+            map.removeLayer(markerToRemove);
+          }
+          // Remove from arrays
+          poiMarkers.splice(markerIndex, 1);
+          poiData = poiData.filter((p) => p.id !== poiId);
+
+          return true;
+        }
+
+        console.log('Marker not found for removal');
+        return false;
+      };
+
       // Helper function to create popup content with crowd info
       function getPopupContent(poi) {
         const buildingId = poi.id;
@@ -210,37 +253,89 @@
             <strong>Crowd: ${crowdInfo.label}</strong><br>
             <small>Updated recently • Expires in 1 hour</small>
           </div>
-        `;
+          `;
         }
 
         let adminButtons = '';
         if (window.isAdmin) {
           adminButtons = `
             <div style="margin-top: 8px;">
-              <button onclick="window.editPOI('${buildingId}')" style="margin-right:6px;background-color:orange;">Edit</button>
-              <button onclick="window.deletePOI('${buildingId}')" style="background-color:red;">Delete</button>
+              <button onclick="window.showAdminActions('${buildingId}')" style="
+                padding: 6px 12px;
+                background-color: #FF9800;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+                width: 100%;
+              ">Admin Actions</button>
             </div>
           `;
         }
 
         return `
-        <div style="text-align: center;">
-          <strong>🏢 ${poi.name || 'Unnamed Building'}</strong>
-          ${crowdHtml}
-          <button onclick="window.selectPOI('${poi.id}')" style="
-            margin-top: 8px;
-            padding: 6px 12px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-          ">Navigate Here</button>
-          ${adminButtons}
-        </div>
-      `;
+          <div style="text-align: center; min-width: 150px;">
+            <div style="margin-bottom: 8px;">
+              <strong>🏢 ${poi.name || 'Unnamed Building'}</strong>
+            </div>
+            ${crowdHtml}
+            <div style="margin-top: 8px;">
+              <button onclick="window.navigateToPOI('${poi.id}')" style="
+                padding: 6px 12px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+                width: 100%;
+              ">Navigate Here</button>
+            </div>
+            ${adminButtons}
+          </div>
+        `;
       }
+
+      // Function specifically for navigation
+      window.navigateToPOI = function (poiId) {
+        console.log('Navigating to POI with ID:', poiId);
+        const selectedMarker = poiMarkers.find(
+          (marker) => marker.poiData && marker.poiData.id === poiId,
+        );
+        if (selectedMarker) {
+          hideOtherPOIMarkers(selectedMarker);
+
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(
+              JSON.stringify({
+                type: 'POI_SELECTED',
+                poi: selectedMarker.poiData,
+              }),
+            );
+          }
+        }
+      };
+
+      // Function specifically for admin actions
+      window.showAdminActions = function (poiId) {
+        console.log('Showing admin actions for POI with ID:', poiId);
+        const selectedMarker = poiMarkers.find(
+          (marker) => marker.poiData && marker.poiData.id === poiId,
+        );
+        if (selectedMarker) {
+          hideOtherPOIMarkers(selectedMarker);
+
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(
+              JSON.stringify({
+                type: 'ADMIN_POI_SELECTED',
+                poi: selectedMarker.poiData,
+              }),
+            );
+          }
+        }
+      };
 
       // Function to update popup content with latest crowd data
       function updatePopupContent(marker) {
@@ -300,6 +395,20 @@
         }
       };
 
+      window.clearAllPOIMarkers = function () {
+        if (!map) return;
+
+        // Remove all existing POI markers
+        poiMarkers.forEach((marker) => {
+          if (map.hasLayer(marker)) {
+            map.removeLayer(marker);
+          }
+        });
+        poiMarkers = [];
+        poiData = [];
+        map.invalidateSize();
+      };
+
       function showAllPOIMarkers() {
         if (!isNavigating) {
           // Only show POI markers when not navigating
@@ -328,6 +437,7 @@
       };
 
       window.selectPOI = function (poiId) {
+        console.log('Selecting POI with ID:', poiId);
         const selectedMarker = poiMarkers.find(
           (marker) => marker.poiData && marker.poiData.id === poiId,
         );

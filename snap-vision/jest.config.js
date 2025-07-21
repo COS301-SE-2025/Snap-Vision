@@ -9,7 +9,11 @@ module.exports = {
     '^~/(.*)$': '<rootDir>/src/$1',
     '^@expo/vector-icons/?(.*)$': 'react-native-vector-icons/$1',
   },
-  testMatch: ['**/__tests__/**/*.test.ts?(x)', '<rootDir>/detox/tests/**/*.test.js'],
+  testMatch: [
+    '**/__tests__/**/*.test.js?(x)',
+    '**/__tests__/**/*.test.ts?(x)',
+    '<rootDir>/detox/tests/**/*.test.js',
+  ],
   collectCoverage: true,
   collectCoverageFrom: [
     'src/components/organisms/*.{ts,tsx}',
