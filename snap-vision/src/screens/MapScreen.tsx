@@ -121,6 +121,7 @@ const MapScreen = () => {
   // AR Navigation state
   const [showAR, setShowAR] = useState(false);
   const deviceHeading = useCompass();
+  const [isNavigationMinimized, setIsNavigationMinimized] = useState(false);
 
   //haptic feedback options
   const hapticOptions = {
@@ -282,6 +283,10 @@ const MapScreen = () => {
       setShowAR(false);
       setStatus('AR Navigation disabled');
     }
+  };
+
+  const handleNavigationMinimize = () => {
+    setIsNavigationMinimized(!isNavigationMinimized);
   };
 
   // Helper: Open modal to add new POI
@@ -1539,6 +1544,11 @@ const MapScreen = () => {
           onToggleVoice={() => setIsVoiceEnabled(!isVoiceEnabled)}
           currentInstruction={steps[currentStep]?.instruction}
           onSpeakingChange={setIsSpeaking}
+          showAR={showAR}
+          onToggleAR={handleARToggle}
+          destinationCoords={destinationCoords}
+          isMinimized={showAR && isNavigationMinimized}
+          onToggleMinimize={handleNavigationMinimize}
         />
       )}
 
@@ -1559,39 +1569,6 @@ const MapScreen = () => {
         onReportOut={() => setShowReportTooltip(false)}
         color={colors.primary}
       />
-
-      {/* AR Navigation Toggle Button */}
-      {isNavigating && destinationCoords && (
-        <TouchableOpacity
-          style={{
-            position: 'absolute',
-            bottom: 120,
-            right: 20,
-            backgroundColor: showAR ? colors.primary : colors.card,
-            width: 56,
-            height: 56,
-            borderRadius: 28,
-            justifyContent: 'center',
-            alignItems: 'center',
-            elevation: 6,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.25,
-            shadowRadius: 4,
-          }}
-          onPress={handleARToggle}
-        >
-          <Text
-            style={{
-              color: showAR ? 'white' : colors.text,
-              fontSize: 12,
-              fontWeight: 'bold',
-            }}
-          >
-            AR
-          </Text>
-        </TouchableOpacity>
-      )}
 
       {/* AR Navigation Overlay */}
       {showAR && isNavigating && destinationCoords && currentLocation && (
