@@ -234,7 +234,7 @@ describe('Floorplans Integration Tests', () => {
   describe('AdminEditFloorplansContent Integration', () => {
     it('shows loading, then floorplans', async () => {
       setupDefaultMocks();
-      
+
       const { getByText, queryByText } = render(
         <TestWrapper>
           <AdminEditFloorplansContent />
@@ -271,7 +271,9 @@ describe('Floorplans Integration Tests', () => {
 
       await waitFor(
         () => {
-          expect(getByText('No floorplans available. Add a new floorplan to get started.')).toBeTruthy();
+          expect(
+            getByText('No floorplans available. Add a new floorplan to get started.'),
+          ).toBeTruthy();
         },
         { timeout: 3000 },
       );
@@ -533,9 +535,11 @@ describe('Floorplans Integration Tests', () => {
       await waitFor(
         () => {
           // Should either show "No floorplans available" or not show "Science Hall"
-          const noFloorplansText = queryByText('No floorplans available. Add a new floorplan to get started.');
+          const noFloorplansText = queryByText(
+            'No floorplans available. Add a new floorplan to get started.',
+          );
           const scienceHallText = queryByText('Science Hall');
-          
+
           expect(noFloorplansText || !scienceHallText).toBeTruthy();
         },
         { timeout: 3000 },

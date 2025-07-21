@@ -264,7 +264,9 @@ describe('AdminEditFloorplansContent', () => {
     const { getByText } = render(<AdminEditFloorplansContent />);
 
     await waitFor(() => {
-      expect(getByText('No floorplans available. Add a new floorplan to get started.')).toBeTruthy();
+      expect(
+        getByText('No floorplans available. Add a new floorplan to get started.'),
+      ).toBeTruthy();
     });
   });
 
