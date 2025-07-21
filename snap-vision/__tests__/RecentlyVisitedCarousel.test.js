@@ -152,5 +152,14 @@ it('handles items without a timestamp', () => {
   expect(screen.getByText('Building A')).toBeTruthy();
   expect(screen.queryByText('7/1/2023')).toBeNull(); 
 });
+
+it('handles items with long names', () => {
+  const visits = [
+    { id: '1', name: 'A very long building name that might overflow', timestamp: { toDate: () => new Date('2023-07-01') } },
+  ];
+
+  render(<RecentlyVisitedCarousel visits={visits} />);
+  expect(screen.getByText('A very long building name that might overflow')).toBeTruthy();
+});
 });
 
