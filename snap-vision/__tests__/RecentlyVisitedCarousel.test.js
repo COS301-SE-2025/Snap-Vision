@@ -59,4 +59,36 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+describe('RecentlyVisitedCarousel', () => {
+  it('renders "No recently visited locations" when no visits are provided', () => {
+    render(<RecentlyVisitedCarousel visits={[]} />);
+    expect(screen.getByText('No recently visited locations.')).toBeTruthy();
+  });
+
+  it('renders a list of recently visited locations', () => {
+    const visits = [
+      { id: '1', name: 'Building A', timestamp: { toDate: () => new Date('2023-07-01') } },
+      { id: '2', name: 'Building B', timestamp: { toDate: () => new Date('2023-07-02') } },
+    ];
+
+    render(<RecentlyVisitedCarousel visits={visits} />);
+
+    expect(screen.getByText('Building A')).toBeTruthy();
+    expect(screen.getByText('Building B')).toBeTruthy();
+    expect(screen.getByText('7/1/2023')).toBeTruthy();
+    expect(screen.getByText('7/2/2023')).toBeTruthy();
+  });
+
+  it('handles item selection', () => {
+    const visits = [
+      { id: '1', name: 'Building A', timestamp: { toDate: () => new Date('2023-07-01') } },
+    ];
+
+    const { getByText } = render(<RecentlyVisitedCarousel visits={visits} />);
+    const item = getByText('Building A');
+
+    fireEvent.press(item);
+    expect(console.log).toHaveBeenCalledWith('Selected:', 'Building A');
+  });
+});
 
