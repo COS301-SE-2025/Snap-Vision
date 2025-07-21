@@ -120,5 +120,27 @@ describe('RecentlyVisitedCarousel', () => {
     expect(getByText('Building A')).toBeTruthy();
     expect(getByText('Building B')).toBeTruthy();
   });
+
+    it('logs the correct item when pressed', () => {
+    const visits = [
+      { id: '1', name: 'Building A', timestamp: { toDate: () => new Date('2023-07-01') } },
+      { id: '2', name: 'Building B', timestamp: { toDate: () => new Date('2023-07-02') } },
+    ];
+  
+    const { getByText } = render(<RecentlyVisitedCarousel visits={visits} />);
+    const item = getByText('Building B');
+  
+    fireEvent.press(item);
+    expect(console.log).toHaveBeenCalledWith('Selected:', 'Building B');
+  });
+  
+    it('formats the timestamp correctly', () => {
+    const visits = [
+      { id: '1', name: 'Building A', timestamp: { toDate: () => new Date('2023-07-01') } },
+    ];
+  
+    render(<RecentlyVisitedCarousel visits={visits} />);
+    expect(screen.getByText('7/1/2023')).toBeTruthy(); // Adjust format based on locale
+  });
 });
 
