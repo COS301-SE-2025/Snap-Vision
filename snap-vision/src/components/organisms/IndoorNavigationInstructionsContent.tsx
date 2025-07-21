@@ -245,7 +245,7 @@ export default function IndoorNavigationInstructionsContent({
                 style={[styles.completeButton, { backgroundColor: colors.primary }]}
                 onPress={() => markStepCompleted(index)}
               >
-                <Text style={styles.completeButtonText}>I've completed this step</Text>
+                <Text style={styles.completeButtonText}>I&#39;ve completed this step</Text>
               </TouchableOpacity>
             )}
 
@@ -254,7 +254,7 @@ export default function IndoorNavigationInstructionsContent({
                 style={[styles.completeButton, { backgroundColor: colors.success || '#4CAF50' }]}
                 onPress={() => markStepCompleted(index)}
               >
-                <Text style={styles.completeButtonText}>I've arrived!</Text>
+                <Text style={styles.completeButtonText}>I&#39;ve arrived!</Text>
               </TouchableOpacity>
             )}
           </View>

@@ -1,8 +1,7 @@
+/* eslint-env jest */
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
 import RecentlyVisitedCarousel from '../src/components/molecules/RecentlyVisitedCarousel';
-import { addRecentlyVisitedPOI } from '../src/services/firebase/recentlyVService';
-import firestore from '@react-native-firebase/firestore';
 
 jest.mock('@react-native-firebase/app', () => ({
   firebase: {
@@ -20,7 +19,6 @@ jest.mock('@react-native-firebase/auth', () => ({
     signInWithEmailAndPassword: jest.fn(),
     signOut: jest.fn(),
     currentUser: { uid: 'user123' },
-    currentUser: null,
   })),
 }));
 
