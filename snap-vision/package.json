@@ -27,6 +27,7 @@
     "@react-navigation/native": "^7.1.10",
     "@react-navigation/native-stack": "^7.3.14",
     "@react-navigation/stack": "^7.3.2",
+    "@shopify/react-native-skia": "^2.1.1",
     "babel-plugin-module-resolver": "^4.1.0",
     "cli-spinners": "^3.2.0",
     "query-string": "^9.2.1",
@@ -43,12 +44,15 @@
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "^5.4.1",
     "react-native-screens": "~4.10.0",
+    "react-native-sensors": "^7.3.6",
     "react-native-svg-transformer": "^1.5.1",
     "react-native-toast-message": "^2.3.3",
     "react-native-tts": "^4.1.1",
     "react-native-vector-icons": "^10.2.0",
+    "react-native-vision-camera": "^4.7.0",
     "react-native-web": "~0.20.0",
     "react-native-webview": "^13.13.5",
+    "react-native-worklets-core": "^1.6.0",
     "react-test-renderer": "^19.0.0"
   },
   "devDependencies": {

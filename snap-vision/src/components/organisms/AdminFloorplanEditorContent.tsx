@@ -26,6 +26,18 @@ interface RoomPOI {
   description: string | null;
 }
 
+interface PathPOI {
+  id: string;
+  buildingId: string;
+  floorId: string;
+  startRoomId: string;
+  endRoomId: string;
+  waypoints: { x: number; y: number }[];
+  distance: number;
+  accessible: boolean;
+  createdAt: string;
+}
+
 type Point = { x: number; y: number } | null;
 
 export default function AdminFloorplanEditorContent() {
@@ -47,6 +59,12 @@ export default function AdminFloorplanEditorContent() {
   });
   const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+
+  // Path creation state
+  const [pathMarkers, setPathMarkers] = useState<PathPOI[]>([]);
+  const [isPathMode, setIsPathMode] = useState(false);
+  const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
+  const [currentPath, setCurrentPath] = useState<{ x: number; y: number }[]>([]);
 
   // Get route params with a safe default
   const { buildingId, floorLabel, imageUri } = route.params || {
@@ -94,6 +112,146 @@ export default function AdminFloorplanEditorContent() {
 
     loadRoomPOIs();
   }, [buildingId, floorLabel, route.params]);
+
+  // Load existing paths
+  useEffect(() => {
+    if (!route.params || !buildingId || !floorLabel) return;
+
+    const loadPaths = async () => {
+      try {
+        const snapshot = await firestore()
+          .collection('PathPOIs')
+          .where('buildingId', '==', buildingId)
+          .where('floorId', '==', floorLabel)
+          .get();
+
+        const paths = snapshot.docs.map((doc) => ({
+          ...(doc.data() as PathPOI),
+        }));
+        setPathMarkers(paths);
+
+        // Draw paths on WebView
+        if (paths.length > 0) {
+          setTimeout(() => {
+            const pathData = paths.map((path) => ({
+              id: path.id,
+              d: generatePathSVG(path.waypoints),
+            }));
+            webViewRef.current?.injectJavaScript(`
+              window.drawPaths && window.drawPaths(${JSON.stringify(pathData)});
+              true;
+            `);
+          }, 1000);
+        }
+      } catch (error) {
+        console.error('Error loading paths:', error);
+      }
+    };
+
+    loadPaths();
+  }, [buildingId, floorLabel, route.params]);
+
+  // Generate SVG path string from waypoints
+  const generatePathSVG = (waypoints: { x: number; y: number }[]) => {
+    if (waypoints.length < 2) return '';
+
+    // Convert relative coordinates (0-1) to SVG coordinates (0-100)
+    let pathString = `M ${waypoints[0].x * 100} ${waypoints[0].y * 100}`;
+    for (let i = 1; i < waypoints.length; i++) {
+      pathString += ` L ${waypoints[i].x * 100} ${waypoints[i].y * 100}`;
+    }
+    return pathString;
+  };
+
+  // Calculate path distance
+  const calculatePathDistance = (waypoints: { x: number; y: number }[]) => {
+    let totalDistance = 0;
+    for (let i = 1; i < waypoints.length; i++) {
+      const dx = waypoints[i].x - waypoints[i - 1].x;
+      const dy = waypoints[i].y - waypoints[i - 1].y;
+      totalDistance += Math.sqrt(dx * dx + dy * dy);
+    }
+    return totalDistance;
+  };
+
+  // Toggle path creation mode
+  const togglePathMode = () => {
+    const newPathMode = !isPathMode;
+    setIsPathMode(newPathMode);
+    setSelectedRooms([]);
+    setCurrentPath([]);
+
+    webViewRef.current?.injectJavaScript(`
+      window.togglePathMode && window.togglePathMode(${newPathMode});
+      true;
+    `);
+  };
+
+  // Save path to Firestore
+  const savePath = async () => {
+    if (selectedRooms.length !== 2 || currentPath.length < 2) {
+      Alert.alert('Error', 'Please select two rooms and add waypoints to create a path');
+      return;
+    }
+
+    try {
+      const pathId = `path_${buildingId.replace(/\//g, '_')}_${floorLabel.replace(/\s/g, '_')}_${Date.now()}`;
+
+      // Get room coordinates for start and end points
+      const startRoom = roomMarkers.find((r) => r.id === selectedRooms[0]);
+      const endRoom = roomMarkers.find((r) => r.id === selectedRooms[1]);
+
+      if (!startRoom || !endRoom) {
+        Alert.alert('Error', 'Selected rooms not found');
+        return;
+      }
+
+      // Create waypoints array including start and end room positions
+      const waypoints = [startRoom.coordinates, ...currentPath, endRoom.coordinates];
+
+      const pathPOI: PathPOI = {
+        id: pathId,
+        buildingId: buildingId,
+        floorId: floorLabel,
+        startRoomId: selectedRooms[0],
+        endRoomId: selectedRooms[1],
+        waypoints: waypoints, // This includes start, middle waypoints, and end
+        distance: calculatePathDistance(waypoints),
+        accessible: true,
+        createdAt: new Date().toISOString(),
+      };
+
+      await firestore().collection('PathPOIs').doc(pathId).set(pathPOI);
+
+      setPathMarkers([...pathMarkers, pathPOI]);
+
+      // Draw the new path - use the full waypoints array
+      const pathData = {
+        id: pathId,
+        d: generatePathSVG(waypoints),
+      };
+
+      webViewRef.current?.injectJavaScript(`
+        window.drawSinglePath && window.drawSinglePath(${JSON.stringify(pathData)});
+        true;
+      `);
+
+      // Reset path creation
+      setIsPathMode(false);
+      setSelectedRooms([]);
+      setCurrentPath([]);
+
+      webViewRef.current?.injectJavaScript(`
+        window.togglePathMode && window.togglePathMode(false);
+        true;
+      `);
+
+      Alert.alert('Success', 'Path created successfully');
+    } catch (error) {
+      console.error('Error saving path:', error);
+      Alert.alert('Error', 'Failed to save path');
+    }
+  };
 
   // After all hooks, we can have conditional returns
   // Add defensive check for route.params
@@ -154,7 +312,6 @@ export default function AdminFloorplanEditorContent() {
     );
   }
 
-  // Generate HTML for WebView
   const getHTML = () => {
     return `
       <!DOCTYPE html>
@@ -184,8 +341,9 @@ export default function AdminFloorplanEditorContent() {
             transition: transform 0.1s ease-out;
           }
           #floorplan { 
-            width: 100%; 
-            height: auto; 
+            width: 100vw; 
+            height: 100vh; 
+            object-fit: contain;
             display: block;
             filter: ${isDarkMode ? 'brightness(0.9) contrast(1.1)' : 'none'};
           }
@@ -206,6 +364,10 @@ export default function AdminFloorplanEditorContent() {
             background-color: #ff9800;
             box-shadow: 0 0 8px rgba(255,152,0,0.8);
           }
+          .marker.room-selected {
+            background-color: #ff9800 !important;
+            box-shadow: 0 0 10px rgba(255,152,0,0.8) !important;
+          }
           .marker-label { 
             position: absolute; 
             top: 25px; 
@@ -221,12 +383,36 @@ export default function AdminFloorplanEditorContent() {
             pointer-events: none;
             transform-origin: center top;
           }
+          .path-line {
+            stroke: ${colors.primary};
+            stroke-width: 3;
+            fill: none;
+            stroke-dasharray: 5,5;
+            opacity: 0.8;
+            vector-effect: non-scaling-stroke;
+          }
+          .path-waypoint {
+            width: 12px;
+            height: 12px;
+            background-color: ${colors.primary};
+            border: 2px solid white;
+            border-radius: 50%;
+            position: absolute;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            z-index: 15;
+            transform-origin: center center;
+          }
+          .path-waypoint:hover {
+            background-color: #ff9800;
+          }
         </style>
       </head>
       <body>
         <div id="container">
           <div id="zoomable-area">
             <img id="floorplan" src="${imageUri}" onerror="console.error('Failed to load image: ' + this.src);" />
+            <svg id="path-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5;" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
           </div>
         </div>
         
@@ -234,6 +420,7 @@ export default function AdminFloorplanEditorContent() {
           const container = document.getElementById('container');
           const zoomableArea = document.getElementById('zoomable-area');
           const floorplan = document.getElementById('floorplan');
+          const pathSvg = document.getElementById('path-svg');
           
           // Theme info from React Native
           const isDarkMode = ${isDarkMode};
@@ -243,6 +430,11 @@ export default function AdminFloorplanEditorContent() {
             border: "${colors.border}",
             primary: "${colors.primary}"
           };
+          
+          // Path creation variables
+          let isPathMode = false;
+          let selectedRooms = [];
+          let currentPath = [];
           
           // Zoom variables
           let currentScale = 1;
@@ -258,10 +450,11 @@ export default function AdminFloorplanEditorContent() {
           let lastTapTime = 0;
           let tapTimeout = null;
           
-          // Update marker scales when zoom changes
+          // Update marker and waypoint scales when zoom changes
           function updateMarkerScales() {
             const markers = document.querySelectorAll('.marker');
             const labels = document.querySelectorAll('.marker-label');
+            const waypoints = document.querySelectorAll('.path-waypoint');
             
             const inverseScale = 1 / currentScale;
             
@@ -274,7 +467,119 @@ export default function AdminFloorplanEditorContent() {
             labels.forEach(label => {
               label.style.transform = \`translateX(-50%) scale(\${inverseScale})\`;
             });
+            
+            // Scale waypoints inversely to maintain consistent size
+            waypoints.forEach(waypoint => {
+              waypoint.style.transform = \`translate(-50%, -50%) scale(\${inverseScale})\`;
+            });
           }
+          
+          // Toggle path creation mode
+          window.togglePathMode = function(enabled) {
+            isPathMode = enabled;
+            selectedRooms = [];
+            currentPath = [];
+            
+            // Clear any existing path selection
+            document.querySelectorAll('.marker').forEach(marker => {
+              marker.classList.remove('room-selected');
+            });
+            
+            // Clear temporary waypoints
+            document.querySelectorAll('.path-waypoint').forEach(waypoint => {
+              waypoint.remove();
+            });
+            
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'path_mode_changed',
+              enabled: enabled
+            }));
+          };
+          
+          // Handle room selection for path creation
+          window.selectRoomForPath = function(roomId) {
+            if (!isPathMode) return;
+            
+            const marker = document.getElementById('marker-' + roomId);
+            if (!marker) return;
+            
+            if (selectedRooms.includes(roomId)) {
+              // Deselect room
+              selectedRooms = selectedRooms.filter(id => id !== roomId);
+              marker.classList.remove('room-selected');
+            } else if (selectedRooms.length < 2) {
+              // Select room
+              selectedRooms.push(roomId);
+              marker.classList.add('room-selected');
+            }
+            
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'rooms_selected',
+              selectedRooms: selectedRooms
+            }));
+          };
+          
+          // Draw paths on the floorplan
+          window.drawPaths = function(pathData) {
+            pathSvg.innerHTML = '';
+            
+            pathData.forEach(path => {
+              const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+              pathElement.setAttribute('class', 'path-line');
+              pathElement.setAttribute('d', path.d);
+              pathElement.setAttribute('data-path-id', path.id);
+              pathSvg.appendChild(pathElement);
+            });
+          };
+          
+          // Draw a single path
+          window.drawSinglePath = function(pathData) {
+            const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            pathElement.setAttribute('class', 'path-line');
+            pathElement.setAttribute('d', pathData.d);
+            pathElement.setAttribute('data-path-id', pathData.id);
+            pathSvg.appendChild(pathElement);
+          };
+          
+          // Add waypoint to current path
+          window.addWaypoint = function(x, y) {
+            if (!isPathMode || selectedRooms.length !== 2) return;
+            
+            currentPath.push({ x, y });
+            
+            // Create waypoint marker
+            const waypoint = document.createElement('div');
+            waypoint.className = 'path-waypoint';
+            waypoint.style.left = (x * 100) + '%';
+            waypoint.style.top = (y * 100) + '%';
+            
+            // Apply current scale to new waypoint
+            const inverseScale = 1 / currentScale;
+            waypoint.style.transform = \`translate(-50%, -50%) scale(\${inverseScale})\`;
+            
+            waypoint.onclick = function() {
+              // Remove waypoint
+              const index = currentPath.findIndex(p => p.x === x && p.y === y);
+              if (index > -1) {
+                currentPath.splice(index, 1);
+                waypoint.remove();
+                
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                  type: 'waypoint_removed',
+                  waypoint: { x, y },
+                  currentPath: currentPath
+                }));
+              }
+            };
+            
+            zoomableArea.appendChild(waypoint);
+            
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'waypoint_added',
+              waypoint: { x, y },
+              currentPath: currentPath
+            }));
+          };
           
           // Handle pinch zoom
           document.addEventListener('touchstart', function(e) {
@@ -413,11 +718,17 @@ export default function AdminFloorplanEditorContent() {
             
             // Ensure coordinates are within bounds
             if (imageX >= 0 && imageX <= 1 && imageY >= 0 && imageY <= 1) {
-              window.ReactNativeWebView.postMessage(JSON.stringify({
-                type: 'add_marker',
-                x: imageX,
-                y: imageY
-              }));
+              if (isPathMode && selectedRooms.length === 2) {
+                // Add waypoint in path mode
+                window.addWaypoint(imageX, imageY);
+              } else {
+                // Regular room marker creation
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                  type: 'add_marker',
+                  x: imageX,
+                  y: imageY
+                }));
+              }
             }
           }
           
@@ -452,17 +763,23 @@ export default function AdminFloorplanEditorContent() {
               e.preventDefault();
               e.stopPropagation();
               
-              document.querySelectorAll('.marker.selected').forEach(m => {
-                m.classList.remove('selected');
-              });
-              
-              marker.classList.add('selected');
-              updateMarkerScales();
-              
-              window.ReactNativeWebView.postMessage(JSON.stringify({
-                type: 'edit_marker',
-                id: id
-              }));
+              if (isPathMode) {
+                // Select room for path creation
+                window.selectRoomForPath(id);
+              } else {
+                // Regular room editing
+                document.querySelectorAll('.marker.selected').forEach(m => {
+                  m.classList.remove('selected');
+                });
+                
+                marker.classList.add('selected');
+                updateMarkerScales();
+                
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                  type: 'edit_marker',
+                  id: id
+                }));
+              }
             });
             
             zoomableArea.appendChild(marker);
@@ -491,36 +808,54 @@ export default function AdminFloorplanEditorContent() {
     `;
   };
 
+  // ...rest of existing code...
+
   // Handle messages from WebView
   const handleMessage = (event: { nativeEvent: { data: string } }) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
 
       if (data.type === 'add_marker') {
-        // Adding a new marker
-        setCurrentPoint({ x: data.x, y: data.y });
-        setIsEditing(false);
-        setEditingRoomId(null);
-        setRoomData({
-          name: '',
-          type: 'classroom',
-          description: '',
-        });
-        setIsModalVisible(true);
-      } else if (data.type === 'edit_marker') {
-        // Editing an existing marker
-        const roomToEdit = roomMarkers.find((room) => room.id === data.id);
-        if (roomToEdit) {
-          setEditingRoomId(data.id);
-          setIsEditing(true);
-          setCurrentPoint(roomToEdit.coordinates);
+        if (isPathMode && selectedRooms.length === 2) {
+          // Add waypoint in path mode (handled in WebView)
+          return;
+        } else {
+          // Regular room marker creation
+          setCurrentPoint({ x: data.x, y: data.y });
+          setIsEditing(false);
+          setEditingRoomId(null);
           setRoomData({
-            name: roomToEdit.name,
-            type: roomToEdit.type,
-            description: roomToEdit.description || '',
+            name: '',
+            type: 'classroom',
+            description: '',
           });
           setIsModalVisible(true);
         }
+      } else if (data.type === 'edit_marker') {
+        if (isPathMode) {
+          // Room selection for path creation (handled in WebView)
+          return;
+        } else {
+          // Regular room editing
+          const roomToEdit = roomMarkers.find((room) => room.id === data.id);
+          if (roomToEdit) {
+            setEditingRoomId(data.id);
+            setIsEditing(true);
+            setCurrentPoint(roomToEdit.coordinates);
+            setRoomData({
+              name: roomToEdit.name,
+              type: roomToEdit.type,
+              description: roomToEdit.description || '',
+            });
+            setIsModalVisible(true);
+          }
+        }
+      } else if (data.type === 'rooms_selected') {
+        setSelectedRooms(data.selectedRooms);
+      } else if (data.type === 'waypoint_added') {
+        setCurrentPath(data.currentPath);
+      } else if (data.type === 'waypoint_removed') {
+        setCurrentPath(data.currentPath);
       }
     } catch (e) {
       console.error('Error parsing WebView message:', e);
@@ -632,6 +967,7 @@ export default function AdminFloorplanEditorContent() {
       { text: 'Delete', onPress: deleteRoomPOI, style: 'destructive' },
     ]);
   };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
@@ -639,8 +975,37 @@ export default function AdminFloorplanEditorContent() {
           Add Room POIs - {floorLabel}
         </Text>
         <Text style={[styles.headerSubtitle, { color: colors.text }]}>
-          Tap on the floorplan to add rooms or tap existing markers to edit
+          {isPathMode
+            ? `Path Mode: Select 2 rooms, then tap to add waypoints. Selected: ${selectedRooms.length}/2`
+            : 'Tap on the floorplan to add rooms or tap existing markers to edit'}
         </Text>
+
+        {/* Path creation controls */}
+        <View style={styles.pathControls}>
+          <TouchableOpacity
+            onPress={togglePathMode}
+            style={[
+              styles.pathButton,
+              {
+                backgroundColor: isPathMode ? colors.primary : colors.card,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <Text style={{ color: isPathMode ? '#FFFFFF' : colors.text }}>
+              {isPathMode ? 'Exit Path Mode' : 'Create Path'}
+            </Text>
+          </TouchableOpacity>
+
+          {isPathMode && selectedRooms.length === 2 && (
+            <TouchableOpacity
+              onPress={savePath}
+              style={[styles.pathButton, { backgroundColor: colors.primary }]}
+            >
+              <Text style={{ color: '#FFFFFF' }}>Save Path ({currentPath.length} waypoints)</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <WebView
@@ -663,7 +1028,7 @@ export default function AdminFloorplanEditorContent() {
 
       <View style={[styles.footer, { borderTopColor: colors.border }]}>
         <Text style={[styles.footerText, { color: colors.text }]}>
-          {roomMarkers.length} rooms added
+          {roomMarkers.length} rooms • {pathMarkers.length} paths
         </Text>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -802,6 +1167,19 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 14,
     marginTop: 4,
+  },
+  pathControls: {
+    flexDirection: 'row',
+    marginTop: 12,
+    gap: 8,
+  },
+  pathButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   webview: {
     flex: 1,

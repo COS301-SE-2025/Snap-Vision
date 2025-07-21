@@ -5,7 +5,6 @@ import { ThemeProvider } from '../src/theme/ThemeContext';
 import MapWebView from '../src/components/organisms/MapWebView';
 import NavigationPanel from '../src/components/organisms/NavigationPanel';
 
-
 jest.mock('react-native-webview', () => {
   const React = require('react');
   const { View } = require('react-native');

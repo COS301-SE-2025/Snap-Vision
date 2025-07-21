@@ -11,7 +11,16 @@ module.exports = defineConfig([
     plugins: {
       prettier: prettierPlugin,
     },
-
+    languageOptions: {
+      globals: {
+        jest: 'readonly',
+        describe: 'readonly',
+        it: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+      },
+    },
     rules: {
       'prettier/prettier': 'error',
     },

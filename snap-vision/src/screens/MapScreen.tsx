@@ -31,13 +31,16 @@ import { addRecentlyVisitedPOI, Visit } from '../services/firebase/recentlyVServ
 import { useBadges } from '../context/BadgeContext';
 import { useAccessibility } from '../context/AccessibilityContext';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import ARNavigationOverlay from '../components/organisms/ARNavigationOverlay';
+import { useCompass } from '../hooks/useCompass';
+import { requestCameraPermission } from '../utils/cameraPermissions';
 
 type MapScreenParams = {
   lat?: string;
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'http://10.0.2.2:3000'; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = 'http://192.168.38.203:3000'; // <-- Use your correct backend IP here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
@@ -113,6 +116,10 @@ const MapScreen = () => {
   const [showAdminActions, setShowAdminActions] = useState(false);
   const [adminActionPOI, setAdminActionPOI] = useState<any>(null);
   const [tempMessage, setTempMessage] = useState<string>('');
+
+  // AR Navigation state
+  const [showAR, setShowAR] = useState(false);
+  const deviceHeading = useCompass();
 
   //haptic feedback options
   const hapticOptions = {
@@ -199,6 +206,21 @@ const MapScreen = () => {
       }
     } catch (err) {
       setError('Permission request failed');
+    }
+  };
+
+  // AR Navigation functions
+  const handleARToggle = async () => {
+    if (!showAR) {
+      // Request camera permission before enabling AR
+      const hasPermission = await requestCameraPermission();
+      if (hasPermission) {
+        setShowAR(true);
+        setStatus('AR Navigation enabled');
+      }
+    } else {
+      setShowAR(false);
+      setStatus('AR Navigation disabled');
     }
   };
 
@@ -864,7 +886,6 @@ const MapScreen = () => {
     }
   };
 
- 
   //IMP: temp test to take out later
   const simulateDestinationReached = async () => {
     if (!selectedPOI) {
@@ -1443,6 +1464,55 @@ const MapScreen = () => {
         onReportOut={() => setShowReportTooltip(false)}
         color={colors.primary}
       />
+
+      {/* AR Navigation Toggle Button */}
+      {isNavigating && destinationCoords && (
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            bottom: 120,
+            right: 20,
+            backgroundColor: showAR ? colors.primary : colors.card,
+            width: 56,
+            height: 56,
+            borderRadius: 28,
+            justifyContent: 'center',
+            alignItems: 'center',
+            elevation: 6,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.25,
+            shadowRadius: 4,
+          }}
+          onPress={handleARToggle}
+        >
+          <Text
+            style={{
+              color: showAR ? 'white' : colors.text,
+              fontSize: 12,
+              fontWeight: 'bold',
+            }}
+          >
+            AR
+          </Text>
+        </TouchableOpacity>
+      )}
+
+      {/* AR Navigation Overlay */}
+      {showAR && isNavigating && destinationCoords && currentLocation && (
+        <ARNavigationOverlay
+          currentLocation={{
+            x: currentLocation.longitude,
+            y: currentLocation.latitude,
+          }}
+          destinationCoords={{
+            x: destinationCoords[0],
+            y: destinationCoords[1],
+          }}
+          deviceHeading={deviceHeading}
+          navigationSteps={steps}
+        />
+      )}
 
       {isNavigating && steps.length > 0 && (
         <Pressable
