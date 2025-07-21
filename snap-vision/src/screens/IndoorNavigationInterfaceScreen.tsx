@@ -38,11 +38,7 @@ export default function IndoorNavigationInterfaceScreen() {
 
   const { buildingId, buildingName } = route.params;
 
-  const handleNavigationStart = (
-    startRoomId: string,
-    endRoomId: string,
-    floorId: string
-  ) => {
+  const handleNavigationStart = (startRoomId: string, endRoomId: string, floorId: string) => {
     navigation.navigate('IndoorNavigationInstructions', {
       buildingId,
       floorId,

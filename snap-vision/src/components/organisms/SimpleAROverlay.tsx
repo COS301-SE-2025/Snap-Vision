@@ -12,11 +12,11 @@ interface Props {
   navigationSteps?: any[];
 }
 
-export default function SimpleAROverlay({ 
-  currentLocation, 
-  destinationCoords, 
+export default function SimpleAROverlay({
+  currentLocation,
+  destinationCoords,
   deviceHeading,
-  navigationSteps = []
+  navigationSteps = [],
 }: Props) {
   const [bearing, setBearing] = useState<number>(0);
   const [showDebug, setShowDebug] = useState(true);
@@ -25,15 +25,31 @@ export default function SimpleAROverlay({
   const [shakeAnimation] = useState(new Animated.Value(0));
   const [animalPosition] = useState(new Animated.ValueXY({ x: 0, y: 0 }));
 
-  const animals = ['🐕', '🐱', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐸', '🐧', '🦋', '🐝', '🐙', '🦄'];
+  const animals = [
+    '🐕',
+    '🐱',
+    '🐰',
+    '🦊',
+    '🐻',
+    '🐼',
+    '🐨',
+    '🐯',
+    '🦁',
+    '🐸',
+    '🐧',
+    '🦋',
+    '🐝',
+    '🐙',
+    '🦄',
+  ];
 
   useEffect(() => {
     // Set up accelerometer for shake detection
     setUpdateIntervalForType(SensorTypes.accelerometer, 100);
-    
+
     const subscription = accelerometer.subscribe(({ x, y, z }) => {
       const totalAcceleration = Math.sqrt(x * x + y * y + z * z);
-      
+
       // Detect shake (high acceleration) or phone pointing forward (z > 8)
       if (totalAcceleration > 15 || z > 8) {
         if (!showAnimal) {
@@ -41,13 +57,13 @@ export default function SimpleAROverlay({
           const randomAnimal = animals[Math.floor(Math.random() * animals.length)];
           setCurrentAnimal(randomAnimal);
           setShowAnimal(true);
-          
+
           // Random position
           const randomX = Math.random() * (screenWidth - 100);
           const randomY = Math.random() * (screenHeight - 200) + 100;
-          
+
           animalPosition.setValue({ x: randomX, y: randomY });
-          
+
           // Shake animation
           Animated.sequence([
             Animated.timing(shakeAnimation, {
@@ -61,7 +77,7 @@ export default function SimpleAROverlay({
               useNativeDriver: true,
             }),
           ]).start();
-          
+
           // Hide animal after 3 seconds
           setTimeout(() => {
             setShowAnimal(false);
@@ -96,19 +112,19 @@ export default function SimpleAROverlay({
     <View style={styles.container}>
       {/* Simple colored background instead of camera */}
       <View style={styles.background} />
-      
+
       {/* Large, visible arrow */}
       <View style={styles.arrowContainer}>
-        <Animated.View 
+        <Animated.View
           style={[
-            styles.arrow, 
-            { 
+            styles.arrow,
+            {
               transform: [
                 { rotate: `${arrowDirection}deg` },
                 { translateX: shakeTransform },
-                { translateY: shakeTransform }
-              ] 
-            }
+                { translateY: shakeTransform },
+              ],
+            },
           ]}
         >
           <Text style={styles.arrowText}>▲</Text>
@@ -117,19 +133,21 @@ export default function SimpleAROverlay({
 
       {/* Fun Animal that appears on shake/tilt */}
       {showAnimal && (
-        <Animated.View 
+        <Animated.View
           style={[
             styles.animalContainer,
             {
               transform: [
                 { translateX: animalPosition.x },
                 { translateY: animalPosition.y },
-                { scale: shakeAnimation.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [1, 1.5],
-                }) }
-              ]
-            }
+                {
+                  scale: shakeAnimation.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [1, 1.5],
+                  }),
+                },
+              ],
+            },
           ]}
         >
           <Text style={styles.animalEmoji}>{currentAnimal}</Text>
@@ -139,24 +157,15 @@ export default function SimpleAROverlay({
 
       {/* Simple status */}
       <View style={styles.statusBar}>
-        <Text style={styles.statusText}>
-          🧭 AR Navigation Active {showAnimal ? '🎉' : ''}
-        </Text>
+        <Text style={styles.statusText}>🧭 AR Navigation Active {showAnimal ? '🎉' : ''}</Text>
         {showAnimal && (
-          <Text style={styles.statusSubtext}>
-            Shake or tilt forward to see animals!
-          </Text>
+          <Text style={styles.statusSubtext}>Shake or tilt forward to see animals!</Text>
         )}
       </View>
 
       {/* Debug toggle */}
-      <TouchableOpacity 
-        style={styles.debugToggle}
-        onPress={() => setShowDebug(!showDebug)}
-      >
-        <Text style={styles.debugToggleText}>
-          {showDebug ? 'Hide' : 'Info'}
-        </Text>
+      <TouchableOpacity style={styles.debugToggle} onPress={() => setShowDebug(!showDebug)}>
+        <Text style={styles.debugToggleText}>{showDebug ? 'Hide' : 'Info'}</Text>
       </TouchableOpacity>
 
       {/* Debug info */}
@@ -166,12 +175,14 @@ export default function SimpleAROverlay({
           <Text style={styles.debugText}>🧭 Device: {Math.round(deviceHeading)}°</Text>
           <Text style={styles.debugText}>➡️ Arrow: {Math.round(normalizedDirection)}°</Text>
           <Text style={styles.debugText}>
-            Direction: {Math.abs(normalizedDirection) < 20 ? 'STRAIGHT' : 
-                       normalizedDirection > 0 ? 'TURN RIGHT' : 'TURN LEFT'}
+            Direction:{' '}
+            {Math.abs(normalizedDirection) < 20
+              ? 'STRAIGHT'
+              : normalizedDirection > 0
+                ? 'TURN RIGHT'
+                : 'TURN LEFT'}
           </Text>
-          {showAnimal && (
-            <Text style={styles.debugText}>🎉 Animal: {currentAnimal} appeared!</Text>
-          )}
+          {showAnimal && <Text style={styles.debugText}>🎉 Animal: {currentAnimal} appeared!</Text>}
         </View>
       )}
 
@@ -183,7 +194,7 @@ export default function SimpleAROverlay({
       </View>
 
       {/* Instructions */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.instructionBubble}
         onPress={() => {
           const randomAnimal = animals[Math.floor(Math.random() * animals.length)];
@@ -192,9 +203,7 @@ export default function SimpleAROverlay({
           setTimeout(() => setShowAnimal(false), 3000);
         }}
       >
-        <Text style={styles.instructionText}>
-          📱 Shake phone or tap here for animals!
-        </Text>
+        <Text style={styles.instructionText}>📱 Shake phone or tap here for animals!</Text>
       </TouchableOpacity>
     </View>
   );

@@ -15,11 +15,11 @@ interface Props {
   navigationSteps?: any[];
 }
 
-export default function ARNavigationOverlayAdvanced({ 
-  currentLocation, 
-  destinationCoords, 
+export default function ARNavigationOverlayAdvanced({
+  currentLocation,
+  destinationCoords,
   deviceHeading,
-  navigationSteps = []
+  navigationSteps = [],
 }: Props) {
   const devices = useCameraDevices();
   const device = devices.back;
@@ -32,7 +32,7 @@ export default function ARNavigationOverlayAdvanced({
         currentLocation.x,
         currentLocation.y,
         destinationCoords.x,
-        destinationCoords.y
+        destinationCoords.y,
       );
       setBearing(newBearing);
     }
@@ -44,12 +44,8 @@ export default function ARNavigationOverlayAdvanced({
 
   return (
     <View style={styles.container}>
-      <Camera
-        style={StyleSheet.absoluteFill}
-        device={device}
-        isActive={true}
-      />
-      
+      <Camera style={StyleSheet.absoluteFill} device={device} isActive={true} />
+
       <Canvas style={styles.overlay}>
         <ARArrow direction={arrowDirection} />
       </Canvas>
@@ -61,26 +57,17 @@ function ARArrow({ direction }: { direction: number }) {
   const centerX = screenWidth / 2;
   const centerY = screenHeight / 2 - 100;
   const arrowLength = 80;
-  
+
   const directionRad = (direction * Math.PI) / 180;
   const endX = centerX + Math.sin(directionRad) * arrowLength;
   const endY = centerY - Math.cos(directionRad) * arrowLength;
-  
+
   const arrowPath = `M ${centerX} ${centerY} L ${endX} ${endY}`;
-  
+
   return (
     <>
-      <Path
-        path={arrowPath}
-        style="stroke"
-        strokeWidth={8}
-        color="#00FF00"
-      />
-      <Path
-        path={createArrowHead(endX, endY, directionRad)}
-        style="fill"
-        color="#00FF00"
-      />
+      <Path path={arrowPath} style="stroke" strokeWidth={8} color="#00FF00" />
+      <Path path={createArrowHead(endX, endY, directionRad)} style="fill" color="#00FF00" />
       <Path
         path={`M ${centerX - 8} ${centerY} A 8 8 0 1 0 ${centerX + 8} ${centerY} A 8 8 0 1 0 ${centerX - 8} ${centerY}`}
         style="fill"
@@ -101,12 +88,12 @@ function createArrowHead(x: number, y: number, direction: number): string {
   const size = 20;
   const angle1 = direction + Math.PI * 0.8;
   const angle2 = direction - Math.PI * 0.8;
-  
+
   const x1 = x + Math.cos(angle1) * size;
   const y1 = y + Math.sin(angle1) * size;
   const x2 = x + Math.cos(angle2) * size;
   const y2 = y + Math.sin(angle2) * size;
-  
+
   return `M ${x} ${y} L ${x1} ${y1} L ${x2} ${y2} Z`;
 }
 

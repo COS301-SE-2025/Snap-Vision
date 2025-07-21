@@ -25,7 +25,7 @@ jest.mock('@react-native-firebase/auth', () => ({
 }));
 
 jest.mock('@react-native-firebase/firestore', () => ({
-  __esModule: true, 
+  __esModule: true,
   default: jest.fn(() => ({
     collection: jest.fn(() => ({
       doc: jest.fn(() => ({
@@ -34,11 +34,19 @@ jest.mock('@react-native-firebase/firestore', () => ({
             exists: true,
             data: () => ({
               pois: [
-                { id: '1', name: 'Building A', timestamp: { toDate: () => new Date('2023-07-01') } },
-                { id: '2', name: 'Building B', timestamp: { toDate: () => new Date('2023-07-02') } },
+                {
+                  id: '1',
+                  name: 'Building A',
+                  timestamp: { toDate: () => new Date('2023-07-01') },
+                },
+                {
+                  id: '2',
+                  name: 'Building B',
+                  timestamp: { toDate: () => new Date('2023-07-02') },
+                },
               ],
             }),
-          })
+          }),
         ),
         set: jest.fn(),
         update: jest.fn(),
@@ -46,10 +54,9 @@ jest.mock('@react-native-firebase/firestore', () => ({
     })),
   })),
   Timestamp: {
-    now: jest.fn(() => new Date()), 
+    now: jest.fn(() => new Date()),
   },
 }));
-
 
 beforeEach(() => {
   jest.spyOn(console, 'log').mockImplementation(() => {});
@@ -91,75 +98,76 @@ describe('RecentlyVisitedCarousel', () => {
     expect(console.log).toHaveBeenCalledWith('Selected:', 'Building A');
   });
 
-    it('renders no items when visits array is empty', () => {
+  it('renders no items when visits array is empty', () => {
     render(<RecentlyVisitedCarousel visits={[]} />);
     expect(screen.queryByText('Building A')).toBeNull(); // Ensure no items are rendered
   });
 
-    it('renders all items in the visits array', () => {
+  it('renders all items in the visits array', () => {
     const visits = [
       { id: '1', name: 'Building A', timestamp: { toDate: () => new Date('2023-07-01') } },
       { id: '2', name: 'Building B', timestamp: { toDate: () => new Date('2023-07-02') } },
       { id: '3', name: 'Building C', timestamp: { toDate: () => new Date('2023-07-03') } },
     ];
-  
+
     render(<RecentlyVisitedCarousel visits={visits} />);
-  
+
     expect(screen.getByText('Building A')).toBeTruthy();
     expect(screen.getByText('Building B')).toBeTruthy();
     expect(screen.getByText('Building C')).toBeTruthy();
   });
 
-    it('uses a unique key for each item', () => {
+  it('uses a unique key for each item', () => {
     const visits = [
       { id: '1', name: 'Building A', timestamp: { toDate: () => new Date('2023-07-01') } },
       { poiId: 'poi123', name: 'Building B', timestamp: { toDate: () => new Date('2023-07-02') } },
     ];
-  
+
     const { getByText } = render(<RecentlyVisitedCarousel visits={visits} />);
     expect(getByText('Building A')).toBeTruthy();
     expect(getByText('Building B')).toBeTruthy();
   });
 
-    it('logs the correct item when pressed', () => {
+  it('logs the correct item when pressed', () => {
     const visits = [
       { id: '1', name: 'Building A', timestamp: { toDate: () => new Date('2023-07-01') } },
       { id: '2', name: 'Building B', timestamp: { toDate: () => new Date('2023-07-02') } },
     ];
-  
+
     const { getByText } = render(<RecentlyVisitedCarousel visits={visits} />);
     const item = getByText('Building B');
-  
+
     fireEvent.press(item);
     expect(console.log).toHaveBeenCalledWith('Selected:', 'Building B');
   });
 
-    it('formats the timestamp correctly', () => {
+  it('formats the timestamp correctly', () => {
     const visits = [
       { id: '1', name: 'Building A', timestamp: { toDate: () => new Date('2023-07-01') } },
     ];
-  
+
     render(<RecentlyVisitedCarousel visits={visits} />);
     expect(screen.getByText('7/1/2023')).toBeTruthy();
   });
 
-it('handles items without a timestamp', () => {
-  const visits = [
-    { id: '1', name: 'Building A' }, 
-  ];
+  it('handles items without a timestamp', () => {
+    const visits = [{ id: '1', name: 'Building A' }];
 
-  render(<RecentlyVisitedCarousel visits={visits} />);
-  expect(screen.getByText('Building A')).toBeTruthy();
-  expect(screen.queryByText('7/1/2023')).toBeNull(); 
+    render(<RecentlyVisitedCarousel visits={visits} />);
+    expect(screen.getByText('Building A')).toBeTruthy();
+    expect(screen.queryByText('7/1/2023')).toBeNull();
+  });
+
+  it('handles items with long names', () => {
+    const visits = [
+      {
+        id: '1',
+        name: 'A very long building name that might overflow',
+        timestamp: { toDate: () => new Date('2023-07-01') },
+      },
+    ];
+
+    render(<RecentlyVisitedCarousel visits={visits} />);
+    expect(screen.getByText('A very long building name that might overflow')).toBeTruthy();
+  });
 });
-
-it('handles items with long names', () => {
-  const visits = [
-    { id: '1', name: 'A very long building name that might overflow', timestamp: { toDate: () => new Date('2023-07-01') } },
-  ];
-
-  render(<RecentlyVisitedCarousel visits={visits} />);
-  expect(screen.getByText('A very long building name that might overflow')).toBeTruthy();
-});
-});
-

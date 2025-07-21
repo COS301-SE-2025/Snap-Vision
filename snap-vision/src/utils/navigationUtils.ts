@@ -50,26 +50,26 @@ export class NavigationGraph {
   private buildGraph(roomPOIs: RoomPOI[], pathPOIs: PathPOI[]) {
     console.log('Building graph with:', {
       rooms: roomPOIs.length,
-      paths: pathPOIs.length
+      paths: pathPOIs.length,
     });
 
     // Create nodes for each room
-    roomPOIs.forEach(room => {
+    roomPOIs.forEach((room) => {
       this.nodes.set(room.id, {
         roomId: room.id,
         coordinates: room.coordinates,
-        connections: []
+        connections: [],
       });
       console.log('Added node for room:', room.id, room.name);
     });
 
     // Add edges based on paths
-    pathPOIs.forEach(path => {
+    pathPOIs.forEach((path) => {
       console.log('Processing path:', {
         id: path.id,
         startRoomId: path.startRoomId,
         endRoomId: path.endRoomId,
-        waypoints: path.waypoints.length
+        waypoints: path.waypoints.length,
       });
 
       const startNode = this.nodes.get(path.startRoomId);
@@ -81,14 +81,14 @@ export class NavigationGraph {
           targetRoomId: path.endRoomId,
           pathId: path.id,
           waypoints: path.waypoints,
-          distance: path.distance
+          distance: path.distance,
         });
 
         endNode.connections.push({
           targetRoomId: path.startRoomId,
           pathId: path.id,
           waypoints: [...path.waypoints].reverse(), // Reverse waypoints for opposite direction
-          distance: path.distance
+          distance: path.distance,
         });
 
         console.log('Added bidirectional connection:', path.startRoomId, '<->', path.endRoomId);
@@ -98,7 +98,7 @@ export class NavigationGraph {
           startNode: !!startNode,
           endNode: !!endNode,
           startRoomId: path.startRoomId,
-          endRoomId: path.endRoomId
+          endRoomId: path.endRoomId,
         });
       }
     });
@@ -116,7 +116,7 @@ export class NavigationGraph {
       console.error('Start room not found in graph:', startRoomId);
       return null;
     }
-    
+
     if (!this.nodes.has(endRoomId)) {
       console.error('End room not found in graph:', endRoomId);
       return null;
@@ -144,7 +144,7 @@ export class NavigationGraph {
       startRoomExists: this.nodes.has(startRoomId),
       startDistance: distances.get(startRoomId),
       endDistance: distances.get(endRoomId),
-      unvisitedCount: unvisited.size
+      unvisitedCount: unvisited.size,
     });
 
     while (unvisited.size > 0) {
@@ -153,7 +153,7 @@ export class NavigationGraph {
       let minDistance = Infinity;
 
       // FIXED: Use Array.from for proper iteration
-      Array.from(unvisited).forEach(roomId => {
+      Array.from(unvisited).forEach((roomId) => {
         const distance = distances.get(roomId);
         if (distance !== undefined && distance < minDistance) {
           minDistance = distance;
@@ -174,24 +174,30 @@ export class NavigationGraph {
       const currentNode = this.nodes.get(currentRoom);
       if (currentNode) {
         console.log(`Processing ${currentNode.connections.length} connections from ${currentRoom}`);
-        
-        currentNode.connections.forEach(edge => {
-          console.log(`Checking connection to ${edge.targetRoomId}, is unvisited: ${unvisited.has(edge.targetRoomId)}`);
-          
+
+        currentNode.connections.forEach((edge) => {
+          console.log(
+            `Checking connection to ${edge.targetRoomId}, is unvisited: ${unvisited.has(edge.targetRoomId)}`,
+          );
+
           if (unvisited.has(edge.targetRoomId)) {
             const currentDistance = distances.get(currentRoom!);
             const targetDistance = distances.get(edge.targetRoomId);
-            
+
             if (currentDistance !== undefined && targetDistance !== undefined) {
               const altDistance = currentDistance + edge.distance;
 
               console.log(`Distance calculation: ${currentRoom} to ${edge.targetRoomId}`);
-              console.log(`  Current: ${currentDistance}, Target: ${targetDistance}, Alt: ${altDistance}`);
+              console.log(
+                `  Current: ${currentDistance}, Target: ${targetDistance}, Alt: ${altDistance}`,
+              );
 
               if (altDistance < targetDistance) {
                 distances.set(edge.targetRoomId, altDistance);
                 previous.set(edge.targetRoomId, currentRoom);
-                console.log(`Updated distance to ${edge.targetRoomId}: ${altDistance}, previous: ${currentRoom}`);
+                console.log(
+                  `Updated distance to ${edge.targetRoomId}: ${altDistance}, previous: ${currentRoom}`,
+                );
               }
             }
           }
@@ -217,12 +223,12 @@ export class NavigationGraph {
     while (currentRoom !== null) {
       console.log('Adding to path:', currentRoom);
       path.unshift(currentRoom);
-      
+
       const prevRoom = previous.get(currentRoom);
       console.log(`Previous room for ${currentRoom}:`, prevRoom);
-      
+
       currentRoom = prevRoom || null;
-      
+
       // Safety check to prevent infinite loops
       if (path.length > this.nodes.size) {
         console.error('Path reconstruction loop detected');
@@ -242,23 +248,26 @@ export class NavigationGraph {
         firstRoom: path[0],
         lastRoom: path[path.length - 1],
         expectedStart: startRoomId,
-        expectedEnd: endRoomId
+        expectedEnd: endRoomId,
       });
       return null;
     }
   }
 
-  getPathDetails(roomPath: string[]): { waypoints: { x: number; y: number }[], totalDistance: number } {
+  getPathDetails(roomPath: string[]): {
+    waypoints: { x: number; y: number }[];
+    totalDistance: number;
+  } {
     const allWaypoints: { x: number; y: number }[] = [];
     let totalDistance = 0;
 
     for (let i = 0; i < roomPath.length - 1; i++) {
       const currentRoomId = roomPath[i];
       const nextRoomId = roomPath[i + 1];
-      
+
       const currentNode = this.nodes.get(currentRoomId);
       if (currentNode) {
-        const connection = currentNode.connections.find(conn => conn.targetRoomId === nextRoomId);
+        const connection = currentNode.connections.find((conn) => conn.targetRoomId === nextRoomId);
         if (connection) {
           // Add all waypoints for this segment
           allWaypoints.push(...connection.waypoints);
@@ -323,7 +332,7 @@ export class NavigationGraph {
 
 //       // Calculate distance from previous point
 //       const distanceFromPrev = calculateDistance(prevPoint, currentPoint);
-      
+
 //       let instruction = '';
 //       let stepType: 'waypoint' | 'turn' = 'waypoint';
 
@@ -333,7 +342,7 @@ export class NavigationGraph {
 //       } else {
 //         // Subsequent waypoints - check for turns
 //         const turnDirection = calculateTurnDirection(prevPoint, currentPoint, nextPoint);
-        
+
 //         if (turnDirection === 'left') {
 //           instruction = `Turn left and continue ${formatDistance(calculateDistance(currentPoint, nextPoint))}`;
 //           stepType = 'turn';
@@ -380,7 +389,7 @@ export class NavigationGraph {
 //   // Convert relative distance to approximate real-world distance
 //   // This is a rough approximation - may need to adjust based on your floorplan scale
 //   const approximateMeters = distance * 10; // Assuming 1 unit = 10 meters
-  
+
 //   if (approximateMeters < 1) {
 //     return `${Math.round(approximateMeters * 100)} cm`;
 //   } else if (approximateMeters < 10) {
@@ -394,15 +403,16 @@ export class NavigationGraph {
 function findNearestRoom(
   point: { x: number; y: number },
   roomPOIs: RoomPOI[],
-  excludeRoomIds: string[]
+  excludeRoomIds: string[],
 ): RoomPOI | null {
   let nearestRoom: RoomPOI | null = null;
   let minDistance = Infinity;
 
-  roomPOIs.forEach(room => {
+  roomPOIs.forEach((room) => {
     if (!excludeRoomIds.includes(room.id)) {
       const distance = calculateDistance(point, room.coordinates);
-      if (distance < minDistance && distance < 0.3) { // Only consider rooms within reasonable distance
+      if (distance < minDistance && distance < 0.3) {
+        // Only consider rooms within reasonable distance
         minDistance = distance;
         nearestRoom = room;
       }
@@ -415,7 +425,7 @@ function findNearestRoom(
 // Helper function to calculate distance between two points
 export const calculateDistance = (
   point1: { x: number; y: number },
-  point2: { x: number; y: number }
+  point2: { x: number; y: number },
 ): number => {
   const dx = point2.x - point1.x;
   const dy = point2.y - point1.y;
@@ -429,27 +439,27 @@ export const generateDetailedDirections = (steps: NavigationStep[]): NavigationS
   }
 
   const detailedSteps: NavigationStep[] = [];
-  
+
   steps.forEach((step, index) => {
     if (step.type === 'start') {
       detailedSteps.push({
         ...step,
-        instruction: `🚶 ${step.instruction}`
+        instruction: `🚶 ${step.instruction}`,
       });
     } else if (step.type === 'destination') {
       detailedSteps.push({
         ...step,
-        instruction: `🎯 ${step.instruction}`
+        instruction: `🎯 ${step.instruction}`,
       });
     } else if (step.type === 'turn') {
       detailedSteps.push({
         ...step,
-        instruction: `🔄 ${step.instruction}`
+        instruction: `🔄 ${step.instruction}`,
       });
     } else {
       detailedSteps.push({
         ...step,
-        instruction: `➡️ ${step.instruction}`
+        instruction: `➡️ ${step.instruction}`,
       });
     }
   });
@@ -461,15 +471,15 @@ export const generateDetailedDirections = (steps: NavigationStep[]): NavigationS
 function calculateTurnDirection(
   point1: { x: number; y: number },
   point2: { x: number; y: number },
-  point3: { x: number; y: number }
+  point3: { x: number; y: number },
 ): 'left' | 'right' | 'straight' {
   // Calculate vectors
   const vec1 = { x: point2.x - point1.x, y: point2.y - point1.y };
   const vec2 = { x: point3.x - point2.x, y: point3.y - point2.y };
-  
+
   // Calculate cross product
   const cross = vec1.x * vec2.y - vec1.y * vec2.x;
-  
+
   // Determine turn direction
   if (Math.abs(cross) < 0.01) return 'straight'; // Threshold for straight line
   return cross > 0 ? 'left' : 'right';
@@ -480,13 +490,13 @@ export const calculateRoute = (
   startRoomId: string,
   endRoomId: string,
   roomPOIs: RoomPOI[],
-  pathPOIs: PathPOI[]
+  pathPOIs: PathPOI[],
 ): NavigationStep[] => {
   console.log('calculateRouteWithLandmarks called with:', {
     startRoomId,
     endRoomId,
     roomCount: roomPOIs.length,
-    pathCount: pathPOIs.length
+    pathCount: pathPOIs.length,
   });
 
   const graph = new NavigationGraph(roomPOIs, pathPOIs);
@@ -503,8 +513,8 @@ export const calculateRoute = (
   const { waypoints, totalDistance } = graph.getPathDetails(roomPath);
 
   // Find room details
-  const startRoom = roomPOIs.find(r => r.id === startRoomId);
-  const endRoom = roomPOIs.find(r => r.id === endRoomId);
+  const startRoom = roomPOIs.find((r) => r.id === startRoomId);
+  const endRoom = roomPOIs.find((r) => r.id === endRoomId);
 
   if (!startRoom || !endRoom) {
     console.error('Could not find room details');
@@ -515,7 +525,7 @@ export const calculateRoute = (
   steps.push({
     instruction: `Begin navigation from ${startRoom.name}`,
     coordinates: startRoom.coordinates,
-    type: 'start'
+    type: 'start',
   });
 
   // Process waypoints with landmark references
@@ -527,7 +537,7 @@ export const calculateRoute = (
 
       // Find nearest room to current waypoint for landmark reference
       const nearestRoom = findNearestRoom(currentPoint, roomPOIs, [startRoomId, endRoomId]);
-      
+
       let instruction = '';
       let stepType: 'waypoint' | 'turn' = 'waypoint';
 
@@ -539,19 +549,19 @@ export const calculateRoute = (
         }
       } else {
         const turnDirection = calculateTurnDirection(prevPoint, currentPoint, nextPoint);
-        
+
         if (turnDirection === 'left') {
-          instruction = nearestRoom 
+          instruction = nearestRoom
             ? `Turn left near ${nearestRoom.name}`
             : `Turn left and continue`;
           stepType = 'turn';
         } else if (turnDirection === 'right') {
-          instruction = nearestRoom 
+          instruction = nearestRoom
             ? `Turn right near ${nearestRoom.name}`
             : `Turn right and continue`;
           stepType = 'turn';
         } else {
-          instruction = nearestRoom 
+          instruction = nearestRoom
             ? `Continue straight past ${nearestRoom.name}`
             : `Continue straight`;
         }
@@ -560,7 +570,7 @@ export const calculateRoute = (
       steps.push({
         instruction,
         coordinates: currentPoint,
-        type: stepType
+        type: stepType,
       });
     }
   }
@@ -570,7 +580,7 @@ export const calculateRoute = (
     instruction: `You have arrived at ${endRoom.name}`,
     coordinates: endRoom.coordinates,
     type: 'destination',
-    distance: totalDistance
+    distance: totalDistance,
   });
 
   console.log('Generated steps:', steps.length);
@@ -588,15 +598,15 @@ export interface ARNavigationData {
 // Calculate bearing from current position to target in your coordinate system
 export const calculateARBearing = (
   currentPos: { x: number; y: number },
-  targetPos: { x: number; y: number }
+  targetPos: { x: number; y: number },
 ): number => {
   const dx = targetPos.x - currentPos.x;
   const dy = targetPos.y - currentPos.y;
-  
+
   // Calculate angle in radians, then convert to degrees
   // Note: This assumes your coordinate system has Y increasing upward
   const angle = Math.atan2(dx, -dy) * (180 / Math.PI);
-  
+
   // Normalize to 0-360 degrees
   return (angle + 360) % 360;
 };
@@ -605,7 +615,7 @@ export const calculateARBearing = (
 export const getNextARWaypoint = (
   currentPos: { x: number; y: number },
   navigationSteps: NavigationStep[],
-  proximityThreshold: number = 0.1
+  proximityThreshold: number = 0.1,
 ): { x: number; y: number } | null => {
   if (!navigationSteps || navigationSteps.length === 0) {
     return null;
@@ -614,7 +624,7 @@ export const getNextARWaypoint = (
   // Find the closest upcoming waypoint
   for (const step of navigationSteps) {
     const distance = calculateDistance(currentPos, step.coordinates);
-    
+
     // If we're not close to this waypoint yet, it's our target
     if (distance > proximityThreshold) {
       return step.coordinates;
@@ -629,20 +639,20 @@ export const getNextARWaypoint = (
 export const calculateARNavigationData = (
   currentPos: { x: number; y: number },
   navigationSteps: NavigationStep[],
-  destinationPos: { x: number; y: number }
+  destinationPos: { x: number; y: number },
 ): ARNavigationData => {
   const nextWaypoint = getNextARWaypoint(currentPos, navigationSteps);
   const targetPos = nextWaypoint || destinationPos;
-  
+
   const bearing = calculateARBearing(currentPos, targetPos);
   const distance = calculateDistance(currentPos, targetPos);
   const isAtDestination = distance < 0.05; // Very close to destination
-  
+
   return {
     bearing,
     distance,
     nextWaypoint,
-    isAtDestination
+    isAtDestination,
   };
 };
 
@@ -650,19 +660,19 @@ export const calculateARNavigationData = (
 export const getARDirection = (
   currentPos: { x: number; y: number },
   targetPos: { x: number; y: number },
-  deviceHeading: number
+  deviceHeading: number,
 ): number => {
   const bearing = calculateARBearing(currentPos, targetPos);
-  
+
   // Calculate direction relative to device heading
   let arDirection = bearing - deviceHeading;
-  
+
   // Normalize to -180 to 180 range for easier arrow positioning
   if (arDirection > 180) {
     arDirection -= 360;
   } else if (arDirection < -180) {
     arDirection += 360;
   }
-  
+
   return arDirection;
 };

@@ -22,14 +22,14 @@ interface Props {
   onNavigationStart: (startRoomId: string, endRoomId: string, floorId: string) => void;
 }
 
-export default function IndoorNavigationInterfaceContent({ 
-  buildingId, 
-  buildingName, 
-  onNavigationStart 
+export default function IndoorNavigationInterfaceContent({
+  buildingId,
+  buildingName,
+  onNavigationStart,
 }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  
+
   const [rooms, setRooms] = useState<Room[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStartRoom, setSelectedStartRoom] = useState<Room | null>(null);
@@ -49,21 +49,24 @@ export default function IndoorNavigationInterfaceContent({
         .where('buildingId', '==', buildingId)
         .get();
 
-      const roomsData = snapshot.docs.map(doc => ({
+      const roomsData = snapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       })) as Room[];
 
       setRooms(roomsData);
-      
+
       // Group rooms by floor
-      const grouped = roomsData.reduce((acc, room) => {
-        if (!acc[room.floorId]) {
-          acc[room.floorId] = [];
-        }
-        acc[room.floorId].push(room);
-        return acc;
-      }, {} as { [key: string]: Room[] });
+      const grouped = roomsData.reduce(
+        (acc, room) => {
+          if (!acc[room.floorId]) {
+            acc[room.floorId] = [];
+          }
+          acc[room.floorId].push(room);
+          return acc;
+        },
+        {} as { [key: string]: Room[] },
+      );
 
       setGroupedRooms(grouped);
     } catch (error) {
@@ -73,9 +76,10 @@ export default function IndoorNavigationInterfaceContent({
     }
   };
 
-  const filteredRooms = rooms.filter(room =>
-    room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    room.type.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredRooms = rooms.filter(
+    (room) =>
+      room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      room.type.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const handleRoomSelect = (room: Room, isStart: boolean) => {
@@ -101,51 +105,42 @@ export default function IndoorNavigationInterfaceContent({
   };
 
   const renderRoomItem = ({ item, isStart }: { item: Room; isStart: boolean }) => {
-    const isSelected = isStart ? 
-      selectedStartRoom?.id === item.id : 
-      selectedEndRoom?.id === item.id;
-    
+    const isSelected = isStart
+      ? selectedStartRoom?.id === item.id
+      : selectedEndRoom?.id === item.id;
+
     // Check if room is selectable (same floor constraint for end room)
-    const isSelectable = isStart || !selectedStartRoom || selectedStartRoom.floorId === item.floorId;
+    const isSelectable =
+      isStart || !selectedStartRoom || selectedStartRoom.floorId === item.floorId;
 
     return (
       <TouchableOpacity
         style={[
           styles.roomItem,
-          { 
+          {
             backgroundColor: isSelected ? colors.primary : colors.card,
             borderColor: colors.border,
-            opacity: isSelectable ? 1 : 0.5
-          }
+            opacity: isSelectable ? 1 : 0.5,
+          },
         ]}
         onPress={() => isSelectable && handleRoomSelect(item, isStart)}
         disabled={!isSelectable}
       >
         <View style={styles.roomHeader}>
-          <Text style={[
-            styles.roomName,
-            { color: isSelected ? '#FFFFFF' : colors.text }
-          ]}>
+          <Text style={[styles.roomName, { color: isSelected ? '#FFFFFF' : colors.text }]}>
             {item.name}
           </Text>
-          <Text style={[
-            styles.roomFloor,
-            { color: isSelected ? '#FFFFFF' : colors.secondary }
-          ]}>
+          <Text style={[styles.roomFloor, { color: isSelected ? '#FFFFFF' : colors.secondary }]}>
             {item.floorId}
           </Text>
         </View>
-        <Text style={[
-          styles.roomType,
-          { color: isSelected ? '#FFFFFF' : colors.secondary }
-        ]}>
+        <Text style={[styles.roomType, { color: isSelected ? '#FFFFFF' : colors.secondary }]}>
           {item.type}
         </Text>
         {item.description && (
-          <Text style={[
-            styles.roomDescription,
-            { color: isSelected ? '#FFFFFF' : colors.secondary }
-          ]}>
+          <Text
+            style={[styles.roomDescription, { color: isSelected ? '#FFFFFF' : colors.secondary }]}
+          >
             {item.description}
           </Text>
         )}
@@ -158,9 +153,7 @@ export default function IndoorNavigationInterfaceContent({
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <SettingsHeader title={`Indoor Navigation - ${buildingName}`} />
         <View style={styles.loadingContainer}>
-          <Text style={[styles.loadingText, { color: colors.text }]}>
-            Loading rooms...
-          </Text>
+          <Text style={[styles.loadingText, { color: colors.text }]}>Loading rooms...</Text>
         </View>
       </View>
     );
@@ -189,11 +182,11 @@ export default function IndoorNavigationInterfaceContent({
         <TextInput
           style={[
             styles.searchInput,
-            { 
+            {
               backgroundColor: colors.card,
               borderColor: colors.border,
-              color: colors.text
-            }
+              color: colors.text,
+            },
           ]}
           placeholder="Search rooms..."
           placeholderTextColor={colors.secondary}
@@ -245,17 +238,16 @@ export default function IndoorNavigationInterfaceContent({
       <TouchableOpacity
         style={[
           styles.navigationButton,
-          { 
-            backgroundColor: (selectedStartRoom && selectedEndRoom) ? colors.primary : colors.secondary,
-            opacity: (selectedStartRoom && selectedEndRoom) ? 1 : 0.5
-          }
+          {
+            backgroundColor:
+              selectedStartRoom && selectedEndRoom ? colors.primary : colors.secondary,
+            opacity: selectedStartRoom && selectedEndRoom ? 1 : 0.5,
+          },
         ]}
         onPress={startNavigation}
         disabled={!selectedStartRoom || !selectedEndRoom}
       >
-        <Text style={styles.navigationButtonText}>
-          Start Indoor Navigation
-        </Text>
+        <Text style={styles.navigationButtonText}>Start Indoor Navigation</Text>
       </TouchableOpacity>
     </View>
   );

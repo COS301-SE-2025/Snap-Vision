@@ -1,13 +1,13 @@
 // src/screens/BuildingSelectionScreen.tsx
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  FlatList, 
-  TouchableOpacity, 
-  StyleSheet, 
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
   SafeAreaView,
-  ActivityIndicator 
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -55,25 +55,21 @@ export default function BuildingSelectionScreen() {
   const loadBuildingsWithNavigation = async () => {
     try {
       setIsLoading(true);
-  
+
       // Get all buildings from UPcampusPOIs
-      const buildingsSnapshot = await firestore()
-        .collection('UPcampusPOIs')
-        .get(); // Remove the filter to get all buildings
-  
-      const buildingsFromPOIs = buildingsSnapshot.docs.map(doc => ({
+      const buildingsSnapshot = await firestore().collection('UPcampusPOIs').get(); // Remove the filter to get all buildings
+
+      const buildingsFromPOIs = buildingsSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-        source: 'UPcampusPOIs'
+        source: 'UPcampusPOIs',
       }));
-  
+
       // Also get unique buildings from RoomPOIs
-      const roomsSnapshot = await firestore()
-        .collection('RoomPOIs')
-        .get();
-  
+      const roomsSnapshot = await firestore().collection('RoomPOIs').get();
+
       const buildingsFromRooms = new Map();
-      roomsSnapshot.docs.forEach(doc => {
+      roomsSnapshot.docs.forEach((doc) => {
         const data = doc.data();
         if (data.buildingId && !buildingsFromRooms.has(data.buildingId)) {
           buildingsFromRooms.set(data.buildingId, {
@@ -82,55 +78,54 @@ export default function BuildingSelectionScreen() {
             centroid: { latitude: 0, longitude: 0 }, // Default coordinates
             floors: 1, // Default floors
             hasNavigation: true,
-            source: 'RoomPOIs'
+            source: 'RoomPOIs',
           });
         }
       });
-  
+
       // Combine both sources
       const allBuildings = [...buildingsFromPOIs];
-      
+
       // Add buildings from rooms that don't exist in UPcampusPOIs
       buildingsFromRooms.forEach((building, buildingId) => {
-        const existsInPOIs = buildingsFromPOIs.some(b => 
-          b.id === buildingId || b.name === buildingId
+        const existsInPOIs = buildingsFromPOIs.some(
+          (b) => b.id === buildingId || b.name === buildingId,
         );
         if (!existsInPOIs) {
           allBuildings.push(building);
         }
       });
-  
+
       // Check navigation capability for UPcampusPOIs buildings
       const buildingsWithNavigation = await Promise.all(
         allBuildings.map(async (building) => {
           if (building.source === 'RoomPOIs') {
             return building; // Already has navigation
           }
-  
+
           // Check for room POIs using both document ID and name
           const roomsSnapshot1 = await firestore()
             .collection('RoomPOIs')
             .where('buildingId', '==', building.id)
             .limit(1)
             .get();
-  
+
           const roomsSnapshot2 = await firestore()
             .collection('RoomPOIs')
             .where('buildingId', '==', building.name)
             .limit(1)
             .get();
-  
+
           return {
             ...building,
-            hasNavigation: !roomsSnapshot1.empty || !roomsSnapshot2.empty
+            hasNavigation: !roomsSnapshot1.empty || !roomsSnapshot2.empty,
           };
-        })
+        }),
       );
-  
+
       // Filter to only show buildings with navigation
-      const navigableBuildings = buildingsWithNavigation.filter(b => b.hasNavigation);
+      const navigableBuildings = buildingsWithNavigation.filter((b) => b.hasNavigation);
       setBuildings(navigableBuildings);
-  
     } catch (error) {
       console.error('Error loading buildings:', error);
     } finally {
@@ -142,7 +137,7 @@ export default function BuildingSelectionScreen() {
     // For buildings from RoomPOIs, use the buildingId as stored in the room data
     // For buildings from UPcampusPOIs, try to find the matching buildingId in room data
     let actualBuildingId = building.id;
-    
+
     if (building.source === 'RoomPOIs') {
       // This building came from RoomPOIs, so the ID is already correct
       actualBuildingId = building.id;
@@ -151,7 +146,7 @@ export default function BuildingSelectionScreen() {
       // We'll use the name if that's what the rooms reference
       actualBuildingId = building.name || building.id;
     }
-  
+
     navigation.navigate('IndoorNavigationInterface', {
       buildingId: actualBuildingId,
       buildingName: building.name,
@@ -165,16 +160,14 @@ export default function BuildingSelectionScreen() {
         {
           backgroundColor: colors.card,
           borderColor: colors.border,
-        }
+        },
       ]}
       onPress={() => handleBuildingSelect(item)}
     >
       <View style={styles.buildingHeader}>
         <Icon name="domain" size={24} color={colors.primary} />
         <View style={styles.buildingInfo}>
-          <Text style={[styles.buildingName, { color: colors.text }]}>
-            {item.name}
-          </Text>
+          <Text style={[styles.buildingName, { color: colors.text }]}>{item.name}</Text>
           <Text style={[styles.buildingDetails, { color: colors.secondary }]}>
             {item.floors} floor{item.floors !== 1 ? 's' : ''} • Indoor navigation available
           </Text>
@@ -190,9 +183,7 @@ export default function BuildingSelectionScreen() {
         <SettingsHeader title="Indoor Navigation" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: colors.text }]}>
-            Loading buildings...
-          </Text>
+          <Text style={[styles.loadingText, { color: colors.text }]}>Loading buildings...</Text>
         </View>
       </SafeAreaView>
     );
@@ -204,12 +195,10 @@ export default function BuildingSelectionScreen() {
         <SettingsHeader title="Indoor Navigation" />
         <View style={styles.emptyContainer}>
           <Icon name="domain-off" size={64} color={colors.secondary} />
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>
-            No Buildings Available
-          </Text>
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>No Buildings Available</Text>
           <Text style={[styles.emptyText, { color: colors.secondary }]}>
-            No buildings with indoor navigation are currently available. 
-            Buildings need room POIs to enable navigation.
+            No buildings with indoor navigation are currently available. Buildings need room POIs to
+            enable navigation.
           </Text>
         </View>
       </SafeAreaView>
@@ -219,7 +208,7 @@ export default function BuildingSelectionScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title="Indoor Navigation" />
-      
+
       <View style={styles.header}>
         <Text style={[styles.subtitle, { color: colors.secondary }]}>
           Select a building to start indoor navigation

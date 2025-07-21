@@ -38,7 +38,11 @@ export default function BottomTabs() {
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Map" component={MapScreen} />
-      <Tab.Screen name="Indoor" component={BuildingSelectionScreen} options={{ title: 'Indoor Nav' }} />
+      <Tab.Screen
+        name="Indoor"
+        component={BuildingSelectionScreen}
+        options={{ title: 'Indoor Nav' }}
+      />
       <Tab.Screen name="Achievements" component={AchievementsScreen} />
       <Tab.Screen name="Settings" component={SettingsNavigator} />
       {role === 'admin' && <Tab.Screen name="Admin" component={AdminScreen} />}

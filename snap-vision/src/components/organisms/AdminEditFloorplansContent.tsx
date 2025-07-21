@@ -50,10 +50,10 @@ export default function AdminEditFloorplansContent() {
     const fetchFloorplans = async () => {
       try {
         setIsLoading(true);
-        
+
         // Clear duplicates first
         await clearDuplicateFloorplans();
-        
+
         // Use the utility function to get unique floorplans
         const floorplanData = await getAllFloorplans();
 
@@ -281,7 +281,7 @@ export default function AdminEditFloorplansContent() {
                 key={`${fp.id}_${index}`}
                 style={[
                   styles.floorplanItem,
-                  { 
+                  {
                     backgroundColor: selectedFloorplan === fp.id ? colors.primary : colors.card,
                     borderColor: colors.border,
                     borderWidth: 1,
@@ -339,7 +339,8 @@ export default function AdminEditFloorplansContent() {
                   </Text>
                   <Text style={[styles.detailText, { color: colors.text }]}>
                     <Text style={{ fontWeight: 'bold' }}>Image URI: </Text>
-                    {floorplans.find((fp) => fp.id === selectedFloorplan)?.localUri || 'Not available'}
+                    {floorplans.find((fp) => fp.id === selectedFloorplan)?.localUri ||
+                      'Not available'}
                   </Text>
                 </>
               )}

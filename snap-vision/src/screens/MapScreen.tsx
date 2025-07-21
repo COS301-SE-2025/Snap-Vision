@@ -40,7 +40,7 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'http://192.168.1.93:3000'; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = 'http://192.168.38.203:3000'; // <-- Use your correct backend IP here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
@@ -886,7 +886,6 @@ const MapScreen = () => {
     }
   };
 
- 
   //IMP: temp test to take out later
   const simulateDestinationReached = async () => {
     if (!selectedPOI) {
@@ -1487,11 +1486,13 @@ const MapScreen = () => {
           }}
           onPress={handleARToggle}
         >
-          <Text style={{ 
-            color: showAR ? 'white' : colors.text, 
-            fontSize: 12, 
-            fontWeight: 'bold' 
-          }}>
+          <Text
+            style={{
+              color: showAR ? 'white' : colors.text,
+              fontSize: 12,
+              fontWeight: 'bold',
+            }}
+          >
             AR
           </Text>
         </TouchableOpacity>
@@ -1500,13 +1501,13 @@ const MapScreen = () => {
       {/* AR Navigation Overlay */}
       {showAR && isNavigating && destinationCoords && currentLocation && (
         <ARNavigationOverlay
-          currentLocation={{ 
-            x: currentLocation.longitude, 
-            y: currentLocation.latitude 
+          currentLocation={{
+            x: currentLocation.longitude,
+            y: currentLocation.latitude,
           }}
-          destinationCoords={{ 
-            x: destinationCoords[0], 
-            y: destinationCoords[1] 
+          destinationCoords={{
+            x: destinationCoords[0],
+            y: destinationCoords[1],
           }}
           deviceHeading={deviceHeading}
           navigationSteps={steps}

@@ -34,7 +34,7 @@ export default function CameraTestScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Camera Device Test</Text>
-      
+
       <View style={styles.info}>
         <Text>Permission: {hasPermission ? '✅ Granted' : '❌ Not granted'}</Text>
         <Text>Available devices: {Object.keys(devices).length}</Text>

@@ -4,7 +4,12 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'rea
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
-import { NavigationGraph, calculateRoute, generateDetailedDirections, NavigationStep } from '../../utils/navigationUtils';
+import {
+  NavigationGraph,
+  calculateRoute,
+  generateDetailedDirections,
+  NavigationStep,
+} from '../../utils/navigationUtils';
 import firestore from '@react-native-firebase/firestore';
 import SettingsHeader from '../molecules/SettingsHeader';
 
@@ -23,11 +28,11 @@ export default function IndoorNavigationInstructionsContent({
   startRoomId,
   endRoomId,
   onNavigationComplete,
-  onBack
+  onBack,
 }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  
+
   const [steps, setSteps] = useState<NavigationStep[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,7 +53,7 @@ export default function IndoorNavigationInstructionsContent({
         buildingId,
         floorId,
         startRoomId,
-        endRoomId
+        endRoomId,
       });
 
       // Load room data
@@ -58,9 +63,9 @@ export default function IndoorNavigationInstructionsContent({
         .where('floorId', '==', floorId)
         .get();
 
-      const rooms = roomsSnapshot.docs.map(doc => ({
+      const rooms = roomsSnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
 
       // Load path data
@@ -70,9 +75,9 @@ export default function IndoorNavigationInstructionsContent({
         .where('floorId', '==', floorId)
         .get();
 
-      const paths = pathsSnapshot.docs.map(doc => ({
+      const paths = pathsSnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
 
       if (rooms.length === 0) {
@@ -86,8 +91,8 @@ export default function IndoorNavigationInstructionsContent({
       }
 
       // Find start and end rooms
-      const startRoom = rooms.find(r => r.id === startRoomId);
-      const endRoom = rooms.find(r => r.id === endRoomId);
+      const startRoom = rooms.find((r) => r.id === startRoomId);
+      const endRoom = rooms.find((r) => r.id === endRoomId);
 
       if (!startRoom || !endRoom) {
         setError('Selected rooms not found');
@@ -99,7 +104,7 @@ export default function IndoorNavigationInstructionsContent({
 
       // Calculate route
       const routeSteps = calculateRoute(startRoomId, endRoomId, rooms, paths);
-      
+
       if (routeSteps.length === 0) {
         setError('No route found between selected rooms');
         return;
@@ -108,7 +113,6 @@ export default function IndoorNavigationInstructionsContent({
       // Generate detailed directions
       const detailedSteps = generateDetailedDirections(routeSteps);
       setSteps(detailedSteps);
-      
     } catch (error) {
       console.error('Error generating navigation steps:', error);
       setError('Failed to generate navigation route');
@@ -120,13 +124,9 @@ export default function IndoorNavigationInstructionsContent({
   const markStepCompleted = (stepIndex: number) => {
     if (stepIndex === steps.length - 1) {
       // Reached destination
-      Alert.alert(
-        'Destination Reached!',
-        `You have arrived at ${endRoomName}`,
-        [
-          { text: 'Finish', onPress: onNavigationComplete }
-        ]
-      );
+      Alert.alert('Destination Reached!', `You have arrived at ${endRoomName}`, [
+        { text: 'Finish', onPress: onNavigationComplete },
+      ]);
     } else {
       setCurrentStep(stepIndex + 1);
     }
@@ -136,7 +136,7 @@ export default function IndoorNavigationInstructionsContent({
     if (index < currentStep) {
       return 'check-circle';
     }
-    
+
     switch (step.type) {
       case 'start':
         return 'play-circle';
@@ -178,9 +178,7 @@ export default function IndoorNavigationInstructionsContent({
         <SettingsHeader title="Navigation Error" />
         <View style={styles.centerContainer}>
           <Icon name="alert-circle" size={64} color={colors.danger} />
-          <Text style={[styles.errorText, { color: colors.danger }]}>
-            {error}
-          </Text>
+          <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>
           <TouchableOpacity
             style={[styles.button, { backgroundColor: colors.primary }]}
             onPress={onBack}
@@ -195,7 +193,7 @@ export default function IndoorNavigationInstructionsContent({
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title="Indoor Navigation" />
-      
+
       <View style={styles.header}>
         <Text style={[styles.routeTitle, { color: colors.text }]}>
           {startRoomName} → {endRoomName}
@@ -214,26 +212,24 @@ export default function IndoorNavigationInstructionsContent({
               {
                 backgroundColor: index === currentStep ? colors.primary + '20' : colors.card,
                 borderColor: index === currentStep ? colors.primary : colors.border,
-                opacity: index > currentStep ? 0.7 : 1
-              }
+                opacity: index > currentStep ? 0.7 : 1,
+              },
             ]}
           >
             <View style={styles.stepHeader}>
               <View style={[styles.stepIcon, { backgroundColor: getStepColor(index) }]}>
-                <Icon 
-                  name={getStepIcon(step, index)} 
-                  size={20} 
-                  color="#FFFFFF" 
-                />
+                <Icon name={getStepIcon(step, index)} size={20} color="#FFFFFF" />
               </View>
               <View style={styles.stepContent}>
-                <Text style={[
-                  styles.stepInstruction,
-                  { 
-                    color: colors.text,
-                    textDecorationLine: index < currentStep ? 'line-through' : 'none'
-                  }
-                ]}>
+                <Text
+                  style={[
+                    styles.stepInstruction,
+                    {
+                      color: colors.text,
+                      textDecorationLine: index < currentStep ? 'line-through' : 'none',
+                    },
+                  ]}
+                >
                   {step.instruction}
                 </Text>
                 {step.distance && (
@@ -243,15 +239,13 @@ export default function IndoorNavigationInstructionsContent({
                 )}
               </View>
             </View>
-            
+
             {index === currentStep && index < steps.length - 1 && (
               <TouchableOpacity
                 style={[styles.completeButton, { backgroundColor: colors.primary }]}
                 onPress={() => markStepCompleted(index)}
               >
-                <Text style={styles.completeButtonText}>
-                  I've completed this step
-                </Text>
+                <Text style={styles.completeButtonText}>I've completed this step</Text>
               </TouchableOpacity>
             )}
 
@@ -260,9 +254,7 @@ export default function IndoorNavigationInstructionsContent({
                 style={[styles.completeButton, { backgroundColor: colors.success || '#4CAF50' }]}
                 onPress={() => markStepCompleted(index)}
               >
-                <Text style={styles.completeButtonText}>
-                  I've arrived!
-                </Text>
+                <Text style={styles.completeButtonText}>I've arrived!</Text>
               </TouchableOpacity>
             )}
           </View>

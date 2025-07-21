@@ -85,15 +85,18 @@ import ARNavigationOverlay from '../components/organisms/ARNavigationOverlay.adv
 ## Troubleshooting 🔧
 
 ### Camera Not Working
+
 1. Check camera permissions in device settings
 2. Restart the app after granting permissions
 3. Ensure no other apps are using the camera
 
 ### AR Button Not Showing
+
 - AR button only appears when navigation is active
 - Make sure you have a destination set and navigation started
 
 ### Direction Arrow Not Accurate
+
 - Calibrate device compass by moving in figure-8 pattern
 - Ensure location permissions are granted
 - Check that GPS signal is strong
@@ -101,6 +104,7 @@ import ARNavigationOverlay from '../components/organisms/ARNavigationOverlay.adv
 ## Coordinate System Notes 📍
 
 The AR system currently uses:
+
 - **Current Location**: Longitude/Latitude from GPS
 - **Destination Coords**: Your indoor coordinate system (x, y)
 - **Bearing Calculation**: Converts between coordinate systems

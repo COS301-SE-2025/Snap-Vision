@@ -133,9 +133,9 @@ export default function AdminFloorplanEditorContent() {
         // Draw paths on WebView
         if (paths.length > 0) {
           setTimeout(() => {
-            const pathData = paths.map(path => ({
+            const pathData = paths.map((path) => ({
               id: path.id,
-              d: generatePathSVG(path.waypoints)
+              d: generatePathSVG(path.waypoints),
             }));
             webViewRef.current?.injectJavaScript(`
               window.drawPaths && window.drawPaths(${JSON.stringify(pathData)});
@@ -154,7 +154,7 @@ export default function AdminFloorplanEditorContent() {
   // Generate SVG path string from waypoints
   const generatePathSVG = (waypoints: { x: number; y: number }[]) => {
     if (waypoints.length < 2) return '';
-    
+
     // Convert relative coordinates (0-1) to SVG coordinates (0-100)
     let pathString = `M ${waypoints[0].x * 100} ${waypoints[0].y * 100}`;
     for (let i = 1; i < waypoints.length; i++) {
@@ -167,8 +167,8 @@ export default function AdminFloorplanEditorContent() {
   const calculatePathDistance = (waypoints: { x: number; y: number }[]) => {
     let totalDistance = 0;
     for (let i = 1; i < waypoints.length; i++) {
-      const dx = waypoints[i].x - waypoints[i-1].x;
-      const dy = waypoints[i].y - waypoints[i-1].y;
+      const dx = waypoints[i].x - waypoints[i - 1].x;
+      const dy = waypoints[i].y - waypoints[i - 1].y;
       totalDistance += Math.sqrt(dx * dx + dy * dy);
     }
     return totalDistance;
@@ -180,7 +180,7 @@ export default function AdminFloorplanEditorContent() {
     setIsPathMode(newPathMode);
     setSelectedRooms([]);
     setCurrentPath([]);
-    
+
     webViewRef.current?.injectJavaScript(`
       window.togglePathMode && window.togglePathMode(${newPathMode});
       true;
@@ -193,26 +193,22 @@ export default function AdminFloorplanEditorContent() {
       Alert.alert('Error', 'Please select two rooms and add waypoints to create a path');
       return;
     }
-  
+
     try {
       const pathId = `path_${buildingId.replace(/\//g, '_')}_${floorLabel.replace(/\s/g, '_')}_${Date.now()}`;
-      
+
       // Get room coordinates for start and end points
-      const startRoom = roomMarkers.find(r => r.id === selectedRooms[0]);
-      const endRoom = roomMarkers.find(r => r.id === selectedRooms[1]);
-      
+      const startRoom = roomMarkers.find((r) => r.id === selectedRooms[0]);
+      const endRoom = roomMarkers.find((r) => r.id === selectedRooms[1]);
+
       if (!startRoom || !endRoom) {
         Alert.alert('Error', 'Selected rooms not found');
         return;
       }
-  
+
       // Create waypoints array including start and end room positions
-      const waypoints = [
-        startRoom.coordinates,
-        ...currentPath,
-        endRoom.coordinates
-      ];
-  
+      const waypoints = [startRoom.coordinates, ...currentPath, endRoom.coordinates];
+
       const pathPOI: PathPOI = {
         id: pathId,
         buildingId: buildingId,
@@ -224,35 +220,32 @@ export default function AdminFloorplanEditorContent() {
         accessible: true,
         createdAt: new Date().toISOString(),
       };
-  
-      await firestore()
-        .collection('PathPOIs')
-        .doc(pathId)
-        .set(pathPOI);
-  
+
+      await firestore().collection('PathPOIs').doc(pathId).set(pathPOI);
+
       setPathMarkers([...pathMarkers, pathPOI]);
-      
+
       // Draw the new path - use the full waypoints array
       const pathData = {
         id: pathId,
-        d: generatePathSVG(waypoints)
+        d: generatePathSVG(waypoints),
       };
-      
+
       webViewRef.current?.injectJavaScript(`
         window.drawSinglePath && window.drawSinglePath(${JSON.stringify(pathData)});
         true;
       `);
-      
+
       // Reset path creation
       setIsPathMode(false);
       setSelectedRooms([]);
       setCurrentPath([]);
-      
+
       webViewRef.current?.injectJavaScript(`
         window.togglePathMode && window.togglePathMode(false);
         true;
       `);
-  
+
       Alert.alert('Success', 'Path created successfully');
     } catch (error) {
       console.error('Error saving path:', error);
@@ -319,7 +312,6 @@ export default function AdminFloorplanEditorContent() {
     );
   }
 
-  
   const getHTML = () => {
     return `
       <!DOCTYPE html>
@@ -815,7 +807,7 @@ export default function AdminFloorplanEditorContent() {
       </html>
     `;
   };
-  
+
   // ...rest of existing code...
 
   // Handle messages from WebView
@@ -983,12 +975,11 @@ export default function AdminFloorplanEditorContent() {
           Add Room POIs - {floorLabel}
         </Text>
         <Text style={[styles.headerSubtitle, { color: colors.text }]}>
-          {isPathMode 
+          {isPathMode
             ? `Path Mode: Select 2 rooms, then tap to add waypoints. Selected: ${selectedRooms.length}/2`
-            : 'Tap on the floorplan to add rooms or tap existing markers to edit'
-          }
+            : 'Tap on the floorplan to add rooms or tap existing markers to edit'}
         </Text>
-        
+
         {/* Path creation controls */}
         <View style={styles.pathControls}>
           <TouchableOpacity
@@ -1005,7 +996,7 @@ export default function AdminFloorplanEditorContent() {
               {isPathMode ? 'Exit Path Mode' : 'Create Path'}
             </Text>
           </TouchableOpacity>
-          
+
           {isPathMode && selectedRooms.length === 2 && (
             <TouchableOpacity
               onPress={savePath}

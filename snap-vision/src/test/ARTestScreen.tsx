@@ -23,20 +23,18 @@ export default function ARTestScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>AR Navigation Test</Text>
-      
+
       <View style={styles.infoContainer}>
         <Text style={styles.info}>Device Heading: {Math.round(deviceHeading)}°</Text>
         <Text style={styles.info}>Target Bearing: {Math.round(calculateBearing())}°</Text>
         <Text style={styles.info}>AR Status: {showAR ? '✅ Active' : '❌ Inactive'}</Text>
       </View>
-      
+
       <TouchableOpacity
         style={[styles.button, { backgroundColor: showAR ? '#ff4444' : '#44ff44' }]}
         onPress={() => setShowAR(!showAR)}
       >
-        <Text style={styles.buttonText}>
-          {showAR ? 'Hide AR' : 'Show AR'}
-        </Text>
+        <Text style={styles.buttonText}>{showAR ? 'Hide AR' : 'Show AR'}</Text>
       </TouchableOpacity>
 
       {showAR && (
