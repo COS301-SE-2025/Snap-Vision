@@ -153,11 +153,11 @@ describe('AdminLoadFloorplansContent', () => {
 
     it('displays buildings from firestore', async () => {
       const { findByText } = renderWithTheme(<AdminLoadFloorplansContent />);
-    
+
       await act(async () => {
         await waitForData(); // Wait for initial data load
       });
-    
+
       await expect(findByText('Building A')).resolves.toBeTruthy();
       await expect(findByText('Building B')).resolves.toBeTruthy();
     });
@@ -240,13 +240,13 @@ describe('AdminLoadFloorplansContent', () => {
       it('handles firestore fetch error', async () => {
         const firestore = require('@react-native-firebase/firestore');
         firestore.default().collection().where().get.mockRejectedValue(new Error('Network error'));
-      
+
         const { findByText } = renderWithTheme(<AdminLoadFloorplansContent />);
-      
+
         await act(async () => {
           await waitForData();
         });
-      
+
         expect(await findByText('Failed to load buildings. Please try again.')).toBeTruthy();
       });
 
