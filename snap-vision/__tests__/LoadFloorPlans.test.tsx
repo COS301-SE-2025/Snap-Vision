@@ -154,7 +154,9 @@ describe('AdminLoadFloorplansContent', () => {
     it('displays buildings from firestore', async () => {
       const { findByText } = renderWithTheme(<AdminLoadFloorplansContent />);
 
-      await waitForData(); // Wait for initial data load
+      await act(async () => {
+        await waitForData(); // Wait for initial data load
+      });
 
       await expect(findByText('Building A')).resolves.toBeTruthy();
       await expect(findByText('Building B')).resolves.toBeTruthy();
@@ -241,6 +243,10 @@ describe('AdminLoadFloorplansContent', () => {
         firestore.default().collection().where().get.mockRejectedValue(new Error('Network error'));
 
         const { findByText } = renderWithTheme(<AdminLoadFloorplansContent />);
+
+        await act(async () => {
+          await waitForData();
+        });
 
         expect(await findByText('Failed to load buildings. Please try again.')).toBeTruthy();
       });
