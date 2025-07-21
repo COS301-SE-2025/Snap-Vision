@@ -1,4 +1,3 @@
-// snap-vision-backend/src/services/recentlyVisitedService.js
 const admin = require('firebase-admin');
 const path = require('path');
 
