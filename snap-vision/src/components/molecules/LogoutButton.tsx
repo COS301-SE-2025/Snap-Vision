@@ -2,6 +2,8 @@ import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
+import Toast from 'react-native-toast-message';
+import { Colors } from 'react-native/Libraries/NewAppScreen';
 
 interface LogoutButtonProps {
   onLogout: () => void;
@@ -12,10 +14,40 @@ export default function LogoutButton({ onLogout, isLoading = false }: LogoutButt
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
+  const handlePress = async () => {
+    try {
+      await onLogout();
+
+      Toast.show({
+        type: 'default',
+        text1: 'Logged Out',
+        text2: 'See you soon!',
+        props: {
+          backgroundColor: colors.card,
+          borderColor: colors.primary,
+          textColor: colors.primary,
+          iconColor: colors.secondary,
+        },
+      });
+    } catch (error) {
+      Toast.show({
+        type: 'default',
+        text1: 'Logout Failed',
+        text2: 'Please try again.',
+        props: {
+          backgroundColor: colors.card,
+          borderColor: colors.primary,
+          textColor: colors.primary,
+          iconColor: colors.secondary,
+        },
+      });
+    }
+  };
+
   return (
     <TouchableOpacity
-      style={[styles.button, { backgroundColor: colors.danger }]}
-      onPress={onLogout}
+      style={[styles.button, { backgroundColor: colors.card }]}
+      onPress={handlePress}
       disabled={isLoading}
     >
       {isLoading ? (
@@ -29,15 +61,14 @@ export default function LogoutButton({ onLogout, isLoading = false }: LogoutButt
 
 const styles = StyleSheet.create({
   button: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     borderRadius: 8,
-    minWidth: 120,
     alignItems: 'center',
+    marginBottom: 20,
   },
   buttonText: {
-    color: '#FFFFFF',
+    fontWeight: '600',
     fontSize: 16,
-    fontWeight: '500',
   },
 });
