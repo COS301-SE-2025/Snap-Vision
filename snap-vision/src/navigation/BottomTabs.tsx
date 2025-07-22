@@ -4,7 +4,7 @@ import HomeScreen from '../screens/HomeScreen';
 import MapScreen from '../screens/MapScreen';
 import AchievementsScreen from '../screens/AchievementsScreen';
 import SettingsNavigator from './SettingsNavigator';
-import AdminScreen from '../screens/AdminScreen';
+import AdminNavigator from './AdminNavigator';
 import BuildingSelectionScreen from '../screens/BuildingSelectionScreen';
 import TabBarIcon from '../components/molecules/TabBarIcon';
 import { useTheme } from '../theme/ThemeContext';
@@ -45,7 +45,7 @@ export default function BottomTabs() {
       />
       <Tab.Screen name="Achievements" component={AchievementsScreen} />
       <Tab.Screen name="Settings" component={SettingsNavigator} />
-      {role === 'admin' && <Tab.Screen name="Admin" component={AdminScreen} />}
+      {role === 'admin' && <Tab.Screen name="Admin" component={AdminNavigator} />}
     </Tab.Navigator>
   );
 }
