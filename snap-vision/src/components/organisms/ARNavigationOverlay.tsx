@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    zIndez: 999
+    zIndez: 999,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,

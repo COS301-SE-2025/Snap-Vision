@@ -77,10 +77,7 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
   if (isMinimized && showAR) {
     return (
       <View style={[styles.minimizedContainer, { backgroundColor: colors.card }]}>
-        <Pressable
-          style={styles.minimizedContent}
-          onPress={onToggleMinimize}
-        >
+        <Pressable style={styles.minimizedContent} onPress={onToggleMinimize}>
           <Text style={[styles.minimizedText, { color: colors.text }]} numberOfLines={1}>
             {destination} • {formatDistance(distance)} • {Math.round(progress)}%
           </Text>
@@ -107,7 +104,7 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
             <Pressable
               style={[
                 styles.miniButton,
-                { backgroundColor: showAR ? colors.primary : colors.secondary }
+                { backgroundColor: showAR ? colors.primary : colors.secondary },
               ]}
               onPress={onToggleAR}
             >
@@ -212,22 +209,15 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
               <Pressable
                 style={[
                   styles.voiceStyleButton,
-                  { 
+                  {
                     backgroundColor: showAR ? colors.primary : colors.secondary,
                     opacity: showAR ? 1 : 0.8,
                   },
                 ]}
                 onPress={onToggleAR}
               >
-                <Icon 
-                  name="camera-outline" 
-                  size={16} 
-                  color="#fff" 
-                  style={styles.buttonIcon} 
-                />
-                <Text style={styles.voiceLabel}>
-                  {showAR ? 'AR On' : 'AR'}
-                </Text>
+                <Icon name="camera-outline" size={16} color="#fff" style={styles.buttonIcon} />
+                <Text style={styles.voiceLabel}>{showAR ? 'AR On' : 'AR'}</Text>
               </Pressable>
             )}
           </View>
