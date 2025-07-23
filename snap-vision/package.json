@@ -52,8 +52,7 @@
     "react-native-vision-camera": "^4.7.0",
     "react-native-web": "~0.20.0",
     "react-native-webview": "^13.13.5",
-    "react-native-worklets-core": "^1.6.0",
-    "react-test-renderer": "^19.0.0"
+    "react-native-worklets-core": "^1.6.0"
   },
   "devDependencies": {
     "@babel/core": "^7.23.9",
@@ -61,6 +60,7 @@
     "@babel/preset-env": "^7.23.7",
     "@babel/runtime": "^7.23.9",
     "@react-native-community/cli": "^18.0.0",
+    "@react-native-community/cli-platform-android": "^18.0.0",
     "@react-native/metro-config": "^0.79.2",
     "@testing-library/jest-native": "^5.4.3",
     "@testing-library/react-native": "^13.2.0",
@@ -81,6 +81,7 @@
     "metro-react-native-babel-preset": "^0.77.0",
     "prettier": "^3.6.1",
     "react-native-dotenv": "^3.4.11",
+    "react-test-renderer": "^19.1.0",
     "ts-jest": "^29.3.4",
     "typescript": "~5.8.3"
   },
