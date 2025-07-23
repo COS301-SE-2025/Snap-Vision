@@ -34,18 +34,19 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import ARNavigationOverlay from '../components/organisms/ARNavigationOverlay';
 import { useCompass } from '../hooks/useCompass';
 import { requestCameraPermission } from '../utils/cameraPermissions';
+import { Platform } from 'react-native';
 
 type MapScreenParams = {
   lat?: string;
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'http://192.168.38.203:3000'; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = 'http://192.168.0.118:3000'; // <-- Use your correct backend IP here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
 // L wifi: 192.168.0.127
-// T home: 192.168.0.133
+// T home: 192.168.0.118
 // T data: 192.168.43.155
 // Th home: 10.0.0.9
 // T Durban: 192.168.1.93
@@ -120,6 +121,7 @@ const MapScreen = () => {
   // AR Navigation state
   const [showAR, setShowAR] = useState(false);
   const deviceHeading = useCompass();
+  const [isNavigationMinimized, setIsNavigationMinimized] = useState(false);
 
   //haptic feedback options
   const hapticOptions = {
@@ -183,28 +185,87 @@ const MapScreen = () => {
     }
   };
 
+  // Replace your requestLocation function with this enhanced version
   const requestLocation = async () => {
     try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      );
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        setStatus('Getting your location...');
-        Geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            sendLocationToWebView(latitude, longitude, true);
-            setStatus('Location found');
-          },
-          (error) => {
-            setError('Failed to get location');
-          },
-          { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
-        );
-      } else {
-        setError('Location permission denied');
+      console.log('🔍 Requesting location permissions...');
+
+      if (Platform.OS === 'android') {
+        // For Android 12+, we need to request both permissions
+        const permissions = [
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+        ];
+
+        const results = await PermissionsAndroid.requestMultiple(permissions);
+
+        console.log('Permission results:', results);
+
+        const fineLocationGranted =
+          results['android.permission.ACCESS_FINE_LOCATION'] === 'granted';
+        const coarseLocationGranted =
+          results['android.permission.ACCESS_COARSE_LOCATION'] === 'granted';
+
+        if (!fineLocationGranted && !coarseLocationGranted) {
+          setError('Location permissions denied. Please enable in Settings.');
+          return;
+        }
+
+        // Android 12+ specific: Check if we need to request precise location
+        if (Platform.Version >= 31) {
+          // Android 12 = API 31
+          try {
+            // Try to get high accuracy first
+            setStatus('Getting precise location...');
+            Geolocation.getCurrentPosition(
+              (position) => {
+                console.log('✅ High accuracy location:', position.coords);
+                const { latitude, longitude } = position.coords;
+                sendLocationToWebView(latitude, longitude, true);
+                setStatus('High accuracy location found');
+              },
+              (error) => {
+                console.log('❌ High accuracy failed, trying approximate:', error);
+                // Fallback to approximate location
+                Geolocation.getCurrentPosition(
+                  (position) => {
+                    console.log('✅ Approximate location:', position.coords);
+                    const { latitude, longitude } = position.coords;
+                    sendLocationToWebView(latitude, longitude, true);
+                    setStatus('Approximate location found');
+                  },
+                  (fallbackError) => {
+                    console.error('❌ All location attempts failed:', fallbackError);
+                    setError('Unable to get location. Check GPS settings.');
+                  },
+                  { enableHighAccuracy: false, timeout: 20000, maximumAge: 30000 },
+                );
+              },
+              { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
+            );
+          } catch (err) {
+            console.error('❌ Location request failed:', err);
+            setError('Location service error');
+          }
+        } else {
+          // Pre-Android 12 behavior
+          setStatus('Getting your location...');
+          Geolocation.getCurrentPosition(
+            (position) => {
+              const { latitude, longitude } = position.coords;
+              sendLocationToWebView(latitude, longitude, true);
+              setStatus('Location found');
+            },
+            (error) => {
+              console.error('❌ Location error:', error);
+              setError('Failed to get location');
+            },
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
+          );
+        }
       }
     } catch (err) {
+      console.error('❌ Permission request failed:', err);
       setError('Permission request failed');
     }
   };
@@ -222,6 +283,10 @@ const MapScreen = () => {
       setShowAR(false);
       setStatus('AR Navigation disabled');
     }
+  };
+
+  const handleNavigationMinimize = () => {
+    setIsNavigationMinimized(!isNavigationMinimized);
   };
 
   // Helper: Open modal to add new POI
@@ -1099,22 +1164,56 @@ const MapScreen = () => {
     let watchId: number | null = null;
 
     const startWatchingLocation = async () => {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      );
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        watchId = Geolocation.watchPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            sendLocationToWebView(latitude, longitude);
-          },
-          (error) => {
-            setError('Failed to get location');
-          },
-          { enableHighAccuracy: true, distanceFilter: 5, interval: 2000 },
-        );
-      } else {
-        setError('Location permission denied');
+      try {
+        const permissions = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+        ]);
+
+        const fineGranted = permissions['android.permission.ACCESS_FINE_LOCATION'] === 'granted';
+        const coarseGranted =
+          permissions['android.permission.ACCESS_COARSE_LOCATION'] === 'granted';
+
+        if (fineGranted || coarseGranted) {
+          console.log('✅ Starting location watch...');
+
+          // Android 12+ requires different options
+          const watchOptions =
+            Platform.Version >= 31
+              ? {
+                  enableHighAccuracy: fineGranted, // Use high accuracy only if fine location granted
+                  distanceFilter: 3,
+                  interval: 2000,
+                  fastestInterval: 1000,
+                  timeout: 25000,
+                  maximumAge: 8000,
+                }
+              : {
+                  enableHighAccuracy: true,
+                  distanceFilter: 5,
+                  interval: 2000,
+                  timeout: 20000,
+                  maximumAge: 5000,
+                };
+
+          watchId = Geolocation.watchPosition(
+            (position) => {
+              console.log('📍 Location update:', position.coords.accuracy + 'm accuracy');
+              const { latitude, longitude } = position.coords;
+              sendLocationToWebView(latitude, longitude);
+            },
+            (error) => {
+              console.error('❌ Location watch error:', error);
+              setError(`Location tracking error: ${error.message}`);
+            },
+            watchOptions,
+          );
+        } else {
+          setError('Location permissions required for navigation');
+        }
+      } catch (err) {
+        console.error('❌ Location watch setup failed:', err);
+        setError('Failed to setup location tracking');
       }
     };
 
@@ -1122,6 +1221,7 @@ const MapScreen = () => {
 
     return () => {
       if (watchId !== null) {
+        console.log('🛑 Stopping location watch');
         Geolocation.clearWatch(watchId);
       }
     };
@@ -1444,6 +1544,11 @@ const MapScreen = () => {
           onToggleVoice={() => setIsVoiceEnabled(!isVoiceEnabled)}
           currentInstruction={steps[currentStep]?.instruction}
           onSpeakingChange={setIsSpeaking}
+          showAR={showAR}
+          onToggleAR={handleARToggle}
+          destinationCoords={destinationCoords}
+          isMinimized={showAR && isNavigationMinimized}
+          onToggleMinimize={handleNavigationMinimize}
         />
       )}
 
@@ -1464,39 +1569,6 @@ const MapScreen = () => {
         onReportOut={() => setShowReportTooltip(false)}
         color={colors.primary}
       />
-
-      {/* AR Navigation Toggle Button */}
-      {isNavigating && destinationCoords && (
-        <TouchableOpacity
-          style={{
-            position: 'absolute',
-            bottom: 120,
-            right: 20,
-            backgroundColor: showAR ? colors.primary : colors.card,
-            width: 56,
-            height: 56,
-            borderRadius: 28,
-            justifyContent: 'center',
-            alignItems: 'center',
-            elevation: 6,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.25,
-            shadowRadius: 4,
-          }}
-          onPress={handleARToggle}
-        >
-          <Text
-            style={{
-              color: showAR ? 'white' : colors.text,
-              fontSize: 12,
-              fontWeight: 'bold',
-            }}
-          >
-            AR
-          </Text>
-        </TouchableOpacity>
-      )}
 
       {/* AR Navigation Overlay */}
       {showAR && isNavigating && destinationCoords && currentLocation && (
