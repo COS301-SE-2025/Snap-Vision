@@ -60,6 +60,8 @@ const [buildingDropdownItems, setBuildingDropdownItems] = useState<{ label: stri
 const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
 
 
+
+
   // Fetch all buildings from UPcampusPOIs collection
   useEffect(() => {
   if (!selectedLocation) return;
@@ -153,10 +155,11 @@ useEffect(() => {
       return;
     }
 
-    if (!floorLabel) {
-      setError('Please enter a floor label');
-      return;
-    }
+    if (isNaN(Number(floorLabel)) || Number(floorLabel) < 1) {
+  setError('Please enter a valid floor number (1 or higher)');
+  return;
+}
+
 
     if (!fileUri) {
       setError('Please select a floorplan file');
@@ -338,15 +341,24 @@ useEffect(() => {
           <View style={styles.inputSection}>
             <Text style={[styles.inputTitle, { color: colors.primary }]}>Floor Number / Label</Text>
             <AppInput
-              placeholder="e.g., Floor 2, Basement"
-              value={floorLabel}
-              onChangeText={setFloorLabel}
-              style={[
-                styles.textField,
-                { borderColor: colors.primary, color: colors.text, backgroundColor: colors.card },
-              ]}
-              placeholderTextColor={colors.secondary}
-            />
+  placeholder="Enter floor number (e.g., 1, 2, 3...)"
+  value={floorLabel}
+  onChangeText={(text) => {
+    // Remove any non-digit characters and block leading zero
+    const cleaned = text.replace(/[^0-9]/g, '');
+    if (cleaned === '' || parseInt(cleaned) >= 1) {
+      setFloorLabel(cleaned);
+    }
+  }}
+  keyboardType="number-pad"
+  maxLength={2} // optional: block large numbers like 100+
+  style={[
+    styles.textField,
+    { borderColor: colors.primary, color: colors.text, backgroundColor: colors.card },
+  ]}
+  placeholderTextColor={colors.secondary}
+/>
+
             <Text style={[styles.infoText, { color: colors.secondary }]}>
               Specify the floor designation
             </Text>
