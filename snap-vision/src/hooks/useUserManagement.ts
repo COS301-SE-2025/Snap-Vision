@@ -11,6 +11,7 @@ export const useUserManagement = () => {
     searchQuery: '',
   });
   const [loading, setLoading] = useState(true);
+  const [allLocations, setAllLocations] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     const unsubscribe = firestore()
@@ -25,7 +26,8 @@ export const useUserManagement = () => {
               id: doc.id,
               name: d.name || '',
               email: d.email || '',
-              role: d.role === 'admin' ? 'Admin' : 'Viewer',
+              // handle editor role here too
+              role: d.role === 'admin' ? 'Admin' : d.role === 'editor' ? 'Editor' : 'Viewer',
             };
           });
           setUsers(data);
@@ -64,6 +66,23 @@ export const useUserManagement = () => {
     setFilteredUsers(filtered);
   };
 
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const snapshot = await firestore().collection('locations').get();
+        const locations = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data().name,
+        }));
+        setAllLocations(locations);
+      } catch (error) {
+        console.error('Failed to fetch locations:', error);
+      }
+    };
+
+    fetchLocations();
+  }, []);
+
   const updateSearchQuery = (query: string) => {
     setFilters((prev) => ({ ...prev, searchQuery: query }));
   };
@@ -72,12 +91,24 @@ export const useUserManagement = () => {
     setFilters((prev) => ({ ...prev, role }));
   };
 
-  const editUser = async (user: User) => {
+  const editUser = async (user: User, selectedLocation?: string) => {
     try {
-      const roleValue = user.role === 'Admin' ? 'admin' : 'user';
-      await firestore().collection('userInformation').doc(user.id).update({
-        role: roleValue,
-      });
+      let roleValue: string = 'user';
+      let updateData: any = {};
+
+      if (user.role === 'Admin') {
+        roleValue = 'admin';
+      } else if (user.role === 'Editor') {
+        roleValue = 'editor';
+        if (!selectedLocation) {
+          throw new Error('No location selected for editor');
+        }
+        updateData.adminLocations = [selectedLocation];
+      }
+
+      updateData.role = roleValue;
+
+      await firestore().collection('userInformation').doc(user.id).update(updateData);
     } catch (err) {
       console.error('Failed to update role:', err);
     }
@@ -99,5 +130,7 @@ export const useUserManagement = () => {
     updateRoleFilter,
     editUser,
     deleteUser,
+    allLocations,
+    setAllLocations,
   };
 };
