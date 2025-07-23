@@ -89,6 +89,7 @@ const MapScreen = () => {
   const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
   const [pois, setPOIs] = useState<any[]>([]);
   const [poiSuggestions, setPOISuggestions] = useState<any[]>([]);
+  const [hasReachedDestination, setHasReachedDestination] = useState(false);
 
   // share location
   const route = useRoute();
@@ -485,6 +486,7 @@ const MapScreen = () => {
 
     // Stop any ongoing route loading
     setIsRouteLoading(false);
+    setHasReachedDestination(false);
 
     // Clear all route-related state
     setDestination('');
@@ -600,6 +602,7 @@ const MapScreen = () => {
 
   // Start navigation function with haptic feedback
   const startNavigation = () => {
+    setHasReachedDestination(false);
     if (!currentLocation || !destinationCoords || lastRoute.current.length === 0) {
       setError('Cannot start navigation without a route');
       return;
@@ -666,6 +669,7 @@ const MapScreen = () => {
 
   // Update the updateNavigationProgress function to check for destination arrival
   const updateNavigationProgress = (latitude: number, longitude: number) => {
+    if (hasReachedDestination) return;
     if (!lastRoute.current || lastRoute.current.length === 0) {
       return;
     }
@@ -784,13 +788,14 @@ const MapScreen = () => {
     // 1. Progress is 100%
     // 2. Distance to destination is less than 3 meters
     if ((newProgress >= 100 || distanceToEnd < 3) && isNavigating) {
+      setHasReachedDestination(true);
       destinationReached();
     }
   };
 
   // Destination reached function with haptic feedback
   const destinationReached = async () => {
-    if (!isNavigating) return; // Only handle if actually navigating
+    if (!isNavigating || hasReachedDestination) return; // Only handle if actually navigating
 
     // Stop navigation FIRST to prevent repeated calls
     stopNavigation();
@@ -850,7 +855,10 @@ const MapScreen = () => {
 
     // Show alert only once
     Alert.alert('Destination Reached', 'You have arrived at your destination!', [
-      { text: 'OK', onPress: () => setStatus('Ready for navigation') },
+      { text: 'OK', onPress: () => {
+            setStatus('Ready for navigation');
+            setHasReachedDestination(false);
+          } },
     ]);
   };
 
