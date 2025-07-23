@@ -87,32 +87,43 @@ export const useUserManagement = () => {
     setFilters((prev) => ({ ...prev, searchQuery: query }));
   };
 
-  const updateRoleFilter = (role: 'All' | 'Admin' | 'Viewer') => {
+  const updateRoleFilter = (role: 'All' | 'Admin' | 'Viewer' | 'Editor') => {
     setFilters((prev) => ({ ...prev, role }));
   };
 
-  const editUser = async (user: User, selectedLocation?: string) => {
-    try {
-      let roleValue: string = 'user';
-      let updateData: any = {};
+ const editUser = async (user: User, selectedLocation?: string) => {
+  try {
+    const updateData: any = {};
 
-      if (user.role === 'Admin') {
-        roleValue = 'admin';
-      } else if (user.role === 'Editor') {
-        roleValue = 'editor';
-        if (!selectedLocation) {
-          throw new Error('No location selected for editor');
-        }
+    switch (user.role) {
+      case 'Admin':
+        updateData.role = 'admin';
+        updateData.adminLocations = firestore.FieldValue.delete();
+        break;
+
+      case 'Viewer':
+        updateData.role = 'viewer';
+        updateData.adminLocations = firestore.FieldValue.delete();
+        break;
+
+      case 'Editor':
+        if (!selectedLocation) throw new Error('No location selected for editor');
+        updateData.role = 'editor';
         updateData.adminLocations = [selectedLocation];
-      }
+        break;
 
-      updateData.role = roleValue;
-
-      await firestore().collection('userInformation').doc(user.id).update(updateData);
-    } catch (err) {
-      console.error('Failed to update role:', err);
+      default:
+        updateData.role = 'user';
+        updateData.adminLocations = firestore.FieldValue.delete();
     }
-  };
+
+    await firestore().collection('userInformation').doc(user.id).update(updateData);
+  } catch (err) {
+    console.error('Failed to update role:', err);
+  }
+};
+
+
 
   const deleteUser = async (user: User) => {
     try {
