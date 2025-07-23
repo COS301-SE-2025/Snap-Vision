@@ -21,11 +21,11 @@ describe("recentlyVisitedService (unit)", () => {
     admin = require("firebase-admin");
 
     mockCollection = {
-      where:    jest.fn().mockReturnThis(),
-      orderBy:  jest.fn().mockReturnThis(),
-      limit:    jest.fn().mockReturnThis(),
-      get:      jest.fn(),
-      add:      jest.fn(),
+      where: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      get: jest.fn(),
+      add: jest.fn(),
     };
 
     mockDb = { collection: jest.fn(() => mockCollection) };
@@ -50,7 +50,11 @@ describe("recentlyVisitedService (unit)", () => {
       const results = await service.getRecentVisits("user123");
 
       expect(mockDb.collection).toHaveBeenCalledWith("recentlyVisited");
-      expect(mockCollection.where).toHaveBeenCalledWith("userId", "==", "user123");
+      expect(mockCollection.where).toHaveBeenCalledWith(
+        "userId",
+        "==",
+        "user123",
+      );
       expect(mockCollection.orderBy).toHaveBeenCalledWith("timestamp", "desc");
       expect(mockCollection.limit).toHaveBeenCalledWith(10);
       expect(results).toEqual([
