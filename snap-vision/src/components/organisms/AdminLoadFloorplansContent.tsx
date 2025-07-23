@@ -20,6 +20,8 @@ import RNFS from 'react-native-fs';
 import * as ImagePicker from 'react-native-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
+import DropDownPicker from 'react-native-dropdown-picker';
 
 // Interface for building data from UPcampusPOIs
 interface Building {
@@ -48,36 +50,83 @@ export default function AdminLoadFloorplansContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [locations, setLocations] = useState<{ id: string; name: string }[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<string>('');
+  const [userRole, setUserRole] = useState<'admin' | 'editor' | 'user'>();
+  const [adminLocations, setAdminLocations] = useState<string[]>([]);
+
+  const [buildingDropdownOpen, setBuildingDropdownOpen] = useState(false);
+const [buildingDropdownItems, setBuildingDropdownItems] = useState<{ label: string; value: string }[]>([]);
+const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
+
+
   // Fetch all buildings from UPcampusPOIs collection
   useEffect(() => {
-    const fetchBuildings = async () => {
-      try {
-        setIsLoading(true);
-        const snapshot = await firestore()
-          .collection('UPcampusPOIs')
-          .where('type', '==', 'building')
-          .get();
+  if (!selectedLocation) return;
 
-        const buildingsData = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            name: data.name || 'Unnamed Building',
-            centroid: data.centroid,
-          };
-        });
+  const fetchBuildings = async () => {
+    setIsLoading(true);
+    const snapshot = await firestore()
+      .collection(`locations/${selectedLocation}/buildingPOIs`)
+      .get();
 
-        setBuildings(buildingsData);
-        setIsLoading(false);
-      } catch (err) {
-        console.error('Error fetching buildings:', err);
-        setError('Failed to load buildings. Please try again.');
-        setIsLoading(false);
-      }
-    };
+    const buildingsData = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        name: data.name || 'Unnamed Building',
+        centroid: data.centroid,
+        floors: data.floors || 1,
+      };
+    });
 
-    fetchBuildings();
-  }, []);
+    setBuildings(buildingsData);
+    setBuildingDropdownItems(
+  buildingsData.map((b) => ({
+    label: b.name,
+    value: b.id,
+  }))
+);
+
+
+
+    setIsLoading(false);
+  };
+
+  fetchBuildings();
+}, [selectedLocation]);
+
+
+  useEffect(() => {
+  const fetchUserInfo = async () => {
+    const userId = (await auth().currentUser)?.uid;
+    if (!userId) return;
+
+    const userSnap = await firestore().doc(`userInformation/${userId}`).get();
+    const data = userSnap.data();
+    setUserRole(data?.role);
+    setAdminLocations(data?.adminLocations || []);
+  };
+
+  fetchUserInfo();
+}, []);
+
+useEffect(() => {
+  const fetchLocations = async () => {
+    const snapshot = await firestore().collection('locations').get();
+    const allLocations = snapshot.docs.map((doc) => ({ id: doc.id, name: doc.data().name }));
+
+    if (userRole === 'admin') {
+      setLocations(allLocations);
+    } else if (userRole === 'editor') {
+      setLocations(allLocations.filter(loc => adminLocations.includes(loc.id)));
+    }
+  };
+
+  if (userRole) fetchLocations();
+}, [userRole, adminLocations]);
+
+
 
   // Handle file selection
   const handlePickDocument = async () => {
@@ -199,6 +248,32 @@ export default function AdminLoadFloorplansContent() {
           </View>
         )}
 
+        <View style={styles.inputSection}>
+  <Text style={[styles.inputTitle, { color: colors.primary }]}>Select a Location</Text>
+  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.buildingList}>
+    {locations.map((loc) => (
+      <TouchableOpacity
+        key={loc.id}
+        style={[
+          styles.buildingItem,
+          {
+            backgroundColor: selectedLocation === loc.id ? colors.primary : colors.card,
+          },
+        ]}
+        onPress={() => {
+          setSelectedLocation(loc.id);
+          setSelectedBuilding(null); // reset building
+        }}
+      >
+        <Text style={{ color: selectedLocation === loc.id ? '#FFF' : colors.text }}>
+          {loc.name}
+        </Text>
+      </TouchableOpacity>
+    ))}
+  </ScrollView>
+</View>
+
+
         {/* Step 1: Select Building */}
         <View style={styles.sectionContainer}>
           <Text style={[styles.sectionTitle, { color: colors.primary }]}>
@@ -211,55 +286,47 @@ export default function AdminLoadFloorplansContent() {
               No buildings available. Please check your connection.
             </Text>
           ) : (
-            <View style={styles.buildingSelector}>
-              <Text style={[styles.inputTitle, { color: colors.primary }]}>Select a Building</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.buildingList}
-              >
-                {buildings.map((building) => (
-                  <TouchableOpacity
-                    key={building.id}
-                    style={[
-                      styles.buildingItem,
-                      {
-                        backgroundColor:
-                          selectedBuilding?.id === building.id ? colors.primary : colors.card,
-                      },
-                    ]}
-                    onPress={() => handleBuildingSelect(building)}
-                  >
-                    <Text
-                      style={{
-                        color: selectedBuilding?.id === building.id ? '#FFFFFF' : colors.text,
-                      }}
-                    >
-                      {building.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
+            <View style={{ zIndex: 3000, marginBottom: 16 }}>
+  <Text style={[styles.inputTitle, { color: colors.primary }]}>Select a Building</Text>
+  <DropDownPicker
+    open={buildingDropdownOpen}
+    setOpen={setBuildingDropdownOpen}
+    items={buildingDropdownItems}
+    setItems={setBuildingDropdownItems}
+    value={selectedBuildingId}
+    setValue={(val) => {
+      const buildingId = val();
+      setSelectedBuildingId(buildingId);
+      const selected = buildings.find((b) => b.id === buildingId);
+      if (selected) {
+        setSelectedBuilding(selected);
+        setBuildingName(selected.name);
+      }
+    }}
+    searchable={true}
+    searchPlaceholder="Search for a building..."
+    placeholder="Select a building"
+    zIndex={3000}
+    zIndexInverse={1000}
+    style={{
+      backgroundColor: colors.card,
+      borderColor: colors.primary,
+    }}
+    dropDownContainerStyle={{
+      backgroundColor: colors.card,
+      borderColor: colors.primary,
+    }}
+    textStyle={{
+      color: colors.text,
+    }}
+    searchTextInputStyle={{
+      color: colors.text,
+    }}
+  />
+</View>
+
           )}
 
-          {/* Or manually enter building name */}
-          <Text style={[styles.orText, { color: colors.text }]}>OR</Text>
-
-          <View style={styles.inputSection}>
-            <Text style={[styles.inputTitle, { color: colors.primary }]}>Building Name</Text>
-            <AppInput
-              placeholder="Enter the building's name"
-              value={buildingName}
-              onChangeText={setBuildingName}
-              style={[
-                styles.textField,
-                { borderColor: colors.primary, color: colors.text, backgroundColor: colors.card },
-              ]}
-              placeholderTextColor={colors.secondary}
-            />
-            <Text style={[styles.infoText, { color: colors.secondary }]}>e.g. Science Hall</Text>
-          </View>
         </View>
 
         {/* Step 2: Floor Label */}
