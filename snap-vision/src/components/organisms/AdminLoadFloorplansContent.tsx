@@ -22,6 +22,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import DropDownPicker from 'react-native-dropdown-picker';
+import storage from '@react-native-firebase/storage';
 
 // Interface for building data from UPcampusPOIs
 interface Building {
@@ -137,95 +138,122 @@ useEffect(() => {
         mediaType: 'photo',
         quality: 0.8,
       });
+      
 
-      if (result.assets && result.assets[0]) {
-        setFileUri(result.assets[0].uri ?? null);
-        setFileName(result.assets[0].fileName || 'floorplan.jpg');
-      }
+      if (!result.didCancel && result.assets?.length > 0) {
+  const asset = result.assets[0];
+  if (asset.uri && asset.fileName) {
+    setFileUri(asset.uri);
+    setFileName(asset.fileName);
+  } else if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
+  setError('Please select an image smaller than 5MB.');
+  return;
+}
+  
+  else {
+    setError('Invalid image selected. Please try again.');
+  }
+} else if (result.errorMessage) {
+  setError(`Image Picker error: ${result.errorMessage}`);
+}
+
     } catch (err) {
       console.error('Error picking image:', err);
       setError('Failed to select image');
     }
   };
 
+  
   // Handle floorplan upload
   const handleUpload = async () => {
-    if (!selectedBuilding) {
-      setError('Please select a building');
-      return;
-    }
+  setError(null);
 
-    if (isNaN(Number(floorLabel)) || Number(floorLabel) < 1) {
-  setError('Please enter a valid floor number (1 or higher)');
+  if (!selectedBuilding || !selectedLocation) {
+  setError('Please select a building and location');
+  return;
+}
+
+if (!userRole) {
+  setError('User access not yet loaded. Please wait...');
+  return;
+}
+
+if (userRole === 'editor' && !adminLocations.includes(selectedLocation)) {
+  setError("You're not allowed to upload to this location.");
   return;
 }
 
 
-    if (!fileUri) {
-      setError('Please select a floorplan file');
-      return;
-    }
+  if (isNaN(Number(floorLabel)) || Number(floorLabel) < 1) {
+    setError('Please enter a valid floor number (1 or higher)');
+    return;
+  }
 
-    try {
-      setIsLoading(true);
+  if (!fileUri) {
+    setError('Please select a floorplan file');
+    return;
+  }
 
-      // Create directory if it doesn't exist
-      const dirPath = `${RNFS.DocumentDirectoryPath}/floorplans`;
-      await RNFS.mkdir(dirPath, { NSURLIsExcludedFromBackupKey: true });
+  try {
+    setIsLoading(true);
 
-      // Generate safe filename
-      const fileExt = fileName.substring(fileName.lastIndexOf('.'));
-      const safeFileName = `${selectedBuilding.id}_${floorLabel.replace(/\s+/g, '_')}${fileExt}`;
-      const destPath = `${dirPath}/${safeFileName}`;
+    const floorNumber = floorLabel;
+    const storagePath = `floorplans/${selectedLocation}/${selectedBuilding.id}/${floorNumber}.jpg`;
+console.log('Uploading to:', storagePath);
+console.log('Current user UID:', auth().currentUser?.uid);
 
-      // Copy file to app documents directory
-      await RNFS.copyFile(fileUri, destPath);
+    // Upload to Firebase Storage
+    const reference = storage().ref(storagePath);
+    await reference.putFile(fileUri);
 
-      // Create floorplan metadata
-      const floorplanId = `${selectedBuilding.id}_${floorLabel.replace(/\s+/g, '_')}`;
-      const floorplanData = {
-        id: floorplanId,
-        buildingId: selectedBuilding.id,
-        buildingName: selectedBuilding.name,
-        floorLabel: floorLabel,
-        uri: `file://${destPath}`,
-        timestamp: new Date().toISOString(),
-        status: 'active',
-      };
+    const downloadURL = await reference.getDownloadURL();
 
-      // Save to AsyncStorage
-      await AsyncStorage.setItem(`floorplan_${floorplanId}`, JSON.stringify(floorplanData));
+    // Create metadata
+    const floorplanDocRef = firestore()
+      .doc(`locations/${selectedLocation}/buildingPOIs/${selectedBuilding.id}/floorplans/${floorNumber}`);
 
-      setIsLoading(false);
-      Alert.alert(
-        'Success',
-        'Floorplan uploaded successfully. Would you like to add room POIs now?',
-        [
-          { text: 'Later', style: 'cancel' },
-          {
-            text: 'Add POIs',
-            onPress: () =>
-              navigation.navigate('FloorplanEditor', {
-                buildingId: selectedBuilding.id,
-                floorLabel: floorLabel,
-                imageUri: `file://${destPath}`,
-              }),
-          },
-        ],
-      );
+    await floorplanDocRef.set({
+      buildingId: selectedBuilding.id,
+      floorLabel: floorNumber,
+      downloadURL,
+      timestamp: firestore.FieldValue.serverTimestamp(),
+      uploadedBy: auth().currentUser?.uid,
+    });
 
-      // Reset form
-      setBuildingName('');
-      setFloorLabel('');
-      setSelectedBuilding(null);
-      setFileUri(null);
-      setFileName('');
-    } catch (err) {
-      console.error('Error uploading floorplan:', err);
-      setError('Failed to upload floorplan');
-      setIsLoading(false);
-    }
-  };
+    setIsLoading(false);
+
+    Alert.alert(
+      'Success',
+      'Floorplan uploaded successfully. Would you like to add room POIs now?',
+      [
+        { text: 'Later', style: 'cancel' },
+        {
+          text: 'Add POIs',
+          onPress: () =>
+            navigation.navigate('FloorplanEditor', {
+              buildingId: selectedBuilding.id,
+              floorLabel,
+              imageUri: downloadURL,
+              locationId: selectedLocation,
+            }),
+        },
+      ],
+    );
+
+    // Reset form
+    setBuildingName('');
+    setFloorLabel('');
+    setSelectedBuilding(null);
+    setSelectedBuildingId(null);
+    setFileUri(null);
+    setFileName('');
+  } catch (err) {
+    console.error('Error uploading floorplan:', err);
+    setError('Failed to upload floorplan');
+    setIsLoading(false);
+  }
+};
+
 
   // Handle building selection
   const handleBuildingSelect = (building: Building) => {
@@ -299,7 +327,7 @@ useEffect(() => {
     value={selectedBuildingId}
     setValue={(val) => {
       const buildingId = val();
-      setSelectedBuildingId(buildingId);
+      setSelectedBuildingId(val);
       const selected = buildings.find((b) => b.id === buildingId);
       if (selected) {
         setSelectedBuilding(selected);
