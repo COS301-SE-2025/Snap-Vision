@@ -41,7 +41,7 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'http://192.168.0.118:3000'; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = 'http://192.168.43.155:3000'; // <-- Use your correct backend IP here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
@@ -1583,6 +1583,8 @@ const MapScreen = () => {
           }}
           deviceHeading={deviceHeading}
           navigationSteps={steps}
+          routeCoordinates={lastRoute.current} // Pass the actual route
+          currentRouteIndex={Math.floor((routeProgress / 100) * (lastRoute.current.length - 1))} // Current position on route
         />
       )}
 
