@@ -35,6 +35,7 @@ import ARNavigationOverlay from '../components/organisms/ARNavigationOverlay';
 import { useCompass } from '../hooks/useCompass';
 import { requestCameraPermission } from '../utils/cameraPermissions';
 import { Platform } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 
 type MapScreenParams = {
   lat?: string;
@@ -122,6 +123,9 @@ const MapScreen = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
 const [adminLocations, setAdminLocations] = useState<string[]>([]);
 
+const [availableLocations, setAvailableLocations] = useState<string[]>([]);
+const [selectedLocation, setSelectedLocation] = useState<string>('');
+
   // AR Navigation state
   const [showAR, setShowAR] = useState(false);
   const deviceHeading = useCompass();
@@ -132,6 +136,15 @@ const [adminLocations, setAdminLocations] = useState<string[]>([]);
     enableVibrateFallback: true,
     ignoreAndroidSystemSettings: false,
   };
+
+  //Fetch Locations
+  useEffect(() => {
+  const fetchLocations = async () => {
+    const snapshot = await firestore().collection('locations').get();
+    setAvailableLocations(snapshot.docs.map(doc => doc.id));
+  };
+  if (isAdmin) fetchLocations();
+}, [isAdmin]);
 
   //Check if user is admin
   useEffect(() => {
@@ -464,30 +477,33 @@ webViewRef.current.injectJavaScript(setAdminJS);
 
   //Add building (admin only)
   const submitNewBuilding = async () => {
-    if (!addPOICoords) return;
-    if (!buildingName.trim()) return Alert.alert('Building name required');
-    if (!numberOfFloors.trim() || isNaN(Number(numberOfFloors)))
-      return Alert.alert('Please enter a valid number of floors');
-    try {
-      const newDoc = {
-        name: buildingName,
-        centroid: {
-          latitude: addPOICoords.lat,
-          longitude: addPOICoords.lon,
-        },
-        floors: Number(numberOfFloors),
-        tags: {
-          building: 'yes',
-        },
-      };
-      await firestore().collection('UPcampusPOIs').add(newDoc);
-      setShowAddPOIModal(false);
-      setStatus('Building added!');
-      fetchPOIs(); // Refresh markers
-    } catch (e) {
-      setError('Failed to add building');
-    }
-  };
+  if (!addPOICoords) return;
+  if (!buildingName.trim()) return Alert.alert('Building name required');
+  if (!numberOfFloors.trim() || isNaN(Number(numberOfFloors)))
+    return Alert.alert('Please enter a valid number of floors');
+  if (!selectedLocation) return Alert.alert('Please select a location');
+  try {
+    const newDoc = {
+      name: buildingName,
+      centroid: {
+        latitude: addPOICoords.lat,
+        longitude: addPOICoords.lon,
+      },
+      floors: Number(numberOfFloors),
+      tags: {
+        building: 'yes',
+      },
+    };
+    await firestore()
+      .collection(`locations/${selectedLocation}/buildingPOIs`)
+      .add(newDoc);
+    setShowAddPOIModal(false);
+    setStatus('Building added!');
+    fetchPOIs(); // Refresh markers
+  } catch (e) {
+    setError('Failed to add building');
+  }
+};
 
   const submitEditBuilding = async () => {
     if (!newName.trim()) return Alert.alert('Building name required');
@@ -1460,44 +1476,56 @@ useEffect(() => {
       )}
 
       {showAddPOIModal && (
-        <Modal transparent visible animationType="slide">
-          <View
-            style={{
-              flex: 1,
-              justifyContent: 'center',
-              backgroundColor: 'rgba(0,0,0,0.5)',
-              padding: 20,
-            }}
+  <Modal transparent visible animationType="slide">
+    <View style={{
+      flex: 1,
+      justifyContent: 'center',
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      padding: 20,
+    }}>
+      <View style={{ backgroundColor: 'white', borderRadius: 10, padding: 20 }}>
+        <Text style={{ fontWeight: 'bold' }}>Add Building</Text>
+        {/* Location Dropdown */}
+        <Text>Location:</Text>
+        <View style={{ borderWidth: 1, borderRadius: 5, marginBottom: 10 }}>
+          <Picker
+            selectedValue={selectedLocation}
+            onValueChange={setSelectedLocation}
+            style={{ height: 40 }}
           >
-            <View style={{ backgroundColor: 'white', borderRadius: 10, padding: 20 }}>
-              <Text style={{ fontWeight: 'bold' }}>Add Building</Text>
-              <Text>Name:</Text>
-              <TextInput
-                value={buildingName}
-                onChangeText={setBuildingName}
-                placeholder="Building Name"
-                style={{ borderBottomWidth: 1, marginBottom: 10 }}
-              />
-              <Text>Floors:</Text>
-              <TextInput
-                value={numberOfFloors}
-                onChangeText={setNumberOfFloors}
-                placeholder="e.g. 3"
-                keyboardType="numeric"
-                style={{ borderBottomWidth: 1, marginBottom: 10 }}
-              />
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Pressable onPress={() => setShowAddPOIModal(false)}>
-                  <Text>Cancel</Text>
-                </Pressable>
-                <Pressable onPress={submitNewBuilding}>
-                  <Text style={{ fontWeight: 'bold' }}>Add</Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </Modal>
-      )}
+            <Picker.Item label="Select a location" value="" />
+            {availableLocations.map(loc => (
+              <Picker.Item key={loc} label={loc} value={loc} />
+            ))}
+          </Picker>
+        </View>
+        <Text>Name:</Text>
+        <TextInput
+          value={buildingName}
+          onChangeText={setBuildingName}
+          placeholder="Building Name"
+          style={{ borderBottomWidth: 1, marginBottom: 10 }}
+        />
+        <Text>Floors:</Text>
+        <TextInput
+          value={numberOfFloors}
+          onChangeText={setNumberOfFloors}
+          placeholder="e.g. 3"
+          keyboardType="numeric"
+          style={{ borderBottomWidth: 1, marginBottom: 10 }}
+        />
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <Pressable onPress={() => setShowAddPOIModal(false)}>
+            <Text>Cancel</Text>
+          </Pressable>
+          <Pressable onPress={submitNewBuilding}>
+            <Text style={{ fontWeight: 'bold' }}>Add</Text>
+          </Pressable>
+        </View>
+      </View>
+    </View>
+  </Modal>
+)}
 
       {showEditPOIModal && (
         <Modal transparent visible animationType="slide">
