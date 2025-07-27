@@ -1,12 +1,9 @@
-// Silence warnings about missing native modules
 jest.mock('react-native/Libraries/EventEmitter/NativeEventEmitter');
 
-// Mock Firebase App initialization
 jest.mock('@react-native-firebase/app', () => ({
   initializeApp: jest.fn(),
 }));
 
-// Mock Firestore and Auth to connect to the emulator
 jest.mock('@react-native-firebase/firestore', () => {
   const mockFirestoreInstance = {
     useEmulator: jest.fn(),
@@ -59,6 +56,9 @@ jest.mock('@react-native-firebase/firestore', () => {
 });
 
 jest.mock('@react-native-firebase/auth', () => ({
-  currentUser: { uid: 'test-user' },
-  useEmulator: jest.fn(),
+  __esModule: true,
+  default: jest.fn(() => ({
+    currentUser: null,
+    useEmulator: jest.fn(),
+  })),
 }));
