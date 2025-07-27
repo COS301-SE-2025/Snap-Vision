@@ -336,7 +336,9 @@ webViewRef.current.injectJavaScript(setAdminJS);
             const deletedPoiId = poi.id;
 
             // First handle document IDs that might contain slashes
-            await firestore().doc(`UPcampusPOIs/${poi.id}`).delete();
+            await firestore()
+  .doc(`locations/${poi.location}/buildingPOIs/${poi.id}`)
+  .delete();
 
             // Direct removal of the specific marker
             if (webViewRef.current && isMapReady) {
@@ -506,84 +508,68 @@ webViewRef.current.injectJavaScript(setAdminJS);
 };
 
   const submitEditBuilding = async () => {
-    if (!newName.trim()) return Alert.alert('Building name required');
-    if (!newFloors.trim() || isNaN(Number(newFloors)))
-      return Alert.alert('Please enter a valid number of floors');
+  if (!newName.trim()) return Alert.alert('Building name required');
+  if (!newFloors.trim() || isNaN(Number(newFloors)))
+    return Alert.alert('Please enter a valid number of floors');
 
-    if (!editingPOI || !editingPOI.id) {
-      console.error('No valid POI ID found:', editingPOI);
-      setError('Invalid building data');
-      return;
-    }
+  if (!editingPOI || !editingPOI.id || !editingPOI.location) {
+    console.error('No valid POI ID or location found:', editingPOI);
+    setError('Invalid building data');
+    return;
+  }
 
-    try {
-      // Update the document in Firestore
-      const docId = await getPOIDocIdByCentroidId(editingPOI.id);
+  try {
+    // Update the document in Firestore using the new structure
+    await firestore()
+      .doc(`locations/${editingPOI.location}/buildingPOIs/${editingPOI.id}`)
+      .update({
+        name: newName,
+        floors: Number(newFloors),
+      });
 
-      if (docId) {
-        await firestore()
-          .collection('UPcampusPOIs')
-          .doc(docId)
-          .update({
-            name: newName,
-            floors: Number(newFloors),
-          });
-      } else {
-        await firestore()
-          .doc(`UPcampusPOIs/${editingPOI.id}`)
-          .update({
-            name: newName,
-            floors: Number(newFloors),
-          });
+    setShowEditPOIModal(false);
+    setStatus('Building updated!');
+
+    // Refresh POIs immediately after Firestore update
+    await fetchPOIs();
+
+    // Nuclear option: Force complete WebView reload
+    setIsMapReady(false);
+    setStatus('Refreshing map...');
+
+    // Small delay to ensure the modal closes and POIs are updated
+    setTimeout(() => {
+      // Force WebView to reload completely
+      if (webViewRef.current) {
+        webViewRef.current.reload();
       }
+    }, 100);
 
-      setShowEditPOIModal(false);
-      setStatus('Building updated!');
-
-      // Refresh POIs immediately after Firestore update
-      await fetchPOIs();
-
-      // Nuclear option: Force complete WebView reload
-      setIsMapReady(false);
-      setStatus('Refreshing map...');
-
-      // Small delay to ensure the modal closes and POIs are updated
-      setTimeout(() => {
-        // Force WebView to reload completely
-        if (webViewRef.current) {
-          webViewRef.current.reload();
-        }
-      }, 100);
-
-      Alert.alert('Success', 'Building information updated successfully.');
-    } catch (error) {
-      console.error('Error updating building:', error);
-      setError('Failed to update');
-    }
-  };
+    Alert.alert('Success', 'Building information updated successfully.');
+  } catch (error) {
+    console.error('Error updating building:', error);
+    setError('Failed to update');
+  }
+};
 
   // Helper function to get document ID from centroid ID
-  const getPOIDocIdByCentroidId = async (buildingId) => {
-    try {
-      const querySnapshot = await firestore()
-        .collection('UPcampusPOIs')
-        .where('id', '==', buildingId)
-        .get();
+  const getPOIDocIdByCentroidId = async (buildingId: string, locationId: string) => {
+  try {
+    // In your new Firestore structure, the document ID is buildingId and locationId is known
+    const docRef = firestore().doc(`locations/${locationId}/buildingPOIs/${buildingId}`);
+    const docSnap = await docRef.get();
 
-      if (querySnapshot.empty) {
-        console.warn('No building found for this centroid id:', buildingId);
-        return null;
-      }
-
-      // Assuming only one document matches
-      const doc = querySnapshot.docs[0];
-      //console.log("doc: "+ doc.id);
-      return doc.id;
-    } catch (error) {
-      console.error('Error querying POI by centroid id:', error);
+    if (!docSnap.exists) {
+      console.warn('No building found for this centroid id:', buildingId, 'in location:', locationId);
       return null;
     }
-  };
+
+    return docSnap.id;
+  } catch (error) {
+    console.error('Error querying POI by centroid id:', error);
+    return null;
+  }
+};
 
   const cancelRoute = () => {
     // console.log('cancelRoute called');
