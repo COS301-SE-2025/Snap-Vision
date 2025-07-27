@@ -41,7 +41,7 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'http://10.0.2.2:3000'; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = 'http://10.0.0.7:3000'; // <-- Use your correct backend IP here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
@@ -118,6 +118,10 @@ const MapScreen = () => {
   const [adminActionPOI, setAdminActionPOI] = useState<any>(null);
   const [tempMessage, setTempMessage] = useState<string>('');
 
+  //RBAC
+  const [userRole, setUserRole] = useState<string | null>(null);
+const [adminLocations, setAdminLocations] = useState<string[]>([]);
+
   // AR Navigation state
   const [showAR, setShowAR] = useState(false);
   const deviceHeading = useCompass();
@@ -131,22 +135,26 @@ const MapScreen = () => {
 
   //Check if user is admin
   useEffect(() => {
-    const fetchRole = async () => {
-      const userId = auth().currentUser?.uid;
-      if (!userId) return;
-      const userDoc = await firestore().collection('userInformation').doc(userId).get();
-      const role = userDoc.data()?.role;
-      setIsAdmin(role === 'admin');
-    };
-    fetchRole();
-  }, []);
+  const fetchRole = async () => {
+    const userId = auth().currentUser?.uid;
+    if (!userId) return;
+    const userDoc = await firestore().collection('userInformation').doc(userId).get();
+    const role = userDoc.data()?.role;
+    setUserRole(role);
+    setIsAdmin(role === 'admin');
+    if (role === 'editor') {
+      setAdminLocations(userDoc.data()?.adminLocations || []);
+    }
+  };
+  fetchRole();
+}, []);
 
   // Inject admin handlers into the WebView
   useEffect(() => {
     if (isMapReady && webViewRef.current) {
       // Set admin mode in the WebView
-      const setAdminJS = `window.setAdminMode && window.setAdminMode(${isAdmin ? 'true' : 'false'});`;
-      webViewRef.current.injectJavaScript(setAdminJS);
+      const setAdminJS = `window.setAdminMode && window.setAdminMode(${userRole === 'admin' || userRole === 'editor' ? 'true' : 'false'});`;
+webViewRef.current.injectJavaScript(setAdminJS);
 
       // Re-display POIs to update popups/buttons
       const jsPOICode = `window.displayPOIs && window.displayPOIs(${JSON.stringify(pois)});`;
@@ -421,14 +429,30 @@ const MapScreen = () => {
           }
           break;
 
-        case 'ADMIN_POI_SELECTED':
-          const adminPOI = pois.find((p) => p.id === parsed.poi.id);
-          if (adminPOI) {
-            setAdminActionPOI(adminPOI);
-            setShowAdminActions(true);
-            webViewRef.current?.injectJavaScript('map.closePopup();');
-          }
-          break;
+        case 'ADMIN_POI_SELECTED': {
+  const adminPOI = pois.find((p) => p.id === parsed.poi.id);
+  if (!adminPOI) break;
+  console.log('userRole:', userRole);
+  console.log('adminLocations:', adminLocations);
+  console.log('adminPOI.location:', adminPOI.location);
+
+  const canEdit =
+    userRole === 'admin' ||
+    (userRole === 'editor' && adminLocations.includes(adminPOI.location));
+
+  if (canEdit) {
+    setAdminActionPOI(adminPOI);
+    setShowAdminActions(true);
+  } else {
+    Alert.alert(
+      'Access Denied',
+      'You do not have permission to modify this POI.'
+    );
+  }
+
+  webViewRef.current?.injectJavaScript('map.closePopup();');
+  break;
+}
 
         default:
           // console.log('Unknown message type from WebView:', parsed.type);
