@@ -48,26 +48,34 @@ export default function AdminLoadFloorplansContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch all buildings from UPcampusPOIs collection
+  // Fetch all buildings from new Firestore structure (dynamically gets location)
   useEffect(() => {
     const fetchBuildings = async () => {
       try {
         setIsLoading(true);
-        const snapshot = await firestore()
-          .collection('UPcampusPOIs')
-          .where('type', '==', 'building')
-          .get();
+        const locationsSnapshot = await firestore().collection('locations').get();
+        const allBuildings: Building[] = [];
 
-        const buildingsData = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            name: data.name || 'Unnamed Building',
-            centroid: data.centroid,
-          };
-        });
+        for (const locationDoc of locationsSnapshot.docs) {
+          const locationId = locationDoc.id;
+          const buildingPOIsSnapshot = await firestore()
+            .collection(`locations/${locationId}/buildingPOIs`)
+            .get();
 
-        setBuildings(buildingsData);
+          buildingPOIsSnapshot.forEach((doc) => {
+            const data = doc.data();
+            // Only include buildings (tags.building === 'yes')
+            if (data?.tags?.building === 'yes') {
+              allBuildings.push({
+                id: doc.id,
+                name: data.name || 'Unnamed Building',
+                centroid: data.centroid,
+              });
+            }
+          });
+        }
+
+        setBuildings(allBuildings);
         setIsLoading(false);
       } catch (err) {
         console.error('Error fetching buildings:', err);
