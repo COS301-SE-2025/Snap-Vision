@@ -41,7 +41,7 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'http://192.168.0.118:3000'; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = 'http://10.0.2.2:3000'; // <-- Use your correct backend IP here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
@@ -188,7 +188,7 @@ const MapScreen = () => {
   // Replace your requestLocation function with this enhanced version
   const requestLocation = async () => {
     try {
-      console.log('🔍 Requesting location permissions...');
+      // console.log('🔍 Requesting location permissions...');
 
       if (Platform.OS === 'android') {
         // For Android 12+, we need to request both permissions
@@ -199,7 +199,7 @@ const MapScreen = () => {
 
         const results = await PermissionsAndroid.requestMultiple(permissions);
 
-        console.log('Permission results:', results);
+        // console.log('Permission results:', results);
 
         const fineLocationGranted =
           results['android.permission.ACCESS_FINE_LOCATION'] === 'granted';
@@ -219,17 +219,17 @@ const MapScreen = () => {
             setStatus('Getting precise location...');
             Geolocation.getCurrentPosition(
               (position) => {
-                console.log('✅ High accuracy location:', position.coords);
+                // console.log('✅ High accuracy location:', position.coords);
                 const { latitude, longitude } = position.coords;
                 sendLocationToWebView(latitude, longitude, true);
                 setStatus('High accuracy location found');
               },
               (error) => {
-                console.log('❌ High accuracy failed, trying approximate:', error);
+                // console.log('❌ High accuracy failed, trying approximate:', error);
                 // Fallback to approximate location
                 Geolocation.getCurrentPosition(
                   (position) => {
-                    console.log('✅ Approximate location:', position.coords);
+                    // console.log('✅ Approximate location:', position.coords);
                     const { latitude, longitude } = position.coords;
                     sendLocationToWebView(latitude, longitude, true);
                     setStatus('Approximate location found');
@@ -431,10 +431,10 @@ const MapScreen = () => {
           break;
 
         default:
-          console.log('Unknown message type from WebView:', parsed.type);
+          // console.log('Unknown message type from WebView:', parsed.type);
       }
     } catch (e) {
-      console.log('WebView message error:', event.nativeEvent.data);
+      // console.log('WebView message error:', event.nativeEvent.data);
     }
   };
 
@@ -546,7 +546,7 @@ const MapScreen = () => {
   };
 
   const cancelRoute = () => {
-    console.log('cancelRoute called');
+    // console.log('cancelRoute called');
 
     // Stop any ongoing route loading
     setIsRouteLoading(false);
@@ -884,9 +884,9 @@ const MapScreen = () => {
       };
 
       await addRecentlyVisitedPOI(visit);
-      console.log('Visit recorded:', selectedPOI.name);
+      // console.log('Visit recorded:', selectedPOI.name);
     } catch (error) {
-      console.error('Failed to record visit:', error);
+      // console.error('Failed to record visit:', error);
     }
 
     // Clear destination and navigation state to hide the progress bar
@@ -971,10 +971,10 @@ const MapScreen = () => {
       };
 
       await addRecentlyVisitedPOI(visit);
-      console.log('Simulated visit recorded:', selectedPOI.name);
+      // console.log('Simulated visit recorded:', selectedPOI.name);
       Alert.alert('Test Successful', `Simulated visit to: ${selectedPOI.name}`);
     } catch (error) {
-      console.error('Failed to simulate visit:', error);
+      // console.error('Failed to simulate visit:', error);
       Alert.alert('Error', 'Failed to simulate visit. Please try again.');
     }
   };
@@ -1079,7 +1079,7 @@ const MapScreen = () => {
           ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
         }
 
-        console.log('TTS should speak:', instruction);
+        // console.log('TTS should speak:', instruction);
         if (isVoiceEnabled) {
           try {
             Tts.stop();
@@ -1096,18 +1096,44 @@ const MapScreen = () => {
   }, [isNavigating, steps, currentStep]);
 
   const fetchPOIs = async () => {
-    try {
-      const snapshot = await firestore().collection('UPcampusPOIs').get();
-      const poiList = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setPOIs(poiList);
-    } catch (e) {
-      console.error('Failed to fetch POIs:', e);
-    }
-  };
+  try {
+    const locationsSnapshot = await firestore().collection('locations').get();
+    const allPOIs: any[] = [];
 
-  useEffect(() => {
-    fetchPOIs();
-  }, []);
+    for (const locationDoc of locationsSnapshot.docs) {
+      const locationId = locationDoc.id;
+      console.log(`📍 Fetching POIs from: locations/${locationId}/buildingPOIs`);
+
+      const buildingPOIsSnapshot = await firestore()
+        .collection(`locations/${locationId}/buildingPOIs`)
+        .get();
+
+      buildingPOIsSnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data?.centroid?.latitude && data?.centroid?.longitude) {
+          allPOIs.push({
+            ...data,
+            id: doc.id,
+            location: locationId,
+          });
+        }
+      });
+    }
+
+    console.log('✅ Total POIs fetched:', allPOIs.length);
+    setPOIs(allPOIs);
+  } catch (e) {
+    console.error('❌ Failed to fetch POIs:', e);
+    setError('Failed to load buildings');
+  }
+};
+
+useEffect(() => {
+  fetchPOIs();
+}, []);
+
+
+
 
   // Send POIs to WebView when they change and WebView is ready
   useEffect(() => {
@@ -1175,7 +1201,7 @@ const MapScreen = () => {
           permissions['android.permission.ACCESS_COARSE_LOCATION'] === 'granted';
 
         if (fineGranted || coarseGranted) {
-          console.log('✅ Starting location watch...');
+          // console.log('✅ Starting location watch...');
 
           // Android 12+ requires different options
           const watchOptions =
@@ -1198,7 +1224,7 @@ const MapScreen = () => {
 
           watchId = Geolocation.watchPosition(
             (position) => {
-              console.log('📍 Location update:', position.coords.accuracy + 'm accuracy');
+              // console.log('📍 Location update:', position.coords.accuracy + 'm accuracy');
               const { latitude, longitude } = position.coords;
               sendLocationToWebView(latitude, longitude);
             },
@@ -1221,7 +1247,7 @@ const MapScreen = () => {
 
     return () => {
       if (watchId !== null) {
-        console.log('🛑 Stopping location watch');
+        // console.log('🛑 Stopping location watch');
         Geolocation.clearWatch(watchId);
       }
     };
@@ -1497,7 +1523,7 @@ const MapScreen = () => {
           setShouldStartTTS(true);
           setCurrentStep(0);
           setShowDirectionsSheet(false);
-          console.log('Navigation started');
+          // console.log('Navigation started');
         }}
         destination={destination}
         steps={steps}
