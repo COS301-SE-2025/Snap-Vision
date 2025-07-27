@@ -121,10 +121,10 @@ const MapScreen = () => {
 
   //RBAC
   const [userRole, setUserRole] = useState<string | null>(null);
-const [adminLocations, setAdminLocations] = useState<string[]>([]);
+  const [adminLocations, setAdminLocations] = useState<string[]>([]);
 
-const [availableLocations, setAvailableLocations] = useState<string[]>([]);
-const [selectedLocation, setSelectedLocation] = useState<string>('');
+  const [availableLocations, setAvailableLocations] = useState<string[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<string>('');
 
   // AR Navigation state
   const [showAR, setShowAR] = useState(false);
@@ -139,35 +139,35 @@ const [selectedLocation, setSelectedLocation] = useState<string>('');
 
   //Fetch Locations
   useEffect(() => {
-  const fetchLocations = async () => {
-    const snapshot = await firestore().collection('locations').get();
-    setAvailableLocations(snapshot.docs.map(doc => doc.id));
-  };
-  if (isAdmin) fetchLocations();
-}, [isAdmin]);
+    const fetchLocations = async () => {
+      const snapshot = await firestore().collection('locations').get();
+      setAvailableLocations(snapshot.docs.map((doc) => doc.id));
+    };
+    if (isAdmin) fetchLocations();
+  }, [isAdmin]);
 
   //Check if user is admin
   useEffect(() => {
-  const fetchRole = async () => {
-    const userId = auth().currentUser?.uid;
-    if (!userId) return;
-    const userDoc = await firestore().collection('userInformation').doc(userId).get();
-    const role = userDoc.data()?.role;
-    setUserRole(role);
-    setIsAdmin(role === 'admin');
-    if (role === 'editor') {
-      setAdminLocations(userDoc.data()?.adminLocations || []);
-    }
-  };
-  fetchRole();
-}, []);
+    const fetchRole = async () => {
+      const userId = auth().currentUser?.uid;
+      if (!userId) return;
+      const userDoc = await firestore().collection('userInformation').doc(userId).get();
+      const role = userDoc.data()?.role;
+      setUserRole(role);
+      setIsAdmin(role === 'admin');
+      if (role === 'editor') {
+        setAdminLocations(userDoc.data()?.adminLocations || []);
+      }
+    };
+    fetchRole();
+  }, []);
 
   // Inject admin handlers into the WebView
   useEffect(() => {
     if (isMapReady && webViewRef.current) {
       // Set admin mode in the WebView
       const setAdminJS = `window.setAdminMode && window.setAdminMode(${userRole === 'admin' || userRole === 'editor' ? 'true' : 'false'});`;
-webViewRef.current.injectJavaScript(setAdminJS);
+      webViewRef.current.injectJavaScript(setAdminJS);
 
       // Re-display POIs to update popups/buttons
       const jsPOICode = `window.displayPOIs && window.displayPOIs(${JSON.stringify(pois)});`;
@@ -336,9 +336,7 @@ webViewRef.current.injectJavaScript(setAdminJS);
             const deletedPoiId = poi.id;
 
             // First handle document IDs that might contain slashes
-            await firestore()
-  .doc(`locations/${poi.location}/buildingPOIs/${poi.id}`)
-  .delete();
+            await firestore().doc(`locations/${poi.location}/buildingPOIs/${poi.id}`).delete();
 
             // Direct removal of the specific marker
             if (webViewRef.current && isMapReady) {
@@ -445,32 +443,29 @@ webViewRef.current.injectJavaScript(setAdminJS);
           break;
 
         case 'ADMIN_POI_SELECTED': {
-  const adminPOI = pois.find((p) => p.id === parsed.poi.id);
-  if (!adminPOI) break;
-  console.log('userRole:', userRole);
-  console.log('adminLocations:', adminLocations);
-  console.log('adminPOI.location:', adminPOI.location);
+          const adminPOI = pois.find((p) => p.id === parsed.poi.id);
+          if (!adminPOI) break;
+          console.log('userRole:', userRole);
+          console.log('adminLocations:', adminLocations);
+          console.log('adminPOI.location:', adminPOI.location);
 
-  const canEdit =
-    userRole === 'admin' ||
-    (userRole === 'editor' && adminLocations.includes(adminPOI.location));
+          const canEdit =
+            userRole === 'admin' ||
+            (userRole === 'editor' && adminLocations.includes(adminPOI.location));
 
-  if (canEdit) {
-    setAdminActionPOI(adminPOI);
-    setShowAdminActions(true);
-  } else {
-    Alert.alert(
-      'Access Denied',
-      'You do not have permission to modify this POI.'
-    );
-  }
+          if (canEdit) {
+            setAdminActionPOI(adminPOI);
+            setShowAdminActions(true);
+          } else {
+            Alert.alert('Access Denied', 'You do not have permission to modify this POI.');
+          }
 
-  webViewRef.current?.injectJavaScript('map.closePopup();');
-  break;
-}
+          webViewRef.current?.injectJavaScript('map.closePopup();');
+          break;
+        }
 
         default:
-          // console.log('Unknown message type from WebView:', parsed.type);
+        // console.log('Unknown message type from WebView:', parsed.type);
       }
     } catch (e) {
       // console.log('WebView message error:', event.nativeEvent.data);
@@ -479,97 +474,100 @@ webViewRef.current.injectJavaScript(setAdminJS);
 
   //Add building (admin only)
   const submitNewBuilding = async () => {
-  if (!addPOICoords) return;
-  if (!buildingName.trim()) return Alert.alert('Building name required');
-  if (!numberOfFloors.trim() || isNaN(Number(numberOfFloors)))
-    return Alert.alert('Please enter a valid number of floors');
-  if (!selectedLocation) return Alert.alert('Please select a location');
-  try {
-    const newDoc = {
-      name: buildingName,
-      centroid: {
-        latitude: addPOICoords.lat,
-        longitude: addPOICoords.lon,
-      },
-      floors: Number(numberOfFloors),
-      tags: {
-        building: 'yes',
-      },
-    };
-    await firestore()
-      .collection(`locations/${selectedLocation}/buildingPOIs`)
-      .add(newDoc);
-    setShowAddPOIModal(false);
-    setStatus('Building added!');
-    fetchPOIs(); // Refresh markers
-  } catch (e) {
-    setError('Failed to add building');
-  }
-};
+    if (!addPOICoords) return;
+    if (!buildingName.trim()) return Alert.alert('Building name required');
+    if (!numberOfFloors.trim() || isNaN(Number(numberOfFloors)))
+      return Alert.alert('Please enter a valid number of floors');
+    if (!selectedLocation) return Alert.alert('Please select a location');
+    try {
+      const newDoc = {
+        name: buildingName,
+        centroid: {
+          latitude: addPOICoords.lat,
+          longitude: addPOICoords.lon,
+        },
+        floors: Number(numberOfFloors),
+        tags: {
+          building: 'yes',
+        },
+      };
+      await firestore().collection(`locations/${selectedLocation}/buildingPOIs`).add(newDoc);
+      setShowAddPOIModal(false);
+      setStatus('Building added!');
+      fetchPOIs(); // Refresh markers
+    } catch (e) {
+      setError('Failed to add building');
+    }
+  };
 
   const submitEditBuilding = async () => {
-  if (!newName.trim()) return Alert.alert('Building name required');
-  if (!newFloors.trim() || isNaN(Number(newFloors)))
-    return Alert.alert('Please enter a valid number of floors');
+    if (!newName.trim()) return Alert.alert('Building name required');
+    if (!newFloors.trim() || isNaN(Number(newFloors)))
+      return Alert.alert('Please enter a valid number of floors');
 
-  if (!editingPOI || !editingPOI.id || !editingPOI.location) {
-    console.error('No valid POI ID or location found:', editingPOI);
-    setError('Invalid building data');
-    return;
-  }
+    if (!editingPOI || !editingPOI.id || !editingPOI.location) {
+      console.error('No valid POI ID or location found:', editingPOI);
+      setError('Invalid building data');
+      return;
+    }
 
-  try {
-    // Update the document in Firestore using the new structure
-    await firestore()
-      .doc(`locations/${editingPOI.location}/buildingPOIs/${editingPOI.id}`)
-      .update({
-        name: newName,
-        floors: Number(newFloors),
-      });
+    try {
+      // Update the document in Firestore using the new structure
+      await firestore()
+        .doc(`locations/${editingPOI.location}/buildingPOIs/${editingPOI.id}`)
+        .update({
+          name: newName,
+          floors: Number(newFloors),
+        });
 
-    setShowEditPOIModal(false);
-    setStatus('Building updated!');
+      setShowEditPOIModal(false);
+      setStatus('Building updated!');
 
-    // Refresh POIs immediately after Firestore update
-    await fetchPOIs();
+      // Refresh POIs immediately after Firestore update
+      await fetchPOIs();
 
-    // Nuclear option: Force complete WebView reload
-    setIsMapReady(false);
-    setStatus('Refreshing map...');
+      // Nuclear option: Force complete WebView reload
+      setIsMapReady(false);
+      setStatus('Refreshing map...');
 
-    // Small delay to ensure the modal closes and POIs are updated
-    setTimeout(() => {
-      // Force WebView to reload completely
-      if (webViewRef.current) {
-        webViewRef.current.reload();
-      }
-    }, 100);
+      // Small delay to ensure the modal closes and POIs are updated
+      setTimeout(() => {
+        // Force WebView to reload completely
+        if (webViewRef.current) {
+          webViewRef.current.reload();
+        }
+      }, 100);
 
-    Alert.alert('Success', 'Building information updated successfully.');
-  } catch (error) {
-    console.error('Error updating building:', error);
-    setError('Failed to update');
-  }
-};
+      Alert.alert('Success', 'Building information updated successfully.');
+    } catch (error) {
+      console.error('Error updating building:', error);
+      setError('Failed to update');
+    }
+  };
 
   // Helper function to get document ID from centroid ID
   const getPOIDocIdByCentroidId = async (buildingId: string, locationId: string) => {
-  try {
-    // In your new Firestore structure, the document ID is buildingId and locationId is known
-    const docRef = firestore().doc(`locations/${locationId}/buildingPOIs/${buildingId}`);
-    const docSnap = await docRef.get();
+    try {
+      // In your new Firestore structure, the document ID is buildingId and locationId is known
+      const docRef = firestore().doc(`locations/${locationId}/buildingPOIs/${buildingId}`);
+      const docSnap = await docRef.get();
 
-    if (!docSnap.exists) {
-      console.warn('No building found for this centroid id:', buildingId, 'in location:', locationId);
+      if (!docSnap.exists) {
+        console.warn(
+          'No building found for this centroid id:',
+          buildingId,
+          'in location:',
+          locationId,
+        );
+        return null;
+      }
+
+      return docSnap.id;
+    } catch (error) {
+      console.error('Error querying POI by centroid id:', error);
       return null;
     }
-
-    return docSnap.id;
-  } catch (error) {
-    console.error('Error querying POI by centroid id:', error);
-    return null;
-  }
-};
+  };
 
   const cancelRoute = () => {
     // console.log('cancelRoute called');
@@ -1122,44 +1120,41 @@ webViewRef.current.injectJavaScript(setAdminJS);
   }, [isNavigating, steps, currentStep]);
 
   const fetchPOIs = async () => {
-  try {
-    const locationsSnapshot = await firestore().collection('locations').get();
-    const allPOIs: any[] = [];
+    try {
+      const locationsSnapshot = await firestore().collection('locations').get();
+      const allPOIs: any[] = [];
 
-    for (const locationDoc of locationsSnapshot.docs) {
-      const locationId = locationDoc.id;
-      console.log(`📍 Fetching POIs from: locations/${locationId}/buildingPOIs`);
+      for (const locationDoc of locationsSnapshot.docs) {
+        const locationId = locationDoc.id;
+        console.log(`📍 Fetching POIs from: locations/${locationId}/buildingPOIs`);
 
-      const buildingPOIsSnapshot = await firestore()
-        .collection(`locations/${locationId}/buildingPOIs`)
-        .get();
+        const buildingPOIsSnapshot = await firestore()
+          .collection(`locations/${locationId}/buildingPOIs`)
+          .get();
 
-      buildingPOIsSnapshot.forEach((doc) => {
-        const data = doc.data();
-        if (data?.centroid?.latitude && data?.centroid?.longitude) {
-          allPOIs.push({
-            ...data,
-            id: doc.id,
-            location: locationId,
-          });
-        }
-      });
+        buildingPOIsSnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data?.centroid?.latitude && data?.centroid?.longitude) {
+            allPOIs.push({
+              ...data,
+              id: doc.id,
+              location: locationId,
+            });
+          }
+        });
+      }
+
+      console.log('✅ Total POIs fetched:', allPOIs.length);
+      setPOIs(allPOIs);
+    } catch (e) {
+      console.error('❌ Failed to fetch POIs:', e);
+      setError('Failed to load buildings');
     }
+  };
 
-    console.log('✅ Total POIs fetched:', allPOIs.length);
-    setPOIs(allPOIs);
-  } catch (e) {
-    console.error('❌ Failed to fetch POIs:', e);
-    setError('Failed to load buildings');
-  }
-};
-
-useEffect(() => {
-  fetchPOIs();
-}, []);
-
-
-
+  useEffect(() => {
+    fetchPOIs();
+  }, []);
 
   // Send POIs to WebView when they change and WebView is ready
   useEffect(() => {
@@ -1462,56 +1457,58 @@ useEffect(() => {
       )}
 
       {showAddPOIModal && (
-  <Modal transparent visible animationType="slide">
-    <View style={{
-      flex: 1,
-      justifyContent: 'center',
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      padding: 20,
-    }}>
-      <View style={{ backgroundColor: 'white', borderRadius: 10, padding: 20 }}>
-        <Text style={{ fontWeight: 'bold' }}>Add Building</Text>
-        {/* Location Dropdown */}
-        <Text>Location:</Text>
-        <View style={{ borderWidth: 1, borderRadius: 5, marginBottom: 10 }}>
-          <Picker
-            selectedValue={selectedLocation}
-            onValueChange={setSelectedLocation}
-            style={{ height: 40 }}
+        <Modal transparent visible animationType="slide">
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              padding: 20,
+            }}
           >
-            <Picker.Item label="Select a location" value="" />
-            {availableLocations.map(loc => (
-              <Picker.Item key={loc} label={loc} value={loc} />
-            ))}
-          </Picker>
-        </View>
-        <Text>Name:</Text>
-        <TextInput
-          value={buildingName}
-          onChangeText={setBuildingName}
-          placeholder="Building Name"
-          style={{ borderBottomWidth: 1, marginBottom: 10 }}
-        />
-        <Text>Floors:</Text>
-        <TextInput
-          value={numberOfFloors}
-          onChangeText={setNumberOfFloors}
-          placeholder="e.g. 3"
-          keyboardType="numeric"
-          style={{ borderBottomWidth: 1, marginBottom: 10 }}
-        />
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Pressable onPress={() => setShowAddPOIModal(false)}>
-            <Text>Cancel</Text>
-          </Pressable>
-          <Pressable onPress={submitNewBuilding}>
-            <Text style={{ fontWeight: 'bold' }}>Add</Text>
-          </Pressable>
-        </View>
-      </View>
-    </View>
-  </Modal>
-)}
+            <View style={{ backgroundColor: 'white', borderRadius: 10, padding: 20 }}>
+              <Text style={{ fontWeight: 'bold' }}>Add Building</Text>
+              {/* Location Dropdown */}
+              <Text>Location:</Text>
+              <View style={{ borderWidth: 1, borderRadius: 5, marginBottom: 10 }}>
+                <Picker
+                  selectedValue={selectedLocation}
+                  onValueChange={setSelectedLocation}
+                  style={{ height: 40 }}
+                >
+                  <Picker.Item label="Select a location" value="" />
+                  {availableLocations.map((loc) => (
+                    <Picker.Item key={loc} label={loc} value={loc} />
+                  ))}
+                </Picker>
+              </View>
+              <Text>Name:</Text>
+              <TextInput
+                value={buildingName}
+                onChangeText={setBuildingName}
+                placeholder="Building Name"
+                style={{ borderBottomWidth: 1, marginBottom: 10 }}
+              />
+              <Text>Floors:</Text>
+              <TextInput
+                value={numberOfFloors}
+                onChangeText={setNumberOfFloors}
+                placeholder="e.g. 3"
+                keyboardType="numeric"
+                style={{ borderBottomWidth: 1, marginBottom: 10 }}
+              />
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Pressable onPress={() => setShowAddPOIModal(false)}>
+                  <Text>Cancel</Text>
+                </Pressable>
+                <Pressable onPress={submitNewBuilding}>
+                  <Text style={{ fontWeight: 'bold' }}>Add</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
 
       {showEditPOIModal && (
         <Modal transparent visible animationType="slide">
