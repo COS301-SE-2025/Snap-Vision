@@ -8,7 +8,6 @@ interface Props {
   onLoadFloorplans: () => void;
   onEditFloorplans: () => void;
   onSettings: () => void;
-  onManageUsers: () => void;
   onFloorplanEditor?: () => void;
 }
 
@@ -17,7 +16,6 @@ export default function AdminScreenContent({
   onLoadFloorplans,
   onEditFloorplans,
   onSettings,
-  onManageUsers,
   onFloorplanEditor,
 }: Props) {
   return (
@@ -32,7 +30,7 @@ export default function AdminScreenContent({
           transform: [{ rotate: '-3deg' }],
         }}
       >
-        ADMIN
+        Editor
       </Text>
       <Text
         style={{
@@ -50,7 +48,6 @@ export default function AdminScreenContent({
         <AppButton title="Load Floorplans" onPress={onLoadFloorplans} />
         <AppButton title="Edit Floorplans" onPress={onEditFloorplans} />
         <AppButton title="Settings" onPress={onSettings} />
-        <AppButton title="Manage Users" onPress={onManageUsers} />
       </View>
     </View>
   );

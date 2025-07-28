@@ -51,6 +51,17 @@ export default function AdminLoadFloorplansContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // const [locations, setLocations] = useState<{ id: string; name: string }[]>([]);
+  // const [selectedLocation, setSelectedLocation] = useState<string>('');
+  // const [userRole, setUserRole] = useState<'admin' | 'editor' | 'user'>();
+  // const [adminLocations, setAdminLocations] = useState<string[]>([]);
+
+  // const [buildingDropdownOpen, setBuildingDropdownOpen] = useState(false);
+  // const [buildingDropdownItems, setBuildingDropdownItems] = useState<
+  //   { label: string; value: string }[]
+  // >([]);
+  // const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
+
   const [locations, setLocations] = useState<{ id: string; name: string }[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'user'>();
@@ -62,7 +73,7 @@ export default function AdminLoadFloorplansContent() {
   >([]);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
 
-  // Fetch all buildings from UPcampusPOIs collection
+  // Fetch all buildings from new Firestore structure (dynamically gets location)
   useEffect(() => {
     if (!selectedLocation) return;
 
