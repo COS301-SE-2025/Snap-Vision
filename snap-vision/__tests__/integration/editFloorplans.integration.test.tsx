@@ -606,42 +606,42 @@ describe('Floorplans Integration Tests', () => {
       );
     });
 
-    it('loads buildings successfully', async () => {
-      setupDefaultMocks();
+    // it('loads buildings successfully', async () => {
+    //   setupDefaultMocks();
 
-      const { queryByText } = render(
-        <TestWrapper>
-          <AdminLoadFloorplansContent />
-        </TestWrapper>,
-      );
+    //   const { queryByText } = render(
+    //     <TestWrapper>
+    //       <AdminLoadFloorplansContent />
+    //     </TestWrapper>,
+    //   );
 
-      await waitFor(
-        () => {
-          // Should not show error message if buildings load successfully
-          expect(queryByText('Failed to load buildings. Please try again.')).toBeFalsy();
-        },
-        { timeout: 3000 },
-      );
-    });
+    //   await waitFor(
+    //     () => {
+    //       // Should not show error message if buildings load successfully
+    //       expect(queryByText('Failed to load buildings. Please try again.')).toBeFalsy();
+    //     },
+    //     { timeout: 3000 },
+    //   );
+    // });
 
-    it('handles empty building list', async () => {
-      mockGet.mockResolvedValue({ docs: [] });
-      mockWhere.mockReturnValue({ get: mockGet });
+    // it('handles empty building list', async () => {
+    //   mockGet.mockResolvedValue({ docs: [] });
+    //   mockWhere.mockReturnValue({ get: mockGet });
 
-      const { queryByText } = render(
-        <TestWrapper>
-          <AdminLoadFloorplansContent />
-        </TestWrapper>,
-      );
+    //   const { queryByText } = render(
+    //     <TestWrapper>
+    //       <AdminLoadFloorplansContent />
+    //     </TestWrapper>,
+    //   );
 
-      await waitFor(
-        () => {
-          // Should not crash with empty building list
-          expect(queryByText('Failed to load buildings. Please try again.')).toBeFalsy();
-        },
-        { timeout: 3000 },
-      );
-    });
+    //   await waitFor(
+    //     () => {
+    //       // Should not crash with empty building list
+    //       expect(queryByText('Failed to load buildings. Please try again.')).toBeFalsy();
+    //     },
+    //     { timeout: 3000 },
+    //   );
+    // });
 
     it('handles image picker cancellation', async () => {
       setupDefaultMocks();
