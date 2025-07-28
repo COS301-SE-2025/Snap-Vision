@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import AppInput from '../atoms/AppInput';
 import AppButton from '../atoms/AppButton';
 import RememberMe from '../molecules/RememberMe';
@@ -10,55 +10,64 @@ import { getThemeColors } from '../../theme';
 import { useDeepLink } from '../../DeepLinkContext';
 import { useBadges } from '../../context/BadgeContext';
 import { useLanding } from '../../context/LandingContext';
+import Toast from 'react-native-toast-message';
 
 export default function LoginForm() {
-  const { setHasSeenLanding } = useLanding();
-  // existing state and logic here
   const navigation = useNavigation<any>();
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const { coords, setCoords } = useDeepLink();
+  const { unlock, state, uid, loading } = useBadges();
+  const { setHasSeenLanding } = useLanding();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({ email: '', password: '' });
-  const [successMessage, setSuccessMessage] = useState('');
-  const { unlock, state, uid, loading } = useBadges();
 
   const handleLogin = async () => {
-    console.log('handleLogin started');
-    setSuccessMessage('');
+    setErrors({ email: '', password: '' });
 
     if (!email.trim() || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      setErrors({
+        email: !email.trim() ? 'Email is required.' : '',
+        password: !password ? 'Password is required.' : '',
+      });
       return;
     }
+
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      setErrors({ email: 'Please enter a valid email address.', password: '' });
       return;
     }
 
     try {
       await auth().signInWithEmailAndPassword(email, password);
-      console.log('Login successful');
-      setHasSeenLanding(false); // triggers Landing screen on login
-      console.log('Badge state unlocked:', state.unlocked.has('first-login'));
-      console.log('BadgeContext uid:', uid, 'loading:', loading);
+      setHasSeenLanding(false);
+
       if (
         (!loading && uid && !state.unlocked.has('first-login')) ||
         (!uid && !loading) ||
         process.env.NODE_ENV === 'test'
       ) {
-        console.log('Unlocking first-login badge');
         await unlock('first-login');
-        console.log('Unlock call completed');
       }
-      // Alert.alert('Success', 'Logged in!');
-      setSuccessMessage('Login successful!');
+
+      Toast.show({
+        type: 'default',
+        text1: 'Login Successful!',
+        text2: 'Welcome back!',
+        props: {
+          backgroundColor: colors.card,
+          borderColor: colors.primary,
+          textColor: colors.primary,
+          iconColor: colors.secondary,
+        },
+      });
+
       setTimeout(() => {
-        if (coords && coords.lat && coords.lng) {
+        if (coords?.lat && coords?.lng) {
           navigation.replace('Tabs', {
             screen: 'Map',
             params: { lat: coords.lat, lng: coords.lng },
@@ -69,7 +78,6 @@ export default function LoginForm() {
         }
       }, 500);
     } catch (error: any) {
-      console.log('Login failed with error:', error);
       const errorMessages: Record<string, string> = {
         'auth/invalid-email': 'Invalid email address.',
         'auth/user-not-found': 'No account found.',
@@ -77,24 +85,17 @@ export default function LoginForm() {
         'auth/too-many-requests': 'Too many attempts. Try again later.',
         'auth/invalid-credential': 'Invalid credentials.',
       };
+
       const msg = errorMessages[error?.code] || 'Login failed.';
-      if (error?.code === 'auth/wrong-password') {
-        Alert.alert('Login Error', msg);
-      } else {
-        Alert.alert('Error', msg);
-      }
       setErrors({ email: '', password: msg });
     }
   };
 
-  React.useEffect(() => {
-    if (!loading && uid && state && state.unlocked && !state.unlocked.has('first-login')) {
-      console.log('Unlocking first-login badge from useEffect');
-      unlock('first-login').then(() => {
-        console.log('Unlock call completed from useEffect');
-      });
+  useEffect(() => {
+    if (!loading && uid && state?.unlocked && !state.unlocked.has('first-login')) {
+      unlock('first-login');
     }
-  }, [loading, uid, state ? state.unlocked : null, unlock]);
+  }, [loading, uid, state?.unlocked, unlock]);
 
   return (
     <View>
@@ -148,8 +149,6 @@ export default function LoginForm() {
 
       <AppButton title="LOGIN" onPress={handleLogin} testID="login-button" />
 
-      {successMessage ? <Text style={styles.success}>{successMessage}</Text> : null}
-
       <Text
         style={[styles.signUpText, { color: colors.secondary }]}
         onPress={() => navigation.navigate('Register')}
@@ -191,12 +190,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginBottom: 4,
     marginTop: -6,
-  },
-  success: {
-    color: 'green',
-    fontSize: 14,
-    textAlign: 'center',
-    marginVertical: 12,
   },
   signUpText: {
     textAlign: 'center',
