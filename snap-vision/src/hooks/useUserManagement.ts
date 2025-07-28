@@ -91,39 +91,37 @@ export const useUserManagement = () => {
     setFilters((prev) => ({ ...prev, role }));
   };
 
- const editUser = async (user: User, selectedLocation?: string) => {
-  try {
-    const updateData: any = {};
+  const editUser = async (user: User, selectedLocation?: string) => {
+    try {
+      const updateData: any = {};
 
-    switch (user.role) {
-      case 'Admin':
-        updateData.role = 'admin';
-        updateData.adminLocations = firestore.FieldValue.delete();
-        break;
+      switch (user.role) {
+        case 'Admin':
+          updateData.role = 'admin';
+          updateData.adminLocations = firestore.FieldValue.delete();
+          break;
 
-      case 'Viewer':
-        updateData.role = 'viewer';
-        updateData.adminLocations = firestore.FieldValue.delete();
-        break;
+        case 'Viewer':
+          updateData.role = 'viewer';
+          updateData.adminLocations = firestore.FieldValue.delete();
+          break;
 
-      case 'Editor':
-        if (!selectedLocation) throw new Error('No location selected for editor');
-        updateData.role = 'editor';
-        updateData.adminLocations = [selectedLocation];
-        break;
+        case 'Editor':
+          if (!selectedLocation) throw new Error('No location selected for editor');
+          updateData.role = 'editor';
+          updateData.adminLocations = [selectedLocation];
+          break;
 
-      default:
-        updateData.role = 'user';
-        updateData.adminLocations = firestore.FieldValue.delete();
+        default:
+          updateData.role = 'user';
+          updateData.adminLocations = firestore.FieldValue.delete();
+      }
+
+      await firestore().collection('userInformation').doc(user.id).update(updateData);
+    } catch (err) {
+      console.error('Failed to update role:', err);
     }
-
-    await firestore().collection('userInformation').doc(user.id).update(updateData);
-  } catch (err) {
-    console.error('Failed to update role:', err);
-  }
-};
-
-
+  };
 
   const deleteUser = async (user: User) => {
     try {

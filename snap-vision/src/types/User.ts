@@ -10,6 +10,6 @@ export interface User {
 }
 
 export interface UserFilters {
-  role: 'All' | 'Admin' | 'Viewer'| 'Editor';
+  role: 'All' | 'Admin' | 'Viewer' | 'Editor';
   searchQuery: string;
 }

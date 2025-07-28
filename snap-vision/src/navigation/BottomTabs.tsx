@@ -12,7 +12,6 @@ import { getThemeColors } from '../theme';
 import { useUser } from '../context/UserContext';
 import EditorScreen from '../screens/EditorScreen';
 
-
 const Tab = createBottomTabNavigator();
 
 export default function BottomTabs() {

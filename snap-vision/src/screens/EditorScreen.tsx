@@ -30,7 +30,6 @@ const EditorScreen = () => {
     navigation.navigate('AdminSettings');
   };
 
-
   return (
     <AdminContent
       colors={colors}

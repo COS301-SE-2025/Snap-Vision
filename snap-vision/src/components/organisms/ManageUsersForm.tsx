@@ -174,36 +174,35 @@ export default function ManageUsersForm({ navigation }: Props) {
               <Text style={[styles.modalTitle, { color: colors.primary }]}>Select Role</Text>
 
               <View style={styles.roleButtonsContainer}>
-  {ROLE_OPTIONS.map((roleOption) => {
-    const isSelected = selectedRole === roleOption;
-    return (
-      <TouchableOpacity
-        key={roleOption}
-        style={[
-          styles.roleOption,
-          {
-            backgroundColor: isSelected ? colors.secondary : colors.background,
-            borderColor: isSelected ? colors.primary : colors.text,
-            borderWidth: 2,
-          },
-        ]}
-        onPress={() => setSelectedRole(roleOption)}
-        activeOpacity={0.8}
-      >
-        <Text
-          style={{
-            color: isSelected ? 'white' : colors.text,
-            fontWeight: '600',
-            textAlign: 'center',
-          }}
-        >
-          {roleOption}
-        </Text>
-      </TouchableOpacity>
-    );
-  })}
-</View>
-
+                {ROLE_OPTIONS.map((roleOption) => {
+                  const isSelected = selectedRole === roleOption;
+                  return (
+                    <TouchableOpacity
+                      key={roleOption}
+                      style={[
+                        styles.roleOption,
+                        {
+                          backgroundColor: isSelected ? colors.secondary : colors.background,
+                          borderColor: isSelected ? colors.primary : colors.text,
+                          borderWidth: 2,
+                        },
+                      ]}
+                      onPress={() => setSelectedRole(roleOption)}
+                      activeOpacity={0.8}
+                    >
+                      <Text
+                        style={{
+                          color: isSelected ? 'white' : colors.text,
+                          fontWeight: '600',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {roleOption}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
 
               <View style={styles.modalButtons}>
                 <Button title="Cancel" onPress={resetEditingState} />
@@ -230,7 +229,7 @@ export default function ManageUsersForm({ navigation }: Props) {
                       styles.locationItem,
                       {
                         backgroundColor:
-                          selectedLocationId === item.id ? colors.background: colors.background,
+                          selectedLocationId === item.id ? colors.background : colors.background,
                       },
                     ]}
                     onPress={() => setSelectedLocationId(item.id)}
@@ -316,11 +315,11 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalTitle: {
-  fontWeight: 'bold',
-  fontSize: 18,
-  marginBottom: 12,
-  textAlign: 'center',  // <-- add this to center text horizontally
-},
+    fontWeight: 'bold',
+    fontSize: 18,
+    marginBottom: 12,
+    textAlign: 'center', // <-- add this to center text horizontally
+  },
 
   roleOption: {
     padding: 12,
@@ -338,12 +337,10 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   roleButtonsContainer: {
-  flexDirection: 'row',
-  justifyContent: 'center',
-  alignItems: 'center',
-  gap: 12,       // space between buttons, works with React Native 0.71+
-  marginVertical: 12,
-},
-
-
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12, // space between buttons, works with React Native 0.71+
+    marginVertical: 12,
+  },
 });
