@@ -7,33 +7,33 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import { Alert } from 'react-native';
 import LoginScreen from '../../src/screens/LoginScreen';
 import LoginForm from '../../src/components/organisms/LoginForm';
+import Toast from 'react-native-toast-message';
+
+// Mock Toast
+jest.mock('react-native-toast-message', () => ({
+  show: jest.fn(),
+}));
 
 // Mock Firebase auth
+const mockSignIn = jest.fn();
 jest.mock('@react-native-firebase/auth', () => {
-  const signInWithEmailAndPassword = jest.fn();
   return () => ({
-    signInWithEmailAndPassword,
+    signInWithEmailAndPassword: mockSignIn,
   });
 });
-
-// Mock Alert
-jest.spyOn(Alert, 'alert').mockImplementation(() => {});
 
 // Mock Navigation
 const mockNavigate = jest.fn();
 const mockReplace = jest.fn();
-jest.mock('@react-navigation/native', () => {
-  return {
-    ...jest.requireActual('@react-navigation/native'),
-    useNavigation: () => ({
-      navigate: mockNavigate,
-      replace: mockReplace,
-    }),
-  };
-});
+jest.mock('@react-navigation/native', () => ({
+  ...jest.requireActual('@react-navigation/native'),
+  useNavigation: () => ({
+    navigate: mockNavigate,
+    replace: mockReplace,
+  }),
+}));
 
 // Mock Theme Context
 jest.mock('../../src/theme/ThemeContext', () => ({
@@ -77,7 +77,7 @@ jest.mock('../../src/context/BadgeContext', () => {
   };
 });
 
-// Mock AppInput component
+// Mock AppInput
 jest.mock('../../src/components/atoms/AppInput', () => {
   const React = require('react');
   const { View, TextInput, TouchableOpacity, Text } = require('react-native');
@@ -111,7 +111,7 @@ jest.mock('../../src/components/atoms/AppInput', () => {
   };
 });
 
-// Mock AppButton component
+// Mock AppButton
 jest.mock('../../src/components/atoms/AppButton', () => {
   const React = require('react');
   const { TouchableOpacity, Text } = require('react-native');
@@ -124,7 +124,7 @@ jest.mock('../../src/components/atoms/AppButton', () => {
   };
 });
 
-// Mock RememberMe component
+// Mock RememberMe
 jest.mock('../../src/components/molecules/RememberMe', () => {
   const React = require('react');
   const { View, Text, TouchableOpacity } = require('react-native');
@@ -150,65 +150,87 @@ describe('Login Integration Tests', () => {
   it('handles form input changes', () => {
     const { getAllByTestId } = render(<LoginForm />);
     const inputs = getAllByTestId('input');
-    const emailInput = inputs[0];
-    const passwordInput = inputs[1];
-    fireEvent.changeText(emailInput, 'test@example.com');
-    fireEvent.changeText(passwordInput, 'password123');
-    expect(emailInput.props.value).toBe('test@example.com');
-    expect(passwordInput.props.value).toBe('password123');
+    fireEvent.changeText(inputs[0], 'test@example.com');
+    fireEvent.changeText(inputs[1], 'password123');
+    expect(inputs[0].props.value).toBe('test@example.com');
+    expect(inputs[1].props.value).toBe('password123');
   });
 
-  it('validates form inputs before submission', async () => {
-    const { getByTestId, getAllByTestId } = render(<LoginForm />);
+  it('validates empty inputs before submission', async () => {
+    const { getByTestId, getByText } = render(<LoginForm />);
     fireEvent.press(getByTestId('login-button'));
+
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Error', 'Please fill in all fields');
+      expect(getByText('Email is required.')).toBeTruthy();
+      expect(getByText('Password is required.')).toBeTruthy();
     });
+  });
+
+  it('validates invalid email format', async () => {
+    const { getByTestId, getAllByTestId, getByText } = render(<LoginForm />);
     const inputs = getAllByTestId('input');
-    const emailInput = inputs[0];
-    const passwordInput = inputs[1];
-    fireEvent.changeText(emailInput, 'invalid-email');
-    fireEvent.changeText(passwordInput, 'password123');
+    fireEvent.changeText(inputs[0], 'invalid-email');
+    fireEvent.changeText(inputs[1], 'password123');
     fireEvent.press(getByTestId('login-button'));
+
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Error', 'Please enter a valid email address');
+      expect(getByText('Please enter a valid email address.')).toBeTruthy();
     });
   });
 
   it('attempts login with valid credentials', async () => {
-    const auth = require('@react-native-firebase/auth')();
-    auth.signInWithEmailAndPassword.mockResolvedValueOnce({});
+    mockSignIn.mockResolvedValueOnce({});
     const { getByTestId, getAllByTestId } = render(<LoginForm />);
     const inputs = getAllByTestId('input');
-    const emailInput = inputs[0];
-    const passwordInput = inputs[1];
-    fireEvent.changeText(emailInput, 'test@example.com');
-    fireEvent.changeText(passwordInput, 'password123');
+    fireEvent.changeText(inputs[0], 'test@example.com');
+    fireEvent.changeText(inputs[1], 'password123');
     fireEvent.press(getByTestId('login-button'));
+
     await waitFor(() => {
-      expect(auth.signInWithEmailAndPassword).toHaveBeenCalledWith(
-        'test@example.com',
-        'password123',
-      );
+      expect(mockSignIn).toHaveBeenCalledWith('test@example.com', 'password123');
       expect(mockUnlock).toHaveBeenCalledWith('first-login');
       expect(mockReplace).toHaveBeenCalledWith('Tabs');
     });
   });
 
-  it('handles login errors', async () => {
-    const auth = require('@react-native-firebase/auth')();
-    auth.signInWithEmailAndPassword.mockRejectedValueOnce({
-      code: 'auth/wrong-password',
+  it('handles wrong-password error', async () => {
+    mockSignIn.mockRejectedValueOnce({ code: 'auth/wrong-password' });
+    const { getByTestId, getAllByTestId, getByText } = render(<LoginForm />);
+    const inputs = getAllByTestId('input');
+    fireEvent.changeText(inputs[0], 'test@example.com');
+    fireEvent.changeText(inputs[1], 'wrong-password');
+    fireEvent.press(getByTestId('login-button'));
+
+    await waitFor(() => {
+      expect(getByText('Incorrect password.')).toBeTruthy();
     });
+  });
+
+  it('shows Toast on successful login', async () => {
+    mockSignIn.mockResolvedValueOnce({});
     const { getByTestId, getAllByTestId } = render(<LoginForm />);
     const inputs = getAllByTestId('input');
-    const emailInput = inputs[0];
-    const passwordInput = inputs[1];
-    fireEvent.changeText(emailInput, 'test@example.com');
-    fireEvent.changeText(passwordInput, 'wrong-password');
+    fireEvent.changeText(inputs[0], 'test@example.com');
+    fireEvent.changeText(inputs[1], 'password123');
     fireEvent.press(getByTestId('login-button'));
+
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Login Error', 'Incorrect password.');
+      expect(Toast.show).toHaveBeenCalledWith(expect.objectContaining({
+        text1: 'Login Successful!',
+      }));
+    });
+  });
+
+  it('handles unknown login error', async () => {
+    mockSignIn.mockRejectedValueOnce({ code: 'auth/unknown-error' });
+    const { getByTestId, getAllByTestId, getByText } = render(<LoginForm />);
+    const inputs = getAllByTestId('input');
+    fireEvent.changeText(inputs[0], 'test@example.com');
+    fireEvent.changeText(inputs[1], 'password123');
+    fireEvent.press(getByTestId('login-button'));
+
+    await waitFor(() => {
+      expect(getByText('Login failed.')).toBeTruthy();
     });
   });
 
@@ -221,37 +243,11 @@ describe('Login Integration Tests', () => {
   it('toggles password visibility', () => {
     const { getByTestId, getAllByTestId } = render(<LoginForm />);
     const inputs = getAllByTestId('input');
-    const passwordInput = inputs[1];
     const toggleButton = getByTestId('toggle-password');
-    expect(passwordInput.props.secureTextEntry).toBe(true);
+    expect(inputs[1].props.secureTextEntry).toBe(true);
     fireEvent.press(toggleButton);
-    expect(passwordInput.props.secureTextEntry).toBe(false);
-  });
-
-  it('shows success message after login', async () => {
-    const auth = require('@react-native-firebase/auth')();
-    auth.signInWithEmailAndPassword.mockResolvedValueOnce({});
-    const { getByTestId, getAllByTestId, findByText } = render(<LoginForm />);
-    const inputs = getAllByTestId('input');
-    fireEvent.changeText(inputs[0], 'test@example.com');
-    fireEvent.changeText(inputs[1], 'password123');
-    fireEvent.press(getByTestId('login-button'));
-    expect(await findByText('Login successful!')).toBeTruthy();
-  });
-
-  it('shows error message for unknown error', async () => {
-    const auth = require('@react-native-firebase/auth')();
-    auth.signInWithEmailAndPassword.mockRejectedValueOnce({
-      code: 'auth/unknown-error',
-    });
-    const { getByTestId, getAllByTestId } = render(<LoginForm />);
-    const inputs = getAllByTestId('input');
-    fireEvent.changeText(inputs[0], 'test@example.com');
-    fireEvent.changeText(inputs[1], 'password123');
-    fireEvent.press(getByTestId('login-button'));
-    await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Error', 'Login failed.');
-    });
+    // Assume state change occurred, value should flip
+    expect(inputs[1].props.secureTextEntry).toBe(false);
   });
 
   it('navigates to register screen when sign up text is pressed', () => {
@@ -260,15 +256,14 @@ describe('Login Integration Tests', () => {
     expect(mockNavigate).toHaveBeenCalledWith('Register');
   });
 
-  it('renders login screen with correct background', () => {
+  it('renders login screen with form present', () => {
     const { getByTestId } = render(<LoginScreen />);
-    // The root View in LoginScreen does not have a testID, so we check for LoginForm existence
     expect(getByTestId('login-button')).toBeTruthy();
   });
 
-  it('toggles remember me', () => {
+  it('toggles remember me without error', () => {
     const { getByTestId } = render(<LoginForm />);
     fireEvent.press(getByTestId('remember-me-toggle'));
-    // No assertion needed, just ensure no crash and toggle works
+    // No assertion needed, just ensures toggle does not crash
   });
 });
