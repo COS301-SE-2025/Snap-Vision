@@ -5,12 +5,12 @@ jest.mock("axios");
 const axios = require("axios");
 
 // 2) Point at local emulators
-process.env.FIRESTORE_EMULATOR_HOST       = "127.0.0.1:8080";
-process.env.FIREBASE_AUTH_EMULATOR_HOST   = "127.0.0.1:9099";
-process.env.ORS_API_KEY                   = "integration-key";
+process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
+process.env.FIREBASE_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
+process.env.ORS_API_KEY = "integration-key";
 
 const request = require("supertest");
-const admin   = require("firebase-admin");
+const admin = require("firebase-admin");
 let server;
 
 beforeAll(() => {
@@ -54,8 +54,18 @@ describe("index.js (integration)", () => {
     // Confirm headers and payload too, if desired:
     expect(axios.post).toHaveBeenCalledWith(
       "https://api.openrouteservice.org/v2/directions/foot-walking/geojson",
-      { coordinates: [[1, 2], [3, 4]] },
-      { headers: { Authorization: "integration-key", "Content-Type": "application/json" } }
+      {
+        coordinates: [
+          [1, 2],
+          [3, 4],
+        ],
+      },
+      {
+        headers: {
+          Authorization: "integration-key",
+          "Content-Type": "application/json",
+        },
+      },
     );
   });
 

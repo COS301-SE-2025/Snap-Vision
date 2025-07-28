@@ -17,6 +17,7 @@ export default function TabBarIcon({ routeName, color, size }: Props) {
   else if (routeName === 'Achievements') iconName = 'trophy-outline';
   else if (routeName === 'Settings') iconName = 'settings-outline';
   else if (routeName === 'Admin') iconName = 'shield-outline';
+  else if (routeName === 'Editor') iconName = 'pencil-outline';
 
   return <Icon name={iconName} size={size} color={color} />;
 }

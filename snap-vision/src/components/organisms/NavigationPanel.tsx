@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -19,6 +19,13 @@ interface NavigationPanelProps {
   onToggleVoice: () => void;
   currentInstruction?: string;
   onSpeakingChange?: (isSpeaking: boolean) => void;
+  // AR Navigation props
+  showAR?: boolean;
+  onToggleAR?: () => void;
+  destinationCoords?: [number, number] | null;
+  // Minimization props
+  isMinimized?: boolean;
+  onToggleMinimize?: () => void;
 }
 
 const NavigationPanel: React.FC<NavigationPanelProps> = ({
@@ -35,6 +42,11 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
   onToggleVoice,
   currentInstruction,
   onSpeakingChange,
+  showAR = false,
+  onToggleAR,
+  destinationCoords,
+  isMinimized = false,
+  onToggleMinimize,
 }) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
@@ -61,15 +73,69 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
     }
   };
 
+  // Minimized version for AR mode
+  if (isMinimized && showAR) {
+    return (
+      <View style={[styles.minimizedContainer, { backgroundColor: colors.card }]}>
+        <Pressable style={styles.minimizedContent} onPress={onToggleMinimize}>
+          <Text style={[styles.minimizedText, { color: colors.text }]} numberOfLines={1}>
+            {destination} • {formatDistance(distance)} • {Math.round(progress)}%
+          </Text>
+          <Icon name="chevron-up" size={16} color={colors.text} />
+        </Pressable>
+
+        {/* Essential controls */}
+        <View style={styles.minimizedControls}>
+          <Pressable
+            style={[styles.miniButton, { backgroundColor: colors.danger }]}
+            onPress={onCancelRoute}
+          >
+            <Icon name="close" size={12} color="#fff" />
+          </Pressable>
+
+          <Pressable
+            style={[styles.miniButton, { backgroundColor: '#E53935' }]}
+            onPress={onStopNavigation}
+          >
+            <Icon name="stop" size={12} color="#fff" />
+          </Pressable>
+
+          {onToggleAR && (
+            <Pressable
+              style={[
+                styles.miniButton,
+                { backgroundColor: showAR ? colors.primary : colors.secondary },
+              ]}
+              onPress={onToggleAR}
+            >
+              <Icon name="camera-outline" size={12} color="#fff" />
+            </Pressable>
+          )}
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: colors.card }]}>
-      {/* Cancel Button - Always visible in top right */}
-      <Pressable
-        style={[styles.cancelButton, { backgroundColor: colors.danger }]}
-        onPress={onCancelRoute}
-      >
-        <Icon name="close" size={14} color="#fff" />
-      </Pressable>
+      {/* Header with Cancel Button */}
+      <View style={styles.header}>
+        <View style={styles.headerSpacer} />
+        {showAR && onToggleMinimize && (
+          <Pressable
+            style={[styles.minimizeButton, { backgroundColor: colors.secondary }]}
+            onPress={onToggleMinimize}
+          >
+            <Icon name="chevron-down" size={14} color="#fff" />
+          </Pressable>
+        )}
+        <Pressable
+          style={[styles.cancelButton, { backgroundColor: colors.danger }]}
+          onPress={onCancelRoute}
+        >
+          <Icon name="close" size={14} color="#fff" />
+        </Pressable>
+      </View>
 
       {/* Main Content */}
       <View style={styles.content}>
@@ -138,17 +204,35 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
               </Text>
             </Pressable>
 
-            {isNavigating && (
-              <View style={{ marginTop: 8 }}>
-                <TextToSpeech
-                  isActive={isVoiceEnabled}
-                  onToggle={onToggleVoice}
-                  text={currentInstruction}
-                  onSpeakingChange={onSpeakingChange}
-                />
-              </View>
+            {/* AR Navigation Button - Only show when navigating and destination exists */}
+            {isNavigating && destinationCoords && onToggleAR && (
+              <Pressable
+                style={[
+                  styles.voiceStyleButton,
+                  {
+                    backgroundColor: showAR ? colors.primary : colors.secondary,
+                    opacity: showAR ? 1 : 0.8,
+                  },
+                ]}
+                onPress={onToggleAR}
+              >
+                <Icon name="camera-outline" size={16} color="#fff" style={styles.buttonIcon} />
+                <Text style={styles.voiceLabel}>{showAR ? 'AR On' : 'AR'}</Text>
+              </Pressable>
             )}
           </View>
+
+          {/* Voice Controls - Separate row */}
+          {isNavigating && (
+            <View style={styles.voiceSection}>
+              <TextToSpeech
+                isActive={isVoiceEnabled}
+                onToggle={onToggleVoice}
+                text={currentInstruction}
+                onSpeakingChange={onSpeakingChange}
+              />
+            </View>
+          )}
         </View>
       </View>
     </View>
@@ -172,26 +256,81 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     alignSelf: 'center',
   },
-  cancelButton: {
+  minimizedContainer: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 21,
-    height: 21,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1001,
-  },
-  content: {
+    bottom: 20,
+    left: 20,
+    right: 20,
+    maxWidth: 360,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 1000,
+    alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingRight: 32, // Add padding to avoid overlap with cancel button
+  },
+  minimizedContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingRight: 8,
+  },
+  minimizedText: {
+    fontSize: 12,
+    fontWeight: '500',
+    flex: 1,
+  },
+  minimizedControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  miniButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+    height: 24, // Fixed height for the header
+  },
+  headerSpacer: {
+    flex: 1, // Takes up space so cancel button is right-aligned
+  },
+  minimizeButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  cancelButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
   },
   infoSection: {
     flex: 1,
-    marginRight: 12,
   },
   destinationText: {
     fontSize: 16,
@@ -218,6 +357,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     position: 'relative',
+    marginBottom: 12,
   },
   progressBar: {
     height: '100%',
@@ -237,26 +377,11 @@ const styles = StyleSheet.create({
     textShadowRadius: 1,
     paddingTop: 3,
   },
-  navButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+  actionsContainer: {
     flexDirection: 'row',
-    minWidth: 90,
-  },
-  buttonIcon: {
-    marginRight: 6,
-  },
-  navButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  actionColumn: {
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 8,
   },
   voiceStyleButton: {
     flexDirection: 'row',
@@ -279,11 +404,30 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
-  actionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+  buttonIcon: {
+    marginRight: 4,
+  },
+  voiceSection: {
+    marginTop: 4,
+  },
+  // Remove unused styles
+  navButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
+    flexDirection: 'row',
+    minWidth: 90,
+  },
+  navButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  actionColumn: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

@@ -88,6 +88,10 @@ android {
         versionCode 1
         versionName "1.0"
     }
+    packagingOptions {
+        pickFirst "**/libc++_shared.so"
+        pickFirst "**/libjsc.so"
+    }
     signingConfigs {
         debug {
             storeFile file('debug.keystore')

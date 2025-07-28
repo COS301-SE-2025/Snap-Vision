@@ -1,7 +1,10 @@
 process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
 
 const admin = require("firebase-admin");
-const { getRecentVisits, addVisit } = require("../../src/services/recentlyVisitedService");
+const {
+  getRecentVisits,
+  addVisit,
+} = require("../../src/services/recentlyVisitedService");
 
 beforeAll(() => {
   if (!admin.apps.length) {

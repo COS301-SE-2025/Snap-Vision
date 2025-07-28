@@ -1,5 +1,16 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  TouchableOpacity,
+  FlatList,
+  Button,
+} from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useUserManagement } from '../../hooks/useUserManagement';
@@ -7,17 +18,95 @@ import SearchInput from '../atoms/SearchInput';
 import RoleFilter from '../molecules/RoleFilter';
 import UserCard from '../molecules/UserCard';
 import SettingsHeader from '../molecules/SettingsHeader';
+import { User } from '../../types/User';
 
 interface Props {
   navigation: any;
 }
 
+const ROLE_OPTIONS: Array<'Admin' | 'Editor' | 'Viewer'> = ['Admin', 'Editor', 'Viewer'];
+
 export default function ManageUsersForm({ navigation }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
-  const { users, loading, filters, updateSearchQuery, updateRoleFilter, editUser, deleteUser } =
-    useUserManagement();
+  const {
+    users,
+    loading,
+    filters,
+    updateSearchQuery,
+    updateRoleFilter,
+    editUser,
+    deleteUser,
+    allLocations,
+  } = useUserManagement();
+
+  // Modal states
+  const [roleModalVisible, setRoleModalVisible] = useState(false);
+  const [locationModalVisible, setLocationModalVisible] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [selectedRole, setSelectedRole] = useState<'Admin' | 'Editor' | 'Viewer' | null>(null);
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
+
+  // Step 1: Open role selection modal
+  const onEditPress = (user: User) => {
+    setEditingUser(user);
+    setSelectedRole(null);
+    setSelectedLocationId(null);
+    setRoleModalVisible(true);
+  };
+
+  // Step 2: Confirm role selection
+  const onConfirmRoleSelection = () => {
+    if (!selectedRole || !editingUser) return;
+
+    if (selectedRole === editingUser.role) {
+      Alert.alert('Error', `User is already a ${selectedRole}`);
+      return;
+    }
+
+    setRoleModalVisible(false);
+
+    if (selectedRole === 'Editor') {
+      // If Editor, open location modal next
+      setLocationModalVisible(true);
+    } else {
+      // Admin or Viewer: confirm role change directly
+      Alert.alert(
+        'Confirm Role Change',
+        `Are you sure you want to change ${editingUser.name}'s role to ${selectedRole}?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Confirm',
+            onPress: () => {
+              editUser({ ...editingUser, role: selectedRole });
+              resetEditingState();
+            },
+          },
+        ],
+      );
+    }
+  };
+
+  // Step 3: Confirm location selection for Editor
+  const confirmLocationSelection = () => {
+    if (!selectedLocationId || !editingUser) {
+      Alert.alert('Please select a location.');
+      return;
+    }
+    editUser({ ...editingUser, role: 'Editor' }, selectedLocationId);
+    resetEditingState();
+  };
+
+  // Reset all editing states
+  const resetEditingState = () => {
+    setEditingUser(null);
+    setSelectedRole(null);
+    setSelectedLocationId(null);
+    setRoleModalVisible(false);
+    setLocationModalVisible(false);
+  };
 
   if (loading) {
     return (
@@ -62,20 +151,7 @@ export default function ManageUsersForm({ navigation }: Props) {
               <UserCard
                 key={user.id}
                 user={user}
-                onEdit={(u) => {
-                  const newRole = u.role === 'Admin' ? 'Viewer' : 'Admin';
-                  Alert.alert(
-                    'Confirm Role Change',
-                    `Are you sure you want to make this user a ${newRole}?`,
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Confirm',
-                        onPress: () => editUser({ ...u, role: newRole }),
-                      },
-                    ],
-                  );
-                }}
+                onEdit={() => onEditPress(user)}
                 onDelete={(u) => {
                   Alert.alert('Confirm Deletion', `Are you sure you want to delete ${u.name}?`, [
                     { text: 'Cancel', style: 'cancel' },
@@ -91,21 +167,96 @@ export default function ManageUsersForm({ navigation }: Props) {
           )}
         </View>
 
-        {/* Action Buttons */}
-        {/* <View style={styles.actionButtonsContainer}>
-          <ActionButton
-            title="Bulk Deactivate"
-            onPress={bulkDeactivate}
-            variant="secondary"
-            style={styles.actionButton}
-          />
-          <ActionButton
-            title="Add New User"
-            onPress={addNewUser}
-            variant="primary"
-            style={styles.actionButton}
-          />
-        </View> */}
+        {/* Role Selection Modal */}
+        <Modal visible={roleModalVisible} transparent animationType="slide">
+          <View style={styles.modalBackground}>
+            <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+              <Text style={[styles.modalTitle, { color: colors.primary }]}>Select Role</Text>
+
+              <View style={styles.roleButtonsContainer}>
+                {ROLE_OPTIONS.map((roleOption) => {
+                  const isSelected = selectedRole === roleOption;
+                  return (
+                    <TouchableOpacity
+                      key={roleOption}
+                      style={[
+                        styles.roleOption,
+                        {
+                          backgroundColor: isSelected ? colors.secondary : colors.background,
+                          borderColor: isSelected ? colors.primary : colors.text,
+                          borderWidth: 2,
+                        },
+                      ]}
+                      onPress={() => setSelectedRole(roleOption)}
+                      activeOpacity={0.8}
+                    >
+                      <Text
+                        style={{
+                          color: isSelected ? 'white' : colors.text,
+                          fontWeight: '600',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {roleOption}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <View style={styles.modalButtons}>
+                <Button title="Cancel" onPress={resetEditingState} />
+                <Button title="Confirm" onPress={onConfirmRoleSelection} disabled={!selectedRole} />
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Location Selection Modal */}
+        <Modal visible={locationModalVisible} transparent animationType="slide">
+          <View style={styles.modalBackground}>
+            <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>
+                Select Location for Editor
+              </Text>
+
+              <FlatList
+                data={allLocations}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.locationItem,
+                      {
+                        backgroundColor:
+                          selectedLocationId === item.id ? colors.background : colors.background,
+                      },
+                    ]}
+                    onPress={() => setSelectedLocationId(item.id)}
+                  >
+                    <Text
+                      style={{
+                        color: selectedLocationId === item.id ? 'white' : colors.text,
+                      }}
+                    >
+                      {item.name}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                style={{ maxHeight: 250 }}
+              />
+
+              <View style={styles.modalButtons}>
+                <Button title="Cancel" onPress={resetEditingState} />
+                <Button
+                  title="Confirm"
+                  onPress={confirmLocationSelection}
+                  disabled={!selectedLocationId}
+                />
+              </View>
+            </View>
+          </View>
+        </Modal>
       </ScrollView>
     </View>
   );
@@ -153,14 +304,43 @@ const styles = StyleSheet.create({
     fontSize: 16,
     opacity: 0.6,
   },
-  actionButtonsContainer: {
+  modalBackground: {
+    flex: 1,
+    backgroundColor: '#00000099',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  modalContainer: {
+    borderRadius: 10,
+    padding: 20,
+  },
+  modalTitle: {
+    fontWeight: 'bold',
+    fontSize: 18,
+    marginBottom: 12,
+    textAlign: 'center', // <-- add this to center text horizontally
+  },
+
+  roleOption: {
+    padding: 12,
+    borderRadius: 6,
+    marginVertical: 6,
+  },
+  locationItem: {
+    padding: 12,
+    borderRadius: 6,
+    marginVertical: 4,
+  },
+  modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 24,
-    gap: 12,
+    marginTop: 16,
   },
-  actionButton: {
-    flex: 1,
+  roleButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12, // space between buttons, works with React Native 0.71+
+    marginVertical: 12,
   },
 });
