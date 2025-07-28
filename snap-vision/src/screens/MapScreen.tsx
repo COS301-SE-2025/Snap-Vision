@@ -35,13 +35,14 @@ import ARNavigationOverlay from '../components/organisms/ARNavigationOverlay';
 import { useCompass } from '../hooks/useCompass';
 import { requestCameraPermission } from '../utils/cameraPermissions';
 import { Platform } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 
 type MapScreenParams = {
   lat?: string;
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'http://192.168.0.118:3000'; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = 'http://10.0.0.7:3000'; // <-- Use your correct backend IP here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
@@ -118,6 +119,13 @@ const MapScreen = () => {
   const [adminActionPOI, setAdminActionPOI] = useState<any>(null);
   const [tempMessage, setTempMessage] = useState<string>('');
 
+  //RBAC
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [adminLocations, setAdminLocations] = useState<string[]>([]);
+
+  const [availableLocations, setAvailableLocations] = useState<string[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<string>('');
+
   // AR Navigation state
   const [showAR, setShowAR] = useState(false);
   const deviceHeading = useCompass();
@@ -129,6 +137,15 @@ const MapScreen = () => {
     ignoreAndroidSystemSettings: false,
   };
 
+  //Fetch Locations
+  useEffect(() => {
+    const fetchLocations = async () => {
+      const snapshot = await firestore().collection('locations').get();
+      setAvailableLocations(snapshot.docs.map((doc) => doc.id));
+    };
+    if (isAdmin) fetchLocations();
+  }, [isAdmin]);
+
   //Check if user is admin
   useEffect(() => {
     const fetchRole = async () => {
@@ -136,7 +153,11 @@ const MapScreen = () => {
       if (!userId) return;
       const userDoc = await firestore().collection('userInformation').doc(userId).get();
       const role = userDoc.data()?.role;
+      setUserRole(role);
       setIsAdmin(role === 'admin');
+      if (role === 'editor') {
+        setAdminLocations(userDoc.data()?.adminLocations || []);
+      }
     };
     fetchRole();
   }, []);
@@ -145,7 +166,7 @@ const MapScreen = () => {
   useEffect(() => {
     if (isMapReady && webViewRef.current) {
       // Set admin mode in the WebView
-      const setAdminJS = `window.setAdminMode && window.setAdminMode(${isAdmin ? 'true' : 'false'});`;
+      const setAdminJS = `window.setAdminMode && window.setAdminMode(${userRole === 'admin' || userRole === 'editor' ? 'true' : 'false'});`;
       webViewRef.current.injectJavaScript(setAdminJS);
 
       // Re-display POIs to update popups/buttons
@@ -188,7 +209,7 @@ const MapScreen = () => {
   // Replace your requestLocation function with this enhanced version
   const requestLocation = async () => {
     try {
-      console.log('🔍 Requesting location permissions...');
+      // console.log('🔍 Requesting location permissions...');
 
       if (Platform.OS === 'android') {
         // For Android 12+, we need to request both permissions
@@ -199,7 +220,7 @@ const MapScreen = () => {
 
         const results = await PermissionsAndroid.requestMultiple(permissions);
 
-        console.log('Permission results:', results);
+        // console.log('Permission results:', results);
 
         const fineLocationGranted =
           results['android.permission.ACCESS_FINE_LOCATION'] === 'granted';
@@ -219,17 +240,17 @@ const MapScreen = () => {
             setStatus('Getting precise location...');
             Geolocation.getCurrentPosition(
               (position) => {
-                console.log('✅ High accuracy location:', position.coords);
+                // console.log('✅ High accuracy location:', position.coords);
                 const { latitude, longitude } = position.coords;
                 sendLocationToWebView(latitude, longitude, true);
                 setStatus('High accuracy location found');
               },
               (error) => {
-                console.log('❌ High accuracy failed, trying approximate:', error);
+                // console.log('❌ High accuracy failed, trying approximate:', error);
                 // Fallback to approximate location
                 Geolocation.getCurrentPosition(
                   (position) => {
-                    console.log('✅ Approximate location:', position.coords);
+                    // console.log('✅ Approximate location:', position.coords);
                     const { latitude, longitude } = position.coords;
                     sendLocationToWebView(latitude, longitude, true);
                     setStatus('Approximate location found');
@@ -315,7 +336,7 @@ const MapScreen = () => {
             const deletedPoiId = poi.id;
 
             // First handle document IDs that might contain slashes
-            await firestore().doc(`UPcampusPOIs/${poi.id}`).delete();
+            await firestore().doc(`locations/${poi.location}/buildingPOIs/${poi.id}`).delete();
 
             // Direct removal of the specific marker
             if (webViewRef.current && isMapReady) {
@@ -421,20 +442,33 @@ const MapScreen = () => {
           }
           break;
 
-        case 'ADMIN_POI_SELECTED':
+        case 'ADMIN_POI_SELECTED': {
           const adminPOI = pois.find((p) => p.id === parsed.poi.id);
-          if (adminPOI) {
+          if (!adminPOI) break;
+          console.log('userRole:', userRole);
+          console.log('adminLocations:', adminLocations);
+          console.log('adminPOI.location:', adminPOI.location);
+
+          const canEdit =
+            userRole === 'admin' ||
+            (userRole === 'editor' && adminLocations.includes(adminPOI.location));
+
+          if (canEdit) {
             setAdminActionPOI(adminPOI);
             setShowAdminActions(true);
-            webViewRef.current?.injectJavaScript('map.closePopup();');
+          } else {
+            Alert.alert('Access Denied', 'You do not have permission to modify this POI.');
           }
+
+          webViewRef.current?.injectJavaScript('map.closePopup();');
           break;
+        }
 
         default:
-          console.log('Unknown message type from WebView:', parsed.type);
+        // console.log('Unknown message type from WebView:', parsed.type);
       }
     } catch (e) {
-      console.log('WebView message error:', event.nativeEvent.data);
+      // console.log('WebView message error:', event.nativeEvent.data);
     }
   };
 
@@ -444,6 +478,7 @@ const MapScreen = () => {
     if (!buildingName.trim()) return Alert.alert('Building name required');
     if (!numberOfFloors.trim() || isNaN(Number(numberOfFloors)))
       return Alert.alert('Please enter a valid number of floors');
+    if (!selectedLocation) return Alert.alert('Please select a location');
     try {
       const newDoc = {
         name: buildingName,
@@ -456,7 +491,7 @@ const MapScreen = () => {
           building: 'yes',
         },
       };
-      await firestore().collection('UPcampusPOIs').add(newDoc);
+      await firestore().collection(`locations/${selectedLocation}/buildingPOIs`).add(newDoc);
       setShowAddPOIModal(false);
       setStatus('Building added!');
       fetchPOIs(); // Refresh markers
@@ -470,32 +505,20 @@ const MapScreen = () => {
     if (!newFloors.trim() || isNaN(Number(newFloors)))
       return Alert.alert('Please enter a valid number of floors');
 
-    if (!editingPOI || !editingPOI.id) {
-      console.error('No valid POI ID found:', editingPOI);
+    if (!editingPOI || !editingPOI.id || !editingPOI.location) {
+      console.error('No valid POI ID or location found:', editingPOI);
       setError('Invalid building data');
       return;
     }
 
     try {
-      // Update the document in Firestore
-      const docId = await getPOIDocIdByCentroidId(editingPOI.id);
-
-      if (docId) {
-        await firestore()
-          .collection('UPcampusPOIs')
-          .doc(docId)
-          .update({
-            name: newName,
-            floors: Number(newFloors),
-          });
-      } else {
-        await firestore()
-          .doc(`UPcampusPOIs/${editingPOI.id}`)
-          .update({
-            name: newName,
-            floors: Number(newFloors),
-          });
-      }
+      // Update the document in Firestore using the new structure
+      await firestore()
+        .doc(`locations/${editingPOI.location}/buildingPOIs/${editingPOI.id}`)
+        .update({
+          name: newName,
+          floors: Number(newFloors),
+        });
 
       setShowEditPOIModal(false);
       setStatus('Building updated!');
@@ -523,22 +546,23 @@ const MapScreen = () => {
   };
 
   // Helper function to get document ID from centroid ID
-  const getPOIDocIdByCentroidId = async (buildingId) => {
+  const getPOIDocIdByCentroidId = async (buildingId: string, locationId: string) => {
     try {
-      const querySnapshot = await firestore()
-        .collection('UPcampusPOIs')
-        .where('id', '==', buildingId)
-        .get();
+      // In your new Firestore structure, the document ID is buildingId and locationId is known
+      const docRef = firestore().doc(`locations/${locationId}/buildingPOIs/${buildingId}`);
+      const docSnap = await docRef.get();
 
-      if (querySnapshot.empty) {
-        console.warn('No building found for this centroid id:', buildingId);
+      if (!docSnap.exists) {
+        console.warn(
+          'No building found for this centroid id:',
+          buildingId,
+          'in location:',
+          locationId,
+        );
         return null;
       }
 
-      // Assuming only one document matches
-      const doc = querySnapshot.docs[0];
-      //console.log("doc: "+ doc.id);
-      return doc.id;
+      return docSnap.id;
     } catch (error) {
       console.error('Error querying POI by centroid id:', error);
       return null;
@@ -546,7 +570,7 @@ const MapScreen = () => {
   };
 
   const cancelRoute = () => {
-    console.log('cancelRoute called');
+    // console.log('cancelRoute called');
 
     // Stop any ongoing route loading
     setIsRouteLoading(false);
@@ -884,9 +908,9 @@ const MapScreen = () => {
       };
 
       await addRecentlyVisitedPOI(visit);
-      console.log('Visit recorded:', selectedPOI.name);
+      // console.log('Visit recorded:', selectedPOI.name);
     } catch (error) {
-      console.error('Failed to record visit:', error);
+      // console.error('Failed to record visit:', error);
     }
 
     // Clear destination and navigation state to hide the progress bar
@@ -971,10 +995,10 @@ const MapScreen = () => {
       };
 
       await addRecentlyVisitedPOI(visit);
-      console.log('Simulated visit recorded:', selectedPOI.name);
+      // console.log('Simulated visit recorded:', selectedPOI.name);
       Alert.alert('Test Successful', `Simulated visit to: ${selectedPOI.name}`);
     } catch (error) {
-      console.error('Failed to simulate visit:', error);
+      // console.error('Failed to simulate visit:', error);
       Alert.alert('Error', 'Failed to simulate visit. Please try again.');
     }
   };
@@ -1079,7 +1103,7 @@ const MapScreen = () => {
           ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
         }
 
-        console.log('TTS should speak:', instruction);
+        // console.log('TTS should speak:', instruction);
         if (isVoiceEnabled) {
           try {
             Tts.stop();
@@ -1097,11 +1121,34 @@ const MapScreen = () => {
 
   const fetchPOIs = async () => {
     try {
-      const snapshot = await firestore().collection('UPcampusPOIs').get();
-      const poiList = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setPOIs(poiList);
+      const locationsSnapshot = await firestore().collection('locations').get();
+      const allPOIs: any[] = [];
+
+      for (const locationDoc of locationsSnapshot.docs) {
+        const locationId = locationDoc.id;
+        console.log(`📍 Fetching POIs from: locations/${locationId}/buildingPOIs`);
+
+        const buildingPOIsSnapshot = await firestore()
+          .collection(`locations/${locationId}/buildingPOIs`)
+          .get();
+
+        buildingPOIsSnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data?.centroid?.latitude && data?.centroid?.longitude) {
+            allPOIs.push({
+              ...data,
+              id: doc.id,
+              location: locationId,
+            });
+          }
+        });
+      }
+
+      console.log('✅ Total POIs fetched:', allPOIs.length);
+      setPOIs(allPOIs);
     } catch (e) {
-      console.error('Failed to fetch POIs:', e);
+      console.error('❌ Failed to fetch POIs:', e);
+      setError('Failed to load buildings');
     }
   };
 
@@ -1175,7 +1222,7 @@ const MapScreen = () => {
           permissions['android.permission.ACCESS_COARSE_LOCATION'] === 'granted';
 
         if (fineGranted || coarseGranted) {
-          console.log('✅ Starting location watch...');
+          // console.log('✅ Starting location watch...');
 
           // Android 12+ requires different options
           const watchOptions =
@@ -1198,7 +1245,7 @@ const MapScreen = () => {
 
           watchId = Geolocation.watchPosition(
             (position) => {
-              console.log('📍 Location update:', position.coords.accuracy + 'm accuracy');
+              // console.log('📍 Location update:', position.coords.accuracy + 'm accuracy');
               const { latitude, longitude } = position.coords;
               sendLocationToWebView(latitude, longitude);
             },
@@ -1221,7 +1268,7 @@ const MapScreen = () => {
 
     return () => {
       if (watchId !== null) {
-        console.log('🛑 Stopping location watch');
+        // console.log('🛑 Stopping location watch');
         Geolocation.clearWatch(watchId);
       }
     };
@@ -1421,6 +1468,20 @@ const MapScreen = () => {
           >
             <View style={{ backgroundColor: 'white', borderRadius: 10, padding: 20 }}>
               <Text style={{ fontWeight: 'bold' }}>Add Building</Text>
+              {/* Location Dropdown */}
+              <Text>Location:</Text>
+              <View style={{ borderWidth: 1, borderRadius: 5, marginBottom: 10 }}>
+                <Picker
+                  selectedValue={selectedLocation}
+                  onValueChange={setSelectedLocation}
+                  style={{ height: 40 }}
+                >
+                  <Picker.Item label="Select a location" value="" />
+                  {availableLocations.map((loc) => (
+                    <Picker.Item key={loc} label={loc} value={loc} />
+                  ))}
+                </Picker>
+              </View>
               <Text>Name:</Text>
               <TextInput
                 value={buildingName}
@@ -1497,7 +1558,7 @@ const MapScreen = () => {
           setShouldStartTTS(true);
           setCurrentStep(0);
           setShowDirectionsSheet(false);
-          console.log('Navigation started');
+          // console.log('Navigation started');
         }}
         destination={destination}
         steps={steps}
