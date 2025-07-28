@@ -9,9 +9,9 @@ beforeAll(() => {
   process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
   process.env.FIREBASE_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
 
-//   admin.initializeApp({
-//     projectId: "snap-vision-backend",
-//   });
+  //   admin.initializeApp({
+  //     projectId: "snap-vision-backend",
+  //   });
 });
 
 afterAll(async () => {
@@ -67,7 +67,7 @@ describe("badgeService (integration)", () => {
 
     const updated = await badgeService.completeChallengeForUser(
       testUserId,
-      "challenge-1"
+      "challenge-1",
     );
     expect(updated.points).toBe(prevPoints + 20);
     expect(updated.completedChallenges).toContain("challenge-1");
@@ -80,9 +80,8 @@ describe("badgeService (integration)", () => {
       .doc(testUserId)
       .update({ routesCompleted: 9, badges: [] });
 
-    const updated = await badgeService.incrementRoutesCompletedForUser(
-      testUserId
-    );
+    const updated =
+      await badgeService.incrementRoutesCompletedForUser(testUserId);
     expect(updated.routesCompleted).toBe(10);
     expect(updated.badges).toContain("10-destinations");
   });
