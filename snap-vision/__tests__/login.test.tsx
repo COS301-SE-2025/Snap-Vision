@@ -91,7 +91,7 @@ describe('LoginForm', () => {
         <ThemeProviderWrapper>
           <LoginForm />
         </ThemeProviderWrapper>
-      </BadgeProvider>
+      </BadgeProvider>,
     );
 
     fireEvent.press(getByTestId('login-button'));
@@ -108,7 +108,7 @@ describe('LoginForm', () => {
         <ThemeProviderWrapper>
           <LoginForm />
         </ThemeProviderWrapper>
-      </BadgeProvider>
+      </BadgeProvider>,
     );
 
     fireEvent.changeText(getByPlaceholderText('Enter your email'), 'invalid-email');
@@ -130,7 +130,7 @@ describe('LoginForm', () => {
             <LoginForm />
           </DeepLinkProvider>
         </ThemeProviderWrapper>
-      </BadgeProvider>
+      </BadgeProvider>,
     );
 
     fireEvent.changeText(getByPlaceholderText('Enter your email'), 'test@example.com');
@@ -147,7 +147,7 @@ describe('LoginForm', () => {
       expect(Toast.show).toHaveBeenCalledWith(
         expect.objectContaining({
           text1: 'Login Successful!',
-        })
+        }),
       );
       expect(mockReplace).toHaveBeenCalledWith('Tabs');
     });
@@ -161,7 +161,7 @@ describe('LoginForm', () => {
         <ThemeProviderWrapper>
           <LoginForm />
         </ThemeProviderWrapper>
-      </BadgeProvider>
+      </BadgeProvider>,
     );
 
     fireEvent.changeText(getByPlaceholderText('Enter your email'), 'test@example.com');
@@ -179,7 +179,7 @@ describe('LoginForm', () => {
         <ThemeProviderWrapper>
           <LoginForm />
         </ThemeProviderWrapper>
-      </BadgeProvider>
+      </BadgeProvider>,
     );
 
     fireEvent.press(getByText(/SIGN UP/i));

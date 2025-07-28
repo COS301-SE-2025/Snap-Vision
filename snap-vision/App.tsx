@@ -105,7 +105,7 @@ function AppInner() {
               options={{ headerShown: false }}
             />
           </Stack.Navigator>
-          <Toast config={toastConfig} /> 
+          <Toast config={toastConfig} />
         </NavigationContainer>
       </ThemeProvider>
     </BadgeProvider>

@@ -19,7 +19,9 @@ const StyledToast = ({ text1, text2, props }: any) => {
         </View>
         <View style={styles.textContainer}>
           <Text style={[styles.title, { color: props?.textColor || '#007AFF' }]}>{text1}</Text>
-          {text2 ? <Text style={[styles.subtitle, { color: props?.textColor || '#007AFF' }]}>{text2}</Text> : null}
+          {text2 ? (
+            <Text style={[styles.subtitle, { color: props?.textColor || '#007AFF' }]}>{text2}</Text>
+          ) : null}
         </View>
       </View>
     </View>

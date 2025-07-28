@@ -215,9 +215,11 @@ describe('Login Integration Tests', () => {
     fireEvent.press(getByTestId('login-button'));
 
     await waitFor(() => {
-      expect(Toast.show).toHaveBeenCalledWith(expect.objectContaining({
-        text1: 'Login Successful!',
-      }));
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          text1: 'Login Successful!',
+        }),
+      );
     });
   });
 
