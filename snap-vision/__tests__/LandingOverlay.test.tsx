@@ -62,7 +62,9 @@ const mockAnimatedTiming = jest.fn(() => createAnimationMock());
 const mockAnimatedLoop = jest.fn((animation) => createAnimationMock());
 const mockAnimatedStagger = jest.fn(() => createAnimationMock());
 
-const MockAnimatedValue = jest.fn().mockImplementation((value: number) => createMockAnimatedValue());
+const MockAnimatedValue = jest
+  .fn()
+  .mockImplementation((value: number) => createMockAnimatedValue());
 
 jest.spyOn(Animated, 'Value').mockImplementation(MockAnimatedValue as any);
 jest.spyOn(Animated, 'spring').mockImplementation(mockAnimatedSpring);
@@ -101,7 +103,7 @@ describe('LandingOverlay', () => {
     jest.clearAllMocks();
     mockUseTheme.mockReturnValue(mockTheme);
     mockGetThemeColors.mockReturnValue(mockColors);
-    
+
     mockAnimatedSpring.mockReturnValue(createAnimationMock());
     mockAnimatedTiming.mockReturnValue(createAnimationMock());
     mockAnimatedLoop.mockReturnValue(createAnimationMock());
@@ -110,27 +112,23 @@ describe('LandingOverlay', () => {
 
   describe('Component Rendering', () => {
     it('renders all main text content correctly', () => {
-      const { getByText } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(getByText('Snap')).toBeTruthy();
       expect(getByText('Vision')).toBeTruthy();
-      
+
       expect(getByText('Wander Less, Discover More')).toBeTruthy();
-      
+
       expect(getByText(/Snap Vision is an indoor and outdoor navigation system/)).toBeTruthy();
       expect(getByText(/designed to help students and visitors find their way/)).toBeTruthy();
-      
+
       expect(getByText('Key Features')).toBeTruthy();
-      
+
       expect(getByText('© 2025 Snap Vision Team')).toBeTruthy();
     });
 
     it('renders all feature items', () => {
-      const { getByText } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       const expectedFeatures = [
         'Turn-by-turn Navigation',
@@ -139,24 +137,20 @@ describe('LandingOverlay', () => {
         'AR Navigation',
       ];
 
-      expectedFeatures.forEach(feature => {
+      expectedFeatures.forEach((feature) => {
         expect(getByText(feature)).toBeTruthy();
       });
     });
 
     it('renders MaskedView and LinearGradient components', () => {
-      const { getByTestId } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { getByTestId } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(getByTestId('masked-view')).toBeTruthy();
       expect(getByTestId('linear-gradient')).toBeTruthy();
     });
 
     it('applies correct structure with ScrollView and TouchableWithoutFeedback', () => {
-      const { getByText } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(getByText('Snap')).toBeTruthy();
     });
@@ -189,9 +183,7 @@ describe('LandingOverlay', () => {
       mockUseTheme.mockReturnValue({ ...mockTheme, isDark: false });
       mockGetThemeColors.mockReturnValue(lightColors);
 
-      const { getByText } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(mockGetThemeColors).toHaveBeenCalledWith(false);
       expect(getByText('Snap')).toBeTruthy();
@@ -216,18 +208,14 @@ describe('LandingOverlay', () => {
       mockUseTheme.mockReturnValue({ ...mockTheme, isDark: true });
       mockGetThemeColors.mockReturnValue(darkColors);
 
-      const { getByText } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(mockGetThemeColors).toHaveBeenCalledWith(true);
       expect(getByText('Snap')).toBeTruthy();
     });
 
     it('handles color swapping correctly', () => {
-      const { getByText } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
       expect(getByText('Snap')).toBeTruthy();
       expect(getByText('Vision')).toBeTruthy();
     });
@@ -238,7 +226,7 @@ describe('LandingOverlay', () => {
       const mockStart = jest.fn();
       const mockStop = jest.fn();
       const mockReset = jest.fn();
-      
+
       mockAnimatedStagger.mockReturnValue({ start: mockStart, stop: mockStop, reset: mockReset });
       mockAnimatedLoop.mockReturnValue({ start: mockStart, stop: mockStop, reset: mockReset });
 
@@ -258,7 +246,7 @@ describe('LandingOverlay', () => {
           stiffness: 150,
           damping: 8,
           useNativeDriver: true,
-        })
+        }),
       );
 
       expect(mockAnimatedTiming).toHaveBeenCalledWith(
@@ -266,7 +254,7 @@ describe('LandingOverlay', () => {
         expect.objectContaining({
           duration: 1800,
           useNativeDriver: true,
-        })
+        }),
       );
 
       expect(mockAnimatedStagger).toHaveBeenCalledWith(300, expect.any(Array));
@@ -277,17 +265,16 @@ describe('LandingOverlay', () => {
       const mockValue2 = createMockAnimatedValue();
       const mockValue3 = createMockAnimatedValue();
 
-      MockAnimatedValue
-        .mockReturnValueOnce(mockValue1)
+      MockAnimatedValue.mockReturnValueOnce(mockValue1)
         .mockReturnValueOnce(mockValue2)
         .mockReturnValueOnce(mockValue3);
 
       render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(mockAnimatedSpring).toHaveBeenCalledTimes(2);
-      
+
       expect(mockAnimatedTiming).toHaveBeenCalledTimes(1);
-      
+
       expect(mockAnimatedLoop).toHaveBeenCalledTimes(1);
     });
 
@@ -295,7 +282,7 @@ describe('LandingOverlay', () => {
       const mockStart = jest.fn();
       const mockReset = jest.fn();
       const mockStop = jest.fn();
-      
+
       mockAnimatedStagger.mockReturnValue({ start: mockStart, reset: mockReset, stop: mockStop });
       mockAnimatedLoop.mockReturnValue({ start: mockStart, reset: mockReset, stop: mockStop });
 
@@ -318,47 +305,33 @@ describe('LandingOverlay', () => {
     it('configures staggered spring animations for title', () => {
       render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
-      expect(mockAnimatedStagger).toHaveBeenCalledWith(300, [
-        expect.anything(),
-        expect.anything(),
-      ]);
+      expect(mockAnimatedStagger).toHaveBeenCalledWith(300, [expect.anything(), expect.anything()]);
 
-      expect(mockAnimatedSpring).toHaveBeenCalledWith(
-        expect.anything(), 
-        {
-          toValue: 1,
-          useNativeDriver: true,
-          stiffness: 150,
-          damping: 8,
-        }
-      );
+      expect(mockAnimatedSpring).toHaveBeenCalledWith(expect.anything(), {
+        toValue: 1,
+        useNativeDriver: true,
+        stiffness: 150,
+        damping: 8,
+      });
 
-      expect(mockAnimatedSpring).toHaveBeenCalledWith(
-        expect.anything(), 
-        {
-          toValue: 1,
-          useNativeDriver: true,
-          stiffness: 150,
-          damping: 8,
-        }
-      );
+      expect(mockAnimatedSpring).toHaveBeenCalledWith(expect.anything(), {
+        toValue: 1,
+        useNativeDriver: true,
+        stiffness: 150,
+        damping: 8,
+      });
     });
 
     it('configures looped timing animation for shimmer effect', () => {
       render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
-      expect(mockAnimatedLoop).toHaveBeenCalledWith(
-        expect.anything()
-      );
+      expect(mockAnimatedLoop).toHaveBeenCalledWith(expect.anything());
 
-      expect(mockAnimatedTiming).toHaveBeenCalledWith(
-        expect.anything(),
-        {
-          toValue: 1,
-          duration: 1800,
-          useNativeDriver: true,
-        }
-      );
+      expect(mockAnimatedTiming).toHaveBeenCalledWith(expect.anything(), {
+        toValue: 1,
+        duration: 1800,
+        useNativeDriver: true,
+      });
     });
 
     it('starts animations on component mount', () => {
@@ -398,13 +371,11 @@ describe('LandingOverlay', () => {
 
   describe('User Interactions', () => {
     it('calls onDismiss when TouchableWithoutFeedback is pressed', () => {
-      const { getByText } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       const snapText = getByText('Snap');
       let currentElement = snapText.parent;
-      
+
       while (currentElement) {
         try {
           fireEvent.press(currentElement);
@@ -412,44 +383,38 @@ describe('LandingOverlay', () => {
             expect(mockOnDismiss).toHaveBeenCalledTimes(1);
             return;
           }
-        } catch (error) {
-        }
+        } catch (error) {}
         currentElement = currentElement.parent;
       }
-      
+
       expect(getByText('Snap')).toBeTruthy();
     });
 
     it('handles multiple rapid touches', () => {
-      const { getByText } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       const snapText = getByText('Snap');
       let currentElement = snapText.parent;
-      
+
       while (currentElement) {
         try {
           fireEvent.press(currentElement);
           fireEvent.press(currentElement);
           fireEvent.press(currentElement);
-          
+
           if (mockOnDismiss.mock.calls.length > 0) {
             expect(mockOnDismiss).toHaveBeenCalledTimes(3);
             return;
           }
-        } catch (error) {
-        }
+        } catch (error) {}
         currentElement = currentElement.parent;
       }
-      
+
       expect(getByText('Snap')).toBeTruthy();
     });
 
     it('handles undefined onDismiss gracefully', () => {
-      const { getByText } = render(
-        <LandingOverlay onDismiss={undefined as any} />
-      );
+      const { getByText } = render(<LandingOverlay onDismiss={undefined as any} />);
 
       expect(getByText('Snap')).toBeTruthy();
     });
@@ -457,35 +422,29 @@ describe('LandingOverlay', () => {
 
   describe('Component Structure', () => {
     it('renders features in correct order', () => {
-      const { getByText } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       const features = [
         'Turn-by-turn Navigation',
-        'Indoor & Outdoor Coverage', 
+        'Indoor & Outdoor Coverage',
         'Voice Assistance',
         'AR Navigation',
       ];
 
-      features.forEach(feature => {
+      features.forEach((feature) => {
         expect(getByText(feature)).toBeTruthy();
       });
     });
 
     it('applies proper styling classes', () => {
-      const { getByText } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(getByText('Snap')).toBeTruthy();
       expect(getByText('Vision')).toBeTruthy();
     });
 
     it('handles font family application', () => {
-      const { getByText } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(getByText('Snap')).toBeTruthy();
       expect(getByText('Vision')).toBeTruthy();
@@ -494,9 +453,7 @@ describe('LandingOverlay', () => {
 
   describe('Shimmer Effect', () => {
     it('renders shimmer gradient with correct colors', () => {
-      const { getByTestId } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { getByTestId } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       const gradient = getByTestId('linear-gradient');
       expect(gradient).toBeTruthy();
@@ -519,19 +476,17 @@ describe('LandingOverlay', () => {
   describe('Performance', () => {
     it('renders efficiently', () => {
       const startTime = Date.now();
-      
+
       render(<LandingOverlay onDismiss={mockOnDismiss} />);
-      
+
       const endTime = Date.now();
       const renderTime = endTime - startTime;
-      
+
       expect(renderTime).toBeLessThan(100);
     });
 
     it('handles multiple re-renders without issues', () => {
-      const { rerender } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { rerender } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       for (let i = 0; i < 10; i++) {
         rerender(<LandingOverlay onDismiss={jest.fn()} />);
@@ -543,9 +498,7 @@ describe('LandingOverlay', () => {
 
   describe('Accessibility', () => {
     it('provides accessible text content', () => {
-      const { getByText } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(getByText('Snap')).toBeTruthy();
       expect(getByText('Vision')).toBeTruthy();
@@ -559,9 +512,7 @@ describe('LandingOverlay', () => {
     });
 
     it('handles touch accessibility', () => {
-      const { getByText } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(getByText('Snap')).toBeTruthy();
     });

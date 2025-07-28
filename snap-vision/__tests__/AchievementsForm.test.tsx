@@ -43,9 +43,13 @@ jest.mock('../src/context/BadgeContext', () => ({
 
 jest.mock('../src/types/badges', () => ({
   BADGES: {
-    'first-navigation': { id: 'first-navigation', title: 'First Navigation', description: 'Complete your first navigation' },
+    'first-navigation': {
+      id: 'first-navigation',
+      title: 'First Navigation',
+      description: 'Complete your first navigation',
+    },
     'speed-demon': { id: 'speed-demon', title: 'Speed Demon', description: 'Navigate quickly' },
-    'explorer': { id: 'explorer', title: 'Explorer', description: 'Visit many locations' },
+    explorer: { id: 'explorer', title: 'Explorer', description: 'Visit many locations' },
   },
 }));
 
@@ -86,8 +90,10 @@ jest.mock('../src/components/molecules/BadgeSection', () => {
     return (
       <View testID="badges-section">
         <Text>Unlocked Badges: {unlockedIds.length}</Text>
-        {unlockedIds.map(id => (
-          <Text key={id} testID={`badge-${id}`}>{id}</Text>
+        {unlockedIds.map((id) => (
+          <Text key={id} testID={`badge-${id}`}>
+            {id}
+          </Text>
         ))}
       </View>
     );
@@ -99,7 +105,9 @@ jest.mock('../src/components/molecules/ActionButton', () => {
   return function ActionButton({ title, onPress, variant, testID }: any) {
     return (
       <TouchableOpacity testID={testID || `action-button-${title.toLowerCase()}`} onPress={onPress}>
-        <Text>{title} ({variant})</Text>
+        <Text>
+          {title} ({variant})
+        </Text>
       </TouchableOpacity>
     );
   };
@@ -110,7 +118,9 @@ jest.mock('../src/components/atoms/ProgressCard', () => {
   return function ProgressCard({ title, value }: { title: string; value: string | number }) {
     return (
       <View testID={`progress-card-${title.toLowerCase().replace(' ', '-')}`}>
-        <Text>{title}: {value}</Text>
+        <Text>
+          {title}: {value}
+        </Text>
       </View>
     );
   };
@@ -121,7 +131,9 @@ jest.mock('../src/components/molecules/RewardCard', () => {
   return function RewardCard({ title, points }: { title: string; points: number }) {
     return (
       <View testID={`reward-card-${title.toLowerCase().replace(' ', '-')}`}>
-        <Text>{title}: {points} points</Text>
+        <Text>
+          {title}: {points} points
+        </Text>
       </View>
     );
   };
@@ -131,9 +143,7 @@ const mockUseTheme = useTheme as jest.MockedFunction<typeof useTheme>;
 const mockGetThemeColors = getThemeColors as jest.MockedFunction<typeof getThemeColors>;
 const mockUseBadges = useBadges as jest.MockedFunction<typeof useBadges>;
 
-const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <>{children}</>
-);
+const TestWrapper = ({ children }: { children: React.ReactNode }) => <>{children}</>;
 
 describe('AchievementsForm', () => {
   const mockTheme = {
@@ -164,7 +174,12 @@ describe('AchievementsForm', () => {
     checkIns: 5,
     routesCompleted: 0,
     purchases: [
-      { itemId: 'item-1', name: 'Navigation Boost', cost: 50, purchasedAt: new Date().toISOString() },
+      {
+        itemId: 'item-1',
+        name: 'Navigation Boost',
+        cost: 50,
+        purchasedAt: new Date().toISOString(),
+      },
     ],
     completedChallenges: new Set(['challenge-1']),
   };
@@ -185,7 +200,7 @@ describe('AchievementsForm', () => {
       isCompleted: false,
       icon: 'location',
       type: 'current',
-    }
+    },
   ];
 
   const mockBadgeActions = {
@@ -224,7 +239,7 @@ describe('AchievementsForm', () => {
       const { debug, getByTestId } = render(
         <TestWrapper>
           <AchievementsForm />
-        </TestWrapper>
+        </TestWrapper>,
       );
     });
   });
@@ -234,7 +249,7 @@ describe('AchievementsForm', () => {
       const { getByText, queryByText } = render(
         <TestWrapper>
           <AchievementsForm />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       try {
@@ -272,7 +287,7 @@ describe('AchievementsForm', () => {
       const { getByText, getByTestId, queryByText, queryByTestId } = render(
         <TestWrapper>
           <AchievementsForm />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       try {
@@ -310,7 +325,7 @@ describe('AchievementsForm', () => {
       const { getByTestId, getByText, queryByTestId, queryByText } = render(
         <TestWrapper>
           <AchievementsForm />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       try {
@@ -352,7 +367,7 @@ describe('AchievementsForm', () => {
       render(
         <TestWrapper>
           <AchievementsForm />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       expect(mockUseTheme).toHaveBeenCalled();
@@ -374,7 +389,7 @@ describe('AchievementsForm', () => {
       render(
         <TestWrapper>
           <AchievementsForm />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       expect(mockGetThemeColors).toHaveBeenCalledWith(true);
@@ -387,7 +402,7 @@ describe('AchievementsForm', () => {
       render(
         <TestWrapper>
           <AchievementsForm />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       expect(mockUseBadges).toHaveBeenCalled();
@@ -409,19 +424,23 @@ describe('AchievementsForm', () => {
       const { queryByText } = render(
         <TestWrapper>
           <AchievementsForm />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       const unlocked0 = queryByText('Unlocked Badges: 0') || queryByText(/0/);
       const badges0 = queryByText('Badges: 0') || queryByText(/0/);
-      
+
       expect(unlocked0 || badges0).toBeTruthy();
     });
 
     it('handles many unlocked badges', () => {
       const manyBadgesState = {
         ...mockBadgeState,
-        unlocked: new Set<BadgeId>(['first-navigation', 'speed-demon', 'explorer'] as unknown as BadgeId[]),
+        unlocked: new Set<BadgeId>([
+          'first-navigation',
+          'speed-demon',
+          'explorer',
+        ] as unknown as BadgeId[]),
       };
 
       mockUseBadges.mockReturnValue({
@@ -432,12 +451,12 @@ describe('AchievementsForm', () => {
       const { queryByText } = render(
         <TestWrapper>
           <AchievementsForm />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       const unlocked3 = queryByText('Unlocked Badges: 3') || queryByText(/3/);
       const badges3 = queryByText('Badges: 3') || queryByText(/3/);
-      
+
       expect(unlocked3 || badges3).toBeTruthy();
     });
   });
@@ -449,11 +468,12 @@ describe('AchievementsForm', () => {
       const { queryByTestId } = render(
         <TestWrapper>
           <AchievementsForm />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
-      const challengeElement = queryByTestId('challenge-challenge-1') || queryByTestId('challenge-1');
-      
+      const challengeElement =
+        queryByTestId('challenge-challenge-1') || queryByTestId('challenge-1');
+
       if (challengeElement) {
         fireEvent.press(challengeElement);
         expect(consoleSpy).toHaveBeenCalledWith('Challenge Navigate 5 Times pressed');
@@ -470,7 +490,7 @@ describe('AchievementsForm', () => {
       const { queryByText, queryByTestId } = render(
         <TestWrapper>
           <AchievementsForm />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       const challengesText = queryByText('Current Challenges') || queryByText(/Challenges/);
@@ -487,12 +507,12 @@ describe('AchievementsForm', () => {
         throw new Error('Badge context not found');
       });
 
-      expect(() => 
+      expect(() =>
         render(
           <TestWrapper>
             <AchievementsForm />
-          </TestWrapper>
-        )
+          </TestWrapper>,
+        ),
       ).toThrow('Badge context not found');
     });
   });

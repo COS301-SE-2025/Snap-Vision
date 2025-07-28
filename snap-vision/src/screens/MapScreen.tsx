@@ -855,10 +855,13 @@ const MapScreen = () => {
 
     // Show alert only once
     Alert.alert('Destination Reached', 'You have arrived at your destination!', [
-      { text: 'OK', onPress: () => {
-            setStatus('Ready for navigation');
-            setHasReachedDestination(false);
-          } },
+      {
+        text: 'OK',
+        onPress: () => {
+          setStatus('Ready for navigation');
+          setHasReachedDestination(false);
+        },
+      },
     ]);
   };
 

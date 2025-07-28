@@ -32,7 +32,11 @@ jest.mock('../src/components/atoms/AccountInfoField', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return function MockAccountInfoField({ label, value, testID }: any) {
-    return <Text testID={testID || `field-${label.replace(/\s+/g, '-').toLowerCase()}`}>{`${label}: ${value}`}</Text>;
+    return (
+      <Text
+        testID={testID || `field-${label.replace(/\s+/g, '-').toLowerCase()}`}
+      >{`${label}: ${value}`}</Text>
+    );
   };
 });
 
@@ -49,11 +53,11 @@ const mockFirestore = firestore as jest.MockedFunction<typeof firestore>;
 const mockUseTheme = useTheme as jest.MockedFunction<typeof useTheme>;
 
 describe('AccountDetails Unit Tests', () => {
-    let consoleSpy: jest.SpyInstance; 
- beforeEach(() => {
+  let consoleSpy: jest.SpyInstance;
+  beforeEach(() => {
     jest.clearAllMocks();
     consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-    
+
     mockUseTheme.mockReturnValue({
       theme: 'light',
       isDark: false,
@@ -61,9 +65,9 @@ describe('AccountDetails Unit Tests', () => {
     });
   });
 
-    afterEach(() => {
-        consoleSpy.mockRestore();
-});
+  afterEach(() => {
+    consoleSpy.mockRestore();
+  });
 
   it('should apply light theme correctly', async () => {
     mockUseTheme.mockReturnValue({
@@ -101,7 +105,7 @@ describe('AccountDetails Unit Tests', () => {
     expect(screen.getByText('Email Address: light-theme@example.com')).toBeTruthy();
   });
 
- it('should handle no authenticated user', async () => {
+  it('should handle no authenticated user', async () => {
     consoleSpy.mockRestore();
     const specificConsoleSpy = jest.spyOn(console, 'log').mockImplementation();
 
@@ -157,7 +161,9 @@ describe('AccountDetails Unit Tests', () => {
     expect(screen.getByText('Email Address: test@example.com')).toBeTruthy();
     expect(screen.getByText('Name: Not provided')).toBeTruthy();
     expect(screen.getByText('Role: Standard User')).toBeTruthy();
-    expect(specificConsoleSpy).toHaveBeenCalledWith('No matching document found in userInformation collection');
+    expect(specificConsoleSpy).toHaveBeenCalledWith(
+      'No matching document found in userInformation collection',
+    );
 
     specificConsoleSpy.mockRestore();
   });
@@ -232,7 +238,10 @@ describe('AccountDetails Unit Tests', () => {
       expect(screen.queryByTestId('loading-indicator')).toBeNull();
     });
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith('Error fetching from Firestore:', expect.any(Error));
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Error fetching from Firestore:',
+      expect.any(Error),
+    );
     expect(screen.getByText('Email Address: error@example.com')).toBeTruthy();
     expect(screen.getByText('Name: Not provided')).toBeTruthy();
     expect(screen.getByText('Role: Standard User')).toBeTruthy();

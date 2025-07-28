@@ -52,11 +52,21 @@ const mockStart = jest.fn();
 const mockStop = jest.fn();
 const mockReset = jest.fn();
 
-const animatedValueSpy = jest.spyOn(originalAnimated, 'Value').mockImplementation(() => mockAnimatedValue);
-const animatedSpringSpy = jest.spyOn(originalAnimated, 'spring').mockImplementation(() => ({ start: mockStart, stop: mockStop, reset: mockReset }));
-const animatedTimingSpy = jest.spyOn(originalAnimated, 'timing').mockImplementation(() => ({ start: mockStart, stop: mockStop, reset: mockReset }));
-const animatedLoopSpy = jest.spyOn(originalAnimated, 'loop').mockImplementation(() => ({ start: mockStart, stop: mockStop, reset: mockReset }));
-const animatedStaggerSpy = jest.spyOn(originalAnimated, 'stagger').mockImplementation(() => ({ start: mockStart, stop: mockStop, reset: mockReset }));
+const animatedValueSpy = jest
+  .spyOn(originalAnimated, 'Value')
+  .mockImplementation(() => mockAnimatedValue);
+const animatedSpringSpy = jest
+  .spyOn(originalAnimated, 'spring')
+  .mockImplementation(() => ({ start: mockStart, stop: mockStop, reset: mockReset }));
+const animatedTimingSpy = jest
+  .spyOn(originalAnimated, 'timing')
+  .mockImplementation(() => ({ start: mockStart, stop: mockStop, reset: mockReset }));
+const animatedLoopSpy = jest
+  .spyOn(originalAnimated, 'loop')
+  .mockImplementation(() => ({ start: mockStart, stop: mockStop, reset: mockReset }));
+const animatedStaggerSpy = jest
+  .spyOn(originalAnimated, 'stagger')
+  .mockImplementation(() => ({ start: mockStart, stop: mockStop, reset: mockReset }));
 
 const mockUseTheme = useTheme as jest.MockedFunction<typeof useTheme>;
 const mockGetThemeColors = getThemeColors as jest.MockedFunction<typeof getThemeColors>;
@@ -117,9 +127,7 @@ describe('LandingOverlay Integration Tests', () => {
       mockGetThemeColors.mockReturnValue(lightColors);
       const mockOnDismiss = jest.fn();
 
-      const { getByText, getByTestId } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { getByText, getByTestId } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(mockUseTheme).toHaveBeenCalled();
       expect(mockGetThemeColors).toHaveBeenCalledWith(false);
@@ -136,22 +144,21 @@ describe('LandingOverlay Integration Tests', () => {
         'Voice Assistance',
         'AR Navigation',
       ];
-      features.forEach(feature => {
+      features.forEach((feature) => {
         expect(getByText(feature)).toBeTruthy();
       });
 
       expect(getByTestId('masked-view')).toBeTruthy();
       expect(getByTestId('linear-gradient')).toBeTruthy();
 
-      expect(animatedValueSpy).toHaveBeenCalledTimes(3); 
-      expect(animatedSpringSpy).toHaveBeenCalledTimes(2); 
-      expect(animatedTimingSpy).toHaveBeenCalledTimes(1); 
-      expect(animatedStaggerSpy).toHaveBeenCalledTimes(1); 
-      expect(animatedLoopSpy).toHaveBeenCalledTimes(1); 
+      expect(animatedValueSpy).toHaveBeenCalledTimes(3);
+      expect(animatedSpringSpy).toHaveBeenCalledTimes(2);
+      expect(animatedTimingSpy).toHaveBeenCalledTimes(1);
+      expect(animatedStaggerSpy).toHaveBeenCalledTimes(1);
+      expect(animatedLoopSpy).toHaveBeenCalledTimes(1);
 
       expect(mockStart).toHaveBeenCalledTimes(2);
 
-      
       expect(getByText('© 2025 Snap Vision Team')).toBeTruthy();
     });
 
@@ -160,9 +167,7 @@ describe('LandingOverlay Integration Tests', () => {
       mockGetThemeColors.mockReturnValue(lightColors);
       const mockOnDismiss = jest.fn();
 
-      const { getByText, queryByText } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { getByText, queryByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(getByText('Snap')).toBeTruthy();
       expect(getByText('Vision')).toBeTruthy();
@@ -177,12 +182,11 @@ describe('LandingOverlay Integration Tests', () => {
 
       const snapText = getByText('Snap');
       let currentElement = snapText.parent;
-      
+
       while (currentElement && !mockOnDismiss.mock.calls.length) {
         try {
           fireEvent.press(currentElement);
-        } catch (error) {
-        }
+        } catch (error) {}
         currentElement = currentElement.parent;
       }
 
@@ -199,9 +203,7 @@ describe('LandingOverlay Integration Tests', () => {
       mockUseTheme.mockReturnValue(lightTheme);
       mockGetThemeColors.mockReturnValue(lightColors);
 
-      const { rerender, getByText } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { rerender, getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(getByText('Snap')).toBeTruthy();
       expect(mockGetThemeColors).toHaveBeenCalledWith(false);
@@ -237,7 +239,7 @@ describe('LandingOverlay Integration Tests', () => {
           useNativeDriver: true,
           stiffness: 150,
           damping: 8,
-        })
+        }),
       );
 
       expect(animatedTimingSpy).toHaveBeenCalledWith(
@@ -246,7 +248,7 @@ describe('LandingOverlay Integration Tests', () => {
           toValue: 1,
           duration: 1800,
           useNativeDriver: true,
-        })
+        }),
       );
 
       expect(animatedStaggerSpy).toHaveBeenCalledWith(300, expect.any(Array));
@@ -255,12 +257,12 @@ describe('LandingOverlay Integration Tests', () => {
 
       expect(mockAnimatedValue.interpolate).toHaveBeenCalledWith({
         inputRange: [0, 1],
-        outputRange: [-150, 150], 
+        outputRange: [-150, 150],
       });
 
       expect(mockAnimatedValue.interpolate).toHaveBeenCalledWith({
         inputRange: [0, 1],
-        outputRange: [0.3, 1], 
+        outputRange: [0.3, 1],
       });
     });
 
@@ -269,9 +271,7 @@ describe('LandingOverlay Integration Tests', () => {
       mockGetThemeColors.mockReturnValue(lightColors);
       const mockOnDismiss = jest.fn();
 
-      const { unmount } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { unmount } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(mockStart).toHaveBeenCalledTimes(2);
 
@@ -285,9 +285,7 @@ describe('LandingOverlay Integration Tests', () => {
       mockGetThemeColors.mockReturnValue(lightColors);
       const mockOnDismiss = jest.fn();
 
-      const { getByTestId, getByText } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { getByTestId, getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       const maskedView = getByTestId('masked-view');
       expect(maskedView).toBeTruthy();
@@ -311,9 +309,7 @@ describe('LandingOverlay Integration Tests', () => {
       mockGetThemeColors.mockReturnValue(lightColors);
       const mockOnDismiss = jest.fn();
 
-      const { getByText } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(getByText('Snap')).toBeTruthy();
       expect(getByText('Vision')).toBeTruthy();
@@ -338,9 +334,7 @@ describe('LandingOverlay Integration Tests', () => {
       mockGetThemeColors.mockReturnValue(lightColors);
       const mockOnDismiss = jest.fn();
 
-      const { getByText } = render(
-        <LandingOverlay onDismiss={mockOnDismiss} />
-      );
+      const { getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       const accessibleTexts = [
         'Snap',
@@ -351,14 +345,12 @@ describe('LandingOverlay Integration Tests', () => {
         'Indoor & Outdoor Coverage',
         'Voice Assistance',
         'AR Navigation',
-        '© 2025 Snap Vision Team'
+        '© 2025 Snap Vision Team',
       ];
 
-      accessibleTexts.forEach(text => {
+      accessibleTexts.forEach((text) => {
         expect(getByText(text)).toBeTruthy();
       });
     });
   });
-
- 
 });

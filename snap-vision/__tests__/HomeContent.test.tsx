@@ -13,7 +13,7 @@ beforeAll(() => {
     if (
       typeof args[0] === 'string' &&
       (args[0].includes('was not wrapped in act') ||
-       args[0].includes('Error fetching recently visited')) // ← Add this line
+        args[0].includes('Error fetching recently visited')) // ← Add this line
     ) {
       return;
     }
@@ -79,10 +79,7 @@ jest.mock('../src/components/molecules/HeaderWithIcons', () => {
 jest.mock('../src/components/molecules/QrCard', () => {
   const { View } = require('react-native');
   return ({ backgroundColor, titleColor, subtitleColor }: any) => (
-    <View 
-      testID="qr-card"
-      style={{ backgroundColor }}
-    >
+    <View testID="qr-card" style={{ backgroundColor }}>
       QrCard
     </View>
   );
@@ -106,20 +103,20 @@ jest.mock('../src/components/molecules/RecentlyVisitedCarousel', () => {
 });
 
 describe('HomeContent', () => {
- beforeEach(() => {
+  beforeEach(() => {
     jest.clearAllMocks();
     (useNavigation as jest.Mock).mockReturnValue(mockNavigation);
-    
+
     (useFocusEffect as jest.Mock).mockImplementation((callback) => {
       setTimeout(() => callback(), 0);
     });
-    
+
     (auth as jest.MockedFunction<typeof auth>).mockReturnValue(mockAuth as any);
     mockGetRecentlyVPOIs.mockResolvedValue([]);
   });
 
   describe('Basic Rendering', () => {
-   it('renders all main components correctly', async () => {
+    it('renders all main components correctly', async () => {
       const { getByText, getByTestId } = render(
         <ThemeProviderWrapper>
           <HomeContent />
@@ -130,27 +127,28 @@ describe('HomeContent', () => {
       expect(getByText('Recently Visited')).toBeTruthy();
       expect(getByTestId('app-button')).toBeTruthy();
 
-      await waitFor(() => {
-        expect(getByTestId('recently-visited-carousel')).toBeTruthy();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(getByTestId('recently-visited-carousel')).toBeTruthy();
+        },
+        { timeout: 3000 },
+      );
     });
-
 
     it('renders with default theme correctly', async () => {
-    const { getByText } = render(
-      <ThemeProviderWrapper>
-        <HomeContent />
-      </ThemeProviderWrapper>,
-    );
+      const { getByText } = render(
+        <ThemeProviderWrapper>
+          <HomeContent />
+        </ThemeProviderWrapper>,
+      );
 
-    await waitFor(() => {
-      expect(getByText('Recently Visited')).toBeTruthy();
-    });
-  });
-
-it('displays loading state initially', () => {
-      (useFocusEffect as jest.Mock).mockImplementation(() => {
+      await waitFor(() => {
+        expect(getByText('Recently Visited')).toBeTruthy();
       });
+    });
+
+    it('displays loading state initially', () => {
+      (useFocusEffect as jest.Mock).mockImplementation(() => {});
 
       const { getByText } = render(
         <ThemeProviderWrapper>
@@ -190,7 +188,7 @@ it('displays loading state initially', () => {
     });
   });
 
-   describe('Recently Visited Data Loading', () => {
+  describe('Recently Visited Data Loading', () => {
     it('handles error when loading recently visited data', async () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       mockGetRecentlyVPOIs.mockRejectedValue(new Error('Network error'));
@@ -205,18 +203,21 @@ it('displays loading state initially', () => {
         </ThemeProviderWrapper>,
       );
 
-      await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith(
-          'Error fetching recently visited:',
-          expect.any(Error),
-        );
-        expect(getByTestId('recently-visited-carousel')).toBeTruthy();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(consoleSpy).toHaveBeenCalledWith(
+            'Error fetching recently visited:',
+            expect.any(Error),
+          );
+          expect(getByTestId('recently-visited-carousel')).toBeTruthy();
+        },
+        { timeout: 3000 },
+      );
 
       consoleSpy.mockRestore();
     });
 
-     it('does not load data when user is not authenticated', async () => {
+    it('does not load data when user is not authenticated', async () => {
       (auth as jest.MockedFunction<typeof auth>).mockReturnValue({
         currentUser: null,
       } as any);
@@ -231,11 +232,14 @@ it('displays loading state initially', () => {
         </ThemeProviderWrapper>,
       );
 
-      await waitFor(() => {
-        expect(mockGetRecentlyVPOIs).not.toHaveBeenCalled();
-        // Should still render carousel with empty data
-        expect(getByTestId('recently-visited-carousel')).toBeTruthy();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(mockGetRecentlyVPOIs).not.toHaveBeenCalled();
+          // Should still render carousel with empty data
+          expect(getByTestId('recently-visited-carousel')).toBeTruthy();
+        },
+        { timeout: 3000 },
+      );
     });
 
     it('handles undefined user ID', async () => {
@@ -255,50 +259,55 @@ it('displays loading state initially', () => {
     });
 
     it('handles empty recently visited data', async () => {
-    mockGetRecentlyVPOIs.mockResolvedValue([]);
+      mockGetRecentlyVPOIs.mockResolvedValue([]);
 
-    (useFocusEffect as jest.Mock).mockImplementation((callback) => {
-      setTimeout(() => callback(), 0);
+      (useFocusEffect as jest.Mock).mockImplementation((callback) => {
+        setTimeout(() => callback(), 0);
+      });
+
+      const { getByTestId, getByText } = render(
+        <ThemeProviderWrapper>
+          <HomeContent />
+        </ThemeProviderWrapper>,
+      );
+
+      await waitFor(
+        () => {
+          expect(getByTestId('recently-visited-carousel')).toBeTruthy();
+
+          expect(getByText('0 visits')).toBeTruthy();
+        },
+        { timeout: 3000 },
+      );
     });
 
-    const { getByTestId, getByText } = render(
-      <ThemeProviderWrapper>
-        <HomeContent />
-      </ThemeProviderWrapper>,
-    );
+    it('does not fetch recently visited if userId is missing and still renders carousel', async () => {
+      // Simulate no user logged in
+      (auth as jest.MockedFunction<typeof auth>).mockReturnValue({
+        currentUser: null,
+      } as any);
 
-    await waitFor(() => {
-      expect(getByTestId('recently-visited-carousel')).toBeTruthy();
-      
-      expect(getByText('0 visits')).toBeTruthy();
-    }, { timeout: 3000 });
-  });
+      (useFocusEffect as jest.Mock).mockImplementation((callback) => {
+        setTimeout(() => callback(), 0);
+      });
 
-  it('does not fetch recently visited if userId is missing and still renders carousel', async () => {
-  // Simulate no user logged in
-  (auth as jest.MockedFunction<typeof auth>).mockReturnValue({
-    currentUser: null,
-  } as any);
+      const { getByTestId, getByText } = render(
+        <ThemeProviderWrapper>
+          <HomeContent />
+        </ThemeProviderWrapper>,
+      );
 
-  (useFocusEffect as jest.Mock).mockImplementation((callback) => {
-    setTimeout(() => callback(), 0);
-  });
-
-  const { getByTestId, getByText } = render(
-    <ThemeProviderWrapper>
-      <HomeContent />
-    </ThemeProviderWrapper>,
-  );
-
-  await waitFor(() => {
-    // Should NOT call the service
-    expect(mockGetRecentlyVPOIs).not.toHaveBeenCalled();
-    // Should still render the carousel with 0 visits
-    expect(getByTestId('recently-visited-carousel')).toBeTruthy();
-    expect(getByText('0 visits')).toBeTruthy();
-  }, { timeout: 3000 });
-});
-
+      await waitFor(
+        () => {
+          // Should NOT call the service
+          expect(mockGetRecentlyVPOIs).not.toHaveBeenCalled();
+          // Should still render the carousel with 0 visits
+          expect(getByTestId('recently-visited-carousel')).toBeTruthy();
+          expect(getByText('0 visits')).toBeTruthy();
+        },
+        { timeout: 3000 },
+      );
+    });
   });
 
   describe('Focus Effect Behavior', () => {
@@ -395,26 +404,26 @@ it('displays loading state initially', () => {
   });
 
   describe('Theme Integration', () => {
-  it('applies theme colors correctly', () => {
-    (useFocusEffect as jest.Mock).mockImplementation(() => {});
-    
-    // ✅ BETTER APPROACH: Test that theme-dependent components receive proper props
-    const { getByTestId } = render(
-      <ThemeProviderWrapper>
-        <HomeContent />
-      </ThemeProviderWrapper>,
-    );
+    it('applies theme colors correctly', () => {
+      (useFocusEffect as jest.Mock).mockImplementation(() => {});
 
-    // Test QrCard receives theme-based backgroundColor
-    const qrCard = getByTestId('qr-card');
-    const backgroundColor = qrCard.props.style.backgroundColor;
-    
-    // Should be either light or dark theme color
-    expect(backgroundColor).toMatch(/^#[0-9a-f]{6}$/i); // Valid hex color
-    expect(['#f9f9f9', '#1e1e1e']).toContain(backgroundColor);
-  });
+      // ✅ BETTER APPROACH: Test that theme-dependent components receive proper props
+      const { getByTestId } = render(
+        <ThemeProviderWrapper>
+          <HomeContent />
+        </ThemeProviderWrapper>,
+      );
 
-it('passes backgroundColor prop to QrCard', async () => {
+      // Test QrCard receives theme-based backgroundColor
+      const qrCard = getByTestId('qr-card');
+      const backgroundColor = qrCard.props.style.backgroundColor;
+
+      // Should be either light or dark theme color
+      expect(backgroundColor).toMatch(/^#[0-9a-f]{6}$/i); // Valid hex color
+      expect(['#f9f9f9', '#1e1e1e']).toContain(backgroundColor);
+    });
+
+    it('passes backgroundColor prop to QrCard', async () => {
       const { getByTestId } = render(
         <ThemeProviderWrapper>
           <HomeContent />

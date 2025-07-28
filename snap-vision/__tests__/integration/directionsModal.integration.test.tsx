@@ -20,7 +20,6 @@ const mockProps = {
 };
 
 describe('DirectionsModal True Integration Tests', () => {
-
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -56,11 +55,11 @@ describe('DirectionsModal True Integration Tests', () => {
       const { getByText } = render(
         <ThemeProviderWrapper>
           <NavigationParent />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       fireEvent.press(getByText('Close'));
-      
+
       expect(getByText('Directions to Central Library')).toBeTruthy();
     });
   });
@@ -68,11 +67,11 @@ describe('DirectionsModal True Integration Tests', () => {
   describe('React Native Modal Integration', () => {
     it('integrates with React Native Modal lifecycle and hardware back button', async () => {
       const mockClose = jest.fn();
-      
+
       const { rerender } = render(
         <ThemeProviderWrapper>
           <DirectionsModal {...mockProps} onClose={mockClose} visible={true} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       expect(mockProps.onClose).toBeDefined();
@@ -80,13 +79,13 @@ describe('DirectionsModal True Integration Tests', () => {
       rerender(
         <ThemeProviderWrapper>
           <DirectionsModal {...mockProps} onClose={mockClose} visible={false} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       rerender(
         <ThemeProviderWrapper>
           <DirectionsModal {...mockProps} onClose={mockClose} visible={true} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       expect(true).toBe(true);
@@ -101,16 +100,14 @@ describe('DirectionsModal True Integration Tests', () => {
 
       const { getByText } = render(
         <ThemeProviderWrapper>
-          <DirectionsModal 
-            {...mockProps} 
-            steps={largeSteps} 
-            currentStep={500} 
-          />
-        </ThemeProviderWrapper>
+          <DirectionsModal {...mockProps} steps={largeSteps} currentStep={500} />
+        </ThemeProviderWrapper>,
       );
 
       expect(getByText('Directions to Central Library')).toBeTruthy();
-      expect(getByText('Navigation step 1 with detailed instructions for complex route guidance')).toBeTruthy();
+      expect(
+        getByText('Navigation step 1 with detailed instructions for complex route guidance'),
+      ).toBeTruthy();
     });
   });
 
@@ -119,11 +116,11 @@ describe('DirectionsModal True Integration Tests', () => {
       const { getByText, getByLabelText } = render(
         <ThemeProviderWrapper>
           <DirectionsModal {...mockProps} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       expect(getByText('Directions to Central Library')).toBeTruthy();
-      
+
       mockProps.steps.forEach((step, index) => {
         expect(getByText(step.instruction)).toBeTruthy();
       });
@@ -136,7 +133,7 @@ describe('Platform Integration Tests', () => {
     const { getByText } = render(
       <ThemeProviderWrapper>
         <DirectionsModal {...mockProps} />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     expect(getByText('Directions to Central Library')).toBeTruthy();

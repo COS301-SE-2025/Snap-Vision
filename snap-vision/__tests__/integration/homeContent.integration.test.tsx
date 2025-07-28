@@ -14,7 +14,7 @@ beforeAll(() => {
     if (
       typeof args[0] === 'string' &&
       (args[0].includes('was not wrapped in act') ||
-       args[0].includes('Error fetching recently visited'))
+        args[0].includes('Error fetching recently visited'))
     ) {
       return;
     }
@@ -81,7 +81,7 @@ jest.mock('../../src/components/molecules/HeaderWithIcons', () => {
 jest.mock('../../src/components/molecules/QrCard', () => {
   const { View } = require('react-native');
   return ({ backgroundColor, titleColor, subtitleColor }: any) => (
-    <View 
+    <View
       testID="qr-card"
       style={{ backgroundColor }}
       accessibilityLabel={`QR Card with background ${backgroundColor}`}
@@ -160,9 +160,12 @@ describe('HomeContent Integration Tests', () => {
       expect(getByText('Loading...')).toBeTruthy();
 
       // Wait for data loading to complete
-      await waitFor(() => {
-        expect(getByTestId('recently-visited-carousel')).toBeTruthy();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(getByTestId('recently-visited-carousel')).toBeTruthy();
+        },
+        { timeout: 3000 },
+      );
     });
 
     it('applies theme integration across all components', () => {
@@ -182,49 +185,51 @@ describe('HomeContent Integration Tests', () => {
   });
 
   describe('Data Loading Integration', () => {
-  it('integrates with Firebase auth and loads user data successfully', async () => {
-    const mockVisits = [
-      createMockVisit({
-        id: 'visit1',
-        poiId: 'poi1',
-        name: 'Test Library',
-        imageUrl: 'http://example.com/image1.jpg',
-        centroid: {
-          latitude: 0,
-          longitude: 0,
-        },
-      }),
-      createMockVisit({
-        id: 'visit2',
-        poiId: 'poi2',
-        name: 'Test Cafeteria',
-        imageUrl: 'http://example.com/image2.jpg',
-        centroid: {
-          latitude: 0,
-          longitude: 0,
-        },
-      }),
-    ];
+    it('integrates with Firebase auth and loads user data successfully', async () => {
+      const mockVisits = [
+        createMockVisit({
+          id: 'visit1',
+          poiId: 'poi1',
+          name: 'Test Library',
+          imageUrl: 'http://example.com/image1.jpg',
+          centroid: {
+            latitude: 0,
+            longitude: 0,
+          },
+        }),
+        createMockVisit({
+          id: 'visit2',
+          poiId: 'poi2',
+          name: 'Test Cafeteria',
+          imageUrl: 'http://example.com/image2.jpg',
+          centroid: {
+            latitude: 0,
+            longitude: 0,
+          },
+        }),
+      ];
 
-    mockGetRecentlyVPOIs.mockResolvedValue(mockVisits);
+      mockGetRecentlyVPOIs.mockResolvedValue(mockVisits);
 
-    (useFocusEffect as jest.Mock).mockImplementation((callback) => {
-      setTimeout(() => callback(), 0);
+      (useFocusEffect as jest.Mock).mockImplementation((callback) => {
+        setTimeout(() => callback(), 0);
+      });
+
+      const { getByTestId, getByText } = render(
+        <ThemeProviderWrapper>
+          <HomeContent />
+        </ThemeProviderWrapper>,
+      );
+
+      await waitFor(
+        () => {
+          expect(mockGetRecentlyVPOIs).toHaveBeenCalledWith('test-user-123');
+          expect(getByTestId('recently-visited-carousel')).toBeTruthy();
+          expect(getByText('2 visits')).toBeTruthy();
+        },
+        { timeout: 3000 },
+      );
     });
-
-    const { getByTestId, getByText } = render(
-      <ThemeProviderWrapper>
-        <HomeContent />
-      </ThemeProviderWrapper>,
-    );
-
-    await waitFor(() => {
-      expect(mockGetRecentlyVPOIs).toHaveBeenCalledWith('test-user-123');
-      expect(getByTestId('recently-visited-carousel')).toBeTruthy();
-      expect(getByText('2 visits')).toBeTruthy();
-    }, { timeout: 3000 });
-  });
-
 
     it('handles empty data gracefully', async () => {
       mockGetRecentlyVPOIs.mockResolvedValue([]);
@@ -239,10 +244,13 @@ describe('HomeContent Integration Tests', () => {
         </ThemeProviderWrapper>,
       );
 
-      await waitFor(() => {
-        expect(getByTestId('recently-visited-carousel')).toBeTruthy();
-        expect(getByText('0 visits')).toBeTruthy();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(getByTestId('recently-visited-carousel')).toBeTruthy();
+          expect(getByText('0 visits')).toBeTruthy();
+        },
+        { timeout: 3000 },
+      );
     });
 
     it('handles network errors gracefully', async () => {
@@ -259,14 +267,17 @@ describe('HomeContent Integration Tests', () => {
         </ThemeProviderWrapper>,
       );
 
-      await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith(
-          'Error fetching recently visited:',
-          expect.any(Error),
-        );
-        expect(queryByText('Loading...')).toBeNull();
-        expect(getByTestId('recently-visited-carousel')).toBeTruthy();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(consoleSpy).toHaveBeenCalledWith(
+            'Error fetching recently visited:',
+            expect.any(Error),
+          );
+          expect(queryByText('Loading...')).toBeNull();
+          expect(getByTestId('recently-visited-carousel')).toBeTruthy();
+        },
+        { timeout: 3000 },
+      );
 
       consoleSpy.mockRestore();
     });
@@ -292,7 +303,7 @@ describe('HomeContent Integration Tests', () => {
       // Manually trigger the focus callback to execute the early return
       await act(async () => {
         focusCallback();
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise((resolve) => setTimeout(resolve, 50));
       });
 
       await waitFor(() => {
@@ -320,7 +331,7 @@ describe('HomeContent Integration Tests', () => {
 
       await act(async () => {
         focusCallback();
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise((resolve) => setTimeout(resolve, 50));
       });
 
       await waitFor(() => {
@@ -347,7 +358,7 @@ describe('HomeContent Integration Tests', () => {
 
       await act(async () => {
         focusCallback();
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise((resolve) => setTimeout(resolve, 50));
       });
 
       await waitFor(() => {
@@ -391,19 +402,19 @@ describe('HomeContent Integration Tests', () => {
 
   describe('Focus Effect Integration', () => {
     it('integrates useFocusEffect for data refetching', async () => {
-    let focusCallback: () => void;
-    (useFocusEffect as jest.Mock).mockImplementation((callback) => {
-      focusCallback = callback;
-      setTimeout(() => callback(), 0);
-    });
+      let focusCallback: () => void;
+      (useFocusEffect as jest.Mock).mockImplementation((callback) => {
+        focusCallback = callback;
+        setTimeout(() => callback(), 0);
+      });
 
-    mockGetRecentlyVPOIs.mockResolvedValue([
-      createMockVisit({
-        id: 'visit1',
-        poiId: 'poi1',
-        name: 'Library',
-      }),
-    ]);
+      mockGetRecentlyVPOIs.mockResolvedValue([
+        createMockVisit({
+          id: 'visit1',
+          poiId: 'poi1',
+          name: 'Library',
+        }),
+      ]);
 
       render(
         <ThemeProviderWrapper>
@@ -459,9 +470,12 @@ describe('HomeContent Integration Tests', () => {
       expect(getByText('Loading...')).toBeTruthy();
 
       // After data loads, loading disappears
-      await waitFor(() => {
-        expect(queryByText('Loading...')).toBeNull();
-      }, { timeout: 2000 });
+      await waitFor(
+        () => {
+          expect(queryByText('Loading...')).toBeNull();
+        },
+        { timeout: 2000 },
+      );
     });
 
     it('hides loading state even when errors occur', async () => {
@@ -488,73 +502,73 @@ describe('HomeContent Integration Tests', () => {
 
   describe('Component Layout Integration', () => {
     it('renders action row with button and QR components', () => {
-    (useFocusEffect as jest.Mock).mockImplementation(() => {});
+      (useFocusEffect as jest.Mock).mockImplementation(() => {});
 
-    const { getByTestId } = render(
-      <ThemeProviderWrapper>
-        <HomeContent />
-      </ThemeProviderWrapper>,
-    );
+      const { getByTestId } = render(
+        <ThemeProviderWrapper>
+          <HomeContent />
+        </ThemeProviderWrapper>,
+      );
 
-    // Test specific layout relationships
-    const button = getByTestId('app-button');
-    const qrCard = getByTestId('qr-card');
-    
-    expect(button).toBeTruthy();
-    expect(qrCard).toBeTruthy();
-  });
-});
-describe('Complete Workflow Integration', () => {
-  it('executes complete user workflow from load to navigation', async () => {
-    const mockVisits = [
-      createMockVisit({
-        id: 'visit1',
-        poiId: 'poi1',
-        name: 'Test Location',  
-      }),
-    ];
+      // Test specific layout relationships
+      const button = getByTestId('app-button');
+      const qrCard = getByTestId('qr-card');
 
-    mockGetRecentlyVPOIs.mockResolvedValue(mockVisits);
-
-    (useFocusEffect as jest.Mock).mockImplementation((callback) => {
-      setTimeout(() => callback(), 0);
+      expect(button).toBeTruthy();
+      expect(qrCard).toBeTruthy();
     });
-
-    const { getByTestId, getByText, queryByText } = render(
-      <ThemeProviderWrapper>
-        <HomeContent />
-      </ThemeProviderWrapper>,
-    );
-
-    expect(getByText('Loading...')).toBeTruthy();
-    await waitFor(() => {
-      expect(mockGetRecentlyVPOIs).toHaveBeenCalledWith('test-user-123');
-      expect(queryByText('Loading...')).toBeNull();
-      expect(getByText('1 visits')).toBeTruthy();
-    });
-
-    const mapButton = getByTestId('app-button');
-    fireEvent.press(mapButton);
-    expect(mockNavigate).toHaveBeenCalledWith('Map');
-
-    expect(getByTestId('header-with-icons')).toBeTruthy();
-    expect(getByTestId('qr-card')).toBeTruthy();
-    expect(getByTestId('recently-visited-carousel')).toBeTruthy();
   });
-});
+  describe('Complete Workflow Integration', () => {
+    it('executes complete user workflow from load to navigation', async () => {
+      const mockVisits = [
+        createMockVisit({
+          id: 'visit1',
+          poiId: 'poi1',
+          name: 'Test Location',
+        }),
+      ];
+
+      mockGetRecentlyVPOIs.mockResolvedValue(mockVisits);
+
+      (useFocusEffect as jest.Mock).mockImplementation((callback) => {
+        setTimeout(() => callback(), 0);
+      });
+
+      const { getByTestId, getByText, queryByText } = render(
+        <ThemeProviderWrapper>
+          <HomeContent />
+        </ThemeProviderWrapper>,
+      );
+
+      expect(getByText('Loading...')).toBeTruthy();
+      await waitFor(() => {
+        expect(mockGetRecentlyVPOIs).toHaveBeenCalledWith('test-user-123');
+        expect(queryByText('Loading...')).toBeNull();
+        expect(getByText('1 visits')).toBeTruthy();
+      });
+
+      const mapButton = getByTestId('app-button');
+      fireEvent.press(mapButton);
+      expect(mockNavigate).toHaveBeenCalledWith('Map');
+
+      expect(getByTestId('header-with-icons')).toBeTruthy();
+      expect(getByTestId('qr-card')).toBeTruthy();
+      expect(getByTestId('recently-visited-carousel')).toBeTruthy();
+    });
+  });
 
   describe('Error Recovery Integration', () => {
     it('integrates error handling with state management', async () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-      
+
       mockGetRecentlyVPOIs.mockRejectedValueOnce(new Error('First call failed'));
       mockGetRecentlyVPOIs.mockResolvedValue([
-      createMockVisit({
-        id: 'visit1',
-        poiId: 'poi1',
-        name: 'Library',
-      }),
-    ]);
+        createMockVisit({
+          id: 'visit1',
+          poiId: 'poi1',
+          name: 'Library',
+        }),
+      ]);
 
       let focusCallback: () => void;
       (useFocusEffect as jest.Mock).mockImplementation((callback) => {
@@ -588,4 +602,3 @@ describe('Complete Workflow Integration', () => {
     });
   });
 });
-

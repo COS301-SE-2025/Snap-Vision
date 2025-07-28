@@ -24,23 +24,20 @@ jest.mock('../../src/theme', () => ({
 jest.mock('../../src/components/molecules/SettingsToggleItem', () => {
   const React = require('react');
   const { TouchableOpacity, Text, View } = require('react-native');
-  
-  return function MockSettingsToggleItem({ 
-    icon, 
-    label, 
-    description, 
-    value, 
+
+  return function MockSettingsToggleItem({
+    icon,
+    label,
+    description,
+    value,
     onToggle,
-    testID 
+    testID,
   }: any) {
     return (
       <View testID={testID || 'settings-toggle-item'}>
         <Text testID="toggle-label">{label}</Text>
         <Text testID="toggle-description">{description}</Text>
-        <TouchableOpacity
-          testID="toggle-button"
-          onPress={() => onToggle(!value)}
-        >
+        <TouchableOpacity testID="toggle-button" onPress={() => onToggle(!value)}>
           <Text testID="toggle-value">{value ? 'ON' : 'OFF'}</Text>
         </TouchableOpacity>
       </View>
@@ -78,7 +75,6 @@ describe('AccessibilitySettingsContent Integration Tests', () => {
     expect(screen.getByTestId('toggle-value')).toHaveTextContent('ON');
   });
 
-
   it('should handle AsyncStorage errors gracefully', async () => {
     // Mock AsyncStorage to throw error
     mockAsyncStorage.getItem.mockRejectedValue(new Error('Storage error'));
@@ -113,7 +109,7 @@ describe('AccessibilitySettingsContent Integration Tests', () => {
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith(
         'Error',
-        'Failed to save haptic feedback setting. Please try again.'
+        'Failed to save haptic feedback setting. Please try again.',
       );
     });
   });
@@ -129,7 +125,7 @@ describe('AccessibilitySettingsContent Integration Tests', () => {
     render(
       <AccessibilityProvider>
         <AccessibilitySettingsContent isDark={false} navigation={mockNavigation} />
-      </AccessibilityProvider>
+      </AccessibilityProvider>,
     );
 
     await waitFor(() => {
@@ -138,6 +134,4 @@ describe('AccessibilitySettingsContent Integration Tests', () => {
 
     expect(screen.getByText('Touch & Vibration')).toBeTruthy();
   });
-
-  
 });

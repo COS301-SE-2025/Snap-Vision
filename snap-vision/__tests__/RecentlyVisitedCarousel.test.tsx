@@ -96,16 +96,16 @@ describe('RecentlyVisitedCarousel', () => {
   });
 
   const createVisits = (count: number, overrides: Array<Partial<Visit>> = []): Visit[] => {
-    return Array.from({ length: count }, (_, index) => 
+    return Array.from({ length: count }, (_, index) =>
       createVisit({
         poiId: `poi-${index + 1}`,
         name: `Building ${String.fromCharCode(65 + index)}`, // A, B, C...
-        centroid: { 
-          latitude: -25.755 + (index * 0.001), 
-          longitude: 28.233 + (index * 0.001) 
+        centroid: {
+          latitude: -25.755 + index * 0.001,
+          longitude: 28.233 + index * 0.001,
         },
         ...overrides[index],
-      })
+      }),
     );
   };
   const createVisitWithId = (overrides: Partial<Visit> = {}): Visit => ({
@@ -171,8 +171,8 @@ describe('RecentlyVisitedCarousel', () => {
   });
 
   it('handles items with timestamp', () => {
-    const visits = [createVisit()]; 
-  
+    const visits = [createVisit()];
+
     render(<RecentlyVisitedCarousel visits={visits} />);
     expect(screen.getByText('Building A')).toBeTruthy();
     expect(screen.getByText('7/1/2023')).toBeTruthy();
@@ -180,16 +180,18 @@ describe('RecentlyVisitedCarousel', () => {
 
   it('handles items without timestamp', () => {
     const visits = [createVisit({ timestamp: undefined })];
-  
+
     render(<RecentlyVisitedCarousel visits={visits} />);
     expect(screen.getByText('Building A')).toBeTruthy();
     expect(screen.queryByText('7/1/2023')).toBeNull();
   });
 
   it('handles items with long names', () => {
-    const visits = [createVisit({
-      name: 'A very long building name that might overflow'
-    })];
+    const visits = [
+      createVisit({
+        name: 'A very long building name that might overflow',
+      }),
+    ];
 
     render(<RecentlyVisitedCarousel visits={visits} />);
     expect(screen.getByText('A very long building name that might overflow')).toBeTruthy();
@@ -197,31 +199,30 @@ describe('RecentlyVisitedCarousel', () => {
 
   it('displays formatted timestamp correctly', () => {
     const visits = [createVisit()];
-  
+
     render(<RecentlyVisitedCarousel visits={visits} />);
-    
+
     expect(screen.getByText('7/1/2023')).toBeTruthy();
   });
 
-   it('uses item.id as key when available', () => {
+  it('uses item.id as key when available', () => {
     const visits = [createVisitWithId()];
 
     const { getByText } = render(<RecentlyVisitedCarousel visits={visits} />);
     expect(getByText('Building A')).toBeTruthy();
   });
 
-   it('uses index as fallback key when id and poiId are missing', () => {
+  it('uses index as fallback key when id and poiId are missing', () => {
     const visits: any[] = [
       {
         userId: 'user123',
         name: 'Building A',
         timestamp: mockTimestamp,
         centroid: { latitude: -25.755, longitude: 28.233 },
-      }
+      },
     ];
 
     const { getByText } = render(<RecentlyVisitedCarousel visits={visits} />);
     expect(getByText('Building A')).toBeTruthy();
   });
-  
 });

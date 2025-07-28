@@ -3,7 +3,6 @@ import { render, fireEvent } from '@testing-library/react-native';
 import DirectionsModal from '../src/components/organisms/DirectionsModal';
 import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
 
-
 //mock theme dependencies
 jest.mock('../src/theme/ThemeContext', () => ({
   useTheme: jest.fn(),
@@ -63,26 +62,20 @@ describe('DirectionsModal', () => {
 
   describe('Basic Rendering', () => {
     it('renders correctly when visible', () => {
-      const { getByText } = render(
-        <DirectionsModal {...mockProps} />
-      );
+      const { getByText } = render(<DirectionsModal {...mockProps} />);
 
       expect(getByText('Directions to Test Destination')).toBeTruthy();
       expect(getByText('Close')).toBeTruthy();
     });
 
     it('does not render when not visible', () => {
-      const { queryByText } = render(
-          <DirectionsModal {...mockProps} visible={false} />
-      );
+      const { queryByText } = render(<DirectionsModal {...mockProps} visible={false} />);
 
       expect(queryByText('Directions to Test Destination')).toBeNull();
     });
 
     it('renders with empty destination string', () => {
-      const { getByText } = render(
-        <DirectionsModal {...mockProps} destination="" />
-      );
+      const { getByText } = render(<DirectionsModal {...mockProps} destination="" />);
 
       expect(getByText('Directions to ')).toBeTruthy();
     });
@@ -90,9 +83,7 @@ describe('DirectionsModal', () => {
 
   describe('Steps Rendering', () => {
     it('renders all navigation steps', () => {
-      const { getByText } = render(
-          <DirectionsModal {...mockProps} />
-      );
+      const { getByText } = render(<DirectionsModal {...mockProps} />);
 
       expect(getByText('1.')).toBeTruthy();
       expect(getByText('Turn left on Main Street')).toBeTruthy();
@@ -103,9 +94,7 @@ describe('DirectionsModal', () => {
     });
 
     it('renders with empty steps array', () => {
-      const { getByText, queryByText } = render(
-          <DirectionsModal {...mockProps} steps={[]} />
-      );
+      const { getByText, queryByText } = render(<DirectionsModal {...mockProps} steps={[]} />);
 
       expect(getByText('Directions to Test Destination')).toBeTruthy();
       expect(queryByText('1.')).toBeNull();
@@ -113,9 +102,9 @@ describe('DirectionsModal', () => {
 
     it('renders with single step', () => {
       const singleStep = [{ instruction: 'You have arrived at your destination' }];
-      
+
       const { getByText, queryByText } = render(
-          <DirectionsModal {...mockProps} steps={singleStep} />
+        <DirectionsModal {...mockProps} steps={singleStep} />,
       );
 
       expect(getByText('1.')).toBeTruthy();
@@ -130,9 +119,7 @@ describe('DirectionsModal', () => {
         { instruction: 'Another valid step' },
       ];
 
-      const { getByText } = render(
-          <DirectionsModal {...mockProps} steps={stepsWithMissingData} />
-      );
+      const { getByText } = render(<DirectionsModal {...mockProps} steps={stepsWithMissingData} />);
 
       expect(getByText('Valid step')).toBeTruthy();
       expect(getByText('Another valid step')).toBeTruthy();
@@ -142,43 +129,32 @@ describe('DirectionsModal', () => {
 
   describe('Current Step Highlighting', () => {
     it('highlights the current step correctly', () => {
-      const { getByText } = render(
-          <DirectionsModal {...mockProps} currentStep={1} />
-      );
+      const { getByText } = render(<DirectionsModal {...mockProps} currentStep={1} />);
 
-     
       const currentStepText = getByText('Continue straight for 500m');
       expect(currentStepText).toBeTruthy();
     });
 
     it('handles currentStep at the beginning of the list', () => {
-      const { getByText } = render(
-          <DirectionsModal {...mockProps} currentStep={0} />
-      );
+      const { getByText } = render(<DirectionsModal {...mockProps} currentStep={0} />);
 
       expect(getByText('Turn left on Main Street')).toBeTruthy();
     });
 
     it('handles currentStep at the end of the list', () => {
-      const { getByText } = render(
-          <DirectionsModal {...mockProps} currentStep={2} />
-      );
+      const { getByText } = render(<DirectionsModal {...mockProps} currentStep={2} />);
 
       expect(getByText('Turn right on Oak Avenue')).toBeTruthy();
     });
 
     it('handles currentStep out of bounds (negative)', () => {
-      const { getByText } = render(
-          <DirectionsModal {...mockProps} currentStep={-1} />
-      );
+      const { getByText } = render(<DirectionsModal {...mockProps} currentStep={-1} />);
 
       expect(getByText('Directions to Test Destination')).toBeTruthy();
     });
 
     it('handles currentStep out of bounds (too large)', () => {
-      const { getByText } = render(
-          <DirectionsModal {...mockProps} currentStep={10} />
-      );
+      const { getByText } = render(<DirectionsModal {...mockProps} currentStep={10} />);
 
       expect(getByText('Directions to Test Destination')).toBeTruthy();
     });
@@ -186,18 +162,14 @@ describe('DirectionsModal', () => {
 
   describe('User Interactions', () => {
     it('calls onClose when Close button is pressed', () => {
-      const { getByText } = render(
-          <DirectionsModal {...mockProps} />
-      );
+      const { getByText } = render(<DirectionsModal {...mockProps} />);
 
       fireEvent.press(getByText('Close'));
       expect(mockProps.onClose).toHaveBeenCalledTimes(1);
     });
 
     it('calls onStart when Start Navigation button is pressed', () => {
-      const { getByText } = render(
-          <DirectionsModal {...mockProps} />
-      );
+      const { getByText } = render(<DirectionsModal {...mockProps} />);
 
       try {
         const startButton = getByText('Start Navigation');
@@ -209,9 +181,7 @@ describe('DirectionsModal', () => {
     });
 
     it('handles multiple rapid button presses', () => {
-      const { getByText } = render(
-          <DirectionsModal {...mockProps} />
-      );
+      const { getByText } = render(<DirectionsModal {...mockProps} />);
 
       const closeButton = getByText('Close');
       fireEvent.press(closeButton);
@@ -248,9 +218,7 @@ describe('DirectionsModal', () => {
       mockUseTheme.mockReturnValue(lightTheme);
       mockGetThemeColors.mockReturnValue(lightColors);
 
-      const { getByText } = render(
-          <DirectionsModal {...mockProps} />
-      );
+      const { getByText } = render(<DirectionsModal {...mockProps} />);
 
       expect(mockUseTheme).toHaveBeenCalled();
       expect(mockGetThemeColors).toHaveBeenCalledWith(false);
@@ -282,9 +250,7 @@ describe('DirectionsModal', () => {
       mockUseTheme.mockReturnValue(darkTheme);
       mockGetThemeColors.mockReturnValue(darkColors);
 
-      const { getByText } = render(
-          <DirectionsModal {...mockProps} />
-      );
+      const { getByText } = render(<DirectionsModal {...mockProps} />);
 
       expect(mockUseTheme).toHaveBeenCalled();
       expect(mockGetThemeColors).toHaveBeenCalledWith(true);
@@ -309,9 +275,7 @@ describe('DirectionsModal', () => {
 
       mockGetThemeColors.mockReturnValue(emptyColors);
 
-      const { getByText } = render(
-          <DirectionsModal {...mockProps} />
-      );
+      const { getByText } = render(<DirectionsModal {...mockProps} />);
 
       expect(getByText('Directions to Test Destination')).toBeTruthy();
     });
@@ -320,14 +284,12 @@ describe('DirectionsModal', () => {
   describe('Modal Properties', () => {
     it('handles modal visibility changes', () => {
       const { rerender, getByText, queryByText } = render(
-          <DirectionsModal {...mockProps} visible={true} />
+        <DirectionsModal {...mockProps} visible={true} />,
       );
 
       expect(getByText('Directions to Test Destination')).toBeTruthy();
 
-      rerender(
-          <DirectionsModal {...mockProps} visible={false} />
-      );
+      rerender(<DirectionsModal {...mockProps} visible={false} />);
 
       expect(queryByText('Directions to Test Destination')).toBeNull();
     });
@@ -335,17 +297,13 @@ describe('DirectionsModal', () => {
 
   describe('Navigation State', () => {
     it('handles isNavigating prop correctly when true', () => {
-      const { getByText } = render(
-          <DirectionsModal {...mockProps} isNavigating={true} />
-      );
+      const { getByText } = render(<DirectionsModal {...mockProps} isNavigating={true} />);
 
       expect(getByText('Directions to Test Destination')).toBeTruthy();
     });
 
     it('handles isNavigating prop correctly when false', () => {
-      const { getByText } = render(
-          <DirectionsModal {...mockProps} isNavigating={false} />
-      );
+      const { getByText } = render(<DirectionsModal {...mockProps} isNavigating={false} />);
 
       expect(getByText('Directions to Test Destination')).toBeTruthy();
     });
@@ -353,13 +311,11 @@ describe('DirectionsModal', () => {
 
   describe('Accessibility', () => {
     it('provides accessible content for screen readers', () => {
-      const { getByText } = render(
-          <DirectionsModal {...mockProps} />
-      );
+      const { getByText } = render(<DirectionsModal {...mockProps} />);
 
       expect(getByText('Directions to Test Destination')).toBeTruthy();
       expect(getByText('Close')).toBeTruthy();
-      
+
       mockProps.steps.forEach((step, index) => {
         expect(getByText(`${index + 1}.`)).toBeTruthy();
         expect(getByText(step.instruction)).toBeTruthy();
@@ -367,10 +323,11 @@ describe('DirectionsModal', () => {
     });
 
     it('handles long destination names', () => {
-      const longDestination = 'A Very Long Destination Name That Might Wrap To Multiple Lines In The UI';
-      
+      const longDestination =
+        'A Very Long Destination Name That Might Wrap To Multiple Lines In The UI';
+
       const { getByText } = render(
-          <DirectionsModal {...mockProps} destination={longDestination} />
+        <DirectionsModal {...mockProps} destination={longDestination} />,
       );
 
       expect(getByText(`Directions to ${longDestination}`)).toBeTruthy();
@@ -378,14 +335,13 @@ describe('DirectionsModal', () => {
 
     it('handles long step instructions', () => {
       const longSteps = [
-        { 
-          instruction: 'Turn left on Main Street and continue for a very long distance until you reach the intersection with Oak Avenue, then prepare for your next turn which will be coming up shortly after the traffic light'
+        {
+          instruction:
+            'Turn left on Main Street and continue for a very long distance until you reach the intersection with Oak Avenue, then prepare for your next turn which will be coming up shortly after the traffic light',
         },
       ];
 
-      const { getByText } = render(
-          <DirectionsModal {...mockProps} steps={longSteps} />
-      );
+      const { getByText } = render(<DirectionsModal {...mockProps} steps={longSteps} />);
 
       expect(getByText(longSteps[0].instruction)).toBeTruthy();
     });
@@ -393,29 +349,23 @@ describe('DirectionsModal', () => {
 
   describe('Component State', () => {
     it('maintains state correctly across re-renders', () => {
-      const { rerender, getByText } = render(
-          <DirectionsModal {...mockProps} currentStep={0} />
-      );
+      const { rerender, getByText } = render(<DirectionsModal {...mockProps} currentStep={0} />);
 
       expect(getByText('Turn left on Main Street')).toBeTruthy();
 
-      rerender(
-          <DirectionsModal {...mockProps} currentStep={1} />
-      );
+      rerender(<DirectionsModal {...mockProps} currentStep={1} />);
 
       expect(getByText('Continue straight for 500m')).toBeTruthy();
     });
 
     it('handles prop changes correctly', () => {
       const { rerender, getByText, queryByText } = render(
-          <DirectionsModal {...mockProps} destination="Original Destination" />
+        <DirectionsModal {...mockProps} destination="Original Destination" />,
       );
 
       expect(getByText('Directions to Original Destination')).toBeTruthy();
 
-      rerender(
-          <DirectionsModal {...mockProps} destination="New Destination" />
-      );
+      rerender(<DirectionsModal {...mockProps} destination="New Destination" />);
 
       expect(queryByText('Directions to Original Destination')).toBeNull();
       expect(getByText('Directions to New Destination')).toBeTruthy();

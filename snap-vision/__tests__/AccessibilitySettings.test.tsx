@@ -17,23 +17,20 @@ jest.mock('../src/theme', () => ({
 jest.mock('../src/components/molecules/SettingsToggleItem', () => {
   const React = require('react');
   const { TouchableOpacity, Text, View } = require('react-native');
-  
-  return function MockSettingsToggleItem({ 
-    icon, 
-    label, 
-    description, 
-    value, 
+
+  return function MockSettingsToggleItem({
+    icon,
+    label,
+    description,
+    value,
     onToggle,
-    testID 
+    testID,
   }: any) {
     return (
       <View testID={testID || 'settings-toggle-item'}>
         <Text testID="toggle-label">{label}</Text>
         <Text testID="toggle-description">{description}</Text>
-        <TouchableOpacity
-          testID="toggle-button"
-          onPress={() => onToggle(!value)}
-        >
+        <TouchableOpacity testID="toggle-button" onPress={() => onToggle(!value)}>
           <Text testID="toggle-value">{value ? 'ON' : 'OFF'}</Text>
         </TouchableOpacity>
       </View>
@@ -66,9 +63,9 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     mockGetThemeColors.mockReturnValue(mockColors);
-    
+
     mockUseAccessibility.mockReturnValue({
       isHapticFeedbackEnabled: false,
       setHapticFeedbackEnabled: mockSetHapticFeedbackEnabled,
@@ -95,7 +92,9 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
     expect(screen.getByText('Touch & Vibration')).toBeTruthy();
     expect(screen.getByTestId('toggle-label')).toBeTruthy();
     expect(screen.getByText('Haptic Feedback')).toBeTruthy();
-    expect(screen.getByText('Enable vibration feedback for navigation events and interactions')).toBeTruthy();
+    expect(
+      screen.getByText('Enable vibration feedback for navigation events and interactions'),
+    ).toBeTruthy();
     expect(screen.getByText(/Haptic feedback provides tactile confirmation/)).toBeTruthy();
   });
 
@@ -174,7 +173,7 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
 
     expect(Alert.alert).toHaveBeenCalledWith(
       'Error',
-      'Failed to save haptic feedback setting. Please try again.'
+      'Failed to save haptic feedback setting. Please try again.',
     );
   });
 
@@ -235,7 +234,9 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
 
     // Verify all props are passed correctly
     expect(screen.getByText('Haptic Feedback')).toBeTruthy();
-    expect(screen.getByText('Enable vibration feedback for navigation events and interactions')).toBeTruthy();
+    expect(
+      screen.getByText('Enable vibration feedback for navigation events and interactions'),
+    ).toBeTruthy();
     expect(screen.getByTestId('toggle-value')).toHaveTextContent('ON');
   });
 
@@ -243,7 +244,7 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
     render(<AccessibilitySettingsContent isDark={false} navigation={{}} />);
 
     const infoText = screen.getByText(
-      /Haptic feedback provides tactile confirmation of your actions and navigation events/
+      /Haptic feedback provides tactile confirmation of your actions and navigation events/,
     );
     expect(infoText).toBeTruthy();
   });
@@ -262,7 +263,7 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
     render(<AccessibilitySettingsContent isDark={false} navigation={{}} />);
 
     const toggleButton = screen.getByTestId('toggle-button');
-    
+
     fireEvent.press(toggleButton);
     fireEvent.press(toggleButton);
 
@@ -272,7 +273,7 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
 
     expect(Alert.alert).toHaveBeenCalledWith(
       'Error',
-      'Failed to save haptic feedback setting. Please try again.'
+      'Failed to save haptic feedback setting. Please try again.',
     );
   });
 
