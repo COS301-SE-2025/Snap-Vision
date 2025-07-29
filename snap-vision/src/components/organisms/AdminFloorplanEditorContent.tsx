@@ -84,7 +84,7 @@ export default function AdminFloorplanEditorContent() {
     const loadRoomPOIs = async () => {
       try {
         const snapshot = await firestore()
-          .collection('RoomPOIs')
+          .collection('locations/up-campus/roomPOIs')
           .where('buildingId', '==', buildingId)
           .where('floorId', '==', floorLabel)
           .get();
@@ -120,7 +120,7 @@ export default function AdminFloorplanEditorContent() {
     const loadPaths = async () => {
       try {
         const snapshot = await firestore()
-          .collection('PathPOIs')
+          .collection('locations/up-campus/pathPOIs')
           .where('buildingId', '==', buildingId)
           .where('floorId', '==', floorLabel)
           .get();
@@ -221,7 +221,7 @@ export default function AdminFloorplanEditorContent() {
         createdAt: new Date().toISOString(),
       };
 
-      await firestore().collection('PathPOIs').doc(pathId).set(pathPOI);
+      await firestore().collection('locations/up-campus/pathPOIs').doc(pathId).set(pathPOI);
 
       setPathMarkers([...pathMarkers, pathPOI]);
 
@@ -808,8 +808,6 @@ export default function AdminFloorplanEditorContent() {
     `;
   };
 
-  // ...rest of existing code...
-
   // Handle messages from WebView
   const handleMessage = (event: { nativeEvent: { data: string } }) => {
     try {
@@ -897,7 +895,7 @@ export default function AdminFloorplanEditorContent() {
 
       // Save to Firestore
       await firestore()
-        .collection('RoomPOIs')
+        .collection('locations/up-campus/roomPOIs')
         .doc(roomId as string)
         .set(roomPOI);
 
@@ -935,7 +933,7 @@ export default function AdminFloorplanEditorContent() {
     }
 
     try {
-      await firestore().collection('RoomPOIs').doc(editingRoomId).delete();
+      await firestore().collection('locations/up-campus/roomPOIs').doc(editingRoomId).delete();
 
       // Remove from local state
       setRoomMarkers(roomMarkers.filter((room) => room.id !== editingRoomId));
