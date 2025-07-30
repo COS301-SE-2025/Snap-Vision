@@ -9,7 +9,7 @@ import AdminContent from '../components/organisms/EditorContent';
 type EditorStackParamList = {
   AdminLoadFloorplans: undefined;
   AdminEditFloorplans: undefined;
-  AdminSettings: undefined;
+  //AdminSettings: undefined;
   AdminFloorplanEditor: undefined;
 };
 
@@ -26,16 +26,16 @@ const EditorScreen = () => {
   const handleEditFloorplans = () => {
     navigation.navigate('AdminEditFloorplans');
   };
-  const handleSettings = () => {
-    navigation.navigate('AdminSettings');
-  };
+  // const handleSettings = () => {
+  //   navigation.navigate('AdminSettings');
+  // };
 
   return (
     <AdminContent
       colors={colors}
       onLoadFloorplans={handleLoadFloorplans}
       onEditFloorplans={handleEditFloorplans}
-      onSettings={handleSettings}
+      //onSettings={handleSettings}
     />
   );
 };
