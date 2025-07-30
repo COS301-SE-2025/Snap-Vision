@@ -145,6 +145,35 @@ function SimpleARGuidance({
   routeCoordinates: [number, number][];
   currentRouteIndex: number;
 }) {
+  // Add state for stabilized heading to reduce tilt sensitivity
+  const [stabilizedHeading, setStabilizedHeading] = useState(deviceHeading);
+  const [headingHistory, setHeadingHistory] = useState<number[]>([]);
+  
+  // Stabilize the heading to reduce tilt sensitivity
+  useEffect(() => {
+    const normalizedHeading = ((deviceHeading % 360) + 360) % 360;
+    
+    // Update heading history (keep last 8 readings)
+    setHeadingHistory(prev => {
+      const newHistory = [...prev, normalizedHeading].slice(-8);
+      
+      // Calculate moving average for stability
+      const average = newHistory.reduce((sum, h) => sum + h, 0) / newHistory.length;
+      
+      // Only update if change is significant (> 8°) and consistent
+      const recentReadings = newHistory.slice(-3); // Last 3 readings
+      const isConsistent = recentReadings.every(h => Math.abs(h - normalizedHeading) < 15);
+      
+      if (isConsistent && Math.abs(average - stabilizedHeading) > 8) {
+        // Smooth the transition to prevent sudden jumps
+        const smoothedHeading = stabilizedHeading + (average - stabilizedHeading) * 0.4;
+        setStabilizedHeading(smoothedHeading);
+      }
+      
+      return newHistory;
+    });
+  }, [deviceHeading, stabilizedHeading]);
+
   if (!currentLocation || !destinationCoords) return null;
 
   // FIXED: Use the actual route coordinates correctly
@@ -173,7 +202,8 @@ function SimpleARGuidance({
   );
   
   // FIXED: Normalize device heading and handle negative values
-  const normalizedDeviceHeading = ((deviceHeading % 360) + 360) % 360;
+  // Use stabilized heading instead of raw device heading
+  const normalizedDeviceHeading = ((stabilizedHeading % 360) + 360) % 360;
   const relativeBearing = normalizeAngle(bearing - normalizedDeviceHeading);
   
   const distance = calculateDistance(
