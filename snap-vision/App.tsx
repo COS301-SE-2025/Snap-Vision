@@ -10,7 +10,7 @@ import BottomTabs from './src/navigation/BottomTabs';
 import AdminLoadFloorplansScreen from './src/screens/AdminLoadFloorplansScreen';
 import AdminEditFloorplansScreen from './src/screens/AdminEditFloorplansScreen';
 import AdminFloorplanEditorScreen from './src/screens/AdminFloorplanEditorScreen';
-import AdminSettingsFrom from './src/components/organisms/AdminSettingsForm';
+import AdminSettingsFrom from './editTests/AdminSettingsForm';
 import { ThemeProvider } from './src/theme/ThemeContext';
 import ManageUsersScreen from './src/screens/ManageUsersScreen';
 import { Linking } from 'react-native';

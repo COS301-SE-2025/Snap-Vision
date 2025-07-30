@@ -2,8 +2,8 @@ import React from 'react';
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import AdminSettingsForm from '../../src/components/organisms/AdminSettingsForm';
-import { ThemeProvider } from '../../src/theme/ThemeContext';
+import AdminSettingsForm from './AdminSettingsForm';
+import { ThemeProvider } from '../src/theme/ThemeContext';
 
 jest.mock('react-native-gesture-handler', () => {
   const { View, TextInput, TouchableOpacity } = require('react-native');

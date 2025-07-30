@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import AdminSettingsForm from '../src/components/organisms/AdminSettingsForm';
+import AdminSettingsForm from './AdminSettingsForm';
 import { ThemeProvider } from '../src/theme/ThemeContext';
 
 //mock all dependencies

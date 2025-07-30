@@ -6,14 +6,13 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import { getRecentlyVPOIs } from '../src/services/firebase/recentlyVService';
 
-// Mock console.error to suppress act warnings
 const originalError = console.error;
 beforeAll(() => {
   console.error = (...args) => {
     if (
       typeof args[0] === 'string' &&
       (args[0].includes('was not wrapped in act') ||
-        args[0].includes('Error fetching recently visited')) // ← Add this line
+        args[0].includes('Error fetching recently visited'))
     ) {
       return;
     }
@@ -25,7 +24,6 @@ afterAll(() => {
   console.error = originalError;
 });
 
-// Mock navigation
 const mockNavigate = jest.fn();
 const mockNavigation = {
   navigate: mockNavigate,
@@ -44,7 +42,6 @@ jest.mock('@react-navigation/native', () => ({
   useFocusEffect: jest.fn(),
 }));
 
-// Mock Firebase Auth
 const mockAuth = {
   currentUser: {
     uid: 'test-user-123',
@@ -57,13 +54,11 @@ jest.mock('@react-native-firebase/auth', () => ({
   default: jest.fn(() => mockAuth),
 }));
 
-// Mock Firebase Firestore
 jest.mock('@react-native-firebase/firestore', () => ({
   __esModule: true,
   default: jest.fn(() => ({})),
 }));
 
-// Make sure the mock is set up before the import
 jest.mock('../src/services/firebase/recentlyVService', () => ({
   __esModule: true,
   getRecentlyVPOIs: jest.fn(),
@@ -71,35 +66,45 @@ jest.mock('../src/services/firebase/recentlyVService', () => ({
 
 const mockGetRecentlyVPOIs = getRecentlyVPOIs as jest.MockedFunction<typeof getRecentlyVPOIs>;
 
-// Mock child components
 jest.mock('../src/components/molecules/HeaderWithIcons', () => {
   const { View } = require('react-native');
-  return () => <View testID="header-with-icons">HeaderWithIcons</View>;
+  const MockComponent = () => <View testID="header-with-icons">HeaderWithIcons</View>;
+  MockComponent.displayName = 'MockedHeaderWithIcons';
+  return MockComponent;
 });
+
 jest.mock('../src/components/molecules/QrCard', () => {
   const { View } = require('react-native');
-  return ({ backgroundColor, titleColor, subtitleColor }: any) => (
+  const MockComponent = ({ backgroundColor, titleColor, subtitleColor }: any) => (
     <View testID="qr-card" style={{ backgroundColor }}>
       QrCard
     </View>
   );
+  MockComponent.displayName = 'MockedQrCard';
+  return MockComponent;
 });
+
 jest.mock('../src/components/atoms/AppButton', () => {
   const { Text, TouchableOpacity } = require('react-native');
-  return ({ title, onPress }: { title: string; onPress: () => void }) => (
+  const MockComponent = ({ title, onPress }: { title: string; onPress: () => void }) => (
     <TouchableOpacity onPress={onPress} testID="app-button">
       <Text>{title}</Text>
     </TouchableOpacity>
   );
+  MockComponent.displayName = 'MockedAppButton';
+  return MockComponent;
 });
+
 jest.mock('../src/components/molecules/RecentlyVisitedCarousel', () => {
   const { Text, View } = require('react-native');
-  return ({ visits }: { visits: any[] }) => (
+  const MockComponent = ({ visits }: { visits: any[] }) => (
     <View testID="recently-visited-carousel">
       <Text>Recently Visited Carousel</Text>
       <Text testID="visits-count">{visits.length} visits</Text>
     </View>
   );
+  MockComponent.displayName = 'MockedRecentlyVisitedCarousel';
+  return MockComponent;
 });
 
 describe('HomeContent', () => {
@@ -407,19 +412,16 @@ describe('HomeContent', () => {
     it('applies theme colors correctly', () => {
       (useFocusEffect as jest.Mock).mockImplementation(() => {});
 
-      // ✅ BETTER APPROACH: Test that theme-dependent components receive proper props
       const { getByTestId } = render(
         <ThemeProviderWrapper>
           <HomeContent />
         </ThemeProviderWrapper>,
       );
 
-      // Test QrCard receives theme-based backgroundColor
       const qrCard = getByTestId('qr-card');
       const backgroundColor = qrCard.props.style.backgroundColor;
 
-      // Should be either light or dark theme color
-      expect(backgroundColor).toMatch(/^#[0-9a-f]{6}$/i); // Valid hex color
+      expect(backgroundColor).toMatch(/^#[0-9a-f]{6}$/i);
       expect(['#f9f9f9', '#1e1e1e']).toContain(backgroundColor);
     });
 

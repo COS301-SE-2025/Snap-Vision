@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
-import Toggle from '../atoms/Toggle';
-import SettingItem from '../molecules/SettingItem';
-import ThemedText from '../atoms/ThemedText';
-import { useTheme } from '../../theme/ThemeContext';
-import { getThemeColors } from '../../theme';
-import SettingsHeader from '../molecules/SettingsHeader';
-import AppSecondaryButton from '../atoms/AppSecondaryButton';
-import AppButton from '../atoms/AppButton';
+import Toggle from '../src/components/atoms/Toggle';
+import SettingItem from '../src/components/molecules/SettingItem';
+import ThemedText from '../src/components/atoms/ThemedText';
+import { useTheme } from '../src/theme/ThemeContext';
+import { getThemeColors } from '../src/theme';
+import SettingsHeader from '../src/components/molecules/SettingsHeader';
+import AppSecondaryButton from '../src/components/atoms/AppSecondaryButton';
+import AppButton from '../src/components/atoms/AppButton';
 
 const SectionHeader = ({ title }: { title: string }) => {
   const { isDark } = useTheme();

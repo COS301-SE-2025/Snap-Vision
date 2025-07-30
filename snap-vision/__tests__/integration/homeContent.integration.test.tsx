@@ -1,4 +1,3 @@
-import firestore from '@react-native-firebase/firestore';
 import React from 'react';
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import HomeContent from '../../src/components/organisms/HomeContent';
@@ -7,7 +6,6 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import { getRecentlyVPOIs } from '../../src/services/firebase/recentlyVService';
 
-// Mock console.error to suppress expected errors
 const originalError = console.error;
 beforeAll(() => {
   console.error = (...args) => {
@@ -26,7 +24,7 @@ afterAll(() => {
   console.error = originalError;
 });
 
-// Mock navigation
+//mock navigation
 const mockNavigate = jest.fn();
 const mockNavigation = {
   navigate: mockNavigate,
@@ -45,7 +43,6 @@ jest.mock('@react-navigation/native', () => ({
   useFocusEffect: jest.fn(),
 }));
 
-// Mock Firebase Auth
 const mockAuth = {
   currentUser: {
     uid: 'test-user-123',
@@ -58,13 +55,11 @@ jest.mock('@react-native-firebase/auth', () => ({
   default: jest.fn(() => mockAuth),
 }));
 
-// Mock Firebase Firestore
 jest.mock('@react-native-firebase/firestore', () => ({
   __esModule: true,
   default: jest.fn(() => ({})),
 }));
 
-// Mock recently visited service
 jest.mock('../../src/services/firebase/recentlyVService', () => ({
   __esModule: true,
   getRecentlyVPOIs: jest.fn(),
@@ -72,15 +67,17 @@ jest.mock('../../src/services/firebase/recentlyVService', () => ({
 
 const mockGetRecentlyVPOIs = getRecentlyVPOIs as jest.MockedFunction<typeof getRecentlyVPOIs>;
 
-// Mock child components
+// mock child components
 jest.mock('../../src/components/molecules/HeaderWithIcons', () => {
   const { View } = require('react-native');
-  return () => <View testID="header-with-icons">HeaderWithIcons</View>;
+  const HeaderWithIconsComponent = () => <View testID="header-with-icons">HeaderWithIcons</View>;
+  HeaderWithIconsComponent.displayName = 'MockedHeaderWithIcons';
+  return HeaderWithIconsComponent;
 });
 
 jest.mock('../../src/components/molecules/QrCard', () => {
   const { View } = require('react-native');
-  return ({ backgroundColor, titleColor, subtitleColor }: any) => (
+  const QrCardComponent = ({ backgroundColor, titleColor, subtitleColor }: any) => (
     <View
       testID="qr-card"
       style={{ backgroundColor }}
@@ -89,28 +86,33 @@ jest.mock('../../src/components/molecules/QrCard', () => {
       QrCard
     </View>
   );
+  QrCardComponent.displayName = 'MockedQrCard';
+  return QrCardComponent;
 });
 
 jest.mock('../../src/components/atoms/AppButton', () => {
   const { Text, TouchableOpacity } = require('react-native');
-  return ({ title, onPress }: { title: string; onPress: () => void }) => (
+  const AppButtonComponent = ({ title, onPress }: { title: string; onPress: () => void }) => (
     <TouchableOpacity onPress={onPress} testID="app-button" accessibilityLabel={title}>
       <Text>{title}</Text>
     </TouchableOpacity>
   );
+  AppButtonComponent.displayName = 'MockedAppButton';
+  return AppButtonComponent;
 });
 
 jest.mock('../../src/components/molecules/RecentlyVisitedCarousel', () => {
   const { Text, View } = require('react-native');
-  return ({ visits }: { visits: any[] }) => (
+  const RecentlyVisitedCarouselComponent = ({ visits }: { visits: any[] }) => (
     <View testID="recently-visited-carousel">
       <Text>Recently Visited Carousel</Text>
       <Text testID="visits-count">{visits.length} visits</Text>
     </View>
   );
+  RecentlyVisitedCarouselComponent.displayName = 'MockedRecentlyVisitedCarousel';
+  return RecentlyVisitedCarouselComponent;
 });
 
-// ✅ ALTERNATIVE: Simple mock that doesn't rely on firestore.Timestamp
 const createMockVisit = (overrides: any = {}) => {
   const timestamp = {
     seconds: Math.floor(Date.now() / 1000),
@@ -125,7 +127,7 @@ const createMockVisit = (overrides: any = {}) => {
     userId: 'test-user-123',
     poiId: 'default-poi-id',
     name: 'Default Location',
-    timestamp, // ✅ Use simple mock timestamp
+    timestamp,
     ...overrides,
   };
 };
@@ -139,7 +141,6 @@ describe('HomeContent Integration Tests', () => {
 
   describe('Component Integration & Rendering', () => {
     it('renders all components and integrates properly', async () => {
-      // Mock focus effect to load data
       (useFocusEffect as jest.Mock).mockImplementation((callback) => {
         setTimeout(() => callback(), 0);
       });
@@ -150,16 +151,13 @@ describe('HomeContent Integration Tests', () => {
         </ThemeProviderWrapper>,
       );
 
-      // Test basic rendering
       expect(getByTestId('header-with-icons')).toBeTruthy();
       expect(getByText('GO TO MAPS')).toBeTruthy();
       expect(getByTestId('qr-card')).toBeTruthy();
       expect(getByText('Recently Visited')).toBeTruthy();
 
-      // Test loading state initially
       expect(getByText('Loading...')).toBeTruthy();
 
-      // Wait for data loading to complete
       await waitFor(
         () => {
           expect(getByTestId('recently-visited-carousel')).toBeTruthy();
@@ -177,7 +175,6 @@ describe('HomeContent Integration Tests', () => {
         </ThemeProviderWrapper>,
       );
 
-      // Test QrCard receives theme-based props
       const qrCard = getByTestId('qr-card');
       const backgroundColor = qrCard.props.style.backgroundColor;
       expect(['#f9f9f9', '#1e1e1e']).toContain(backgroundColor);
@@ -300,7 +297,6 @@ describe('HomeContent Integration Tests', () => {
         </ThemeProviderWrapper>,
       );
 
-      // Manually trigger the focus callback to execute the early return
       await act(async () => {
         focusCallback();
         await new Promise((resolve) => setTimeout(resolve, 50));
@@ -426,10 +422,7 @@ describe('HomeContent Integration Tests', () => {
         expect(mockGetRecentlyVPOIs).toHaveBeenCalledWith('test-user-123');
       });
 
-      // Clear mock and test refetch
       mockGetRecentlyVPOIs.mockClear();
-
-      // Simulate coming back into focus
       await act(async () => {
         focusCallback();
       });
@@ -466,10 +459,8 @@ describe('HomeContent Integration Tests', () => {
         </ThemeProviderWrapper>,
       );
 
-      // Initially shows loading
       expect(getByText('Loading...')).toBeTruthy();
 
-      // After data loads, loading disappears
       await waitFor(
         () => {
           expect(queryByText('Loading...')).toBeNull();
@@ -510,7 +501,6 @@ describe('HomeContent Integration Tests', () => {
         </ThemeProviderWrapper>,
       );
 
-      // Test specific layout relationships
       const button = getByTestId('app-button');
       const qrCard = getByTestId('qr-card');
 

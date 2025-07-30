@@ -42,7 +42,6 @@ describe('AdminContent', () => {
     expect(getByText('DASHBOARD')).toBeTruthy();
     expect(getByText('Load Floorplans')).toBeTruthy();
     expect(getByText('Edit Floorplans')).toBeTruthy();
-    expect(getByText('Settings')).toBeTruthy();
     expect(getByText('Manage Users')).toBeTruthy();
   });
 
@@ -69,13 +68,6 @@ describe('AdminContent', () => {
 
     fireEvent.press(getByTestId('button-edit-floorplans'));
     expect(defaultProps.onEditFloorplans).toHaveBeenCalledTimes(1);
-  });
-
-  it('calls onSettings when Settings button is pressed', () => {
-    const { getByTestId } = render(<AdminContent {...defaultProps} />);
-
-    fireEvent.press(getByTestId('button-settings'));
-    expect(defaultProps.onSettings).toHaveBeenCalledTimes(1);
   });
 
   it('calls onManageUsers when Manage Users button is pressed', () => {
@@ -164,12 +156,10 @@ describe('AdminContent', () => {
     const { getAllByTestId } = render(<AdminContent {...defaultProps} />);
 
     const buttons = getAllByTestId(/^button-/);
-    expect(buttons).toHaveLength(4);
+    expect(buttons).toHaveLength(3);
 
-    // Verify button order by testID
     expect(buttons[0]).toHaveProperty('props.testID', 'button-load-floorplans');
     expect(buttons[1]).toHaveProperty('props.testID', 'button-edit-floorplans');
-    expect(buttons[2]).toHaveProperty('props.testID', 'button-settings');
-    expect(buttons[3]).toHaveProperty('props.testID', 'button-manage-users');
+    expect(buttons[2]).toHaveProperty('props.testID', 'button-manage-users');
   });
 });
