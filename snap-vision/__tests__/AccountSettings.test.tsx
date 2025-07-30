@@ -1,17 +1,18 @@
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 
-// Create a mock Alert implementation
-const mockAlert = {
-  alert: jest.fn(),
-};
+// Create a mock StandardPopup implementation
+const mockStandardPopup = jest.fn();
 
-// Replace the React Native Alert with our mock
+// Mock StandardPopup component
+jest.mock('../src/components/atoms/StandardPopup', () => {
+  return mockStandardPopup;
+});
+
 jest.mock('react-native', () => {
   const reactNative = jest.requireActual('react-native');
   return {
     ...reactNative,
-    Alert: mockAlert,
   };
 });
 
@@ -99,17 +100,27 @@ async function fetchUserData() {
   }
 }
 
-// IMPORTANT: Modified to use mockAlert directly for testing
+// IMPORTANT: Modified to use mockStandardPopup directly for testing
 async function handleLogout() {
   try {
     await auth().signOut();
-    // Use mockAlert for testing rather than Alert
-    mockAlert.alert('Logged Out', 'You have been logged out successfully.');
+
+    mockStandardPopup({
+      visible: true,
+      title: 'Logged Out',
+      message: 'You have been logged out successfully.',
+      onClose: () => {},
+    });
     require('../src/navigation/RootNavigation').resetToLogin();
     return true;
   } catch (error) {
-    // Use mockAlert for testing rather than Alert
-    mockAlert.alert('An error occurred while logging out.');
+
+    mockStandardPopup({
+      visible: true,
+      title: 'Error',
+      message: 'An error occurred while logging out.',
+      onClose: () => {},
+    });
     return false;
   }
 }
@@ -144,8 +155,8 @@ describe('User Settings Functions', () => {
       email: 'test@example.com',
     });
 
-    // Clear Alert mock
-    mockAlert.alert.mockClear();
+    // Clear StandardPopup mock
+    mockStandardPopup.mockClear();
   });
 
   describe('Fetch User Data', () => {
@@ -224,11 +235,13 @@ describe('User Settings Functions', () => {
       // Verify signOut was called
       expect(auth().signOut).toHaveBeenCalled();
 
-      // Verify Alert was shown
-      expect(mockAlert.alert).toHaveBeenCalledWith(
-        'Logged Out',
-        'You have been logged out successfully.',
-      );
+      // Verify StandardPopup was shown
+      expect(mockStandardPopup).toHaveBeenCalledWith({
+        visible: true,
+        title: 'Logged Out',
+        message: 'You have been logged out successfully.',
+        onClose: expect.any(Function),
+      });
 
       // Verify navigation was reset
       expect(mockResetToLogin).toHaveBeenCalled();
@@ -245,7 +258,12 @@ describe('User Settings Functions', () => {
       const result = await handleLogout();
 
       // Verify error handling
-      expect(mockAlert.alert).toHaveBeenCalledWith('An error occurred while logging out.');
+      expect(mockStandardPopup).toHaveBeenCalledWith({
+        visible: true,
+        title: 'Error',
+        message: 'An error occurred while logging out.',
+        onClose: expect.any(Function),
+      });
 
       // Verify navigation was not called
       expect(mockResetToLogin).not.toHaveBeenCalled();

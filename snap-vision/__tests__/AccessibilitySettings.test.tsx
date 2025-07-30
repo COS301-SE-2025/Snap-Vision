@@ -1,6 +1,5 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
-import { Alert } from 'react-native';
 import AccessibilitySettingsContent from '../src/components/organisms/AccessibilitySettingsContent';
 import { useAccessibility } from '../src/context/AccessibilityContext';
 import { getThemeColors } from '../src/theme';
@@ -38,8 +37,25 @@ jest.mock('../src/components/molecules/SettingsToggleItem', () => {
   };
 });
 
-// Mock Alert
-jest.spyOn(Alert, 'alert');
+// Mock StandardPopup
+jest.mock('../src/components/atoms/StandardPopup', () => {
+  const React = require('react');
+  const { View, Text, TouchableOpacity } = require('react-native');
+
+  return function MockStandardPopup({ visible, title, message, onConfirm, confirmText }: any) {
+    if (!visible) return null;
+    
+    return (
+      <View testID="standard-popup">
+        <Text testID="popup-title">{title}</Text>
+        <Text testID="popup-message">{message}</Text>
+        <TouchableOpacity testID="popup-confirm" onPress={onConfirm}>
+          <Text>{confirmText}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+});
 
 const mockUseAccessibility = useAccessibility as jest.MockedFunction<typeof useAccessibility>;
 const mockGetThemeColors = getThemeColors as jest.MockedFunction<typeof getThemeColors>;
@@ -134,7 +150,7 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
       expect(mockSetHapticFeedbackEnabled).toHaveBeenCalledWith(true);
     });
 
-    expect(Alert.alert).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('standard-popup')).toBeNull();
   });
 
   it('should handle successful haptic feedback toggle from ON to OFF', async () => {
@@ -155,10 +171,10 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
       expect(mockSetHapticFeedbackEnabled).toHaveBeenCalledWith(false);
     });
 
-    expect(Alert.alert).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('standard-popup')).toBeNull();
   });
 
-  it('should show error alert when haptic feedback toggle fails', async () => {
+  it('should show error popup when haptic feedback toggle fails', async () => {
     const mockError = new Error('Network error');
     mockSetHapticFeedbackEnabled.mockRejectedValue(mockError);
 
@@ -171,9 +187,10 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
       expect(mockSetHapticFeedbackEnabled).toHaveBeenCalledWith(true);
     });
 
-    expect(Alert.alert).toHaveBeenCalledWith(
-      'Error',
-      'Failed to save haptic feedback setting. Please try again.',
+    expect(screen.getByTestId('standard-popup')).toBeTruthy();
+    expect(screen.getByTestId('popup-title')).toHaveTextContent('Error');
+    expect(screen.getByTestId('popup-message')).toHaveTextContent(
+      'Failed to save haptic feedback setting. Please try again.'
     );
   });
 
@@ -271,9 +288,10 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
       expect(mockSetHapticFeedbackEnabled).toHaveBeenCalledTimes(2);
     });
 
-    expect(Alert.alert).toHaveBeenCalledWith(
-      'Error',
-      'Failed to save haptic feedback setting. Please try again.',
+    expect(screen.getByTestId('standard-popup')).toBeTruthy();
+    expect(screen.getByTestId('popup-title')).toHaveTextContent('Error');
+    expect(screen.getByTestId('popup-message')).toHaveTextContent(
+      'Failed to save haptic feedback setting. Please try again.'
     );
   });
 
