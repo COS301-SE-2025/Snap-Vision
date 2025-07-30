@@ -149,7 +149,8 @@ export default function AdminEditFloorplansContent() {
           return {
             locationId: selectedLocation,
             buildingId: selectedBuildingId,
-            buildingName: buildings.find((b) => b.id === selectedBuildingId)?.name || selectedBuildingId,
+            buildingName:
+              buildings.find((b) => b.id === selectedBuildingId)?.name || selectedBuildingId,
             floorLabel: data.floorLabel || doc.id,
             downloadURL: data.downloadURL,
             timestamp: data.timestamp?.toDate()?.toISOString() || '',
@@ -248,7 +249,9 @@ export default function AdminEditFloorplansContent() {
 
         {/* Step 1: Select Location */}
         <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionTitle, { color: colors.primary }]}>Step 1: Select Location</Text>
+          <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+            Step 1: Select Location
+          </Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -278,7 +281,9 @@ export default function AdminEditFloorplansContent() {
         {/* Step 2: Select Building */}
         {selectedLocation && (
           <View style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: colors.primary }]}>Step 2: Select Building</Text>
+            <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+              Step 2: Select Building
+            </Text>
             <DropDownPicker
               open={buildingDropdownOpen}
               setOpen={setBuildingDropdownOpen}
@@ -309,7 +314,9 @@ export default function AdminEditFloorplansContent() {
         {/* Step 3: Select Floor */}
         {selectedBuildingId && (
           <View style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: colors.primary }]}>Step 3: Select Floor</Text>
+            <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+              Step 3: Select Floor
+            </Text>
             <DropDownPicker
               open={floorDropdownOpen}
               setOpen={setFloorDropdownOpen}
