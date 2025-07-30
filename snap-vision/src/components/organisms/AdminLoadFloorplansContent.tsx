@@ -6,12 +6,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import AppInput from '../atoms/AppInput';
 import AppButton from '../atoms/AppButton';
 import AppSecondaryButton from '../atoms/AppSecondaryButton';
 import SettingsHeader from '../molecules/SettingsHeader';
+import StandardPopup from '../atoms/StandardPopup';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeContext';
@@ -72,6 +72,16 @@ export default function AdminLoadFloorplansContent() {
     { label: string; value: string }[]
   >([]);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
+
+  // Popup states
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showNavigationConfirm, setShowNavigationConfirm] = useState(false);
+  const [uploadedData, setUploadedData] = useState<{
+    buildingId: string;
+    floorLabel: string;
+    imageUri: string;
+    locationId: string;
+  } | null>(null);
 
   // Fetch all buildings from new Firestore structure (dynamically gets location)
   useEffect(() => {
@@ -222,31 +232,15 @@ export default function AdminLoadFloorplansContent() {
 
       setIsLoading(false);
 
-      Alert.alert(
-        'Success',
-        'Floorplan uploaded successfully. Would you like to add room POIs now?',
-        [
-          { text: 'Later', style: 'cancel' },
-          {
-            text: 'Add POIs',
-            onPress: () =>
-              navigation.navigate('FloorplanEditor', {
-                buildingId: selectedBuilding.id,
-                floorLabel,
-                imageUri: downloadURL,
-                locationId: selectedLocation,
-              }),
-          },
-        ],
-      );
+      // Store upload data for potential navigation
+      setUploadedData({
+        buildingId: selectedBuilding.id,
+        floorLabel,
+        imageUri: downloadURL,
+        locationId: selectedLocation,
+      });
 
-      // Reset form
-      setBuildingName('');
-      setFloorLabel('');
-      setSelectedBuilding(null);
-      setSelectedBuildingId(null);
-      setFileUri(null);
-      setFileName('');
+      setShowSuccessPopup(true);
     } catch (err) {
       console.error('Error uploading floorplan:', err);
       setError('Failed to upload floorplan');
@@ -258,6 +252,37 @@ export default function AdminLoadFloorplansContent() {
   const handleBuildingSelect = (building: Building) => {
     setSelectedBuilding(building);
     setBuildingName(building.name);
+  };
+
+  // Handle success popup confirmation
+  const handleSuccessConfirm = () => {
+    setShowSuccessPopup(false);
+    setShowNavigationConfirm(true);
+  };
+
+  // Handle navigation to POI editor
+  const handleNavigateToPOIEditor = () => {
+    if (uploadedData) {
+      navigation.navigate('FloorplanEditor', uploadedData);
+    }
+    handleResetForm();
+  };
+
+  // Handle "Later" option
+  const handleLater = () => {
+    handleResetForm();
+  };
+
+  // Reset form after successful upload
+  const handleResetForm = () => {
+    setShowNavigationConfirm(false);
+    setBuildingName('');
+    setFloorLabel('');
+    setSelectedBuilding(null);
+    setSelectedBuildingId(null);
+    setFileUri(null);
+    setFileName('');
+    setUploadedData(null);
   };
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -429,6 +454,28 @@ export default function AdminLoadFloorplansContent() {
           />
         </View>
       </ScrollView>
+
+      {/* Success Popup */}
+      <StandardPopup
+        visible={showSuccessPopup}
+        title="Upload Successful"
+        message="Floorplan uploaded successfully!"
+        onConfirm={handleSuccessConfirm}
+        confirmText="Continue"
+        showCancel={false}
+      />
+
+      {/* Navigation Confirmation Popup */}
+      <StandardPopup
+        visible={showNavigationConfirm}
+        title="Add Room POIs"
+        message="Would you like to add room POIs now?"
+        onConfirm={handleNavigateToPOIEditor}
+        onCancel={handleLater}
+        confirmText="Add POIs"
+        cancelText="Later"
+        showCancel={true}
+      />
     </View>
   );
 }

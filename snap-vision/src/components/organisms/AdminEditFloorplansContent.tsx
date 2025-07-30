@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+} from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -8,7 +15,6 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import AppSecondaryButton from '../atoms/AppSecondaryButton';
 import SettingsHeader from '../molecules/SettingsHeader';
 import StandardPopup from '../atoms/StandardPopup';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
@@ -50,16 +56,6 @@ export default function AdminEditFloorplansContent() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Popup states
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-
-  // Popup states
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-
   const [buildingDropdownOpen, setBuildingDropdownOpen] = useState(false);
   const [buildingDropdownItems, setBuildingDropdownItems] = useState<
     { label: string; value: string }[]
@@ -67,6 +63,11 @@ export default function AdminEditFloorplansContent() {
 
   // Added state for floor dropdown open
   const [floorDropdownOpen, setFloorDropdownOpen] = useState(false);
+
+  // Popup states
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -178,92 +179,6 @@ export default function AdminEditFloorplansContent() {
 
   const handleEditPOIs = () => {
     if (!selectedFloorplan) return;
-
-    try {
-      // Using launchImageLibrary instead of DocumentPicker
-      const result = await launchImageLibrary({
-        mediaType: 'photo',
-        quality: 0.8,
-        selectionLimit: 1,
-      });
-
-      // Check if user canceled or if there are no assets
-      if (result.didCancel || !result.assets || result.assets.length === 0) {
-        return;
-      }
-
-      const selectedImage = result.assets[0];
-      if (!selectedImage.uri) {
-        throw new Error('Selected image has no URI');
-      }
-
-      // Get selected floorplan data
-      const floorplan = floorplans.find((fp) => fp.id === selectedFloorplan);
-      if (!floorplan) return;
-
-      // Create directory if it doesn't exist
-      const dirPath = `${RNFS.DocumentDirectoryPath}/floorplans`;
-      await RNFS.mkdir(dirPath, { NSURLIsExcludedFromBackupKey: true });
-
-      // Generate file name and path
-      const fileExtension = selectedImage.type?.includes('png') ? '.png' : '.jpg';
-      const fileName = `${floorplan.buildingId}_${floorplan.floorLabel.replace(/\s+/g, '_')}${fileExtension}`;
-      const destPath = `${dirPath}/${fileName}`;
-
-      // Copy file to app's documents directory
-      await RNFS.copyFile(selectedImage.uri, destPath);
-
-      // Update AsyncStorage with new URI
-      const storageKey = `floorplan_${floorplan.buildingId}_${floorplan.floorLabel}`;
-      const existingData = await AsyncStorage.getItem(storageKey);
-      const updatedData = existingData ? JSON.parse(existingData) : {};
-      updatedData.uri = `file://${destPath}`;
-      updatedData.timestamp = new Date().toISOString();
-
-      await AsyncStorage.setItem(storageKey, JSON.stringify(updatedData));
-
-      // Update UI
-      setFloorplans((prev) =>
-        prev.map((fp) =>
-          fp.id === selectedFloorplan
-            ? { ...fp, localUri: `file://${destPath}`, lastModified: new Date().toISOString() }
-            : fp,
-        ),
-      );
-
-      setSuccessMessage('Floorplan updated successfully');
-      setShowSuccessPopup(true);
-    } catch (err) {
-      console.error('Error updating floorplan:', err);
-      setError(
-        `Failed to update floorplan: ${err instanceof Error ? err.message : 'Unknown error'}`,
-      );
-    }
-  };
-
-  const handleAddNewFloorplan = () => {
-    // Navigate to the floorplan creation screen
-    navigation.navigate('AdminLoadFloorplansScreen');
-  };
-
-  const handleEditRooms = () => {
-    if (!selectedFloorplan) {
-      setError('Please select a floorplan first');
-      return;
-    }
-
-    const floorplan = floorplans.find((fp) => fp.id === selectedFloorplan);
-    if (!floorplan) {
-      setError('Selected floorplan not found');
-      return;
-    }
-
-    if (!floorplan.localUri) {
-      setError('Floorplan image not found. Please update the floorplan first');
-      return;
-    }
-
-    // Navigate to the floorplan editor
     navigation.navigate('AdminFloorplanEditor', {
       buildingId: selectedFloorplan.buildingId,
       floorLabel: selectedFloorplan.floorLabel,
@@ -277,19 +192,26 @@ export default function AdminEditFloorplansContent() {
   };
 
   const confirmDeleteFloorplan = async () => {
+    if (!selectedFloorplan) return;
+
     try {
       setIsLoading(true);
-      const floorplan = floorplans.find((fp) => fp.id === selectedFloorplan);
-      if (!floorplan) return;
+      const { locationId, buildingId, floorLabel } = selectedFloorplan;
 
-      // Delete from AsyncStorage
-      await AsyncStorage.removeItem(`floorplan_${floorplan.buildingId}_${floorplan.floorLabel}`);
+      await firestore()
+        .doc(`locations/${locationId}/buildingPOIs/${buildingId}/floorplans/${floorLabel}`)
+        .delete();
 
-      // Delete associated room POIs from Firestore
-      const snapshot = await firestore()
-        .collection('RoomPOIs')
-        .where('buildingId', '==', floorplan.buildingId)
-        .where('floorId', '==', floorplan.floorLabel)
+      const roomSnap = await firestore()
+        .collection(`locations/${locationId}/roomPOIs`)
+        .where('buildingId', '==', buildingId)
+        .where('floorId', '==', floorLabel)
+        .get();
+
+      const pathSnap = await firestore()
+        .collection(`locations/${locationId}/pathPOIs`)
+        .where('buildingId', '==', buildingId)
+        .where('floorId', '==', floorLabel)
         .get();
 
       const batch = firestore().batch();
@@ -297,27 +219,15 @@ export default function AdminEditFloorplansContent() {
       pathSnap.forEach((doc) => batch.delete(doc.ref));
       await batch.commit();
 
-      // Remove from local file system
-      if (floorplan.localUri) {
-        try {
-          await RNFS.unlink(floorplan.localUri.replace('file://', ''));
-        } catch (fileErr) {
-          console.warn('Error deleting floorplan file:', fileErr);
-          // Continue with deletion even if file removal fails
-        }
-      }
-
-      // Update UI
-      setFloorplans((prev) => prev.filter((fp) => fp.id !== selectedFloorplan));
+      setFloorplans((prev) => prev.filter((fp) => fp.id !== selectedFloorplan.id));
       setSelectedFloorplan(null);
-      setIsLoading(false);
-
-      setSuccessMessage('Floorplan and associated POIs deleted successfully');
+      setSuccessMessage('Floorplan and POIs removed successfully.');
       setShowSuccessPopup(true);
     } catch (err) {
-      setIsLoading(false);
-      console.error('Error deleting floorplan:', err);
+      console.error(err);
       setError('Failed to delete floorplan');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -466,7 +376,7 @@ export default function AdminEditFloorplansContent() {
       <StandardPopup
         visible={showDeleteConfirmation}
         title="Delete Floorplan"
-        message="Are you sure you want to delete this floorplan? This will also delete all associated room POIs."
+        message="Are you sure you want to delete this floorplan? This action cannot be undone."
         onConfirm={() => {
           setShowDeleteConfirmation(false);
           confirmDeleteFloorplan();
