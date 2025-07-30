@@ -22,11 +22,12 @@ import { User } from '../../types/User';
 
 interface Props {
   navigation: any;
+  currentUserId: string | undefined;
 }
 
 const ROLE_OPTIONS: Array<'Admin' | 'Editor' | 'Viewer'> = ['Admin', 'Editor', 'Viewer'];
 
-export default function ManageUsersForm({ navigation }: Props) {
+export default function ManageUsersForm({ navigation, currentUserId }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
@@ -153,6 +154,11 @@ export default function ManageUsersForm({ navigation }: Props) {
                 user={user}
                 onEdit={() => onEditPress(user)}
                 onDelete={(u) => {
+                  if (u.id === currentUserId) {
+                      Alert.alert('Action Not Allowed', 'You cannot delete yourself.');
+                      return;
+                    }
+                  
                   Alert.alert('Confirm Deletion', `Are you sure you want to delete ${u.name}?`, [
                     { text: 'Cancel', style: 'cancel' },
                     {
