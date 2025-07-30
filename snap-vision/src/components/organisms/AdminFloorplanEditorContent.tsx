@@ -12,6 +12,7 @@ import firestore from '@react-native-firebase/firestore';
 import type { StackNavigationProp } from '@react-navigation/stack';
 
 type FloorplanEditorScreenRouteParams = {
+  locationId: string;
   buildingId: string;
   floorLabel: string;
   imageUri: string;
@@ -75,7 +76,7 @@ export default function AdminFloorplanEditorContent() {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   // Get route params with a safe default
-  const { buildingId, floorLabel, imageUri } = route.params || {
+  const { buildingId, floorLabel, imageUri, locationId } = route.params || {
     buildingId: '',
     floorLabel: '',
     imageUri: '',
@@ -92,7 +93,7 @@ export default function AdminFloorplanEditorContent() {
     const loadRoomPOIs = async () => {
       try {
         const snapshot = await firestore()
-          .collection('RoomPOIs')
+          .collection(`locations/${locationId}/roomPOIs`)
           .where('buildingId', '==', buildingId)
           .where('floorId', '==', floorLabel)
           .get();
@@ -128,7 +129,7 @@ export default function AdminFloorplanEditorContent() {
     const loadPaths = async () => {
       try {
         const snapshot = await firestore()
-          .collection('PathPOIs')
+          .collection(`locations/${locationId}/pathPOIs`)
           .where('buildingId', '==', buildingId)
           .where('floorId', '==', floorLabel)
           .get();
@@ -231,7 +232,7 @@ export default function AdminFloorplanEditorContent() {
         createdAt: new Date().toISOString(),
       };
 
-      await firestore().collection('PathPOIs').doc(pathId).set(pathPOI);
+      await firestore().collection(`locations/${locationId}/pathPOIs`).doc(pathId).set(pathPOI);
 
       setPathMarkers([...pathMarkers, pathPOI]);
 
@@ -820,8 +821,6 @@ export default function AdminFloorplanEditorContent() {
     `;
   };
 
-  // ...rest of existing code...
-
   // Handle messages from WebView
   const handleMessage = (event: { nativeEvent: { data: string } }) => {
     try {
@@ -911,7 +910,7 @@ export default function AdminFloorplanEditorContent() {
 
       // Save to Firestore
       await firestore()
-        .collection('RoomPOIs')
+        .collection(`locations/${locationId}/roomPOIs`)
         .doc(roomId as string)
         .set(roomPOI);
 
@@ -950,7 +949,7 @@ export default function AdminFloorplanEditorContent() {
     }
 
     try {
-      await firestore().collection('RoomPOIs').doc(editingRoomId).delete();
+      await firestore().collection(`locations/${locationId}/roomPOIs`).doc(editingRoomId).delete();
 
       // Remove from local state
       setRoomMarkers(roomMarkers.filter((room) => room.id !== editingRoomId));
