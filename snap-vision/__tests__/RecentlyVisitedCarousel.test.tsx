@@ -199,7 +199,6 @@ describe('RecentlyVisitedCarousel', () => {
     const visits = [createVisit()];
 
     render(<RecentlyVisitedCarousel visits={visits} />);
-
   });
 
   it('uses item.id as key when available', () => {
