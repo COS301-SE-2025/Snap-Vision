@@ -19,14 +19,16 @@ import RoleFilter from '../molecules/RoleFilter';
 import UserCard from '../molecules/UserCard';
 import SettingsHeader from '../molecules/SettingsHeader';
 import { User } from '../../types/User';
+import StandardPopup from '../atoms/StandardPopup';
 
 interface Props {
   navigation: any;
+  currentUserId: string | undefined;
 }
 
 const ROLE_OPTIONS: Array<'Admin' | 'Editor' | 'Viewer'> = ['Admin', 'Editor', 'Viewer'];
 
-export default function ManageUsersForm({ navigation }: Props) {
+export default function ManageUsersForm({ navigation, currentUserId }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
@@ -47,6 +49,32 @@ export default function ManageUsersForm({ navigation }: Props) {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [selectedRole, setSelectedRole] = useState<'Admin' | 'Editor' | 'Viewer' | null>(null);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
+  const [popupVisible, setPopupVisible] = useState(false);
+  const [popupMessage, setPopupMessage] = useState('');
+  const [popupTitle, setPopupTitle] = useState('Notice');
+  const [popupConfirm, setPopupConfirm] = useState<() => void>(() => () => {});
+  const [popupCancelHandler, setPopupCancelHandler] = useState<() => void>(
+    () => () => setPopupVisible(false),
+  );
+  const [popupShowCancel, setPopupShowCancel] = useState(true);
+
+  const showPopup = (
+    title: string,
+    message: string,
+    onConfirm: () => void = () => setPopupVisible(false),
+    showCancel: boolean = true,
+    cancelHandler: () => void = () => setPopupVisible(false),
+  ) => {
+    setPopupTitle(title);
+    setPopupMessage(message);
+    setPopupConfirm(() => () => {
+      onConfirm();
+      setPopupVisible(false);
+    });
+    setPopupVisible(true);
+    setPopupCancelHandler(() => cancelHandler);
+    setPopupShowCancel(showCancel);
+  };
 
   // Step 1: Open role selection modal
   const onEditPress = (user: User) => {
@@ -61,7 +89,7 @@ export default function ManageUsersForm({ navigation }: Props) {
     if (!selectedRole || !editingUser) return;
 
     if (selectedRole === editingUser.role) {
-      Alert.alert('Error', `User is already a ${selectedRole}`);
+      showPopup('Error', `User is already a ${selectedRole}`, () => {});
       return;
     }
 
@@ -72,19 +100,13 @@ export default function ManageUsersForm({ navigation }: Props) {
       setLocationModalVisible(true);
     } else {
       // Admin or Viewer: confirm role change directly
-      Alert.alert(
+      showPopup(
         'Confirm Role Change',
         `Are you sure you want to change ${editingUser.name}'s role to ${selectedRole}?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Confirm',
-            onPress: () => {
-              editUser({ ...editingUser, role: selectedRole });
-              resetEditingState();
-            },
-          },
-        ],
+        () => {
+          editUser({ ...editingUser, role: selectedRole });
+          resetEditingState();
+        },
       );
     }
   };
@@ -92,9 +114,10 @@ export default function ManageUsersForm({ navigation }: Props) {
   // Step 3: Confirm location selection for Editor
   const confirmLocationSelection = () => {
     if (!selectedLocationId || !editingUser) {
-      Alert.alert('Please select a location.');
+      showPopup('Error', 'Please select a location.', () => {});
       return;
     }
+
     editUser({ ...editingUser, role: 'Editor' }, selectedLocationId);
     resetEditingState();
   };
@@ -153,14 +176,22 @@ export default function ManageUsersForm({ navigation }: Props) {
                 user={user}
                 onEdit={() => onEditPress(user)}
                 onDelete={(u) => {
-                  Alert.alert('Confirm Deletion', `Are you sure you want to delete ${u.name}?`, [
-                    { text: 'Cancel', style: 'cancel' },
-                    {
-                      text: 'Delete',
-                      style: 'destructive',
-                      onPress: () => deleteUser(u),
-                    },
-                  ]);
+                  if (u.id === currentUserId) {
+                    setPopupTitle('Action Not Allowed');
+                    setPopupMessage('You cannot delete yourself.');
+                    setPopupConfirm(() => () => setPopupVisible(false));
+                    setPopupVisible(true);
+                    return;
+                  }
+
+                  setPopupTitle('Confirm Deletion');
+                  setPopupMessage(`Are you sure you want to delete ${u.name}?`);
+                  setPopupConfirm(() => () => {
+                    deleteUser(u);
+                  });
+                  setPopupCancelHandler(() => () => setPopupVisible(false));
+                  setPopupShowCancel(true);
+                  setPopupVisible(true);
                 }}
               />
             ))
@@ -258,6 +289,15 @@ export default function ManageUsersForm({ navigation }: Props) {
           </View>
         </Modal>
       </ScrollView>
+
+      <StandardPopup
+        visible={popupVisible}
+        title={popupTitle}
+        message={popupMessage}
+        onConfirm={popupConfirm}
+        onCancel={popupCancelHandler}
+        showCancel={popupShowCancel}
+      />
     </View>
   );
 }
