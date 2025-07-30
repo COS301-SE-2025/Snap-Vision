@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Dimensions, Text, TouchableOpacity } from 'react-native';
 import { Camera, useCameraDevices, useCameraPermission } from 'react-native-vision-camera';
-import { Canvas, Path, Skia, Circle } from '@shopify/react-native-skia';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -29,13 +28,7 @@ export default function ARNavigationOverlay({
   const [isActive, setIsActive] = useState(false);
   const [deviceError, setDeviceError] = useState<string | null>(null);
   const [showDebugInfo, setShowDebugInfo] = useState(false);
-
-  // Simplified visible route segments
-  const [visibleRouteSegments, setVisibleRouteSegments] = useState<{
-    x: number;
-    y: number;
-    distance: number;
-  }[]>([]);
+  const [nextInstruction, setNextInstruction] = useState<string>('');
 
   useEffect(() => {
     if (!hasPermission) {
@@ -54,18 +47,12 @@ export default function ARNavigationOverlay({
     }
   }, [hasPermission, device, devices]);
 
-  // Calculate visible route segments
+  // Get next navigation instruction
   useEffect(() => {
-    if (currentLocation && routeCoordinates.length > 0) {
-      const segments = calculateVisibleRouteSegments(
-        currentLocation,
-        routeCoordinates,
-        currentRouteIndex,
-        deviceHeading
-      );
-      setVisibleRouteSegments(segments);
+    if (navigationSteps.length > 0 && currentRouteIndex < navigationSteps.length) {
+      setNextInstruction(navigationSteps[currentRouteIndex]?.instruction || '');
     }
-  }, [currentLocation, routeCoordinates, currentRouteIndex, deviceHeading]);
+  }, [navigationSteps, currentRouteIndex]);
 
   if (!hasPermission) {
     return (
@@ -82,11 +69,11 @@ export default function ARNavigationOverlay({
       <View style={styles.container}>
         <View style={styles.placeholder}>
           <Text style={styles.placeholderText}>{deviceError || 'Initializing camera...'}</Text>
-          <ARFallbackView 
+          <SimpleARFallback 
             currentLocation={currentLocation}
-            routeCoordinates={routeCoordinates}
-            currentRouteIndex={currentRouteIndex}
+            destinationCoords={destinationCoords}
             deviceHeading={deviceHeading}
+            nextInstruction={nextInstruction}
           />
         </View>
       </View>
@@ -105,25 +92,15 @@ export default function ARNavigationOverlay({
         audio={false}
       />
 
-      {/* AR Path Overlay */}
-      <Canvas style={styles.overlay}>
-        <ARPathRenderer 
-          routeSegments={visibleRouteSegments}
-          deviceHeading={deviceHeading}
-          currentLocation={currentLocation}
-        />
-      </Canvas>
-
-      {/* Simple Direction Arrow - Always visible */}
-      {currentLocation && destinationCoords && (
-        <View style={styles.directionContainer}>
-          <DirectionArrow 
-            currentLocation={currentLocation}
-            destinationCoords={destinationCoords}
-            deviceHeading={deviceHeading}
-          />
-        </View>
-      )}
+      {/* Simple AR Guidance Overlay */}
+      <SimpleARGuidance 
+        currentLocation={currentLocation}
+        destinationCoords={destinationCoords}
+        deviceHeading={deviceHeading}
+        nextInstruction={nextInstruction}
+        routeCoordinates={routeCoordinates}
+        currentRouteIndex={currentRouteIndex}
+      />
 
       {/* Debug Toggle */}
       <TouchableOpacity 
@@ -140,7 +117,6 @@ export default function ARNavigationOverlay({
         <View style={styles.debugInfo}>
           <Text style={styles.debugText}>Route Points: {routeCoordinates.length}</Text>
           <Text style={styles.debugText}>Current Index: {currentRouteIndex}</Text>
-          <Text style={styles.debugText}>Visible Segments: {visibleRouteSegments.length}</Text>
           <Text style={styles.debugText}>Device Heading: {Math.round(deviceHeading)}°</Text>
           {currentLocation && (
             <Text style={styles.debugText}>
@@ -153,146 +129,155 @@ export default function ARNavigationOverlay({
   );
 }
 
-// Enhanced calculation with debugging
-function calculateVisibleRouteSegments(
-  currentLocation: { x: number; y: number },
-  routeCoordinates: [number, number][],
-  currentRouteIndex: number,
-  deviceHeading: number
-) {
-  console.log('calculateVisibleRouteSegments called with:');
-  console.log('- Current location:', currentLocation);
-  console.log('- Route coordinates count:', routeCoordinates.length);
-  console.log('- Current route index:', currentRouteIndex);
-  console.log('- Device heading:', deviceHeading);
-
-  const visiblePoints: { x: number; y: number; distance: number }[] = [];
-  const maxVisibleDistance = 100; // Increased for debugging
-  const fieldOfView = 120; // Increased for debugging
-
-  // Start from current index and look ahead
-  const startIndex = Math.max(0, currentRouteIndex);
-  const endIndex = Math.min(routeCoordinates.length, startIndex + 15); // Get more points
-
-  console.log(`Processing route points from index ${startIndex} to ${endIndex}`);
-
-  for (let i = startIndex; i < endIndex; i++) {
-    const [lon, lat] = routeCoordinates[i];
-    
-    const distance = calculateDistance(
-      currentLocation.x, currentLocation.y,
-      lon, lat
-    );
-
-    console.log(`Point ${i}: (${lon.toFixed(6)}, ${lat.toFixed(6)}) - Distance: ${distance.toFixed(2)}m`);
-
-    // Include more points for debugging
-    if (distance <= maxVisibleDistance && distance > 1) {
-      const bearing = calculateBearing(currentLocation.x, currentLocation.y, lon, lat);
-      const relativeBearing = normalizeAngle(bearing - deviceHeading);
-      
-      console.log(`Point ${i}: Bearing: ${bearing.toFixed(2)}°, Relative: ${relativeBearing.toFixed(2)}°`);
-      
-      // Include points within field of view (more lenient for debugging)
-      if (Math.abs(relativeBearing) <= fieldOfView / 2) {
-        visiblePoints.push({
-          x: lon,
-          y: lat,
-          distance
-        });
-        console.log(`Point ${i}: INCLUDED in visible points`);
-      } else {
-        console.log(`Point ${i}: EXCLUDED - outside field of view`);
-      }
-    } else {
-      console.log(`Point ${i}: EXCLUDED - distance ${distance.toFixed(2)}m (max: ${maxVisibleDistance}m)`);
-    }
-  }
-
-  console.log(`Total visible points: ${visiblePoints.length}`);
-  return visiblePoints;
-}
-
-// AR Path Renderer Component - Enhanced with debugging (reverted to better version)
-function ARPathRenderer({ 
-  routeSegments, 
+// Simplified AR Guidance Component
+function SimpleARGuidance({ 
+  currentLocation, 
+  destinationCoords, 
   deviceHeading,
-  currentLocation
-}: { 
-  routeSegments: { x: number; y: number; distance: number }[]; 
-  deviceHeading: number;
+  nextInstruction,
+  routeCoordinates,
+  currentRouteIndex
+}: {
   currentLocation: { x: number; y: number } | null;
+  destinationCoords: { x: number; y: number } | null;
+  deviceHeading: number;
+  nextInstruction: string;
+  routeCoordinates: [number, number][];
+  currentRouteIndex: number;
 }) {
-  console.log('ARPathRenderer - Route segments:', routeSegments.length);
-  console.log('ARPathRenderer - Current location:', currentLocation);
+  if (!currentLocation || !destinationCoords) return null;
+
+  // Get next point from route or destination
+  const nextPoint = routeCoordinates.length > currentRouteIndex + 1 
+    ? routeCoordinates[currentRouteIndex + 1] 
+    : [destinationCoords.x, destinationCoords.y];
+
+  const bearing = calculateBearing(
+    currentLocation.x, currentLocation.y,
+    nextPoint[0], nextPoint[1]
+  );
   
-  if (routeSegments.length < 2 || !currentLocation) {
-    console.log('ARPathRenderer - Not enough data to render path');
-    return null;
-  }
+  const relativeBearing = normalizeAngle(bearing - deviceHeading);
+  const distance = calculateDistance(
+    currentLocation.x, currentLocation.y,
+    nextPoint[0], nextPoint[1]
+  );
 
-  // Convert world coordinates to screen coordinates
-  const screenPoints = routeSegments
-    .map((point, index) => {
-      const screenPoint = worldToScreen(point, deviceHeading, currentLocation);
-      console.log(`Point ${index}: World(${point.x.toFixed(6)}, ${point.y.toFixed(6)}) -> Screen(${screenPoint?.x}, ${screenPoint?.y})`);
-      return screenPoint;
-    })
-    .filter(point => point !== null);
+  // Determine direction instruction with much wider tolerance
+  const getDirectionInstruction = () => {
+    if (Math.abs(relativeBearing) < 45) return "Continue Straight"; // Much wider straight zone
+    if (relativeBearing > 45) return "Turn Right";
+    if (relativeBearing < -45) return "Turn Left";
+    return "Continue";
+  };
 
-  console.log('ARPathRenderer - Screen points:', screenPoints.length);
-
-  if (screenPoints.length < 2) {
-    console.log('ARPathRenderer - Not enough screen points to render path');
-    return null;
-  }
-
-  // Create a simple straight line path for debugging
-  const routePath = Skia.Path.Make();
-  routePath.moveTo(screenPoints[0]!.x, screenPoints[0]!.y);
-  
-  // Just draw straight lines between points for now
-  for (let i = 1; i < screenPoints.length; i++) {
-    const point = screenPoints[i]!;
-    routePath.lineTo(point.x, point.y);
-  }
+  // Get direction emoji with wider zones
+  const getDirectionEmoji = () => {
+    if (Math.abs(relativeBearing) < 45) return "⬆️"; // Wider straight zone
+    if (relativeBearing > 135) return "↙️"; // Behind right
+    if (relativeBearing > 90) return "➡️";
+    if (relativeBearing > 45) return "↗️";
+    if (relativeBearing < -135) return "↘️"; // Behind left
+    if (relativeBearing < -90) return "⬅️";
+    if (relativeBearing < -45) return "↖️";
+    return "⬆️";
+  };
 
   return (
     <>
-      {/* Route line - make it very visible */}
-      <Path 
-        path={routePath} 
-        style="stroke" 
-        strokeWidth={25} 
-        color="#00FF00" // Bright green
-        opacity={1.0}
-      />
-      
-      {/* Route points - smaller and less intrusive */}
-      {screenPoints.map((point, index) => (
-        <Circle
-          key={index}
-          cx={point!.x}
-          cy={point!.y}
-          r={8}
-          color="#FFFFFF" 
-          opacity={0.8}
-        />
-      ))}
+      {/* Main Direction Indicator - Center of screen */}
+      <View style={styles.mainGuidanceContainer}>
+        <View style={[
+          styles.directionCircle,
+          { 
+            backgroundColor: Math.abs(relativeBearing) < 45 ? '#4CAF50' : '#FF9800', // Wider green zone
+            transform: [{ rotate: `0deg` }] // Remove rotation, keep circle stable
+          }
+        ]}>
+          <Text style={styles.directionEmoji}>{getDirectionEmoji()}</Text>
+        </View>
+        
+        <Text style={styles.directionText}>
+          {getDirectionInstruction()}
+        </Text>
+        
+        <Text style={styles.distanceText}>
+          {Math.round(distance)}m
+        </Text>
+        
+        {/* Add bearing debug info */}
+        <Text style={styles.bearingDebugText}>
+          Bearing: {Math.round(relativeBearing)}°
+        </Text>
+      </View>
+
+      {/* Top Instruction Bar */}
+      {nextInstruction && (
+        <View style={styles.instructionBar}>
+          <Text style={styles.instructionText}>
+            {nextInstruction}
+          </Text>
+        </View>
+      )}
+
+      {/* Ground Level Path Indicator */}
+      <View style={styles.groundIndicator}>
+        <View style={[
+          styles.pathLine,
+          { 
+            transform: [{ rotate: `${Math.max(-45, Math.min(45, relativeBearing))}deg` }], // Clamp rotation
+            opacity: Math.abs(relativeBearing) < 60 ? 0.8 : 0.3 // Wider visibility zone
+          }
+        ]} />
+        <View style={styles.pathDots}>
+          {[...Array(5)].map((_, i) => (
+            <View 
+              key={i} 
+              style={[
+                styles.pathDot, 
+                { 
+                  opacity: Math.abs(relativeBearing) < 60 ? 1 - (i * 0.15) : 0.3, // Wider visibility
+                  transform: [{ translateX: Math.max(-50, Math.min(50, relativeBearing * 1.5)) }] // Clamp and reduce movement
+                }
+              ]} 
+            />
+          ))}
+        </View>
+      </View>
+
+      {/* Compass Ring */}
+      <View style={styles.compassContainer}>
+        <View style={styles.compassRing}>
+          <Text style={[styles.compassDirection, { top: 5 }]}>N</Text>
+          <Text style={[styles.compassDirection, { right: 5, top: '45%' }]}>E</Text>
+          <Text style={[styles.compassDirection, { bottom: 5 }]}>S</Text>
+          <Text style={[styles.compassDirection, { left: 5, top: '45%' }]}>W</Text>
+          
+          {/* Current heading indicator */}
+          <View style={[
+            styles.headingIndicator,
+            { transform: [{ rotate: `${-deviceHeading}deg` }] }
+          ]} />
+        </View>
+      </View>
     </>
   );
 }
 
-// Simple direction arrow component
-function DirectionArrow({ 
+// Simple fallback without camera
+function SimpleARFallback({ 
   currentLocation, 
   destinationCoords, 
-  deviceHeading 
+  deviceHeading,
+  nextInstruction
 }: {
-  currentLocation: { x: number; y: number };
-  destinationCoords: { x: number; y: number };
+  currentLocation: { x: number; y: number } | null;
+  destinationCoords: { x: number; y: number } | null;
   deviceHeading: number;
+  nextInstruction: string;
 }) {
+  if (!currentLocation || !destinationCoords) return null;
+
   const bearing = calculateBearing(
     currentLocation.x, currentLocation.y,
     destinationCoords.x, destinationCoords.y
@@ -305,120 +290,30 @@ function DirectionArrow({
   );
 
   return (
-    <View style={styles.arrowContainer}>
-      <View
-        style={[
-          styles.arrow,
-          {
-            transform: [{ rotate: `${relativeBearing}deg` }],
-          },
-        ]}
-      >
-        <Text style={styles.arrowText}>→</Text>
+    <View style={styles.fallbackContainer}>
+      <Text style={styles.fallbackTitle}>AR Navigation</Text>
+      
+      <View style={[
+        styles.fallbackArrow,
+        { transform: [{ rotate: `${relativeBearing}deg` }] }
+      ]}>
+        <Text style={styles.fallbackArrowText}>↑</Text>
       </View>
-      <Text style={styles.distanceText}>
+      
+      <Text style={styles.fallbackDistance}>
         {Math.round(distance)}m to destination
       </Text>
+      
+      {nextInstruction && (
+        <Text style={styles.fallbackInstruction}>
+          {nextInstruction}
+        </Text>
+      )}
     </View>
   );
 }
 
-// Fallback AR view without camera
-function ARFallbackView({ 
-  currentLocation, 
-  routeCoordinates, 
-  currentRouteIndex, 
-  deviceHeading 
-}: {
-  currentLocation: { x: number; y: number } | null;
-  routeCoordinates: [number, number][];
-  currentRouteIndex: number;
-  deviceHeading: number;
-}) {
-  if (!currentLocation || routeCoordinates.length === 0) return null;
-
-  const nextPoint = routeCoordinates[Math.min(currentRouteIndex + 1, routeCoordinates.length - 1)];
-  if (!nextPoint) return null;
-
-  const bearing = calculateBearing(
-    currentLocation.x, currentLocation.y,
-    nextPoint[0], nextPoint[1]
-  );
-
-  const arrowDirection = normalizeAngle(bearing - deviceHeading);
-
-  return (
-    <View style={styles.fallbackContainer}>
-      <Text style={styles.fallbackText}>AR Navigation (Fallback Mode)</Text>
-      <View
-        style={[
-          styles.fallbackArrow,
-          {
-            transform: [{ rotate: `${arrowDirection}deg` }],
-          },
-        ]}
-      >
-        <Text style={styles.arrowText}>↑</Text>
-      </View>
-      <Text style={styles.fallbackText}>
-        Next: {Math.round(calculateDistance(
-          currentLocation.x, currentLocation.y,
-          nextPoint[0], nextPoint[1]
-        ))}m
-      </Text>
-    </View>
-  );
-}
-
-// Enhanced coordinate projection with better ground-level positioning
-function worldToScreen(
-  worldPoint: { x: number; y: number; distance: number },
-  deviceHeading: number,
-  currentLocation: { x: number; y: number }
-): { x: number; y: number } | null {
-  // Calculate bearing from current location to the point
-  const bearing = calculateBearing(currentLocation.x, currentLocation.y, worldPoint.x, worldPoint.y);
-  const relativeBearing = normalizeAngle(bearing - deviceHeading);
-  
-  console.log(`WorldToScreen - Bearing: ${bearing.toFixed(2)}°, Relative: ${relativeBearing.toFixed(2)}°, Distance: ${worldPoint.distance.toFixed(2)}m`);
-  
-  // Horizontal position based on bearing (wider field of view)
-  const horizontalFactor = relativeBearing / 60; // Map -60° to +60° to screen width
-  const horizontalPos = screenWidth / 2 + (horizontalFactor * screenWidth / 2);
-  
-  // Ground-level vertical positioning for AR effect
-  const maxDistance = 100;
-  const minDistance = 5;
-  
-  // Normalize distance with better scaling
-  const clampedDistance = Math.max(minDistance, Math.min(worldPoint.distance, maxDistance));
-  const normalizedDistance = (clampedDistance - minDistance) / (maxDistance - minDistance);
-  
-  // Ground level positioning - closer points appear much lower
-  const groundLevel = screenHeight * 0.95; // Very bottom of screen
-  const horizonLevel = screenHeight * 0.6;  // Higher horizon for better perspective
-  
-  // Use exponential scaling for better depth perception
-  const distanceFactor = Math.pow(normalizedDistance, 0.7);
-  const verticalPos = groundLevel - (distanceFactor * (groundLevel - horizonLevel));
-  
-  console.log(`WorldToScreen - Distance: ${worldPoint.distance.toFixed(2)}m, Normalized: ${normalizedDistance.toFixed(3)}, VerticalPos: ${verticalPos.toFixed(2)}`);
-  console.log(`WorldToScreen - Screen position: (${horizontalPos.toFixed(2)}, ${verticalPos.toFixed(2)})`);
-  
-  // Bounds checking (more lenient for debugging)
-  if (horizontalPos < -50 || horizontalPos > screenWidth + 50) {
-    console.log('WorldToScreen - Point outside horizontal bounds');
-    return null;
-  }
-  if (verticalPos < horizonLevel || verticalPos > screenHeight) {
-    console.log('WorldToScreen - Point outside vertical bounds');
-    return null;
-  }
-  
-  return { x: horizontalPos, y: verticalPos };
-}
-
-// Utility functions remain the same
+// Utility functions
 function calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
   const toRad = (x: number) => (x * Math.PI) / 180;
   const R = 6371000;
@@ -462,10 +357,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     zIndex: 999,
   },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 1,
-  },
   placeholder: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -478,40 +369,142 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     textAlign: 'center',
   },
-  directionContainer: {
+  
+  // Main AR Guidance
+  mainGuidanceContainer: {
     position: 'absolute',
-    top: screenHeight * 0.3,
+    top: screenHeight * 0.4,
     left: 0,
     right: 0,
     alignItems: 'center',
     zIndex: 2,
   },
-  arrowContainer: {
-    alignItems: 'center',
-  },
-  arrow: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(0, 255, 0, 0.8)',
+  directionCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
+    borderWidth: 4,
+    borderColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
   },
-  arrowText: {
-    fontSize: 40,
+  directionEmoji: {
+    fontSize: 50,
     color: 'white',
+  },
+  directionText: {
+    fontSize: 24,
     fontWeight: 'bold',
+    color: 'white',
+    marginTop: 15,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
   distanceText: {
     fontSize: 18,
     color: 'white',
-    fontWeight: 'bold',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    marginTop: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
+  bearingDebugText: {
+    fontSize: 14,
+    color: '#FFD700',
+    marginTop: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  
+  // Instruction Bar
+  instructionBar: {
+    position: 'absolute',
+    top: 80,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    zIndex: 3,
+  },
+  instructionText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  
+  // Ground Path Indicator
+  groundIndicator: {
+    position: 'absolute',
+    bottom: screenHeight * 0.2,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  pathLine: {
+    width: 4,
+    height: 100,
+    backgroundColor: '#4CAF50',
+    borderRadius: 2,
+  },
+  pathDots: {
+    flexDirection: 'row',
+    marginTop: 10,
+    justifyContent: 'center',
+  },
+  pathDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4CAF50',
+    marginHorizontal: 4,
+  },
+  
+  // Mini Compass
+  compassContainer: {
+    position: 'absolute',
+    top: 150,
+    right: 20,
+    zIndex: 3,
+  },
+  compassRing: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 2,
+    borderColor: 'white',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  compassDirection: {
+    position: 'absolute',
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  headingIndicator: {
+    width: 2,
+    height: 30,
+    backgroundColor: '#FF5722',
+    position: 'absolute',
+    top: 5,
+  },
+  
+  // Debug
   debugToggle: {
     position: 'absolute',
     top: 40,
@@ -520,7 +513,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
-    zIndex: 3,
+    zIndex: 4,
   },
   debugToggleText: {
     color: 'white',
@@ -529,7 +522,7 @@ const styles = StyleSheet.create({
   },
   debugInfo: {
     position: 'absolute',
-    bottom: 100,
+    bottom: 20,
     left: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     padding: 10,
@@ -542,22 +535,48 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginVertical: 2,
   },
+  
+  // Fallback Mode
   fallbackContainer: {
     alignItems: 'center',
     marginTop: 50,
   },
-  fallbackText: {
+  fallbackTitle: {
     color: 'white',
-    fontSize: 16,
-    marginVertical: 10,
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 30,
   },
   fallbackArrow: {
-    width: 60,
-    height: 60,
+    width: 100,
+    height: 100,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 255, 0, 0.8)',
-    borderRadius: 30,
+    backgroundColor: 'rgba(76, 175, 80, 0.8)',
+    borderRadius: 50,
+    borderWidth: 3,
+    borderColor: 'white',
     marginVertical: 20,
+  },
+  fallbackArrowText: {
+    fontSize: 50,
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  fallbackDistance: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginVertical: 10,
+  },
+  fallbackInstruction: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: 15,
+    borderRadius: 10,
+    maxWidth: 300,
   },
 });
