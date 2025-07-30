@@ -2,7 +2,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
-  Alert,
   Share,
   Text,
   TextInput,
@@ -18,6 +17,7 @@ import Tts from 'react-native-tts';
 import MapWebView from '../components/organisms/MapWebView';
 import CrowdReportModal from '../components/molecules/CrowdReportModal';
 import StatusOverlay from '../components/atoms/StatusOverlay';
+import StandardPopup from '../components/atoms/StandardPopup';
 import DestinationSearch from '../components/molecules/DestinationSearch';
 import MapActionsPanel from '../components/organisms/MapActionsPanel';
 import NavigationPanel from '../components/organisms/NavigationPanel';
@@ -136,6 +136,19 @@ const MapScreen = () => {
     enableVibrateFallback: true,
     ignoreAndroidSystemSettings: false,
   };
+
+  // Popup states
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [errorPopupMessage, setErrorPopupMessage] = useState('');
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successPopupMessage, setSuccessPopupMessage] = useState('');
+  const [showConfirmationPopup, setShowConfirmationPopup] = useState(false);
+  const [confirmationPopupData, setConfirmationPopupData] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
+  const [showDestinationReachedPopup, setShowDestinationReachedPopup] = useState(false);
 
   //Fetch Locations
   useEffect(() => {
@@ -325,56 +338,56 @@ const MapScreen = () => {
   };
 
   const confirmDeleteBuilding = (poi: any) => {
-    Alert.alert('Delete Building', `Are you sure you want to delete "${poi.name}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            // Store POI ID before deletion for cleanup
-            const deletedPoiId = poi.id;
+    setConfirmationPopupData({
+      title: 'Delete Building',
+      message: `Are you sure you want to delete "${poi.name}"?`,
+      onConfirm: async () => {
+        setShowConfirmationPopup(false);
+        try {
+          // Store POI ID before deletion for cleanup
+          const deletedPoiId = poi.id;
 
-            // First handle document IDs that might contain slashes
-            await firestore().doc(`locations/${poi.location}/buildingPOIs/${poi.id}`).delete();
+          // First handle document IDs that might contain slashes
+          await firestore().doc(`locations/${poi.location}/buildingPOIs/${poi.id}`).delete();
 
-            // Direct removal of the specific marker
-            if (webViewRef.current && isMapReady) {
-              // First try direct removal
-              webViewRef.current.injectJavaScript(`
-                    window.removePOIById("${deletedPoiId}");
-                    map.closePopup();
-                  `);
+          // Direct removal of the specific marker
+          if (webViewRef.current && isMapReady) {
+            // First try direct removal
+            webViewRef.current.injectJavaScript(`
+                  window.removePOIById("${deletedPoiId}");
+                  map.closePopup();
+                `);
 
-              // Clear route if it exists
-              webViewRef.current.injectJavaScript('window.clearRoute && window.clearRoute();');
+            // Clear route if it exists
+            webViewRef.current.injectJavaScript('window.clearRoute && window.clearRoute();');
 
-              // Update state
-              await fetchPOIs();
-              setStatus(`Building "${poi.name}" deleted`);
+            // Update state
+            await fetchPOIs();
+            setStatus(`Building "${poi.name}" deleted`);
 
-              // Clear UI elements related to the deleted POI
-              if (destination === poi.name) {
-                setDestination('');
-                setDestinationCoords(null);
-                setRouteProgress(0);
+            // Clear UI elements related to the deleted POI
+            if (destination === poi.name) {
+              setDestination('');
+              setDestinationCoords(null);
+              setRouteProgress(0);
 
-                // Stop navigation if currently navigating
-                if (isNavigating) {
-                  stopNavigation();
-                }
-
-                // Clear any stored route
-                lastRoute.current = [];
+              // Stop navigation if currently navigating
+              if (isNavigating) {
+                stopNavigation();
               }
+
+              // Clear any stored route
+              lastRoute.current = [];
             }
-          } catch (error) {
-            console.error('Error deleting building:', error);
-            setError('Failed to delete building');
           }
-        },
-      },
-    ]);
+        } catch (error) {
+          console.error('Error deleting building:', error);
+          setErrorPopupMessage('Failed to delete building');
+          setShowErrorPopup(true);
+        }
+      }
+    });
+    setShowConfirmationPopup(true);
   };
 
   const handleWebViewMessage = async (event: any) => {
@@ -457,7 +470,8 @@ const MapScreen = () => {
             setAdminActionPOI(adminPOI);
             setShowAdminActions(true);
           } else {
-            Alert.alert('Access Denied', 'You do not have permission to modify this POI.');
+            setErrorPopupMessage('You do not have permission to modify this POI.');
+            setShowErrorPopup(true);
           }
 
           webViewRef.current?.injectJavaScript('map.closePopup();');
@@ -475,10 +489,21 @@ const MapScreen = () => {
   //Add building (admin only)
   const submitNewBuilding = async () => {
     if (!addPOICoords) return;
-    if (!buildingName.trim()) return Alert.alert('Building name required');
-    if (!numberOfFloors.trim() || isNaN(Number(numberOfFloors)))
-      return Alert.alert('Please enter a valid number of floors');
-    if (!selectedLocation) return Alert.alert('Please select a location');
+    if (!buildingName.trim()) {
+      setErrorPopupMessage('Building name required');
+      setShowErrorPopup(true);
+      return;
+    }
+    if (!numberOfFloors.trim() || isNaN(Number(numberOfFloors))) {
+      setErrorPopupMessage('Please enter a valid number of floors');
+      setShowErrorPopup(true);
+      return;
+    }
+    if (!selectedLocation) {
+      setErrorPopupMessage('Please select a location');
+      setShowErrorPopup(true);
+      return;
+    }
     try {
       const newDoc = {
         name: buildingName,
@@ -501,9 +526,16 @@ const MapScreen = () => {
   };
 
   const submitEditBuilding = async () => {
-    if (!newName.trim()) return Alert.alert('Building name required');
-    if (!newFloors.trim() || isNaN(Number(newFloors)))
-      return Alert.alert('Please enter a valid number of floors');
+    if (!newName.trim()) {
+      setErrorPopupMessage('Building name required');
+      setShowErrorPopup(true);
+      return;
+    }
+    if (!newFloors.trim() || isNaN(Number(newFloors))) {
+      setErrorPopupMessage('Please enter a valid number of floors');
+      setShowErrorPopup(true);
+      return;
+    }
 
     if (!editingPOI || !editingPOI.id || !editingPOI.location) {
       console.error('No valid POI ID or location found:', editingPOI);
@@ -538,7 +570,8 @@ const MapScreen = () => {
         }
       }, 100);
 
-      Alert.alert('Success', 'Building information updated successfully.');
+      setSuccessPopupMessage('Building information updated successfully.');
+      setShowSuccessPopup(true);
     } catch (error) {
       console.error('Error updating building:', error);
       setError('Failed to update');
@@ -607,7 +640,8 @@ const MapScreen = () => {
 
   const shareLocation = async () => {
     if (!currentLocation) {
-      Alert.alert('No Location', 'Your location is not available yet.');
+      setErrorPopupMessage('Your location is not available yet.');
+      setShowErrorPopup(true);
       return;
     }
     try {
@@ -937,10 +971,8 @@ const MapScreen = () => {
       }, 500);
     }
 
-    // Show alert only once
-    Alert.alert('Destination Reached', 'You have arrived at your destination!', [
-      { text: 'OK', onPress: () => setStatus('Ready for navigation') },
-    ]);
+    // Show destination reached popup
+    setShowDestinationReachedPopup(true);
   };
 
   //add this function to handle report submission
@@ -996,10 +1028,12 @@ const MapScreen = () => {
 
       await addRecentlyVisitedPOI(visit);
       // console.log('Simulated visit recorded:', selectedPOI.name);
-      Alert.alert('Test Successful', `Simulated visit to: ${selectedPOI.name}`);
+      setSuccessPopupMessage(`Simulated visit to: ${selectedPOI.name}`);
+      setShowSuccessPopup(true);
     } catch (error) {
       // console.error('Failed to simulate visit:', error);
-      Alert.alert('Error', 'Failed to simulate visit. Please try again.');
+      setErrorPopupMessage('Failed to simulate visit. Please try again.');
+      setShowErrorPopup(true);
     }
   };
 
@@ -1811,6 +1845,48 @@ const MapScreen = () => {
       >
         <Text style={{ color: 'white', textAlign: 'center' }}>Simulate Destination Reached</Text>
       </TouchableOpacity>
+
+      {/* Error Popup */}
+      <StandardPopup
+        visible={showErrorPopup}
+        title="Error"
+        message={errorPopupMessage}
+        onConfirm={() => setShowErrorPopup(false)}
+        showCancel={false}
+      />
+
+      {/* Success Popup */}
+      <StandardPopup
+        visible={showSuccessPopup}
+        title="Success"
+        message={successPopupMessage}
+        onConfirm={() => setShowSuccessPopup(false)}
+        showCancel={false}
+      />
+
+      {/* Confirmation Popup */}
+      <StandardPopup
+        visible={showConfirmationPopup}
+        title={confirmationPopupData?.title || ''}
+        message={confirmationPopupData?.message || ''}
+        onConfirm={confirmationPopupData?.onConfirm}
+        onCancel={() => setShowConfirmationPopup(false)}
+        confirmText="Delete"
+        cancelText="Cancel"
+        showCancel={true}
+      />
+
+      {/* Destination Reached Popup */}
+      <StandardPopup
+        visible={showDestinationReachedPopup}
+        title="Destination Reached"
+        message="You have arrived at your destination!"
+        onConfirm={() => {
+          setShowDestinationReachedPopup(false);
+          setStatus('Ready for navigation');
+        }}
+        showCancel={false}
+      />
     </View>
   );
 };
