@@ -164,8 +164,8 @@ jest.mock('react-native-modal', () => {
   return ModalComponent;
 });
 
-import AdminEditFloorplansContent from '../../src/components/organisms/AdminEditFloorplansContent';
-import AdminLoadFloorplansContent from '../../src/components/organisms/AdminLoadFloorplansContent';
+import AdminEditFloorplansContent from '../src/components/organisms/AdminEditFloorplansContent';
+import AdminLoadFloorplansContent from '../src/components/organisms/AdminLoadFloorplansContent';
 
 const TestWrapper = ({ children }: any) => <>{children}</>;
 
