@@ -4,7 +4,7 @@ import { Alert, View } from 'react-native';
 import AdminEditFloorplansContent from '../src/components/organisms/AdminEditFloorplansContent';
 import AdminLoadFloorplansContent from '../src/components/organisms/AdminLoadFloorplansContent';
 import AdminFloorplanEditorContent from '../src/components/organisms/AdminFloorplanEditorContent';
-import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
+import { ThemeProviderWrapper } from '../__tests__/test-utils/ThemeProviderWrapper';
 
 // Mock AsyncStorage
 const mockAsyncStorage = {

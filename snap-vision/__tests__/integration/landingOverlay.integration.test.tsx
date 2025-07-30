@@ -15,7 +15,7 @@ jest.mock('../../src/theme', () => ({
 
 jest.mock('@react-native-masked-view/masked-view', () => {
   const { View } = require('react-native');
-  return ({ children, maskElement }: any) => {
+  const MaskedViewComponent = ({ children, maskElement }: any) => {
     return (
       <View testID="masked-view">
         {maskElement}
@@ -23,11 +23,15 @@ jest.mock('@react-native-masked-view/masked-view', () => {
       </View>
     );
   };
+  MaskedViewComponent.displayName = 'MockedMaskedView';
+  return MaskedViewComponent;
 });
 
 jest.mock('react-native-linear-gradient', () => {
   const { View } = require('react-native');
-  return (props: any) => <View testID="linear-gradient" {...props} />;
+  const LinearGradientComponent = (props: any) => <View testID="linear-gradient" {...props} />;
+  LinearGradientComponent.displayName = 'MockedLinearGradient';
+  return LinearGradientComponent;
 });
 
 const originalAnimated = jest.requireActual('react-native').Animated;
