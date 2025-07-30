@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { WebView } from 'react-native-webview';
 import AppButton from '../atoms/AppButton';
 import AppSecondaryButton from '../atoms/AppSecondaryButton';
 import Modal from 'react-native-modal';
+import StandardPopup from '../atoms/StandardPopup';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
@@ -65,6 +66,13 @@ export default function AdminFloorplanEditorContent() {
   const [isPathMode, setIsPathMode] = useState(false);
   const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
   const [currentPath, setCurrentPath] = useState<{ x: number; y: number }[]>([]);
+
+  // Popup states
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   // Get route params with a safe default
   const { buildingId, floorLabel, imageUri } = route.params || {
@@ -190,7 +198,8 @@ export default function AdminFloorplanEditorContent() {
   // Save path to Firestore
   const savePath = async () => {
     if (selectedRooms.length !== 2 || currentPath.length < 2) {
-      Alert.alert('Error', 'Please select two rooms and add waypoints to create a path');
+      setErrorMessage('Please select two rooms and add waypoints to create a path');
+      setShowErrorPopup(true);
       return;
     }
 
@@ -202,7 +211,8 @@ export default function AdminFloorplanEditorContent() {
       const endRoom = roomMarkers.find((r) => r.id === selectedRooms[1]);
 
       if (!startRoom || !endRoom) {
-        Alert.alert('Error', 'Selected rooms not found');
+        setErrorMessage('Selected rooms not found');
+        setShowErrorPopup(true);
         return;
       }
 
@@ -246,10 +256,12 @@ export default function AdminFloorplanEditorContent() {
         true;
       `);
 
-      Alert.alert('Success', 'Path created successfully');
+      setSuccessMessage('Path created successfully');
+      setShowSuccessPopup(true);
     } catch (error) {
       console.error('Error saving path:', error);
-      Alert.alert('Error', 'Failed to save path');
+      setErrorMessage('Failed to save path');
+      setShowErrorPopup(true);
     }
   };
 
@@ -865,11 +877,13 @@ export default function AdminFloorplanEditorContent() {
   // Save or update room POI
   const saveRoomPOI = async () => {
     if (!roomData.name.trim()) {
-      Alert.alert('Error', 'Room name is required');
+      setErrorMessage('Room name is required');
+      setShowErrorPopup(true);
       return;
     }
     if (!currentPoint) {
-      Alert.alert('Error', 'No location selected for the room.');
+      setErrorMessage('No location selected for the room.');
+      setShowErrorPopup(true);
       return;
     }
 
@@ -923,7 +937,8 @@ export default function AdminFloorplanEditorContent() {
       setIsModalVisible(false);
     } catch (error) {
       console.error('Error saving room POI:', error);
-      Alert.alert('Error', 'Failed to save room POI');
+      setErrorMessage('Failed to save room POI');
+      setShowErrorPopup(true);
     }
   };
 
@@ -956,16 +971,20 @@ export default function AdminFloorplanEditorContent() {
       setIsModalVisible(false);
     } catch (error) {
       console.error('Error deleting room POI:', error);
-      Alert.alert('Error', 'Failed to delete room POI');
+      setErrorMessage('Failed to delete room POI');
+      setShowErrorPopup(true);
     }
   };
 
   // Show delete confirmation
   const confirmDelete = () => {
-    Alert.alert('Delete Room', `Are you sure you want to delete ${roomData.name}?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', onPress: deleteRoomPOI, style: 'destructive' },
-    ]);
+    setShowDeleteConfirmation(true);
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = () => {
+    setShowDeleteConfirmation(false);
+    deleteRoomPOI();
   };
 
   return (
@@ -1148,6 +1167,38 @@ export default function AdminFloorplanEditorContent() {
           </View>
         </View>
       </Modal>
+
+      {/* Error Popup */}
+      <StandardPopup
+        visible={showErrorPopup}
+        title="Error"
+        message={errorMessage}
+        onConfirm={() => setShowErrorPopup(false)}
+        confirmText="OK"
+        showCancel={false}
+      />
+
+      {/* Success Popup */}
+      <StandardPopup
+        visible={showSuccessPopup}
+        title="Success"
+        message={successMessage}
+        onConfirm={() => setShowSuccessPopup(false)}
+        confirmText="OK"
+        showCancel={false}
+      />
+
+      {/* Delete Confirmation Popup */}
+      <StandardPopup
+        visible={showDeleteConfirmation}
+        title="Delete Room"
+        message={`Are you sure you want to delete ${roomData.name}?`}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setShowDeleteConfirmation(false)}
+        confirmText="Delete"
+        cancelText="Cancel"
+        showCancel={true}
+      />
     </View>
   );
 }

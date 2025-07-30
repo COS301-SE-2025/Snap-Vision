@@ -6,11 +6,11 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import AppButton from '../atoms/AppButton';
 import AppSecondaryButton from '../atoms/AppSecondaryButton';
 import SettingsHeader from '../molecules/SettingsHeader';
+import StandardPopup from '../atoms/StandardPopup';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
@@ -44,6 +44,11 @@ export default function AdminEditFloorplansContent() {
   const [selectedFloorplan, setSelectedFloorplan] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Popup states
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Fetch floorplans data from AsyncStorage using utility functions
   useEffect(() => {
@@ -134,7 +139,8 @@ export default function AdminEditFloorplansContent() {
         ),
       );
 
-      Alert.alert('Success', 'Floorplan updated successfully');
+      setSuccessMessage('Floorplan updated successfully');
+      setShowSuccessPopup(true);
     } catch (err) {
       console.error('Error updating floorplan:', err);
       setError(
@@ -173,67 +179,58 @@ export default function AdminEditFloorplansContent() {
     });
   };
 
-  const handleDeleteFloorplan = async () => {
+  const handleDeleteFloorplan = () => {
     if (!selectedFloorplan) return;
+    setShowDeleteConfirmation(true);
+  };
 
-    Alert.alert(
-      'Delete Floorplan',
-      'Are you sure you want to delete this floorplan? This will also delete all associated room POIs.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setIsLoading(true);
-              const floorplan = floorplans.find((fp) => fp.id === selectedFloorplan);
-              if (!floorplan) return;
+  const confirmDeleteFloorplan = async () => {
+    try {
+      setIsLoading(true);
+      const floorplan = floorplans.find((fp) => fp.id === selectedFloorplan);
+      if (!floorplan) return;
 
-              // Delete from AsyncStorage
-              await AsyncStorage.removeItem(
-                `floorplan_${floorplan.buildingId}_${floorplan.floorLabel}`,
-              );
+      // Delete from AsyncStorage
+      await AsyncStorage.removeItem(
+        `floorplan_${floorplan.buildingId}_${floorplan.floorLabel}`,
+      );
 
-              // Delete associated room POIs from Firestore
-              const snapshot = await firestore()
-                .collection('RoomPOIs')
-                .where('buildingId', '==', floorplan.buildingId)
-                .where('floorId', '==', floorplan.floorLabel)
-                .get();
+      // Delete associated room POIs from Firestore
+      const snapshot = await firestore()
+        .collection('RoomPOIs')
+        .where('buildingId', '==', floorplan.buildingId)
+        .where('floorId', '==', floorplan.floorLabel)
+        .get();
 
-              const batch = firestore().batch();
-              snapshot.docs.forEach((doc) => {
-                batch.delete(doc.ref);
-              });
+      const batch = firestore().batch();
+      snapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
 
-              await batch.commit();
+      await batch.commit();
 
-              // Remove from local file system
-              if (floorplan.localUri) {
-                try {
-                  await RNFS.unlink(floorplan.localUri.replace('file://', ''));
-                } catch (fileErr) {
-                  console.warn('Error deleting floorplan file:', fileErr);
-                  // Continue with deletion even if file removal fails
-                }
-              }
+      // Remove from local file system
+      if (floorplan.localUri) {
+        try {
+          await RNFS.unlink(floorplan.localUri.replace('file://', ''));
+        } catch (fileErr) {
+          console.warn('Error deleting floorplan file:', fileErr);
+          // Continue with deletion even if file removal fails
+        }
+      }
 
-              // Update UI
-              setFloorplans((prev) => prev.filter((fp) => fp.id !== selectedFloorplan));
-              setSelectedFloorplan(null);
-              setIsLoading(false);
+      // Update UI
+      setFloorplans((prev) => prev.filter((fp) => fp.id !== selectedFloorplan));
+      setSelectedFloorplan(null);
+      setIsLoading(false);
 
-              Alert.alert('Success', 'Floorplan and associated POIs deleted');
-            } catch (err) {
-              setIsLoading(false);
-              console.error('Error deleting floorplan:', err);
-              setError('Failed to delete floorplan');
-            }
-          },
-        },
-      ],
-    );
+      setSuccessMessage('Floorplan and associated POIs deleted successfully');
+      setShowSuccessPopup(true);
+    } catch (err) {
+      setIsLoading(false);
+      console.error('Error deleting floorplan:', err);
+      setError('Failed to delete floorplan');
+    }
   };
 
   if (isLoading) {
@@ -375,6 +372,31 @@ export default function AdminEditFloorplansContent() {
           </View>
         )}
       </ScrollView>
+
+      {/* Delete Confirmation Popup */}
+      <StandardPopup
+        visible={showDeleteConfirmation}
+        title="Delete Floorplan"
+        message="Are you sure you want to delete this floorplan? This will also delete all associated room POIs."
+        onConfirm={() => {
+          setShowDeleteConfirmation(false);
+          confirmDeleteFloorplan();
+        }}
+        onCancel={() => setShowDeleteConfirmation(false)}
+        confirmText="Delete"
+        cancelText="Cancel"
+        showCancel={true}
+      />
+
+      {/* Success Popup */}
+      <StandardPopup
+        visible={showSuccessPopup}
+        title="Success"
+        message={successMessage}
+        onConfirm={() => setShowSuccessPopup(false)}
+        confirmText="OK"
+        showCancel={false}
+      />
     </View>
   );
 }
