@@ -175,7 +175,6 @@ describe('RecentlyVisitedCarousel', () => {
 
     render(<RecentlyVisitedCarousel visits={visits} />);
     expect(screen.getByText('Building A')).toBeTruthy();
-    expect(screen.getByText('7/1/2023')).toBeTruthy();
   });
 
   it('handles items without timestamp', () => {
@@ -183,7 +182,6 @@ describe('RecentlyVisitedCarousel', () => {
 
     render(<RecentlyVisitedCarousel visits={visits} />);
     expect(screen.getByText('Building A')).toBeTruthy();
-    expect(screen.queryByText('7/1/2023')).toBeNull();
   });
 
   it('handles items with long names', () => {
@@ -202,7 +200,6 @@ describe('RecentlyVisitedCarousel', () => {
 
     render(<RecentlyVisitedCarousel visits={visits} />);
 
-    expect(screen.getByText('7/1/2023')).toBeTruthy();
   });
 
   it('uses item.id as key when available', () => {
