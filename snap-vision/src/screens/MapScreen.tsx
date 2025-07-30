@@ -385,7 +385,7 @@ const MapScreen = () => {
           setErrorPopupMessage('Failed to delete building');
           setShowErrorPopup(true);
         }
-      }
+      },
     });
     setShowConfirmationPopup(true);
   };

@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -289,9 +283,7 @@ export default function AdminEditFloorplansContent() {
       if (!floorplan) return;
 
       // Delete from AsyncStorage
-      await AsyncStorage.removeItem(
-        `floorplan_${floorplan.buildingId}_${floorplan.floorLabel}`,
-      );
+      await AsyncStorage.removeItem(`floorplan_${floorplan.buildingId}_${floorplan.floorLabel}`);
 
       // Delete associated room POIs from Firestore
       const snapshot = await firestore()
@@ -300,10 +292,10 @@ export default function AdminEditFloorplansContent() {
         .where('floorId', '==', floorplan.floorLabel)
         .get();
 
-            const batch = firestore().batch();
-            roomSnap.forEach((doc) => batch.delete(doc.ref));
-            pathSnap.forEach((doc) => batch.delete(doc.ref));
-            await batch.commit();
+      const batch = firestore().batch();
+      roomSnap.forEach((doc) => batch.delete(doc.ref));
+      pathSnap.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
 
       // Remove from local file system
       if (floorplan.localUri) {

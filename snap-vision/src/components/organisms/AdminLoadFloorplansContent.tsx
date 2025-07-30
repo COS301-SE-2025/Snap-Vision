@@ -6,12 +6,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import AppInput from '../atoms/AppInput';
 import AppButton from '../atoms/AppButton';
 import AppSecondaryButton from '../atoms/AppSecondaryButton';
 import SettingsHeader from '../molecules/SettingsHeader';
-import StandardPopup from '../atoms/StandardPopup';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeContext';
@@ -72,12 +72,6 @@ export default function AdminLoadFloorplansContent() {
     { label: string; value: string }[]
   >([]);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
-
-  // Popup states
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const [showAddPOIsOption, setShowAddPOIsOption] = useState(false);
-  const [showErrorPopup, setShowErrorPopup] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
 
   // Fetch all buildings from new Firestore structure (dynamically gets location)
   useEffect(() => {
@@ -156,21 +150,17 @@ export default function AdminLoadFloorplansContent() {
           setFileUri(asset.uri);
           setFileName(asset.fileName);
         } else if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
-          setErrorMessage('Please select an image smaller than 5MB.');
-          setShowErrorPopup(true);
+          setError('Please select an image smaller than 5MB.');
           return;
         } else {
-          setErrorMessage('Invalid image selected. Please try again.');
-          setShowErrorPopup(true);
+          setError('Invalid image selected. Please try again.');
         }
       } else if (result.errorMessage) {
-        setErrorMessage(`Image Picker error: ${result.errorMessage}`);
-        setShowErrorPopup(true);
+        setError(`Image Picker error: ${result.errorMessage}`);
       }
     } catch (err) {
       console.error('Error picking image:', err);
-      setErrorMessage('Failed to select image');
-      setShowErrorPopup(true);
+      setError('Failed to select image');
     }
   };
 
@@ -179,32 +169,27 @@ export default function AdminLoadFloorplansContent() {
     setError(null);
 
     if (!selectedBuilding || !selectedLocation) {
-      setErrorMessage('Please select a building and location');
-      setShowErrorPopup(true);
+      setError('Please select a building and location');
       return;
     }
 
     if (!userRole) {
-      setErrorMessage('User access not yet loaded. Please wait...');
-      setShowErrorPopup(true);
+      setError('User access not yet loaded. Please wait...');
       return;
     }
 
     if (userRole === 'editor' && !adminLocations.includes(selectedLocation)) {
-      setErrorMessage("You're not allowed to upload to this location.");
-      setShowErrorPopup(true);
+      setError("You're not allowed to upload to this location.");
       return;
     }
 
     if (isNaN(Number(floorLabel)) || Number(floorLabel) < 1) {
-      setErrorMessage('Please enter a valid floor number (1 or higher)');
-      setShowErrorPopup(true);
+      setError('Please enter a valid floor number (1 or higher)');
       return;
     }
 
     if (!fileUri) {
-      setErrorMessage('Please select a floorplan file');
-      setShowErrorPopup(true);
+      setError('Please select a floorplan file');
       return;
     }
 
@@ -237,48 +222,36 @@ export default function AdminLoadFloorplansContent() {
 
       setIsLoading(false);
 
-      setShowSuccessPopup(true);
+      Alert.alert(
+        'Success',
+        'Floorplan uploaded successfully. Would you like to add room POIs now?',
+        [
+          { text: 'Later', style: 'cancel' },
+          {
+            text: 'Add POIs',
+            onPress: () =>
+              navigation.navigate('FloorplanEditor', {
+                buildingId: selectedBuilding.id,
+                floorLabel,
+                imageUri: downloadURL,
+                locationId: selectedLocation,
+              }),
+          },
+        ],
+      );
+
+      // Reset form
+      setBuildingName('');
+      setFloorLabel('');
+      setSelectedBuilding(null);
+      setSelectedBuildingId(null);
+      setFileUri(null);
+      setFileName('');
     } catch (err) {
       console.error('Error uploading floorplan:', err);
-      setErrorMessage('Failed to upload floorplan');
-      setShowErrorPopup(true);
+      setError('Failed to upload floorplan');
       setIsLoading(false);
     }
-  };
-
-  // Handle success popup confirmation
-  const handleSuccessConfirm = () => {
-    setShowSuccessPopup(false);
-    setShowAddPOIsOption(true);
-  };
-
-  // Handle "Add POIs" option
-  const handleAddPOIs = () => {
-    setShowAddPOIsOption(false);
-    navigation.navigate('FloorplanEditor', {
-      buildingId: selectedBuilding?.id,
-      floorLabel,
-      imageUri: '', // Will be passed from upload success
-      locationId: selectedLocation,
-    });
-    resetForm();
-  };
-
-  // Handle "Later" option
-  const handleLater = () => {
-    setShowAddPOIsOption(false);
-    resetForm();
-  };
-
-  // Reset form function
-  const resetForm = () => {
-    setBuildingName('');
-    setFloorLabel('');
-    setSelectedBuilding(null);
-    setSelectedBuildingId(null);
-    setFileUri(null);
-    setFileName('');
-  };
   };
 
   // Handle building selection
@@ -298,6 +271,13 @@ export default function AdminLoadFloorplansContent() {
       )}
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Error message */}
+        {error && (
+          <View style={[styles.errorContainer, { backgroundColor: colors.danger }]}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        )}
+
         <View style={styles.inputSection}>
           <Text style={[styles.inputTitle, { color: colors.primary }]}>Select a Location</Text>
           <ScrollView
@@ -449,38 +429,6 @@ export default function AdminLoadFloorplansContent() {
           />
         </View>
       </ScrollView>
-
-      {/* Success Popup */}
-      <StandardPopup
-        visible={showSuccessPopup}
-        title="Success"
-        message="Floorplan uploaded successfully!"
-        onConfirm={handleSuccessConfirm}
-        confirmText="OK"
-        showCancel={false}
-      />
-
-      {/* Add POIs Option Popup */}
-      <StandardPopup
-        visible={showAddPOIsOption}
-        title="Add Room POIs"
-        message="Would you like to add room POIs now?"
-        onConfirm={handleAddPOIs}
-        onCancel={handleLater}
-        confirmText="Add POIs"
-        cancelText="Later"
-        showCancel={true}
-      />
-
-      {/* Error Popup */}
-      <StandardPopup
-        visible={showErrorPopup}
-        title="Error"
-        message={errorMessage}
-        onConfirm={() => setShowErrorPopup(false)}
-        confirmText="OK"
-        showCancel={false}
-      />
     </View>
   );
 }
@@ -500,9 +448,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 1000,
   },
-  marginBottom: 32,
+  errorContainer: {
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 16,
   },
-});
+  errorText: {
+    color: 'white',
+    fontWeight: '500',
+  },
   sectionContainer: {
     marginBottom: 24,
     padding: 16,

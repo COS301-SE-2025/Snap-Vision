@@ -135,7 +135,7 @@ export default function RegisterForm() {
   // Handle success popup confirmation
   const handleSuccessConfirm = () => {
     setShowSuccessPopup(false);
-    
+
     // Navigate after popup is dismissed
     if (coords && coords.lat && coords.lng) {
       navigation.replace('Tabs', {
