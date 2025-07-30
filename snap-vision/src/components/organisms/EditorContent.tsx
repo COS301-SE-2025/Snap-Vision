@@ -15,7 +15,7 @@ export default function AdminScreenContent({
   colors,
   onLoadFloorplans,
   onEditFloorplans,
-  onSettings,
+  //onSettings,
   onFloorplanEditor,
 }: Props) {
   return (
@@ -47,7 +47,7 @@ export default function AdminScreenContent({
       <View style={styles.buttonContainer}>
         <AppButton title="Load Floorplans" onPress={onLoadFloorplans} />
         <AppButton title="Edit Floorplans" onPress={onEditFloorplans} />
-        <AppButton title="Settings" onPress={onSettings} />
+        {/* <AppButton title="Settings" onPress={onSettings} /> */}
       </View>
     </View>
   );
