@@ -17,7 +17,7 @@ jest.mock('../src/components/atoms/StandardPopup', () => {
   return jest.fn(({ visible, title, message, onClose, showCloseButton }) => {
     const { View, Text, TouchableOpacity } = require('react-native');
     if (!visible) return null;
-    
+
     // Determine testID based on title
     let testID = 'standard-popup';
     if (title === 'Registration Error') {
@@ -25,7 +25,7 @@ jest.mock('../src/components/atoms/StandardPopup', () => {
     } else if (title === 'Registration Successful') {
       testID = 'success-popup';
     }
-    
+
     return (
       <View testID={testID}>
         <Text testID="popup-title">{title}</Text>
@@ -137,7 +137,7 @@ describe('RegisterForm', () => {
   it('shows popup if fields are empty', () => {
     const { getByTestId } = setup();
     fireEvent.press(getByTestId('register-button'));
-    
+
     expect(screen.getByTestId('error-popup')).toBeTruthy();
     expect(screen.getByTestId('popup-title')).toHaveTextContent('Registration Error');
     expect(screen.getByTestId('popup-message')).toHaveTextContent('Please fill in all fields');
@@ -155,7 +155,9 @@ describe('RegisterForm', () => {
 
     expect(screen.getByTestId('error-popup')).toBeTruthy();
     expect(screen.getByTestId('popup-title')).toHaveTextContent('Registration Error');
-    expect(screen.getByTestId('popup-message')).toHaveTextContent('Please enter a valid email address');
+    expect(screen.getByTestId('popup-message')).toHaveTextContent(
+      'Please enter a valid email address',
+    );
   });
 
   it('shows popup for weak password', () => {
@@ -171,7 +173,7 @@ describe('RegisterForm', () => {
     expect(screen.getByTestId('error-popup')).toBeTruthy();
     expect(screen.getByTestId('popup-title')).toHaveTextContent('Registration Error');
     expect(screen.getByTestId('popup-message')).toHaveTextContent(
-      /Password must be at least 8 characters/
+      /Password must be at least 8 characters/,
     );
   });
 
@@ -208,7 +210,9 @@ describe('RegisterForm', () => {
 
     expect(screen.getByTestId('success-popup')).toBeTruthy();
     expect(screen.getByTestId('popup-title')).toHaveTextContent('Registration Successful');
-    expect(screen.getByTestId('popup-message')).toHaveTextContent('Your account has been created successfully!');
+    expect(screen.getByTestId('popup-message')).toHaveTextContent(
+      'Your account has been created successfully!',
+    );
   });
 
   it('shows Firebase error if email already in use', async () => {
@@ -226,7 +230,9 @@ describe('RegisterForm', () => {
     await waitFor(() => {
       expect(screen.getByTestId('error-popup')).toBeTruthy();
       expect(screen.getByTestId('popup-title')).toHaveTextContent('Registration Error');
-      expect(screen.getByTestId('popup-message')).toHaveTextContent('This email is already registered.');
+      expect(screen.getByTestId('popup-message')).toHaveTextContent(
+        'This email is already registered.',
+      );
     });
   });
 });

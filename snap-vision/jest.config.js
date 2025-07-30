@@ -19,11 +19,9 @@ module.exports = {
   collectCoverage: true,
   collectCoverageFrom: [
     'src/components/organisms/*.{ts,tsx}',
-    'src/components/molecules/*.{ts,tsx}',
     '!**/__tests__/**',
     '!**/index.{ts,tsx}',
     '!**/*.d.ts',
-    '!src/components/organisms/AdminEditFloorplansContent.tsx',
     '!src/components/organisms/AdminFloorplanEditorContent.tsx',
     '!src/components/organisms/ManageUsersForm.tsx',
   ],

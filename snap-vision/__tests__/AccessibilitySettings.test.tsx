@@ -44,7 +44,7 @@ jest.mock('../src/components/atoms/StandardPopup', () => {
 
   return function MockStandardPopup({ visible, title, message, onConfirm, confirmText }: any) {
     if (!visible) return null;
-    
+
     return (
       <View testID="standard-popup">
         <Text testID="popup-title">{title}</Text>
@@ -190,7 +190,7 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
     expect(screen.getByTestId('standard-popup')).toBeTruthy();
     expect(screen.getByTestId('popup-title')).toHaveTextContent('Error');
     expect(screen.getByTestId('popup-message')).toHaveTextContent(
-      'Failed to save haptic feedback setting. Please try again.'
+      'Failed to save haptic feedback setting. Please try again.',
     );
   });
 
@@ -291,7 +291,7 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
     expect(screen.getByTestId('standard-popup')).toBeTruthy();
     expect(screen.getByTestId('popup-title')).toHaveTextContent('Error');
     expect(screen.getByTestId('popup-message')).toHaveTextContent(
-      'Failed to save haptic feedback setting. Please try again.'
+      'Failed to save haptic feedback setting. Please try again.',
     );
   });
 

@@ -16,10 +16,10 @@ const mockStandardPopup = jest.fn();
 jest.mock('../../src/components/atoms/StandardPopup', () => {
   return jest.fn(({ visible, title, message, onConfirm, confirmText, showCancel }) => {
     const { View, Text, TouchableOpacity } = require('react-native');
-    
+
     // Call the mock function to track calls
     mockStandardPopup({ visible, title, message, onConfirm, confirmText, showCancel });
-    
+
     // Return a proper React component
     if (!visible) return null;
     return (

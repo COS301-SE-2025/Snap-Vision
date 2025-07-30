@@ -114,7 +114,6 @@ async function handleLogout() {
     require('../src/navigation/RootNavigation').resetToLogin();
     return true;
   } catch (error) {
-
     mockStandardPopup({
       visible: true,
       title: 'Error',

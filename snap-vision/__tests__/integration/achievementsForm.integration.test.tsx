@@ -324,29 +324,40 @@ jest.mock('../../src/components/molecules/RewardCard', () => 'RewardCard');
 // Mock StandardPopup component
 const mockStandardPopup = jest.fn();
 jest.mock('../../src/components/atoms/StandardPopup', () => {
-  return jest.fn(({ visible, title, message, onConfirm, onCancel, confirmText, cancelText, showCancel }) => {
-    const { View, Text, TouchableOpacity } = require('react-native');
-    
-    // Call the mock function to track calls
-    mockStandardPopup({ visible, title, message, onConfirm, onCancel, confirmText, cancelText, showCancel });
-    
-    // Return a proper React component
-    if (!visible) return null;
-    return (
-      <View testID="standard-popup">
-        <Text testID="popup-title">{title}</Text>
-        <Text testID="popup-message">{message}</Text>
-        <TouchableOpacity onPress={onConfirm} testID="popup-confirm">
-          <Text>{confirmText}</Text>
-        </TouchableOpacity>
-        {showCancel && (
-          <TouchableOpacity onPress={onCancel} testID="popup-cancel">
-            <Text>{cancelText}</Text>
+  return jest.fn(
+    ({ visible, title, message, onConfirm, onCancel, confirmText, cancelText, showCancel }) => {
+      const { View, Text, TouchableOpacity } = require('react-native');
+
+      // Call the mock function to track calls
+      mockStandardPopup({
+        visible,
+        title,
+        message,
+        onConfirm,
+        onCancel,
+        confirmText,
+        cancelText,
+        showCancel,
+      });
+
+      // Return a proper React component
+      if (!visible) return null;
+      return (
+        <View testID="standard-popup">
+          <Text testID="popup-title">{title}</Text>
+          <Text testID="popup-message">{message}</Text>
+          <TouchableOpacity onPress={onConfirm} testID="popup-confirm">
+            <Text>{confirmText}</Text>
           </TouchableOpacity>
-        )}
-      </View>
-    );
-  });
+          {showCancel && (
+            <TouchableOpacity onPress={onCancel} testID="popup-cancel">
+              <Text>{cancelText}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      );
+    },
+  );
 });
 
 const IntegrationTestWrapper = ({

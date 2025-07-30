@@ -29,10 +29,10 @@ const mockStandardPopup = jest.fn();
 jest.mock('../../src/components/atoms/StandardPopup', () => {
   return jest.fn(({ visible, title, message, onClose, showCloseButton }) => {
     const { View, Text, TouchableOpacity } = require('react-native');
-    
+
     // Call the mock function to track calls
     mockStandardPopup({ visible, title, message, onClose, showCloseButton });
-    
+
     // Return a proper React component
     if (!visible) return null;
     return (
@@ -227,7 +227,8 @@ describe('Registration Integration Tests', () => {
       expect(mockStandardPopup).toHaveBeenCalledWith({
         visible: true,
         title: 'Registration Error',
-        message: 'Password must be at least 8 characters, include a capital letter, number, and special character.',
+        message:
+          'Password must be at least 8 characters, include a capital letter, number, and special character.',
         onClose: expect.any(Function),
         showCloseButton: true,
       });
