@@ -1795,22 +1795,6 @@ const MapScreen = () => {
           <Text style={{ color: colors.text, fontWeight: 'bold' }}>{tempMessage}</Text>
         </View>
       ) : null}
-
-      <TouchableOpacity //IMP: test to take out laters
-        style={{
-          position: 'absolute',
-          bottom: 50, // Adjust position to avoid overlap with the admin button
-          right: 20,
-          backgroundColor: 'blue',
-          paddingVertical: 10,
-          paddingHorizontal: 16,
-          borderRadius: 8,
-          elevation: 4,
-        }}
-        onPress={simulateDestinationReached}
-      >
-        <Text style={{ color: 'white', textAlign: 'center' }}>Simulate Destination Reached</Text>
-      </TouchableOpacity>
     </View>
   );
 };
