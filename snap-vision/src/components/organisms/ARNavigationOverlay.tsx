@@ -266,6 +266,14 @@ function SimpleARGuidance({
           </Text>
           
           <Text style={styles.bearingDebugText}>
+            COMPASS DEBUG: Raw={deviceHeading.toFixed(1)}° | Normalized={((deviceHeading % 360) + 360) % 360}°
+          </Text>
+          
+          <Text style={styles.bearingDebugText}>
+            DIRECTION RANGES: N=0-45, E=45-135, S=135-225, W=225-315, N=315-360
+          </Text>
+          
+          <Text style={styles.bearingDebugText}>
             RAW: Bearing={bearing.toFixed(1)}° Device={deviceHeading.toFixed(1)}° Normalized={normalizedDeviceHeading.toFixed(1)}°
           </Text>
           
