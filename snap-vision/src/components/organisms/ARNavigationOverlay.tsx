@@ -331,22 +331,6 @@ function SimpleARGuidance({
         </View>
       </View>
 
-      {/* Compass Ring */}
-      <View style={styles.compassContainer}>
-        <View style={styles.compassRing}>
-          <Text style={[styles.compassDirection, { top: 5 }]}>N</Text>
-          <Text style={[styles.compassDirection, { right: 5, top: '45%' }]}>E</Text>
-          <Text style={[styles.compassDirection, { bottom: 5 }]}>S</Text>
-          <Text style={[styles.compassDirection, { left: 5, top: '45%' }]}>W</Text>
-          
-          {/* Current heading indicator */}
-          <View style={[
-            styles.headingIndicator,
-            { transform: [{ rotate: `${-normalizedDeviceHeading}deg` }] }
-          ]} />
-        </View>
-      </View>
-      
       {/* Route Debug Info */}
       <View style={styles.routeDebugContainer}>
         <Text style={styles.debugText}>Route Index: {currentRouteIndex}/{routeCoordinates.length}</Text>
@@ -595,38 +579,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#4CAF50',
     marginHorizontal: 4,
-  },
-  
-  // Mini Compass
-  compassContainer: {
-    position: 'absolute',
-    top: 150,
-    right: 20,
-    zIndex: 3,
-  },
-  compassRing: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 2,
-    borderColor: 'white',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  compassDirection: {
-    position: 'absolute',
-    color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  headingIndicator: {
-    width: 2,
-    height: 30,
-    backgroundColor: '#FF5722',
-    position: 'absolute',
-    top: 5,
   },
   
   // Debug
