@@ -85,7 +85,6 @@ function AppInner() {
             <Stack.Screen name="AdminLoadFloorplans" component={AdminLoadFloorplansScreen} />
             <Stack.Screen name="AdminFloorplanEditor" component={AdminFloorplanEditorScreen} />
             <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
-            <Stack.Screen name="AdminSettings" component={AdminSettingsFrom} />
             <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
             <Stack.Screen name="ShopScreen" component={ShopScreen} />
