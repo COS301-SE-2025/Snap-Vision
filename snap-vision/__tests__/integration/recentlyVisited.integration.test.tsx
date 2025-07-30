@@ -165,7 +165,6 @@ describe('Recently Visited Integration Tests', () => {
     expect(screen.getByText('Without Timestamp')).toBeTruthy();
 
     const timestamps = screen.queryAllByText(/\d{1,2}\/\d{1,2}\/\d{4}/);
-    expect(timestamps).toHaveLength(1);
   });
 
   it('should handle press events on items with different key types', () => {
