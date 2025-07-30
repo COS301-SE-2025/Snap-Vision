@@ -53,26 +53,28 @@ export default function ManageUsersForm({ navigation, currentUserId }: Props) {
   const [popupMessage, setPopupMessage] = useState('');
   const [popupTitle, setPopupTitle] = useState('Notice');
   const [popupConfirm, setPopupConfirm] = useState<() => void>(() => () => {});
-  const [popupCancelHandler, setPopupCancelHandler] = useState<() => void>(() => () => setPopupVisible(false));
+  const [popupCancelHandler, setPopupCancelHandler] = useState<() => void>(
+    () => () => setPopupVisible(false),
+  );
   const [popupShowCancel, setPopupShowCancel] = useState(true);
 
   const showPopup = (
-  title: string,
-  message: string,
-  onConfirm: () => void = () => setPopupVisible(false),
-  showCancel: boolean = true,
-  cancelHandler: () => void = () => setPopupVisible(false),
-) => {
-  setPopupTitle(title);
-  setPopupMessage(message);
-  setPopupConfirm(() => () => {
-    onConfirm();
-    setPopupVisible(false);
-  });
-  setPopupVisible(true);
-  setPopupCancelHandler(() => cancelHandler);
-  setPopupShowCancel(showCancel);
-};
+    title: string,
+    message: string,
+    onConfirm: () => void = () => setPopupVisible(false),
+    showCancel: boolean = true,
+    cancelHandler: () => void = () => setPopupVisible(false),
+  ) => {
+    setPopupTitle(title);
+    setPopupMessage(message);
+    setPopupConfirm(() => () => {
+      onConfirm();
+      setPopupVisible(false);
+    });
+    setPopupVisible(true);
+    setPopupCancelHandler(() => cancelHandler);
+    setPopupShowCancel(showCancel);
+  };
 
   // Step 1: Open role selection modal
   const onEditPress = (user: User) => {
@@ -91,7 +93,6 @@ export default function ManageUsersForm({ navigation, currentUserId }: Props) {
       return;
     }
 
-
     setRoleModalVisible(false);
 
     if (selectedRole === 'Editor') {
@@ -105,9 +106,8 @@ export default function ManageUsersForm({ navigation, currentUserId }: Props) {
         () => {
           editUser({ ...editingUser, role: selectedRole });
           resetEditingState();
-        }
+        },
       );
-
     }
   };
 
@@ -183,7 +183,7 @@ export default function ManageUsersForm({ navigation, currentUserId }: Props) {
                     setPopupVisible(true);
                     return;
                   }
-                  
+
                   setPopupTitle('Confirm Deletion');
                   setPopupMessage(`Are you sure you want to delete ${u.name}?`);
                   setPopupConfirm(() => () => {
@@ -192,8 +192,6 @@ export default function ManageUsersForm({ navigation, currentUserId }: Props) {
                   setPopupCancelHandler(() => () => setPopupVisible(false));
                   setPopupShowCancel(true);
                   setPopupVisible(true);
-
-
                 }}
               />
             ))
@@ -300,10 +298,7 @@ export default function ManageUsersForm({ navigation, currentUserId }: Props) {
         onCancel={popupCancelHandler}
         showCancel={popupShowCancel}
       />
-
     </View>
-    
-    
   );
 }
 

@@ -19,7 +19,6 @@ export default function ManageUsersScreen({ navigation }: Props) {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Main Content - TopBar is handled inside ManageUsersForm */}
       <ManageUsersForm navigation={navigation} currentUserId={auth().currentUser?.uid} />
-
     </View>
   );
 }
