@@ -240,7 +240,7 @@ describe('AchievementsForm', () => {
         </TestWrapper>,
       );
     });
-        it('does not log anything when justUnlocked is empty', () => {
+    it('does not log anything when justUnlocked is empty', () => {
       const mockEmptyJustUnlockedState = {
         ...mockBadgeState,
         justUnlocked: [] as BadgeId[],
@@ -479,42 +479,42 @@ describe('AchievementsForm', () => {
       expect(unlocked3 || badges3).toBeTruthy();
     });
     it('processes badge titles when justUnlocked is not empty', () => {
-          const mockJustUnlockedState = {
-            ...mockBadgeState,
-            justUnlocked: ['first-navigation', 'speed-demon'] as unknown as BadgeId[],
-          };
-        
-          mockUseBadges.mockReturnValue({
-            state: mockJustUnlockedState,
-            ...mockBadgeActions,
-          });
-        
-          const { rerender } = render(
-            <TestWrapper>
-              <AchievementsForm />
-            </TestWrapper>,
-          );
-        
-          expect(mockUseBadges).toHaveBeenCalled();
-          
-          const emptyState = {
-            ...mockBadgeState,
-            justUnlocked: [] as BadgeId[],
-          };
-          
-          mockUseBadges.mockReturnValue({
-            state: emptyState,
-            ...mockBadgeActions,
-          });
-        
-          rerender(
-            <TestWrapper>
-              <AchievementsForm />
-            </TestWrapper>,
-          );
-        
-          expect(mockUseBadges).toHaveBeenCalled();
-        });
+      const mockJustUnlockedState = {
+        ...mockBadgeState,
+        justUnlocked: ['first-navigation', 'speed-demon'] as unknown as BadgeId[],
+      };
+
+      mockUseBadges.mockReturnValue({
+        state: mockJustUnlockedState,
+        ...mockBadgeActions,
+      });
+
+      const { rerender } = render(
+        <TestWrapper>
+          <AchievementsForm />
+        </TestWrapper>,
+      );
+
+      expect(mockUseBadges).toHaveBeenCalled();
+
+      const emptyState = {
+        ...mockBadgeState,
+        justUnlocked: [] as BadgeId[],
+      };
+
+      mockUseBadges.mockReturnValue({
+        state: emptyState,
+        ...mockBadgeActions,
+      });
+
+      rerender(
+        <TestWrapper>
+          <AchievementsForm />
+        </TestWrapper>,
+      );
+
+      expect(mockUseBadges).toHaveBeenCalled();
+    });
   });
 
   describe('Challenge Interactions', () => {
@@ -572,12 +572,12 @@ describe('AchievementsForm', () => {
       ).toThrow('Badge context not found');
     });
 
-        it('handles missing theme gracefully', () => {
+    it('handles missing theme gracefully', () => {
       mockUseTheme.mockReturnValue({
-      isDark: false,
-      theme: 'light',
-      toggleTheme: jest.fn(),
-    });
+        isDark: false,
+        theme: 'light',
+        toggleTheme: jest.fn(),
+      });
 
       const { queryByText } = render(
         <TestWrapper>
@@ -614,7 +614,6 @@ describe('AchievementsForm', () => {
       expect(queryByTestId('badges-section')).toBeTruthy();
     });
 
-
     it('handles challenge press with missing data', () => {
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
 
@@ -634,7 +633,6 @@ describe('AchievementsForm', () => {
   });
 
   describe('Purchases Section', () => {
-
     it('handles empty purchases list', () => {
       const emptyBadgeState = {
         ...mockBadgeState,
@@ -657,8 +655,7 @@ describe('AchievementsForm', () => {
     });
   });
 
-describe('Dynamic Challenges Section', () => {
-
+  describe('Dynamic Challenges Section', () => {
     it('handles empty challenges gracefully', () => {
       mockBadgeActions.getChallenges.mockReturnValue([]);
 
@@ -688,28 +685,25 @@ describe('Dynamic Challenges Section', () => {
     });
 
     it('handles navigation on button press', () => {
-    const mockNavigate = jest.fn();
-    (useNavigation as jest.Mock).mockReturnValue({
-      navigate: mockNavigate,
+      const mockNavigate = jest.fn();
+      (useNavigation as jest.Mock).mockReturnValue({
+        navigate: mockNavigate,
+      });
+
+      const { getByTestId } = render(
+        <TestWrapper>
+          <AchievementsForm />
+        </TestWrapper>,
+      );
+
+      const shopButton = getByTestId('action-button-shop');
+      fireEvent.press(shopButton);
+
+      expect(mockNavigate).toHaveBeenCalledWith('ShopScreen');
     });
-
-    const { getByTestId } = render(
-      <TestWrapper>
-        <AchievementsForm />
-      </TestWrapper>,
-    );
-
-    const shopButton = getByTestId('action-button-shop');
-    fireEvent.press(shopButton);
-
-    expect(mockNavigate).toHaveBeenCalledWith('ShopScreen');
   });
-
-  });
-
 
   describe('Purchases Section', () => {
-
     it('navigates to ShopScreen on SHOP button press', () => {
       const mockNavigate = jest.fn();
       (useNavigation as jest.Mock).mockReturnValue({
@@ -727,8 +721,5 @@ describe('Dynamic Challenges Section', () => {
 
       expect(mockNavigate).toHaveBeenCalledWith('ShopScreen');
     });
-
-
   });
-  
 });
