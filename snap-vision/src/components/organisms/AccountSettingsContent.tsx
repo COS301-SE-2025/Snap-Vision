@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import SettingsHeader from '../molecules/SettingsHeader';
 import AccountDetails from '../molecules/AccountDetails';
 import { useTheme } from '../../theme/ThemeContext';

@@ -1,8 +1,9 @@
-import React from 'react';
-import { View, StyleSheet, Text, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, Text } from 'react-native';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import { getThemeColors } from '../../theme';
 import SettingsToggleItem from '../molecules/SettingsToggleItem';
+import StandardPopup from '../atoms/StandardPopup';
 
 interface Props {
   isDark: boolean;
@@ -12,12 +13,13 @@ interface Props {
 export default function AccessibilitySettingsContent({ isDark }: Props) {
   const colors = getThemeColors(isDark);
   const { isHapticFeedbackEnabled, setHapticFeedbackEnabled, loading } = useAccessibility();
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
 
   const handleHapticFeedbackToggle = async (enabled: boolean) => {
     try {
       await setHapticFeedbackEnabled(enabled);
     } catch {
-      Alert.alert('Error', 'Failed to save haptic feedback setting. Please try again.');
+      setShowErrorPopup(true);
     }
   };
 
@@ -51,6 +53,16 @@ export default function AccessibilitySettingsContent({ isDark }: Props) {
           help make the app more accessible and easier to use.
         </Text>
       </View>
+
+      {/* Error Popup */}
+      <StandardPopup
+        visible={showErrorPopup}
+        title="Error"
+        message="Failed to save haptic feedback setting. Please try again."
+        onConfirm={() => setShowErrorPopup(false)}
+        confirmText="OK"
+        showCancel={false}
+      />
     </View>
   );
 }
