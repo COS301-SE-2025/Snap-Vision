@@ -147,39 +147,67 @@ function SimpleARGuidance({
 }) {
   if (!currentLocation || !destinationCoords) return null;
 
-  // Get next point from route or destination
-  const nextPoint = routeCoordinates.length > currentRouteIndex + 1 
-    ? routeCoordinates[currentRouteIndex + 1] 
-    : [destinationCoords.x, destinationCoords.y];
+  // FIXED: Use the actual route coordinates correctly
+  // routeCoordinates are in [longitude, latitude] format from the routing API
+  let nextPoint: [number, number];
+  
+  if (routeCoordinates.length > 0) {
+    // Find the next point ahead in the route
+    const lookAheadDistance = 1; // Reduced look ahead for more accurate direction
+    const nextIndex = Math.min(currentRouteIndex + lookAheadDistance, routeCoordinates.length - 1);
+    nextPoint = routeCoordinates[nextIndex];
+  } else {
+    // Fallback to destination if no route
+    nextPoint = [destinationCoords.x, destinationCoords.y];
+  }
 
+  // FIXED: Ensure coordinates are in the right order
+  // currentLocation: { x: longitude, y: latitude }
+  // nextPoint: [longitude, latitude]
+  // calculateBearing expects (lat1, lon1, lat2, lon2)
   const bearing = calculateBearing(
-    currentLocation.x, currentLocation.y,
-    nextPoint[0], nextPoint[1]
+    currentLocation.y, // current latitude
+    currentLocation.x, // current longitude
+    nextPoint[1],      // target latitude
+    nextPoint[0]       // target longitude
   );
   
-  const relativeBearing = normalizeAngle(bearing - deviceHeading);
+  // FIXED: Normalize device heading and handle negative values
+  const normalizedDeviceHeading = ((deviceHeading % 360) + 360) % 360;
+  const relativeBearing = normalizeAngle(bearing - normalizedDeviceHeading);
+  
   const distance = calculateDistance(
-    currentLocation.x, currentLocation.y,
-    nextPoint[0], nextPoint[1]
+    currentLocation.y, // current latitude
+    currentLocation.x, // current longitude
+    nextPoint[1],      // target latitude
+    nextPoint[0]       // target longitude
   );
 
-  // Determine direction instruction with much wider tolerance
+  // More precise direction logic with relaxed tolerances
   const getDirectionInstruction = () => {
-    if (Math.abs(relativeBearing) < 45) return "Continue Straight"; // Much wider straight zone
-    if (relativeBearing > 45) return "Turn Right";
-    if (relativeBearing < -45) return "Turn Left";
+    const absRelativeBearing = Math.abs(relativeBearing);
+    
+    if (absRelativeBearing < 25) return "Continue Straight"; // Increased from 10° to 25°
+    if (relativeBearing >= 25 && relativeBearing < 80) return "Turn Right";
+    if (relativeBearing >= 80 && relativeBearing < 120) return "Sharp Right";
+    if (relativeBearing >= 120) return "Turn Around";
+    if (relativeBearing <= -25 && relativeBearing > -80) return "Turn Left";
+    if (relativeBearing <= -80 && relativeBearing > -120) return "Sharp Left";
+    if (relativeBearing <= -120) return "Turn Around";
     return "Continue";
   };
 
-  // Get direction emoji with wider zones
+  // More precise emoji logic with relaxed tolerances
   const getDirectionEmoji = () => {
-    if (Math.abs(relativeBearing) < 45) return "⬆️"; // Wider straight zone
-    if (relativeBearing > 135) return "↙️"; // Behind right
-    if (relativeBearing > 90) return "➡️";
-    if (relativeBearing > 45) return "↗️";
-    if (relativeBearing < -135) return "↘️"; // Behind left
-    if (relativeBearing < -90) return "⬅️";
-    if (relativeBearing < -45) return "↖️";
+    if (Math.abs(relativeBearing) < 25) return "⬆️"; // Increased from 10° to 25°
+    if (relativeBearing >= 25 && relativeBearing < 45) return "↗️";
+    if (relativeBearing >= 45 && relativeBearing < 90) return "➡️";
+    if (relativeBearing >= 90 && relativeBearing < 135) return "↘️";
+    if (relativeBearing >= 135) return "🔄"; // Turn around
+    if (relativeBearing <= -25 && relativeBearing > -45) return "↖️";
+    if (relativeBearing <= -45 && relativeBearing > -90) return "⬅️";
+    if (relativeBearing <= -90 && relativeBearing > -135) return "↙️";
+    if (relativeBearing <= -135) return "🔄"; // Turn around
     return "⬆️";
   };
 
@@ -187,11 +215,44 @@ function SimpleARGuidance({
     <>
       {/* Main Direction Indicator - Center of screen */}
       <View style={styles.mainGuidanceContainer}>
+        {/* Enhanced debug info - MOVED ABOVE ARROW */}
+        <View style={styles.debugInfoAboveArrow}>
+          <Text style={styles.bearingDebugText}>
+            True Bearing: {Math.round(bearing)}° | Device: {Math.round(deviceHeading)}° | Relative: {Math.round(relativeBearing)}°
+          </Text>
+          
+          <Text style={styles.bearingDebugText}>
+            Should Go: {bearing >= 0 && bearing < 45 ? 'NORTH' : 
+                       bearing >= 45 && bearing < 135 ? 'EAST' :
+                       bearing >= 135 && bearing < 225 ? 'SOUTH' :
+                       bearing >= 225 && bearing < 315 ? 'WEST' : 
+                       bearing >= 315 ? 'NORTH' : 'UNKNOWN'}
+          </Text>
+          <Text style={styles.bearingDebugText}>
+            Phone Facing: {((deviceHeading % 360) + 360) % 360 >= 0 && ((deviceHeading % 360) + 360) % 360 < 45 ? 'NORTH' : 
+                          ((deviceHeading % 360) + 360) % 360 >= 45 && ((deviceHeading % 360) + 360) % 360 < 135 ? 'EAST' :
+                          ((deviceHeading % 360) + 360) % 360 >= 135 && ((deviceHeading % 360) + 360) % 360 < 225 ? 'SOUTH' :
+                          ((deviceHeading % 360) + 360) % 360 >= 225 && ((deviceHeading % 360) + 360) % 360 < 315 ? 'WEST' : 'NORTH'}
+          </Text>
+          
+          <Text style={styles.bearingDebugText}>
+            RAW: Bearing={bearing.toFixed(1)}° Device={deviceHeading.toFixed(1)}° Normalized={normalizedDeviceHeading.toFixed(1)}°
+          </Text>
+          
+          <Text style={styles.bearingDebugText}>
+            From: {currentLocation.y.toFixed(6)},{currentLocation.x.toFixed(6)}
+          </Text>
+          <Text style={styles.bearingDebugText}>
+            To: {nextPoint[1].toFixed(6)},{nextPoint[0].toFixed(6)}
+          </Text>
+        </View>
+
         <View style={[
           styles.directionCircle,
           { 
-            backgroundColor: Math.abs(relativeBearing) < 45 ? '#4CAF50' : '#FF9800', // Wider green zone
-            transform: [{ rotate: `0deg` }] // Remove rotation, keep circle stable
+            backgroundColor: Math.abs(relativeBearing) < 25 ? '#4CAF50' : 
+                           Math.abs(relativeBearing) < 45 ? '#FF9800' : '#F44336', // Updated green threshold
+            transform: [{ rotate: `0deg` }] // Keep circle stable
           }
         ]}>
           <Text style={styles.directionEmoji}>{getDirectionEmoji()}</Text>
@@ -204,14 +265,9 @@ function SimpleARGuidance({
         <Text style={styles.distanceText}>
           {Math.round(distance)}m
         </Text>
-        
-        {/* Add bearing debug info */}
-        <Text style={styles.bearingDebugText}>
-          Bearing: {Math.round(relativeBearing)}°
-        </Text>
       </View>
 
-      {/* Top Instruction Bar */}
+      {/* Top Instruction Bar - Show turn-by-turn instruction */}
       {nextInstruction && (
         <View style={styles.instructionBar}>
           <Text style={styles.instructionText}>
@@ -225,8 +281,8 @@ function SimpleARGuidance({
         <View style={[
           styles.pathLine,
           { 
-            transform: [{ rotate: `${Math.max(-45, Math.min(45, relativeBearing))}deg` }], // Clamp rotation
-            opacity: Math.abs(relativeBearing) < 60 ? 0.8 : 0.3 // Wider visibility zone
+            transform: [{ rotate: `${Math.max(-90, Math.min(90, relativeBearing))}deg` }],
+            opacity: Math.abs(relativeBearing) < 45 ? 0.8 : 0.3
           }
         ]} />
         <View style={styles.pathDots}>
@@ -236,8 +292,8 @@ function SimpleARGuidance({
               style={[
                 styles.pathDot, 
                 { 
-                  opacity: Math.abs(relativeBearing) < 60 ? 1 - (i * 0.15) : 0.3, // Wider visibility
-                  transform: [{ translateX: Math.max(-50, Math.min(50, relativeBearing * 1.5)) }] // Clamp and reduce movement
+                  opacity: Math.abs(relativeBearing) < 45 ? 1 - (i * 0.15) : 0.3,
+                  transform: [{ translateX: Math.max(-50, Math.min(50, relativeBearing * 0.5)) }]
                 }
               ]} 
             />
@@ -256,9 +312,16 @@ function SimpleARGuidance({
           {/* Current heading indicator */}
           <View style={[
             styles.headingIndicator,
-            { transform: [{ rotate: `${-deviceHeading}deg` }] }
+            { transform: [{ rotate: `${-normalizedDeviceHeading}deg` }] }
           ]} />
         </View>
+      </View>
+      
+      {/* Route Debug Info */}
+      <View style={styles.routeDebugContainer}>
+        <Text style={styles.debugText}>Route Index: {currentRouteIndex}/{routeCoordinates.length}</Text>
+        <Text style={styles.debugText}>Look Ahead: {Math.min(currentRouteIndex + 1, routeCoordinates.length - 1)}</Text>
+        <Text style={styles.debugText}>Direction Should Be: {bearing > 135 && bearing < 225 ? 'SOUTH ✓' : 'NOT SOUTH ✗'}</Text>
       </View>
     </>
   );
@@ -278,15 +341,20 @@ function SimpleARFallback({
 }) {
   if (!currentLocation || !destinationCoords) return null;
 
+  // FIXED: Use correct coordinate order for GPS coordinates
   const bearing = calculateBearing(
-    currentLocation.x, currentLocation.y,
-    destinationCoords.x, destinationCoords.y
+    currentLocation.y, // latitude
+    currentLocation.x, // longitude
+    destinationCoords.y, // destination latitude
+    destinationCoords.x  // destination longitude
   );
   
   const relativeBearing = normalizeAngle(bearing - deviceHeading);
   const distance = calculateDistance(
-    currentLocation.x, currentLocation.y,
-    destinationCoords.x, destinationCoords.y
+    currentLocation.y, // latitude
+    currentLocation.x, // longitude
+    destinationCoords.y, // destination latitude
+    destinationCoords.x  // destination longitude
   );
 
   return (
@@ -304,6 +372,12 @@ function SimpleARFallback({
         {Math.round(distance)}m to destination
       </Text>
       
+      {/* Debug info for fallback */}
+      <Text style={styles.fallbackInstruction}>
+        True Bearing: {Math.round(bearing)}°
+        {bearing > 135 && bearing < 225 ? ' (SOUTH)' : ''}
+      </Text>
+      
       {nextInstruction && (
         <Text style={styles.fallbackInstruction}>
           {nextInstruction}
@@ -313,31 +387,44 @@ function SimpleARFallback({
   );
 }
 
-// Utility functions
-function calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
+// Updated utility functions to handle coordinates correctly
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const toRad = (x: number) => (x * Math.PI) / 180;
-  const R = 6371000;
-  const dLat = toRad(y2 - y1);
-  const dLon = toRad(x2 - x1);
+  const R = 6371000; // Earth's radius in meters
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(y1)) * Math.cos(toRad(y2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
 
-function calculateBearing(x1: number, y1: number, x2: number, y2: number): number {
+function calculateBearing(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const toRad = (x: number) => (x * Math.PI) / 180;
   const toDeg = (x: number) => (x * 180) / Math.PI;
   
-  const dLon = toRad(x2 - x1);
-  const lat1 = toRad(y1);
-  const lat2 = toRad(y2);
+  const dLon = toRad(lon2 - lon1);
+  const lat1Rad = toRad(lat1);
+  const lat2Rad = toRad(lat2);
   
-  const y = Math.sin(dLon) * Math.cos(lat2);
-  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+  const y = Math.sin(dLon) * Math.cos(lat2Rad);
+  const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
   
-  return normalizeAngle(toDeg(Math.atan2(y, x)));
+  const bearing = normalizeAngle(toDeg(Math.atan2(y, x)));
+  
+  // Debug log to console to verify calculation
+  console.log('BEARING CALC:', {
+    from: [lat1, lon1],
+    to: [lat2, lon2],
+    dLon: toDeg(dLon),
+    y: y.toFixed(4),
+    x: x.toFixed(4),
+    atan2: toDeg(Math.atan2(y, x)).toFixed(1),
+    finalBearing: bearing.toFixed(1)
+  });
+  
+  return bearing;
 }
 
 function normalizeAngle(angle: number): number {
@@ -378,6 +465,14 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     zIndex: 2,
+  },
+  debugInfoAboveArrow: {
+    alignItems: 'center',
+    marginBottom: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: 10,
+    borderRadius: 10,
+    maxWidth: screenWidth * 0.9,
   },
   directionCircle: {
     width: 120,
@@ -534,6 +629,17 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 12,
     marginVertical: 2,
+  },
+  
+  // Route Debug Info
+  routeDebugContainer: {
+    position: 'absolute',
+    bottom: 100,
+    left: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    padding: 8,
+    borderRadius: 8,
+    zIndex: 3,
   },
   
   // Fallback Mode
