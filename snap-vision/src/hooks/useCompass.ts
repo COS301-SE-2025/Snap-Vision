@@ -20,8 +20,8 @@ export function useCompass() {
           angle = (angle + 360) % 360;
 
           // CALIBRATION: Add offset to match actual device compass
-          // Your device compass shows 0° when facing north, but our calculation was different
-          // We need to calibrate to match your device's built-in compass
+          // Device compass shows 0° when facing north, but the calculation was different
+          // Calibrate to match your device's built-in compass
           const calibrationOffset = -81; // Flip the calibration direction
           angle = (angle - calibrationOffset + 360) % 360;
 
