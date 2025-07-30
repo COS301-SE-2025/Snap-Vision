@@ -1662,8 +1662,6 @@ const MapScreen = () => {
           <Text style={{ color: colors.text, fontWeight: 'bold' }}>{tempMessage}</Text>
         </View>
       ) : null}
-
-      
     </View>
   );
 };
