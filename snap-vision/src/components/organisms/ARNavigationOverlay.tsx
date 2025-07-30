@@ -306,31 +306,6 @@ function SimpleARGuidance({
         </View>
       )}
 
-      {/* Ground Level Path Indicator */}
-      <View style={styles.groundIndicator}>
-        <View style={[
-          styles.pathLine,
-          { 
-            transform: [{ rotate: `${Math.max(-90, Math.min(90, relativeBearing))}deg` }],
-            opacity: Math.abs(relativeBearing) < 45 ? 0.8 : 0.3
-          }
-        ]} />
-        <View style={styles.pathDots}>
-          {[...Array(5)].map((_, i) => (
-            <View 
-              key={i} 
-              style={[
-                styles.pathDot, 
-                { 
-                  opacity: Math.abs(relativeBearing) < 45 ? 1 - (i * 0.15) : 0.3,
-                  transform: [{ translateX: Math.max(-50, Math.min(50, relativeBearing * 0.5)) }]
-                }
-              ]} 
-            />
-          ))}
-        </View>
-      </View>
-
       {/* Route Debug Info */}
       <View style={styles.routeDebugContainer}>
         <Text style={styles.debugText}>Route Index: {currentRouteIndex}/{routeCoordinates.length}</Text>
@@ -551,34 +526,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     textAlign: 'center',
-  },
-  
-  // Ground Path Indicator
-  groundIndicator: {
-    position: 'absolute',
-    bottom: screenHeight * 0.2,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    zIndex: 1,
-  },
-  pathLine: {
-    width: 4,
-    height: 100,
-    backgroundColor: '#4CAF50',
-    borderRadius: 2,
-  },
-  pathDots: {
-    flexDirection: 'row',
-    marginTop: 10,
-    justifyContent: 'center',
-  },
-  pathDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#4CAF50',
-    marginHorizontal: 4,
   },
   
   // Debug
