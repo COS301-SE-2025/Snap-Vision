@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, StyleSheet, Text, Alert } from 'react-native';
+import { View, StyleSheet, Text, Alert, ScrollView } from 'react-native';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import { getThemeColors } from '../../theme';
 import SettingsToggleItem from '../molecules/SettingsToggleItem';
+import SettingsHeader from '../molecules/SettingsHeader';
 
 interface Props {
   isDark: boolean;
-  navigation: any;
 }
 
 export default function AccessibilitySettingsContent({ isDark }: Props) {
@@ -24,33 +24,42 @@ export default function AccessibilitySettingsContent({ isDark }: Props) {
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Text style={[styles.loadingText, { color: colors.text }]}>Loading settings...</Text>
+        <SettingsHeader title="Accessibility Settings" />
+        <View style={styles.loadingContent}>
+          <Text style={[styles.loadingText, { color: colors.text }]}>Loading settings...</Text>
+        </View>
       </View>
     );
   }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Touch & Vibration</Text>
-        <SettingsToggleItem
-          icon="pulse"
-          label="Haptic Feedback"
-          description="Enable vibration feedback for navigation events and interactions"
-          value={isHapticFeedbackEnabled}
-          onToggle={handleHapticFeedbackToggle}
-          color={colors.primary}
-          textColor={colors.text}
-          descriptionColor={colors.secondary}
-        />
-      </View>
+      <SettingsHeader title="Accessibility Settings" />
+      
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <View style={styles.content}>
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Touch & Vibration</Text>
+            <SettingsToggleItem
+              icon="pulse"
+              label="Haptic Feedback"
+              description="Enable vibration feedback for navigation events and interactions"
+              value={isHapticFeedbackEnabled}
+              onToggle={handleHapticFeedbackToggle}
+              color={colors.primary}
+              textColor={colors.text}
+              descriptionColor={colors.secondary}
+            />
+          </View>
 
-      <View style={styles.infoSection}>
-        <Text style={[styles.infoText, { color: colors.secondary }]}>
-          Haptic feedback provides tactile confirmation of your actions and navigation events to
-          help make the app more accessible and easier to use.
-        </Text>
-      </View>
+          <View style={styles.infoSection}>
+            <Text style={[styles.infoText, { color: colors.secondary }]}>
+              Haptic feedback provides tactile confirmation of your actions and navigation events to
+              help make the app more accessible and easier to use.
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -58,7 +67,17 @@ export default function AccessibilitySettingsContent({ isDark }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  content: {
     padding: 16,
+  },
+  loadingContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   section: {
     marginBottom: 24,
@@ -83,6 +102,5 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     textAlign: 'center',
-    marginTop: 40,
   },
 });
