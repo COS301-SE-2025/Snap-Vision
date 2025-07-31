@@ -2,7 +2,7 @@
 // Run this in a React Native screen to test the AR components
 
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import SimpleAROverlay from '../components/organisms/SimpleAROverlay';
 import { useCompass } from '../hooks/useCompass';
 

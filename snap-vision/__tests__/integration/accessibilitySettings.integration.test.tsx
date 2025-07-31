@@ -1,6 +1,5 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
-import { Alert } from 'react-native';
 import AccessibilitySettingsContent from '../../src/components/organisms/AccessibilitySettingsContent';
 import { AccessibilityProvider } from '../../src/context/AccessibilityContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,6 +10,29 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   setItem: jest.fn(),
   removeItem: jest.fn(),
 }));
+
+// Mock StandardPopup component
+const mockStandardPopup = jest.fn();
+jest.mock('../../src/components/atoms/StandardPopup', () => {
+  return jest.fn(({ visible, title, message, onConfirm, confirmText, showCancel }) => {
+    const { View, Text, TouchableOpacity } = require('react-native');
+
+    // Call the mock function to track calls
+    mockStandardPopup({ visible, title, message, onConfirm, confirmText, showCancel });
+
+    // Return a proper React component
+    if (!visible) return null;
+    return (
+      <View testID="standard-popup">
+        <Text testID="popup-title">{title}</Text>
+        <Text testID="popup-message">{message}</Text>
+        <TouchableOpacity onPress={onConfirm} testID="popup-confirm">
+          <Text>{confirmText}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  });
+});
 
 jest.mock('../../src/theme', () => ({
   getThemeColors: jest.fn(() => ({
@@ -45,8 +67,6 @@ jest.mock('../../src/components/molecules/SettingsToggleItem', () => {
   };
 });
 
-jest.spyOn(Alert, 'alert');
-
 const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
 
 const TestComponent = ({ isDark = false }: { isDark?: boolean }) => (
@@ -60,6 +80,7 @@ describe('AccessibilitySettingsContent Integration Tests', () => {
     jest.clearAllMocks();
     mockAsyncStorage.getItem.mockResolvedValue(null);
     mockAsyncStorage.setItem.mockResolvedValue();
+    mockStandardPopup.mockClear();
   });
 
   it('should load saved haptic feedback preference from storage', async () => {
@@ -107,10 +128,14 @@ describe('AccessibilitySettingsContent Integration Tests', () => {
     fireEvent.press(toggleButton);
 
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith(
-        'Error',
-        'Failed to save haptic feedback setting. Please try again.',
-      );
+      expect(mockStandardPopup).toHaveBeenCalledWith({
+        visible: true,
+        title: 'Error',
+        message: 'Failed to save haptic feedback setting. Please try again.',
+        onConfirm: expect.any(Function),
+        confirmText: 'OK',
+        showCancel: false,
+      });
     });
   });
 

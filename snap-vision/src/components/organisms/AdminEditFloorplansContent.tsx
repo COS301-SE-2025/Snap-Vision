@@ -5,7 +5,6 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
-  Alert,
   TouchableOpacity,
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
@@ -15,6 +14,7 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 
 import AppSecondaryButton from '../atoms/AppSecondaryButton';
 import SettingsHeader from '../molecules/SettingsHeader';
+import StandardPopup from '../atoms/StandardPopup';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
@@ -63,6 +63,11 @@ export default function AdminEditFloorplansContent() {
 
   // Added state for floor dropdown open
   const [floorDropdownOpen, setFloorDropdownOpen] = useState(false);
+
+  // Popup states
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -181,52 +186,49 @@ export default function AdminEditFloorplansContent() {
     });
   };
 
-  const handleDeleteFloorplan = async () => {
+  const handleDeleteFloorplan = () => {
+    if (!selectedFloorplan) return;
+    setShowDeleteConfirmation(true);
+  };
+
+  const confirmDeleteFloorplan = async () => {
     if (!selectedFloorplan) return;
 
-    Alert.alert('Delete Floorplan', 'Are you sure?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            setIsLoading(true);
-            const { locationId, buildingId, floorLabel } = selectedFloorplan;
+    try {
+      setIsLoading(true);
+      const { locationId, buildingId, floorLabel } = selectedFloorplan;
 
-            await firestore()
-              .doc(`locations/${locationId}/buildingPOIs/${buildingId}/floorplans/${floorLabel}`)
-              .delete();
+      await firestore()
+        .doc(`locations/${locationId}/buildingPOIs/${buildingId}/floorplans/${floorLabel}`)
+        .delete();
 
-            const roomSnap = await firestore()
-              .collection(`locations/${locationId}/roomPOIs`)
-              .where('buildingId', '==', buildingId)
-              .where('floorId', '==', floorLabel)
-              .get();
+      const roomSnap = await firestore()
+        .collection(`locations/${locationId}/roomPOIs`)
+        .where('buildingId', '==', buildingId)
+        .where('floorId', '==', floorLabel)
+        .get();
 
-            const pathSnap = await firestore()
-              .collection(`locations/${locationId}/pathPOIs`)
-              .where('buildingId', '==', buildingId)
-              .where('floorId', '==', floorLabel)
-              .get();
+      const pathSnap = await firestore()
+        .collection(`locations/${locationId}/pathPOIs`)
+        .where('buildingId', '==', buildingId)
+        .where('floorId', '==', floorLabel)
+        .get();
 
-            const batch = firestore().batch();
-            roomSnap.forEach((doc) => batch.delete(doc.ref));
-            pathSnap.forEach((doc) => batch.delete(doc.ref));
-            await batch.commit();
+      const batch = firestore().batch();
+      roomSnap.forEach((doc) => batch.delete(doc.ref));
+      pathSnap.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
 
-            setFloorplans((prev) => prev.filter((fp) => fp.id !== selectedFloorplan.id));
-            setSelectedFloorplan(null);
-            Alert.alert('Deleted', 'Floorplan and POIs removed.');
-          } catch (err) {
-            console.error(err);
-            setError('Failed to delete floorplan');
-          } finally {
-            setIsLoading(false);
-          }
-        },
-      },
-    ]);
+      setFloorplans((prev) => prev.filter((fp) => fp.id !== selectedFloorplan.id));
+      setSelectedFloorplan(null);
+      setSuccessMessage('Floorplan and POIs removed successfully.');
+      setShowSuccessPopup(true);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to delete floorplan');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -369,6 +371,31 @@ export default function AdminEditFloorplansContent() {
           </View>
         )}
       </ScrollView>
+
+      {/* Delete Confirmation Popup */}
+      <StandardPopup
+        visible={showDeleteConfirmation}
+        title="Delete Floorplan"
+        message="Are you sure you want to delete this floorplan? This action cannot be undone."
+        onConfirm={() => {
+          setShowDeleteConfirmation(false);
+          confirmDeleteFloorplan();
+        }}
+        onCancel={() => setShowDeleteConfirmation(false)}
+        confirmText="Delete"
+        cancelText="Cancel"
+        showCancel={true}
+      />
+
+      {/* Success Popup */}
+      <StandardPopup
+        visible={showSuccessPopup}
+        title="Success"
+        message={successMessage}
+        onConfirm={() => setShowSuccessPopup(false)}
+        confirmText="OK"
+        showCancel={false}
+      />
     </View>
   );
 }
