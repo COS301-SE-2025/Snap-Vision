@@ -308,17 +308,17 @@ export default function AdminLoadFloorplansContent() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.inputSection}>
-      {/* Error Popup */}
-      <StandardPopup
-        visible={showErrorPopup && !!error}
-        title="Error"
-        message={error || ''}
-        onConfirm={() => {
-          setShowErrorPopup(false);
-          setError(null);
-        }}
-        showCancel={false}
-      />
+          {/* Error Popup */}
+          <StandardPopup
+            visible={showErrorPopup && !!error}
+            title="Error"
+            message={error || ''}
+            onConfirm={() => {
+              setShowErrorPopup(false);
+              setError(null);
+            }}
+            showCancel={false}
+          />
           <Text style={[styles.inputTitle, { color: colors.primary }]}>Select a Location</Text>
           <ScrollView
             horizontal

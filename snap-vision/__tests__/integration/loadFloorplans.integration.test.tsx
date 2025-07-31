@@ -1,4 +1,4 @@
-  import React from 'react';
+import React from 'react';
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 
 const mockGetAllKeys = jest.fn();
@@ -30,12 +30,14 @@ const mockCollection = jest.fn(() => ({
 
 // Mock document reference with get method
 const mockDocRef = {
-  get: jest.fn(() => Promise.resolve({
-    data: () => ({
-      role: 'admin',
-      adminLocations: ['building1', 'building2'],
+  get: jest.fn(() =>
+    Promise.resolve({
+      data: () => ({
+        role: 'admin',
+        adminLocations: ['building1', 'building2'],
+      }),
     }),
-  })),
+  ),
   set: jest.fn(() => Promise.resolve()),
   delete: jest.fn(() => Promise.resolve()),
 };
@@ -120,7 +122,9 @@ jest.mock('react-native-dropdown-picker', () => {
     return (
       <View testID="dropdown-picker" {...props}>
         <TouchableOpacity onPress={() => setOpen && setOpen(!open)}>
-          <Text>{value ? items?.find((item: any) => item.value === value)?.label : placeholder}</Text>
+          <Text>
+            {value ? items?.find((item: any) => item.value === value)?.label : placeholder}
+          </Text>
         </TouchableOpacity>
         {open && (
           <View>
@@ -162,29 +166,40 @@ jest.mock('@react-navigation/native', () => ({
 // Mock StandardPopup component
 const mockStandardPopup = jest.fn();
 jest.mock('../../src/components/atoms/StandardPopup', () => {
-  return jest.fn(({ visible, title, message, onConfirm, onCancel, confirmText, cancelText, showCancel }) => {
-    const { View, Text, TouchableOpacity } = require('react-native');
-    
-    // Call the mock function to track calls
-    mockStandardPopup({ visible, title, message, onConfirm, onCancel, confirmText, cancelText, showCancel });
-    
-    // Return a proper React component
-    if (!visible) return null;
-    return (
-      <View testID="standard-popup">
-        <Text testID="popup-title">{title}</Text>
-        <Text testID="popup-message">{message}</Text>
-        <TouchableOpacity onPress={onConfirm} testID="popup-confirm">
-          <Text>{confirmText || 'OK'}</Text>
-        </TouchableOpacity>
-        {showCancel && (
-          <TouchableOpacity onPress={onCancel} testID="popup-cancel">
-            <Text>{cancelText || 'Cancel'}</Text>
+  return jest.fn(
+    ({ visible, title, message, onConfirm, onCancel, confirmText, cancelText, showCancel }) => {
+      const { View, Text, TouchableOpacity } = require('react-native');
+
+      // Call the mock function to track calls
+      mockStandardPopup({
+        visible,
+        title,
+        message,
+        onConfirm,
+        onCancel,
+        confirmText,
+        cancelText,
+        showCancel,
+      });
+
+      // Return a proper React component
+      if (!visible) return null;
+      return (
+        <View testID="standard-popup">
+          <Text testID="popup-title">{title}</Text>
+          <Text testID="popup-message">{message}</Text>
+          <TouchableOpacity onPress={onConfirm} testID="popup-confirm">
+            <Text>{confirmText || 'OK'}</Text>
           </TouchableOpacity>
-        )}
-      </View>
-    );
-  });
+          {showCancel && (
+            <TouchableOpacity onPress={onCancel} testID="popup-cancel">
+              <Text>{cancelText || 'Cancel'}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      );
+    },
+  );
 });
 
 jest.mock('../../src/theme/ThemeContext', () => ({
@@ -355,7 +370,7 @@ describe('AdminLoadFloorplansContent Integration', () => {
           ],
         });
       }
-      
+
       // Mock buildings collection for a specific location
       return Promise.resolve({
         docs: [
@@ -371,7 +386,7 @@ describe('AdminLoadFloorplansContent Integration', () => {
             id: 'building2',
             data: () => ({
               name: 'Engineering Building',
-              centroid: { latitude: -25.7550, longitude: 28.2320 },
+              centroid: { latitude: -25.755, longitude: 28.232 },
               floors: 5,
             }),
           },
@@ -383,12 +398,14 @@ describe('AdminLoadFloorplansContent Integration', () => {
     mockDoc.mockReturnValue({
       set: jest.fn(() => Promise.resolve()),
       delete: jest.fn(() => Promise.resolve()),
-      get: jest.fn(() => Promise.resolve({
-        data: () => ({
-          role: 'admin',
-          adminLocations: ['location1', 'location2'],
+      get: jest.fn(() =>
+        Promise.resolve({
+          data: () => ({
+            role: 'admin',
+            adminLocations: ['location1', 'location2'],
+          }),
         }),
-      })),
+      ),
     });
 
     // Reset storage mocks
@@ -401,378 +418,376 @@ describe('AdminLoadFloorplansContent Integration', () => {
     mockStandardPopup.mockClear();
   });
 
-    it('handles image picker cancellation', async () => {
-      setupDefaultMocks();
-      mockImagePicker.launchImageLibrary.mockResolvedValueOnce({
-        didCancel: true,
-        assets: [],
-      });
-
-      const { getByTestId } = render(
-        <TestWrapper>
-          <AdminLoadFloorplansContent />
-        </TestWrapper>,
-      );
-
-      await waitFor(
-        () => {
-          expect(getByTestId('button-upload-floorplan')).toBeTruthy();
-        },
-        { timeout: 3000 },
-      );
-
-      // This test verifies that canceling image picker doesn't crash the app
-      expect(getByTestId('button-upload-floorplan')).toBeTruthy();
+  it('handles image picker cancellation', async () => {
+    setupDefaultMocks();
+    mockImagePicker.launchImageLibrary.mockResolvedValueOnce({
+      didCancel: true,
+      assets: [],
     });
 
-    it('handles successful image selection', async () => {
-      setupDefaultMocks();
-      mockImagePicker.launchImageLibrary.mockResolvedValueOnce({
-        didCancel: false,
-        assets: [
-          {
-            uri: 'file:///mock/selected-image.jpg',
-            type: 'image/jpeg',
-            fileName: 'selected-image.jpg',
-          },
-        ],
-      });
+    const { getByTestId } = render(
+      <TestWrapper>
+        <AdminLoadFloorplansContent />
+      </TestWrapper>,
+    );
 
-      const { getByTestId } = render(
-        <TestWrapper>
-          <AdminLoadFloorplansContent />
-        </TestWrapper>,
-      );
+    await waitFor(
+      () => {
+        expect(getByTestId('button-upload-floorplan')).toBeTruthy();
+      },
+      { timeout: 3000 },
+    );
 
-      await waitFor(
-        () => {
-          expect(getByTestId('button-upload-floorplan')).toBeTruthy();
-        },
-        { timeout: 3000 },
-      );
-
-      // This test verifies that successful image selection doesn't crash the app
-      expect(getByTestId('button-upload-floorplan')).toBeTruthy();
-    });
-
-    it('handles floor label input and validation', async () => {
-      setupDefaultMocks();
-
-      const { getByTestId, queryByTestId } = render(
-        <TestWrapper>
-          <AdminLoadFloorplansContent />
-        </TestWrapper>,
-      );
-
-      await waitFor(
-        () => {
-          expect(getByTestId('button-upload-floorplan')).toBeTruthy();
-        },
-        { timeout: 3000 },
-      );
-
-      // Look for floor label input
-      const floorInput = queryByTestId('input-floor-label') || queryByTestId('app-input');
-      if (floorInput) {
-        await act(async () => {
-          fireEvent.changeText(floorInput, 'Ground Floor');
-        });
-      }
-
-      expect(getByTestId('button-upload-floorplan')).toBeTruthy();
-    });
-
-    it('handles building selection from dropdown', async () => {
-      setupDefaultMocks();
-
-      const { getByTestId, queryByTestId } = render(
-        <TestWrapper>
-          <AdminLoadFloorplansContent />
-        </TestWrapper>,
-      );
-
-      await waitFor(
-        () => {
-          expect(getByTestId('button-upload-floorplan')).toBeTruthy();
-        },
-        { timeout: 3000 },
-      );
-
-      // Look for dropdown picker
-      const dropdown = queryByTestId('dropdown-picker');
-      if (dropdown) {
-        await act(async () => {
-          fireEvent.press(dropdown);
-        });
-      }
-
-      expect(getByTestId('button-upload-floorplan')).toBeTruthy();
-    });
-
-    it('handles successful floorplan upload with all fields filled', async () => {
-      setupDefaultMocks();
-      mockImagePicker.launchImageLibrary.mockResolvedValueOnce({
-        didCancel: false,
-        assets: [
-          {
-            uri: 'file:///mock/selected-image.jpg',
-            type: 'image/jpeg',
-            fileName: 'selected-image.jpg',
-          },
-        ],
-      });
-
-      const { getByTestId, queryByTestId } = render(
-        <TestWrapper>
-          <AdminLoadFloorplansContent />
-        </TestWrapper>,
-      );
-
-      await waitFor(
-        () => {
-          expect(getByTestId('button-upload-floorplan')).toBeTruthy();
-        },
-        { timeout: 3000 },
-      );
-
-      // Fill in floor label
-      const floorInput = queryByTestId('input-floor-label') || queryByTestId('app-input');
-      if (floorInput) {
-        await act(async () => {
-          fireEvent.changeText(floorInput, 'Ground Floor');
-        });
-      }
-
-      mockStandardPopup.mockClear();
-
-      // Try to upload
-      await act(async () => {
-        fireEvent.press(getByTestId('button-upload-floorplan'));
-      });
-
-      // Should either succeed or show validation error, but not crash
-      expect(getByTestId('button-upload-floorplan')).toBeTruthy();
-    });
-
-    it('handles back navigation correctly', async () => {
-      setupDefaultMocks();
-
-      const { queryByTestId } = render(
-        <TestWrapper>
-          <AdminLoadFloorplansContent />
-        </TestWrapper>,
-      );
-
-      await waitFor(
-        () => {
-          const backButton = queryByTestId('button-back') || queryByTestId('secondary-button-back');
-          if (backButton) {
-            expect(backButton).toBeTruthy();
-          }
-        },
-        { timeout: 3000 },
-      );
-    });
-
-    it('displays proper component structure and elements', async () => {
-      setupDefaultMocks();
-
-      const { queryByText, getAllByText } = render(
-        <TestWrapper>
-          <AdminLoadFloorplansContent />
-        </TestWrapper>,
-      );
-
-      await waitFor(
-        () => {
-          // Use getAllByText to handle multiple elements with same text
-          const uploadElements = getAllByText('Upload Floorplan');
-          expect(uploadElements.length).toBeGreaterThanOrEqual(1);
-        },
-        { timeout: 3000 },
-      );
-
-      // Check for key UI elements (updated for new button text)
-      expect(
-        queryByText('Select Floorplan Image') || queryByText('Change Image'),
-      ).toBeTruthy();
-    });
-
-    it('handles storage operations correctly', async () => {
-      setupDefaultMocks();
-
-      const { getByTestId } = render(
-        <TestWrapper>
-          <AdminLoadFloorplansContent />
-        </TestWrapper>,
-      );
-
-      await waitFor(
-        () => {
-          expect(getByTestId('button-upload-floorplan')).toBeTruthy();
-        },
-        { timeout: 3000 },
-      );
-
-      // Verify component loads without storage errors
-      expect(getByTestId('button-upload-floorplan')).toBeTruthy();
-    });
-
-    it('handles image picker selection and file operations', async () => {
-      setupDefaultMocks();
-
-      const { getByTestId, queryByTestId } = render(
-        <TestWrapper>
-          <AdminLoadFloorplansContent />
-        </TestWrapper>,
-      );
-
-      await waitFor(
-        () => {
-          expect(getByTestId('button-upload-floorplan')).toBeTruthy();
-        },
-        { timeout: 3000 },
-      );
-
-      // Look for image picker button
-      const imageButton =
-        queryByTestId('button-select-image') ||
-        queryByTestId('button-pick-document') ||
-        queryByTestId('image-picker-button');
-
-      if (imageButton) {
-        await act(async () => {
-          fireEvent.press(imageButton);
-        });
-      }
-
-      expect(getByTestId('button-upload-floorplan')).toBeTruthy();
-    });
-
-    it('handles location and building data loading', async () => {
-      setupDefaultMocks();
-
-      const { queryByText } = render(
-        <TestWrapper>
-          <AdminLoadFloorplansContent />
-        </TestWrapper>,
-      );
-
-      await waitFor(
-        () => {
-          // Should load locations and buildings without errors
-          // Look for the location selection header and at least one location name
-          const locationHeader = queryByText('Select a Location');
-          const buildingHeader = queryByText('Select a Building');
-          expect(locationHeader || buildingHeader).toBeTruthy();
-        },
-        { timeout: 3000 },
-      );
-    });
-
-    it('handles user role and access control', async () => {
-      setupDefaultMocks();
-
-      const { queryByText, getAllByText } = render(
-        <TestWrapper>
-          <AdminLoadFloorplansContent />
-        </TestWrapper>,
-      );
-
-      await waitFor(
-        () => {
-          // Should either show access controls or handle gracefully
-          // Check that at least one header is present (avoid multiple elements error)
-          // Use getAllByText to avoid ambiguity
-          const headers = typeof getAllByText === 'function' ? getAllByText('Upload Floorplan') : [];
-          expect(headers.length).toBeGreaterThanOrEqual(1);
-        },
-        { timeout: 3000 },
-      );
-    });
-
-    it('handles successful upload flow with all validations passing', async () => {
-      setupDefaultMocks();
-
-      // Mock successful conditions
-      mockImagePicker.launchImageLibrary.mockResolvedValueOnce({
-        didCancel: false,
-        assets: [{ uri: 'file:///mock/image.jpg', type: 'image/jpeg', fileName: 'image.jpg' }],
-      });
-
-      const { getByTestId, queryByTestId } = render(
-        <TestWrapper>
-          <AdminLoadFloorplansContent />
-        </TestWrapper>,
-      );
-
-      await waitFor(
-        () => {
-          expect(getByTestId('button-upload-floorplan')).toBeTruthy();
-        },
-        { timeout: 3000 },
-      );
-
-      // Fill form with valid data
-      const floorInput = queryByTestId('input-floor-label') || queryByTestId('app-input');
-      if (floorInput) {
-        await act(async () => {
-          fireEvent.changeText(floorInput, '1');
-        });
-      }
-
-      // Try upload
-      mockStandardPopup.mockClear();
-      await act(async () => {
-        fireEvent.press(getByTestId('button-upload-floorplan'));
-      });
-
-      // Should either succeed or show appropriate validation
-      expect(getByTestId('button-upload-floorplan')).toBeTruthy();
-    });
-
-    it('handles Firebase Storage upload operations', async () => {
-      setupDefaultMocks();
-
-      const { getByTestId } = render(
-        <TestWrapper>
-          <AdminLoadFloorplansContent />
-        </TestWrapper>,
-      );
-
-      await waitFor(
-        () => {
-          expect(getByTestId('button-upload-floorplan')).toBeTruthy();
-        },
-        { timeout: 3000 },
-      );
-
-      // Component should handle Firebase operations without crashing
-      expect(getByTestId('button-upload-floorplan')).toBeTruthy();
-    });
-
-    it('handles error states and recovery', async () => {
-      setupDefaultMocks();
-
-      const { queryByText, getAllByText } = render(
-        <TestWrapper>
-          <AdminLoadFloorplansContent />
-        </TestWrapper>,
-      );
-
-      await waitFor(
-        () => {
-          // Should handle errors gracefully (look for error popup or main header)
-          const calls = mockStandardPopup.mock.calls;
-          const found = calls.some(call => {
-            const { visible, title } = call[0] || {};
-            return visible && (title === 'Error' || title === 'Error!');
-          });
-          // Use getAllByText to avoid ambiguity
-          const headers = typeof getAllByText === 'function' ? getAllByText('Upload Floorplan') : [];
-          expect(found || headers.length > 0).toBeTruthy();
-        },
-        { timeout: 3000 },
-      );
-    });
+    // This test verifies that canceling image picker doesn't crash the app
+    expect(getByTestId('button-upload-floorplan')).toBeTruthy();
   });
+
+  it('handles successful image selection', async () => {
+    setupDefaultMocks();
+    mockImagePicker.launchImageLibrary.mockResolvedValueOnce({
+      didCancel: false,
+      assets: [
+        {
+          uri: 'file:///mock/selected-image.jpg',
+          type: 'image/jpeg',
+          fileName: 'selected-image.jpg',
+        },
+      ],
+    });
+
+    const { getByTestId } = render(
+      <TestWrapper>
+        <AdminLoadFloorplansContent />
+      </TestWrapper>,
+    );
+
+    await waitFor(
+      () => {
+        expect(getByTestId('button-upload-floorplan')).toBeTruthy();
+      },
+      { timeout: 3000 },
+    );
+
+    // This test verifies that successful image selection doesn't crash the app
+    expect(getByTestId('button-upload-floorplan')).toBeTruthy();
+  });
+
+  it('handles floor label input and validation', async () => {
+    setupDefaultMocks();
+
+    const { getByTestId, queryByTestId } = render(
+      <TestWrapper>
+        <AdminLoadFloorplansContent />
+      </TestWrapper>,
+    );
+
+    await waitFor(
+      () => {
+        expect(getByTestId('button-upload-floorplan')).toBeTruthy();
+      },
+      { timeout: 3000 },
+    );
+
+    // Look for floor label input
+    const floorInput = queryByTestId('input-floor-label') || queryByTestId('app-input');
+    if (floorInput) {
+      await act(async () => {
+        fireEvent.changeText(floorInput, 'Ground Floor');
+      });
+    }
+
+    expect(getByTestId('button-upload-floorplan')).toBeTruthy();
+  });
+
+  it('handles building selection from dropdown', async () => {
+    setupDefaultMocks();
+
+    const { getByTestId, queryByTestId } = render(
+      <TestWrapper>
+        <AdminLoadFloorplansContent />
+      </TestWrapper>,
+    );
+
+    await waitFor(
+      () => {
+        expect(getByTestId('button-upload-floorplan')).toBeTruthy();
+      },
+      { timeout: 3000 },
+    );
+
+    // Look for dropdown picker
+    const dropdown = queryByTestId('dropdown-picker');
+    if (dropdown) {
+      await act(async () => {
+        fireEvent.press(dropdown);
+      });
+    }
+
+    expect(getByTestId('button-upload-floorplan')).toBeTruthy();
+  });
+
+  it('handles successful floorplan upload with all fields filled', async () => {
+    setupDefaultMocks();
+    mockImagePicker.launchImageLibrary.mockResolvedValueOnce({
+      didCancel: false,
+      assets: [
+        {
+          uri: 'file:///mock/selected-image.jpg',
+          type: 'image/jpeg',
+          fileName: 'selected-image.jpg',
+        },
+      ],
+    });
+
+    const { getByTestId, queryByTestId } = render(
+      <TestWrapper>
+        <AdminLoadFloorplansContent />
+      </TestWrapper>,
+    );
+
+    await waitFor(
+      () => {
+        expect(getByTestId('button-upload-floorplan')).toBeTruthy();
+      },
+      { timeout: 3000 },
+    );
+
+    // Fill in floor label
+    const floorInput = queryByTestId('input-floor-label') || queryByTestId('app-input');
+    if (floorInput) {
+      await act(async () => {
+        fireEvent.changeText(floorInput, 'Ground Floor');
+      });
+    }
+
+    mockStandardPopup.mockClear();
+
+    // Try to upload
+    await act(async () => {
+      fireEvent.press(getByTestId('button-upload-floorplan'));
+    });
+
+    // Should either succeed or show validation error, but not crash
+    expect(getByTestId('button-upload-floorplan')).toBeTruthy();
+  });
+
+  it('handles back navigation correctly', async () => {
+    setupDefaultMocks();
+
+    const { queryByTestId } = render(
+      <TestWrapper>
+        <AdminLoadFloorplansContent />
+      </TestWrapper>,
+    );
+
+    await waitFor(
+      () => {
+        const backButton = queryByTestId('button-back') || queryByTestId('secondary-button-back');
+        if (backButton) {
+          expect(backButton).toBeTruthy();
+        }
+      },
+      { timeout: 3000 },
+    );
+  });
+
+  it('displays proper component structure and elements', async () => {
+    setupDefaultMocks();
+
+    const { queryByText, getAllByText } = render(
+      <TestWrapper>
+        <AdminLoadFloorplansContent />
+      </TestWrapper>,
+    );
+
+    await waitFor(
+      () => {
+        // Use getAllByText to handle multiple elements with same text
+        const uploadElements = getAllByText('Upload Floorplan');
+        expect(uploadElements.length).toBeGreaterThanOrEqual(1);
+      },
+      { timeout: 3000 },
+    );
+
+    // Check for key UI elements (updated for new button text)
+    expect(queryByText('Select Floorplan Image') || queryByText('Change Image')).toBeTruthy();
+  });
+
+  it('handles storage operations correctly', async () => {
+    setupDefaultMocks();
+
+    const { getByTestId } = render(
+      <TestWrapper>
+        <AdminLoadFloorplansContent />
+      </TestWrapper>,
+    );
+
+    await waitFor(
+      () => {
+        expect(getByTestId('button-upload-floorplan')).toBeTruthy();
+      },
+      { timeout: 3000 },
+    );
+
+    // Verify component loads without storage errors
+    expect(getByTestId('button-upload-floorplan')).toBeTruthy();
+  });
+
+  it('handles image picker selection and file operations', async () => {
+    setupDefaultMocks();
+
+    const { getByTestId, queryByTestId } = render(
+      <TestWrapper>
+        <AdminLoadFloorplansContent />
+      </TestWrapper>,
+    );
+
+    await waitFor(
+      () => {
+        expect(getByTestId('button-upload-floorplan')).toBeTruthy();
+      },
+      { timeout: 3000 },
+    );
+
+    // Look for image picker button
+    const imageButton =
+      queryByTestId('button-select-image') ||
+      queryByTestId('button-pick-document') ||
+      queryByTestId('image-picker-button');
+
+    if (imageButton) {
+      await act(async () => {
+        fireEvent.press(imageButton);
+      });
+    }
+
+    expect(getByTestId('button-upload-floorplan')).toBeTruthy();
+  });
+
+  it('handles location and building data loading', async () => {
+    setupDefaultMocks();
+
+    const { queryByText } = render(
+      <TestWrapper>
+        <AdminLoadFloorplansContent />
+      </TestWrapper>,
+    );
+
+    await waitFor(
+      () => {
+        // Should load locations and buildings without errors
+        // Look for the location selection header and at least one location name
+        const locationHeader = queryByText('Select a Location');
+        const buildingHeader = queryByText('Select a Building');
+        expect(locationHeader || buildingHeader).toBeTruthy();
+      },
+      { timeout: 3000 },
+    );
+  });
+
+  it('handles user role and access control', async () => {
+    setupDefaultMocks();
+
+    const { queryByText, getAllByText } = render(
+      <TestWrapper>
+        <AdminLoadFloorplansContent />
+      </TestWrapper>,
+    );
+
+    await waitFor(
+      () => {
+        // Should either show access controls or handle gracefully
+        // Check that at least one header is present (avoid multiple elements error)
+        // Use getAllByText to avoid ambiguity
+        const headers = typeof getAllByText === 'function' ? getAllByText('Upload Floorplan') : [];
+        expect(headers.length).toBeGreaterThanOrEqual(1);
+      },
+      { timeout: 3000 },
+    );
+  });
+
+  it('handles successful upload flow with all validations passing', async () => {
+    setupDefaultMocks();
+
+    // Mock successful conditions
+    mockImagePicker.launchImageLibrary.mockResolvedValueOnce({
+      didCancel: false,
+      assets: [{ uri: 'file:///mock/image.jpg', type: 'image/jpeg', fileName: 'image.jpg' }],
+    });
+
+    const { getByTestId, queryByTestId } = render(
+      <TestWrapper>
+        <AdminLoadFloorplansContent />
+      </TestWrapper>,
+    );
+
+    await waitFor(
+      () => {
+        expect(getByTestId('button-upload-floorplan')).toBeTruthy();
+      },
+      { timeout: 3000 },
+    );
+
+    // Fill form with valid data
+    const floorInput = queryByTestId('input-floor-label') || queryByTestId('app-input');
+    if (floorInput) {
+      await act(async () => {
+        fireEvent.changeText(floorInput, '1');
+      });
+    }
+
+    // Try upload
+    mockStandardPopup.mockClear();
+    await act(async () => {
+      fireEvent.press(getByTestId('button-upload-floorplan'));
+    });
+
+    // Should either succeed or show appropriate validation
+    expect(getByTestId('button-upload-floorplan')).toBeTruthy();
+  });
+
+  it('handles Firebase Storage upload operations', async () => {
+    setupDefaultMocks();
+
+    const { getByTestId } = render(
+      <TestWrapper>
+        <AdminLoadFloorplansContent />
+      </TestWrapper>,
+    );
+
+    await waitFor(
+      () => {
+        expect(getByTestId('button-upload-floorplan')).toBeTruthy();
+      },
+      { timeout: 3000 },
+    );
+
+    // Component should handle Firebase operations without crashing
+    expect(getByTestId('button-upload-floorplan')).toBeTruthy();
+  });
+
+  it('handles error states and recovery', async () => {
+    setupDefaultMocks();
+
+    const { queryByText, getAllByText } = render(
+      <TestWrapper>
+        <AdminLoadFloorplansContent />
+      </TestWrapper>,
+    );
+
+    await waitFor(
+      () => {
+        // Should handle errors gracefully (look for error popup or main header)
+        const calls = mockStandardPopup.mock.calls;
+        const found = calls.some((call) => {
+          const { visible, title } = call[0] || {};
+          return visible && (title === 'Error' || title === 'Error!');
+        });
+        // Use getAllByText to avoid ambiguity
+        const headers = typeof getAllByText === 'function' ? getAllByText('Upload Floorplan') : [];
+        expect(found || headers.length > 0).toBeTruthy();
+      },
+      { timeout: 3000 },
+    );
+  });
+});
