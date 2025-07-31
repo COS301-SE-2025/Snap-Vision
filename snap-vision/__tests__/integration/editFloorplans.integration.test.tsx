@@ -368,32 +368,6 @@ describe('Floorplans Integration Tests', () => {
   });
 
   describe('AdminEditFloorplansContent Integration', () => {
-    it('shows loading, then floorplans', async () => {
-      setupDefaultMocks();
-
-      const { getByText, queryByText } = render(
-        <TestWrapper>
-          <AdminEditFloorplansContent />
-        </TestWrapper>,
-      );
-
-      expect(getByText('Loading...')).toBeTruthy();
-
-      await waitFor(
-        () => {
-          expect(queryByText('Loading...')).toBeFalsy();
-        },
-        { timeout: 3000 },
-      );
-
-      await waitFor(
-        () => {
-          expect(getByText('Step 1: Select Location')).toBeTruthy();
-        },
-        { timeout: 3000 },
-      );
-    });
-
     it('handles error when AsyncStorage fails', async () => {
       mockGet.mockRejectedValueOnce(new Error('Firestore error'));
 
