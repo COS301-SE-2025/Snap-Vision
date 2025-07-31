@@ -35,7 +35,7 @@ export default function AccessibilitySettingsContent({ isDark }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title="Accessibility Settings" />
-      
+
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           <View style={styles.section}>

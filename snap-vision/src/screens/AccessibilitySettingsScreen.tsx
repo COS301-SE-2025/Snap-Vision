@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, SafeAreaView } from 'react-native';
+import { StyleSheet, SafeAreaView } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 import AccessibilitySettingsContent from '../components/organisms/AccessibilitySettingsContent';
@@ -16,7 +16,7 @@ export default function AccessibilitySettingsScreen({
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
- return (
+  return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <AccessibilitySettingsContent isDark={isDark} />
     </SafeAreaView>
