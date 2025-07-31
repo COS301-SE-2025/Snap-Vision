@@ -76,11 +76,16 @@ export default function AdminFloorplanEditorContent() {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   // Get route params with a safe default
-  const { buildingId, floorLabel, imageUri, locationId } = route.params || {
-    buildingId: '',
-    floorLabel: '',
-    imageUri: '',
-  };
+  if (!route.params) {
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+      <Text>Missing route parameters. Please go back and try again.</Text>
+    </View>
+  );
+}
+
+const { buildingId, floorLabel, imageUri, locationId } = route.params;
+
 
   // IMPORTANT: Place all useEffect hooks before any conditional returns
   // Load existing room POIs

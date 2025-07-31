@@ -22,6 +22,7 @@ type RootStackParamList = {
   AdminEditFloorplansScreen: undefined;
   AdminLoadFloorplansScreen: undefined;
   AdminFloorplanEditor: {
+    locationId: string;
     buildingId: string;
     floorLabel: string;
     imageUri?: string;
@@ -180,6 +181,7 @@ export default function AdminEditFloorplansContent() {
   const handleEditPOIs = () => {
     if (!selectedFloorplan) return;
     navigation.navigate('AdminFloorplanEditor', {
+      locationId: selectedFloorplan.locationId,
       buildingId: selectedFloorplan.buildingId,
       floorLabel: selectedFloorplan.floorLabel,
       imageUri: selectedFloorplan.downloadURL,
