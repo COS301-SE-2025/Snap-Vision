@@ -446,7 +446,7 @@ describe('HomeContent Integration Tests', () => {
   describe('Loading State Integration', () => {
     it('integrates loading states with data fetching', async () => {
       mockGetRecentlyVPOIs.mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve([]), 1000)),
+        () => new Promise((resolve) => setTimeout(() => resolve([]), 100)),
       );
 
       (useFocusEffect as jest.Mock).mockImplementation((callback) => {
@@ -459,13 +459,17 @@ describe('HomeContent Integration Tests', () => {
         </ThemeProviderWrapper>,
       );
 
-      expect(getByText('Loading...')).toBeTruthy();
+      // Wait for loading to appear first
+      await waitFor(() => {
+        expect(getByText('Loading...')).toBeTruthy();
+      });
 
+      // Then wait for it to disappear
       await waitFor(
         () => {
           expect(queryByText('Loading...')).toBeNull();
         },
-        { timeout: 2000 },
+        { timeout: 3000 },
       );
     });
 

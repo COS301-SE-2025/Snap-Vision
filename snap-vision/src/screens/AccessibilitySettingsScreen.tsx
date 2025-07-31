@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, SafeAreaView } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 import AccessibilitySettingsContent from '../components/organisms/AccessibilitySettingsContent';
@@ -17,12 +17,9 @@ export default function AccessibilitySettingsScreen({
   const colors = getThemeColors(isDark);
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.primary }]}>
-        <Text style={styles.headerText}>Accessibility Settings</Text>
-      </View>
-      <AccessibilitySettingsContent isDark={isDark} navigation={navigation} />
-    </ScrollView>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <AccessibilitySettingsContent isDark={isDark} />
+    </SafeAreaView>
   );
 }
 

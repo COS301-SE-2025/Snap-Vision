@@ -13,6 +13,26 @@ jest.mock('../src/theme', () => ({
   getThemeColors: jest.fn(),
 }));
 
+jest.mock('../src/theme', () => ({
+  getThemeColors: jest.fn(),
+}));
+
+// Add this mock for SettingsHeader
+jest.mock('../src/components/molecules/SettingsHeader', () => {
+  const React = require('react');
+  const { View, Text } = require('react-native');
+
+  function MockedSettingsHeader({ title }: { title: string }) {
+    return (
+      <View testID="settings-header">
+        <Text testID="header-title">{title}</Text>
+      </View>
+    );
+  }
+
+  return MockedSettingsHeader;
+});
+
 jest.mock('../src/components/molecules/SettingsToggleItem', () => {
   const React = require('react');
   const { TouchableOpacity, Text, View } = require('react-native');
@@ -36,7 +56,6 @@ jest.mock('../src/components/molecules/SettingsToggleItem', () => {
     );
   };
 });
-
 // Mock StandardPopup
 jest.mock('../src/components/atoms/StandardPopup', () => {
   const React = require('react');
@@ -89,21 +108,28 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
     });
   });
 
+  it('should render SettingsHeader with correct title', () => {
+    render(<AccessibilitySettingsContent isDark={false} />);
+
+    expect(screen.getByTestId('settings-header')).toBeTruthy();
+    expect(screen.getByTestId('header-title')).toHaveTextContent('Accessibility Settings');
+  });
+
   it('should render loading state when loading is true', () => {
     mockUseAccessibility.mockReturnValue({
       isHapticFeedbackEnabled: false,
       setHapticFeedbackEnabled: mockSetHapticFeedbackEnabled,
-      loading: true, // ✅ Test loading state
+      loading: true,
     });
-
-    render(<AccessibilitySettingsContent isDark={false} navigation={{}} />);
+    render(<AccessibilitySettingsContent isDark={false} />);
 
     expect(screen.getByText('Loading settings...')).toBeTruthy();
     expect(screen.queryByText('Touch & Vibration')).toBeNull();
+    expect(screen.getByTestId('settings-header')).toBeTruthy();
   });
 
   it('should render accessibility settings when not loading', () => {
-    render(<AccessibilitySettingsContent isDark={false} navigation={{}} />);
+    render(<AccessibilitySettingsContent isDark={false} />);
 
     expect(screen.getByText('Touch & Vibration')).toBeTruthy();
     expect(screen.getByTestId('toggle-label')).toBeTruthy();
@@ -116,24 +142,24 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
 
   it('should display haptic feedback as OFF when disabled', () => {
     mockUseAccessibility.mockReturnValue({
-      isHapticFeedbackEnabled: false, // ✅ Test OFF state
+      isHapticFeedbackEnabled: false,
       setHapticFeedbackEnabled: mockSetHapticFeedbackEnabled,
       loading: false,
     });
 
-    render(<AccessibilitySettingsContent isDark={false} navigation={{}} />);
+    render(<AccessibilitySettingsContent isDark={false} />);
 
     expect(screen.getByTestId('toggle-value')).toHaveTextContent('OFF');
   });
 
   it('should display haptic feedback as ON when enabled', () => {
     mockUseAccessibility.mockReturnValue({
-      isHapticFeedbackEnabled: true, // ✅ Test ON state
+      isHapticFeedbackEnabled: true,
       setHapticFeedbackEnabled: mockSetHapticFeedbackEnabled,
       loading: false,
     });
 
-    render(<AccessibilitySettingsContent isDark={false} navigation={{}} />);
+    render(<AccessibilitySettingsContent isDark={false} />);
 
     expect(screen.getByTestId('toggle-value')).toHaveTextContent('ON');
   });
@@ -141,7 +167,7 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
   it('should handle successful haptic feedback toggle from OFF to ON', async () => {
     mockSetHapticFeedbackEnabled.mockResolvedValue(undefined);
 
-    render(<AccessibilitySettingsContent isDark={false} navigation={{}} />);
+    render(<AccessibilitySettingsContent isDark={false} />);
 
     const toggleButton = screen.getByTestId('toggle-button');
     fireEvent.press(toggleButton);
@@ -162,7 +188,7 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
 
     mockSetHapticFeedbackEnabled.mockResolvedValue(undefined);
 
-    render(<AccessibilitySettingsContent isDark={false} navigation={{}} />);
+    render(<AccessibilitySettingsContent isDark={false} />);
 
     const toggleButton = screen.getByTestId('toggle-button');
     fireEvent.press(toggleButton);
@@ -178,7 +204,7 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
     const mockError = new Error('Network error');
     mockSetHapticFeedbackEnabled.mockRejectedValue(mockError);
 
-    render(<AccessibilitySettingsContent isDark={false} navigation={{}} />);
+    render(<AccessibilitySettingsContent isDark={false} />);
 
     const toggleButton = screen.getByTestId('toggle-button');
     fireEvent.press(toggleButton);
@@ -212,7 +238,7 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
 
     mockGetThemeColors.mockReturnValue(lightColors);
 
-    render(<AccessibilitySettingsContent isDark={false} navigation={{}} />);
+    render(<AccessibilitySettingsContent isDark={false} />);
 
     expect(mockGetThemeColors).toHaveBeenCalledWith(false);
   });
@@ -235,7 +261,7 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
 
     mockGetThemeColors.mockReturnValue(darkColors);
 
-    render(<AccessibilitySettingsContent isDark={true} navigation={{}} />);
+    render(<AccessibilitySettingsContent isDark={true} />);
 
     expect(mockGetThemeColors).toHaveBeenCalledWith(true);
   });
@@ -247,7 +273,7 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
       loading: false,
     });
 
-    render(<AccessibilitySettingsContent isDark={false} navigation={{}} />);
+    render(<AccessibilitySettingsContent isDark={false} />);
 
     // Verify all props are passed correctly
     expect(screen.getByText('Haptic Feedback')).toBeTruthy();
@@ -258,7 +284,7 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
   });
 
   it('should render info section with correct text', () => {
-    render(<AccessibilitySettingsContent isDark={false} navigation={{}} />);
+    render(<AccessibilitySettingsContent isDark={false} />);
 
     const infoText = screen.getByText(
       /Haptic feedback provides tactile confirmation of your actions and navigation events/,
@@ -277,7 +303,7 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
       }
     });
 
-    render(<AccessibilitySettingsContent isDark={false} navigation={{}} />);
+    render(<AccessibilitySettingsContent isDark={false} />);
 
     const toggleButton = screen.getByTestId('toggle-button');
 
@@ -296,11 +322,11 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
   });
 
   it('should maintain component state during theme changes', () => {
-    const { rerender } = render(<AccessibilitySettingsContent isDark={false} navigation={{}} />);
+    const { rerender } = render(<AccessibilitySettingsContent isDark={false} />);
 
     expect(mockGetThemeColors).toHaveBeenCalledWith(false);
 
-    rerender(<AccessibilitySettingsContent isDark={true} navigation={{}} />);
+    rerender(<AccessibilitySettingsContent isDark={true} />);
 
     expect(mockGetThemeColors).toHaveBeenCalledWith(true);
     expect(screen.getByText('Touch & Vibration')).toBeTruthy();
@@ -313,7 +339,7 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
       loading: false,
     });
 
-    render(<AccessibilitySettingsContent isDark={false} navigation={{}} />);
+    render(<AccessibilitySettingsContent isDark={false} />);
 
     expect(screen.getByText('Touch & Vibration')).toBeTruthy();
   });
