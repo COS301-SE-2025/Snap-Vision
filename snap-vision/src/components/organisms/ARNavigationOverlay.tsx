@@ -29,6 +29,7 @@ export default function ARNavigationOverlay({
   const [deviceError, setDeviceError] = useState<string | null>(null);
   const [showDebugInfo, setShowDebugInfo] = useState(false);
   const [nextInstruction, setNextInstruction] = useState<string>('');
+  const [compassOffset, setCompassOffset] = useState(0); // No initial offset
 
   useEffect(() => {
     if (!hasPermission) {
@@ -74,6 +75,7 @@ export default function ARNavigationOverlay({
             destinationCoords={destinationCoords}
             deviceHeading={deviceHeading}
             nextInstruction={nextInstruction}
+            compassOffset={compassOffset}
           />
         </View>
       </View>
@@ -100,6 +102,8 @@ export default function ARNavigationOverlay({
         nextInstruction={nextInstruction}
         routeCoordinates={routeCoordinates}
         currentRouteIndex={currentRouteIndex}
+        compassOffset={compassOffset}
+        setCompassOffset={setCompassOffset}
       />
 
       {/* Debug Toggle */}
@@ -136,7 +140,9 @@ function SimpleARGuidance({
   deviceHeading,
   nextInstruction,
   routeCoordinates,
-  currentRouteIndex
+  currentRouteIndex,
+  compassOffset,
+  setCompassOffset
 }: {
   currentLocation: { x: number; y: number } | null;
   destinationCoords: { x: number; y: number } | null;
@@ -144,12 +150,86 @@ function SimpleARGuidance({
   nextInstruction: string;
   routeCoordinates: [number, number][];
   currentRouteIndex: number;
+  compassOffset: number;
+  setCompassOffset: (offset: number) => void;
 }) {
+  // GPS-based heading (like Google Maps)
+  const [gpsHeading, setGpsHeading] = useState<number | null>(null);
+  const [lastPosition, setLastPosition] = useState<{x: number, y: number, timestamp: number} | null>(null);
+  const [isMoving, setIsMoving] = useState(false);
+  const [movementSpeed, setMovementSpeed] = useState(0);
+  
+  // Add bearing smoothing to prevent flickering
+  const [bearingHistory, setBearingHistory] = useState<number[]>([]);
+  const [smoothedBearing, setSmoothedBearing] = useState<number | null>(null);
+  
   // Add state for stabilized heading to reduce tilt sensitivity
   const [stabilizedHeading, setStabilizedHeading] = useState(deviceHeading);
   const [headingHistory, setHeadingHistory] = useState<number[]>([]);
   
-  // Stabilize the heading to reduce tilt sensitivity
+  // Calculate GPS heading from movement (like Google Maps)
+  useEffect(() => {
+    if (currentLocation && lastPosition) {
+      const now = Date.now();
+      const timeDiff = (now - lastPosition.timestamp) / 1000; // seconds
+      
+      // Skip if GPS update is too slow (> 3 seconds between updates)
+      if (timeDiff > 3.0) {
+        console.log('GPS UPDATE TOO SLOW:', timeDiff.toFixed(1), 's - skipping GPS heading');
+        setLastPosition({
+          x: currentLocation.x,
+          y: currentLocation.y,
+          timestamp: now
+        });
+        return;
+      }
+      
+      // Calculate distance moved
+      const distanceMoved = calculateDistance(
+        lastPosition.y, lastPosition.x,
+        currentLocation.y, currentLocation.x
+      );
+      
+      // Calculate speed (meters per second)
+      const speed = timeDiff > 0 ? distanceMoved / timeDiff : 0;
+      setMovementSpeed(speed);
+      
+      // Debug GPS calculation
+      console.log('GPS DEBUG:', {
+        timeDiff: timeDiff.toFixed(2),
+        distanceMoved: distanceMoved.toFixed(2),
+        speed: speed.toFixed(2),
+        updateFreq: `${(1/timeDiff).toFixed(1)} Hz`,
+        isMovingNow: speed > 0.1 && distanceMoved > 0.3
+      });
+      
+      // Much more sensitive thresholds: 0.1 m/s (very slow walking) and 0.3m distance
+      if (speed > 0.1 && distanceMoved > 0.3 && timeDiff < 2.0) {
+        const movementBearing = calculateBearing(
+          lastPosition.y, lastPosition.x,
+          currentLocation.y, currentLocation.x
+        );
+        setGpsHeading(movementBearing);
+        setIsMoving(true);
+        console.log('GPS HEADING ACTIVATED:', movementBearing.toFixed(1), '°');
+      } else if (speed < 0.02) {
+        // Nearly stopped, will fall back to compass
+        setIsMoving(false);
+        console.log('GPS HEADING DEACTIVATED - stationary');
+      }
+    }
+    
+    // Update last position with current timestamp
+    if (currentLocation) {
+      setLastPosition({
+        x: currentLocation.x,
+        y: currentLocation.y,
+        timestamp: Date.now()
+      });
+    }
+  }, [currentLocation]);
+  
+  // Stabilize the heading to reduce tilt sensitivity (for compass fallback)
   useEffect(() => {
     const normalizedHeading = ((deviceHeading % 360) + 360) % 360;
     
@@ -194,17 +274,43 @@ function SimpleARGuidance({
   // currentLocation: { x: longitude, y: latitude }
   // nextPoint: [longitude, latitude]
   // calculateBearing expects (lat1, lon1, lat2, lon2)
-  const bearing = calculateBearing(
+  const rawBearing = calculateBearing(
     currentLocation.y, // current latitude
     currentLocation.x, // current longitude
     nextPoint[1],      // target latitude
     nextPoint[0]       // target longitude
   );
   
+  // Smooth the bearing to prevent flickering
+  useEffect(() => {
+    setBearingHistory(prev => {
+      const newHistory = [...prev, rawBearing].slice(-5); // Keep last 5 readings
+      
+      // Calculate weighted average (more weight to recent readings)
+      let weightedSum = 0;
+      let totalWeight = 0;
+      newHistory.forEach((bearing, index) => {
+        const weight = index + 1; // More recent = higher weight
+        weightedSum += bearing * weight;
+        totalWeight += weight;
+      });
+      
+      const smoothed = weightedSum / totalWeight;
+      setSmoothedBearing(smoothed);
+      
+      return newHistory;
+    });
+  }, [rawBearing]);
+  
+  // Use smoothed bearing if available, otherwise use raw
+  const bearing = smoothedBearing !== null ? smoothedBearing : rawBearing;
+  
   // FIXED: Normalize device heading and handle negative values
-  // Use stabilized heading instead of raw device heading
-  const normalizedDeviceHeading = ((stabilizedHeading % 360) + 360) % 360;
-  const relativeBearing = normalizeAngle(bearing - normalizedDeviceHeading);
+  // Use GPS heading when moving (like Google Maps), compass when stationary
+  const adjustedHeading = stabilizedHeading + compassOffset; // Apply manual calibration
+  const normalizedDeviceHeading = ((adjustedHeading % 360) + 360) % 360;
+  const effectiveHeading = (isMoving && gpsHeading !== null) ? gpsHeading : normalizedDeviceHeading;
+  const relativeBearing = normalizeAngle(bearing - effectiveHeading);
   
   const distance = calculateDistance(
     currentLocation.y, // current latitude
@@ -243,82 +349,87 @@ function SimpleARGuidance({
 
   return (
     <>
-      {/* Main Direction Indicator - Center of screen */}
+      {/* COMPASS CALIBRATION ONLY - Center of screen */}
       <View style={styles.mainGuidanceContainer}>
-        {/* Enhanced debug info - MOVED ABOVE ARROW */}
         <View style={styles.debugInfoAboveArrow}>
-          <Text style={styles.bearingDebugText}>
-            True Bearing: {Math.round(bearing)}° | Device: {Math.round(deviceHeading)}° | Relative: {Math.round(relativeBearing)}°
+          <Text style={styles.compassCalibrationText}>
+            🧭 COMPASS CALIBRATION TEST
+          </Text>
+          
+          <Text style={styles.compassCalibrationText}>
+            Raw Device: {Math.round(deviceHeading)}°
+          </Text>
+          
+          <Text style={styles.compassCalibrationText}>
+            Offset: {compassOffset}°
+          </Text>
+          
+          <Text style={styles.compassCalibrationText}>
+            Final Heading: {Math.round(normalizedDeviceHeading)}°
+          </Text>
+          
+          <Text style={styles.compassCalibrationText}>
+            📱 Cardinal Direction: {
+              normalizedDeviceHeading >= 315 || normalizedDeviceHeading < 45 ? 'NORTH (0°)' :
+              normalizedDeviceHeading >= 45 && normalizedDeviceHeading < 135 ? 'EAST (90°)' :
+              normalizedDeviceHeading >= 135 && normalizedDeviceHeading < 225 ? 'SOUTH (180°)' :
+              'WEST (270°)'
+            }
           </Text>
           
           <Text style={styles.bearingDebugText}>
-            Should Go: {bearing >= 0 && bearing < 45 ? 'NORTH' : 
-                       bearing >= 45 && bearing < 135 ? 'EAST' :
-                       bearing >= 135 && bearing < 225 ? 'SOUTH' :
-                       bearing >= 225 && bearing < 315 ? 'WEST' : 
-                       bearing >= 315 ? 'NORTH' : 'UNKNOWN'}
-          </Text>
-          <Text style={styles.bearingDebugText}>
-            Phone Facing: {((deviceHeading % 360) + 360) % 360 >= 0 && ((deviceHeading % 360) + 360) % 360 < 45 ? 'NORTH' : 
-                          ((deviceHeading % 360) + 360) % 360 >= 45 && ((deviceHeading % 360) + 360) % 360 < 135 ? 'EAST' :
-                          ((deviceHeading % 360) + 360) % 360 >= 135 && ((deviceHeading % 360) + 360) % 360 < 225 ? 'SOUTH' :
-                          ((deviceHeading % 360) + 360) % 360 >= 225 && ((deviceHeading % 360) + 360) % 360 < 315 ? 'WEST' : 'NORTH'}
+            📱 Check: Does your phone compass match "Final Heading"?
           </Text>
           
           <Text style={styles.bearingDebugText}>
-            COMPASS DEBUG: Raw={deviceHeading.toFixed(1)}° | Normalized={((deviceHeading % 360) + 360) % 360}°
+            🎯 To calibrate: Point North → Final should show ~0°
           </Text>
           
           <Text style={styles.bearingDebugText}>
-            DIRECTION RANGES: N=0-45, E=45-135, S=135-225, W=225-315, N=315-360
+            🎯 Point East → Final should show ~90°
           </Text>
           
           <Text style={styles.bearingDebugText}>
-            RAW: Bearing={bearing.toFixed(1)}° Device={deviceHeading.toFixed(1)}° Normalized={normalizedDeviceHeading.toFixed(1)}°
+            🎯 Point South → Final should show ~180°
           </Text>
           
           <Text style={styles.bearingDebugText}>
-            From: {currentLocation.y.toFixed(6)},{currentLocation.x.toFixed(6)}
-          </Text>
-          <Text style={styles.bearingDebugText}>
-            To: {nextPoint[1].toFixed(6)},{nextPoint[0].toFixed(6)}
+            🎯 Point West → Final should show ~270°
           </Text>
         </View>
-
-        <View style={[
-          styles.directionCircle,
-          { 
-            backgroundColor: Math.abs(relativeBearing) < 25 ? '#4CAF50' : 
-                           Math.abs(relativeBearing) < 45 ? '#FF9800' : '#F44336', // Updated green threshold
-            transform: [{ rotate: `0deg` }] // Keep circle stable
-          }
-        ]}>
-          <Text style={styles.directionEmoji}>{getDirectionEmoji()}</Text>
-        </View>
-        
-        <Text style={styles.directionText}>
-          {getDirectionInstruction()}
-        </Text>
-        
-        <Text style={styles.distanceText}>
-          {Math.round(distance)}m
-        </Text>
       </View>
 
-      {/* Top Instruction Bar - Show turn-by-turn instruction */}
-      {nextInstruction && (
-        <View style={styles.instructionBar}>
-          <Text style={styles.instructionText}>
-            {nextInstruction}
-          </Text>
-        </View>
-      )}
+      {/* Compass Calibration Controls */}
+      <View style={styles.calibrationContainer}>
+        <TouchableOpacity 
+          style={styles.calibrateButton}
+          onPress={() => setCompassOffset(compassOffset - 90)}
+        >
+          <Text style={styles.calibrateButtonText}>-90°</Text>
+        </TouchableOpacity>
 
-      {/* Route Debug Info */}
-      <View style={styles.routeDebugContainer}>
-        <Text style={styles.debugText}>Route Index: {currentRouteIndex}/{routeCoordinates.length}</Text>
-        <Text style={styles.debugText}>Look Ahead: {Math.min(currentRouteIndex + 1, routeCoordinates.length - 1)}</Text>
-        <Text style={styles.debugText}>Direction Should Be: {bearing > 135 && bearing < 225 ? 'SOUTH ✓' : 'NOT SOUTH ✗'}</Text>
+        <TouchableOpacity 
+          style={styles.calibrateButton}
+          onPress={() => setCompassOffset(compassOffset - 10)}
+        >
+          <Text style={styles.calibrateButtonText}>-10°</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.offsetText}>Offset: {compassOffset}°</Text>
+
+        <TouchableOpacity 
+          style={styles.calibrateButton}
+          onPress={() => setCompassOffset(compassOffset + 10)}
+        >
+          <Text style={styles.calibrateButtonText}>+10°</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.calibrateButton}
+          onPress={() => setCompassOffset(compassOffset + 90)}
+        >
+          <Text style={styles.calibrateButtonText}>+90°</Text>
+        </TouchableOpacity>
       </View>
     </>
   );
@@ -329,12 +440,14 @@ function SimpleARFallback({
   currentLocation, 
   destinationCoords, 
   deviceHeading,
-  nextInstruction
+  nextInstruction,
+  compassOffset
 }: {
   currentLocation: { x: number; y: number } | null;
   destinationCoords: { x: number; y: number } | null;
   deviceHeading: number;
   nextInstruction: string;
+  compassOffset: number;
 }) {
   if (!currentLocation || !destinationCoords) return null;
 
@@ -346,7 +459,9 @@ function SimpleARFallback({
     destinationCoords.x  // destination longitude
   );
   
-  const relativeBearing = normalizeAngle(bearing - deviceHeading);
+  const adjustedHeading = deviceHeading + compassOffset;
+  const normalizedHeading = ((adjustedHeading % 360) + 360) % 360;
+  const relativeBearing = normalizeAngle(bearing - normalizedHeading);
   const distance = calculateDistance(
     currentLocation.y, // latitude
     currentLocation.x, // longitude
@@ -457,7 +572,7 @@ const styles = StyleSheet.create({
   // Main AR Guidance
   mainGuidanceContainer: {
     position: 'absolute',
-    top: screenHeight * 0.4,
+    top: screenHeight * 0.25,
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -516,6 +631,16 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 8,
   },
+  compassCalibrationText: {
+    fontSize: 16,
+    color: '#00FF00',
+    marginTop: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    fontWeight: 'bold',
+  },
   
   // Instruction Bar
   instructionBar: {
@@ -568,17 +693,6 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   
-  // Route Debug Info
-  routeDebugContainer: {
-    position: 'absolute',
-    bottom: 100,
-    left: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    padding: 8,
-    borderRadius: 8,
-    zIndex: 3,
-  },
-  
   // Fallback Mode
   fallbackContainer: {
     alignItems: 'center',
@@ -621,5 +735,34 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     maxWidth: 300,
+  },
+  calibrationContainer: {
+    position: 'absolute',
+    bottom: 120,
+    left: 10,
+    right: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    padding: 8,
+    borderRadius: 10,
+  },
+  calibrateButton: {
+    backgroundColor: 'rgba(76, 175, 80, 0.8)',
+    padding: 6,
+    borderRadius: 5,
+    minWidth: 50,
+  },
+  calibrateButtonText: {
+    color: 'white',
+    fontSize: 11,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  offsetText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
