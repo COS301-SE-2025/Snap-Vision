@@ -1,6 +1,5 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import { Alert } from 'react-native';
 
 // Setup mock functions
 const mockNavigate = jest.fn();
@@ -15,8 +14,44 @@ jest.mock('react-native-toast-message', () => ({
   show: (...args) => mockToastShow(...args),
 }));
 
-// Spy on Alert
-jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+// Mock StandardPopup component
+const mockStandardPopup = jest.fn();
+jest.mock('../../src/components/atoms/StandardPopup', () => {
+  return jest.fn(
+    ({ visible, title, message, onConfirm, onCancel, confirmText, cancelText, showCancel }) => {
+      const { View, Text, TouchableOpacity } = require('react-native');
+
+      // Call the mock function to track calls
+      mockStandardPopup({
+        visible,
+        title,
+        message,
+        onConfirm,
+        onCancel,
+        confirmText,
+        cancelText,
+        showCancel,
+      });
+
+      // Return a proper React component
+      if (!visible) return null;
+      return (
+        <View testID="standard-popup">
+          <Text testID="popup-title">{title}</Text>
+          <Text testID="popup-message">{message}</Text>
+          <TouchableOpacity onPress={onConfirm} testID="popup-confirm">
+            <Text>{confirmText}</Text>
+          </TouchableOpacity>
+          {showCancel && (
+            <TouchableOpacity onPress={onCancel} testID="popup-cancel">
+              <Text>{cancelText}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      );
+    },
+  );
+});
 
 // --- Navigation Mock ---
 jest.mock('../../src/navigation/RootNavigation', () => ({
@@ -186,6 +221,7 @@ const TestWrapper = ({ children }) => <>{children}</>;
 describe('Account Settings Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockStandardPopup.mockClear();
   });
 
   it('renders account details correctly', () => {
