@@ -50,6 +50,7 @@ export default function AdminLoadFloorplansContent() {
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
 
   // const [locations, setLocations] = useState<{ id: string; name: string }[]>([]);
   // const [selectedLocation, setSelectedLocation] = useState<string>('');
@@ -161,16 +162,20 @@ export default function AdminLoadFloorplansContent() {
           setFileName(asset.fileName);
         } else if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
           setError('Please select an image smaller than 5MB.');
+          setShowErrorPopup(true);
           return;
         } else {
           setError('Invalid image selected. Please try again.');
+          setShowErrorPopup(true);
         }
       } else if (result.errorMessage) {
         setError(`Image Picker error: ${result.errorMessage}`);
+        setShowErrorPopup(true);
       }
     } catch (err) {
       console.error('Error picking image:', err);
       setError('Failed to select image');
+      setShowErrorPopup(true);
     }
   };
 
@@ -180,26 +185,31 @@ export default function AdminLoadFloorplansContent() {
 
     if (!selectedBuilding || !selectedLocation) {
       setError('Please select a building and location');
+      setShowErrorPopup(true);
       return;
     }
 
     if (!userRole) {
       setError('User access not yet loaded. Please wait...');
+      setShowErrorPopup(true);
       return;
     }
 
     if (userRole === 'editor' && !adminLocations.includes(selectedLocation)) {
       setError("You're not allowed to upload to this location.");
+      setShowErrorPopup(true);
       return;
     }
 
     if (isNaN(Number(floorLabel)) || Number(floorLabel) < 1) {
       setError('Please enter a valid floor number (1 or higher)');
+      setShowErrorPopup(true);
       return;
     }
 
     if (!fileUri) {
       setError('Please select a floorplan file');
+      setShowErrorPopup(true);
       return;
     }
 
@@ -244,6 +254,7 @@ export default function AdminLoadFloorplansContent() {
     } catch (err) {
       console.error('Error uploading floorplan:', err);
       setError('Failed to upload floorplan');
+      setShowErrorPopup(true);
       setIsLoading(false);
     }
   };
@@ -296,14 +307,18 @@ export default function AdminLoadFloorplansContent() {
       )}
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Error message */}
-        {error && (
-          <View style={[styles.errorContainer, { backgroundColor: colors.danger }]}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
-
         <View style={styles.inputSection}>
+      {/* Error Popup */}
+      <StandardPopup
+        visible={showErrorPopup && !!error}
+        title="Error"
+        message={error || ''}
+        onConfirm={() => {
+          setShowErrorPopup(false);
+          setError(null);
+        }}
+        showCancel={false}
+      />
           <Text style={[styles.inputTitle, { color: colors.primary }]}>Select a Location</Text>
           <ScrollView
             horizontal
