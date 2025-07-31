@@ -5,8 +5,8 @@ import AdminLoadFloorplansScreen from '../screens/AdminLoadFloorplansScreen';
 import AdminEditFloorplansScreen from '../screens/AdminEditFloorplansScreen';
 import AdminFloorplanEditorScreen from '../screens/AdminFloorplanEditorScreen';
 import AdminIndoorPositioningScreen from '../screens/AdminIndoorPositioningScreen';
-import AdminSettingsScreen from '../screens/AdminSettingsScreen';
-import AdminManageUsersScreen from '../screens/AdminManageUsersScreen';
+// import AdminSettingsScreen from '../screens/AdminSettingsScreen';
+import AdminManageUsersScreen from '../screens/ManageUsersScreen';
 
 export type AdminStackParamList = {
   AdminMain: undefined;
@@ -41,7 +41,7 @@ export default function AdminNavigator() {
       <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
       <Stack.Screen name="AdminFloorplanEditor" component={AdminFloorplanEditorScreen} />
       <Stack.Screen name="AdminIndoorPositioning" component={AdminIndoorPositioningScreen} />
-      <Stack.Screen name="AdminSettings" component={AdminSettingsScreen} />
+      {/* <Stack.Screen name="AdminSettings" component={AdminSettingsScreen} /> */}
       <Stack.Screen name="AdminManageUsers" component={AdminManageUsersScreen} />
     </Stack.Navigator>
   );

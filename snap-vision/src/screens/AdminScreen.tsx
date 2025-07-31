@@ -19,9 +19,9 @@ const AdminScreen = () => {
   const handleEditFloorplans = () => {
     navigation.navigate('AdminEditFloorplans');
   };
-  const handleSettings = () => {
-    navigation.navigate('AdminSettings');
-  };
+  // const handleSettings = () => {
+  //   navigation.navigate('AdminSettings');
+  // };
   const handleManageUsers = () => {
     navigation.navigate('AdminManageUsers');
   };
@@ -39,7 +39,7 @@ const AdminScreen = () => {
       colors={colors}
       onLoadFloorplans={handleLoadFloorplans}
       onEditFloorplans={handleEditFloorplans}
-      onSettings={handleSettings}
+      // onSettings={handleSettings}
       onManageUsers={handleManageUsers}
       onIndoorPositioning={handleIndoorPositioning}
     />
