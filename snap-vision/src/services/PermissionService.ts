@@ -97,7 +97,11 @@ export class PermissionService {
         PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
       );
 
-      return fineLocationGranted && coarseLocationGranted;
+      const nearbyWiFiDevices = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.NEARBY_WIFI_DEVICES,
+      )
+
+      return fineLocationGranted && coarseLocationGranted && nearbyWiFiDevices;
     } catch (error) {
       console.error('Android permission check failed:', error);
       return false;
