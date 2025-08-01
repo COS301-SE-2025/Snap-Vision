@@ -4,7 +4,7 @@ import HomeScreen from '../screens/HomeScreen';
 import MapScreen from '../screens/MapScreen';
 import AchievementsScreen from '../screens/AchievementsScreen';
 import SettingsNavigator from './SettingsNavigator';
-import AdminScreen from '../screens/AdminScreen';
+import AdminNavigator from './AdminNavigator';
 import BuildingSelectionScreen from '../screens/BuildingSelectionScreen';
 import TabBarIcon from '../components/molecules/TabBarIcon';
 import { useTheme } from '../theme/ThemeContext';
