@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import FilterButton from '../atoms/FilterButton';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
 interface Props {
-  selectedRole: 'All' | 'Admin' | 'Viewer';
-  onRoleChange: (role: 'All' | 'Admin' | 'Viewer') => void;
+  selectedRole: 'All' | 'Admin' | 'Viewer' | 'Editor';
+  onRoleChange: (role: 'All' | 'Admin' | 'Viewer' | 'Editor') => void;
 }
 
 export default function RoleFilter({ selectedRole, onRoleChange }: Props) {
@@ -16,7 +16,11 @@ export default function RoleFilter({ selectedRole, onRoleChange }: Props) {
   return (
     <View style={styles.container}>
       <Text style={[styles.title, { color: colors.primary }]}>Filter by Role</Text>
-      <View style={styles.buttonsContainer}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.buttonsContainer}
+      >
         <FilterButton
           title="All"
           iconName="people"
@@ -30,12 +34,18 @@ export default function RoleFilter({ selectedRole, onRoleChange }: Props) {
           onPress={() => onRoleChange('Admin')}
         />
         <FilterButton
+          title="Editor"
+          iconName="create"
+          isSelected={selectedRole === 'Editor'}
+          onPress={() => onRoleChange('Editor')}
+        />
+        <FilterButton
           title="Viewer"
           iconName="eye"
           isSelected={selectedRole === 'Viewer'}
           onPress={() => onRoleChange('Viewer')}
         />
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -53,5 +63,6 @@ const styles = StyleSheet.create({
   buttonsContainer: {
     flexDirection: 'row',
     gap: 12,
+    paddingRight: 16, // ensure padding at end for scroll
   },
 });

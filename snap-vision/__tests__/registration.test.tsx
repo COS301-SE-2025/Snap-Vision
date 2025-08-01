@@ -6,12 +6,40 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 }));
 
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, screen } from '@testing-library/react-native';
 import RegisterForm from '../src/components/organisms/RegisterForm';
-import { Alert } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
 import { BadgeProvider } from '../src/context/BadgeContext';
+
+// Mock StandardPopup component
+jest.mock('../src/components/atoms/StandardPopup', () => {
+  return jest.fn(({ visible, title, message, onClose, showCloseButton }) => {
+    const { View, Text, TouchableOpacity } = require('react-native');
+    if (!visible) return null;
+
+    // Determine testID based on title
+    let testID = 'standard-popup';
+    if (title === 'Registration Error') {
+      testID = 'error-popup';
+    } else if (title === 'Registration Successful') {
+      testID = 'success-popup';
+    }
+
+    return (
+      <View testID={testID}>
+        <Text testID="popup-title">{title}</Text>
+        <Text testID="popup-message">{message}</Text>
+        {showCloseButton && (
+          <TouchableOpacity onPress={onClose} testID="popup-close-button">
+            <Text>Close</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  });
+});
+
 const mockCreateUser = jest.fn();
 
 jest.mock('@react-native-firebase/auth', () => {
@@ -80,8 +108,6 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
-jest.spyOn(Alert, 'alert');
-
 describe('RegisterForm', () => {
   const setup = () =>
     render(
@@ -108,13 +134,16 @@ describe('RegisterForm', () => {
     expect(getByPlaceholderText('Confirm your password')).toBeTruthy();
   });
 
-  it('shows alert if fields are empty', () => {
+  it('shows popup if fields are empty', () => {
     const { getByTestId } = setup();
     fireEvent.press(getByTestId('register-button'));
-    expect(Alert.alert).toHaveBeenCalledWith('Error', 'Please fill in all fields');
+
+    expect(screen.getByTestId('error-popup')).toBeTruthy();
+    expect(screen.getByTestId('popup-title')).toHaveTextContent('Registration Error');
+    expect(screen.getByTestId('popup-message')).toHaveTextContent('Please fill in all fields');
   });
 
-  it('shows alert for invalid email format', () => {
+  it('shows popup for invalid email format', () => {
     const { getByPlaceholderText, getByTestId } = setup();
 
     fireEvent.changeText(getByPlaceholderText('Enter your name'), 'John');
@@ -124,10 +153,14 @@ describe('RegisterForm', () => {
 
     fireEvent.press(getByTestId('register-button'));
 
-    expect(Alert.alert).toHaveBeenCalledWith('Error', 'Please enter a valid email address');
+    expect(screen.getByTestId('error-popup')).toBeTruthy();
+    expect(screen.getByTestId('popup-title')).toHaveTextContent('Registration Error');
+    expect(screen.getByTestId('popup-message')).toHaveTextContent(
+      'Please enter a valid email address',
+    );
   });
 
-  it('shows alert for weak password', () => {
+  it('shows popup for weak password', () => {
     const { getByPlaceholderText, getByTestId } = setup();
 
     fireEvent.changeText(getByPlaceholderText('Enter your name'), 'John');
@@ -137,13 +170,14 @@ describe('RegisterForm', () => {
 
     fireEvent.press(getByTestId('register-button'));
 
-    expect(Alert.alert).toHaveBeenCalledWith(
-      'Error',
-      expect.stringContaining('Password must be at least 8 characters'),
+    expect(screen.getByTestId('error-popup')).toBeTruthy();
+    expect(screen.getByTestId('popup-title')).toHaveTextContent('Registration Error');
+    expect(screen.getByTestId('popup-message')).toHaveTextContent(
+      /Password must be at least 8 characters/,
     );
   });
 
-  it('shows alert if passwords do not match', () => {
+  it('shows popup if passwords do not match', () => {
     const { getByPlaceholderText, getByTestId } = setup();
 
     fireEvent.changeText(getByPlaceholderText('Enter your name'), 'John');
@@ -153,10 +187,12 @@ describe('RegisterForm', () => {
 
     fireEvent.press(getByTestId('register-button'));
 
-    expect(Alert.alert).toHaveBeenCalledWith('Error', 'Passwords do not match');
+    expect(screen.getByTestId('error-popup')).toBeTruthy();
+    expect(screen.getByTestId('popup-title')).toHaveTextContent('Registration Error');
+    expect(screen.getByTestId('popup-message')).toHaveTextContent('Passwords do not match');
   });
 
-  it('calls Firebase auth and navigates on success', async () => {
+  it('calls Firebase auth and shows success popup', async () => {
     mockCreateUser.mockResolvedValueOnce({ user: { uid: 'test123' } });
 
     const { getByPlaceholderText, getByTestId } = setup();
@@ -170,8 +206,13 @@ describe('RegisterForm', () => {
 
     await waitFor(() => {
       expect(mockCreateUser).toHaveBeenCalledWith('john@example.com', 'Strong@123');
-      expect(Alert.alert).toHaveBeenCalledWith('Success', 'Account created!');
     });
+
+    expect(screen.getByTestId('success-popup')).toBeTruthy();
+    expect(screen.getByTestId('popup-title')).toHaveTextContent('Registration Successful');
+    expect(screen.getByTestId('popup-message')).toHaveTextContent(
+      'Your account has been created successfully!',
+    );
   });
 
   it('shows Firebase error if email already in use', async () => {
@@ -187,8 +228,9 @@ describe('RegisterForm', () => {
     fireEvent.press(getByTestId('register-button'));
 
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith(
-        'Registration Error',
+      expect(screen.getByTestId('error-popup')).toBeTruthy();
+      expect(screen.getByTestId('popup-title')).toHaveTextContent('Registration Error');
+      expect(screen.getByTestId('popup-message')).toHaveTextContent(
         'This email is already registered.',
       );
     });

@@ -37,6 +37,8 @@ interface Building {
   longitude: number;
   floors: number;
   hasNavigation?: boolean;
+  source: string;
+  location: string;
 }
 
 export default function BuildingSelectionScreen() {
@@ -51,79 +53,97 @@ export default function BuildingSelectionScreen() {
     loadBuildingsWithNavigation();
   }, []);
 
-  // Update the loadBuildingsWithNavigation function in BuildingSelectionScreen.tsx
   const loadBuildingsWithNavigation = async () => {
     try {
       setIsLoading(true);
 
-      // Get all buildings from UPcampusPOIs
-      const buildingsSnapshot = await firestore().collection('UPcampusPOIs').get(); // Remove the filter to get all buildings
+      const locationSnapshot = await firestore().collection('locations').get();
+      const locationIds = locationSnapshot.docs.map((doc) => doc.id);
 
-      const buildingsFromPOIs = buildingsSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        source: 'UPcampusPOIs',
-      }));
+      const allBuildings: Building[] = [];
+      const buildingsFromRooms = new Map<string, Building>();
 
-      // Also get unique buildings from RoomPOIs
-      const roomsSnapshot = await firestore().collection('RoomPOIs').get();
+      for (const locationId of locationIds) {
+        const buildingPOIsSnap = await firestore()
+          .collection('locations')
+          .doc(locationId)
+          .collection('buildingPOIs')
+          .get();
 
-      const buildingsFromRooms = new Map();
-      roomsSnapshot.docs.forEach((doc) => {
-        const data = doc.data();
-        if (data.buildingId && !buildingsFromRooms.has(data.buildingId)) {
-          buildingsFromRooms.set(data.buildingId, {
-            id: data.buildingId,
-            name: data.buildingId, // Use buildingId as name
-            centroid: { latitude: 0, longitude: 0 }, // Default coordinates
-            floors: 1, // Default floors
-            hasNavigation: true,
-            source: 'RoomPOIs',
+        buildingPOIsSnap.forEach((doc) => {
+          const data = doc.data();
+          allBuildings.push({
+            id: doc.id,
+            name: data.name || doc.id,
+            latitude: data.centroid?.latitude ?? 0,
+            longitude: data.centroid?.longitude ?? 0,
+            floors: data.floors || 1,
+            source: 'buildingPOIs',
+            location: locationId,
           });
+        });
+
+        const roomPOIsSnap = await firestore()
+          .collection('locations')
+          .doc(locationId)
+          .collection('roomPOIs')
+          .get();
+
+        roomPOIsSnap.forEach((doc) => {
+          const data = doc.data();
+          const buildingId = data.buildingId;
+          if (buildingId && !buildingsFromRooms.has(buildingId)) {
+            buildingsFromRooms.set(buildingId, {
+              id: buildingId,
+              name: buildingId,
+              latitude: 0,
+              longitude: 0,
+              floors: 1,
+              hasNavigation: true,
+              source: 'roomPOIs',
+              location: locationId,
+            });
+          }
+        });
+      }
+
+      // Add room-only buildings if they don’t exist in buildingPOIs
+      buildingsFromRooms.forEach((roomBuilding, buildingId) => {
+        const exists = allBuildings.some((b) => b.id === buildingId || b.name === buildingId);
+        if (!exists) {
+          allBuildings.push(roomBuilding);
         }
       });
 
-      // Combine both sources
-      const allBuildings = [...buildingsFromPOIs];
-
-      // Add buildings from rooms that don't exist in UPcampusPOIs
-      buildingsFromRooms.forEach((building, buildingId) => {
-        const existsInPOIs = buildingsFromPOIs.some(
-          (b) => b.id === buildingId || b.name === buildingId,
-        );
-        if (!existsInPOIs) {
-          allBuildings.push(building);
-        }
-      });
-
-      // Check navigation capability for UPcampusPOIs buildings
       const buildingsWithNavigation = await Promise.all(
         allBuildings.map(async (building) => {
-          if (building.source === 'RoomPOIs') {
-            return building; // Already has navigation
+          if (building.source === 'roomPOIs') {
+            return building;
           }
 
-          // Check for room POIs using both document ID and name
-          const roomsSnapshot1 = await firestore()
-            .collection('RoomPOIs')
+          const roomSnapById = await firestore()
+            .collection('locations')
+            .doc(building.location)
+            .collection('roomPOIs')
             .where('buildingId', '==', building.id)
             .limit(1)
             .get();
 
-          const roomsSnapshot2 = await firestore()
-            .collection('RoomPOIs')
+          const roomSnapByName = await firestore()
+            .collection('locations')
+            .doc(building.location)
+            .collection('roomPOIs')
             .where('buildingId', '==', building.name)
             .limit(1)
             .get();
 
           return {
             ...building,
-            hasNavigation: !roomsSnapshot1.empty || !roomsSnapshot2.empty,
+            hasNavigation: !roomSnapById.empty || !roomSnapByName.empty,
           };
         }),
       );
 
-      // Filter to only show buildings with navigation
       const navigableBuildings = buildingsWithNavigation.filter((b) => b.hasNavigation);
       setBuildings(navigableBuildings);
     } catch (error) {
@@ -134,19 +154,7 @@ export default function BuildingSelectionScreen() {
   };
 
   const handleBuildingSelect = (building: Building) => {
-    // For buildings from RoomPOIs, use the buildingId as stored in the room data
-    // For buildings from UPcampusPOIs, try to find the matching buildingId in room data
-    let actualBuildingId = building.id;
-
-    if (building.source === 'RoomPOIs') {
-      // This building came from RoomPOIs, so the ID is already correct
-      actualBuildingId = building.id;
-    } else {
-      // This building came from UPcampusPOIs, check if rooms use the name instead
-      // We'll use the name if that's what the rooms reference
-      actualBuildingId = building.name || building.id;
-    }
-
+    const actualBuildingId = building.name || building.id;
     navigation.navigate('IndoorNavigationInterface', {
       buildingId: actualBuildingId,
       buildingName: building.name,
@@ -208,13 +216,11 @@ export default function BuildingSelectionScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title="Indoor Navigation" />
-
       <View style={styles.header}>
         <Text style={[styles.subtitle, { color: colors.secondary }]}>
           Select a building to start indoor navigation
         </Text>
       </View>
-
       <FlatList
         data={buildings}
         renderItem={renderBuildingItem}
@@ -228,23 +234,11 @@ export default function BuildingSelectionScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  buildingsList: {
-    flex: 1,
-  },
-  buildingsListContent: {
-    padding: 16,
-  },
+  container: { flex: 1 },
+  header: { paddingHorizontal: 16, paddingVertical: 8 },
+  subtitle: { fontSize: 16, textAlign: 'center' },
+  buildingsList: { flex: 1 },
+  buildingsListContent: { padding: 16 },
   buildingItem: {
     borderRadius: 12,
     borderWidth: 1,
@@ -265,18 +259,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 4,
   },
-  buildingDetails: {
-    fontSize: 14,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    marginTop: 16,
-  },
+  buildingDetails: { fontSize: 14 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { fontSize: 16, marginTop: 16 },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',

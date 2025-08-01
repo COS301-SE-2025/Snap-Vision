@@ -10,7 +10,7 @@ import BottomTabs from './src/navigation/BottomTabs';
 import AdminLoadFloorplansScreen from './src/screens/AdminLoadFloorplansScreen';
 import AdminEditFloorplansScreen from './src/screens/AdminEditFloorplansScreen';
 import AdminFloorplanEditorScreen from './src/screens/AdminFloorplanEditorScreen';
-// import AdminSettingsFrom from './src/components/organisms/AdminSettingsForm';
+import AdminSettingsFrom from './editTests/AdminSettingsForm';
 import { ThemeProvider } from './src/theme/ThemeContext';
 import ManageUsersScreen from './src/screens/ManageUsersScreen';
 import { Linking } from 'react-native';
@@ -85,7 +85,6 @@ function AppInner() {
             <Stack.Screen name="AdminLoadFloorplans" component={AdminLoadFloorplansScreen} />
             <Stack.Screen name="AdminFloorplanEditor" component={AdminFloorplanEditorScreen} />
             <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
-            {/* <Stack.Screen name="AdminSettings" component={AdminSettingsFrom} /> */}
             <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
             <Stack.Screen name="ShopScreen" component={ShopScreen} />
@@ -105,6 +104,7 @@ function AppInner() {
               options={{ headerShown: false }}
             />
           </Stack.Navigator>
+          <Toast config={toastConfig} />
         </NavigationContainer>
       </ThemeProvider>
     </BadgeProvider>

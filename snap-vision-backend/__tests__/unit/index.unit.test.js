@@ -1,6 +1,6 @@
 jest.mock("../../src/routes/badges", () => {
   const express = require("express");
-  const router  = express.Router();
+  const router = express.Router();
   router.get("/", (req, res) => res.json({ stub: true }));
   return router;
 });
@@ -9,7 +9,7 @@ jest.mock("axios");
 
 const express = require("express");
 const request = require("supertest");
-const axios   = require("axios");
+const axios = require("axios");
 
 describe("index.js (unit)", () => {
   let server;
@@ -50,8 +50,18 @@ describe("index.js (unit)", () => {
 
       expect(axios.post).toHaveBeenCalledWith(
         "https://api.openrouteservice.org/v2/directions/driving-car/geojson",
-        { coordinates: [[10, 20], [30, 40]] },
-        { headers: { Authorization: "test-key", "Content-Type": "application/json" } }
+        {
+          coordinates: [
+            [10, 20],
+            [30, 40],
+          ],
+        },
+        {
+          headers: {
+            Authorization: "test-key",
+            "Content-Type": "application/json",
+          },
+        },
       );
 
       expect(res.body).toEqual(fakeData);
