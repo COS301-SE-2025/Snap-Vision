@@ -4,6 +4,14 @@ import { BadgeId } from '../types/badges';
 // Android emulator uses 10.0.2.2 to access localhost on your PC
 const BASE = 'http://10.0.2.2:3000/api/badges';
 
+// emulator: 10.0.2.2
+// B home:  192.168.56.1
+// L wifi: 192.168.0.127
+// T home: 192.168.0.118
+// T data: 192.168.43.155
+// Th home: 10.0.0.9
+// T Durban: 192.168.1.93
+
 export async function fetchBadgeSnapshot(uid: string) {
   const res = await fetch(`${BASE}/${uid}`);
   if (!res.ok) throw new Error('Unable to fetch badge data');
