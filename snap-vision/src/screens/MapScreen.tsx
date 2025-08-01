@@ -51,6 +51,7 @@ const ROUTING_API_BASE = 'http://10.0.2.2:3000'; // <-- Use your correct backend
 // T data: 192.168.43.155
 // Th home: 10.0.0.9
 // T Durban: 192.168.1.93
+// S campus:  172.20.10.9
 
 const MapScreen = () => {
   const lastRoute = useRef<any[]>([]);
