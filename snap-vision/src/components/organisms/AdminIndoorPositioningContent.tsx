@@ -1,439 +1,301 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
-  ScrollView,
   View,
   Text,
-  TouchableOpacity,
-  TextInput,
-  FlatList,
-  Alert,
   StyleSheet,
-  RefreshControl,
-  Switch,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
+import DropDownPicker from 'react-native-dropdown-picker';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
+import { WebView } from 'react-native-webview';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
-import {
-  WiFiPositioningService,
-  WiFiFingerprint,
-  BuildingFingerprintStats,
-} from '../../services/WiFiPositioningService';
 import WiFiFingerprintCollector from '../molecules/WiFiFingerprintCollector';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import SettingsHeader from '../molecules/SettingsHeader';
 
-interface Props {
-  buildingId: string;
-  floorId: string;
-  onBack: () => void;
-}
-
-export default function AdminIndoorPositioningContent({ buildingId, floorId, onBack }: Props) {
+export default function AdminIndoorPositioningContent() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
+  const webViewRef = useRef<WebView>(null);
 
-  const [fingerprints, setFingerprints] = useState<WiFiFingerprint[]>([]);
-  const [stats, setStats] = useState<BuildingFingerprintStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [role, setRole] = useState<string | null>(null);
+  const [adminLocations, setAdminLocations] = useState<string[]>([]);
 
-  // Collection mode state
-  const [isCollectionMode, setIsCollectionMode] = useState(false);
-  const [collectionCoords, setCollectionCoords] = useState({ x: '', y: '' });
-  const [collectionDescription, setCollectionDescription] = useState('');
-  const [collectionType, setCollectionType] = useState<
-    'room_center' | 'corridor_point' | 'junction' | 'doorway'
-  >('corridor_point');
+  const [locations, setLocations] = useState<{ id: string; name: string }[]>([]);
+  const [buildings, setBuildings] = useState<{ id: string; name: string }[]>([]);
+  const [floorplans, setFloorplans] = useState<any[]>([]);
 
-  const wifiService = WiFiPositioningService.getInstance();
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
+  const [selectedFloorplan, setSelectedFloorplan] = useState<any | null>(null);
 
+  const [buildingDropdownItems, setBuildingDropdownItems] = useState<
+    { label: string; value: string }[]
+  >([]);
+
+  const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [buildingDropdownOpen, setBuildingDropdownOpen] = useState(false);
+  const [floorDropdownOpen, setFloorDropdownOpen] = useState(false);
+
+  // Fetch user info and role
   useEffect(() => {
-    loadData();
-  }, [buildingId, floorId]);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [fingerprintsData, statsData] = await Promise.all([
-        wifiService.getFingerprints(buildingId, floorId),
-        wifiService.getBuildingFingerprintStats(buildingId),
-      ]);
-
-      setFingerprints(fingerprintsData);
-      setStats(statsData);
-    } catch (error) {
-      console.error('Failed to load positioning data:', error);
-      Alert.alert('Error', 'Failed to load WiFi positioning data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await loadData();
-    setRefreshing(false);
-  };
-
-  const deleteFingerprint = async (fingerprintId: string) => {
-    Alert.alert('Delete Fingerprint', 'Are you sure you want to delete this WiFi fingerprint?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await wifiService.deleteFingerprint(fingerprintId);
-            await loadData();
-          } catch (error) {
-            Alert.alert('Error', 'Failed to delete fingerprint');
-          }
-        },
-      },
-    ]);
-  };
-
-  const testPositioning = async () => {
-    try {
-      const position = await wifiService.getCurrentPosition(buildingId, floorId);
-      Alert.alert(
-        'Current Position',
-        `Estimated Location:\nX: ${position.coordinates.x.toFixed(2)}\nY: ${position.coordinates.y.toFixed(2)}\nConfidence: ${(position.confidence * 100).toFixed(1)}%`,
-        [{ text: 'OK' }],
-      );
-    } catch (error) {
-      Alert.alert('Positioning Failed', error.message);
-    }
-  };
-
-  const addManualFingerprint = () => {
-    if (!collectionCoords.x || !collectionCoords.y || !collectionDescription.trim()) {
-      Alert.alert('Missing Information', 'Please fill in coordinates and description');
-      return;
-    }
-
-    const coordinates = {
-      x: parseFloat(collectionCoords.x),
-      y: parseFloat(collectionCoords.y),
+    const fetchUserInfo = async () => {
+      const uid = auth().currentUser?.uid;
+      if (!uid) return;
+      const doc = await firestore().doc(`userInformation/${uid}`).get();
+      const data = doc.data();
+      setRole(data?.role || 'user');
+      setAdminLocations(data?.adminLocations || []);
     };
+    fetchUserInfo();
+  }, []);
 
-    if (isNaN(coordinates.x) || isNaN(coordinates.y)) {
-      Alert.alert('Invalid Coordinates', 'Please enter valid numeric coordinates');
-      return;
+  // Load locations
+  useEffect(() => {
+    const fetchLocations = async () => {
+      const locSnap = await firestore().collection('locations').get();
+      const all = locSnap.docs.map(doc => ({ id: doc.id, name: doc.data().name || doc.id }));
+
+      const filtered = role === 'editor'
+        ? all.filter(loc => adminLocations.includes(loc.id))
+        : all;
+
+      setLocations(filtered);
+    };
+    if (role) fetchLocations();
+  }, [role, adminLocations]);
+
+  // Load buildings
+  useEffect(() => {
+    const fetchBuildings = async () => {
+      if (!selectedLocation) return;
+
+      const snap = await firestore()
+        .collection(`locations/${selectedLocation}/buildingPOIs`)
+        .get();
+
+      const list = snap.docs.map(doc => ({ id: doc.id, name: doc.data().name || doc.id }));
+      setBuildings(list);
+      setBuildingDropdownItems(list.map((b) => ({ label: b.name, value: b.id })));
+      setSelectedBuildingId(null);
+      setSelectedFloorplan(null);
+    };
+    if (selectedLocation) fetchBuildings();
+  }, [selectedLocation]);
+
+  // Load floorplans
+  useEffect(() => {
+    const fetchFloorplans = async () => {
+      if (!selectedLocation || !selectedBuildingId) return;
+
+      const snap = await firestore()
+        .collection(`locations/${selectedLocation}/buildingPOIs/${selectedBuildingId}/floorplans`)
+        .get();
+
+      const list = snap.docs.map(doc => {
+        const d = doc.data();
+        return {
+          locationId: selectedLocation,
+          buildingId: selectedBuildingId,
+          floorLabel: d.floorLabel || doc.id,
+          downloadURL: d.downloadURL,
+          id: `${selectedBuildingId}_${d.floorLabel || doc.id}`,
+        };
+      });
+
+      setFloorplans(list);
+    };
+    if (selectedBuildingId) fetchFloorplans();
+  }, [selectedBuildingId]);
+
+  // WebView message handler
+  const handleMessage = (event: any) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.type === 'tap') {
+        setCoords({ x: data.x, y: data.y });
+        Alert.alert('Coordinates selected', `X: ${data.x.toFixed(3)}, Y: ${data.y.toFixed(3)}`);
+      }
+    } catch (err) {
+      console.error('Invalid message from WebView', err);
     }
-
-    setIsCollectionMode(false);
   };
 
-  const renderFingerprintItem = ({ item }: { item: WiFiFingerprint }) => (
-    <View style={[styles.fingerprintItem, { backgroundColor: colors.card }]}>
-      <View style={styles.fingerprintHeader}>
-        <Text style={[styles.fingerprintTitle, { color: colors.text }]}>{item.description}</Text>
-        <TouchableOpacity style={styles.deleteButton} onPress={() => deleteFingerprint(item.id)}>
-          <Icon name="delete" size={20} color={colors.error} />
-        </TouchableOpacity>
-      </View>
-
-      <Text style={[styles.fingerprintCoords, { color: colors.secondary }]}>
-        Location: ({item.coordinates.x.toFixed(1)}, {item.coordinates.y.toFixed(1)})
-      </Text>
-
-      <Text style={[styles.fingerprintNetworks, { color: colors.secondary }]}>
-        {item.wifiNetworks.length} networks • {item.metadata?.type || 'unknown'}
-      </Text>
-
-      <Text style={[styles.fingerprintDate, { color: colors.secondary }]}>
-        {new Date(item.timestamp).toLocaleString()}
-      </Text>
-    </View>
-  );
-
-  if (loading) {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Text style={[styles.loading, { color: colors.text }]}>Loading positioning data...</Text>
-      </View>
-    );
-  }
+  const getHTML = () => {
+    return `
+      <html>
+        <body style="margin:0;padding:0;overflow:hidden;background:${colors.background}">
+          <img id="floorplan" src="${selectedFloorplan.downloadURL}" style="width:100%;height:100%;object-fit:contain" />
+          <script>
+            const floorplan = document.getElementById('floorplan');
+            floorplan.addEventListener('click', function(e) {
+              const rect = floorplan.getBoundingClientRect();
+              const x = (e.clientX - rect.left) / rect.width;
+              const y = (e.clientY - rect.top) / rect.height;
+              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'tap', x, y }));
+            });
+          </script>
+        </body>
+      </html>
+    `;
+  };
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
-    >
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={[styles.backButton, { backgroundColor: colors.card }]}
-          onPress={onBack}
-        >
-          <Icon name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>Indoor Positioning Admin</Text>
-      </View>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <SettingsHeader title="Indoor Positioning" />
 
-      {/* Stats Card */}
-      {stats && (
-        <View style={[styles.statsCard, { backgroundColor: colors.card }]}>
-          <Text style={[styles.statsTitle, { color: colors.text }]}>📊 Building Statistics</Text>
-          <View style={styles.statsRow}>
-            <Text style={[styles.statItem, { color: colors.secondary }]}>
-              Total Floors: {stats.totalFloors}
-            </Text>
-            <Text style={[styles.statItem, { color: colors.secondary }]}>
-              Total Points: {stats.totalFingerprints}
-            </Text>
-          </View>
-          <Text style={[styles.statItem, { color: colors.secondary }]}>
-            Current Floor: {fingerprints.length} fingerprints
-          </Text>
+      <ScrollView style={styles.scroll}>
+        {/* Step 1: Location */}
+        <View style={styles.section}>
+          <Text style={[styles.label, { color: colors.primary }]}>Step 1: Select Location</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {locations.map(loc => (
+              <TouchableOpacity
+                key={loc.id}
+                style={[
+                  styles.item,
+                  { backgroundColor: selectedLocation === loc.id ? colors.primary : colors.card },
+                ]}
+                onPress={() => {
+                  setSelectedLocation(loc.id);
+                  setSelectedBuildingId(null);
+                  setSelectedFloorplan(null);
+                  setCoords(null);
+                }}
+              >
+                <Text style={{ color: selectedLocation === loc.id ? '#FFF' : colors.text }}>
+                  {loc.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
-      )}
 
-      {/* Test Positioning */}
-      <TouchableOpacity
-        style={[styles.testButton, { backgroundColor: colors.primary }]}
-        onPress={testPositioning}
-      >
-        <Icon name="location-on" size={20} color="white" />
-        <Text style={styles.testButtonText}>Test Current Position</Text>
-      </TouchableOpacity>
-
-      {/* Collection Mode Toggle */}
-      <View style={[styles.toggleCard, { backgroundColor: colors.card }]}>
-        <Text style={[styles.toggleTitle, { color: colors.text }]}>📍 Manual Collection Mode</Text>
-        <Switch
-          value={isCollectionMode}
-          onValueChange={setIsCollectionMode}
-          trackColor={{ false: colors.secondary, true: colors.primary }}
-          thumbColor={colors.surface}
-        />
-      </View>
-
-      {/* Manual Collection Form */}
-      {isCollectionMode && (
-        <View style={[styles.collectionForm, { backgroundColor: colors.card }]}>
-          <Text style={[styles.formTitle, { color: colors.text }]}>Add WiFi Fingerprint</Text>
-
-          <View style={styles.coordsRow}>
-            <TextInput
-              style={[styles.coordInput, { backgroundColor: colors.surface, color: colors.text }]}
-              placeholder="X coordinate"
-              placeholderTextColor={colors.secondary}
-              value={collectionCoords.x}
-              onChangeText={(text) => setCollectionCoords((prev) => ({ ...prev, x: text }))}
-              keyboardType="numeric"
-            />
-            <TextInput
-              style={[styles.coordInput, { backgroundColor: colors.surface, color: colors.text }]}
-              placeholder="Y coordinate"
-              placeholderTextColor={colors.secondary}
-              value={collectionCoords.y}
-              onChangeText={(text) => setCollectionCoords((prev) => ({ ...prev, y: text }))}
-              keyboardType="numeric"
+        {/* Step 2: Building */}
+        {selectedLocation && (
+          <View style={styles.section}>
+            <Text style={[styles.label, { color: colors.primary }]}>Step 2: Select Building</Text>
+            <DropDownPicker
+              open={buildingDropdownOpen}
+              setOpen={setBuildingDropdownOpen}
+              items={buildingDropdownItems}
+              setItems={setBuildingDropdownItems}
+              value={selectedBuildingId}
+              setValue={(val) => {
+                setSelectedBuildingId(val());
+              }}
+              searchable
+              placeholder="Select a building"
+              zIndex={3000}
+              zIndexInverse={1000}
+              style={{
+                backgroundColor: colors.card,
+                borderColor: colors.primary,
+              }}
+              dropDownContainerStyle={{
+                backgroundColor: colors.card,
+                borderColor: colors.primary,
+              }}
+              textStyle={{ color: colors.text }}
+              searchTextInputStyle={{ color: colors.text }}
             />
           </View>
-
-          <TextInput
-            style={[
-              styles.descriptionInput,
-              { backgroundColor: colors.surface, color: colors.text },
-            ]}
-            placeholder="Location description (e.g., 'Room 101 center', 'Hallway junction')"
-            placeholderTextColor={colors.secondary}
-            value={collectionDescription}
-            onChangeText={setCollectionDescription}
-            multiline
-          />
-
-          {collectionCoords.x && collectionCoords.y && collectionDescription && (
-            <WiFiFingerprintCollector
-              buildingId={buildingId}
-              floorId={floorId}
-              coordinates={{
-                x: parseFloat(collectionCoords.x),
-                y: parseFloat(collectionCoords.y),
-              }}
-              description={collectionDescription}
-              type={collectionType}
-              onFingerprintCollected={() => {
-                setCollectionCoords({ x: '', y: '' });
-                setCollectionDescription('');
-                loadData();
-              }}
-            />
-          )}
-        </View>
-      )}
-
-      {/* Existing Fingerprints */}
-      <View style={[styles.fingerprintsSection, { backgroundColor: colors.card }]}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          📶 WiFi Fingerprints ({fingerprints.length})
-        </Text>
-
-        {fingerprints.length === 0 ? (
-          <Text style={[styles.emptyText, { color: colors.secondary }]}>
-            No WiFi fingerprints collected yet. Enable collection mode to add some.
-          </Text>
-        ) : (
-          <FlatList
-            data={fingerprints}
-            renderItem={renderFingerprintItem}
-            keyExtractor={(item) => item.id}
-            scrollEnabled={false}
-            showsVerticalScrollIndicator={false}
-          />
         )}
-      </View>
-    </ScrollView>
+
+        {/* Step 3: Floor */}
+        {selectedBuildingId && (
+          <View style={styles.section}>
+            <Text style={[styles.label, { color: colors.primary }]}>Step 3: Select Floor</Text>
+            <DropDownPicker
+              open={floorDropdownOpen}
+              setOpen={setFloorDropdownOpen}
+              items={floorplans.map(fp => ({
+                label: `Floor ${fp.floorLabel}`,
+                value: fp.id,
+              }))}
+              value={selectedFloorplan?.id || null}
+              setValue={val => {
+                const match = floorplans.find(fp => fp.id === val());
+                setSelectedFloorplan(match || null);
+                setCoords(null);
+              }}
+              placeholder="Select a floor"
+              style={{ backgroundColor: colors.card, borderColor: colors.primary }}
+              dropDownContainerStyle={{ backgroundColor: colors.card }}
+              textStyle={{ color: colors.text }}
+              searchTextInputStyle={{ color: colors.text }}
+            />
+          </View>
+        )}
+
+        {/* Step 4: Floorplan View + Fingerprint Collection */}
+        {selectedFloorplan && (
+          <View style={styles.section}>
+            <Text style={[styles.label, { color: colors.primary }]}>
+              Step 4: Tap to Select Coordinates
+            </Text>
+            <View style={{ height: 300, marginVertical: 12 }}>
+              <WebView
+                ref={webViewRef}
+                source={{ html: getHTML() }}
+                onMessage={handleMessage}
+                originWhitelist={['*']}
+              />
+            </View>
+
+            {/* Only show WiFi collection if coordinates selected */}
+            {coords && (
+              <>
+                <Text style={{ color: colors.text }}>
+                  Selected Coordinates: ({coords.x.toFixed(3)}, {coords.y.toFixed(3)})
+                </Text>
+
+                <WiFiFingerprintCollector
+  locationId={selectedLocation}
+  buildingId={selectedFloorplan.buildingId}
+  floorId={selectedFloorplan.floorLabel}
+  coordinates={coords}
+  description="Manual fingerprint point"
+  type="corridor_point"
+  onFingerprintCollected={() => setCoords(null)}
+/>
+              </>
+            )}
+          </View>
+        )}
+      </ScrollView>
+
+      {isLoading && (
+        <View style={styles.loading}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { flex: 1 },
+  scroll: { flex: 1, paddingHorizontal: 16 },
+  section: { marginVertical: 16 },
+  label: { fontSize: 18, fontWeight: 'bold', marginBottom: 8 },
+  item: {
+    padding: 12,
+    borderRadius: 8,
+    marginRight: 8,
+    minWidth: 100,
+    alignItems: 'center',
   },
   loading: {
-    textAlign: 'center',
-    marginTop: 50,
-    fontSize: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    gap: 12,
-  },
-  backButton: {
-    padding: 8,
-    borderRadius: 8,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  statsCard: {
-    margin: 16,
-    padding: 16,
-    borderRadius: 12,
-    elevation: 2,
-  },
-  statsTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  statItem: {
-    fontSize: 14,
-  },
-  testButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.1)',
     justifyContent: 'center',
-    margin: 16,
-    padding: 12,
-    borderRadius: 8,
-    gap: 8,
-  },
-  testButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  toggleCard: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    margin: 16,
-    padding: 16,
-    borderRadius: 12,
-    elevation: 2,
-  },
-  toggleTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  collectionForm: {
-    margin: 16,
-    padding: 16,
-    borderRadius: 12,
-    elevation: 2,
-  },
-  formTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  coordsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12,
-  },
-  coordInput: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    fontSize: 16,
-  },
-  descriptionInput: {
-    padding: 12,
-    borderRadius: 8,
-    fontSize: 16,
-    marginBottom: 16,
-    minHeight: 60,
-  },
-  fingerprintsSection: {
-    margin: 16,
-    padding: 16,
-    borderRadius: 12,
-    elevation: 2,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  emptyText: {
-    textAlign: 'center',
-    fontSize: 14,
-    fontStyle: 'italic',
-    padding: 20,
-  },
-  fingerprintItem: {
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-    elevation: 1,
-  },
-  fingerprintHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  fingerprintTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    flex: 1,
-  },
-  deleteButton: {
-    padding: 4,
-  },
-  fingerprintCoords: {
-    fontSize: 12,
-    marginBottom: 2,
-  },
-  fingerprintNetworks: {
-    fontSize: 12,
-    marginBottom: 2,
-  },
-  fingerprintDate: {
-    fontSize: 11,
-    fontStyle: 'italic',
   },
 });

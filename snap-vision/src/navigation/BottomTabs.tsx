@@ -46,7 +46,7 @@ export default function BottomTabs() {
       />
       <Tab.Screen name="Achievements" component={AchievementsScreen} />
       <Tab.Screen name="Settings" component={SettingsNavigator} />
-      {role === 'admin' && <Tab.Screen name="Admin" component={AdminScreen} />}
+      {role === 'admin' && <Tab.Screen name="Admin" component={AdminNavigator} />}
       {role === 'editor' && <Tab.Screen name="Editor" component={EditorScreen} />}
     </Tab.Navigator>
   );
