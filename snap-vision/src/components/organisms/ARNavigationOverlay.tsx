@@ -306,9 +306,8 @@ function SimpleARGuidance({
   const bearing = smoothedBearing !== null ? smoothedBearing : rawBearing;
   
   // FIXED: Normalize device heading and handle negative values
-  // Use GPS heading when moving (like Google Maps), compass when stationary
-  const adjustedHeading = stabilizedHeading + compassOffset; // Apply manual calibration
-  const normalizedDeviceHeading = ((adjustedHeading % 360) + 360) % 360;
+  // NO OFFSETS - Pure raw readings from react-native-compass-heading library
+  const normalizedDeviceHeading = ((deviceHeading % 360) + 360) % 360; // No offset applied
   const effectiveHeading = (isMoving && gpsHeading !== null) ? gpsHeading : normalizedDeviceHeading;
   const relativeBearing = normalizeAngle(bearing - effectiveHeading);
   
@@ -353,7 +352,7 @@ function SimpleARGuidance({
       <View style={styles.mainGuidanceContainer}>
         <View style={styles.debugInfoAboveArrow}>
           <Text style={styles.compassCalibrationText}>
-            🧭 COMPASS CALIBRATION TEST
+            🧭 NEW COMPASS LIBRARY TEST
           </Text>
           
           <Text style={styles.compassCalibrationText}>
@@ -361,7 +360,7 @@ function SimpleARGuidance({
           </Text>
           
           <Text style={styles.compassCalibrationText}>
-            Offset: {compassOffset}°
+            Offset: {compassOffset}° (Currently 0 - No Adjustments)
           </Text>
           
           <Text style={styles.compassCalibrationText}>
@@ -378,23 +377,15 @@ function SimpleARGuidance({
           </Text>
           
           <Text style={styles.bearingDebugText}>
-            📱 Check: Does your phone compass match "Final Heading"?
+            📱 Test: Does Raw Device update when you rotate phone?
           </Text>
           
           <Text style={styles.bearingDebugText}>
-            🎯 To calibrate: Point North → Final should show ~0°
+            🧭 Compare: Raw Device vs Your Phone's Compass App
           </Text>
           
           <Text style={styles.bearingDebugText}>
-            🎯 Point East → Final should show ~90°
-          </Text>
-          
-          <Text style={styles.bearingDebugText}>
-            🎯 Point South → Final should show ~180°
-          </Text>
-          
-          <Text style={styles.bearingDebugText}>
-            🎯 Point West → Final should show ~270°
+            ⚡ This should work without movement!
           </Text>
         </View>
       </View>
@@ -459,8 +450,8 @@ function SimpleARFallback({
     destinationCoords.x  // destination longitude
   );
   
-  const adjustedHeading = deviceHeading + compassOffset;
-  const normalizedHeading = ((adjustedHeading % 360) + 360) % 360;
+  // NO OFFSETS - Pure raw readings from react-native-compass-heading library
+  const normalizedHeading = ((deviceHeading % 360) + 360) % 360;
   const relativeBearing = normalizeAngle(bearing - normalizedHeading);
   const distance = calculateDistance(
     currentLocation.y, // latitude
