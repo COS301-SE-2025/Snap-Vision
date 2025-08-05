@@ -348,46 +348,41 @@ function SimpleARGuidance({
 
   return (
     <>
-      {/* COMPASS CALIBRATION ONLY - Center of screen */}
+      {/* AR Navigation with Arrow and Direction */}
       <View style={styles.mainGuidanceContainer}>
         <View style={styles.debugInfoAboveArrow}>
           <Text style={styles.compassCalibrationText}>
-            🧭 NEW COMPASS LIBRARY TEST
-          </Text>
-          
-          <Text style={styles.compassCalibrationText}>
-            Raw Device: {Math.round(deviceHeading)}°
-          </Text>
-          
-          <Text style={styles.compassCalibrationText}>
-            Offset: {compassOffset}° (Currently 0 - No Adjustments)
-          </Text>
-          
-          <Text style={styles.compassCalibrationText}>
-            Final Heading: {Math.round(normalizedDeviceHeading)}°
-          </Text>
-          
-          <Text style={styles.compassCalibrationText}>
-            📱 Cardinal Direction: {
-              normalizedDeviceHeading >= 315 || normalizedDeviceHeading < 45 ? 'NORTH (0°)' :
-              normalizedDeviceHeading >= 45 && normalizedDeviceHeading < 135 ? 'EAST (90°)' :
-              normalizedDeviceHeading >= 135 && normalizedDeviceHeading < 225 ? 'SOUTH (180°)' :
-              'WEST (270°)'
-            }
+            🧭 Raw Device: {Math.round(deviceHeading)}° | Final: {Math.round(normalizedDeviceHeading)}°
           </Text>
           
           <Text style={styles.bearingDebugText}>
-            📱 Test: Does Raw Device update when you rotate phone?
+            📍 True Bearing: {Math.round(bearing)}° | Compass: {Math.round(effectiveHeading)}° | Relative: {Math.round(relativeBearing)}°
           </Text>
           
           <Text style={styles.bearingDebugText}>
-            🧭 Compare: Raw Device vs Your Phone's Compass App
-          </Text>
-          
-          <Text style={styles.bearingDebugText}>
-            ⚡ This should work without movement!
+            🎯 Movement: {isMoving ? `GPS ACTIVE (${movementSpeed.toFixed(2)} m/s)` : 'Stationary - Using Compass'}
           </Text>
         </View>
+
+        {/* Direction Circle with Arrow */}
+        <View style={[
+          styles.directionCircle,
+          { backgroundColor: Math.abs(relativeBearing) < 25 ? 'rgba(76, 175, 80, 0.8)' : 'rgba(244, 67, 54, 0.8)' }
+        ]}>
+          <Text style={styles.directionEmoji}>
+            {getDirectionEmoji()}
+          </Text>
+        </View>
+
+        {/* Direction Text */}
+        <Text style={styles.directionText}>
+          {getDirectionInstruction()}
+        </Text>
+
+        {/* Distance Text */}
+        <Text style={styles.distanceText}>
+          {Math.round(distance)}m to destination
+        </Text>
       </View>
 
       {/* Compass Calibration Controls */}

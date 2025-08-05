@@ -46,7 +46,7 @@ const ROUTING_API_BASE = 'http://192.168.43.155:3000'; // <-- Use your correct b
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
 // L wifi: 192.168.0.127
-// T home: 192.168.0.118
+// T home: 192.168.0.133
 // T data: 192.168.43.155
 // Th home: 10.0.0.9
 // T Durban: 192.168.1.93
