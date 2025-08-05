@@ -22,7 +22,9 @@ export default function ARNavigationOverlay({
   currentRouteIndex = 0,
 }: Props) {
   const devices = useCameraDevices();
-  const device = devices.back || devices.external || Object.values(devices)[0];
+  const device = devices.find(d => d.position === 'back') 
+    || devices.find(d => d.position === 'external') 
+    || devices[0];
   const { hasPermission, requestPermission } = useCameraPermission();
 
   const [isActive, setIsActive] = useState(false);
@@ -133,7 +135,7 @@ export default function ARNavigationOverlay({
   );
 }
 
-// Simplified AR Guidance Component - ONLY New Compass Library
+//AR Guidance Component
 function SimpleARGuidance({ 
   currentLocation, 
   destinationCoords, 
@@ -173,7 +175,7 @@ function SimpleARGuidance({
     nextPoint = [destinationCoords.x, destinationCoords.y];
   }
 
-  // FIXED: Ensure coordinates are in the right order
+  // Ensure coordinates are in the right order
   // currentLocation: { x: longitude, y: latitude }
   // nextPoint: [longitude, latitude]
   // calculateBearing expects (lat1, lon1, lat2, lon2)
@@ -208,7 +210,6 @@ function SimpleARGuidance({
   // Use smoothed bearing if available, otherwise use raw
   const bearing = smoothedBearing !== null ? smoothedBearing : rawBearing;
   
-  // ONLY NEW COMPASS LIBRARY - No GPS, no offsets, no stabilization
   const normalizedDeviceHeading = ((deviceHeading % 360) + 360) % 360;
   const relativeBearing = normalizeAngle(bearing - normalizedDeviceHeading);
   
@@ -219,15 +220,15 @@ function SimpleARGuidance({
     nextPoint[0]       // target longitude
   );
 
-  // More precise direction logic with relaxed tolerances
+  //direction logic with relaxed tolerances - 35 degrees for straight
   const getDirectionInstruction = () => {
     const absRelativeBearing = Math.abs(relativeBearing);
     
-    if (absRelativeBearing < 25) return "Continue Straight"; // Increased from 10° to 25°
-    if (relativeBearing >= 25 && relativeBearing < 80) return "Turn Right";
+    if (absRelativeBearing < 35) return "Continue Straight"; // Set to 35 but can increase to about 45
+    if (relativeBearing >= 35 && relativeBearing < 80) return "Turn Right";
     if (relativeBearing >= 80 && relativeBearing < 120) return "Sharp Right";
     if (relativeBearing >= 120) return "Turn Around";
-    if (relativeBearing <= -25 && relativeBearing > -80) return "Turn Left";
+    if (relativeBearing <= -35 && relativeBearing > -80) return "Turn Left";
     if (relativeBearing <= -80 && relativeBearing > -120) return "Sharp Left";
     if (relativeBearing <= -120) return "Turn Around";
     return "Continue";
@@ -235,15 +236,13 @@ function SimpleARGuidance({
 
   // More precise emoji logic with relaxed tolerances
   const getDirectionEmoji = () => {
-    if (Math.abs(relativeBearing) < 25) return "⬆️"; // Increased from 10° to 25°
-    if (relativeBearing >= 25 && relativeBearing < 45) return "↗️";
-    if (relativeBearing >= 45 && relativeBearing < 90) return "➡️";
-    if (relativeBearing >= 90 && relativeBearing < 135) return "↘️";
-    if (relativeBearing >= 135) return "🔄"; // Turn around
-    if (relativeBearing <= -25 && relativeBearing > -45) return "↖️";
-    if (relativeBearing <= -45 && relativeBearing > -90) return "⬅️";
-    if (relativeBearing <= -90 && relativeBearing > -135) return "↙️";
-    if (relativeBearing <= -135) return "🔄"; // Turn around
+    if (Math.abs(relativeBearing) < 35) return "⬆️";
+    if (relativeBearing >= 35 && relativeBearing < 80) return "↗️";
+    if (relativeBearing >= 80 && relativeBearing < 120) return "➡️";
+    if (relativeBearing >= 120) return "🔄"; // Turn around
+    if (relativeBearing <= -35 && relativeBearing > -80) return "↖️";
+    if (relativeBearing <= -80 && relativeBearing > -120) return "⬅️";
+    if (relativeBearing <= -120) return "🔄"; // Turn around
     return "⬆️";
   };
 
@@ -272,7 +271,7 @@ function SimpleARGuidance({
         {/* Direction Circle with Arrow */}
         <View style={[
           styles.directionCircle,
-          { backgroundColor: Math.abs(relativeBearing) < 25 ? 'rgba(76, 175, 80, 0.8)' : 'rgba(244, 67, 54, 0.8)' }
+          { backgroundColor: Math.abs(relativeBearing) < 35 ? 'rgba(76, 175, 80, 0.8)' : 'rgba(244, 67, 54, 0.8)' }
         ]}>
           <Text style={styles.directionEmoji}>
             {getDirectionEmoji()}
@@ -416,7 +415,7 @@ function calculateBearing(lat1: number, lon1: number, lat2: number, lon2: number
   
   const bearing = normalizeAngle(toDeg(Math.atan2(y, x)));
   
-  // Debug log to console to verify calculation
+  // Debug log to verify calculation
   console.log('BEARING CALC:', {
     from: [lat1, lon1],
     to: [lat2, lon2],
