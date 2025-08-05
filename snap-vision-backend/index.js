@@ -52,7 +52,7 @@ app.get("/api/directions", async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, () =>
-  console.log(`Server running on port ${server.address().port}`)
+  console.log(`Server running on port ${server.address().port}`),
 );
 
 module.exports = server;

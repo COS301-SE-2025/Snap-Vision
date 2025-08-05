@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 import { useBadges } from '../context/BadgeContext';
 import { purchaseItem } from '../api/badgeApi';
 import auth from '@react-native-firebase/auth';
-import PurchasePopup from '../components/molecules/PurchasePopup'; // Adjust the path as needed
+import PurchasePopup from '../components/molecules/PurchasePopup';
+import SettingsHeader from '../components/molecules/SettingsHeader';
+import StandardPopup from '../components/atoms/StandardPopup';
 
 const SHOP_ITEMS = [
   {
@@ -152,12 +154,22 @@ export default function ShopScreen({ navigation }: { navigation: any }) {
   const { state, setState } = useBadges();
   const [popupItem, setPopupItem] = useState<{ title: string; cost: number } | null>(null);
 
+  // Popup states
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [errorPopupMessage, setErrorPopupMessage] = useState('');
+
   const handlePurchase = async (item: any) => {
     const uid = auth().currentUser?.uid;
-    if (!uid) return Alert.alert('Not logged in');
+    if (!uid) {
+      setErrorPopupMessage('Not logged in');
+      setShowErrorPopup(true);
+      return;
+    }
 
     if (state.points < item.cost) {
-      return Alert.alert('Not enough points', `You need ${item.cost} points.`);
+      setErrorPopupMessage(`You need ${item.cost} points.`);
+      setShowErrorPopup(true);
+      return;
     }
 
     try {
@@ -177,7 +189,8 @@ export default function ShopScreen({ navigation }: { navigation: any }) {
       setPopupItem({ title: item.title, cost: item.cost });
     } catch (err: any) {
       console.error('Purchase error:', err);
-      Alert.alert('Error', err.message || 'Purchase failed');
+      setErrorPopupMessage(err.message || 'Purchase failed');
+      setShowErrorPopup(true);
     }
   };
 
@@ -202,14 +215,7 @@ export default function ShopScreen({ navigation }: { navigation: any }) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={24} color={colors.primary} />
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.primary }]}>Shop</Text>
-        <View style={{ width: 24 }} /> {/* Placeholder */}
-      </View>
+      <SettingsHeader title="Shop" />
 
       <Text style={[styles.subtitle, { color: colors.text }]}>Spend your points wisely!</Text>
 
@@ -218,7 +224,7 @@ export default function ShopScreen({ navigation }: { navigation: any }) {
         data={SHOP_ITEMS}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        numColumns={2} // <-- 2 cards per row; change as needed
+        numColumns={2}
         columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 16 }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 16 }}
@@ -231,20 +237,29 @@ export default function ShopScreen({ navigation }: { navigation: any }) {
           onClose={() => setPopupItem(null)}
         />
       )}
+
+      {/* Error Popup */}
+      <StandardPopup
+        visible={showErrorPopup}
+        title="Error"
+        message={errorPopupMessage}
+        onConfirm={() => setShowErrorPopup(false)}
+        showCancel={false}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
+  container: { flex: 1, backgroundColor: '#fff' },
+  content: { flex: 1, padding: 16 }, // Add content wrapper with padding
   title: { fontSize: 22, fontWeight: 'bold' },
-  subtitle: { fontSize: 14, marginBottom: 16 },
+  subtitle: {
+    fontSize: 14,
+    marginBottom: 16,
+    marginTop: 8, // Add this line
+    paddingHorizontal: 16, // Add horizontal padding to align with content
+  },
   card: {
     flex: 1,
     // width removed to allow flex in FlatList with numColumns

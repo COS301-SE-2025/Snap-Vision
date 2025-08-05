@@ -1,33 +1,28 @@
 const request = require("supertest");
-const admin   = require("firebase-admin");
+const admin = require("firebase-admin");
 
 let server;
-const uid         = "test-user";
-const badgeId     = "welcome";
-const item        = { itemId: "itm1", cost: 20, name: "Sword", type: "Weapon" };
+const uid = "test-user";
+const badgeId = "welcome";
+const item = { itemId: "itm1", cost: 20, name: "Sword", type: "Weapon" };
 const challengeId = "ch1";
 
 beforeAll(async () => {
-
-  process.env.FIRESTORE_EMULATOR_HOST     = "127.0.0.1:8080";
+  process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
   process.env.FIREBASE_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
 
   if (!admin.apps.length) {
     admin.initializeApp({ projectId: "snap-vision-backend" });
   }
 
-  await admin
-    .firestore()
-    .collection("users")
-    .doc(uid)
-    .set({
-      points:               0,
-      badges:               [],
-      purchases:            [],
-      completedChallenges:  [],
-      routesCompleted:      0,
-      checkIns:             0,
-    });
+  await admin.firestore().collection("users").doc(uid).set({
+    points: 0,
+    badges: [],
+    purchases: [],
+    completedChallenges: [],
+    routesCompleted: 0,
+    checkIns: 0,
+  });
 
   server = require("../../index");
 });
@@ -35,11 +30,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await server.close();
 
-  await admin
-    .firestore()
-    .collection("users")
-    .doc(uid)
-    .delete();
+  await admin.firestore().collection("users").doc(uid).delete();
 });
 
 describe("Badges API routes (integration)", () => {
@@ -55,20 +46,14 @@ describe("Badges API routes (integration)", () => {
   });
 
   it("GET /api/badges/:uid → 200 + same data", async () => {
-    const res = await request(server)
-      .get(`/api/badges/${uid}`)
-      .expect(200);
+    const res = await request(server).get(`/api/badges/${uid}`).expect(200);
 
     expect(res.body.badges).toContain("welcome");
   });
 
   it("POST /api/badges/purchase → 200 + new points", async () => {
     // Give user enough points (currently 50) to purchase
-    await admin
-      .firestore()
-      .collection("users")
-      .doc(uid)
-      .update({ points: 50 });
+    await admin.firestore().collection("users").doc(uid).update({ points: 50 });
 
     const res = await request(server)
       .post("/api/badges/purchase")
@@ -106,8 +91,6 @@ describe("Badges API routes (integration)", () => {
   });
 
   it("GET non‐existent uid → 404", async () => {
-    await request(server)
-      .get("/api/badges/does-not-exist")
-      .expect(404);
+    await request(server).get("/api/badges/does-not-exist").expect(404);
   });
 });

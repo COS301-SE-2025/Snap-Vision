@@ -8,12 +8,14 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import LoginForm from '../src/components/organisms/LoginForm';
-import { Alert } from 'react-native';
 import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
 import { DeepLinkProvider } from '../src/DeepLinkContext';
 import { BadgeProvider } from '../src/context/BadgeContext';
+import Toast from 'react-native-toast-message';
 
 const mockSignIn = jest.fn();
+const mockReplace = jest.fn();
+const mockNavigate = jest.fn();
 
 jest.mock('@react-native-firebase/auth', () => {
   return () => ({
@@ -25,11 +27,9 @@ jest.mock('@react-native-firebase/auth', () => {
   });
 });
 
-// Mock navigation with replace method
-const mockReplace = jest.fn();
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
-    navigate: jest.fn(),
+    navigate: mockNavigate,
     replace: mockReplace,
   }),
 }));
@@ -49,7 +49,6 @@ jest.mock('expo-font', () => ({
   },
 }));
 
-// Mock @expo/vector-icons
 jest.mock('@expo/vector-icons', () => ({
   MaterialCommunityIcons: 'MockedMaterialCommunityIcons',
   Ionicons: 'MockedIonicons',
@@ -58,7 +57,6 @@ jest.mock('@expo/vector-icons', () => ({
   createIconSet: () => 'MockedIcon',
 }));
 
-// Mock DeepLinkContext
 jest.mock('../src/DeepLinkContext', () => {
   const originalModule = jest.requireActual('../src/DeepLinkContext');
   return {
@@ -70,8 +68,9 @@ jest.mock('../src/DeepLinkContext', () => {
   };
 });
 
-// Spy on Alert.alert
-const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+jest.mock('react-native-toast-message', () => ({
+  show: jest.fn(),
+}));
 
 describe('LoginForm', () => {
   beforeAll(() => {
@@ -84,13 +83,10 @@ describe('LoginForm', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    alertSpy.mockClear();
-    mockSignIn.mockClear();
-    mockReplace.mockClear();
   });
 
   it('shows error when fields are empty', async () => {
-    const { getByTestId } = render(
+    const { getByTestId, getByText } = render(
       <BadgeProvider>
         <ThemeProviderWrapper>
           <LoginForm />
@@ -101,12 +97,13 @@ describe('LoginForm', () => {
     fireEvent.press(getByTestId('login-button'));
 
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Error', 'Please fill in all fields');
+      expect(getByText('Email is required.')).toBeTruthy();
+      expect(getByText('Password is required.')).toBeTruthy();
     });
   });
 
   it('shows error for invalid email', async () => {
-    const { getByPlaceholderText, getByTestId } = render(
+    const { getByPlaceholderText, getByTestId, getByText } = render(
       <BadgeProvider>
         <ThemeProviderWrapper>
           <LoginForm />
@@ -119,13 +116,14 @@ describe('LoginForm', () => {
     fireEvent.press(getByTestId('login-button'));
 
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Error', 'Please enter a valid email address');
+      expect(getByText('Please enter a valid email address.')).toBeTruthy();
     });
   });
 
   it('logs in and navigates on valid credentials', async () => {
     mockSignIn.mockResolvedValueOnce({});
-    const { getByPlaceholderText, getByTestId, getByText } = render(
+
+    const { getByPlaceholderText, getByTestId } = render(
       <BadgeProvider>
         <ThemeProviderWrapper>
           <DeepLinkProvider>
@@ -139,23 +137,26 @@ describe('LoginForm', () => {
     fireEvent.changeText(getByPlaceholderText('Enter your password'), 'password123');
     fireEvent.press(getByTestId('login-button'));
 
-    // Wait for the async actions to complete
     await waitFor(() => {
       expect(mockSignIn).toHaveBeenCalledWith('test@example.com', 'password123');
     });
 
-    // Advance timers for the setTimeout in the component
     jest.advanceTimersByTime(500);
 
     await waitFor(() => {
-      expect(getByText('Login successful!')).toBeTruthy();
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          text1: 'Login Successful!',
+        }),
+      );
       expect(mockReplace).toHaveBeenCalledWith('Tabs');
     });
   });
 
   it('shows specific error message on login failure', async () => {
     mockSignIn.mockRejectedValueOnce({ code: 'auth/wrong-password' });
-    const { getByPlaceholderText, getByTestId } = render(
+
+    const { getByPlaceholderText, getByTestId, getByText } = render(
       <BadgeProvider>
         <ThemeProviderWrapper>
           <LoginForm />
@@ -168,17 +169,11 @@ describe('LoginForm', () => {
     fireEvent.press(getByTestId('login-button'));
 
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Login Error', 'Incorrect password.');
+      expect(getByText('Incorrect password.')).toBeTruthy();
     });
   });
 
   it('navigates to Register screen', () => {
-    const mockNavigate = jest.fn();
-    jest.spyOn(require('@react-navigation/native'), 'useNavigation').mockReturnValue({
-      navigate: mockNavigate,
-      replace: jest.fn(),
-    });
-
     const { getByText } = render(
       <BadgeProvider>
         <ThemeProviderWrapper>
@@ -190,18 +185,4 @@ describe('LoginForm', () => {
     fireEvent.press(getByText(/SIGN UP/i));
     expect(mockNavigate).toHaveBeenCalledWith('Register');
   });
-
-  //We don't use Remember Me anymore
-  // it('toggles Remember Me', () => {
-  //   const { getByText } = render(
-  //     <BadgeProvider>
-  //     <ThemeProviderWrapper>
-  //       <LoginForm />
-  //     </ThemeProviderWrapper>
-  //     </BadgeProvider>
-  //   );
-  //   const rememberMe = getByText(/Remember Me/);
-  //   fireEvent.press(rememberMe);
-  //   expect(rememberMe.props.children).toContain('◉');
-  // });
 });

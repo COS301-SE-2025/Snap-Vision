@@ -1,3 +1,4 @@
+//C:\Users\bahiy\snapvision\Snap-Vision\snap-vision\src\screens\AdminScreen.tsx
 import React from 'react';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
@@ -8,7 +9,7 @@ import AdminContent from '../components/organisms/AdminContent';
 type AdminStackParamList = {
   AdminLoadFloorplans: undefined;
   AdminEditFloorplans: undefined;
-  AdminSettings: undefined;
+  //AdminSettings: undefined;
   AdminManageUsers: undefined;
   AdminFloorplanEditor: undefined;
 };
@@ -26,9 +27,9 @@ const AdminScreen = () => {
   const handleEditFloorplans = () => {
     navigation.navigate('AdminEditFloorplans');
   };
-  const handleSettings = () => {
-    navigation.navigate('AdminSettings');
-  };
+  // const handleSettings = () => {
+  //   navigation.navigate('AdminSettings');
+  // };
   const handleManageUsers = () => {
     navigation.navigate('AdminManageUsers');
   };
@@ -38,7 +39,7 @@ const AdminScreen = () => {
       colors={colors}
       onLoadFloorplans={handleLoadFloorplans}
       onEditFloorplans={handleEditFloorplans}
-      onSettings={handleSettings}
+      //onSettings={handleSettings}
       onManageUsers={handleManageUsers}
     />
   );

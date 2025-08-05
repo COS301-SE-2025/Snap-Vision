@@ -10,6 +10,7 @@ import TabBarIcon from '../components/molecules/TabBarIcon';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 import { useUser } from '../context/UserContext';
+import EditorScreen from '../screens/EditorScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -46,6 +47,7 @@ export default function BottomTabs() {
       <Tab.Screen name="Achievements" component={AchievementsScreen} />
       <Tab.Screen name="Settings" component={SettingsNavigator} />
       {role === 'admin' && <Tab.Screen name="Admin" component={AdminScreen} />}
+      {role === 'editor' && <Tab.Screen name="Editor" component={EditorScreen} />}
     </Tab.Navigator>
   );
 }

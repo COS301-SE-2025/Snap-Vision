@@ -1,14 +1,14 @@
 jest.mock("firebase-admin", () => {
   const apps = [];
   const firestoreMock = jest.fn();
-  firestoreMock.Timestamp  = { now: jest.fn(() => ({ seconds: 123456 })) };
+  firestoreMock.Timestamp = { now: jest.fn(() => ({ seconds: 123456 })) };
   firestoreMock.FieldValue = { serverTimestamp: jest.fn(() => "SERVED_TS") };
 
   return {
     apps,
     initializeApp: jest.fn(),
-    credential:    { cert: jest.fn() },
-    firestore:     firestoreMock,
+    credential: { cert: jest.fn() },
+    firestore: firestoreMock,
   };
 });
 
@@ -21,30 +21,29 @@ describe("badgeService (unit)", () => {
   let mockUserDoc;
 
   beforeEach(() => {
-
     jest.resetModules();
 
     admin = require("firebase-admin");
 
     mockUserDoc = { exists: false, data: () => ({}) };
     mockTransaction = {
-      get:    jest.fn().mockResolvedValue(mockUserDoc),
-      set:    jest.fn(),
+      get: jest.fn().mockResolvedValue(mockUserDoc),
+      set: jest.fn(),
       update: jest.fn(),
     };
 
     mockUserRef = {
-  get: jest.fn().mockResolvedValue(mockUserDoc),
-  set: jest.fn(),
-  update: jest.fn(),
-};
+      get: jest.fn().mockResolvedValue(mockUserDoc),
+      set: jest.fn(),
+      update: jest.fn(),
+    };
 
-mockDb = {
-  collection: jest.fn().mockReturnValue({
-    doc: jest.fn(() => mockUserRef),
-  }),
-  runTransaction: jest.fn((cb) => cb(mockTransaction)),
-};
+    mockDb = {
+      collection: jest.fn().mockReturnValue({
+        doc: jest.fn(() => mockUserRef),
+      }),
+      runTransaction: jest.fn((cb) => cb(mockTransaction)),
+    };
 
     admin.firestore.mockReturnValue(mockDb);
 
@@ -67,11 +66,11 @@ mockDb = {
       expect(mockTransaction.set).toHaveBeenCalledWith(
         mockUserRef,
         expect.objectContaining({
-          badges:         ["first-badge"],
-          points:         50,
-          checkIns:       0,
+          badges: ["first-badge"],
+          points: 50,
+          checkIns: 0,
           routesCompleted: 0,
-        })
+        }),
       );
     });
 
@@ -83,7 +82,7 @@ mockDb = {
 
       expect(mockTransaction.update).toHaveBeenCalledWith(
         mockUserRef,
-        expect.objectContaining({ badges: ["new-badge"], points: 70 })
+        expect.objectContaining({ badges: ["new-badge"], points: 70 }),
       );
     });
 
@@ -95,76 +94,76 @@ mockDb = {
 
       expect(mockTransaction.update).toHaveBeenCalledWith(
         mockUserRef,
-        expect.objectContaining({ badges: ["same"], points: 50 })
+        expect.objectContaining({ badges: ["same"], points: 50 }),
       );
     });
   });
 
   it("returns data if user exists", async () => {
-  // Stub the top‑level mockDb.collection() → mockUserRef.get()
-  mockDb.collection = jest.fn().mockReturnValue({
-    doc: () => ({
-      get: () => Promise.resolve({ exists: true, data: () => ({ foo: "bar" }) })
-    })
-  });
+    // Stub the top‑level mockDb.collection() → mockUserRef.get()
+    mockDb.collection = jest.fn().mockReturnValue({
+      doc: () => ({
+        get: () =>
+          Promise.resolve({ exists: true, data: () => ({ foo: "bar" }) }),
+      }),
+    });
 
-  const data = await badgeService.getUserBadgeData("u4");
-  expect(data).toEqual({ foo: "bar" });
-});
+    const data = await badgeService.getUserBadgeData("u4");
+    expect(data).toEqual({ foo: "bar" });
+  });
 
   // --- purchaseItemForUser ---
   it("updates points and purchases when enough points", async () => {
-  mockUserDoc.exists = true;
-  mockUserDoc.data = () => ({ points: 100, purchases: [] });
+    mockUserDoc.exists = true;
+    mockUserDoc.data = () => ({ points: 100, purchases: [] });
 
-  // Stub the post‑transaction userRef.get() for the return value
-  mockUserRef.get = jest.fn().mockResolvedValue({
-    data: () => ({
-      points:    90,
-      purchases: [{ itemId: "i3", cost: 10, boughtAt: 123456 }]
-    })
+    // Stub the post‑transaction userRef.get() for the return value
+    mockUserRef.get = jest.fn().mockResolvedValue({
+      data: () => ({
+        points: 90,
+        purchases: [{ itemId: "i3", cost: 10, boughtAt: 123456 }],
+      }),
+    });
+
+    const result = await badgeService.purchaseItemForUser("u7", {
+      cost: 10,
+      itemId: "i3",
+      name: "Test",
+      type: "T",
+    });
+
+    expect(result.points).toBe(90);
+    expect(result.purchases).toHaveLength(1);
   });
-
-  const result = await badgeService.purchaseItemForUser("u7", {
-    cost:   10,
-    itemId: "i3",
-    name:   "Test",
-    type:   "T",
-  });
-
-  expect(result.points).toBe(90);
-  expect(result.purchases).toHaveLength(1);
-});
 
   it("adds new challenge and increments points", async () => {
-  mockUserDoc.exists = true;
-  mockUserDoc.data = () => ({ completedChallenges: [], points: 0 });
+    mockUserDoc.exists = true;
+    mockUserDoc.data = () => ({ completedChallenges: [], points: 0 });
 
-  // Stub the post‑transaction userRef.get() for the return value
-  mockUserRef.get = jest.fn().mockResolvedValue({
-    data: () => ({ completedChallenges: ["c2"], points: 20 })
+    // Stub the post‑transaction userRef.get() for the return value
+    mockUserRef.get = jest.fn().mockResolvedValue({
+      data: () => ({ completedChallenges: ["c2"], points: 20 }),
+    });
+
+    const updated = await badgeService.completeChallengeForUser("u9", "c2");
+    expect(updated.points).toBe(20);
+    expect(updated.completedChallenges).toContain("c2");
   });
-
-  const updated = await badgeService.completeChallengeForUser("u9", "c2");
-  expect(updated.points).toBe(20);
-  expect(updated.completedChallenges).toContain("c2");
-});
 
   it("increments routes and unlocks milestone badge", async () => {
-  mockUserDoc.exists = true;
-  mockUserDoc.data = () => ({ routesCompleted: 9, badges: [] });
+    mockUserDoc.exists = true;
+    mockUserDoc.data = () => ({ routesCompleted: 9, badges: [] });
 
-  // Stub the post‑transaction userRef.get() for the return value
-  mockUserRef.get = jest.fn().mockResolvedValue({
-    data: () => ({
-      routesCompleted: 10,
-      badges:          ["10-destinations"]
-    })
+    // Stub the post‑transaction userRef.get() for the return value
+    mockUserRef.get = jest.fn().mockResolvedValue({
+      data: () => ({
+        routesCompleted: 10,
+        badges: ["10-destinations"],
+      }),
+    });
+
+    const updated = await badgeService.incrementRoutesCompletedForUser("u11");
+    expect(updated.routesCompleted).toBe(10);
+    expect(updated.badges).toContain("10-destinations");
   });
-
-  const updated = await badgeService.incrementRoutesCompletedForUser("u11");
-  expect(updated.routesCompleted).toBe(10);
-  expect(updated.badges).toContain("10-destinations");
 });
-  });
-
