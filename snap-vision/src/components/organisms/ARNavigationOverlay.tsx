@@ -133,7 +133,7 @@ export default function ARNavigationOverlay({
   );
 }
 
-// Simplified AR Guidance Component
+// Simplified AR Guidance Component - ONLY New Compass Library
 function SimpleARGuidance({ 
   currentLocation, 
   destinationCoords, 
@@ -153,106 +153,9 @@ function SimpleARGuidance({
   compassOffset: number;
   setCompassOffset: (offset: number) => void;
 }) {
-  // GPS-based heading (like Google Maps)
-  const [gpsHeading, setGpsHeading] = useState<number | null>(null);
-  const [lastPosition, setLastPosition] = useState<{x: number, y: number, timestamp: number} | null>(null);
-  const [isMoving, setIsMoving] = useState(false);
-  const [movementSpeed, setMovementSpeed] = useState(0);
-  
   // Add bearing smoothing to prevent flickering
   const [bearingHistory, setBearingHistory] = useState<number[]>([]);
   const [smoothedBearing, setSmoothedBearing] = useState<number | null>(null);
-  
-  // Add state for stabilized heading to reduce tilt sensitivity
-  const [stabilizedHeading, setStabilizedHeading] = useState(deviceHeading);
-  const [headingHistory, setHeadingHistory] = useState<number[]>([]);
-  
-  // Calculate GPS heading from movement (like Google Maps)
-  useEffect(() => {
-    if (currentLocation && lastPosition) {
-      const now = Date.now();
-      const timeDiff = (now - lastPosition.timestamp) / 1000; // seconds
-      
-      // Skip if GPS update is too slow (> 3 seconds between updates)
-      if (timeDiff > 3.0) {
-        console.log('GPS UPDATE TOO SLOW:', timeDiff.toFixed(1), 's - skipping GPS heading');
-        setLastPosition({
-          x: currentLocation.x,
-          y: currentLocation.y,
-          timestamp: now
-        });
-        return;
-      }
-      
-      // Calculate distance moved
-      const distanceMoved = calculateDistance(
-        lastPosition.y, lastPosition.x,
-        currentLocation.y, currentLocation.x
-      );
-      
-      // Calculate speed (meters per second)
-      const speed = timeDiff > 0 ? distanceMoved / timeDiff : 0;
-      setMovementSpeed(speed);
-      
-      // Debug GPS calculation
-      console.log('GPS DEBUG:', {
-        timeDiff: timeDiff.toFixed(2),
-        distanceMoved: distanceMoved.toFixed(2),
-        speed: speed.toFixed(2),
-        updateFreq: `${(1/timeDiff).toFixed(1)} Hz`,
-        isMovingNow: speed > 0.1 && distanceMoved > 0.3
-      });
-      
-      // Much more sensitive thresholds: 0.1 m/s (very slow walking) and 0.3m distance
-      if (speed > 0.1 && distanceMoved > 0.3 && timeDiff < 2.0) {
-        const movementBearing = calculateBearing(
-          lastPosition.y, lastPosition.x,
-          currentLocation.y, currentLocation.x
-        );
-        setGpsHeading(movementBearing);
-        setIsMoving(true);
-        console.log('GPS HEADING ACTIVATED:', movementBearing.toFixed(1), '°');
-      } else if (speed < 0.02) {
-        // Nearly stopped, will fall back to compass
-        setIsMoving(false);
-        console.log('GPS HEADING DEACTIVATED - stationary');
-      }
-    }
-    
-    // Update last position with current timestamp
-    if (currentLocation) {
-      setLastPosition({
-        x: currentLocation.x,
-        y: currentLocation.y,
-        timestamp: Date.now()
-      });
-    }
-  }, [currentLocation]);
-  
-  // Stabilize the heading to reduce tilt sensitivity (for compass fallback)
-  useEffect(() => {
-    const normalizedHeading = ((deviceHeading % 360) + 360) % 360;
-    
-    // Update heading history (keep last 8 readings)
-    setHeadingHistory(prev => {
-      const newHistory = [...prev, normalizedHeading].slice(-8);
-      
-      // Calculate moving average for stability
-      const average = newHistory.reduce((sum, h) => sum + h, 0) / newHistory.length;
-      
-      // Only update if change is significant (> 8°) and consistent
-      const recentReadings = newHistory.slice(-3); // Last 3 readings
-      const isConsistent = recentReadings.every(h => Math.abs(h - normalizedHeading) < 15);
-      
-      if (isConsistent && Math.abs(average - stabilizedHeading) > 8) {
-        // Smooth the transition to prevent sudden jumps
-        const smoothedHeading = stabilizedHeading + (average - stabilizedHeading) * 0.4;
-        setStabilizedHeading(smoothedHeading);
-      }
-      
-      return newHistory;
-    });
-  }, [deviceHeading, stabilizedHeading]);
 
   if (!currentLocation || !destinationCoords) return null;
 
@@ -305,11 +208,9 @@ function SimpleARGuidance({
   // Use smoothed bearing if available, otherwise use raw
   const bearing = smoothedBearing !== null ? smoothedBearing : rawBearing;
   
-  // FIXED: Normalize device heading and handle negative values
-  // NO OFFSETS - Pure raw readings from react-native-compass-heading library
-  const normalizedDeviceHeading = ((deviceHeading % 360) + 360) % 360; // No offset applied
-  const effectiveHeading = (isMoving && gpsHeading !== null) ? gpsHeading : normalizedDeviceHeading;
-  const relativeBearing = normalizeAngle(bearing - effectiveHeading);
+  // ONLY NEW COMPASS LIBRARY - No GPS, no offsets, no stabilization
+  const normalizedDeviceHeading = ((deviceHeading % 360) + 360) % 360;
+  const relativeBearing = normalizeAngle(bearing - normalizedDeviceHeading);
   
   const distance = calculateDistance(
     currentLocation.y, // current latitude
@@ -352,15 +253,19 @@ function SimpleARGuidance({
       <View style={styles.mainGuidanceContainer}>
         <View style={styles.debugInfoAboveArrow}>
           <Text style={styles.compassCalibrationText}>
-            🧭 Raw Device: {Math.round(deviceHeading)}° | Final: {Math.round(normalizedDeviceHeading)}°
+            🧭 PURE COMPASS TEST (react-native-compass-heading)
+          </Text>
+          
+          <Text style={styles.compassCalibrationText}>
+            Raw Device: {Math.round(deviceHeading)}° | Final: {Math.round(normalizedDeviceHeading)}°
           </Text>
           
           <Text style={styles.bearingDebugText}>
-            📍 True Bearing: {Math.round(bearing)}° | Compass: {Math.round(effectiveHeading)}° | Relative: {Math.round(relativeBearing)}°
+            📍 True Bearing: {Math.round(bearing)}° | Compass: {Math.round(normalizedDeviceHeading)}° | Relative: {Math.round(relativeBearing)}°
           </Text>
           
           <Text style={styles.bearingDebugText}>
-            🎯 Movement: {isMoving ? `GPS ACTIVE (${movementSpeed.toFixed(2)} m/s)` : 'Stationary - Using Compass'}
+            🎯 Mode: COMPASS ONLY - Works Stationary & Moving
           </Text>
         </View>
 
