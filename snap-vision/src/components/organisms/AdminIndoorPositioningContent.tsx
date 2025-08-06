@@ -144,47 +144,70 @@ export default function AdminIndoorPositioningContent() {
   };
 
   const getHTML = () => {
-    const markers = existingPoints
-      .map(
-        (p) => `<div onclick="onDelete(this)" data-id="${p.id}" style="position:absolute;left:${p.x * 100}%;top:${p.y * 100}%;
+  const markers = existingPoints
+    .map(
+      (p) => `<div onclick="onDelete(this)" data-id="${p.id}" style="position:absolute;left:${p.x * 100}%;top:${p.y * 100}%;
         transform:translate(-50%,-50%);width:20px;height:20px;border-radius:6px;
         background:red;border:2px solid white;"></div>`
-      )
-      .join('');
+    )
+    .join('');
 
-    const currentMarker = coords
-      ? `<div id="marker" style="position:absolute;left:${coords.x * 100}%;top:${coords.y * 100}%;
-        transform:translate(-50%,-50%);width:14px;height:14px;border-radius:7px;
-        background:blue;border:2px solid white;"></div>`
-      : '';
+  const currentMarker = coords
+    ? `<div id="marker"
+          draggable="true"
+          ondragstart="event.dataTransfer.setDragImage(new Image(), 0, 0)"
+          ondragend="onDrag(event)"
+          style="position:absolute;left:${coords.x * 100}%;top:${coords.y * 100}%;
+          transform:translate(-50%,-50%);
+          width:24px;height:24px;border-radius:12px;
+          background:blue;border:2px solid white;
+          cursor:grab;"></div>`
+    : '';
 
-    return `
-      <html>
-        <body style="margin:0;padding:0;overflow:hidden;background:${colors.background}">
-          <div style="position:relative;width:100%;height:100%;overflow:auto;">
-            <img id="floorplan" src="${selectedFloorplan.downloadURL}" style="width:100%;height:auto;object-fit:contain;" />
-            ${markers}
-            ${currentMarker}
-          </div>
-          <script>
-            const floorplan = document.getElementById('floorplan');
-            floorplan.addEventListener('click', function(e) {
-              const rect = floorplan.getBoundingClientRect();
-              const x = (e.clientX - rect.left) / rect.width;
-              const y = (e.clientY - rect.top) / rect.height;
-              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'tap', x, y }));
-            });
-            function onDelete(el) {
-              const id = el.getAttribute('data-id');
-              if (id) {
-                window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'delete', id }));
-              }
+  return `
+    <html>
+      <body style="margin:0;padding:0;overflow:hidden;background:${colors.background}">
+        <div style="position:relative;width:100%;height:100%;">
+          <img id="floorplan" src="${selectedFloorplan.downloadURL}"
+            style="width:100%;height:auto;object-fit:contain;display:block;" />
+
+          ${markers}
+          ${currentMarker}
+        </div>
+
+        <script>
+          const floorplan = document.getElementById('floorplan');
+
+          floorplan.addEventListener('click', function(e) {
+  const rect = floorplan.getBoundingClientRect();
+  const x = (e.offsetX / rect.width);
+  const y = (e.offsetY / rect.height);
+  window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'tap', x, y }));
+});
+
+          function onDelete(el) {
+            const id = el.getAttribute('data-id');
+            if (id) {
+              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'delete', id }));
             }
-          </script>
-        </body>
-      </html>
-    `;
-  };
+          }
+
+          function onDrag(event) {
+            const floorplan = document.getElementById('floorplan');
+            const rect = floorplan.getBoundingClientRect();
+            const x = (event.clientX - rect.left) / rect.width;
+            const y = (event.clientY - rect.top) / rect.height;
+            if (x >= 0 && x <= 1 && y >= 0 && y <= 1) {
+              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'tap', x, y }));
+            }
+          }
+        </script>
+      </body>
+    </html>
+  `;
+};
+
+
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
