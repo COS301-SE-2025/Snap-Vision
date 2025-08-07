@@ -19,6 +19,8 @@ export async function collectWiFiFingerprint(
     // Scan Wi-Fi networks
     const results = await WifiManager.reScanAndLoadWifiList();
 
+     console.log('WiFi scan results:', results);
+
     // Structure data
     const wifiSignals = results.map((wifi) => ({
       SSID: wifi.SSID,

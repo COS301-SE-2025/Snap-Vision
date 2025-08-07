@@ -6,6 +6,7 @@ import AchievementsScreen from '../screens/AchievementsScreen';
 import SettingsNavigator from './SettingsNavigator';
 import AdminNavigator from './AdminNavigator';
 import BuildingSelectionScreen from '../screens/BuildingSelectionScreen';
+import LiveTrackingScreen from '../screens/LiveTrackingScreen';
 import TabBarIcon from '../components/molecules/TabBarIcon';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
@@ -44,6 +45,7 @@ export default function BottomTabs() {
         component={BuildingSelectionScreen}
         options={{ title: 'Indoor Nav' }}
       />
+      <Tab.Screen name="LiveTracking" component={LiveTrackingScreen} options={{ title: 'Live Tracking' }} />
       <Tab.Screen name="Achievements" component={AchievementsScreen} />
       <Tab.Screen name="Settings" component={SettingsNavigator} />
       {role === 'admin' && <Tab.Screen name="Admin" component={AdminNavigator} />}
