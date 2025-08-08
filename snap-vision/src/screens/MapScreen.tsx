@@ -36,13 +36,14 @@ import { useCompass } from '../hooks/useCompass';
 import { requestCameraPermission } from '../utils/cameraPermissions';
 import { Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import { ROUTING_API } from '@env';
 
 type MapScreenParams = {
   lat?: string;
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'http://10.0.2.2:3000'; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = ROUTING_API;// <-- Use your correct backend IP here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
