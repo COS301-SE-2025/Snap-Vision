@@ -1,4 +1,3 @@
-// src/screens/MapScreen.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
