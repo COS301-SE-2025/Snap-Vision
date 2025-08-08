@@ -1,16 +1,6 @@
 // src/screens/MapScreen.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Alert,
-  Share,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Modal,
-  PermissionsAndroid,
-  Pressable,
-} from 'react-native';
+import {View, Alert, Share, Text, TextInput, TouchableOpacity, Modal, PermissionsAndroid,Pressable,} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import { WebView as WebViewType } from 'react-native-webview';
 import firestore from '@react-native-firebase/firestore';
@@ -27,7 +17,6 @@ import DirectionsModal from '../components/organisms/DirectionsModal';
 import { useRoute } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import { addRecentlyVisitedPOI, Visit } from '../services/firebase/recentlyVService';
-
 import { useBadges } from '../context/BadgeContext';
 import { useAccessibility } from '../context/AccessibilityContext';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
