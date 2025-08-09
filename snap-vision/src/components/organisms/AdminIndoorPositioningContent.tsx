@@ -17,6 +17,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import WiFiFingerprintCollector from '../molecules/WiFiFingerprintCollector';
 import SettingsHeader from '../molecules/SettingsHeader';
+import StandardPopup from '../atoms/StandardPopup';
 
 export default function AdminIndoorPositioningContent() {
   const { isDark } = useTheme();
@@ -36,9 +37,15 @@ export default function AdminIndoorPositioningContent() {
   const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [pointName, setPointName] = useState('');
-  const [existingPoints, setExistingPoints] = useState<{ id: string; x: number; y: number }[]>([]);
+  const [existingPoints, setExistingPoints] = useState<{ id: string; x: number; y: number; description?: string }[]>([]);
   const [buildingDropdownOpen, setBuildingDropdownOpen] = useState(false);
   const [floorDropdownOpen, setFloorDropdownOpen] = useState(false);
+
+  // Popup states
+  const [showPointInfoPopup, setShowPointInfoPopup] = useState(false);
+  const [selectedPointInfo, setSelectedPointInfo] = useState<{ id: string; x: number; y: number; description?: string } | null>(null);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [pointToDelete, setPointToDelete] = useState<{ id: string; description?: string } | null>(null);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -104,11 +111,21 @@ export default function AdminIndoorPositioningContent() {
       .where('floorId', '==', selectedFloorplan.floorLabel)
       .get();
 
-    const list = snap.docs.map(doc => ({
-      id: doc.id,
-      x: doc.data().coordinates?.x,
-      y: doc.data().coordinates?.y,
-    }));
+    const list = snap.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        x: data.coordinates?.x,
+        y: data.coordinates?.y,
+        description: data.description || 'WiFi Point',
+      };
+    });
+
+    console.log('📌 Stored WiFi fingerprint locations:');
+    list.forEach((point, i) => {
+      console.log(`  ${i + 1}. ${point.description} at (${point.x?.toFixed(3)}, ${point.y?.toFixed(3)})`);
+    });
+    
     setExistingPoints(list);
   };
 
@@ -122,326 +139,347 @@ export default function AdminIndoorPositioningContent() {
       if (data.type === 'tap') {
         setCoords({ x: data.x, y: data.y });
         Alert.alert('Coordinates selected', `X: ${data.x.toFixed(3)}, Y: ${data.y.toFixed(3)}`);
-      } else if (data.type === 'delete' && data.id) {
-        Alert.alert('Delete fingerprint?', 'Are you sure you want to delete this point?', [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Delete',
-            style: 'destructive',
-            onPress: async () => {
-              await firestore()
-                .collection(`locations/${selectedLocation}/wifiFingerprints`)
-                .doc(data.id)
-                .delete();
-              fetchPoints();
-            },
-          },
-        ]);
+      } else if (data.type === 'marker_click' && data.id) {
+        // Find the point info and show popup
+        const point = existingPoints.find(p => p.id === data.id);
+        if (point) {
+          setSelectedPointInfo(point);
+          setShowPointInfoPopup(true);
+        }
       }
     } catch (err) {
       console.error('Invalid message from WebView', err);
     }
   };
 
-        const getHTML = () => {
-          const markers = existingPoints
-            .map(
-              (p) => `<div onclick="onDelete(this)" data-id="${p.id}" class="marker" style="position:absolute;left:${p.x * 100}%;top:${p.y * 100}%;
-                transform:translate(-50%,-50%);width:12px;height:12px;border-radius:6px;
-                background:red;border:2px solid white;cursor:pointer;"></div>`
-            )
-            .join('');
-      
-          const currentMarker = coords
-            ? `<div id="marker"
-                  draggable="true"
-                  ondragstart="event.dataTransfer.setDragImage(new Image(), 0, 0)"
-                  ondragend="onDrag(event)"
-                  style="position:absolute;left:${coords.x * 100}%;top:${coords.y * 100}%;
-                  transform:translate(-50%,-50%);
-                  width:16px;height:16px;border-radius:8px;
-                  background:blue;border:2px solid white;
-                  cursor:grab;z-index:10;"></div>`
-            : '';
-      
-          return `
-            <!DOCTYPE html>
-            <html>
-              <head>
-                <meta charset="utf-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-                <style>
-                  body {
-                    margin: 0;
-                    padding: 0;
-                    overflow: hidden;
-                    background: ${colors.background};
-                    touch-action: manipulation;
-                  }
-                  #container {
-                    position: relative;
-                    width: 100vw;
-                    height: 100vh;
-                    overflow: hidden;
-                  }
-                  #zoomable-area {
-                    position: absolute;
-                    transform-origin: 0 0;
-                    transition: transform 0.1s ease-out;
-                  }
-                  #floorplan { 
-                    width: 100vw; 
-                    height: 100vh; 
-                    object-fit: contain;
-                    display: block;
-                    filter: ${isDark ? 'brightness(0.9) contrast(1.1)' : 'none'};
-                  }
-                  .marker { 
-                    position: absolute; 
-                    width: 12px; 
-                    height: 12px; 
-                    background-color: red; 
-                    border: 2px solid white;
-                    border-radius: 50%; 
-                    transform: translate(-50%, -50%);
-                    box-shadow: 0 0 3px rgba(0,0,0,0.5);
-                    cursor: pointer;
-                    z-index: 5;
-                  }
-                  #marker {
-                    background-color: blue;
-                    width: 16px;
-                    height: 16px;
-                    z-index: 10;
-                  }
-                </style>
-              </head>
-              <body>
-                <div id="container">
-                  <div id="zoomable-area">
-                    <img id="floorplan" src="${selectedFloorplan.downloadURL}" alt="Floorplan" />
-                    ${markers}
-                    ${currentMarker}
-                  </div>
-                </div>
-      
-                <script>
-                  const container = document.getElementById('container');
-                  const zoomableArea = document.getElementById('zoomable-area');
-                  const floorplan = document.getElementById('floorplan');
-                  
-                  // Zoom and pan variables
-                  let currentScale = 1;
-                  let currentOffsetX = 0;
-                  let currentOffsetY = 0;
-                  let startDistance = 0;
-                  let lastX = 0;
-                  let lastY = 0;
-                  let isDragging = false;
-                  let clickStartTime = 0;
-                  let clickStartX = 0;
-                  let clickStartY = 0;
-                  let lastTapTime = 0;
-                  let tapTimeout = null;
-      
-                  function applyTransform() {
-                    zoomableArea.style.transform = \`translate(\${currentOffsetX}px, \${currentOffsetY}px) scale(\${currentScale})\`;
-                  }
-      
-                  function updateMarkerScales() {
-                    const markers = document.querySelectorAll('.marker, #marker');
-                    const inverseScale = 1 / currentScale;
-                    
-                    markers.forEach(marker => {
-                      // Keep markers at consistent visual size regardless of zoom
-                      marker.style.transform = \`translate(-50%, -50%) scale(\${inverseScale})\`;
-                    });
-                  }
-      
-                  function getDistance(x1, y1, x2, y2) {
-                    const xDiff = x2 - x1;
-                    const yDiff = y2 - y1;
-                    return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
-                  }
-      
-                  function handleTap(x, y) {
-                    const element = document.elementFromPoint(x, y);
-                    
-                    // Don't place marker if clicking on existing marker
-                    if (element && (element.classList.contains('marker') || element.id === 'marker')) {
-                      return;
-                    }
-                    
-                    // Convert screen coordinates to image coordinates accounting for zoom and pan
-                    const rect = container.getBoundingClientRect();
-                    const imageRect = floorplan.getBoundingClientRect();
-                    
-                    // Calculate the position relative to the image
-                    const imageX = (x - imageRect.left) / imageRect.width;
-                    const imageY = (y - imageRect.top) / imageRect.height;
-                    
-                    // Ensure coordinates are within bounds
-                    if (imageX >= 0 && imageX <= 1 && imageY >= 0 && imageY <= 1) {
-                      window.ReactNativeWebView.postMessage(JSON.stringify({
-                        type: 'tap',
-                        x: imageX,
-                        y: imageY
-                      }));
-                    }
-                  }
-      
-                  // Touch event handlers for zoom and pan
-                  document.addEventListener('touchstart', function(e) {
-                    if (tapTimeout) {
-                      clearTimeout(tapTimeout);
-                      tapTimeout = null;
-                    }
-                    
-                    if (e.touches.length === 2) {
-                      startDistance = getDistance(
-                        e.touches[0].clientX, e.touches[0].clientY,
-                        e.touches[1].clientX, e.touches[1].clientY
-                      );
-                      e.preventDefault();
-                    } else if (e.touches.length === 1) {
-                      if (currentScale > 1) {
-                        lastX = e.touches[0].clientX;
-                        lastY = e.touches[0].clientY;
-                        isDragging = true;
-                      }
-                      
-                      clickStartTime = Date.now();
-                      clickStartX = e.touches[0].clientX;
-                      clickStartY = e.touches[0].clientY;
-                    }
-                  }, { passive: false });
-      
-                  document.addEventListener('touchmove', function(e) {
-                    if (e.touches.length === 2) {
-                      const distance = getDistance(
-                        e.touches[0].clientX, e.touches[0].clientY,
-                        e.touches[1].clientX, e.touches[1].clientY
-                      );
-                      
-                      if (startDistance > 0) {
-                        const newScale = Math.min(Math.max(currentScale * (distance / startDistance), 0.5), 5);
-                        
-                        // Get pinch center
-                        const pinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-                        const pinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-                        
-                        // Calculate new offset to zoom around pinch center
-                        const scaleDiff = newScale - currentScale;
-                        const rect = container.getBoundingClientRect();
-                        
-                        currentOffsetX -= (pinchCenterX - rect.left - currentOffsetX) * scaleDiff / currentScale;
-                        currentOffsetY -= (pinchCenterY - rect.top - currentOffsetY) * scaleDiff / currentScale;
-                        
-                        currentScale = newScale;
-                        startDistance = distance;
-                        
-                        applyTransform();
-                        updateMarkerScales();
-                      }
-                      
-                      e.preventDefault();
-                    } else if (e.touches.length === 1 && isDragging && currentScale > 1) {
-                      const deltaX = e.touches[0].clientX - lastX;
-                      const deltaY = e.touches[0].clientY - lastY;
-                      
-                      currentOffsetX += deltaX;
-                      currentOffsetY += deltaY;
-                      
-                      applyTransform();
-                      
-                      lastX = e.touches[0].clientX;
-                      lastY = e.touches[0].clientY;
-                      
-                      const moveDistance = Math.sqrt(
-                        Math.pow(e.touches[0].clientX - clickStartX, 2) +
-                        Math.pow(e.touches[0].clientY - clickStartY, 2)
-                      );
-                      
-                      if (moveDistance > 10) {
-                        clickStartTime = 0;
-                      }
-                      
-                      e.preventDefault();
-                    }
-                  }, { passive: false });
-      
-                  document.addEventListener('touchend', function(e) {
-                    if (e.touches.length < 2) {
-                      startDistance = 0;
-                    }
-                    
-                    if (e.touches.length === 0) {
-                      isDragging = false;
-                      
-                      const clickDuration = Date.now() - clickStartTime;
-                      const currentTime = Date.now();
-                      
-                      // Handle single tap
-                      if (clickDuration < 300 && clickStartTime > 0) {
-                        // Check for double tap
-                        if (currentTime - lastTapTime < 300) {
-                          // Double tap detected - reset zoom
-                          currentScale = 1;
-                          currentOffsetX = 0;
-                          currentOffsetY = 0;
-                          applyTransform();
-                          updateMarkerScales();
-                          lastTapTime = 0;
-                        } else {
-                          // Single tap - set a timeout to handle it if no second tap comes
-                          tapTimeout = setTimeout(() => {
-                            handleTap(clickStartX, clickStartY);
-                            tapTimeout = null;
-                          }, 300);
-                          lastTapTime = currentTime;
-                        }
-                      }
-                      
-                      clickStartTime = 0;
-                    }
-                  });
-      
-                  // Mouse events for desktop
-                  floorplan.addEventListener('click', function(e) {
-                    const rect = floorplan.getBoundingClientRect();
-                    const x = (e.offsetX / rect.width);
-                    const y = (e.offsetY / rect.height);
-                    window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'tap', x, y }));
-                  });
-      
-                  function onDelete(el) {
-                    const id = el.getAttribute('data-id');
-                    if (id) {
-                      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'delete', id }));
-                    }
-                  }
-      
-                  function onDrag(event) {
-                    const floorplan = document.getElementById('floorplan');
-                    const rect = floorplan.getBoundingClientRect();
-                    const x = (event.clientX - rect.left) / rect.width;
-                    const y = (event.clientY - rect.top) / rect.height;
-                    if (x >= 0 && x <= 1 && y >= 0 && y <= 1) {
-                      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'tap', x, y }));
-                    }
-                  }
-      
-                  // Initialize marker scales when image loads
-                  floorplan.addEventListener('load', function() {
-                    updateMarkerScales();
-                  });
-                </script>
-              </body>
-            </html>
-          `;
-        };
+  const handleDeletePoint = async () => {
+    if (!pointToDelete) return;
     
-    // ...existing code...
+    try {
+      await firestore()
+        .collection(`locations/${selectedLocation}/wifiFingerprints`)
+        .doc(pointToDelete.id)
+        .delete();
+      
+      await fetchPoints();
+      setShowDeleteConfirmation(false);
+      setPointToDelete(null);
+    } catch (error) {
+      console.error('Error deleting WiFi point:', error);
+    }
+  };
+
+  const getHTML = () => {
+    const markers = existingPoints
+      .map(
+        (p) => `<div onclick="onMarkerClick('${p.id}')" data-id="${p.id}" class="marker" style="position:absolute;left:${p.x * 100}%;top:${p.y * 100}%;
+          transform:translate(-50%,-50%);width:12px;height:12px;border-radius:6px;
+          background:red;border:2px solid white;cursor:pointer;z-index:5;"></div>`
+      )
+      .join('');
+
+    const currentMarker = coords
+      ? `<div id="marker"
+            draggable="true"
+            ondragstart="event.dataTransfer.setDragImage(new Image(), 0, 0)"
+            ondragend="onDrag(event)"
+            style="position:absolute;left:${coords.x * 100}%;top:${coords.y * 100}%;
+            transform:translate(-50%,-50%);
+            width:16px;height:16px;border-radius:8px;
+            background:blue;border:2px solid white;
+            cursor:grab;z-index:10;"></div>`
+      : '';
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+          <style>
+            body {
+              margin: 0;
+              padding: 0;
+              overflow: hidden;
+              background: ${colors.background};
+              touch-action: manipulation;
+            }
+            #container {
+              position: relative;
+              width: 100vw;
+              height: 100vh;
+              overflow: hidden;
+            }
+            #zoomable-area {
+              position: absolute;
+              transform-origin: 0 0;
+              transition: transform 0.1s ease-out;
+            }
+            #floorplan { 
+              width: 100vw; 
+              height: 100vh; 
+              object-fit: contain;
+              display: block;
+              filter: ${isDark ? 'brightness(0.9) contrast(1.1)' : 'none'};
+            }
+            .marker { 
+              position: absolute; 
+              width: 12px; 
+              height: 12px; 
+              background-color: red; 
+              border: 2px solid white;
+              border-radius: 50%; 
+              transform: translate(-50%, -50%);
+              box-shadow: 0 0 3px rgba(0,0,0,0.5);
+              cursor: pointer;
+              z-index: 5;
+              transition: transform 0.2s ease;
+            }
+            .marker:hover {
+              transform: translate(-50%, -50%) scale(1.2);
+            }
+            #marker {
+              background-color: blue;
+              width: 16px;
+              height: 16px;
+              z-index: 10;
+            }
+          </style>
+        </head>
+        <body>
+          <div id="container">
+            <div id="zoomable-area">
+              <img id="floorplan" src="${selectedFloorplan.downloadURL}" alt="Floorplan" />
+              ${markers}
+              ${currentMarker}
+            </div>
+          </div>
+
+          <script>
+            const container = document.getElementById('container');
+            const zoomableArea = document.getElementById('zoomable-area');
+            const floorplan = document.getElementById('floorplan');
+            
+            // Zoom and pan variables
+            let currentScale = 1;
+            let currentOffsetX = 0;
+            let currentOffsetY = 0;
+            let startDistance = 0;
+            let lastX = 0;
+            let lastY = 0;
+            let isDragging = false;
+            let clickStartTime = 0;
+            let clickStartX = 0;
+            let clickStartY = 0;
+            let lastTapTime = 0;
+            let tapTimeout = null;
+            let touchHandled = false; // Add flag to prevent double events
+
+            function applyTransform() {
+              zoomableArea.style.transform = \`translate(\${currentOffsetX}px, \${currentOffsetY}px) scale(\${currentScale})\`;
+            }
+
+            function updateMarkerScales() {
+              const markers = document.querySelectorAll('.marker, #marker');
+              const inverseScale = 1 / currentScale;
+              
+              markers.forEach(marker => {
+                // Keep markers at consistent visual size regardless of zoom
+                marker.style.transform = \`translate(-50%, -50%) scale(\${inverseScale})\`;
+              });
+            }
+
+            function getDistance(x1, y1, x2, y2) {
+              const xDiff = x2 - x1;
+              const yDiff = y2 - y1;
+              return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+            }
+
+            function handleTap(x, y) {
+              const element = document.elementFromPoint(x, y);
+              
+              // Don't place marker if clicking on existing marker
+              if (element && (element.classList.contains('marker') || element.id === 'marker')) {
+                return;
+              }
+              
+              // Convert screen coordinates to image coordinates accounting for zoom and pan
+              const rect = container.getBoundingClientRect();
+              const imageRect = floorplan.getBoundingClientRect();
+              
+              // Calculate the position relative to the image
+              const imageX = (x - imageRect.left) / imageRect.width;
+              const imageY = (y - imageRect.top) / imageRect.height;
+              
+              // Ensure coordinates are within bounds
+              if (imageX >= 0 && imageX <= 1 && imageY >= 0 && imageY <= 1) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                  type: 'tap',
+                  x: imageX,
+                  y: imageY
+                }));
+              }
+            }
+
+            // Handle marker clicks
+            function onMarkerClick(markerId) {
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'marker_click',
+                id: markerId
+              }));
+            }
+
+            // Touch event handlers for zoom and pan
+            document.addEventListener('touchstart', function(e) {
+              touchHandled = false; // Reset flag
+              
+              if (tapTimeout) {
+                clearTimeout(tapTimeout);
+                tapTimeout = null;
+              }
+              
+              if (e.touches.length === 2) {
+                startDistance = getDistance(
+                  e.touches[0].clientX, e.touches[0].clientY,
+                  e.touches[1].clientX, e.touches[1].clientY
+                );
+                e.preventDefault();
+                touchHandled = true;
+              } else if (e.touches.length === 1) {
+                if (currentScale > 1) {
+                  lastX = e.touches[0].clientX;
+                  lastY = e.touches[0].clientY;
+                  isDragging = true;
+                }
+                
+                clickStartTime = Date.now();
+                clickStartX = e.touches[0].clientX;
+                clickStartY = e.touches[0].clientY;
+              }
+            }, { passive: false });
+
+            document.addEventListener('touchmove', function(e) {
+              if (e.touches.length === 2) {
+                const distance = getDistance(
+                  e.touches[0].clientX, e.touches[0].clientY,
+                  e.touches[1].clientX, e.touches[1].clientY
+                );
+                
+                if (startDistance > 0) {
+                  const newScale = Math.min(Math.max(currentScale * (distance / startDistance), 0.5), 5);
+                  
+                  // Get pinch center
+                  const pinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                  const pinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                  
+                  // Calculate new offset to zoom around pinch center
+                  const scaleDiff = newScale - currentScale;
+                  const rect = container.getBoundingClientRect();
+                  
+                  currentOffsetX -= (pinchCenterX - rect.left - currentOffsetX) * scaleDiff / currentScale;
+                  currentOffsetY -= (pinchCenterY - rect.top - currentOffsetY) * scaleDiff / currentScale;
+                  
+                  currentScale = newScale;
+                  startDistance = distance;
+                  
+                  applyTransform();
+                  updateMarkerScales();
+                }
+                
+                e.preventDefault();
+                touchHandled = true;
+              } else if (e.touches.length === 1 && isDragging && currentScale > 1) {
+                const deltaX = e.touches[0].clientX - lastX;
+                const deltaY = e.touches[0].clientY - lastY;
+                
+                currentOffsetX += deltaX;
+                currentOffsetY += deltaY;
+                
+                applyTransform();
+                
+                lastX = e.touches[0].clientX;
+                lastY = e.touches[0].clientY;
+                
+                const moveDistance = Math.sqrt(
+                  Math.pow(e.touches[0].clientX - clickStartX, 2) +
+                  Math.pow(e.touches[0].clientY - clickStartY, 2)
+                );
+                
+                if (moveDistance > 10) {
+                  clickStartTime = 0;
+                  touchHandled = true;
+                }
+                
+                e.preventDefault();
+              }
+            }, { passive: false });
+
+            document.addEventListener('touchend', function(e) {
+              if (e.touches.length < 2) {
+                startDistance = 0;
+              }
+              
+              if (e.touches.length === 0) {
+                isDragging = false;
+                
+                const clickDuration = Date.now() - clickStartTime;
+                const currentTime = Date.now();
+                
+                // Handle single tap - only if not handled by other touch events
+                if (clickDuration < 300 && clickStartTime > 0 && !touchHandled) {
+                  // Check for double tap
+                  if (currentTime - lastTapTime < 300) {
+                    // Double tap detected - reset zoom
+                    currentScale = 1;
+                    currentOffsetX = 0;
+                    currentOffsetY = 0;
+                    applyTransform();
+                    updateMarkerScales();
+                    lastTapTime = 0;
+                  } else {
+                    // Single tap - set a timeout to handle it if no second tap comes
+                    tapTimeout = setTimeout(() => {
+                      handleTap(clickStartX, clickStartY);
+                      tapTimeout = null;
+                    }, 300);
+                    lastTapTime = currentTime;
+                  }
+                }
+                
+                clickStartTime = 0;
+              }
+            });
+
+            // Remove mouse/click events to prevent double firing on mobile
+            // Only add mouse events if not on a touch device
+            if (!('ontouchstart' in window)) {
+              floorplan.addEventListener('click', function(e) {
+                const rect = floorplan.getBoundingClientRect();
+                const x = (e.offsetX / rect.width);
+                const y = (e.offsetY / rect.height);
+                window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'tap', x, y }));
+              });
+            }
+
+            function onDrag(event) {
+              const floorplan = document.getElementById('floorplan');
+              const rect = floorplan.getBoundingClientRect();
+              const x = (event.clientX - rect.left) / rect.width;
+              const y = (event.clientY - rect.top) / rect.height;
+              if (x >= 0 && x <= 1 && y >= 0 && y <= 1) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'tap', x, y }));
+              }
+            }
+
+            // Initialize marker scales when image loads
+            floorplan.addEventListener('load', function() {
+              updateMarkerScales();
+            });
+          </script>
+        </body>
+      </html>
+    `;
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -527,7 +565,7 @@ export default function AdminIndoorPositioningContent() {
         {selectedFloorplan && (
           <View style={styles.section}>
             <Text style={[styles.label, { color: colors.primary }]}>
-              Step 4: Tap to Select Coordinates
+              Step 4: Tap WiFi Points to View Info, or Tap Empty Space to Add New Point
             </Text>
             <View style={{ height: 300, marginVertical: 12 }}>
               <WebView ref={webViewRef} source={{ html: getHTML() }} onMessage={handleMessage} originWhitelist={['*']} />
@@ -576,6 +614,47 @@ export default function AdminIndoorPositioningContent() {
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       )}
+
+      {/* WiFi Point Info Popup */}
+      <StandardPopup
+        visible={showPointInfoPopup}
+        title="WiFi Point Information"
+        message={selectedPointInfo ? 
+          `📍 ${selectedPointInfo.description || 'WiFi Point'}\n\nCoordinates:\nX: ${selectedPointInfo.x.toFixed(3)}\nY: ${selectedPointInfo.y.toFixed(3)}` 
+          : ''
+        }
+        onConfirm={() => {
+          setShowPointInfoPopup(false);
+          // Show delete confirmation
+          setPointToDelete({
+            id: selectedPointInfo?.id || '',
+            description: selectedPointInfo?.description || 'WiFi Point'
+          });
+          setShowDeleteConfirmation(true);
+        }}
+        onCancel={() => {
+          setShowPointInfoPopup(false);
+          setSelectedPointInfo(null);
+        }}
+        confirmText="Delete Point"
+        cancelText="Close"
+        showCancel={true}
+      />
+
+      {/* Delete Confirmation Popup */}
+      <StandardPopup
+        visible={showDeleteConfirmation}
+        title="Delete WiFi Point"
+        message={`Are you sure you want to delete "${pointToDelete?.description || 'this WiFi point'}"?\n\nThis action cannot be undone.`}
+        onConfirm={handleDeletePoint}
+        onCancel={() => {
+          setShowDeleteConfirmation(false);
+          setPointToDelete(null);
+        }}
+        confirmText="Delete"
+        cancelText="Cancel"
+        showCancel={true}
+      />
     </View>
   );
 }

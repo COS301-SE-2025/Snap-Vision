@@ -41,9 +41,18 @@ export function estimateIndoorPosition(
   const valid = ranked.filter(r => r.distance !== Infinity);
   if (!valid.length) return null;
 
+  console.log('🎯 Using fingerprints for position estimation:');
+  valid.forEach((r, i) => {
+    const fp = r.fingerprint;
+    const desc = fp.description || 'WiFi Point';
+    console.log(`  ${i + 1}. ${desc} at (${fp.coordinates.x.toFixed(3)}, ${fp.coordinates.y.toFixed(3)}) - Distance: ${r.distance.toFixed(2)}`);
+  });
+
   // Average coordinates of top k
   const avgX = valid.reduce((sum, r) => sum + r.fingerprint.coordinates.x, 0) / valid.length;
   const avgY = valid.reduce((sum, r) => sum + r.fingerprint.coordinates.y, 0) / valid.length;
+
+  console.log(`📍 Averaged position: (${avgX.toFixed(3)}, ${avgY.toFixed(3)})`);
 
   return { x: avgX, y: avgY };
 }
