@@ -62,6 +62,10 @@ export class PermissionService {
         permissions.push(PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION);
       }
 
+      if (androidVersion >= 33) {
+        permissions.push(PermissionsAndroid.PERMISSIONS.NEARBY_WIFI_DEVICES);
+      }
+
       const results = await PermissionsAndroid.requestMultiple(permissions);
 
       const allGranted = permissions.every(
@@ -87,26 +91,32 @@ export class PermissionService {
   /**
    * Check WiFi and location permissions on Android
    */
-  private async checkAndroidWiFiPermissions(): Promise<boolean> {
-    try {
-      const fineLocationGranted = await PermissionsAndroid.check(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      );
-
-      const coarseLocationGranted = await PermissionsAndroid.check(
-        PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
-      );
-
-      const nearbyWiFiDevices = await PermissionsAndroid.check(
-        PermissionsAndroid.PERMISSIONS.NEARBY_WIFI_DEVICES,
-      )
-
-      return fineLocationGranted && coarseLocationGranted && nearbyWiFiDevices;
-    } catch (error) {
-      console.error('Android permission check failed:', error);
-      return false;
+    private async checkAndroidWiFiPermissions(): Promise<boolean> {
+      try {
+        const fineLocationGranted = await PermissionsAndroid.check(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        );
+  
+        const coarseLocationGranted = await PermissionsAndroid.check(
+          PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+        );
+  
+        // Check NEARBY_WIFI_DEVICES only on Android 13+
+        const androidVersion = Platform.Version as number;
+        let nearbyWiFiDevices = true; // Default to true for older versions
+  
+        if (androidVersion >= 33) {
+          nearbyWiFiDevices = await PermissionsAndroid.check(
+            PermissionsAndroid.PERMISSIONS.NEARBY_WIFI_DEVICES,
+          );
+        }
+  
+        return fineLocationGranted && coarseLocationGranted && nearbyWiFiDevices;
+      } catch (error) {
+        console.error('Android permission check failed:', error);
+        return false;
+      }
     }
-  }
 
   /**
    * Request location permissions on iOS (required for WiFi scanning)
