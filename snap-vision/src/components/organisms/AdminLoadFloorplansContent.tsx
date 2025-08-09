@@ -274,7 +274,7 @@ export default function AdminLoadFloorplansContent() {
   // Handle navigation to POI editor
   const handleNavigateToPOIEditor = () => {
     if (uploadedData) {
-      navigation.navigate('FloorplanEditor', uploadedData);
+      navigation.navigate('AdminFloorplanEditor', uploadedData);
     }
     handleResetForm();
   };
