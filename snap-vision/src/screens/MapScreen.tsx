@@ -24,7 +24,7 @@ import NavigationPanel from '../components/organisms/NavigationPanel';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 import DirectionsModal from '../components/organisms/DirectionsModal';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import { addRecentlyVisitedPOI, Visit } from '../services/firebase/recentlyVService';
 
@@ -36,13 +36,15 @@ import { useCompass } from '../hooks/useCompass';
 import { requestCameraPermission } from '../utils/cameraPermissions';
 import { Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import { ROUTING_API } from '@env';
+
 
 type MapScreenParams = {
   lat?: string;
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'http://10.0.2.2:3000'; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = ROUTING_API;
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
@@ -91,6 +93,10 @@ const MapScreen = () => {
   const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
   const [pois, setPOIs] = useState<any[]>([]);
   const [poiSuggestions, setPOISuggestions] = useState<any[]>([]);
+
+  //indoor
+  const navigation = useNavigation<any>();
+
 
   // share location
   const route = useRoute();
@@ -202,7 +208,87 @@ const MapScreen = () => {
         };
       `;
       webViewRef.current.injectJavaScript(injectedJS);
-    }
+
+      // Ensures we only hook once
+ // Ensures we only hook once
+// webViewRef.current.injectJavaScript(`
+// (function () {
+//   if (window.__svIndoorNavHooked) return;
+//   window.__svIndoorNavHooked = true;
+
+//   function getPropsFromPopup(popup) {
+//     try {
+//       // Your markers set marker.poiData in displayPOIs()
+//       const src = popup && popup._source;
+//       if (!src) return null;
+//       // Prefer the real source we use (poiData); fall back to GeoJSON if ever used
+//       const props =
+//         (src.poiData) ||
+//         (src.feature && src.feature.properties) ||
+//         null;
+//       return props;
+//     } catch (e) { return null; }
+//   }
+
+//   function ensureIndoorNavButton(popupEl, props) {
+//     if (!popupEl) return;
+//     if (popupEl.querySelector('#sv-indoor-nav-btn')) return;
+
+//     // We only need id + name; location is optional (RN will fall back)
+//     if (!props || !(props.id || props.buildingId) || !(props.name || props.buildingName)) {
+//       // Still show the button; RN will use selectedPOI fallback if needed
+//       props = props || {};
+//     }
+
+//     var container = document.createElement('div');
+//     container.style.marginTop = '8px';
+
+//     var btn = document.createElement('button');
+//     btn.id = 'sv-indoor-nav-btn';
+//     btn.textContent = 'Indoor navigation';
+//     btn.style.width = '100%';
+//     btn.style.padding = '10px';
+//     btn.style.border = 'none';
+//     btn.style.borderRadius = '8px';
+//     btn.style.fontWeight = 'bold';
+//     btn.style.cursor = 'pointer';
+//     btn.style.background = '#5E5CE6';
+//     btn.style.color = '#fff';
+
+//     btn.onclick = function () {
+//       try {
+//         window.ReactNativeWebView.postMessage(JSON.stringify({
+//           type: 'INDOOR_NAV_FROM_MAP',
+//           payload: {
+//             id: props.id || props.buildingId || null,
+//             name: props.name || props.buildingName || null,
+//             locationId: props.location || props.locationId || null
+//           }
+//         }));
+//       } catch (e) {
+//         // no-op
+//       }
+//     };
+
+//     container.appendChild(btn);
+//     popupEl.appendChild(container);
+//   }
+
+//   if (typeof map !== 'undefined' && map && map.on) {
+//     map.on('popupopen', function (e) {
+//       try {
+//         var popupEl = e && e.popup && e.popup.getElement
+//           ? e.popup.getElement().querySelector('.leaflet-popup-content')
+//           : null;
+//         var props = getPropsFromPopup(e.popup);
+//         ensureIndoorNavButton(popupEl, props);
+//       } catch (err) {}
+//     });
+//   }
+// })();
+// `);
+
+  }
   }, [isAdmin, isMapReady, pois]);
 
   const sendLocationToWebView = (lat: number, lon: number, centerMap = false) => {
@@ -391,6 +477,8 @@ const MapScreen = () => {
   };
 
   const handleWebViewMessage = async (event: any) => {
+    console.log('[WebView message]', event.nativeEvent.data);
+
     try {
       const data = event.nativeEvent.data;
 
@@ -416,25 +504,61 @@ const MapScreen = () => {
           break;
 
         case 'POI_SELECTED':
-          const selectedPOI = parsed.poi;
+  const selectedPOI = parsed.poi;
 
-          if (isNavigating) {
-            stopNavigation();
-          }
+  if (isNavigating) {
+    stopNavigation();
+  }
 
-          webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
-          lastRoute.current = [];
+  webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+  lastRoute.current = [];
 
-          setDestination(selectedPOI.name);
-          setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
-          setStatus(`Selected: ${selectedPOI.name}`);
-          setSelectedFeature(selectedPOI);
-          setSelectedPOI(selectedPOI);
+  setDestination(selectedPOI.name);
+  setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
+  setStatus(`Selected: ${selectedPOI.name}`);
+  setSelectedFeature(selectedPOI);
+  setSelectedPOI(selectedPOI);
 
-          if (currentLocation) {
-            fetchRoute([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
-          }
-          break;
+  // 👉 Inject an "Indoor navigation" button into the current popup
+  webViewRef.current?.injectJavaScript(`
+    (function() {
+      try {
+        const popup = document.querySelector('.leaflet-popup-content');
+        if (!popup) return;
+
+        const btnId = 'sv-indoor-nav-btn';
+        if (!document.getElementById(btnId)) {
+          const container = document.createElement('div');
+          container.style.marginTop = '8px';
+
+          const btn = document.createElement('button');
+          btn.id = btnId;
+          btn.textContent = 'Indoor navigation';
+          btn.style.width = '100%';
+          btn.style.padding = '10px';
+          btn.style.border = 'none';
+          btn.style.borderRadius = '8px';
+          btn.style.fontWeight = 'bold';
+          btn.style.cursor = 'pointer';
+          btn.style.background = '#5E5CE6';   // matches your primary vibe
+          btn.style.color = '#fff';
+
+          btn.onclick = function() {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'INDOOR_NAV_FROM_MAP' }));
+          };
+
+          container.appendChild(btn);
+          popup.appendChild(container);
+        }
+      } catch (e) { /* no-op */ }
+    })();
+  `);
+
+  if (currentLocation) {
+    fetchRoute([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
+  }
+  break;
+
 
         case 'ADMIN_ADD_POI':
           openAddBuildingModal(parsed.lat, parsed.lon);
@@ -477,6 +601,40 @@ const MapScreen = () => {
           webViewRef.current?.injectJavaScript('map.closePopup();');
           break;
         }
+
+        case 'INDOOR_NAV_FROM_MAP': {
+  const p = parsed.payload || {};
+  // Prefer payload; fall back to the current selectedPOI from state; last resort: find by id in pois
+  const fallbackPOI = selectedPOI || pois.find(x => x.id === p.id);
+
+  const buildingId =
+    p.id || p.buildingId || fallbackPOI?.id || fallbackPOI?.buildingId;
+  const buildingName =
+    p.name || p.buildingName || fallbackPOI?.name || fallbackPOI?.title || 'Building';
+  const locationId =
+    p.locationId || p.location || fallbackPOI?.location || 'up-campus'; // update default if needed
+
+  console.log('[IndoorNav] payload:', p);
+  console.log('[IndoorNav] resolved ->', { buildingId, buildingName, locationId });
+
+  if (!buildingId) {
+    setError('Indoor navigation is only available for building POIs.');
+    break;
+  }
+
+  // Close popup so UI looks clean
+  webViewRef.current?.injectJavaScript('try{map && map.closePopup && map.closePopup();}catch(e){}');
+
+  navigation.navigate('IndoorNavigationInterface', {
+    buildingId,
+    buildingName,
+    locationId,
+  });
+  break;
+}
+
+
+
 
         default:
         // console.log('Unknown message type from WebView:', parsed.type);
