@@ -155,13 +155,13 @@ export default function BuildingSelectionScreen() {
   };
 
   const handleBuildingSelect = (building: Building) => {
-  const actualBuildingId = building.name || building.id;
-  navigation.navigate('IndoorNavigationInterface', {
-    buildingId: building.id,
-    buildingName: building.name,
-    locationId: building.location, // <-- pass it along
-  });
-};
+    const actualBuildingId = building.name || building.id;
+    navigation.navigate('IndoorNavigationInterface', {
+      buildingId: building.id,
+      buildingName: building.name,
+      locationId: building.location, // <-- pass it along
+    });
+  };
   const renderBuildingItem = ({ item }: { item: Building }) => (
     <TouchableOpacity
       style={[

@@ -318,9 +318,7 @@ export const calculateRoute = (
           instruction = nearest ? `Turn right near ${nearest.name}` : `Turn right and continue`;
           type = 'turn';
         } else {
-          instruction = nearest
-            ? `Continue straight past ${nearest.name}`
-            : `Continue straight`;
+          instruction = nearest ? `Continue straight past ${nearest.name}` : `Continue straight`;
         }
       }
 

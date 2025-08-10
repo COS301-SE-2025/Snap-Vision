@@ -30,6 +30,7 @@ import AuthResolverScreen from './src/screens/AuthResolverScreen';
 import BuildingSelectionScreen from './src/screens/BuildingSelectionScreen';
 import IndoorNavigationInterfaceScreen from './src/screens/IndoorNavigationInterfaceScreen';
 import IndoorNavigationInstructionsScreen from './src/screens/IndoorNavigationInstructionsScreen';
+import IndoorSchematicNavScreen from './src/screens/IndoorSchematicNavScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -103,6 +104,7 @@ function AppInner() {
               component={IndoorNavigationInstructionsScreen}
               options={{ headerShown: false }}
             />
+            <Stack.Screen name="IndoorSchematicNav" component={IndoorSchematicNavScreen} />
           </Stack.Navigator>
           <Toast config={toastConfig} />
         </NavigationContainer>

@@ -39,7 +39,6 @@ import { Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { ROUTING_API } from '@env';
 
-
 type MapScreenParams = {
   lat?: string;
   lng?: string;
@@ -96,8 +95,7 @@ const MapScreen = () => {
   const [poiSuggestions, setPOISuggestions] = useState<any[]>([]);
 
   //indoor
-  const navigation = useNavigation<any>();
-
+  // const navigation = useNavigation<any>();
 
   // share location
   const route = useRoute();
@@ -146,13 +144,12 @@ const MapScreen = () => {
 
   //Indoor
 
-const [showIndoorPicker, setShowIndoorPicker] = useState(false);
-const [indoorRooms, setIndoorRooms] = useState<any[]>([]);
-const [selectedIndoorRoom, setSelectedIndoorRoom] = useState<any | null>(null);
-const [selectedBuildingForIndoor, setSelectedBuildingForIndoor] = useState<any | null>(null);
-const [selectedStartRoom, setSelectedStartRoom] = useState<any | null>(null);  
-const navigation = useNavigation<any>();
-
+  const [showIndoorPicker, setShowIndoorPicker] = useState(false);
+  const [indoorRooms, setIndoorRooms] = useState<any[]>([]);
+  const [selectedIndoorRoom, setSelectedIndoorRoom] = useState<any | null>(null);
+  const [selectedBuildingForIndoor, setSelectedBuildingForIndoor] = useState<any | null>(null);
+  const [selectedStartRoom, setSelectedStartRoom] = useState<any | null>(null);
+  const navigation = useNavigation<any>();
 
   // Popup states
   const [showErrorPopup, setShowErrorPopup] = useState(false);
@@ -221,85 +218,84 @@ const navigation = useNavigation<any>();
       webViewRef.current.injectJavaScript(injectedJS);
 
       // Ensures we only hook once
- // Ensures we only hook once
-// webViewRef.current.injectJavaScript(`
-// (function () {
-//   if (window.__svIndoorNavHooked) return;
-//   window.__svIndoorNavHooked = true;
+      // Ensures we only hook once
+      // webViewRef.current.injectJavaScript(`
+      // (function () {
+      //   if (window.__svIndoorNavHooked) return;
+      //   window.__svIndoorNavHooked = true;
 
-//   function getPropsFromPopup(popup) {
-//     try {
-//       // Your markers set marker.poiData in displayPOIs()
-//       const src = popup && popup._source;
-//       if (!src) return null;
-//       // Prefer the real source we use (poiData); fall back to GeoJSON if ever used
-//       const props =
-//         (src.poiData) ||
-//         (src.feature && src.feature.properties) ||
-//         null;
-//       return props;
-//     } catch (e) { return null; }
-//   }
+      //   function getPropsFromPopup(popup) {
+      //     try {
+      //       // Your markers set marker.poiData in displayPOIs()
+      //       const src = popup && popup._source;
+      //       if (!src) return null;
+      //       // Prefer the real source we use (poiData); fall back to GeoJSON if ever used
+      //       const props =
+      //         (src.poiData) ||
+      //         (src.feature && src.feature.properties) ||
+      //         null;
+      //       return props;
+      //     } catch (e) { return null; }
+      //   }
 
-//   function ensureIndoorNavButton(popupEl, props) {
-//     if (!popupEl) return;
-//     if (popupEl.querySelector('#sv-indoor-nav-btn')) return;
+      //   function ensureIndoorNavButton(popupEl, props) {
+      //     if (!popupEl) return;
+      //     if (popupEl.querySelector('#sv-indoor-nav-btn')) return;
 
-//     // We only need id + name; location is optional (RN will fall back)
-//     if (!props || !(props.id || props.buildingId) || !(props.name || props.buildingName)) {
-//       // Still show the button; RN will use selectedPOI fallback if needed
-//       props = props || {};
-//     }
+      //     // We only need id + name; location is optional (RN will fall back)
+      //     if (!props || !(props.id || props.buildingId) || !(props.name || props.buildingName)) {
+      //       // Still show the button; RN will use selectedPOI fallback if needed
+      //       props = props || {};
+      //     }
 
-//     var container = document.createElement('div');
-//     container.style.marginTop = '8px';
+      //     var container = document.createElement('div');
+      //     container.style.marginTop = '8px';
 
-//     var btn = document.createElement('button');
-//     btn.id = 'sv-indoor-nav-btn';
-//     btn.textContent = 'Indoor navigation';
-//     btn.style.width = '100%';
-//     btn.style.padding = '10px';
-//     btn.style.border = 'none';
-//     btn.style.borderRadius = '8px';
-//     btn.style.fontWeight = 'bold';
-//     btn.style.cursor = 'pointer';
-//     btn.style.background = '#5E5CE6';
-//     btn.style.color = '#fff';
+      //     var btn = document.createElement('button');
+      //     btn.id = 'sv-indoor-nav-btn';
+      //     btn.textContent = 'Indoor navigation';
+      //     btn.style.width = '100%';
+      //     btn.style.padding = '10px';
+      //     btn.style.border = 'none';
+      //     btn.style.borderRadius = '8px';
+      //     btn.style.fontWeight = 'bold';
+      //     btn.style.cursor = 'pointer';
+      //     btn.style.background = '#5E5CE6';
+      //     btn.style.color = '#fff';
 
-//     btn.onclick = function () {
-//       try {
-//         window.ReactNativeWebView.postMessage(JSON.stringify({
-//           type: 'INDOOR_NAV_FROM_MAP',
-//           payload: {
-//             id: props.id || props.buildingId || null,
-//             name: props.name || props.buildingName || null,
-//             locationId: props.location || props.locationId || null
-//           }
-//         }));
-//       } catch (e) {
-//         // no-op
-//       }
-//     };
+      //     btn.onclick = function () {
+      //       try {
+      //         window.ReactNativeWebView.postMessage(JSON.stringify({
+      //           type: 'INDOOR_NAV_FROM_MAP',
+      //           payload: {
+      //             id: props.id || props.buildingId || null,
+      //             name: props.name || props.buildingName || null,
+      //             locationId: props.location || props.locationId || null
+      //           }
+      //         }));
+      //       } catch (e) {
+      //         // no-op
+      //       }
+      //     };
 
-//     container.appendChild(btn);
-//     popupEl.appendChild(container);
-//   }
+      //     container.appendChild(btn);
+      //     popupEl.appendChild(container);
+      //   }
 
-//   if (typeof map !== 'undefined' && map && map.on) {
-//     map.on('popupopen', function (e) {
-//       try {
-//         var popupEl = e && e.popup && e.popup.getElement
-//           ? e.popup.getElement().querySelector('.leaflet-popup-content')
-//           : null;
-//         var props = getPropsFromPopup(e.popup);
-//         ensureIndoorNavButton(popupEl, props);
-//       } catch (err) {}
-//     });
-//   }
-// })();
-// `);
-
-  }
+      //   if (typeof map !== 'undefined' && map && map.on) {
+      //     map.on('popupopen', function (e) {
+      //       try {
+      //         var popupEl = e && e.popup && e.popup.getElement
+      //           ? e.popup.getElement().querySelector('.leaflet-popup-content')
+      //           : null;
+      //         var props = getPropsFromPopup(e.popup);
+      //         ensureIndoorNavButton(popupEl, props);
+      //       } catch (err) {}
+      //     });
+      //   }
+      // })();
+      // `);
+    }
   }, [isAdmin, isMapReady, pois]);
 
   const sendLocationToWebView = (lat: number, lon: number, centerMap = false) => {
@@ -317,14 +313,12 @@ const navigation = useNavigation<any>();
   };
 
   const fetchRoomsForBuilding = async (locationId: string, buildingId: string) => {
-  const snap = await firestore()
-    .collection(`locations/${locationId}/roomPOIs`)
-    .where('buildingId', '==', buildingId)
-    .get();
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-};
-
-
+    const snap = await firestore()
+      .collection(`locations/${locationId}/roomPOIs`)
+      .where('buildingId', '==', buildingId)
+      .get();
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  };
 
   // Replace your requestLocation function with this enhanced version
   const requestLocation = async () => {
@@ -525,61 +519,60 @@ const navigation = useNavigation<any>();
           break;
 
         case 'POI_SELECTED':
-  const selectedPOI = parsed.poi;
+          const selectedPOI = parsed.poi;
 
-  if (isNavigating) {
-    stopNavigation();
-  }
+          if (isNavigating) {
+            stopNavigation();
+          }
 
-  webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
-  lastRoute.current = [];
+          webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+          lastRoute.current = [];
 
-  setDestination(selectedPOI.name);
-  setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
-  setStatus(`Selected: ${selectedPOI.name}`);
-  setSelectedFeature(selectedPOI);
-  setSelectedPOI(selectedPOI);
+          setDestination(selectedPOI.name);
+          setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
+          setStatus(`Selected: ${selectedPOI.name}`);
+          setSelectedFeature(selectedPOI);
+          setSelectedPOI(selectedPOI);
 
-  // 👉 Inject an "Indoor navigation" button into the current popup
-  webViewRef.current?.injectJavaScript(`
-    (function() {
-      try {
-        const popup = document.querySelector('.leaflet-popup-content');
-        if (!popup) return;
+          // 👉 Inject an "Indoor navigation" button into the current popup
+          // webViewRef.current?.injectJavaScript(`
+          //   (function() {
+          //     try {
+          //       const popup = document.querySelector('.leaflet-popup-content');
+          //       if (!popup) return;
 
-        const btnId = 'sv-indoor-nav-btn';
-        if (!document.getElementById(btnId)) {
-          const container = document.createElement('div');
-          container.style.marginTop = '8px';
+          //       const btnId = 'sv-indoor-nav-btn';
+          //       if (!document.getElementById(btnId)) {
+          //         const container = document.createElement('div');
+          //         container.style.marginTop = '8px';
 
-          const btn = document.createElement('button');
-          btn.id = btnId;
-          btn.textContent = 'Indoor navigation';
-          btn.style.width = '100%';
-          btn.style.padding = '10px';
-          btn.style.border = 'none';
-          btn.style.borderRadius = '8px';
-          btn.style.fontWeight = 'bold';
-          btn.style.cursor = 'pointer';
-          btn.style.background = '#5E5CE6';   // matches your primary vibe
-          btn.style.color = '#fff';
+          //         const btn = document.createElement('button');
+          //         btn.id = btnId;
+          //         btn.textContent = 'Indoor navigation';
+          //         btn.style.width = '100%';
+          //         btn.style.padding = '10px';
+          //         btn.style.border = 'none';
+          //         btn.style.borderRadius = '8px';
+          //         btn.style.fontWeight = 'bold';
+          //         btn.style.cursor = 'pointer';
+          //         btn.style.background = '#5E5CE6';   // matches your primary vibe
+          //         btn.style.color = '#fff';
 
-          btn.onclick = function() {
-            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'INDOOR_NAV_FROM_MAP' }));
-          };
+          //         btn.onclick = function() {
+          //           window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'INDOOR_NAV_FROM_MAP' }));
+          //         };
 
-          container.appendChild(btn);
-          popup.appendChild(container);
-        }
-      } catch (e) { /* no-op */ }
-    })();
-  `);
+          //         container.appendChild(btn);
+          //         popup.appendChild(container);
+          //       }
+          //     } catch (e) { /* no-op */ }
+          //   })();
+          // `);
 
-  if (currentLocation) {
-    fetchRoute([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
-  }
-  break;
-
+          if (currentLocation) {
+            fetchRoute([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
+          }
+          break;
 
         case 'ADMIN_ADD_POI':
           openAddBuildingModal(parsed.lat, parsed.lon);
@@ -624,38 +617,37 @@ const navigation = useNavigation<any>();
         }
 
         case 'INDOOR_NAV_FROM_MAP': {
-  const p = parsed.payload || {};
-  // Prefer payload; fall back to the current selectedPOI from state; last resort: find by id in pois
-  const fallbackPOI = selectedPOI || pois.find(x => x.id === p.id);
+          const p = parsed.payload || {};
+          // Prefer payload; fall back to the current selectedPOI from state; last resort: find by id in pois
+          const fallbackPOI = selectedPOI || pois.find((x) => x.id === p.id);
 
-  const buildingId =
-    p.id || p.buildingId || fallbackPOI?.id || fallbackPOI?.buildingId;
-  const buildingName =
-    p.name || p.buildingName || fallbackPOI?.name || fallbackPOI?.title || 'Building';
-  const locationId =
-    p.locationId || p.location || fallbackPOI?.location || 'up-campus'; // update default if needed
+          const buildingId = p.id || p.buildingId || fallbackPOI?.id || fallbackPOI?.buildingId;
+          const buildingName =
+            p.name || p.buildingName || fallbackPOI?.name || fallbackPOI?.title || 'Building';
+          const locationId = p.locationId || p.location || fallbackPOI?.location || 'up-campus'; // update default if needed
+          const floorId = '1';
 
-  console.log('[IndoorNav] payload:', p);
-  console.log('[IndoorNav] resolved ->', { buildingId, buildingName, locationId });
+          console.log('[IndoorNav] payload:', p);
+          console.log('[IndoorNav] resolved ->', { buildingId, buildingName, locationId });
 
-  if (!buildingId) {
-    setError('Indoor navigation is only available for building POIs.');
-    break;
-  }
+          if (!buildingId) {
+            setError('Indoor navigation is only available for building POIs.');
+            break;
+          }
 
-  // Close popup so UI looks clean
-  webViewRef.current?.injectJavaScript('try{map && map.closePopup && map.closePopup();}catch(e){}');
+          // Close popup so UI looks clean
+          webViewRef.current?.injectJavaScript(
+            'try{map && map.closePopup && map.closePopup();}catch(e){}',
+          );
 
-  navigation.navigate('IndoorNavigationInterface', {
-    buildingId,
-    buildingName,
-    locationId,
-  });
-  break;
-}
-
-
-
+          navigation.navigate('IndoorSchematicNav', {
+            buildingId,
+            buildingName,
+            locationId,
+            floorId,
+          });
+          break;
+        }
 
         default:
         // console.log('Unknown message type from WebView:', parsed.type);
@@ -1584,77 +1576,78 @@ const navigation = useNavigation<any>();
     }
   };
   // Count how many paths touch each room (higher = better default start)
-async function getRoomDegrees(locationId: string, buildingId: string, floorId?: string) {
-  let q: any = firestore()
-    .collection(`locations/${locationId}/pathPOIs`)
-    .where('buildingId','==', buildingId);
-  if (floorId) q = q.where('floorId','==', floorId);
-  const snap = await q.get();
-  const deg: Record<string, number> = {};
-  snap.docs.forEach(d => {
-    const p = d.data() as any;
-    [p.startRoomId, p.endRoomId].forEach((id:string) => {
-      deg[id] = (deg[id] ?? 0) + 1;
+  async function getRoomDegrees(locationId: string, buildingId: string, floorId?: string) {
+    let q: any = firestore()
+      .collection(`locations/${locationId}/pathPOIs`)
+      .where('buildingId', '==', buildingId);
+    if (floorId) q = q.where('floorId', '==', floorId);
+    const snap = await q.get();
+    const deg: Record<string, number> = {};
+    snap.docs.forEach((d) => {
+      const p = d.data() as any;
+      [p.startRoomId, p.endRoomId].forEach((id: string) => {
+        deg[id] = (deg[id] ?? 0) + 1;
+      });
     });
-  });
-  return deg;
-}
-
-// Quick connectivity check (BFS) before you navigate
-async function areRoomsConnected(
-  locationId: string,
-  buildingId: string,
-  startRoomId: string,
-  endRoomId: string,
-  floorId?: string
-): Promise<boolean> {
-  // Build graph from pathPOIs
-  let q: any = firestore()
-    .collection(`locations/${locationId}/pathPOIs`)
-    .where('buildingId','==', buildingId);
-  if (floorId) q = q.where('floorId','==', floorId);
-  const pathSnap = await q.get();
-  const edges: Record<string, string[]> = {};
-  pathSnap.docs.forEach(d => {
-    const p = d.data() as any;
-    edges[p.startRoomId] = [...(edges[p.startRoomId]||[]), p.endRoomId];
-    edges[p.endRoomId] = [...(edges[p.endRoomId]||[]), p.startRoomId];
-  });
-
-  // Cross-floor links via connectorGroupId on stairs/elevators
-  const roomSnap = await firestore()
-    .collection(`locations/${locationId}/roomPOIs`)
-    .where('buildingId','==', buildingId)
-    .get();
-  const rooms = roomSnap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
-  const byGroup: Record<string, string[]> = {};
-  rooms.forEach(r => {
-    if (r.connectorGroupId && (r.type === 'stairs' || r.type === 'elevator')) {
-      byGroup[r.connectorGroupId] = [...(byGroup[r.connectorGroupId]||[]), r.id];
-    }
-  });
-  Object.values(byGroup).forEach(ids => {
-    for (let i=0;i<ids.length;i++){
-      for (let j=i+1;j<ids.length;j++){
-        edges[ids[i]] = [...(edges[ids[i]]||[]), ids[j]];
-        edges[ids[j]] = [...(edges[ids[j]]||[]), ids[i]];
-      }
-    }
-  });
-
-  // BFS
-  const seen = new Set<string>();
-  const queue = [startRoomId];
-  while (queue.length) {
-    const node = queue.shift()!;
-    if (node === endRoomId) return true;
-    if (seen.has(node)) continue;
-    seen.add(node);
-    (edges[node]||[]).forEach(n => { if (!seen.has(n)) queue.push(n); });
+    return deg;
   }
-  return false;
-}
 
+  // Quick connectivity check (BFS) before you navigate
+  async function areRoomsConnected(
+    locationId: string,
+    buildingId: string,
+    startRoomId: string,
+    endRoomId: string,
+    floorId?: string,
+  ): Promise<boolean> {
+    // Build graph from pathPOIs
+    let q: any = firestore()
+      .collection(`locations/${locationId}/pathPOIs`)
+      .where('buildingId', '==', buildingId);
+    if (floorId) q = q.where('floorId', '==', floorId);
+    const pathSnap = await q.get();
+    const edges: Record<string, string[]> = {};
+    pathSnap.docs.forEach((d) => {
+      const p = d.data() as any;
+      edges[p.startRoomId] = [...(edges[p.startRoomId] || []), p.endRoomId];
+      edges[p.endRoomId] = [...(edges[p.endRoomId] || []), p.startRoomId];
+    });
+
+    // Cross-floor links via connectorGroupId on stairs/elevators
+    const roomSnap = await firestore()
+      .collection(`locations/${locationId}/roomPOIs`)
+      .where('buildingId', '==', buildingId)
+      .get();
+    const rooms = roomSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+    const byGroup: Record<string, string[]> = {};
+    rooms.forEach((r) => {
+      if (r.connectorGroupId && (r.type === 'stairs' || r.type === 'elevator')) {
+        byGroup[r.connectorGroupId] = [...(byGroup[r.connectorGroupId] || []), r.id];
+      }
+    });
+    Object.values(byGroup).forEach((ids) => {
+      for (let i = 0; i < ids.length; i++) {
+        for (let j = i + 1; j < ids.length; j++) {
+          edges[ids[i]] = [...(edges[ids[i]] || []), ids[j]];
+          edges[ids[j]] = [...(edges[ids[j]] || []), ids[i]];
+        }
+      }
+    });
+
+    // BFS
+    const seen = new Set<string>();
+    const queue = [startRoomId];
+    while (queue.length) {
+      const node = queue.shift()!;
+      if (node === endRoomId) return true;
+      if (seen.has(node)) continue;
+      seen.add(node);
+      (edges[node] || []).forEach((n) => {
+        if (!seen.has(n)) queue.push(n);
+      });
+    }
+    return false;
+  }
 
   // Handle deep link params if they exist
   useEffect(() => {
@@ -1906,134 +1899,176 @@ async function areRoomsConnected(
       )}
 
       {selectedBuildingForIndoor && (
-  <TouchableOpacity
-    style={{
-      position: 'absolute', bottom: 120, left: 20, right: 20,
-      backgroundColor: colors.card, borderRadius: 8, padding: 12, alignItems: 'center', elevation: 4,
-    }}
-    onPress={async () => {
-      const b = selectedBuildingForIndoor;
-      // b.location is how you store location id on buildingPOI in fetchPOIs()
-      const locationId = b.location;
-      const buildingId = b.id;
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            bottom: 120,
+            left: 20,
+            right: 20,
+            backgroundColor: colors.card,
+            borderRadius: 8,
+            padding: 12,
+            alignItems: 'center',
+            elevation: 4,
+          }}
+          onPress={async () => {
+            const b = selectedBuildingForIndoor;
+            // b.location is how you store location id on buildingPOI in fetchPOIs()
+            const locationId = b.location;
+            const buildingId = b.id;
 
-      const rooms = await fetchRoomsForBuilding(locationId, buildingId);
-if (!rooms.length) { /* show popup */ return; }
+            const rooms = await fetchRoomsForBuilding(locationId, buildingId);
+            if (!rooms.length) {
+              /* show popup */ return;
+            }
 
-setIndoorRooms(rooms);
+            setIndoorRooms(rooms);
 
-// Default destination = previously chosen or first
-const defaultDest = selectedIndoorRoom ? rooms.find(r => r.id === selectedIndoorRoom.id) : rooms[0];
+            // Default destination = previously chosen or first
+            const defaultDest = selectedIndoorRoom
+              ? rooms.find((r) => r.id === selectedIndoorRoom.id)
+              : rooms[0];
 
-// Smart default start: entrance on same floor → any entrance → most connected → first
-const entrances = rooms.filter((r:any) => r.isEntrance);
-const sameFloorEntrance = defaultDest?.floorId ? entrances.find((e:any) => e.floorId === defaultDest.floorId) : null;
-const degreeByRoom = await getRoomDegrees(locationId, buildingId, defaultDest?.floorId);
-const mostConnected = [...rooms].sort((a:any,b:any) => (degreeByRoom[b.id]||0)-(degreeByRoom[a.id]||0))[0];
+            // Smart default start: entrance on same floor → any entrance → most connected → first
+            const entrances = rooms.filter((r: any) => r.isEntrance);
+            const sameFloorEntrance = defaultDest?.floorId
+              ? entrances.find((e: any) => e.floorId === defaultDest.floorId)
+              : null;
+            const degreeByRoom = await getRoomDegrees(locationId, buildingId, defaultDest?.floorId);
+            const mostConnected = [...rooms].sort(
+              (a: any, b: any) => (degreeByRoom[b.id] || 0) - (degreeByRoom[a.id] || 0),
+            )[0];
 
-setSelectedStartRoom(sameFloorEntrance || entrances[0] || mostConnected || rooms[0]);
-setSelectedIndoorRoom(defaultDest);
-setShowIndoorPicker(true);
+            setSelectedStartRoom(sameFloorEntrance || entrances[0] || mostConnected || rooms[0]);
+            setSelectedIndoorRoom(defaultDest);
+            setShowIndoorPicker(true);
+          }}
+        >
+          <Text style={{ color: colors.text, fontWeight: 'bold' }}>Navigate Indoors</Text>
+        </TouchableOpacity>
+      )}
 
-    }}
-  >
-    <Text style={{ color: colors.text, fontWeight: 'bold' }}>Navigate Indoors</Text>
-  </TouchableOpacity>
-)}
-
-
-{showIndoorPicker && (
-  <Modal transparent visible animationType="slide">
-    <View style={{ flex:1, justifyContent:'center', backgroundColor:'rgba(0,0,0,0.5)', padding:20 }}>
-      <View style={{ backgroundColor: colors.card, borderRadius:10, padding:16 }}>
-        <Text style={{ fontWeight:'bold', color: colors.text, marginBottom: 8 }}>Start</Text>
-        <View style={{ maxHeight: 140 }}>
-          <ScrollView>
-            {indoorRooms.map(r => (
-              <TouchableOpacity
-                key={`start-${r.id}`}
-                onPress={() => setSelectedStartRoom(r)}
-                style={{
-                  padding:10, borderRadius:6,
-                  backgroundColor: selectedStartRoom?.id === r.id ? colors.primary : 'transparent',
-                  marginBottom:6, borderWidth:1, borderColor: colors.border
-                }}
-              >
-                <Text style={{ color: selectedStartRoom?.id === r.id ? '#fff' : colors.text }}>
-                  {r.name}
-                  {r.isEntrance ? ' · Entrance' : ''}
-                  {r.type ? ` · ${r.type}` : ''}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        <Text style={{ fontWeight:'bold', color: colors.text, marginVertical: 8 }}>Destination</Text>
-        <View style={{ maxHeight: 180 }}>
-          <ScrollView>
-            {indoorRooms.map(r => (
-              <TouchableOpacity
-                key={`dest-${r.id}`}
-                onPress={() => setSelectedIndoorRoom(r)}
-                style={{
-                  padding:10, borderRadius:6,
-                  backgroundColor: selectedIndoorRoom?.id === r.id ? colors.primary : 'transparent',
-                  marginBottom:6, borderWidth:1, borderColor: colors.border
-                }}
-              >
-                <Text style={{ color: selectedIndoorRoom?.id === r.id ? '#fff' : colors.text }}>
-                  {r.name}{r.type ? ` · ${r.type}` : ''}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        <View style={{ flexDirection:'row', justifyContent:'space-between', marginTop:12 }}>
-          <Pressable onPress={() => setShowIndoorPicker(false)}>
-            <Text style={{ color: colors.text }}>Cancel</Text>
-          </Pressable>
-          <Pressable
-            onPress={async () => {
-              if (!selectedStartRoom || !selectedIndoorRoom || !selectedBuildingForIndoor) return;
-              const b = selectedBuildingForIndoor;
-              const connected = await areRoomsConnected(
-                b.location, b.id, selectedStartRoom.id, selectedIndoorRoom.id, selectedIndoorRoom.floorId
-              );
-              if (!connected) {
-                setShowIndoorPicker(false);
-                setErrorPopupMessage('No saved path between those rooms. Try a different start (e.g., an Entrance) or add missing paths in the floor editor.');
-                setShowErrorPopup(true);
-                return;
-              }
-              setShowIndoorPicker(false);
-
-              console.log('Navigating to IndoorNavigation with:', {
-  locationId: b.location,
-  buildingId: b.id,
-  startRoomId: selectedStartRoom.id,
-  endRoomId: selectedIndoorRoom.id,
-  floorId: selectedIndoorRoom.floorId,
-});
-              navigation.navigate('IndoorNavigation', {
-                locationId: b.location,
-                buildingId: b.id,
-                startRoomId: selectedStartRoom.id,
-                endRoomId: selectedIndoorRoom.id,
-                // floorId: selectedIndoorRoom.floorId, // optional
-              });
+      {showIndoorPicker && (
+        <Modal transparent visible animationType="slide">
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              padding: 20,
             }}
           >
-            <Text style={{ fontWeight:'bold', color: colors.primary }}>Start</Text>
-          </Pressable>
-        </View>
-      </View>
-    </View>
-  </Modal>
-)}
+            <View style={{ backgroundColor: colors.card, borderRadius: 10, padding: 16 }}>
+              <Text style={{ fontWeight: 'bold', color: colors.text, marginBottom: 8 }}>Start</Text>
+              <View style={{ maxHeight: 140 }}>
+                <ScrollView>
+                  {indoorRooms.map((r) => (
+                    <TouchableOpacity
+                      key={`start-${r.id}`}
+                      onPress={() => setSelectedStartRoom(r)}
+                      style={{
+                        padding: 10,
+                        borderRadius: 6,
+                        backgroundColor:
+                          selectedStartRoom?.id === r.id ? colors.primary : 'transparent',
+                        marginBottom: 6,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                      }}
+                    >
+                      <Text
+                        style={{ color: selectedStartRoom?.id === r.id ? '#fff' : colors.text }}
+                      >
+                        {r.name}
+                        {r.isEntrance ? ' · Entrance' : ''}
+                        {r.type ? ` · ${r.type}` : ''}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
 
+              <Text style={{ fontWeight: 'bold', color: colors.text, marginVertical: 8 }}>
+                Destination
+              </Text>
+              <View style={{ maxHeight: 180 }}>
+                <ScrollView>
+                  {indoorRooms.map((r) => (
+                    <TouchableOpacity
+                      key={`dest-${r.id}`}
+                      onPress={() => setSelectedIndoorRoom(r)}
+                      style={{
+                        padding: 10,
+                        borderRadius: 6,
+                        backgroundColor:
+                          selectedIndoorRoom?.id === r.id ? colors.primary : 'transparent',
+                        marginBottom: 6,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                      }}
+                    >
+                      <Text
+                        style={{ color: selectedIndoorRoom?.id === r.id ? '#fff' : colors.text }}
+                      >
+                        {r.name}
+                        {r.type ? ` · ${r.type}` : ''}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
 
+              <View
+                style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 }}
+              >
+                <Pressable onPress={() => setShowIndoorPicker(false)}>
+                  <Text style={{ color: colors.text }}>Cancel</Text>
+                </Pressable>
+                <Pressable
+                  onPress={async () => {
+                    if (!selectedStartRoom || !selectedIndoorRoom || !selectedBuildingForIndoor)
+                      return;
+                    const b = selectedBuildingForIndoor;
+                    const connected = await areRoomsConnected(
+                      b.location,
+                      b.id,
+                      selectedStartRoom.id,
+                      selectedIndoorRoom.id,
+                      selectedIndoorRoom.floorId,
+                    );
+                    if (!connected) {
+                      setShowIndoorPicker(false);
+                      setErrorPopupMessage(
+                        'No saved path between those rooms. Try a different start (e.g., an Entrance) or add missing paths in the floor editor.',
+                      );
+                      setShowErrorPopup(true);
+                      return;
+                    }
+                    setShowIndoorPicker(false);
+
+                    console.log('Navigating to IndoorNavigation with:', {
+                      locationId: b.location,
+                      buildingId: b.id,
+                      startRoomId: selectedStartRoom.id,
+                      endRoomId: selectedIndoorRoom.id,
+                      floorId: selectedIndoorRoom.floorId,
+                    });
+                    navigation.navigate('IndoorNavigation', {
+                      locationId: b.location,
+                      buildingId: b.id,
+                      startRoomId: selectedStartRoom.id,
+                      endRoomId: selectedIndoorRoom.id,
+                      // floorId: selectedIndoorRoom.floorId, // optional
+                    });
+                  }}
+                >
+                  <Text style={{ fontWeight: 'bold', color: colors.primary }}>Start</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
 
       <MapActionsPanel
         currentLocation={!!currentLocation}

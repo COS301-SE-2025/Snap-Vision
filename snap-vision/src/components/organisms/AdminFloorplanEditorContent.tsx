@@ -25,7 +25,7 @@ interface RoomPOI {
   coordinates: { x: number; y: number };
   type: string;
   description: string | null;
-  isEntrance?: boolean;          // true if this is a building entry point
+  isEntrance?: boolean; // true if this is a building entry point
   connectorGroupId?: string;
 }
 
@@ -59,8 +59,8 @@ export default function AdminFloorplanEditorContent() {
     name: '',
     type: 'classroom',
     description: '',
-    isEntrance: false,           // NEW
-  connectorGroupId: '', 
+    isEntrance: false, // NEW
+    connectorGroupId: '',
   });
   const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -867,7 +867,7 @@ export default function AdminFloorplanEditorContent() {
               type: roomToEdit.type,
               description: roomToEdit.description || '',
               isEntrance: !!roomToEdit.isEntrance,
-  connectorGroupId: roomToEdit.connectorGroupId || '',
+              connectorGroupId: roomToEdit.connectorGroupId || '',
             });
             setIsModalVisible(true);
           }
@@ -917,8 +917,8 @@ export default function AdminFloorplanEditorContent() {
         },
         type: roomData.type,
         description: roomData.description || null,
-        isEntrance: !!roomData.isEntrance,                // NEW
-  connectorGroupId: roomData.connectorGroupId || '',
+        isEntrance: !!roomData.isEntrance, // NEW
+        connectorGroupId: roomData.connectorGroupId || '',
       };
 
       // Save to Firestore
@@ -943,7 +943,13 @@ export default function AdminFloorplanEditorContent() {
       `);
 
       // Reset form
-      setRoomData({ name: '', type: 'classroom', description: '', isEntrance: false, connectorGroupId: '' });
+      setRoomData({
+        name: '',
+        type: 'classroom',
+        description: '',
+        isEntrance: false,
+        connectorGroupId: '',
+      });
       setIsEditing(false);
       setEditingRoomId(null);
       setIsModalVisible(false);
@@ -977,7 +983,13 @@ export default function AdminFloorplanEditorContent() {
       `);
 
       // Reset form and close modal
-      setRoomData({ name: '', type: 'classroom', description: '', isEntrance: false, connectorGroupId: '' });
+      setRoomData({
+        name: '',
+        type: 'classroom',
+        description: '',
+        isEntrance: false,
+        connectorGroupId: '',
+      });
       setIsEditing(false);
       setEditingRoomId(null);
       setIsModalVisible(false);
@@ -1098,66 +1110,76 @@ export default function AdminFloorplanEditorContent() {
           <View style={styles.typeSelector}>
             <Text style={{ color: colors.text, marginBottom: 8 }}>Room Type:</Text>
             <View style={styles.typeOptions}>
-              {['classroom', 'office', 'lab', 'restroom', 'stairs', 'elevator', 'entrance'].map((type) => (
-                <TouchableOpacity
-                  key={type}
-                  onPress={() => setRoomData({ ...roomData, type })}
-                  style={[
-                    styles.typeOption,
-                    {
-                      backgroundColor: roomData.type === type ? colors.primary : colors.card,
-                      borderColor: colors.border,
-                      borderWidth: 1,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={{
-                      color: roomData.type === type ? '#FFFFFF' : colors.text,
-                      fontSize: 14,
-                    }}
+              {['classroom', 'office', 'lab', 'restroom', 'stairs', 'elevator', 'entrance'].map(
+                (type) => (
+                  <TouchableOpacity
+                    key={type}
+                    onPress={() => setRoomData({ ...roomData, type })}
+                    style={[
+                      styles.typeOption,
+                      {
+                        backgroundColor: roomData.type === type ? colors.primary : colors.card,
+                        borderColor: colors.border,
+                        borderWidth: 1,
+                      },
+                    ]}
                   >
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text
+                      style={{
+                        color: roomData.type === type ? '#FFFFFF' : colors.text,
+                        fontSize: 14,
+                      }}
+                    >
+                      {type.charAt(0).toUpperCase() + type.slice(1)}
+                    </Text>
+                  </TouchableOpacity>
+                ),
+              )}
             </View>
           </View>
 
           {/* Entrance toggle (independent of type) */}
-<View style={{ flexDirection:'row', alignItems:'center', marginBottom: 12 }}>
-  <Text style={{ color: colors.text, marginRight: 8 }}>Mark as entrance</Text>
-  <TouchableOpacity
-    onPress={() => setRoomData({ ...roomData, isEntrance: !roomData.isEntrance })}
-    style={{
-      paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6,
-      backgroundColor: roomData.isEntrance ? colors.primary : colors.card,
-      borderWidth: 1, borderColor: colors.border,
-    }}
-  >
-    <Text style={{ color: roomData.isEntrance ? '#fff' : colors.text }}>
-      {roomData.isEntrance ? 'Yes' : 'No'}
-    </Text>
-  </TouchableOpacity>
-</View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+            <Text style={{ color: colors.text, marginRight: 8 }}>Mark as entrance</Text>
+            <TouchableOpacity
+              onPress={() => setRoomData({ ...roomData, isEntrance: !roomData.isEntrance })}
+              style={{
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 6,
+                backgroundColor: roomData.isEntrance ? colors.primary : colors.card,
+                borderWidth: 1,
+                borderColor: colors.border,
+              }}
+            >
+              <Text style={{ color: roomData.isEntrance ? '#fff' : colors.text }}>
+                {roomData.isEntrance ? 'Yes' : 'No'}
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-{/* Connector ID for stairs/elevator */}
-{(roomData.type === 'stairs' || roomData.type === 'elevator') && (
-  <>
-    <Text style={{ color: colors.text, marginBottom: 6 }}>Connector Group ID (link stairs/elevators across floors)</Text>
-    <TextInput
-      placeholder="e.g., stairs-A"
-      value={roomData.connectorGroupId}
-      onChangeText={(text) => setRoomData({ ...roomData, connectorGroupId: text })}
-      style={[
-        styles.input,
-        { borderColor: colors.border, color: colors.text, backgroundColor: colors.background },
-      ]}
-      placeholderTextColor={colors.secondary}
-    />
-  </>
-)}
-
+          {/* Connector ID for stairs/elevator */}
+          {(roomData.type === 'stairs' || roomData.type === 'elevator') && (
+            <>
+              <Text style={{ color: colors.text, marginBottom: 6 }}>
+                Connector Group ID (link stairs/elevators across floors)
+              </Text>
+              <TextInput
+                placeholder="e.g., stairs-A"
+                value={roomData.connectorGroupId}
+                onChangeText={(text) => setRoomData({ ...roomData, connectorGroupId: text })}
+                style={[
+                  styles.input,
+                  {
+                    borderColor: colors.border,
+                    color: colors.text,
+                    backgroundColor: colors.background,
+                  },
+                ]}
+                placeholderTextColor={colors.secondary}
+              />
+            </>
+          )}
 
           <TextInput
             placeholder="Description (optional)"
