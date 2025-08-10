@@ -14,6 +14,8 @@ import {
   calculateDistance,
   type NavigationStep,
 } from '../utils/navigationUtils';
+import { useNavigation } from '@react-navigation/native';
+
 
 type ParamList = {
   IndoorSchematicNav: {
@@ -68,6 +70,8 @@ export default function IndoorSchematicNavScreen() {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const [currentPos, setCurrentPos] = useState<{ x: number; y: number } | null>(userPos ?? null);
+
+  const navigation = useNavigation<any>();
 
   useEffect(() => {
     (async () => {
@@ -267,6 +271,28 @@ export default function IndoorSchematicNavScreen() {
           <Text style={{ color: '#fff', fontWeight: '700' }}>Directions</Text>
         </TouchableOpacity>
       )}
+
+      {/* Floating AR button */}
+{steps.length > 0 && startId && endId && (
+  <TouchableOpacity
+    onPress={() => navigation.navigate('ARIndoorNav', {
+      buildingId,
+      buildingName,
+      locationId,
+      floorId,
+      startRoomId: startId,
+      endRoomId: endId,
+      userPos: currentPos || null,
+    })}
+    style={[
+      styles.fabAR,
+      { backgroundColor: colors.card, borderColor: colors.border },
+    ]}
+  >
+    <Text style={{ color: colors.text, fontWeight: '700' }}>AR</Text>
+  </TouchableOpacity>
+)}
+
     </View>
   );
 }
@@ -291,4 +317,16 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     elevation: 5,
   },
+
+  fabAR: {
+  position: 'absolute',
+  right: 16,
+  bottom: 74, // stacked above the Directions FAB (which is bottom: 16)
+  paddingVertical: 10,
+  paddingHorizontal: 14,
+  borderRadius: 24,
+  borderWidth: 1,
+  elevation: 4,
+},
+
 });
