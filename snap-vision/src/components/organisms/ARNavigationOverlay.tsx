@@ -1,16 +1,16 @@
-// src/components/organisms/ARNavigationOverlay.tsx
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Dimensions, Text, TouchableOpacity } from 'react-native';
 import { Camera, useCameraDevices, useCameraPermission } from 'react-native-vision-camera';
-import { Canvas, Path, Skia } from '@shopify/react-native-skia';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 interface Props {
   currentLocation: { x: number; y: number } | null;
   destinationCoords: { x: number; y: number } | null;
-  deviceHeading: number; // From compass/magnetometer
-  navigationSteps?: any[]; // Your existing navigation steps
+  deviceHeading: number;
+  navigationSteps?: any[];
+  routeCoordinates?: [number, number][];
+  currentRouteIndex?: number;
 }
 
 export default function ARNavigationOverlay({
@@ -18,15 +18,20 @@ export default function ARNavigationOverlay({
   destinationCoords,
   deviceHeading,
   navigationSteps = [],
+  routeCoordinates = [],
+  currentRouteIndex = 0,
 }: Props) {
   const devices = useCameraDevices();
-  const device = devices.back || devices.external || Object.values(devices)[0];
+  const device = devices.find(d => d.position === 'back') 
+    || devices.find(d => d.position === 'external') 
+    || devices[0];
   const { hasPermission, requestPermission } = useCameraPermission();
 
-  const [bearing, setBearing] = useState<number>(0);
   const [isActive, setIsActive] = useState(false);
   const [deviceError, setDeviceError] = useState<string | null>(null);
   const [showDebugInfo, setShowDebugInfo] = useState(false);
+  const [nextInstruction, setNextInstruction] = useState<string>('');
+  const [compassOffset, setCompassOffset] = useState(0); // No initial offset
 
   useEffect(() => {
     if (!hasPermission) {
@@ -35,32 +40,22 @@ export default function ARNavigationOverlay({
   }, [hasPermission, requestPermission]);
 
   useEffect(() => {
-    console.log('Available devices:', devices);
-    console.log('Selected device:', device);
-
     if (hasPermission) {
       if (device) {
         setIsActive(true);
         setDeviceError(null);
       } else {
         setDeviceError('No camera available');
-        console.warn('No camera device found. Available devices:', Object.keys(devices));
       }
     }
   }, [hasPermission, device, devices]);
 
+  // Get next navigation instruction
   useEffect(() => {
-    if (currentLocation && destinationCoords) {
-      // Calculate bearing to destination using your coordinate system
-      const newBearing = calculateBearingFromCoords(
-        currentLocation.x,
-        currentLocation.y,
-        destinationCoords.x,
-        destinationCoords.y,
-      );
-      setBearing(newBearing);
+    if (navigationSteps.length > 0 && currentRouteIndex < navigationSteps.length) {
+      setNextInstruction(navigationSteps[currentRouteIndex]?.instruction || '');
     }
-  }, [currentLocation, destinationCoords]);
+  }, [navigationSteps, currentRouteIndex]);
 
   if (!hasPermission) {
     return (
@@ -77,62 +72,17 @@ export default function ARNavigationOverlay({
       <View style={styles.container}>
         <View style={styles.placeholder}>
           <Text style={styles.placeholderText}>{deviceError || 'Initializing camera...'}</Text>
-          <Text style={styles.placeholderText}>
-            Available devices: {Object.keys(devices).join(', ') || 'None'}
-          </Text>
-          <Text style={styles.placeholderText}>Try using the fallback AR mode below</Text>
-
-          {/* Fallback AR without camera */}
-          <TouchableOpacity
-            style={styles.debugToggle}
-            onPress={() => setShowDebugInfo(!showDebugInfo)}
-          >
-            <Text style={styles.debugToggleText}>
-              {showDebugInfo ? '📊 Hide Info' : 'ℹ️ Debug'}
-            </Text>
-          </TouchableOpacity>
-
-          {showDebugInfo && (
-            <View style={styles.fallbackAR}>
-              <Text style={styles.debugText}>Fallback AR Mode</Text>
-              <Text style={styles.debugText}>Direction: {Math.round(bearing)}°</Text>
-              <Text style={styles.debugText}>Device Heading: {Math.round(deviceHeading)}°</Text>
-
-              <View
-                style={[
-                  styles.fallbackArrow,
-                  {
-                    transform: [{ rotate: `${bearing - deviceHeading}deg` }],
-                  },
-                ]}
-              >
-                <Text style={styles.arrowText}>↑</Text>
-              </View>
-            </View>
-          )}
-
-          {!showDebugInfo && (
-            <View style={styles.minimalFallback}>
-              <Text style={styles.placeholderText}>AR Mode Active</Text>
-              <View
-                style={[
-                  styles.fallbackArrow,
-                  {
-                    transform: [{ rotate: `${bearing - deviceHeading}deg` }],
-                  },
-                ]}
-              >
-                <Text style={styles.arrowText}>↑</Text>
-              </View>
-            </View>
-          )}
+          <SimpleARFallback 
+            currentLocation={currentLocation}
+            destinationCoords={destinationCoords}
+            deviceHeading={deviceHeading}
+            nextInstruction={nextInstruction}
+            compassOffset={compassOffset}
+          />
         </View>
       </View>
     );
   }
-
-  // Calculate arrow direction relative to device heading
-  const arrowDirection = bearing - deviceHeading;
 
   return (
     <View style={styles.container}>
@@ -146,110 +96,343 @@ export default function ARNavigationOverlay({
         audio={false}
       />
 
-      {/* AR Overlay */}
-      <Canvas style={styles.overlay}>
-        <ARArrow direction={arrowDirection} />
-      </Canvas>
+      {/* Simple AR Guidance Overlay */}
+      <SimpleARGuidance 
+        currentLocation={currentLocation}
+        destinationCoords={destinationCoords}
+        deviceHeading={deviceHeading}
+        nextInstruction={nextInstruction}
+        routeCoordinates={routeCoordinates}
+        currentRouteIndex={currentRouteIndex}
+        compassOffset={compassOffset}
+        setCompassOffset={setCompassOffset}
+      />
 
-      {/* Collapsible Debug Toggle Button */}
-      <TouchableOpacity style={styles.debugToggle} onPress={() => setShowDebugInfo(!showDebugInfo)}>
-        <Text style={styles.debugToggleText}>{showDebugInfo ? '📊 Hide Info' : 'ℹ️ Debug'}</Text>
+      {/* Debug Toggle */}
+      <TouchableOpacity 
+        style={styles.debugToggle} 
+        onPress={() => setShowDebugInfo(!showDebugInfo)}
+      >
+        <Text style={styles.debugToggleText}>
+          {showDebugInfo ? '📊 Hide' : 'ℹ️ Info'}
+        </Text>
       </TouchableOpacity>
 
-      {/* Minimal AR Status (when debug is hidden) */}
-      {!showDebugInfo && (
-        <View style={styles.minimalStatus}>
-          <Text style={styles.minimalStatusText}>
-            AR Active • {Math.round(Math.abs(arrowDirection))}° {arrowDirection > 0 ? '→' : '←'}
-          </Text>
-        </View>
-      )}
-
-      {/* Collapsible Debug Info */}
+      {/* Debug Info */}
       {showDebugInfo && (
         <View style={styles.debugInfo}>
-          <TouchableOpacity style={styles.debugHeader} onPress={() => setShowDebugInfo(false)}>
-            <Text style={styles.debugHeaderText}>AR Navigation Debug ▼</Text>
-          </TouchableOpacity>
-          <Text style={styles.debugText}>Direction: {Math.round(bearing)}°</Text>
+          <Text style={styles.debugText}>Route Points: {routeCoordinates.length}</Text>
+          <Text style={styles.debugText}>Current Index: {currentRouteIndex}</Text>
           <Text style={styles.debugText}>Device Heading: {Math.round(deviceHeading)}°</Text>
-          <Text style={styles.debugText}>Arrow: {Math.round(arrowDirection)}°</Text>
+          {currentLocation && (
+            <Text style={styles.debugText}>
+              Location: {currentLocation.y.toFixed(4)}, {currentLocation.x.toFixed(4)}
+            </Text>
+          )}
         </View>
       )}
     </View>
   );
 }
 
-// Helper component for drawing the AR arrow using Skia
-function ARArrow({ direction }: { direction: number }) {
-  const centerX = screenWidth / 2;
-  const centerY = screenHeight / 2;
-  const arrowLength = 80;
+//AR Guidance Component
+function SimpleARGuidance({ 
+  currentLocation, 
+  destinationCoords, 
+  deviceHeading,
+  nextInstruction,
+  routeCoordinates,
+  currentRouteIndex,
+  compassOffset,
+  setCompassOffset
+}: {
+  currentLocation: { x: number; y: number } | null;
+  destinationCoords: { x: number; y: number } | null;
+  deviceHeading: number;
+  nextInstruction: string;
+  routeCoordinates: [number, number][];
+  currentRouteIndex: number;
+  compassOffset: number;
+  setCompassOffset: (offset: number) => void;
+}) {
+  // Add bearing smoothing to prevent flickering
+  const [bearingHistory, setBearingHistory] = useState<number[]>([]);
+  const [smoothedBearing, setSmoothedBearing] = useState<number | null>(null);
 
-  // Convert direction to radians and adjust for screen coordinates
-  const directionRad = (direction * Math.PI) / 180;
+  if (!currentLocation || !destinationCoords) return null;
 
-  // Calculate arrow end point
-  const endX = centerX + Math.sin(directionRad) * arrowLength;
-  const endY = centerY - Math.cos(directionRad) * arrowLength;
+  // FIXED: Use the actual route coordinates correctly
+  // routeCoordinates are in [longitude, latitude] format from the routing API
+  let nextPoint: [number, number];
+  
+  if (routeCoordinates.length > 0) {
+    // Find the next point ahead in the route
+    const lookAheadDistance = 1; // Reduced look ahead for more accurate direction
+    const nextIndex = Math.min(currentRouteIndex + lookAheadDistance, routeCoordinates.length - 1);
+    nextPoint = routeCoordinates[nextIndex];
+  } else {
+    // Fallback to destination if no route
+    nextPoint = [destinationCoords.x, destinationCoords.y];
+  }
 
-  // Create arrow shaft path
-  const shaftPath = Skia.Path.Make();
-  shaftPath.moveTo(centerX, centerY);
-  shaftPath.lineTo(endX, endY);
+  // Ensure coordinates are in the right order
+  // currentLocation: { x: longitude, y: latitude }
+  // nextPoint: [longitude, latitude]
+  // calculateBearing expects (lat1, lon1, lat2, lon2)
+  const rawBearing = calculateBearing(
+    currentLocation.y, // current latitude
+    currentLocation.x, // current longitude
+    nextPoint[1],      // target latitude
+    nextPoint[0]       // target longitude
+  );
+  
+  // Smooth the bearing to prevent flickering
+  useEffect(() => {
+    setBearingHistory(prev => {
+      const newHistory = [...prev, rawBearing].slice(-5); // Keep last 5 readings
+      
+      // Calculate weighted average (more weight to recent readings)
+      let weightedSum = 0;
+      let totalWeight = 0;
+      newHistory.forEach((bearing, index) => {
+        const weight = index + 1; // More recent = higher weight
+        weightedSum += bearing * weight;
+        totalWeight += weight;
+      });
+      
+      const smoothed = weightedSum / totalWeight;
+      setSmoothedBearing(smoothed);
+      
+      return newHistory;
+    });
+  }, [rawBearing]);
+  
+  // Use smoothed bearing if available, otherwise use raw
+  const bearing = smoothedBearing !== null ? smoothedBearing : rawBearing;
+  
+  const normalizedDeviceHeading = ((deviceHeading % 360) + 360) % 360;
+  const relativeBearing = normalizeAngle(bearing - normalizedDeviceHeading);
+  
+  const distance = calculateDistance(
+    currentLocation.y, // current latitude
+    currentLocation.x, // current longitude
+    nextPoint[1],      // target latitude
+    nextPoint[0]       // target longitude
+  );
 
-  // Create arrowhead path
-  const arrowheadPath = createArrowHead(endX, endY, directionRad);
+  //direction logic with relaxed tolerances - 35 degrees for straight
+  const getDirectionInstruction = () => {
+    const absRelativeBearing = Math.abs(relativeBearing);
+    
+    if (absRelativeBearing < 35) return "Continue Straight"; // Set to 35 but can increase to about 45
+    if (relativeBearing >= 35 && relativeBearing < 80) return "Turn Right";
+    if (relativeBearing >= 80 && relativeBearing < 120) return "Sharp Right";
+    if (relativeBearing >= 120) return "Turn Around";
+    if (relativeBearing <= -35 && relativeBearing > -80) return "Turn Left";
+    if (relativeBearing <= -80 && relativeBearing > -120) return "Sharp Left";
+    if (relativeBearing <= -120) return "Turn Around";
+    return "Continue";
+  };
+
+  // More precise emoji logic with relaxed tolerances
+  const getDirectionEmoji = () => {
+    if (Math.abs(relativeBearing) < 35) return "⬆️";
+    if (relativeBearing >= 35 && relativeBearing < 80) return "↗️";
+    if (relativeBearing >= 80 && relativeBearing < 120) return "➡️";
+    if (relativeBearing >= 120) return "🔄"; // Turn around
+    if (relativeBearing <= -35 && relativeBearing > -80) return "↖️";
+    if (relativeBearing <= -80 && relativeBearing > -120) return "⬅️";
+    if (relativeBearing <= -120) return "🔄"; // Turn around
+    return "⬆️";
+  };
 
   return (
     <>
-      {/* Arrow shaft */}
-      <Path path={shaftPath} style="stroke" strokeWidth={6} color="#00FF00" />
-      {/* Arrowhead */}
-      <Path path={arrowheadPath} style="fill" color="#00FF00" />
-      {/* Center dot */}
-      <Path path={createCenterDot(centerX, centerY)} style="fill" color="#FF0000" />
+      {/* AR Navigation with Arrow and Direction */}
+      <View style={styles.mainGuidanceContainer}>
+        <View style={styles.debugInfoAboveArrow}>
+          <Text style={styles.compassCalibrationText}>
+            🧭 PURE COMPASS TEST (react-native-compass-heading)
+          </Text>
+          
+          <Text style={styles.compassCalibrationText}>
+            Raw Device: {Math.round(deviceHeading)}° | Final: {Math.round(normalizedDeviceHeading)}°
+          </Text>
+          
+          <Text style={styles.bearingDebugText}>
+            📍 True Bearing: {Math.round(bearing)}° | Compass: {Math.round(normalizedDeviceHeading)}° | Relative: {Math.round(relativeBearing)}°
+          </Text>
+          
+          <Text style={styles.bearingDebugText}>
+            🎯 Mode: COMPASS ONLY - Works Stationary & Moving
+          </Text>
+        </View>
+
+        {/* Direction Circle with Arrow */}
+        <View style={[
+          styles.directionCircle,
+          { backgroundColor: Math.abs(relativeBearing) < 35 ? 'rgba(76, 175, 80, 0.8)' : 'rgba(244, 67, 54, 0.8)' }
+        ]}>
+          <Text style={styles.directionEmoji}>
+            {getDirectionEmoji()}
+          </Text>
+        </View>
+
+        {/* Direction Text */}
+        <Text style={styles.directionText}>
+          {getDirectionInstruction()}
+        </Text>
+
+        {/* Distance Text */}
+        <Text style={styles.distanceText}>
+          {Math.round(distance)}m to destination
+        </Text>
+      </View>
+
+      {/* Compass Calibration Controls */}
+      <View style={styles.calibrationContainer}>
+        <TouchableOpacity 
+          style={styles.calibrateButton}
+          onPress={() => setCompassOffset(compassOffset - 90)}
+        >
+          <Text style={styles.calibrateButtonText}>-90°</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.calibrateButton}
+          onPress={() => setCompassOffset(compassOffset - 10)}
+        >
+          <Text style={styles.calibrateButtonText}>-10°</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.offsetText}>Offset: {compassOffset}°</Text>
+
+        <TouchableOpacity 
+          style={styles.calibrateButton}
+          onPress={() => setCompassOffset(compassOffset + 10)}
+        >
+          <Text style={styles.calibrateButtonText}>+10°</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.calibrateButton}
+          onPress={() => setCompassOffset(compassOffset + 90)}
+        >
+          <Text style={styles.calibrateButtonText}>+90°</Text>
+        </TouchableOpacity>
+      </View>
     </>
   );
 }
 
-// Helper function to calculate bearing from current position to target in your coordinate system
-function calculateBearingFromCoords(x1: number, y1: number, x2: number, y2: number): number {
-  const dx = x2 - x1;
-  const dy = y2 - y1;
+// Simple fallback without camera
+function SimpleARFallback({ 
+  currentLocation, 
+  destinationCoords, 
+  deviceHeading,
+  nextInstruction,
+  compassOffset
+}: {
+  currentLocation: { x: number; y: number } | null;
+  destinationCoords: { x: number; y: number } | null;
+  deviceHeading: number;
+  nextInstruction: string;
+  compassOffset: number;
+}) {
+  if (!currentLocation || !destinationCoords) return null;
 
-  // Calculate angle in radians, then convert to degrees
-  const angle = Math.atan2(dx, -dy) * (180 / Math.PI);
+  // FIXED: Use correct coordinate order for GPS coordinates
+  const bearing = calculateBearing(
+    currentLocation.y, // latitude
+    currentLocation.x, // longitude
+    destinationCoords.y, // destination latitude
+    destinationCoords.x  // destination longitude
+  );
+  
+  // NO OFFSETS - Pure raw readings from react-native-compass-heading library
+  const normalizedHeading = ((deviceHeading % 360) + 360) % 360;
+  const relativeBearing = normalizeAngle(bearing - normalizedHeading);
+  const distance = calculateDistance(
+    currentLocation.y, // latitude
+    currentLocation.x, // longitude
+    destinationCoords.y, // destination latitude
+    destinationCoords.x  // destination longitude
+  );
 
-  // Normalize to 0-360 degrees
-  return (angle + 360) % 360;
+  return (
+    <View style={styles.fallbackContainer}>
+      <Text style={styles.fallbackTitle}>AR Navigation</Text>
+      
+      <View style={[
+        styles.fallbackArrow,
+        { transform: [{ rotate: `${relativeBearing}deg` }] }
+      ]}>
+        <Text style={styles.fallbackArrowText}>↑</Text>
+      </View>
+      
+      <Text style={styles.fallbackDistance}>
+        {Math.round(distance)}m to destination
+      </Text>
+      
+      {/* Debug info for fallback */}
+      <Text style={styles.fallbackInstruction}>
+        True Bearing: {Math.round(bearing)}°
+        {bearing > 135 && bearing < 225 ? ' (SOUTH)' : ''}
+      </Text>
+      
+      {nextInstruction && (
+        <Text style={styles.fallbackInstruction}>
+          {nextInstruction}
+        </Text>
+      )}
+    </View>
+  );
 }
 
-// Helper function to create arrowhead using Skia
-function createArrowHead(x: number, y: number, direction: number) {
-  const size = 20;
-  const angle1 = direction + Math.PI * 0.8;
-  const angle2 = direction - Math.PI * 0.8;
-
-  const x1 = x + Math.cos(angle1) * size;
-  const y1 = y + Math.sin(angle1) * size;
-  const x2 = x + Math.cos(angle2) * size;
-  const y2 = y + Math.sin(angle2) * size;
-
-  const path = Skia.Path.Make();
-  path.moveTo(x, y);
-  path.lineTo(x1, y1);
-  path.lineTo(x2, y2);
-  path.close();
-
-  return path;
+// Updated utility functions to handle coordinates correctly
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const R = 6371000; // Earth's radius in meters
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
 
-// Helper function to create center reference dot
-function createCenterDot(x: number, y: number) {
-  const path = Skia.Path.Make();
-  path.addCircle(x, y, 5);
-  return path;
+function calculateBearing(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const toDeg = (x: number) => (x * 180) / Math.PI;
+  
+  const dLon = toRad(lon2 - lon1);
+  const lat1Rad = toRad(lat1);
+  const lat2Rad = toRad(lat2);
+  
+  const y = Math.sin(dLon) * Math.cos(lat2Rad);
+  const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
+  
+  const bearing = normalizeAngle(toDeg(Math.atan2(y, x)));
+  
+  // Debug log to verify calculation
+  console.log('BEARING CALC:', {
+    from: [lat1, lon1],
+    to: [lat2, lon2],
+    dLon: toDeg(dLon),
+    y: y.toFixed(4),
+    x: x.toFixed(4),
+    atan2: toDeg(Math.atan2(y, x)).toFixed(1),
+    finalBearing: bearing.toFixed(1)
+  });
+  
+  return bearing;
+}
+
+function normalizeAngle(angle: number): number {
+  while (angle > 180) angle -= 360;
+  while (angle < -180) angle += 360;
+  return angle;
 }
 
 const styles = StyleSheet.create({
@@ -261,11 +444,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    zIndez: 999,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 1,
+    zIndex: 999,
   },
   placeholder: {
     flex: 1,
@@ -275,104 +454,205 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 16,
     marginVertical: 5,
     textAlign: 'center',
   },
-  debugInfo: {
+  
+  // Main AR Guidance
+  mainGuidanceContainer: {
     position: 'absolute',
-    bottom: 80,
+    top: screenHeight * 0.25,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 2,
+  },
+  debugInfoAboveArrow: {
+    alignItems: 'center',
+    marginBottom: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: 10,
+    borderRadius: 10,
+    maxWidth: screenWidth * 0.9,
+  },
+  directionCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 4,
+    borderColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+  },
+  directionEmoji: {
+    fontSize: 50,
+    color: 'white',
+  },
+  directionText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+    marginTop: 15,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  distanceText: {
+    fontSize: 18,
+    color: 'white',
+    marginTop: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  bearingDebugText: {
+    fontSize: 14,
+    color: '#FFD700',
+    marginTop: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  compassCalibrationText: {
+    fontSize: 16,
+    color: '#00FF00',
+    marginTop: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    fontWeight: 'bold',
+  },
+  
+  // Instruction Bar
+  instructionBar: {
+    position: 'absolute',
+    top: 80,
     left: 20,
     right: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderRadius: 12,
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
     zIndex: 3,
-    elevation: 5,
   },
+  instructionText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  
+  // Debug
   debugToggle: {
     position: 'absolute',
-    bottom: 20,
+    top: 40,
     right: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
-    zIndex: 3,
-    elevation: 5,
+    zIndex: 4,
   },
   debugToggleText: {
     color: 'white',
     fontSize: 12,
     fontWeight: 'bold',
   },
-  minimalStatus: {
+  debugInfo: {
     position: 'absolute',
-    top: 60,
+    bottom: 20,
     left: 20,
-    right: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-    zIndex: 2,
-    alignItems: 'center',
-  },
-  minimalStatusText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  debugHeader: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 8,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    marginBottom: 5,
-  },
-  debugHeaderText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    padding: 10,
+    borderRadius: 8,
+    minWidth: 200,
+    zIndex: 3,
   },
   debugText: {
     color: 'white',
     fontSize: 12,
-    textAlign: 'center',
     marginVertical: 2,
-    paddingHorizontal: 10,
-    paddingBottom: 5,
   },
-  fallbackAR: {
-    marginTop: 30,
-    padding: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    borderRadius: 12,
+  
+  // Fallback Mode
+  fallbackContainer: {
     alignItems: 'center',
-    position: 'absolute',
-    bottom: 80,
-    left: 20,
-    right: 20,
+    marginTop: 50,
   },
-  minimalFallback: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  fallbackTitle: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 30,
   },
   fallbackArrow: {
-    marginTop: 20,
-    width: 80,
-    height: 80,
+    width: 100,
+    height: 100,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 255, 0, 0.3)',
-    borderRadius: 40,
+    backgroundColor: 'rgba(76, 175, 80, 0.8)',
+    borderRadius: 50,
     borderWidth: 3,
-    borderColor: '#00FF00',
+    borderColor: 'white',
+    marginVertical: 20,
   },
-  arrowText: {
-    color: '#00FF00',
+  fallbackArrowText: {
     fontSize: 50,
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  fallbackDistance: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginVertical: 10,
+  },
+  fallbackInstruction: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: 15,
+    borderRadius: 10,
+    maxWidth: 300,
+  },
+  calibrationContainer: {
+    position: 'absolute',
+    bottom: 120,
+    left: 10,
+    right: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    padding: 8,
+    borderRadius: 10,
+  },
+  calibrateButton: {
+    backgroundColor: 'rgba(76, 175, 80, 0.8)',
+    padding: 6,
+    borderRadius: 5,
+    minWidth: 50,
+  },
+  calibrateButtonText: {
+    color: 'white',
+    fontSize: 11,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  offsetText: {
+    color: 'white',
+    fontSize: 14,
     fontWeight: 'bold',
   },
 });
