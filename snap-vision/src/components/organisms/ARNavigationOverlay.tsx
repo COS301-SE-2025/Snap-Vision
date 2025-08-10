@@ -224,7 +224,7 @@ function SimpleARGuidance({
   const getDirectionInstruction = () => {
     const absRelativeBearing = Math.abs(relativeBearing);
     
-    if (absRelativeBearing < 45) return "Continue Straight"; // Set to 35 but can increase to about 45
+    if (absRelativeBearing < 35) return "Continue Straight"; // Set to 35 but can increase to about 45
     if (relativeBearing >= 35 && relativeBearing < 80) return "Turn Right";
     if (relativeBearing >= 80 && relativeBearing < 120) return "Sharp Right";
     if (relativeBearing >= 120) return "Turn Around";
