@@ -1,7 +1,8 @@
 // Updated WiFiFingerprintCollector.tsx with delete support
 import React, { useState } from 'react';
-import { View, Button, Text, ActivityIndicator, Alert, StyleSheet } from 'react-native';
+import { View, Button, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { collectWiFiFingerprint, deleteWiFiFingerprint } from '../../services/WiFiPositioningService';
+import StandardPopup from '../atoms/StandardPopup';
 
 interface Props {
   locationId: string;
@@ -25,6 +26,12 @@ export default function WiFiFingerprintCollector({
   onFingerprintCollected,
 }: Props) {
   const [loading, setLoading] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [showDeleteSuccessPopup, setShowDeleteSuccessPopup] = useState(false);
+  const [showDeleteErrorPopup, setShowDeleteErrorPopup] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleCollect = async () => {
     setLoading(true);
@@ -39,43 +46,36 @@ export default function WiFiFingerprintCollector({
         type,
       });
 
-      Alert.alert('Success', 'Wi-Fi fingerprint saved.');
-      onFingerprintCollected?.();
+      setShowSuccessPopup(true);
     } catch (err) {
-      Alert.alert('Error', 'Failed to collect fingerprint.');
+      setErrorMessage('Failed to collect fingerprint.');
+      setShowErrorPopup(true);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async () => {
-    Alert.alert('Confirm Delete', 'Are you sure you want to delete this point?', [
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          setLoading(true);
-          try {
-            await deleteWiFiFingerprint({
-              locationId,
-              buildingId,
-              floorId,
-              coordinates,
-            });
-            Alert.alert('Deleted', 'Fingerprint deleted successfully.');
-            onFingerprintCollected?.();
-          } catch (err) {
-            Alert.alert('Error', 'Failed to delete fingerprint.');
-          } finally {
-            setLoading(false);
-          }
-        },
-      },
-    ]);
+    setShowDeleteConfirmation(true);
+  };
+
+  const confirmDelete = async () => {
+    setShowDeleteConfirmation(false);
+    setLoading(true);
+    try {
+      await deleteWiFiFingerprint({
+        locationId,
+        buildingId,
+        floorId,
+        coordinates,
+      });
+      setShowDeleteSuccessPopup(true);
+    } catch (err) {
+      setErrorMessage('Failed to delete fingerprint.');
+      setShowDeleteErrorPopup(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -87,6 +87,70 @@ export default function WiFiFingerprintCollector({
       <Text style={styles.note}>
         Make sure Wi-Fi is enabled. Signal strength is recorded at this location.
       </Text>
+
+      {/* Success Popup for Fingerprint Collection */}
+      <StandardPopup
+        visible={showSuccessPopup}
+        title="Success"
+        message="Wi-Fi fingerprint saved successfully! 📶"
+        onConfirm={() => {
+          setShowSuccessPopup(false);
+          onFingerprintCollected?.();
+        }}
+        confirmText="OK"
+        showCancel={false}
+      />
+
+      {/* Error Popup for Fingerprint Collection */}
+      <StandardPopup
+        visible={showErrorPopup}
+        title="Error"
+        message={errorMessage}
+        onConfirm={() => {
+          setShowErrorPopup(false);
+          setErrorMessage('');
+        }}
+        confirmText="OK"
+        showCancel={false}
+      />
+
+      {/* Delete Confirmation Popup */}
+      <StandardPopup
+        visible={showDeleteConfirmation}
+        title="Confirm Delete"
+        message="Are you sure you want to delete this WiFi point? This action cannot be undone."
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteConfirmation(false)}
+        confirmText="Delete"
+        cancelText="Cancel"
+        showCancel={true}
+      />
+
+      {/* Delete Success Popup */}
+      <StandardPopup
+        visible={showDeleteSuccessPopup}
+        title="Deleted"
+        message="WiFi fingerprint deleted successfully! 🗑️"
+        onConfirm={() => {
+          setShowDeleteSuccessPopup(false);
+          onFingerprintCollected?.();
+        }}
+        confirmText="OK"
+        showCancel={false}
+      />
+
+      {/* Delete Error Popup */}
+      <StandardPopup
+        visible={showDeleteErrorPopup}
+        title="Error"
+        message={errorMessage}
+        onConfirm={() => {
+          setShowDeleteErrorPopup(false);
+          setErrorMessage('');
+        }}
+        confirmText="OK"
+        showCancel={false}
+      />
     </View>
   );
 }

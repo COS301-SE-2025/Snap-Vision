@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   TextInput,
 } from 'react-native';
@@ -46,6 +45,8 @@ export default function AdminIndoorPositioningContent() {
   const [selectedPointInfo, setSelectedPointInfo] = useState<{ id: string; x: number; y: number; description?: string } | null>(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [pointToDelete, setPointToDelete] = useState<{ id: string; description?: string } | null>(null);
+  const [showCoordinatesPopup, setShowCoordinatesPopup] = useState(false);
+  const [selectedCoordinates, setSelectedCoordinates] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -125,7 +126,7 @@ export default function AdminIndoorPositioningContent() {
     list.forEach((point, i) => {
       console.log(`  ${i + 1}. ${point.description} at (${point.x?.toFixed(3)}, ${point.y?.toFixed(3)})`);
     });
-    
+
     setExistingPoints(list);
   };
 
@@ -138,7 +139,8 @@ export default function AdminIndoorPositioningContent() {
       const data = JSON.parse(event.nativeEvent.data);
       if (data.type === 'tap') {
         setCoords({ x: data.x, y: data.y });
-        Alert.alert('Coordinates selected', `X: ${data.x.toFixed(3)}, Y: ${data.y.toFixed(3)}`);
+        setSelectedCoordinates({ x: data.x, y: data.y });
+        setShowCoordinatesPopup(true);
       } else if (data.type === 'marker_click' && data.id) {
         // Find the point info and show popup
         const point = existingPoints.find(p => p.id === data.id);
@@ -614,6 +616,28 @@ export default function AdminIndoorPositioningContent() {
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       )}
+
+      {/* Coordinates Selection Popup */}
+      <StandardPopup
+        visible={showCoordinatesPopup}
+        title="Coordinates Selected"
+        message={selectedCoordinates ? 
+          `📍 Location Selected\n\nCoordinates:\nX: ${selectedCoordinates.x.toFixed(3)}\nY: ${selectedCoordinates.y.toFixed(3)}\n\nYou can now add a WiFi fingerprint at this location.` 
+          : ''
+        }
+        onConfirm={() => {
+          setShowCoordinatesPopup(false);
+          setSelectedCoordinates(null);
+        }}
+        onCancel={() => {
+          setShowCoordinatesPopup(false);
+          setSelectedCoordinates(null);
+          setCoords(null); // Clear coordinates if cancelled
+        }}
+        confirmText="Continue"
+        cancelText="Cancel"
+        showCancel={true}
+      />
 
       {/* WiFi Point Info Popup */}
       <StandardPopup
