@@ -22,6 +22,7 @@ type RootStackParamList = {
   IndoorNavigationInterface: {
     buildingId: string;
     buildingName: string;
+    locationId: string;
   };
 };
 
@@ -154,13 +155,13 @@ export default function BuildingSelectionScreen() {
   };
 
   const handleBuildingSelect = (building: Building) => {
-    const actualBuildingId = building.name || building.id;
-    navigation.navigate('IndoorNavigationInterface', {
-      buildingId: actualBuildingId,
-      buildingName: building.name,
-    });
-  };
-
+  const actualBuildingId = building.name || building.id;
+  navigation.navigate('IndoorNavigationInterface', {
+    buildingId: building.id,
+    buildingName: building.name,
+    locationId: building.location, // <-- pass it along
+  });
+};
   const renderBuildingItem = ({ item }: { item: Building }) => (
     <TouchableOpacity
       style={[

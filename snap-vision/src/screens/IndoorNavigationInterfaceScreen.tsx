@@ -11,32 +11,27 @@ type RootStackParamList = {
   IndoorNavigationInterface: {
     buildingId: string;
     buildingName: string;
+    locationId: string;
   };
   IndoorNavigationInstructions: {
     buildingId: string;
     floorId: string;
     startRoomId: string;
     endRoomId: string;
+    locationId: string;
   };
 };
 
-type IndoorNavigationInterfaceScreenRouteProp = RouteProp<
-  RootStackParamList,
-  'IndoorNavigationInterface'
->;
-
-type IndoorNavigationInterfaceScreenNavigationProp = StackNavigationProp<
-  RootStackParamList,
-  'IndoorNavigationInterface'
->;
+type RouteP = RouteProp<RootStackParamList, 'IndoorNavigationInterface'>;
+type NavP = StackNavigationProp<RootStackParamList, 'IndoorNavigationInterface'>;
 
 export default function IndoorNavigationInterfaceScreen() {
-  const navigation = useNavigation<IndoorNavigationInterfaceScreenNavigationProp>();
-  const route = useRoute<IndoorNavigationInterfaceScreenRouteProp>();
+  const navigation = useNavigation<NavP>();
+  const route = useRoute<RouteP>();
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
-  const { buildingId, buildingName } = route.params;
+  const { buildingId, buildingName, locationId } = route.params;
 
   const handleNavigationStart = (startRoomId: string, endRoomId: string, floorId: string) => {
     navigation.navigate('IndoorNavigationInstructions', {
@@ -44,6 +39,7 @@ export default function IndoorNavigationInterfaceScreen() {
       floorId,
       startRoomId,
       endRoomId,
+      locationId, // forward
     });
   };
 
@@ -52,6 +48,7 @@ export default function IndoorNavigationInterfaceScreen() {
       <IndoorNavigationInterfaceContent
         buildingId={buildingId}
         buildingName={buildingName}
+        locationId={locationId} // <- pass to content
         onNavigationStart={handleNavigationStart}
       />
     </SafeAreaView>

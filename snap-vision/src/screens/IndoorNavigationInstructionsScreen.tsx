@@ -11,42 +11,28 @@ type RootStackParamList = {
   IndoorNavigationInterface: {
     buildingId: string;
     buildingName: string;
+    locationId: string;
   };
   IndoorNavigationInstructions: {
     buildingId: string;
     floorId: string;
     startRoomId: string;
     endRoomId: string;
+    locationId: string;
   };
   Home: undefined;
 };
 
-type IndoorNavigationInstructionsScreenRouteProp = RouteProp<
-  RootStackParamList,
-  'IndoorNavigationInstructions'
->;
-
-type IndoorNavigationInstructionsScreenNavigationProp = StackNavigationProp<
-  RootStackParamList,
-  'IndoorNavigationInstructions'
->;
+type RouteP = RouteProp<RootStackParamList, 'IndoorNavigationInstructions'>;
+type NavP = StackNavigationProp<RootStackParamList, 'IndoorNavigationInstructions'>;
 
 export default function IndoorNavigationInstructionsScreen() {
-  const navigation = useNavigation<IndoorNavigationInstructionsScreenNavigationProp>();
-  const route = useRoute<IndoorNavigationInstructionsScreenRouteProp>();
+  const navigation = useNavigation<NavP>();
+  const route = useRoute<RouteP>();
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
-  const { buildingId, floorId, startRoomId, endRoomId } = route.params;
-
-  const handleNavigationComplete = () => {
-    // Navigate back to home or show completion screen
-    navigation.navigate('Home');
-  };
-
-  const handleBack = () => {
-    navigation.goBack();
-  };
+  const { buildingId, floorId, startRoomId, endRoomId, locationId } = route.params;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -55,8 +41,9 @@ export default function IndoorNavigationInstructionsScreen() {
         floorId={floorId}
         startRoomId={startRoomId}
         endRoomId={endRoomId}
-        onNavigationComplete={handleNavigationComplete}
-        onBack={handleBack}
+        locationId={locationId} // new
+        onNavigationComplete={() => navigation.navigate('Home')}
+        onBack={() => navigation.goBack()}
       />
     </SafeAreaView>
   );
