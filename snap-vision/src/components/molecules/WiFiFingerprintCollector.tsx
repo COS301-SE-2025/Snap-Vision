@@ -92,7 +92,7 @@ export default function WiFiFingerprintCollector({
       <StandardPopup
         visible={showSuccessPopup}
         title="Success"
-        message="Wi-Fi fingerprint saved successfully! 📶"
+        message="Wi-Fi fingerprint saved successfully!"
         onConfirm={() => {
           setShowSuccessPopup(false);
           onFingerprintCollected?.();
@@ -130,7 +130,7 @@ export default function WiFiFingerprintCollector({
       <StandardPopup
         visible={showDeleteSuccessPopup}
         title="Deleted"
-        message="WiFi fingerprint deleted successfully! 🗑️"
+        message="WiFi fingerprint deleted successfully!"
         onConfirm={() => {
           setShowDeleteSuccessPopup(false);
           onFingerprintCollected?.();

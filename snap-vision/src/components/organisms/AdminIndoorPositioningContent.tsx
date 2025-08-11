@@ -182,14 +182,11 @@ export default function AdminIndoorPositioningContent() {
 
     const currentMarker = coords
       ? `<div id="marker"
-            draggable="true"
-            ondragstart="event.dataTransfer.setDragImage(new Image(), 0, 0)"
-            ondragend="onDrag(event)"
             style="position:absolute;left:${coords.x * 100}%;top:${coords.y * 100}%;
             transform:translate(-50%,-50%);
             width:16px;height:16px;border-radius:8px;
             background:blue;border:2px solid white;
-            cursor:grab;z-index:10;"></div>`
+            cursor:pointer;z-index:10;"></div>`
       : '';
 
     return `
@@ -215,11 +212,13 @@ export default function AdminIndoorPositioningContent() {
             #zoomable-area {
               position: absolute;
               transform-origin: 0 0;
-              transition: transform 0.1s ease-out;
+              transition: none;
+              width: 100%;
+              height: 100%;
             }
             #floorplan { 
-              width: 100vw; 
-              height: 100vh; 
+              width: 100%; 
+              height: 100%; 
               object-fit: contain;
               display: block;
               filter: ${isDark ? 'brightness(0.9) contrast(1.1)' : 'none'};
@@ -236,6 +235,7 @@ export default function AdminIndoorPositioningContent() {
               cursor: pointer;
               z-index: 5;
               transition: transform 0.2s ease;
+              pointer-events: auto;
             }
             .marker:hover {
               transform: translate(-50%, -50%) scale(1.2);
@@ -245,6 +245,7 @@ export default function AdminIndoorPositioningContent() {
               width: 16px;
               height: 16px;
               z-index: 10;
+              pointer-events: auto;
             }
           </style>
         </head>
@@ -262,7 +263,7 @@ export default function AdminIndoorPositioningContent() {
             const zoomableArea = document.getElementById('zoomable-area');
             const floorplan = document.getElementById('floorplan');
             
-            // Zoom and pan variables
+            // EXACT SAME zoom and pan variables as AdminFloorplanEditorContent
             let currentScale = 1;
             let currentOffsetX = 0;
             let currentOffsetY = 0;
@@ -275,7 +276,7 @@ export default function AdminIndoorPositioningContent() {
             let clickStartY = 0;
             let lastTapTime = 0;
             let tapTimeout = null;
-            let touchHandled = false; // Add flag to prevent double events
+            let touchHandled = false;
 
             function applyTransform() {
               zoomableArea.style.transform = \`translate(\${currentOffsetX}px, \${currentOffsetY}px) scale(\${currentScale})\`;
@@ -287,7 +288,12 @@ export default function AdminIndoorPositioningContent() {
               
               markers.forEach(marker => {
                 // Keep markers at consistent visual size regardless of zoom
-                marker.style.transform = \`translate(-50%, -50%) scale(\${inverseScale})\`;
+                const originalTransform = marker.style.transform;
+                if (originalTransform.includes('translate')) {
+                  marker.style.transform = originalTransform.replace(/scale\\([^)]*\\)/, '') + \` scale(\${inverseScale})\`;
+                } else {
+                  marker.style.transform = \`translate(-50%, -50%) scale(\${inverseScale})\`;
+                }
               });
             }
 
@@ -305,13 +311,18 @@ export default function AdminIndoorPositioningContent() {
                 return;
               }
               
-              // Convert screen coordinates to image coordinates accounting for zoom and pan
+              // FIXED: Use exact same coordinate calculation as AdminFloorplanEditorContent
               const rect = container.getBoundingClientRect();
-              const imageRect = floorplan.getBoundingClientRect();
+              const containerX = x - rect.left;
+              const containerY = y - rect.top;
               
-              // Calculate the position relative to the image
-              const imageX = (x - imageRect.left) / imageRect.width;
-              const imageY = (y - imageRect.top) / imageRect.height;
+              // Account for current zoom and pan
+              const adjustedX = (containerX - currentOffsetX) / currentScale;
+              const adjustedY = (containerY - currentOffsetY) / currentScale;
+              
+              // Convert to image coordinates (0-1 range)
+              const imageX = adjustedX / rect.width;
+              const imageY = adjustedY / rect.height;
               
               // Ensure coordinates are within bounds
               if (imageX >= 0 && imageX <= 1 && imageY >= 0 && imageY <= 1) {
@@ -331,10 +342,11 @@ export default function AdminIndoorPositioningContent() {
               }));
             }
 
-            // Touch event handlers for zoom and pan
+            // EXACT SAME touch event handlers as AdminFloorplanEditorContent
             document.addEventListener('touchstart', function(e) {
-              touchHandled = false; // Reset flag
+              touchHandled = false;
               
+              // Clear any pending tap timeout
               if (tapTimeout) {
                 clearTimeout(tapTimeout);
                 tapTimeout = null;
@@ -461,16 +473,6 @@ export default function AdminIndoorPositioningContent() {
                 const y = (e.offsetY / rect.height);
                 window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'tap', x, y }));
               });
-            }
-
-            function onDrag(event) {
-              const floorplan = document.getElementById('floorplan');
-              const rect = floorplan.getBoundingClientRect();
-              const x = (event.clientX - rect.left) / rect.width;
-              const y = (event.clientY - rect.top) / rect.height;
-              if (x >= 0 && x <= 1 && y >= 0 && y <= 1) {
-                window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'tap', x, y }));
-              }
             }
 
             // Initialize marker scales when image loads
@@ -622,7 +624,7 @@ export default function AdminIndoorPositioningContent() {
         visible={showCoordinatesPopup}
         title="Coordinates Selected"
         message={selectedCoordinates ? 
-          `📍 Location Selected\n\nCoordinates:\nX: ${selectedCoordinates.x.toFixed(3)}\nY: ${selectedCoordinates.y.toFixed(3)}\n\nYou can now add a WiFi fingerprint at this location.` 
+          ` Location Selected\n\nCoordinates:\nX: ${selectedCoordinates.x.toFixed(3)}\nY: ${selectedCoordinates.y.toFixed(3)}\n\nYou can now add a WiFi fingerprint at this location.` 
           : ''
         }
         onConfirm={() => {
@@ -644,7 +646,7 @@ export default function AdminIndoorPositioningContent() {
         visible={showPointInfoPopup}
         title="WiFi Point Information"
         message={selectedPointInfo ? 
-          `📍 ${selectedPointInfo.description || 'WiFi Point'}\n\nCoordinates:\nX: ${selectedPointInfo.x.toFixed(3)}\nY: ${selectedPointInfo.y.toFixed(3)}` 
+          ` ${selectedPointInfo.description || 'WiFi Point'}\n\nCoordinates:\nX: ${selectedPointInfo.x.toFixed(3)}\nY: ${selectedPointInfo.y.toFixed(3)}` 
           : ''
         }
         onConfirm={() => {
