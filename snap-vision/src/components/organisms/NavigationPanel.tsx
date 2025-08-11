@@ -225,27 +225,13 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
             </View>
           )}
 
-          {/* Action Buttons */}
-          <View style={styles.actionsContainer}>
-            <Pressable
-              style={[
-                styles.voiceStyleButton,
-                { backgroundColor: isNavigating ? '#E53935' : colors.primary },
-              ]}
-              onPress={isNavigating ? onStopNavigation : onStartNavigation}
-              disabled={isLoading}
-            >
-              <Text style={styles.voiceIcon}>{isLoading ? '⏳' : isNavigating ? '🛑' : '🧭'}</Text>
-              <Text style={styles.voiceLabel}>
-                {isLoading ? 'Loading' : isNavigating ? 'Stop' : 'Start'}
-              </Text>
-            </Pressable>
-
-            {/* AR Navigation Button - Only show when navigating and destination exists */}
+          {/* Single Row Priority Layout */}
+          <View style={styles.singleRowContainer}>
+            {/* Primary AR Toggle Button - Large and Prominent */}
             {isNavigating && destinationCoords && onToggleAR && (
               <Pressable
                 style={[
-                  styles.voiceStyleButton,
+                  styles.primaryARButton,
                   {
                     backgroundColor: showAR ? colors.primary : colors.secondary,
                     opacity: showAR ? 1 : 0.8,
@@ -253,23 +239,60 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
                 ]}
                 onPress={onToggleAR}
               >
-                <Icon name="camera-outline" size={16} color="#fff" style={styles.buttonIcon} />
-                <Text style={styles.voiceLabel}>{showAR ? 'AR On' : 'AR'}</Text>
+                <Icon name="camera-outline" size={24} color="#fff" style={styles.primaryButtonIcon} />
+                <Text style={styles.primaryButtonLabel}>{showAR ? 'AR On' : 'AR'}</Text>
               </Pressable>
             )}
-          </View>
 
-          {/* Voice Controls - Separate row */}
-          {isNavigating && (
-            <View style={styles.voiceSection}>
-              <TextToSpeech
-                isActive={isVoiceEnabled}
-                onToggle={onToggleVoice}
-                text={currentInstruction}
-                onSpeakingChange={onSpeakingChange}
-              />
+            {/* Secondary Buttons Container */}
+            <View style={styles.secondaryButtonsContainer}>
+              {/* Voice Toggle - Compact */}
+              {isNavigating && (
+                <Pressable
+                  style={[
+                    styles.compactButton,
+                    { backgroundColor: isVoiceEnabled ? colors.primary : colors.secondary },
+                  ]}
+                  onPress={onToggleVoice}
+                >
+                  <Icon 
+                    name={isVoiceEnabled ? "volume-high" : "volume-off"} 
+                    size={16} 
+                    color="#fff" 
+                  />
+                </Pressable>
+              )}
+
+              {/* Start/Stop Button - Compact when AR is available, otherwise primary */}
+              <Pressable
+                style={[
+                  isNavigating && destinationCoords && onToggleAR 
+                    ? styles.compactButton 
+                    : styles.primaryActionButton,
+                  { backgroundColor: isNavigating ? '#E53935' : colors.primary },
+                ]}
+                onPress={isNavigating ? onStopNavigation : onStartNavigation}
+                disabled={isLoading}
+              >
+                {isNavigating && destinationCoords && onToggleAR ? (
+                  <Icon 
+                    name={isLoading ? "loading" : isNavigating ? "stop" : "play"} 
+                    size={16} 
+                    color="#fff" 
+                  />
+                ) : (
+                  <>
+                    <Text style={styles.primaryButtonIcon}>
+                      {isLoading ? '⏳' : isNavigating ? '🛑' : '🧭'}
+                    </Text>
+                    <Text style={styles.primaryButtonLabel}>
+                      {isLoading ? 'Loading' : isNavigating ? 'Stop' : 'Start'}
+                    </Text>
+                  </>
+                )}
+              </Pressable>
             </View>
-          )}
+          </View>
         </View>
       </View>
     </View>
@@ -446,6 +469,57 @@ const styles = StyleSheet.create({
   },
   voiceSection: {
     marginTop: 4,
+  },
+  
+  // New Single Row Priority Styles
+  singleRowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  primaryARButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flex: 1,
+    minHeight: 48,
+  },
+  primaryActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flex: 1,
+    minHeight: 48,
+  },
+  secondaryButtonsContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  compactButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    width: 40,
+    height: 40,
+  },
+  primaryButtonIcon: {
+    marginRight: 8,
+    fontSize: 20,
+    color: '#fff',
+  },
+  primaryButtonLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#fff',
   },
   // Remove unused styles
   navButton: {
