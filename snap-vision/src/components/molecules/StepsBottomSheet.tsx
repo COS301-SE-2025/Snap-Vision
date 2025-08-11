@@ -8,6 +8,7 @@ import {
   View,
   Text,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 import type { NavigationStep } from '../../utils/navigationUtils';
 
@@ -112,7 +113,7 @@ export default function StepsBottomSheet({
         </View>
       </View>
 
-      <View style={styles.list}>
+      <ScrollView style={styles.list}>
         {steps.map((s, i) => {
           const isDone = i < currentStep;
           const isCurrent = i === currentStep;
@@ -156,7 +157,7 @@ export default function StepsBottomSheet({
             Select a start and destination on the map.
           </Text>
         )}
-      </View>
+      </ScrollView>
     </Animated.View>
   );
 }

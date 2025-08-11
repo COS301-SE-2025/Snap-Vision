@@ -70,6 +70,7 @@ export default function AdminFloorplanEditorContent() {
   const [isPathMode, setIsPathMode] = useState(false);
   const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
   const [currentPath, setCurrentPath] = useState<{ x: number; y: number }[]>([]);
+  const [selectedPathId, setSelectedPathId] = useState<string | null>(null);
 
   // Popup states
   const [showErrorPopup, setShowErrorPopup] = useState(false);
@@ -166,6 +167,39 @@ export default function AdminFloorplanEditorContent() {
 
     loadPaths();
   }, [buildingId, floorLabel, route.params, locationId]);
+
+  const handleSelectPath = (pathId: string) => {
+  setSelectedPathId(pathId);
+  // Highlight path in WebView
+  webViewRef.current?.injectJavaScript(`
+    document.querySelectorAll('.path-line').forEach(p => {
+      p.setAttribute('stroke', p.getAttribute('data-path-id') === '${pathId}' ? '#FF9800' : '${colors.primary}');
+      p.setAttribute('opacity', p.getAttribute('data-path-id') === '${pathId}' ? '1' : '0.8');
+      p.setAttribute('stroke-width', p.getAttribute('data-path-id') === '${pathId}' ? '2.5' : '1');
+    });
+    true;
+  `);
+};
+
+const deleteSelectedPath = async () => {
+  if (!selectedPathId) return;
+  try {
+    await firestore().collection(`locations/${locationId}/pathPOIs`).doc(selectedPathId).delete();
+    setPathMarkers(pathMarkers.filter((p) => p.id !== selectedPathId));
+    setSelectedPathId(null);
+    // Remove path from WebView
+    webViewRef.current?.injectJavaScript(`
+      document.querySelectorAll('.path-line[data-path-id="${selectedPathId}"]').forEach(p => p.remove());
+      true;
+    `);
+    setSuccessMessage('Path deleted successfully');
+    setShowSuccessPopup(true);
+  } catch (error) {
+    setErrorMessage('Failed to delete path');
+    setShowErrorPopup(true);
+  }
+};
+
 
   // Generate SVG path string from waypoints
   const generatePathSVG = (waypoints: { x: number; y: number }[]) => {
@@ -400,14 +434,14 @@ export default function AdminFloorplanEditorContent() {
             border-radius: 4px;
             white-space: nowrap;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            pointer-events: none;
+            pointer-events: auto;
             transform-origin: center top;
           }
           .path-line {
             stroke: ${colors.primary};
-            stroke-width: 3;
+            stroke-width: 1;
             fill: none;
-            stroke-dasharray: 5,5;
+            stroke-dasharray: 3,3;
             opacity: 0.8;
             vector-effect: non-scaling-stroke;
           }
@@ -426,17 +460,29 @@ export default function AdminFloorplanEditorContent() {
           .path-waypoint:hover {
             background-color: #ff9800;
           }
+            .path-line {
+          stroke: ${colors.primary};
+          stroke-width: 1;
+          fill: none;
+          stroke-dasharray: 3,3;
+          opacity: 0.8;
+          vector-effect: non-scaling-stroke;
+          cursor: pointer;
+          transition: stroke 0.2s, opacity 0.2s, stroke-width 0.2s;
+        }
         </style>
       </head>
       <body>
         <div id="container">
           <div id="zoomable-area">
             <img id="floorplan" src="${imageUri}" onerror="console.error('Failed to load image: ' + this.src);" />
-            <svg id="path-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5;" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+            <svg id="path-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: auto; z-index: 5;" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
           </div>
         </div>
         
         <script>
+
+        
           const container = document.getElementById('container');
           const zoomableArea = document.getElementById('zoomable-area');
           const floorplan = document.getElementById('floorplan');
@@ -548,6 +594,13 @@ export default function AdminFloorplanEditorContent() {
               pathElement.setAttribute('class', 'path-line');
               pathElement.setAttribute('d', path.d);
               pathElement.setAttribute('data-path-id', path.id);
+               pathElement.onclick = function(e) {
+              e.stopPropagation();
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'select_path',
+                pathId: path.id
+              }));
+            };
               pathSvg.appendChild(pathElement);
             });
           };
@@ -558,6 +611,13 @@ export default function AdminFloorplanEditorContent() {
             pathElement.setAttribute('class', 'path-line');
             pathElement.setAttribute('d', pathData.d);
             pathElement.setAttribute('data-path-id', pathData.id);
+            pathElement.onclick = function(e) {
+            e.stopPropagation();
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'select_path',
+              pathId: pathData.id
+            }));
+          };
             pathSvg.appendChild(pathElement);
           };
           
@@ -828,6 +888,8 @@ export default function AdminFloorplanEditorContent() {
     `;
   };
 
+  
+
   // Handle messages from WebView
   const handleMessage = (event: { nativeEvent: { data: string } }) => {
     try {
@@ -878,6 +940,8 @@ export default function AdminFloorplanEditorContent() {
         setCurrentPath(data.currentPath);
       } else if (data.type === 'waypoint_removed') {
         setCurrentPath(data.currentPath);
+      } else if (data.type === 'select_path'){
+        handleSelectPath(data.pathId);
       }
     } catch (e) {
       console.error('Error parsing WebView message:', e);
@@ -1072,7 +1136,20 @@ export default function AdminFloorplanEditorContent() {
       <View style={[styles.footer, { borderTopColor: colors.border }]}>
         <Text style={[styles.footerText, { color: colors.text }]}>
           {roomMarkers.length} rooms • {pathMarkers.length} paths
+          {selectedPathId && (
+      <Text style={{ color: '#FF9800', marginLeft: 12 }}>
+        {' '}Selected Path
+      </Text>
+    )}
         </Text>
+        {selectedPathId && (
+    <TouchableOpacity
+      onPress={deleteSelectedPath}
+      style={[styles.doneButton, { backgroundColor: '#D32F2F', marginRight: 8 }]}
+    >
+      <Text style={styles.doneButtonText}>Delete Path</Text>
+    </TouchableOpacity>
+  )}
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={[styles.doneButton, { backgroundColor: colors.primary }]}
