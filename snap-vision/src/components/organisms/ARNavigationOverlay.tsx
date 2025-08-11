@@ -11,6 +11,7 @@ interface Props {
   navigationSteps?: any[];
   routeCoordinates?: [number, number][];
   currentRouteIndex?: number;
+  showMiniMap?: boolean;
 }
 
 export default function ARNavigationOverlay({
@@ -20,6 +21,7 @@ export default function ARNavigationOverlay({
   navigationSteps = [],
   routeCoordinates = [],
   currentRouteIndex = 0,
+  showMiniMap = true,
 }: Props) {
   const devices = useCameraDevices();
   const device = devices.find(d => d.position === 'back') 
@@ -131,6 +133,149 @@ export default function ARNavigationOverlay({
           )}
         </View>
       )}
+
+      {/* Mini Map Overlay */}
+      {showMiniMap && currentLocation && destinationCoords && routeCoordinates.length > 0 && (
+        <MiniMapOverlay
+          currentLocation={currentLocation}
+          destinationCoords={destinationCoords}
+          routeCoordinates={routeCoordinates}
+          currentRouteIndex={currentRouteIndex}
+          deviceHeading={deviceHeading}
+        />
+      )}
+    </View>
+  );
+}
+
+// Mini Map Overlay Component
+function MiniMapOverlay({
+  currentLocation,
+  destinationCoords,
+  routeCoordinates,
+  currentRouteIndex,
+  deviceHeading,
+}: {
+  currentLocation: { x: number; y: number };
+  destinationCoords: { x: number; y: number };
+  routeCoordinates: [number, number][];
+  currentRouteIndex: number;
+  deviceHeading: number;
+}) {
+  // Calculate bounds for the mini map
+  const allPoints = [
+    [currentLocation.x, currentLocation.y],
+    [destinationCoords.x, destinationCoords.y],
+    ...routeCoordinates,
+  ];
+  
+  const bounds = {
+    minLat: Math.min(...allPoints.map(p => p[1])),
+    maxLat: Math.max(...allPoints.map(p => p[1])),
+    minLng: Math.min(...allPoints.map(p => p[0])),
+    maxLng: Math.max(...allPoints.map(p => p[0])),
+  };
+  
+  // Add padding to bounds
+  const latPadding = (bounds.maxLat - bounds.minLat) * 0.1;
+  const lngPadding = (bounds.maxLng - bounds.minLng) * 0.1;
+  
+  bounds.minLat -= latPadding;
+  bounds.maxLat += latPadding;
+  bounds.minLng -= lngPadding;
+  bounds.maxLng += lngPadding;
+  
+  // Convert real coordinates to mini map coordinates
+  const coordToMiniMap = (lng: number, lat: number) => {
+    const x = ((lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)) * 140; // 140 = minimap width - padding
+    const y = ((bounds.maxLat - lat) / (bounds.maxLat - bounds.minLat)) * 140; // Flip Y axis
+    return { x: Math.max(10, Math.min(150, x)), y: Math.max(10, Math.min(150, y)) };
+  };
+  
+  const currentPos = coordToMiniMap(currentLocation.x, currentLocation.y);
+  const destPos = coordToMiniMap(destinationCoords.x, destinationCoords.y);
+  
+  // Get upcoming route points for preview
+  const upcomingPoints = routeCoordinates.slice(currentRouteIndex, currentRouteIndex + 10);
+  
+  return (
+    <View style={styles.miniMapContainer}>
+      <View style={styles.miniMapHeader}>
+        <Text style={styles.miniMapTitle}>Route Overview</Text>
+      </View>
+      
+      <View style={styles.miniMapCanvas}>
+        {/* Route Path */}
+        {routeCoordinates.length > 1 && (
+          <View style={styles.routePath}>
+            {routeCoordinates.slice(0, -1).map((point, index) => {
+              const start = coordToMiniMap(point[0], point[1]);
+              const end = coordToMiniMap(routeCoordinates[index + 1][0], routeCoordinates[index + 1][1]);
+              
+              const length = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+              const angle = Math.atan2(end.y - start.y, end.x - start.x) * (180 / Math.PI);
+              
+              return (
+                <View
+                  key={index}
+                  style={[
+                    styles.routeSegment,
+                    {
+                      left: start.x,
+                      top: start.y,
+                      width: length,
+                      transform: [{ rotate: `${angle}deg` }],
+                      opacity: index < currentRouteIndex ? 0.3 : 1, // Dim completed segments
+                    },
+                  ]}
+                />
+              );
+            })}
+          </View>
+        )}
+        
+        {/* Destination Marker */}
+        <View style={[styles.destinationMarker, { left: destPos.x - 6, top: destPos.y - 6 }]}>
+          <Text style={styles.destinationIcon}>🎯</Text>
+        </View>
+        
+        {/* Current Location Marker with heading */}
+        <View 
+          style={[
+            styles.currentLocationMarker, 
+            { 
+              left: currentPos.x - 8, 
+              top: currentPos.y - 8,
+              transform: [{ rotate: `${deviceHeading}deg` }]
+            }
+          ]}
+        >
+          <Text style={styles.currentLocationIcon}>📍</Text>
+        </View>
+        
+        {/* Upcoming waypoints */}
+        {upcomingPoints.slice(1, 4).map((point, index) => {
+          const pos = coordToMiniMap(point[0], point[1]);
+          return (
+            <View 
+              key={index}
+              style={[
+                styles.waypointMarker, 
+                { left: pos.x - 3, top: pos.y - 3 }
+              ]}
+            />
+          );
+        })}
+      </View>
+      
+      <View style={styles.miniMapFooter}>
+        <Text style={styles.miniMapDistance}>
+          {Math.round(calculateDistance(
+            currentLocation.y, currentLocation.x,
+            destinationCoords.y, destinationCoords.x
+          ))}m remaining
+        </Text>
+      </View>
     </View>
   );
 }
@@ -654,5 +799,94 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  
+  // Mini Map Styles
+  miniMapContainer: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    width: 160,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    zIndex: 5,
+  },
+  miniMapHeader: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+  },
+  miniMapTitle: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  miniMapCanvas: {
+    width: 160,
+    height: 160,
+    position: 'relative',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+  },
+  miniMapFooter: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+  },
+  miniMapDistance: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  routePath: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+  },
+  routeSegment: {
+    position: 'absolute',
+    height: 2,
+    backgroundColor: '#4CAF50',
+    transformOrigin: 'left center',
+  },
+  currentLocationMarker: {
+    position: 'absolute',
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#2196F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  currentLocationIcon: {
+    fontSize: 8,
+    color: 'white',
+  },
+  destinationMarker: {
+    position: 'absolute',
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#F44336',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  destinationIcon: {
+    fontSize: 8,
+  },
+  waypointMarker: {
+    position: 'absolute',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
   },
 });

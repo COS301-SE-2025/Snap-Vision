@@ -1703,6 +1703,7 @@ const MapScreen = () => {
           navigationSteps={steps}
           routeCoordinates={lastRoute.current} // Pass the actual route
           currentRouteIndex={Math.floor((routeProgress / 100) * (lastRoute.current.length - 1))} // Current position on route
+          showMiniMap={true} // Enable mini map overlay
         />
       )}
 
