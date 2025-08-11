@@ -22,7 +22,7 @@ export default function LiveTrackingScreen() {
     detectedLocation?.locationId,
     detectedLocation?.buildingId,
     detectedLocation?.floorId,
-    10000 // Increase polling interval to 10 seconds for more stability
+    10000
   );
 
   // Add state for floorplan image
@@ -31,7 +31,6 @@ export default function LiveTrackingScreen() {
   useEffect(() => {
     if (position) {
       console.log("Current indoor position:", position);
-      // Update position in WebView
       updatePositionInWebView(position.x, position.y);
     }
   }, [position]);
@@ -46,18 +45,16 @@ export default function LiveTrackingScreen() {
     `);
   };
 
-  // Load floorplan when location is detected - EXACTLY matching AdminIndoorPositioningContent
+  // Load floorplan when location is detected
   useEffect(() => {
     const loadFloorplan = async () => {
       if (!detectedLocation) return;
 
       try {
-        // Match the EXACT path used in AdminIndoorPositioningContent
         const snap = await firestore()
           .collection(`locations/${detectedLocation.locationId}/buildingPOIs/${detectedLocation.buildingId}/floorplans`)
           .get();
 
-        // Find the matching floorplan by floorLabel
         const floorplanDoc = snap.docs.find(doc => {
           const data = doc.data();
           return data.floorLabel === detectedLocation.floorId;
@@ -78,16 +75,13 @@ export default function LiveTrackingScreen() {
     loadFloorplan();
   }, [detectedLocation]);
 
-  // Generate HTML that EXACTLY matches AdminIndoorPositioningContent
+  // SOLUTION: Calculate position relative to actual image bounds
   const getHTML = () => {
     if (!floorplanImage) return '<html><body>Loading...</body></html>';
 
-    // Position marker - using PERCENTAGE positioning like AdminIndoorPositioningContent
     const currentMarker = position ? `
       <div id="current-position" 
            style="position: absolute; 
-                  left: ${position.x * 100}%; 
-                  top: ${position.y * 100}%; 
                   width: 20px; 
                   height: 20px; 
                   background: #4CAF50; 
@@ -96,7 +90,8 @@ export default function LiveTrackingScreen() {
                   transform: translate(-50%, -50%); 
                   z-index: 100;
                   box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
-                  animation: pulse 2s infinite;">
+                  animation: pulse 2s infinite;
+                  pointer-events: none;">
       </div>
     ` : '';
 
@@ -124,10 +119,12 @@ export default function LiveTrackingScreen() {
             position: absolute;
             transform-origin: 0 0;
             transition: transform 0.1s ease-out;
+            width: 100%;
+            height: 100%;
           }
           #floorplan { 
-            width: 100vw; 
-            height: 100vh; 
+            width: 100%; 
+            height: 100%; 
             object-fit: contain;
             display: block;
             filter: ${isDark ? 'brightness(0.9) contrast(1.1)' : 'none'};
@@ -164,7 +161,6 @@ export default function LiveTrackingScreen() {
           const zoomableArea = document.getElementById('zoomable-area');
           const floorplan = document.getElementById('floorplan');
           
-          // Zoom and pan variables (exactly matching AdminIndoorPositioningContent)
           let currentScale = 1;
           let currentOffsetX = 0;
           let currentOffsetY = 0;
@@ -188,8 +184,12 @@ export default function LiveTrackingScreen() {
             const inverseScale = 1 / currentScale;
             
             markers.forEach(marker => {
-              // Keep markers at consistent visual size regardless of zoom
-              marker.style.transform = \`translate(-50%, -50%) scale(\${inverseScale})\`;
+              const originalTransform = marker.style.transform;
+              if (originalTransform.includes('translate')) {
+                marker.style.transform = originalTransform.replace(/scale\\([^)]*\\)/, '') + \` scale(\${inverseScale})\`;
+              } else {
+                marker.style.transform = \`translate(-50%, -50%) scale(\${inverseScale})\`;
+              }
             });
           }
 
@@ -199,8 +199,10 @@ export default function LiveTrackingScreen() {
             return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
           }
 
-          // SIMPLIFIED: Use percentage positioning like AdminIndoorPositioningContent
+          // CRITICAL: Position marker relative to actual image dimensions and position
           window.updatePosition = function(x, y) {
+            console.log('🎯 updatePosition called with coordinates:', x, y);
+            
             let marker = document.getElementById('current-position');
             if (!marker) {
               marker = document.createElement('div');
@@ -220,15 +222,72 @@ export default function LiveTrackingScreen() {
               zoomableArea.appendChild(marker);
             }
             
-            // Use PERCENTAGE positioning - exactly like AdminIndoorPositioningContent
-            marker.style.left = (x * 100) + '%';
-            marker.style.top = (y * 100) + '%';
-            marker.style.transform = 'translate(-50%, -50%)';
+            function positionMarker() {
+              // Wait for image to be fully loaded and get its natural dimensions
+              if (!floorplan.complete || floorplan.naturalWidth === 0) {
+                console.log('⏳ Image not loaded yet, waiting...');
+                setTimeout(positionMarker, 100);
+                return;
+              }
+              
+              // Get container dimensions
+              const containerRect = container.getBoundingClientRect();
+              const containerWidth = containerRect.width;
+              const containerHeight = containerRect.height;
+              
+              // Get natural image dimensions
+              const imageNaturalWidth = floorplan.naturalWidth;
+              const imageNaturalHeight = floorplan.naturalHeight;
+              const imageAspectRatio = imageNaturalWidth / imageNaturalHeight;
+              
+              // Calculate how the image is actually displayed with object-fit: contain
+              const containerAspectRatio = containerWidth / containerHeight;
+              
+              let displayedImageWidth, displayedImageHeight;
+              let imageLeft, imageTop;
+              
+              if (imageAspectRatio > containerAspectRatio) {
+                // Image is wider than container - width is constrained
+                displayedImageWidth = containerWidth;
+                displayedImageHeight = containerWidth / imageAspectRatio;
+                imageLeft = 0;
+                imageTop = (containerHeight - displayedImageHeight) / 2;
+              } else {
+                // Image is taller than container - height is constrained
+                displayedImageWidth = containerHeight * imageAspectRatio;
+                displayedImageHeight = containerHeight;
+                imageLeft = (containerWidth - displayedImageWidth) / 2;
+                imageTop = 0;
+              }
+              
+              // Calculate marker position relative to the actual displayed image
+              const markerX = imageLeft + (x * displayedImageWidth);
+              const markerY = imageTop + (y * displayedImageHeight);
+              
+              // Position the marker
+              marker.style.left = markerX + 'px';
+              marker.style.top = markerY + 'px';
+              marker.style.transform = 'translate(-50%, -50%)';
+              
+              console.log('📍 Marker positioned at:', {
+                coordinates: { x, y },
+                container: { width: containerWidth, height: containerHeight },
+                naturalImage: { width: imageNaturalWidth, height: imageNaturalHeight },
+                displayedImage: { 
+                  width: displayedImageWidth, 
+                  height: displayedImageHeight,
+                  left: imageLeft,
+                  top: imageTop
+                },
+                markerPosition: { x: markerX, y: markerY }
+              });
+            }
             
+            positionMarker();
             updateMarkerScales();
           };
 
-          // Touch event handlers for zoom and pan (same as AdminIndoorPositioningContent)
+          // Touch event handlers for zoom and pan
           document.addEventListener('touchstart', function(e) {
             touchHandled = false;
             
@@ -281,6 +340,13 @@ export default function LiveTrackingScreen() {
                 
                 applyTransform();
                 updateMarkerScales();
+                
+                // Reposition marker after zoom
+                if (window.lastPosition) {
+                  setTimeout(() => {
+                    window.updatePosition(window.lastPosition.x, window.lastPosition.y);
+                  }, 50);
+                }
               }
               
               e.preventDefault();
@@ -307,6 +373,13 @@ export default function LiveTrackingScreen() {
                 touchHandled = true;
               }
               
+              // Reposition marker after pan
+              if (window.lastPosition) {
+                setTimeout(() => {
+                  window.updatePosition(window.lastPosition.x, window.lastPosition.y);
+                }, 50);
+              }
+              
               e.preventDefault();
             }
           }, { passive: false });
@@ -330,6 +403,14 @@ export default function LiveTrackingScreen() {
                   currentOffsetY = 0;
                   applyTransform();
                   updateMarkerScales();
+                  
+                  // Reposition marker after zoom reset
+                  if (window.lastPosition) {
+                    setTimeout(() => {
+                      window.updatePosition(window.lastPosition.x, window.lastPosition.y);
+                    }, 100);
+                  }
+                  
                   lastTapTime = 0;
                 } else {
                   lastTapTime = currentTime;
@@ -342,13 +423,16 @@ export default function LiveTrackingScreen() {
 
           // Initialize when image loads
           floorplan.addEventListener('load', function() {
+            console.log('🖼️ Floorplan image loaded');
             updateMarkerScales();
             if (window.lastPosition) {
-              window.updatePosition(window.lastPosition.x, window.lastPosition.y);
+              setTimeout(() => {
+                window.updatePosition(window.lastPosition.x, window.lastPosition.y);
+              }, 100);
             }
           });
 
-          // Store last position
+          // Store last position for repositioning after zoom/pan
           const originalUpdatePosition = window.updatePosition;
           window.updatePosition = function(x, y) {
             window.lastPosition = { x, y };
