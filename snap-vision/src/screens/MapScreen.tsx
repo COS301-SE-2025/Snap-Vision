@@ -789,7 +789,9 @@ const MapScreen = () => {
 
   // Update the updateNavigationProgress function to check for destination arrival
   const updateNavigationProgress = (latitude: number, longitude: number) => {
+    // Add safety check at the beginning
     if (!lastRoute.current || lastRoute.current.length === 0) {
+      console.warn('No route data available for progress update');
       return;
     }
 
@@ -799,6 +801,13 @@ const MapScreen = () => {
 
     for (let i = 0; i < lastRoute.current.length; i++) {
       const routePoint = lastRoute.current[i];
+      
+      // Add safety check for each route point
+      if (!Array.isArray(routePoint) || routePoint.length < 2) {
+        console.warn('Invalid route point at index', i, routePoint);
+        continue;
+      }
+      
       const distance = getDistanceMeters(
         latitude,
         longitude,
@@ -860,9 +869,23 @@ const MapScreen = () => {
       let minDist = Infinity;
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
-        const [lon, lat] = step.way_points
-          ? lastRoute.current[step.way_points[0]]
-          : lastRoute.current[0];
+        
+        // Fix: Add safety checks before destructuring
+        let stepCoordinate;
+        if (step.way_points && step.way_points[0] !== undefined && lastRoute.current[step.way_points[0]]) {
+          stepCoordinate = lastRoute.current[step.way_points[0]];
+        } else if (lastRoute.current[0]) {
+          stepCoordinate = lastRoute.current[0];
+        } else {
+          continue; // Skip this iteration if no valid coordinate
+        }
+        
+        // Additional safety check - ensure stepCoordinate is an array with 2 elements
+        if (!Array.isArray(stepCoordinate) || stepCoordinate.length < 2) {
+          continue;
+        }
+        
+        const [lon, lat] = stepCoordinate;
         const dist = getDistanceMeters(latitude, longitude, lat, lon);
         if (dist < minDist) {
           minDist = dist;
