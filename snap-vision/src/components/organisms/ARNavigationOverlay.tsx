@@ -31,9 +31,8 @@ export default function ARNavigationOverlay({
 
   const [isActive, setIsActive] = useState(false);
   const [deviceError, setDeviceError] = useState<string | null>(null);
-  const [showDebugInfo, setShowDebugInfo] = useState(false);
   const [nextInstruction, setNextInstruction] = useState<string>('');
-  const [compassOffset, setCompassOffset] = useState(0); // No initial offset
+  const [isMiniMapCollapsed, setIsMiniMapCollapsed] = useState(false);
 
   useEffect(() => {
     if (!hasPermission) {
@@ -79,7 +78,6 @@ export default function ARNavigationOverlay({
             destinationCoords={destinationCoords}
             deviceHeading={deviceHeading}
             nextInstruction={nextInstruction}
-            compassOffset={compassOffset}
           />
         </View>
       </View>
@@ -106,33 +104,7 @@ export default function ARNavigationOverlay({
         nextInstruction={nextInstruction}
         routeCoordinates={routeCoordinates}
         currentRouteIndex={currentRouteIndex}
-        compassOffset={compassOffset}
-        setCompassOffset={setCompassOffset}
       />
-
-      {/* Debug Toggle */}
-      <TouchableOpacity 
-        style={styles.debugToggle} 
-        onPress={() => setShowDebugInfo(!showDebugInfo)}
-      >
-        <Text style={styles.debugToggleText}>
-          {showDebugInfo ? '📊 Hide' : 'ℹ️ Info'}
-        </Text>
-      </TouchableOpacity>
-
-      {/* Debug Info */}
-      {showDebugInfo && (
-        <View style={styles.debugInfo}>
-          <Text style={styles.debugText}>Route Points: {routeCoordinates.length}</Text>
-          <Text style={styles.debugText}>Current Index: {currentRouteIndex}</Text>
-          <Text style={styles.debugText}>Device Heading: {Math.round(deviceHeading)}°</Text>
-          {currentLocation && (
-            <Text style={styles.debugText}>
-              Location: {currentLocation.y.toFixed(4)}, {currentLocation.x.toFixed(4)}
-            </Text>
-          )}
-        </View>
-      )}
 
       {/* Mini Map Overlay */}
       {showMiniMap && currentLocation && destinationCoords && routeCoordinates.length > 0 && (
@@ -142,6 +114,8 @@ export default function ARNavigationOverlay({
           routeCoordinates={routeCoordinates}
           currentRouteIndex={currentRouteIndex}
           deviceHeading={deviceHeading}
+          isCollapsed={isMiniMapCollapsed}
+          onToggleCollapse={() => setIsMiniMapCollapsed(!isMiniMapCollapsed)}
         />
       )}
     </View>
@@ -155,12 +129,16 @@ function MiniMapOverlay({
   routeCoordinates,
   currentRouteIndex,
   deviceHeading,
+  isCollapsed,
+  onToggleCollapse,
 }: {
   currentLocation: { x: number; y: number };
   destinationCoords: { x: number; y: number };
   routeCoordinates: [number, number][];
   currentRouteIndex: number;
   deviceHeading: number;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
 }) {
   // Calculate bounds for the mini map
   const allPoints = [
@@ -195,87 +173,108 @@ function MiniMapOverlay({
   const currentPos = coordToMiniMap(currentLocation.x, currentLocation.y);
   const destPos = coordToMiniMap(destinationCoords.x, destinationCoords.y);
   
+  // Use actual route start and end points for better alignment
+  const routeStartPos = routeCoordinates.length > 0 
+    ? coordToMiniMap(routeCoordinates[0][0], routeCoordinates[0][1])
+    : currentPos;
+  const routeEndPos = routeCoordinates.length > 0 
+    ? coordToMiniMap(routeCoordinates[routeCoordinates.length - 1][0], routeCoordinates[routeCoordinates.length - 1][1])
+    : destPos;
+  
   // Get upcoming route points for preview
   const upcomingPoints = routeCoordinates.slice(currentRouteIndex, currentRouteIndex + 10);
   
   return (
-    <View style={styles.miniMapContainer}>
-      <View style={styles.miniMapHeader}>
-        <Text style={styles.miniMapTitle}>Route Overview</Text>
-      </View>
+    <View style={[styles.miniMapContainer, isCollapsed && styles.miniMapCollapsed]}>
+      <TouchableOpacity 
+        style={styles.miniMapHeader}
+        onPress={onToggleCollapse}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.miniMapTitle}>
+          {isCollapsed ? 'Map' : 'Route Overview'}
+        </Text>
+        <Text style={styles.miniMapToggle}>
+          {isCollapsed ? '▲' : '▼'}
+        </Text>
+      </TouchableOpacity>
       
-      <View style={styles.miniMapCanvas}>
-        {/* Route Path */}
-        {routeCoordinates.length > 1 && (
-          <View style={styles.routePath}>
-            {routeCoordinates.slice(0, -1).map((point, index) => {
-              const start = coordToMiniMap(point[0], point[1]);
-              const end = coordToMiniMap(routeCoordinates[index + 1][0], routeCoordinates[index + 1][1]);
-              
-              const length = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
-              const angle = Math.atan2(end.y - start.y, end.x - start.x) * (180 / Math.PI);
-              
+      {!isCollapsed && (
+        <>
+          <View style={styles.miniMapCanvas}>
+            {/* Route Path */}
+            {routeCoordinates.length > 1 && (
+              <View style={styles.routePath}>
+                {routeCoordinates.slice(0, -1).map((point, index) => {
+                  const start = coordToMiniMap(point[0], point[1]);
+                  const end = coordToMiniMap(routeCoordinates[index + 1][0], routeCoordinates[index + 1][1]);
+                  
+                  const length = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+                  const angle = Math.atan2(end.y - start.y, end.x - start.x) * (180 / Math.PI);
+                  
+                  return (
+                    <View
+                      key={index}
+                      style={[
+                        styles.routeSegment,
+                        {
+                          left: start.x,
+                          top: start.y - 1, // Center the line vertically
+                          width: length,
+                          transform: [{ rotate: `${angle}deg` }],
+                          opacity: index < currentRouteIndex ? 0.3 : 1, // Dim completed segments
+                        },
+                      ]}
+                    />
+                  );
+                })}
+              </View>
+            )}
+            
+            {/* Current Location Marker with heading - positioned at route start */}
+            <View 
+              style={[
+                styles.currentLocationMarker, 
+                { 
+                  left: routeStartPos.x - 8, 
+                  top: routeStartPos.y - 8,
+                  transform: [{ rotate: `${deviceHeading}deg` }]
+                }
+              ]}
+            >
+              <Text style={styles.currentLocationIcon}>📍</Text>
+            </View>
+            
+            {/* Destination Marker - positioned at route end */}
+            <View style={[styles.destinationMarker, { left: routeEndPos.x - 6, top: routeEndPos.y - 6 }]}>
+              <Text style={styles.destinationIcon}>🎯</Text>
+            </View>
+            
+            {/* Upcoming waypoints */}
+            {upcomingPoints.slice(1, 4).map((point, index) => {
+              const pos = coordToMiniMap(point[0], point[1]);
               return (
-                <View
+                <View 
                   key={index}
                   style={[
-                    styles.routeSegment,
-                    {
-                      left: start.x,
-                      top: start.y,
-                      width: length,
-                      transform: [{ rotate: `${angle}deg` }],
-                      opacity: index < currentRouteIndex ? 0.3 : 1, // Dim completed segments
-                    },
+                    styles.waypointMarker, 
+                    { left: pos.x - 3, top: pos.y - 3 }
                   ]}
                 />
               );
             })}
           </View>
-        )}
-        
-        {/* Destination Marker */}
-        <View style={[styles.destinationMarker, { left: destPos.x - 6, top: destPos.y - 6 }]}>
-          <Text style={styles.destinationIcon}>🎯</Text>
-        </View>
-        
-        {/* Current Location Marker with heading */}
-        <View 
-          style={[
-            styles.currentLocationMarker, 
-            { 
-              left: currentPos.x - 8, 
-              top: currentPos.y - 8,
-              transform: [{ rotate: `${deviceHeading}deg` }]
-            }
-          ]}
-        >
-          <Text style={styles.currentLocationIcon}>📍</Text>
-        </View>
-        
-        {/* Upcoming waypoints */}
-        {upcomingPoints.slice(1, 4).map((point, index) => {
-          const pos = coordToMiniMap(point[0], point[1]);
-          return (
-            <View 
-              key={index}
-              style={[
-                styles.waypointMarker, 
-                { left: pos.x - 3, top: pos.y - 3 }
-              ]}
-            />
-          );
-        })}
-      </View>
-      
-      <View style={styles.miniMapFooter}>
-        <Text style={styles.miniMapDistance}>
-          {Math.round(calculateDistance(
-            currentLocation.y, currentLocation.x,
-            destinationCoords.y, destinationCoords.x
-          ))}m remaining
-        </Text>
-      </View>
+          
+          <View style={styles.miniMapFooter}>
+            <Text style={styles.miniMapDistance}>
+              {Math.round(calculateDistance(
+                currentLocation.y, currentLocation.x,
+                destinationCoords.y, destinationCoords.x
+              ))}m remaining
+            </Text>
+          </View>
+        </>
+      )}
     </View>
   );
 }
@@ -287,9 +286,7 @@ function SimpleARGuidance({
   deviceHeading,
   nextInstruction,
   routeCoordinates,
-  currentRouteIndex,
-  compassOffset,
-  setCompassOffset
+  currentRouteIndex
 }: {
   currentLocation: { x: number; y: number } | null;
   destinationCoords: { x: number; y: number } | null;
@@ -297,8 +294,6 @@ function SimpleARGuidance({
   nextInstruction: string;
   routeCoordinates: [number, number][];
   currentRouteIndex: number;
-  compassOffset: number;
-  setCompassOffset: (offset: number) => void;
 }) {
   // Add bearing smoothing to prevent flickering
   const [bearingHistory, setBearingHistory] = useState<number[]>([]);
@@ -357,13 +352,6 @@ function SimpleARGuidance({
   
   const normalizedDeviceHeading = ((deviceHeading % 360) + 360) % 360;
   const relativeBearing = normalizeAngle(bearing - normalizedDeviceHeading);
-  
-  const distance = calculateDistance(
-    currentLocation.y, // current latitude
-    currentLocation.x, // current longitude
-    nextPoint[1],      // target latitude
-    nextPoint[0]       // target longitude
-  );
 
   //direction logic with relaxed tolerances - 35 degrees for straight
   const getDirectionInstruction = () => {
@@ -395,24 +383,6 @@ function SimpleARGuidance({
     <>
       {/* AR Navigation with Arrow and Direction */}
       <View style={styles.mainGuidanceContainer}>
-        <View style={styles.debugInfoAboveArrow}>
-          <Text style={styles.compassCalibrationText}>
-            🧭 PURE COMPASS TEST (react-native-compass-heading)
-          </Text>
-          
-          <Text style={styles.compassCalibrationText}>
-            Raw Device: {Math.round(deviceHeading)}° | Final: {Math.round(normalizedDeviceHeading)}°
-          </Text>
-          
-          <Text style={styles.bearingDebugText}>
-            📍 True Bearing: {Math.round(bearing)}° | Compass: {Math.round(normalizedDeviceHeading)}° | Relative: {Math.round(relativeBearing)}°
-          </Text>
-          
-          <Text style={styles.bearingDebugText}>
-            🎯 Mode: COMPASS ONLY - Works Stationary & Moving
-          </Text>
-        </View>
-
         {/* Direction Circle with Arrow */}
         <View style={[
           styles.directionCircle,
@@ -427,44 +397,6 @@ function SimpleARGuidance({
         <Text style={styles.directionText}>
           {getDirectionInstruction()}
         </Text>
-
-        {/* Distance Text */}
-        <Text style={styles.distanceText}>
-          {Math.round(distance)}m to destination
-        </Text>
-      </View>
-
-      {/* Compass Calibration Controls */}
-      <View style={styles.calibrationContainer}>
-        <TouchableOpacity 
-          style={styles.calibrateButton}
-          onPress={() => setCompassOffset(compassOffset - 90)}
-        >
-          <Text style={styles.calibrateButtonText}>-90°</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.calibrateButton}
-          onPress={() => setCompassOffset(compassOffset - 10)}
-        >
-          <Text style={styles.calibrateButtonText}>-10°</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.offsetText}>Offset: {compassOffset}°</Text>
-
-        <TouchableOpacity 
-          style={styles.calibrateButton}
-          onPress={() => setCompassOffset(compassOffset + 10)}
-        >
-          <Text style={styles.calibrateButtonText}>+10°</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.calibrateButton}
-          onPress={() => setCompassOffset(compassOffset + 90)}
-        >
-          <Text style={styles.calibrateButtonText}>+90°</Text>
-        </TouchableOpacity>
       </View>
     </>
   );
@@ -475,14 +407,12 @@ function SimpleARFallback({
   currentLocation, 
   destinationCoords, 
   deviceHeading,
-  nextInstruction,
-  compassOffset
+  nextInstruction
 }: {
   currentLocation: { x: number; y: number } | null;
   destinationCoords: { x: number; y: number } | null;
   deviceHeading: number;
   nextInstruction: string;
-  compassOffset: number;
 }) {
   if (!currentLocation || !destinationCoords) return null;
 
@@ -514,16 +444,6 @@ function SimpleARFallback({
       ]}>
         <Text style={styles.fallbackArrowText}>↑</Text>
       </View>
-      
-      <Text style={styles.fallbackDistance}>
-        {Math.round(distance)}m to destination
-      </Text>
-      
-      {/* Debug info for fallback */}
-      <Text style={styles.fallbackInstruction}>
-        True Bearing: {Math.round(bearing)}°
-        {bearing > 135 && bearing < 225 ? ' (SOUTH)' : ''}
-      </Text>
       
       {nextInstruction && (
         <Text style={styles.fallbackInstruction}>
@@ -559,17 +479,6 @@ function calculateBearing(lat1: number, lon1: number, lat2: number, lon2: number
   const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
   
   const bearing = normalizeAngle(toDeg(Math.atan2(y, x)));
-  
-  // Debug log to verify calculation
-  console.log('BEARING CALC:', {
-    from: [lat1, lon1],
-    to: [lat2, lon2],
-    dLon: toDeg(dLon),
-    y: y.toFixed(4),
-    x: x.toFixed(4),
-    atan2: toDeg(Math.atan2(y, x)).toFixed(1),
-    finalBearing: bearing.toFixed(1)
-  });
   
   return bearing;
 }
@@ -607,7 +516,7 @@ const styles = StyleSheet.create({
   // Main AR Guidance
   mainGuidanceContainer: {
     position: 'absolute',
-    top: screenHeight * 0.25,
+    top: screenHeight * 0.375, // Moved down slightly from 0.35 for better positioning
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -680,7 +589,7 @@ const styles = StyleSheet.create({
   // Instruction Bar
   instructionBar: {
     position: 'absolute',
-    top: 80,
+    top: 20, // Aligned with turn-by-turn directions in MapScreen
     left: 20,
     right: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -804,7 +713,7 @@ const styles = StyleSheet.create({
   // Mini Map Styles
   miniMapContainer: {
     position: 'absolute',
-    top: 60,
+    top: 120, // Positioned below the turn-by-turn directions at top: 70
     right: 20,
     width: 160,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -819,11 +728,21 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 8,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   miniMapTitle: {
     color: 'white',
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  miniMapToggle: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  miniMapCollapsed: {
+    height: 'auto',
   },
   miniMapCanvas: {
     width: 160,
