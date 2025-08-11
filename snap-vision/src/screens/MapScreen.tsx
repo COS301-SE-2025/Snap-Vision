@@ -87,6 +87,11 @@ const MapScreen = () => {
   const [routeProgress, setRouteProgress] = useState(0);
   const [distanceToDestination, setDistanceToDestination] = useState<number | null>(null);
   const [estimatedTime, setEstimatedTime] = useState<number | null>(null);
+  
+  // Enhanced progress tracking
+  const [distanceWalked, setDistanceWalked] = useState(0); // Never decreases
+  const [originalRouteDistance, setOriginalRouteDistance] = useState<number | null>(null); // Set when navigation starts
+  const [startLocation, setStartLocation] = useState<{latitude: number; longitude: number} | null>(null); // Starting point
 
   const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
   const [pois, setPOIs] = useState<any[]>([]);
@@ -246,7 +251,7 @@ const MapScreen = () => {
         }
 
         // Android 12+ specific: Check if we need to request precise location
-        if (Platform.Version >= 31) {
+        if (Number(Platform.Version) >= 31) {
           // Android 12 = API 31
           try {
             // Try to get high accuracy first
@@ -618,6 +623,11 @@ const MapScreen = () => {
     setSelectedPOI(null);
     setSteps([]);
     setCurrentStep(0);
+    
+    // Reset enhanced progress tracking
+    setDistanceWalked(0);
+    setStartLocation(null);
+    setOriginalRouteDistance(null);
 
     // Stop navigation if it's active
     if (isNavigating) {
@@ -737,6 +747,13 @@ const MapScreen = () => {
     setStatus('Navigation started');
     setRouteProgress(0);
     setNavigationStartTime(Date.now());
+    
+    // Initialize enhanced progress tracking
+    setDistanceWalked(0);
+    setStartLocation(currentLocation);
+    if (distanceToDestination !== null) {
+      setOriginalRouteDistance(distanceToDestination);
+    }
 
     // Start watching position with higher frequency
     if (watchIdRef.current) {
@@ -785,6 +802,11 @@ const MapScreen = () => {
     webViewRef.current?.injectJavaScript(
       'if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }',
     );
+    
+    // Reset enhanced progress tracking when stopping
+    setDistanceWalked(0);
+    setStartLocation(null);
+    setOriginalRouteDistance(null);
   };
 
   // Update the updateNavigationProgress function to check for destination arrival
@@ -793,6 +815,21 @@ const MapScreen = () => {
     if (!lastRoute.current || lastRoute.current.length === 0) {
       console.warn('No route data available for progress update');
       return;
+    }
+
+    // Calculate distance walked from start location (never decreases)
+    if (startLocation && isNavigating) {
+      const totalWalked = getDistanceMeters(
+        startLocation.latitude,
+        startLocation.longitude,
+        latitude,
+        longitude
+      );
+      
+      // Only update if we've walked further (prevents decrease on rerouting)
+      if (totalWalked > distanceWalked) {
+        setDistanceWalked(totalWalked);
+      }
     }
 
     // Find closest point on the route
@@ -913,8 +950,16 @@ const MapScreen = () => {
     // Update distance to destination
     setDistanceToDestination(distanceToEnd);
 
-    // Keep status update brief to avoid UI clutter
-    setStatus(`Progress: ${newProgress}%`);
+    // Show enhanced status with distance walked and remaining
+    const walkedFormatted = distanceWalked >= 1000 
+      ? `${(distanceWalked / 1000).toFixed(1)}km walked` 
+      : `${Math.round(distanceWalked)}m walked`;
+    
+    const remainingFormatted = distanceToEnd >= 1000 
+      ? `${(distanceToEnd / 1000).toFixed(1)}km remaining` 
+      : `${Math.round(distanceToEnd)}m remaining`;
+
+    setStatus(`${walkedFormatted} • ${remainingFormatted}`);
 
     // Update route progress visually
     if (webViewRef.current) {
@@ -978,6 +1023,11 @@ const MapScreen = () => {
     setEstimatedTime(null);
     setSelectedFeature(null);
     setSelectedPOI(null);
+    
+    // Reset enhanced progress tracking
+    setDistanceWalked(0);
+    setStartLocation(null);
+    setOriginalRouteDistance(null);
 
     // Clear the route from the map
     webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
@@ -1248,6 +1298,11 @@ const MapScreen = () => {
     // Clear any existing route
     webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
     lastRoute.current = [];
+    
+    // Reset enhanced progress tracking for new destination
+    setDistanceWalked(0);
+    setStartLocation(null);
+    setOriginalRouteDistance(null);
 
     setDestination(poi.name);
     setDestinationCoords([poi.centroid.longitude, poi.centroid.latitude]);
@@ -1283,7 +1338,7 @@ const MapScreen = () => {
 
           // Android 12+ requires different options
           const watchOptions =
-            Platform.Version >= 31
+            Number(Platform.Version) >= 31
               ? {
                   enableHighAccuracy: fineGranted, // Use high accuracy only if fine location granted
                   distanceFilter: 3,
@@ -1419,7 +1474,13 @@ const MapScreen = () => {
 
       const jsRouteCode = `window.drawRoute && window.drawRoute(${JSON.stringify(coordinates)});`;
       webViewRef.current?.injectJavaScript(jsRouteCode);
-      setStatus('Route updated!');
+      
+      // Enhanced status message showing rerouting doesn't reset progress
+      const walkedFormatted = distanceWalked >= 1000 
+        ? `${(distanceWalked / 1000).toFixed(1)}km walked` 
+        : `${Math.round(distanceWalked)}m walked`;
+      
+      setStatus(`Route updated! ${walkedFormatted} progress preserved`);
     } catch (error) {
       console.error('Route fetch error:', error);
       setError('Failed to fetch or draw route');
@@ -1656,6 +1717,8 @@ const MapScreen = () => {
           onCancelRoute={cancelRoute}
           progress={routeProgress}
           distance={distanceToDestination}
+          distanceWalked={distanceWalked}
+          originalRouteDistance={originalRouteDistance}
           time={estimatedTime}
           destination={destination}
           isVoiceEnabled={isVoiceEnabled}
@@ -1712,7 +1775,7 @@ const MapScreen = () => {
           onPress={() => setShowDirectionsSheet(true)}
           style={{
             position: 'absolute',
-            top: 59,
+            top: 70, // Moved down from 20 to avoid obstructing zoom buttons
             left: 20,
             right: 20,
             backgroundColor: colors.card,
