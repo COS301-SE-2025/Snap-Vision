@@ -13,6 +13,8 @@ interface NavigationPanelProps {
   onCancelRoute: () => void;
   progress: number;
   distance: number | null;
+  distanceWalked: number; // New: Distance walked from start (never decreases)
+  originalRouteDistance: number | null; // New: Original route distance for completion tracking
   time: number | null;
   destination: string;
   isVoiceEnabled: boolean;
@@ -36,6 +38,8 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
   onCancelRoute,
   progress,
   distance,
+  distanceWalked,
+  originalRouteDistance,
   time,
   destination,
   isVoiceEnabled,
@@ -62,6 +66,26 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
     }
   };
 
+  // Format the distance walked (never shows null, always shows progress)
+  const formatDistanceWalked = (meters: number) => {
+    if (meters >= 1000) {
+      return `${(meters / 1000).toFixed(1)} km walked`;
+    } else {
+      return `${Math.round(meters)} m walked`;
+    }
+  };
+
+  // Calculate completion percentage based on original route distance
+  const getCompletionPercentage = () => {
+    if (!originalRouteDistance || originalRouteDistance === 0) return progress;
+    
+    // Use distance walked relative to original route for more stable percentage
+    const walkedPercent = Math.min((distanceWalked / originalRouteDistance) * 100, 100);
+    
+    // Return the higher of route progress or distance-based progress to prevent decreases
+    return Math.max(progress, Math.round(walkedPercent));
+  };
+
   // Format the time (e.g., "5 min" or "< 1 min")
   const formatTime = (minutes: number | null) => {
     if (minutes === null) return '';
@@ -75,11 +99,13 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
 
   // Minimized version (works for both AR and 2D modes)
   if (isMinimized) {
+    const completionPercent = getCompletionPercentage();
+    
     return (
       <View style={[styles.minimizedContainer, { backgroundColor: colors.card }]}>
         <Pressable style={styles.minimizedContent} onPress={onToggleMinimize}>
           <Text style={[styles.minimizedText, { color: colors.text }]} numberOfLines={1}>
-            {destination} • {formatDistance(distance)} • {Math.round(progress)}%
+            {destination} • {formatDistanceWalked(distanceWalked)} • {formatDistance(distance)} left • {completionPercent}%
           </Text>
           <Icon name="chevron-up" size={16} color={colors.text} />
         </Pressable>
@@ -154,8 +180,19 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
                 style={styles.icon}
               />
               <Text style={[styles.detailsText, { color: colors.text }]}>
-                {formatDistance(distance)}
+                {formatDistance(distance)} remaining
               </Text>
+
+              {/* Show distance walked when navigating */}
+              {isNavigating && distanceWalked > 0 && (
+                <>
+                  <Text style={[styles.separator, { color: colors.text }]}>•</Text>
+                  <Icon name="walk" size={16} color={colors.primary} style={styles.icon} />
+                  <Text style={[styles.detailsText, { color: colors.text }]}>
+                    {formatDistanceWalked(distanceWalked)}
+                  </Text>
+                </>
+              )}
 
               {time !== null && (
                 <>
@@ -169,21 +206,21 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
             </View>
           )}
 
-          {(isNavigating || progress > 0) && (
+          {(isNavigating || progress > 0 || distanceWalked > 0) && (
             <View style={[styles.progressContainer, { backgroundColor: colors.border }]}>
               <View
                 style={[
                   styles.progressBar,
-                  { width: `${progress}%`, backgroundColor: colors.primary },
+                  { width: `${getCompletionPercentage()}%`, backgroundColor: colors.primary },
                 ]}
               />
               <Text
                 style={[
                   styles.progressText,
-                  progress > 50 ? { color: '#fff' } : { color: colors.text },
+                  getCompletionPercentage() > 50 ? { color: '#fff' } : { color: colors.text },
                 ]}
               >
-                {Math.round(progress)}%
+                {getCompletionPercentage()}%
               </Text>
             </View>
           )}
