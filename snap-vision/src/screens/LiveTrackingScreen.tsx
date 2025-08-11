@@ -82,14 +82,14 @@ export default function LiveTrackingScreen() {
     const currentMarker = position ? `
       <div id="current-position" 
            style="position: absolute; 
-                  width: 20px; 
-                  height: 20px; 
+                  width: 12px; 
+                  height: 12px; 
                   background: #4CAF50; 
-                  border: 3px solid white; 
+                  border: 2px solid white; 
                   border-radius: 50%; 
                   transform: translate(-50%, -50%); 
                   z-index: 100;
-                  box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
+                  box-shadow: 0 0 10px rgba(76, 175, 80, 0.8);
                   animation: pulse 2s infinite;
                   pointer-events: none;">
       </div>
@@ -134,15 +134,15 @@ export default function LiveTrackingScreen() {
           }
           @keyframes pulse {
             0% { 
-              box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
+              box-shadow: 0 0 10px rgba(76, 175, 80, 0.8);
               transform: translate(-50%, -50%) scale(1);
             }
             50% { 
-              box-shadow: 0 0 25px rgba(76, 175, 80, 1);
-              transform: translate(-50%, -50%) scale(1.1);
+              box-shadow: 0 0 20px rgba(76, 175, 80, 1);
+              transform: translate(-50%, -50%) scale(1.2);
             }
             100% { 
-              box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
+              box-shadow: 0 0 10px rgba(76, 175, 80, 0.8);
               transform: translate(-50%, -50%) scale(1);
             }
           }
@@ -209,13 +209,13 @@ export default function LiveTrackingScreen() {
               marker.id = 'current-position';
               marker.style.cssText = \`
                 position: absolute; 
-                width: 20px; 
-                height: 20px; 
+                width: 12px; 
+                height: 12px; 
                 background: #4CAF50; 
-                border: 3px solid white; 
+                border: 2px solid white; 
                 border-radius: 50%; 
                 z-index: 100;
-                box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
+                box-shadow: 0 0 10px rgba(76, 175, 80, 0.8);
                 animation: pulse 2s infinite;
                 pointer-events: none;
               \`;
