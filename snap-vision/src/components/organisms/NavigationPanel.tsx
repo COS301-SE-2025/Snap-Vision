@@ -73,8 +73,8 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
     }
   };
 
-  // Minimized version for AR mode
-  if (isMinimized && showAR) {
+  // Minimized version (works for both AR and 2D modes)
+  if (isMinimized) {
     return (
       <View style={[styles.minimizedContainer, { backgroundColor: colors.card }]}>
         <Pressable style={styles.minimizedContent} onPress={onToggleMinimize}>
@@ -118,10 +118,10 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.card }]}>
-      {/* Header with Cancel Button */}
+      {/* Header with Minimize and Cancel Buttons */}
       <View style={styles.header}>
         <View style={styles.headerSpacer} />
-        {showAR && onToggleMinimize && (
+        {onToggleMinimize && (
           <Pressable
             style={[styles.minimizeButton, { backgroundColor: colors.secondary }]}
             onPress={onToggleMinimize}

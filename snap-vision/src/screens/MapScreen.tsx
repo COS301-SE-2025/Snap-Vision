@@ -1665,7 +1665,7 @@ const MapScreen = () => {
           showAR={showAR}
           onToggleAR={handleARToggle}
           destinationCoords={destinationCoords}
-          isMinimized={showAR && isNavigationMinimized}
+          isMinimized={isNavigationMinimized}
           onToggleMinimize={handleNavigationMinimize}
         />
       )}
