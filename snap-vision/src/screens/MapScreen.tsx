@@ -154,6 +154,8 @@ const MapScreen = () => {
     onConfirm: () => void;
   } | null>(null);
   const [showDestinationReachedPopup, setShowDestinationReachedPopup] = useState(false);
+  const [showLocationRefreshPopup, setShowLocationRefreshPopup] = useState(false);
+  const [isRefreshingLocation, setIsRefreshingLocation] = useState(false);
 
   //Fetch Locations
   useEffect(() => {
@@ -251,7 +253,8 @@ const MapScreen = () => {
           results['android.permission.ACCESS_COARSE_LOCATION'] === 'granted';
 
         if (!fineLocationGranted && !coarseLocationGranted) {
-          setError('Location permissions denied. Please enable in Settings.');
+          setErrorPopupMessage('Location permissions denied. Please enable location access in your device settings and try again.');
+          setShowErrorPopup(true);
           return;
         }
 
@@ -280,7 +283,7 @@ const MapScreen = () => {
                   },
                   (fallbackError) => {
                     console.error('❌ All location attempts failed:', fallbackError);
-                    setError('Unable to get location. Check GPS settings.');
+                    setShowLocationRefreshPopup(true);
                   },
                   { enableHighAccuracy: false, timeout: 20000, maximumAge: 30000 },
                 );
@@ -290,6 +293,7 @@ const MapScreen = () => {
           } catch (err) {
             console.error('❌ Location request failed:', err);
             setError('Location service error');
+            setShowLocationRefreshPopup(true);
           }
         } else {
           // Pre-Android 12 behavior
@@ -302,7 +306,7 @@ const MapScreen = () => {
             },
             (error) => {
               console.error('❌ Location error:', error);
-              setError('Failed to get location');
+              setShowLocationRefreshPopup(true);
             },
             { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
           );
@@ -310,7 +314,56 @@ const MapScreen = () => {
       }
     } catch (err) {
       console.error('❌ Permission request failed:', err);
-      setError('Permission request failed');
+      setShowLocationRefreshPopup(true);
+    }
+  };
+
+  // Enhanced location refresh function
+  const refreshLocation = async () => {
+    setIsRefreshingLocation(true);
+    setShowLocationRefreshPopup(false); // Close the popup
+    setTempMessage('Refreshing location...');
+    setError(null); // Clear any existing errors
+    
+    try {
+      // Stop any existing location watching
+      if (watchIdRef.current) {
+        Geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+
+      // Clear current location state
+      setCurrentLocation(null);
+      
+      // Re-request location with fresh permissions
+      await requestLocation();
+      
+      // If we still don't have location after a delay, show manual refresh option
+      setTimeout(() => {
+        if (!currentLocation && !isRefreshingLocation) {
+          setShowLocationRefreshPopup(true);
+        }
+      }, 3000);
+      
+    } catch (error) {
+      console.error('❌ Location refresh failed:', error);
+      setShowLocationRefreshPopup(true);
+    } finally {
+      setIsRefreshingLocation(false);
+    }
+  };
+
+  // Manual map refresh (reload WebView)
+  const refreshMap = () => {
+    setShowLocationRefreshPopup(false); // Close the popup
+    setTempMessage('Refreshing map...');
+    setIsMapReady(false);
+    setCurrentLocation(null);
+    setError(null);
+    
+    // Reload the WebView
+    if (webViewRef.current) {
+      webViewRef.current.reload();
     }
   };
 
@@ -1545,6 +1598,20 @@ const MapScreen = () => {
     return () => clearInterval(progressInterval);
   }, [isNavigating, currentLocation]);
 
+  // Check for location availability after map loads
+  useEffect(() => {
+    if (isMapReady && !currentLocation && !isRefreshingLocation) {
+      // Wait 5 seconds after map is ready, then show location prompt if still no location
+      const locationTimeout = setTimeout(() => {
+        if (!currentLocation && !showLocationRefreshPopup) {
+          setShowLocationRefreshPopup(true);
+        }
+      }, 5000);
+
+      return () => clearTimeout(locationTimeout);
+    }
+  }, [isMapReady, currentLocation, isRefreshingLocation, showLocationRefreshPopup]);
+
   // Dynamically request location updates every 3 seconds
   useEffect(() => {
     let watchId: number | null = null;
@@ -1770,6 +1837,30 @@ const MapScreen = () => {
         color={colors.primary}
       />
 
+      {/* Location Refresh Button - shown when no location available */}
+      {!currentLocation && (
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            bottom: 160, // Above the MapActionsPanel
+            right: 20,
+            backgroundColor: colors.primary,
+            paddingVertical: 12,
+            paddingHorizontal: 16,
+            borderRadius: 8,
+            elevation: 4,
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}
+          onPress={refreshLocation}
+          disabled={isRefreshingLocation}
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold', marginRight: 8 }}>
+            {isRefreshingLocation ? 'Finding Location...' : '📍 Find My Location'}
+          </Text>
+        </TouchableOpacity>
+      )}
+
       {/* AR Navigation Overlay */}
       {showAR && isNavigating && destinationCoords && currentLocation && (
         <ARNavigationOverlay
@@ -1994,6 +2085,19 @@ const MapScreen = () => {
           setStatus('Ready for navigation');
         }}
         showCancel={false}
+      />
+
+      {/* Location Refresh Popup */}
+      <StandardPopup
+        visible={showLocationRefreshPopup}
+        title="Location Not Found"
+        message="Unable to find your location. This can happen indoors or in areas with poor GPS signal. Try 'Retry Location' or 'Refresh Map' for a complete reset."
+        onConfirm={refreshLocation}
+        onCancel={refreshMap}
+        confirmText="Retry Location"
+        cancelText="Refresh Map"
+        showCancel={true}
+        verticalButtons={true}
       />
     </View>
   );
