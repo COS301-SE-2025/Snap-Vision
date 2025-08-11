@@ -136,6 +136,11 @@ const MapScreen = () => {
   const deviceHeading = useCompass();
   const [isNavigationMinimized, setIsNavigationMinimized] = useState(false);
 
+  // Map rotation state
+  const [isMapRotationEnabled, setIsMapRotationEnabled] = useState(false);
+  const [lastLocationUpdate, setLastLocationUpdate] = useState<{latitude: number; longitude: number; timestamp: number} | null>(null);
+  const [movementBearing, setMovementBearing] = useState<number | null>(null);
+
   //haptic feedback options
   const hapticOptions = {
     enableVibrateFallback: true,
@@ -212,6 +217,21 @@ const MapScreen = () => {
     }
   }, [isAdmin, isMapReady, pois]);
 
+  // Handle compass-based map rotation when stationary
+  useEffect(() => {
+    if (isMapRotationEnabled) {
+      // Always use compass heading when rotation is enabled
+      // Priority: movement bearing if available and recent, otherwise compass
+      const shouldUseCompass = !movementBearing || 
+        (lastLocationUpdate && Date.now() - lastLocationUpdate.timestamp > 3000); // Use compass if no movement for 3 seconds
+      
+      if (shouldUseCompass) {
+        console.log(`Using compass rotation: ${deviceHeading}°`);
+        sendCompassRotationToMap(deviceHeading);
+      }
+    }
+  }, [deviceHeading, isMapRotationEnabled, movementBearing, lastLocationUpdate]);
+
   const sendLocationToWebView = (lat: number, lon: number, centerMap = false) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
 
@@ -228,6 +248,98 @@ const MapScreen = () => {
     if (isNavigating && lastRoute.current && lastRoute.current.length > 0) {
       setStatus(`Updating location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
       updateNavigationProgress(lat, lon);
+    }
+
+    // Update movement bearing for map rotation
+    updateMovementDirection(lat, lon);
+  };
+
+  // Function to toggle map rotation mode
+  const toggleMapRotation = () => {
+    const newRotationState = !isMapRotationEnabled;
+    setIsMapRotationEnabled(newRotationState);
+    
+    if (webViewRef.current) {
+      const jsCode = `window.setMapRotationMode && window.setMapRotationMode(${newRotationState});`;
+      webViewRef.current.injectJavaScript(jsCode);
+    }
+  };
+
+  // Function to update movement direction for map rotation
+  const updateMovementDirection = (lat: number, lon: number) => {
+    if (!isMapRotationEnabled) return;
+
+    const currentTime = Date.now();
+    const newLocation = { latitude: lat, longitude: lon, timestamp: currentTime };
+
+    if (lastLocationUpdate) {
+      const timeDiff = currentTime - lastLocationUpdate.timestamp;
+      const distance = calculateDistance(
+        lastLocationUpdate.latitude,
+        lastLocationUpdate.longitude,
+        lat,
+        lon
+      );
+
+      // Lowered thresholds for more responsive rotation
+      if (distance > 0.5 && timeDiff > 500) { // 0.5 meters and 0.5 seconds
+        const bearing = calculateBearing(
+          lastLocationUpdate.latitude,
+          lastLocationUpdate.longitude,
+          lat,
+          lon
+        );
+        
+        console.log(`Movement detected: ${distance.toFixed(2)}m, bearing: ${bearing.toFixed(1)}°`);
+        setMovementBearing(bearing);
+        setLastLocationUpdate(newLocation);
+        
+        // Immediately send rotation to WebView
+        if (webViewRef.current) {
+          const jsCode = `window.setMapRotation && window.setMapRotation(${bearing});`;
+          webViewRef.current.injectJavaScript(jsCode);
+        }
+      }
+    } else {
+      setLastLocationUpdate(newLocation);
+    }
+  };
+
+  // Function to calculate distance between two coordinates (in meters)
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371e3; // Earth's radius in meters
+    const φ1 = lat1 * Math.PI/180;
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lon2-lon1) * Math.PI/180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c;
+  };
+
+  // Function to calculate bearing between two coordinates
+  const calculateBearing = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const φ1 = lat1 * Math.PI/180;
+    const φ2 = lat2 * Math.PI/180;
+    const Δλ = (lon2-lon1) * Math.PI/180;
+
+    const y = Math.sin(Δλ) * Math.cos(φ2);
+    const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+
+    const θ = Math.atan2(y, x);
+    return (θ * 180/Math.PI + 360) % 360;
+  };
+
+  // Function to send compass rotation to map (fallback when not moving)
+  const sendCompassRotationToMap = (heading: number) => {
+    if (isMapRotationEnabled && webViewRef.current) {
+      console.log(`Sending compass rotation to map: ${heading}°`);
+      const jsCode = `window.setMapRotation && window.setMapRotation(${heading});`;
+      webViewRef.current.injectJavaScript(jsCode);
     }
   };
 
@@ -817,6 +929,15 @@ const MapScreen = () => {
     setStartLocation(currentLocation);
     if (distanceToDestination !== null) {
       setOriginalRouteDistance(distanceToDestination);
+    }
+
+    // Enable map rotation during navigation for better experience
+    if (!isMapRotationEnabled) {
+      setIsMapRotationEnabled(true);
+      if (webViewRef.current) {
+        const jsCode = `window.setMapRotationMode && window.setMapRotationMode(true);`;
+        webViewRef.current.injectJavaScript(jsCode);
+      }
     }
 
     // Start watching position with higher frequency
@@ -1835,6 +1956,8 @@ const MapScreen = () => {
         onReportIn={() => setShowReportTooltip(true)}
         onReportOut={() => setShowReportTooltip(false)}
         color={colors.primary}
+        isMapRotationEnabled={isMapRotationEnabled}
+        onToggleMapRotation={toggleMapRotation}
       />
 
       {/* Location Refresh Button - shown when no location available */}
@@ -2087,9 +2210,123 @@ const MapScreen = () => {
         showCancel={false}
       />
 
+      {/* Location Error Banner - Non-modal but centered like a popup */}
+      {showLocationRefreshPopup && (
+        <View style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1003,
+          pointerEvents: 'box-none', // Allow touches through the transparent area
+        }}>
+          <View style={{
+            backgroundColor: isDark ? '#2c2c2c' : 'white',
+            borderRadius: 16,
+            padding: 24,
+            marginHorizontal: 48, // Increased from 32 to add more space from edges
+            maxWidth: 360, // Reduced from 400 to make it narrower
+            width: '100%',
+            elevation: 8,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 8,
+            pointerEvents: 'auto', // Block touches on the popup itself
+          }}>
+            {/* Close button */}
+            <TouchableOpacity
+              style={{
+                position: 'absolute',
+                top: 12,
+                right: 12,
+                padding: 8,
+                zIndex: 1,
+              }}
+              onPress={() => setShowLocationRefreshPopup(false)}
+            >
+              <Text style={{ 
+                color: isDark ? '#ccc' : '#666', 
+                fontSize: 20, 
+                fontWeight: 'bold' 
+              }}>×</Text>
+            </TouchableOpacity>
+
+            {/* Title */}
+            <Text style={{
+              color: isDark ? 'white' : colors.text,
+              fontSize: 18,
+              fontWeight: 'bold',
+              marginBottom: 12,
+              textAlign: 'center',
+              paddingRight: 32, // Space for close button
+            }}>
+              Location Not Found
+            </Text>
+
+            {/* Message */}
+            <Text style={{
+              color: isDark ? '#ccc' : colors.text,
+              fontSize: 14,
+              marginBottom: 20,
+              lineHeight: 20,
+              textAlign: 'center',
+            }}>
+              Unable to find your location. This can happen indoors or in areas with poor GPS signal.
+            </Text>
+
+            {/* Action buttons in vertical layout */}
+            <View style={{ flexDirection: 'column', gap: 12 }}>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: colors.primary,
+                  paddingVertical: 14,
+                  paddingHorizontal: 24,
+                  borderRadius: 8,
+                }}
+                onPress={refreshLocation}
+              >
+                <Text style={{
+                  color: 'white',
+                  fontSize: 16,
+                  fontWeight: '600',
+                  textAlign: 'center',
+                }}>
+                  Retry Location
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={{
+                  backgroundColor: 'transparent',
+                  paddingVertical: 14,
+                  paddingHorizontal: 24,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: colors.primary,
+                }}
+                onPress={refreshMap}
+              >
+                <Text style={{
+                  color: colors.primary,
+                  fontSize: 16,
+                  fontWeight: '600',
+                  textAlign: 'center',
+                }}>
+                  Refresh Map
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
       {/* Location Refresh Popup */}
       <StandardPopup
-        visible={showLocationRefreshPopup}
+        visible={false} // Disabled - using custom non-modal popup instead
         title="Location Not Found"
         message="Unable to find your location. This can happen indoors or in areas with poor GPS signal. Try 'Retry Location' or 'Refresh Map' for a complete reset."
         onConfirm={refreshLocation}
