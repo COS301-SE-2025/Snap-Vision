@@ -713,7 +713,7 @@ const styles = StyleSheet.create({
   // Mini Map Styles
   miniMapContainer: {
     position: 'absolute',
-    top: 120, // Positioned below the turn-by-turn directions at top: 70
+    top: 70, // distanc from top of screen
     right: 20,
     width: 160,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',

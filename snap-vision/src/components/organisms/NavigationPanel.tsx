@@ -66,24 +66,29 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
     }
   };
 
-  // Format the distance walked (never shows null, always shows progress)
-  const formatDistanceWalked = (meters: number) => {
-    if (meters >= 1000) {
-      return `${(meters / 1000).toFixed(1)} km walked`;
-    } else {
-      return `${Math.round(meters)} m walked`;
+  // Calculate completion percentage based on distance remaining
+  const getCompletionPercentage = () => {
+    if (!originalRouteDistance || originalRouteDistance === 0 || distance === null) {
+      return progress; // Fallback to route progress if no distance data
     }
+    
+    // Calculate progress based on how much distance is left vs original distance
+    const remainingPercent = (distance / originalRouteDistance) * 100;
+    const completionPercent = Math.max(0, Math.min(100, 100 - remainingPercent));
+    
+    // Use the higher of route progress or distance-based progress to prevent decreases
+    return Math.max(progress, Math.round(completionPercent));
   };
 
-  // Calculate completion percentage based on original route distance
-  const getCompletionPercentage = () => {
-    if (!originalRouteDistance || originalRouteDistance === 0) return progress;
+  // Format distance remaining for display
+  const formatDistanceRemaining = (meters: number | null) => {
+    if (meters === null) return '';
     
-    // Use distance walked relative to original route for more stable percentage
-    const walkedPercent = Math.min((distanceWalked / originalRouteDistance) * 100, 100);
-    
-    // Return the higher of route progress or distance-based progress to prevent decreases
-    return Math.max(progress, Math.round(walkedPercent));
+    if (meters >= 1000) {
+      return `${(meters / 1000).toFixed(1)}km left`;
+    } else {
+      return `${Math.round(meters)}m left`;
+    }
   };
 
   // Format the time (e.g., "5 min" or "< 1 min")
@@ -105,7 +110,7 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
       <View style={[styles.minimizedContainer, { backgroundColor: colors.card }]}>
         <Pressable style={styles.minimizedContent} onPress={onToggleMinimize}>
           <Text style={[styles.minimizedText, { color: colors.text }]} numberOfLines={1}>
-            {destination} • {formatDistanceWalked(distanceWalked)} • {formatDistance(distance)} left • {completionPercent}%
+            {destination} • {formatDistanceRemaining(distance)} • {formatTime(time)} • {completionPercent}%
           </Text>
           <Icon name="chevron-up" size={16} color={colors.text} />
         </Pressable>
@@ -180,19 +185,8 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
                 style={styles.icon}
               />
               <Text style={[styles.detailsText, { color: colors.text }]}>
-                {formatDistance(distance)} remaining
+                {formatDistanceRemaining(distance)}
               </Text>
-
-              {/* Show distance walked when navigating */}
-              {isNavigating && distanceWalked > 0 && (
-                <>
-                  <Text style={[styles.separator, { color: colors.text }]}>•</Text>
-                  <Icon name="walk" size={16} color={colors.primary} style={styles.icon} />
-                  <Text style={[styles.detailsText, { color: colors.text }]}>
-                    {formatDistanceWalked(distanceWalked)}
-                  </Text>
-                </>
-              )}
 
               {time !== null && (
                 <>

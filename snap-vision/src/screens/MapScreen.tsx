@@ -213,10 +213,15 @@ const MapScreen = () => {
   const sendLocationToWebView = (lat: number, lon: number, centerMap = false) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
 
+    // Only inject JavaScript if the map is ready
+    if (!isMapReady || !webViewRef.current) {
+      return;
+    }
+
     const zoomLevel = isNavigating ? 18 : 16;
 
     const jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap}, ${zoomLevel});`;
-    webViewRef.current?.injectJavaScript(jsCode);
+    webViewRef.current.injectJavaScript(jsCode);
 
     if (isNavigating && lastRoute.current && lastRoute.current.length > 0) {
       setStatus(`Updating location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
@@ -635,7 +640,9 @@ const MapScreen = () => {
     }
 
     // Clear route from map
-    webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+    if (isMapReady && webViewRef.current) {
+      webViewRef.current.injectJavaScript('window.clearRoute && window.clearRoute();');
+    }
     lastRoute.current = [];
 
     // Reset status
@@ -645,7 +652,9 @@ const MapScreen = () => {
     setError(null);
 
     // Hide POI markers and show all markers again
-    webViewRef.current?.injectJavaScript('window.showAllPOIMarkers && window.showAllPOIMarkers();');
+    if (isMapReady && webViewRef.current) {
+      webViewRef.current.injectJavaScript('window.showAllPOIMarkers && window.showAllPOIMarkers();');
+    }
   };
 
   const shareLocation = async () => {
@@ -713,8 +722,10 @@ const MapScreen = () => {
       const timeMinutes = Math.round(totalDistance / (1.4 * 60));
       setEstimatedTime(timeMinutes);
 
-      const jsRouteCode = `window.drawRoute && window.drawRoute(${JSON.stringify(coordinates)});`;
-      webViewRef.current?.injectJavaScript(jsRouteCode);
+      if (isMapReady && webViewRef.current) {
+        const jsRouteCode = `window.drawRoute && window.drawRoute(${JSON.stringify(coordinates)});`;
+        webViewRef.current.injectJavaScript(jsRouteCode);
+      }
       setStatus('Route found!');
       const stepsArr = data.features?.[0]?.properties?.segments?.[0]?.steps || [];
       setSteps(stepsArr);
@@ -790,18 +801,22 @@ const MapScreen = () => {
 
     setIsNavigating(false);
     setStatus('Navigation stopped');
-    webViewRef.current?.injectJavaScript(
-      'window.setNavigationState && window.setNavigationState(false);',
-    );
+    if (isMapReady && webViewRef.current) {
+      webViewRef.current.injectJavaScript(
+        'window.setNavigationState && window.setNavigationState(false);',
+      );
+    }
 
     if (currentLocation) {
       sendLocationToWebView(currentLocation.latitude, currentLocation.longitude, true);
     }
 
     // Clear progress line
-    webViewRef.current?.injectJavaScript(
-      'if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }',
-    );
+    if (isMapReady && webViewRef.current) {
+      webViewRef.current.injectJavaScript(
+        'if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }',
+      );
+    }
     
     // Reset enhanced progress tracking when stopping
     setDistanceWalked(0);
@@ -962,7 +977,7 @@ const MapScreen = () => {
     setStatus(`${walkedFormatted} • ${remainingFormatted}`);
 
     // Update route progress visually
-    if (webViewRef.current) {
+    if (webViewRef.current && isMapReady) {
       const jsProgressCode = `
         if (window.updateRouteProgress) {
           window.updateRouteProgress(${closestPointIndex}, ${progressValue / 100});
@@ -1030,7 +1045,9 @@ const MapScreen = () => {
     setOriginalRouteDistance(null);
 
     // Clear the route from the map
-    webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+    if (isMapReady && webViewRef.current) {
+      webViewRef.current.injectJavaScript('window.clearRoute && window.clearRoute();');
+    }
     lastRoute.current = [];
 
     // Show destination reached message
@@ -1070,8 +1087,10 @@ const MapScreen = () => {
         });
 
       // Update UI
-      const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${selectedPOI.centroid.latitude}, ${selectedPOI.centroid.longitude}, '${selectedDensity}', '${selectedPOI.id}');`;
-      webViewRef.current?.injectJavaScript(jsCrowdCode);
+      if (isMapReady && webViewRef.current) {
+        const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${selectedPOI.centroid.latitude}, ${selectedPOI.centroid.longitude}, '${selectedDensity}', '${selectedPOI.id}');`;
+        webViewRef.current.injectJavaScript(jsCrowdCode);
+      }
       setShowCrowdPopup(false);
       setStatus(`Crowd density reported for ${selectedPOI.name}`);
     } catch (error) {
@@ -1775,7 +1794,7 @@ const MapScreen = () => {
           onPress={() => setShowDirectionsSheet(true)}
           style={{
             position: 'absolute',
-            top: 70, // Moved down from 20 to avoid obstructing zoom buttons
+            top: 20, // Moved back up to original position
             left: 20,
             right: 20,
             backgroundColor: colors.card,
