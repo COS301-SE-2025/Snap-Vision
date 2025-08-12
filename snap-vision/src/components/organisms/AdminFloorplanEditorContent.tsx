@@ -25,7 +25,7 @@ interface RoomPOI {
   coordinates: { x: number; y: number };
   type: string;
   description: string | null;
-  isEntrance?: boolean; // true if this is a building entry point
+  isEntrance?: boolean;
   connectorGroupId?: string;
 }
 
@@ -50,7 +50,6 @@ export default function AdminFloorplanEditorContent() {
   const colors = getThemeColors(isDark);
   const isDarkMode = isDark;
 
-  // Define all hooks at the top level before any conditional returns
   const webViewRef = useRef<WebView>(null);
   const [roomMarkers, setRoomMarkers] = useState<RoomPOI[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -59,43 +58,29 @@ export default function AdminFloorplanEditorContent() {
     name: '',
     type: 'classroom',
     description: '',
-    isEntrance: false, // NEW
+    isEntrance: false,
     connectorGroupId: '',
   });
   const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Path creation state
   const [pathMarkers, setPathMarkers] = useState<PathPOI[]>([]);
   const [isPathMode, setIsPathMode] = useState(false);
   const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
   const [currentPath, setCurrentPath] = useState<{ x: number; y: number }[]>([]);
   const [selectedPathId, setSelectedPathId] = useState<string | null>(null);
 
-  // Popup states
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
-  // Get route params with a safe default
-  // if (!route.params) {
-  //   return (
-  //     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-  //       <Text>Missing route parameters. Please go back and try again.</Text>
-  //     </View>
-  //   );
-  // }
-
   const { buildingId, floorLabel, imageUri, locationId } = route.params;
 
-  // IMPORTANT: Place all useEffect hooks before any conditional returns
-  // Load existing room POIs
   useEffect(() => {
-    // Only load POIs if we have valid parameters
     if (!route.params || !buildingId || !floorLabel) {
-      return; // Skip loading if we don't have valid params
+      return;
     }
 
     const loadRoomPOIs = async () => {
@@ -111,7 +96,6 @@ export default function AdminFloorplanEditorContent() {
         }));
         setRoomMarkers(markers as RoomPOI[]);
 
-        // Add markers to WebView when it's ready
         if (markers.length > 0) {
           setTimeout(() => {
             markers.forEach((marker) => {
@@ -120,7 +104,7 @@ export default function AdminFloorplanEditorContent() {
                 true;
               `);
             });
-          }, 1000); // Wait for WebView to load
+          }, 1000);
         }
       } catch (error) {
         console.error('Error loading room POIs:', error);
@@ -130,7 +114,6 @@ export default function AdminFloorplanEditorContent() {
     loadRoomPOIs();
   }, [buildingId, floorLabel, route.params, locationId]);
 
-  // Load existing paths
   useEffect(() => {
     if (!route.params || !buildingId || !floorLabel) return;
 
@@ -147,7 +130,6 @@ export default function AdminFloorplanEditorContent() {
         }));
         setPathMarkers(paths);
 
-        // Draw paths on WebView
         if (paths.length > 0) {
           setTimeout(() => {
             const pathData = paths.map((path) => ({
@@ -169,9 +151,8 @@ export default function AdminFloorplanEditorContent() {
   }, [buildingId, floorLabel, route.params, locationId]);
 
   const handleSelectPath = (pathId: string) => {
-  setSelectedPathId(pathId);
-  // Highlight path in WebView
-  webViewRef.current?.injectJavaScript(`
+    setSelectedPathId(pathId);
+    webViewRef.current?.injectJavaScript(`
     document.querySelectorAll('.path-line').forEach(p => {
       p.setAttribute('stroke', p.getAttribute('data-path-id') === '${pathId}' ? '#FF9800' : '${colors.primary}');
       p.setAttribute('opacity', p.getAttribute('data-path-id') === '${pathId}' ? '1' : '0.8');
@@ -179,33 +160,29 @@ export default function AdminFloorplanEditorContent() {
     });
     true;
   `);
-};
+  };
 
-const deleteSelectedPath = async () => {
-  if (!selectedPathId) return;
-  try {
-    await firestore().collection(`locations/${locationId}/pathPOIs`).doc(selectedPathId).delete();
-    setPathMarkers(pathMarkers.filter((p) => p.id !== selectedPathId));
-    setSelectedPathId(null);
-    // Remove path from WebView
-    webViewRef.current?.injectJavaScript(`
+  const deleteSelectedPath = async () => {
+    if (!selectedPathId) return;
+    try {
+      await firestore().collection(`locations/${locationId}/pathPOIs`).doc(selectedPathId).delete();
+      setPathMarkers(pathMarkers.filter((p) => p.id !== selectedPathId));
+      setSelectedPathId(null);
+      webViewRef.current?.injectJavaScript(`
       document.querySelectorAll('.path-line[data-path-id="${selectedPathId}"]').forEach(p => p.remove());
       true;
     `);
-    setSuccessMessage('Path deleted successfully');
-    setShowSuccessPopup(true);
-  } catch (error) {
-    setErrorMessage('Failed to delete path');
-    setShowErrorPopup(true);
-  }
-};
+      setSuccessMessage('Path deleted successfully');
+      setShowSuccessPopup(true);
+    } catch (error) {
+      setErrorMessage('Failed to delete path');
+      setShowErrorPopup(true);
+    }
+  };
 
-
-  // Generate SVG path string from waypoints
   const generatePathSVG = (waypoints: { x: number; y: number }[]) => {
     if (waypoints.length < 2) return '';
 
-    // Convert relative coordinates (0-1) to SVG coordinates (0-100)
     let pathString = `M ${waypoints[0].x * 100} ${waypoints[0].y * 100}`;
     for (let i = 1; i < waypoints.length; i++) {
       pathString += ` L ${waypoints[i].x * 100} ${waypoints[i].y * 100}`;
@@ -213,7 +190,6 @@ const deleteSelectedPath = async () => {
     return pathString;
   };
 
-  // Calculate path distance
   const calculatePathDistance = (waypoints: { x: number; y: number }[]) => {
     let totalDistance = 0;
     for (let i = 1; i < waypoints.length; i++) {
@@ -224,7 +200,6 @@ const deleteSelectedPath = async () => {
     return totalDistance;
   };
 
-  // Toggle path creation mode
   const togglePathMode = () => {
     const newPathMode = !isPathMode;
     setIsPathMode(newPathMode);
@@ -237,7 +212,6 @@ const deleteSelectedPath = async () => {
     `);
   };
 
-  // Save path to Firestore
   const savePath = async () => {
     if (selectedRooms.length !== 2 || currentPath.length < 2) {
       setErrorMessage('Please select two rooms and add waypoints to create a path');
@@ -248,7 +222,6 @@ const deleteSelectedPath = async () => {
     try {
       const pathId = `path_${buildingId.replace(/\//g, '_')}_${floorLabel.replace(/\s/g, '_')}_${Date.now()}`;
 
-      // Get room coordinates for start and end points
       const startRoom = roomMarkers.find((r) => r.id === selectedRooms[0]);
       const endRoom = roomMarkers.find((r) => r.id === selectedRooms[1]);
 
@@ -258,7 +231,6 @@ const deleteSelectedPath = async () => {
         return;
       }
 
-      // Create waypoints array including start and end room positions
       const waypoints = [startRoom.coordinates, ...currentPath, endRoom.coordinates];
 
       const pathPOI: PathPOI = {
@@ -267,7 +239,7 @@ const deleteSelectedPath = async () => {
         floorId: floorLabel,
         startRoomId: selectedRooms[0],
         endRoomId: selectedRooms[1],
-        waypoints: waypoints, // This includes start, middle waypoints, and end
+        waypoints: waypoints,
         distance: calculatePathDistance(waypoints),
         accessible: true,
         createdAt: new Date().toISOString(),
@@ -277,7 +249,6 @@ const deleteSelectedPath = async () => {
 
       setPathMarkers([...pathMarkers, pathPOI]);
 
-      // Draw the new path - use the full waypoints array
       const pathData = {
         id: pathId,
         d: generatePathSVG(waypoints),
@@ -288,7 +259,6 @@ const deleteSelectedPath = async () => {
         true;
       `);
 
-      // Reset path creation
       setIsPathMode(false);
       setSelectedRooms([]);
       setCurrentPath([]);
@@ -307,8 +277,6 @@ const deleteSelectedPath = async () => {
     }
   };
 
-  // After all hooks, we can have conditional returns
-  // Add defensive check for route.params
   if (!route.params) {
     return (
       <View
@@ -336,7 +304,6 @@ const deleteSelectedPath = async () => {
     );
   }
 
-  // Additional safety check for each parameter
   if (!buildingId || !floorLabel || !imageUri) {
     return (
       <View
@@ -888,8 +855,6 @@ const deleteSelectedPath = async () => {
     `;
   };
 
-  
-
   // Handle messages from WebView
   const handleMessage = (event: { nativeEvent: { data: string } }) => {
     try {
@@ -940,7 +905,7 @@ const deleteSelectedPath = async () => {
         setCurrentPath(data.currentPath);
       } else if (data.type === 'waypoint_removed') {
         setCurrentPath(data.currentPath);
-      } else if (data.type === 'select_path'){
+      } else if (data.type === 'select_path') {
         handleSelectPath(data.pathId);
       }
     } catch (e) {
@@ -1137,19 +1102,17 @@ const deleteSelectedPath = async () => {
         <Text style={[styles.footerText, { color: colors.text }]}>
           {roomMarkers.length} rooms • {pathMarkers.length} paths
           {selectedPathId && (
-      <Text style={{ color: '#FF9800', marginLeft: 12 }}>
-        {' '}Selected Path
-      </Text>
-    )}
+            <Text style={{ color: '#FF9800', marginLeft: 12 }}> Selected Path</Text>
+          )}
         </Text>
         {selectedPathId && (
-    <TouchableOpacity
-      onPress={deleteSelectedPath}
-      style={[styles.doneButton, { backgroundColor: '#D32F2F', marginRight: 8 }]}
-    >
-      <Text style={styles.doneButtonText}>Delete Path</Text>
-    </TouchableOpacity>
-  )}
+          <TouchableOpacity
+            onPress={deleteSelectedPath}
+            style={[styles.doneButton, { backgroundColor: '#D32F2F', marginRight: 8 }]}
+          >
+            <Text style={styles.doneButtonText}>Delete Path</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={[styles.doneButton, { backgroundColor: colors.primary }]}

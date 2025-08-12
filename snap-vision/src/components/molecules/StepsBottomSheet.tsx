@@ -1,4 +1,3 @@
-// src/components/molecules/StepsBottomSheet.tsx
 import React, { useEffect, useRef } from 'react';
 import {
   Animated,
@@ -15,7 +14,7 @@ import type { NavigationStep } from '../../utils/navigationUtils';
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onCancel?: () => void; // NEW
+  onCancel?: () => void;
   onAdvance?: () => void;
   steps: NavigationStep[];
   colors: any;
@@ -60,7 +59,6 @@ export default function StepsBottomSheet({
   const total = steps.length;
   const remaining = Math.max(0, total - currentStep);
 
-  // Hide tiny/undefined distances to avoid "0 m"
   const displayDistance = (s: NavigationStep, next?: NavigationStep) => {
     const d = typeof s.distance === 'number' ? s.distance : undefined;
     const raw =
@@ -71,8 +69,7 @@ export default function StepsBottomSheet({
               Math.pow(next.coordinates.y - s.coordinates.y, 2),
           )
         : undefined);
-    if (!raw || raw < 0.1) return null; // hide very small/undefined
-    // If your coords are normalized, this is "relative meters".
+    if (!raw || raw < 0.1) return null;
     return `${Math.round(raw)} m`;
   };
 

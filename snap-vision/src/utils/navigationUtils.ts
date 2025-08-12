@@ -39,15 +39,15 @@ interface GraphEdge {
   pathId: string;
   waypoints: { x: number; y: number }[];
   distance: number; // always > 0 (we infer if not provided)
-  floorId: string; 
+  floorId: string;
   connector?: {
-    groupId: string;           // optional if this is an inter-floor hop
+    groupId: string;
     kind: 'stairs' | 'elevator';
     toFloorId: string;
   };
 }
 
-const NEAREST_ROOM_THRESHOLD = 0.3; 
+const NEAREST_ROOM_THRESHOLD = 0.3;
 
 export const calculateDistance = (
   a: { x: number; y: number },
@@ -104,18 +104,16 @@ export const calculateMultiFloorRoute = (
   endRoomId: string,
   roomPOIs: RoomPOI[],
   pathPOIs: PathPOI[],
-  opts?: { accessible?: boolean }
+  opts?: { accessible?: boolean },
 ): NavigationStep[] => {
   const graph = new NavigationGraph(roomPOIs, pathPOIs);
-  // if you want to pass accessible: true, wire it into addInterFloorEdges (above)
-
   const roomPath = graph.findShortestPath(startRoomId, endRoomId);
   if (!roomPath) return [];
 
   // Build steps floor-aware
   const steps: NavigationStep[] = [];
-  const startRoom = roomPOIs.find(r => r.id === startRoomId)!;
-  const endRoom = roomPOIs.find(r => r.id === endRoomId)!;
+  const startRoom = roomPOIs.find((r) => r.id === startRoomId)!;
+  const endRoom = roomPOIs.find((r) => r.id === endRoomId)!;
 
   steps.push({
     instruction: `Begin navigation from ${startRoom.name}`,
@@ -124,17 +122,15 @@ export const calculateMultiFloorRoute = (
     floorId: startRoom.floorId,
   });
 
-  // Walk edges room->room to get waypoints + detect connectors
   for (let i = 0; i < roomPath.length - 1; i++) {
     const current = roomPath[i];
     const next = roomPath[i + 1];
     const node = (graph as any).nodes.get(current) as GraphNode | undefined;
-    const edge = node?.connections.find(c => c.targetRoomId === next);
+    const edge = node?.connections.find((c) => c.targetRoomId === next);
     if (!edge) continue;
 
     if (edge.connector) {
-      // an inter-floor hop
-      const via = roomPOIs.find(r => r.id === current)!;
+      const via = roomPOIs.find((r) => r.id === current)!;
       const label = edge.connector.kind === 'elevator' ? 'Elevator' : 'Stairs';
       steps.push({
         instruction: `Take ${label} to Floor ${edge.connector.toFloorId}`,
@@ -144,11 +140,9 @@ export const calculateMultiFloorRoute = (
         distance: edge.distance,
       });
     } else {
-      // intra-floor: add waypoints as usual, but keep floorId
-      const prevRoom = roomPOIs.find(r => r.id === current)!;
-      const nextRoom = roomPOIs.find(r => r.id === next)!;
+      const prevRoom = roomPOIs.find((r) => r.id === current)!;
+      const nextRoom = roomPOIs.find((r) => r.id === next)!;
 
-      // If you have turn logic, keep it — just attach floorId
       (edge.waypoints.length ? edge.waypoints : [nextRoom.coordinates]).forEach((pt, idx) => {
         steps.push({
           instruction: idx === 0 ? `Proceed towards ${nextRoom.name}` : `Continue`,
@@ -170,13 +164,15 @@ export const calculateMultiFloorRoute = (
   return steps;
 };
 
-
 //Graph
 
-function addInterFloorEdges(nodes: Map<string, GraphNode>, roomPOIs: RoomPOI[], options: { accessible?: boolean }) {
-  // Group connector rooms by connectorGroupId
+function addInterFloorEdges(
+  nodes: Map<string, GraphNode>,
+  roomPOIs: RoomPOI[],
+  options: { accessible?: boolean },
+) {
   const connectorsByGroup = new Map<string, RoomPOI[]>();
-  roomPOIs.forEach(r => {
+  roomPOIs.forEach((r) => {
     if (!r.type) return;
     if (r.type === 'stairs' || r.type === 'elevator') {
       const groupId = (r as any).connectorGroupId;
@@ -192,10 +188,13 @@ function addInterFloorEdges(nodes: Map<string, GraphNode>, roomPOIs: RoomPOI[], 
   const ELEV_PER_FLOOR = 5;
 
   connectorsByGroup.forEach((roomsInGroup, groupId) => {
-    // sort the floors numerically if they are numbers, otherwise lexicographically
-    const sorted = roomsInGroup.slice().sort((a, b) => (a.floorId as any) - (b.floorId as any) || ('' + a.floorId).localeCompare('' + b.floorId));
+    const sorted = roomsInGroup
+      .slice()
+      .sort(
+        (a, b) =>
+          (a.floorId as any) - (b.floorId as any) || ('' + a.floorId).localeCompare('' + b.floorId),
+      );
 
-    // Adjacent links (works for >1 floor automatically by hopping)
     for (let i = 0; i < sorted.length - 1; i++) {
       const a = sorted[i];
       const b = sorted[i + 1];
@@ -207,9 +206,7 @@ function addInterFloorEdges(nodes: Map<string, GraphNode>, roomPOIs: RoomPOI[], 
         const bNode = nodes.get(b.id);
         if (aNode && bNode) {
           const isElev = a.type === 'elevator' && b.type === 'elevator';
-          const distance = isElev
-            ? ELEV_BASE + ELEV_PER_FLOOR
-            : STAIRS_BASE + STAIRS_PER_FLOOR;
+          const distance = isElev ? ELEV_BASE + ELEV_PER_FLOOR : STAIRS_BASE + STAIRS_PER_FLOOR;
 
           // A -> B
           aNode.connections.push({
@@ -235,7 +232,6 @@ function addInterFloorEdges(nodes: Map<string, GraphNode>, roomPOIs: RoomPOI[], 
   });
 }
 
-
 export class NavigationGraph {
   private nodes: Map<string, GraphNode> = new Map();
 
@@ -244,70 +240,69 @@ export class NavigationGraph {
   }
 
   private buildGraph(roomPOIs: RoomPOI[], pathPOIs: PathPOI[]) {
-  // Create nodes
-  for (const room of roomPOIs) {
-    this.nodes.set(room.id, {
-      roomId: room.id,
-      coordinates: room.coordinates,
-      connections: [],
-    });
-  }
-
-  // Create intra-floor edges (bidirectional)
-  for (const path of pathPOIs) {
-    const startId = path.startRoomId ?? path.fromRoomId;
-    const endId   = path.endRoomId   ?? path.toRoomId;
-    if (!startId || !endId) {
-      console.warn('Path missing endpoints:', path.id, { startId, endId });
-      continue;
-    }
-
-    const startNode = this.nodes.get(startId);
-    const endNode   = this.nodes.get(endId);
-    if (!startNode || !endNode) {
-      console.warn('Path endpoints not found in graph:', path.id, {
-        startExists: !!startNode, endExists: !!endNode,
+    // Create nodes
+    for (const room of roomPOIs) {
+      this.nodes.set(room.id, {
+        roomId: room.id,
+        coordinates: room.coordinates,
+        connections: [],
       });
-      continue;
     }
 
-    // Infer distance if missing
-    let inferred = (path.distance ?? 0) > 0 ? path.distance! : 0;
-    if (inferred <= 0) {
-      if (path.waypoints && path.waypoints.length > 1) {
-        inferred = polylineDistance(path.waypoints);
-      } else {
-        inferred = calculateDistance(startNode.coordinates, endNode.coordinates);
+    // Create intra-floor edges (bidirectional)
+    for (const path of pathPOIs) {
+      const startId = path.startRoomId ?? path.fromRoomId;
+      const endId = path.endRoomId ?? path.toRoomId;
+      if (!startId || !endId) {
+        console.warn('Path missing endpoints:', path.id, { startId, endId });
+        continue;
       }
+
+      const startNode = this.nodes.get(startId);
+      const endNode = this.nodes.get(endId);
+      if (!startNode || !endNode) {
+        console.warn('Path endpoints not found in graph:', path.id, {
+          startExists: !!startNode,
+          endExists: !!endNode,
+        });
+        continue;
+      }
+
+      // Infer distance if missing
+      let inferred = (path.distance ?? 0) > 0 ? path.distance! : 0;
+      if (inferred <= 0) {
+        if (path.waypoints && path.waypoints.length > 1) {
+          inferred = polylineDistance(path.waypoints);
+        } else {
+          inferred = calculateDistance(startNode.coordinates, endNode.coordinates);
+        }
+      }
+      const dist = Math.max(0.0001, inferred);
+
+      // Use the path's floorId for both directions
+      const edgeFloor = path.floorId;
+
+      // Forward
+      startNode.connections.push({
+        targetRoomId: endId,
+        pathId: path.id,
+        waypoints: path.waypoints ?? [],
+        distance: dist,
+        floorId: edgeFloor,
+      });
+
+      // Reverse (reverse waypoints)
+      endNode.connections.push({
+        targetRoomId: startId,
+        pathId: path.id,
+        waypoints: (path.waypoints ?? []).slice().reverse(),
+        distance: dist,
+        floorId: edgeFloor,
+      });
     }
-    const dist = Math.max(0.0001, inferred);
 
-    // Use the path's floorId for both directions
-    const edgeFloor = path.floorId;
-
-    // Forward
-    startNode.connections.push({
-      targetRoomId: endId,
-      pathId: path.id,
-      waypoints: path.waypoints ?? [],
-      distance: dist,
-      floorId: edgeFloor,
-    });
-
-    // Reverse (reverse waypoints)
-    endNode.connections.push({
-      targetRoomId: startId,
-      pathId: path.id,
-      waypoints: (path.waypoints ?? []).slice().reverse(),
-      distance: dist,
-      floorId: edgeFloor,
-    });
+    addInterFloorEdges(this.nodes, roomPOIs, { accessible: false });
   }
-
-  // ⚠️ IMPORTANT: add inter-floor edges ONCE, after all intra-floor edges exist
-  addInterFloorEdges(this.nodes, roomPOIs, { accessible: false }); // or make this configurable
-}
-
 
   findShortestPath(startRoomId: string, endRoomId: string): string[] | null {
     if (!this.nodes.has(startRoomId) || !this.nodes.has(endRoomId)) return null;
@@ -325,7 +320,6 @@ export class NavigationGraph {
     }
 
     while (unvisited.size) {
-      // pull min
       let current: string | null = null;
       let best = Infinity;
       for (const id of unvisited) {
@@ -383,7 +377,6 @@ export class NavigationGraph {
       if (conn.waypoints.length > 0) {
         all.push(...conn.waypoints);
       } else {
-        // ensure we still give AR a target when there are no internal waypoints
         const nodeB = this.nodes.get(b);
         if (nodeB) all.push(nodeB.coordinates);
       }
@@ -458,7 +451,6 @@ export const calculateRoute = (
       });
     }
   } else {
-    // No waypoints → direct segment
     const d = calculateDistance(startRoom.coordinates, endRoom.coordinates);
     steps.push({
       instruction: `Walk directly to ${endRoom.name}`,
@@ -468,7 +460,6 @@ export const calculateRoute = (
     });
   }
 
-  // Destination
   steps.push({
     instruction: `You have arrived at ${endRoom.name}`,
     coordinates: endRoom.coordinates,
@@ -488,11 +479,10 @@ export const generateDetailedDirections = (steps: NavigationStep[]): NavigationS
     if (s.type === 'start') prefix = '🚶 ';
     else if (s.type === 'turn') prefix = '🔄 ';
     else if (s.type === 'destination') prefix = '🎯 ';
-    else if (s.type === 'connector') prefix = '🛗 '; // stairs/elevator hop
+    else if (s.type === 'connector') prefix = '🛗 ';
     return { ...s, instruction: `${prefix}${s.instruction}` };
   });
 };
-
 
 export function stepsToPolyline(steps: NavigationStep[]): { x: number; y: number }[] {
   return steps.map((s) => s.coordinates);
@@ -501,17 +491,12 @@ export function stepsToPolyline(steps: NavigationStep[]): { x: number; y: number
 //AR Stuff
 
 export interface ARNavigationData {
-  bearing: number; // degrees, 0-360
-  distance: number; // same units as map coords
+  bearing: number;
+  distance: number;
   nextWaypoint: { x: number; y: number } | null;
   isAtDestination: boolean;
 }
 
-/**
- * Calculate bearing from current -> target.
- * Set screenYDown=true if your floorplan uses screen coords (0,0 top-left, Y grows downward).
- * Otherwise, assume math coords (Y up).
- */
 export const calculateARBearing = (
   currentPos: { x: number; y: number },
   targetPos: { x: number; y: number },
@@ -523,13 +508,9 @@ export const calculateARBearing = (
   let angleDeg: number;
 
   if (screenYDown) {
-    // On screen coords, atan2 returns 0° pointing "down". Convert to a north-up 0°.
-    // atan2 returns angle in radians between the positive X-axis and the point (x, y)
-    // Here we want 0° = up, increasing clockwise; adjust empirically if needed.
-    angleDeg = Math.atan2(dx, dy) * (180 / Math.PI); // 0° ~ down
-    angleDeg = (angleDeg + 180) % 360; // shift so 0° ~ up/north-ish
+    angleDeg = Math.atan2(dx, dy) * (180 / Math.PI);
+    angleDeg = (angleDeg + 180) % 360;
   } else {
-    // Math-style coords: 0° along +X; convert so 0° ~ up
     angleDeg = Math.atan2(dx, -dy) * (180 / Math.PI);
     angleDeg = (angleDeg + 360) % 360;
   }
@@ -548,7 +529,6 @@ export const getNextARWaypoint = (
     const d = calculateDistance(currentPos, step.coordinates);
     if (d > proximityThreshold) return step.coordinates;
   }
-  // Already close to all → target destination
   return navigationSteps[navigationSteps.length - 1]?.coordinates ?? null;
 };
 
@@ -570,12 +550,12 @@ export const calculateARNavigationData = (
 export const getARDirection = (
   currentPos: { x: number; y: number },
   targetPos: { x: number; y: number },
-  deviceHeading: number, // 0-360°, from magnetometer
+  deviceHeading: number,
   screenYDown: boolean = true,
 ): number => {
   const bearing = calculateARBearing(currentPos, targetPos, screenYDown);
   let rel = bearing - deviceHeading;
   if (rel > 180) rel -= 360;
   if (rel < -180) rel += 360;
-  return rel; // -180..180 → left/right offset for arrow
+  return rel;
 };

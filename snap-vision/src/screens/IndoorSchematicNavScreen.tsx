@@ -1,4 +1,3 @@
-// src/screens/IndoorSchematicNavScreen.tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet, Alert, Text, TouchableOpacity } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
@@ -75,24 +74,26 @@ export default function IndoorSchematicNavScreen() {
         setLoading(true);
 
         const roomSnap = await firestore()
-          .collection('locations').doc(locationId)
+          .collection('locations')
+          .doc(locationId)
           .collection('roomPOIs')
           .where('buildingId', '==', buildingId)
           .get();
-        const roomsData = roomSnap.docs.map(d => ({ id: d.id, ...d.data() } as RoomPOI));
+        const roomsData = roomSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as RoomPOI);
 
         const pathSnap = await firestore()
-          .collection('locations').doc(locationId)
+          .collection('locations')
+          .doc(locationId)
           .collection('pathPOIs')
           .where('buildingId', '==', buildingId)
           .get();
-        const pathsData = pathSnap.docs.map(d => ({ id: d.id, ...d.data() } as PathPOI));
+        const pathsData = pathSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as PathPOI);
 
         setAllRooms(roomsData);
         setAllPaths(pathsData);
 
         // Floors list
-        const floorSet = Array.from(new Set(roomsData.map(r => r.floorId))).sort();
+        const floorSet = Array.from(new Set(roomsData.map((r) => r.floorId))).sort();
         setFloors(floorSet);
 
         // Ensure selectedFloorId is valid
@@ -100,12 +101,15 @@ export default function IndoorSchematicNavScreen() {
           setSelectedFloorId(floorSet[0] || initialFloorId);
         }
 
-        // Default "you are here" if none provided: pick an entrance on the initial (or first) floor
+        //Place user at entrance if nothing selected
         if (!userPos) {
-          const initFloor = floorSet.includes(initialFloorId) ? initialFloorId : (floorSet[0] || initialFloorId);
-          const entrances = roomsData.filter(r => (r.isEntrance || r.type === 'entrance') && r.floorId === initFloor);
+          const initFloor = floorSet.includes(initialFloorId)
+            ? initialFloorId
+            : floorSet[0] || initialFloorId;
+          const entrances = roomsData.filter(
+            (r) => (r.isEntrance || r.type === 'entrance') && r.floorId === initFloor,
+          );
           if (entrances.length) {
-            // pick the first entrance (or do centroid logic)
             setCurrentPos(entrances[0].coordinates);
           }
         }
@@ -116,13 +120,11 @@ export default function IndoorSchematicNavScreen() {
         setLoading(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buildingId, locationId]);
 
-  // Floor-specific slices for rendering/tapping
   const roomsOnSelectedFloor = useMemo(
-    () => allRooms.filter(r => r.floorId === selectedFloorId),
-    [allRooms, selectedFloorId]
+    () => allRooms.filter((r) => r.floorId === selectedFloorId),
+    [allRooms, selectedFloorId],
   );
 
   // DO NOT reset start/end when changing floors — multi-floor selection depends on this
@@ -167,15 +169,21 @@ export default function IndoorSchematicNavScreen() {
     const hasMulti = typeof (NavUtils as any).calculateMultiFloorRoute === 'function';
 
     const routeSteps: NavUtils.NavigationStep[] = hasMulti
-      ? (NavUtils as any).calculateMultiFloorRoute(startId, endId, allRooms as any, allPaths as any, {
-          accessible: false, // wire a toggle later if needed
-        })
+      ? (NavUtils as any).calculateMultiFloorRoute(
+          startId,
+          endId,
+          allRooms as any,
+          allPaths as any,
+          {
+            accessible: false,
+          },
+        )
       : NavUtils.calculateRoute(
           startId,
           endId,
-          // single-floor fallback: try to route on whichever floors contain the nodes (best-effort)
+          // single-floor fallback: try to route on whichever floors contain the nodes
           allRooms as any,
-          allPaths as any
+          allPaths as any,
         );
 
     if (!routeSteps || !routeSteps.length) {
@@ -191,13 +199,11 @@ export default function IndoorSchematicNavScreen() {
     setCurrentStep(0);
     setSheetOpen(true);
 
-    // Start position and auto-jump picker to the step's floor if provided
     const firstStep = detailed[0];
     if (firstStep?.coordinates) setCurrentPos(firstStep.coordinates);
     if ((firstStep as any)?.floorId) setSelectedFloorId(String((firstStep as any).floorId));
   }, [startId, endId, allRooms, allPaths]);
 
-  // Step advance — auto-switch floor picker to the current step’s floor
   const handleAdvance = () => {
     if (!steps.length) return;
     if (currentStep >= steps.length - 1) {
@@ -212,34 +218,35 @@ export default function IndoorSchematicNavScreen() {
     if (nextFloor && nextFloor !== selectedFloorId) setSelectedFloorId(String(nextFloor));
   };
 
-  // Build per-floor polylines from steps that carry floorId
   const remainingPolyline = useMemo(() => {
     if (!steps.length) return [];
     return steps
       .slice(currentStep)
-      .filter(s => (s as any).floorId ? String((s as any).floorId) === selectedFloorId : true)
-      .map(s => s.coordinates);
+      .filter((s) => ((s as any).floorId ? String((s as any).floorId) === selectedFloorId : true))
+      .map((s) => s.coordinates);
   }, [steps, currentStep, selectedFloorId]);
 
   const completedPolyline = useMemo(() => {
     if (!steps.length || currentStep <= 0) return [];
     return steps
       .slice(0, currentStep + 1)
-      .filter(s => (s as any).floorId ? String((s as any).floorId) === selectedFloorId : true)
-      .map(s => s.coordinates);
+      .filter((s) => ((s as any).floorId ? String((s as any).floorId) === selectedFloorId : true))
+      .map((s) => s.coordinates);
   }, [steps, currentStep, selectedFloorId]);
 
   const prompt = !startId
     ? 'Choose your start room'
     : !endId
-    ? 'Choose your destination'
-    : `${Math.max(0, steps.length - currentStep)} steps left`;
+      ? 'Choose your destination'
+      : `${Math.max(0, steps.length - currentStep)} steps left`;
 
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <SettingsHeader title={`Indoor Map — ${buildingName}`} />
-        <View style={styles.center}><ActivityIndicator /></View>
+        <View style={styles.center}>
+          <ActivityIndicator />
+        </View>
       </View>
     );
   }
@@ -258,14 +265,16 @@ export default function IndoorSchematicNavScreen() {
           dropdownIconColor={colors.text}
           mode="dropdown"
         >
-          {floors.map(f => (
+          {floors.map((f) => (
             <Picker.Item key={f} label={`Floor ${f}`} value={f} color={colors.text} />
           ))}
         </Picker>
       </View>
 
       {/* Prompt banner */}
-      <View style={[styles.promptBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View
+        style={[styles.promptBar, { backgroundColor: colors.card, borderColor: colors.border }]}
+      >
         <Text style={{ color: colors.text, fontWeight: '600' }}>{prompt}</Text>
       </View>
 
@@ -296,7 +305,10 @@ export default function IndoorSchematicNavScreen() {
       {!sheetOpen && steps.length > 0 && (
         <TouchableOpacity
           onPress={() => setSheetOpen(true)}
-          style={[styles.fab, { backgroundColor: colors.primary, shadowColor: isDark ? '#000' : '#333' }]}
+          style={[
+            styles.fab,
+            { backgroundColor: colors.primary, shadowColor: isDark ? '#000' : '#333' },
+          ]}
         >
           <Text style={{ color: '#fff', fontWeight: '700' }}>Directions</Text>
         </TouchableOpacity>
@@ -310,7 +322,7 @@ export default function IndoorSchematicNavScreen() {
               buildingId,
               buildingName,
               locationId,
-              floorId: selectedFloorId, // AR is per-floor for now
+              floorId: selectedFloorId,
               startRoomId: startId,
               endRoomId: endId,
               userPos: currentPos || null,

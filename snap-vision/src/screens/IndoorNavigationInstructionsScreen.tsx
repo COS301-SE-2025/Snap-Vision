@@ -1,4 +1,3 @@
-// src/screens/IndoorNavigationInstructionsScreen.tsx
 import React from 'react';
 import { SafeAreaView } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';

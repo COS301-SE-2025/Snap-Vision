@@ -106,8 +106,11 @@ function AppInner() {
               options={{ headerShown: false }}
             />
             <Stack.Screen name="IndoorSchematicNav" component={IndoorSchematicNavScreen} />
-            <Stack.Screen name="ARIndoorNav" component={ARIndoorNavScreen} options={{ headerShown: false }} />
-
+            <Stack.Screen
+              name="ARIndoorNav"
+              component={ARIndoorNavScreen}
+              options={{ headerShown: false }}
+            />
           </Stack.Navigator>
           <Toast config={toastConfig} />
         </NavigationContainer>

@@ -1,4 +1,3 @@
-// src/components/organisms/IndoorNavigationInterfaceContent.tsx
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
@@ -50,25 +49,21 @@ export default function IndoorNavigationInterfaceContent({
 
       const base = firestore().collection('locations').doc(locationId).collection('roomPOIs');
 
-      // 1) Try by buildingId (most common)
       let snap = await base.where('buildingId', '==', buildingId).get();
       let roomsData = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Room[];
 
-      // 2) If empty, try by buildingName (some teams store the name instead)
       if (roomsData.length === 0) {
         console.log('[IndoorNav] No rooms by buildingId; trying buildingName ==', buildingName);
         try {
           const snapByName = await base.where('buildingName', '==', buildingName).get();
           roomsData = snapByName.docs.map((d) => ({ id: d.id, ...d.data() })) as Room[];
         } catch (e) {
-          // If index needed or field missing, fall back below
           console.log(
             '[IndoorNav] buildingName query failed or no index, will fallback to client filter',
           );
         }
       }
 
-      // 3) Still empty? Pull all and client-filter by either field
       if (roomsData.length === 0) {
         console.log('[IndoorNav] Fallback: fetching all rooms and filtering locally');
         const allSnap = await base.get();

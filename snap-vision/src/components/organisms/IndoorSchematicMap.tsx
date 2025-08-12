@@ -1,4 +1,3 @@
-// src/components/organisms/IndoorSchematicMap.tsx
 import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import Svg, { G, Circle, Text as SvgText, Polyline, Path } from 'react-native-svg';
@@ -17,7 +16,7 @@ interface Props {
   startId?: string;
   endId?: string;
   routePolyline?: { x: number; y: number }[];
-  completedPolyline?: { x: number; y: number }[]; // NEW
+  completedPolyline?: { x: number; y: number }[];
   currentPos?: { x: number; y: number };
   onSelectRoom: (roomId: string) => void;
   themeColors: any;

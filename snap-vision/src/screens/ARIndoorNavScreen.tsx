@@ -1,4 +1,3 @@
-// src/screens/ARIndoorNavScreen.tsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
@@ -52,12 +51,13 @@ type PathPOI = {
 export default function ARIndoorNavScreen() {
   const route = useRoute<RouteProp<ParamList, 'ARIndoorNav'>>();
   const nav = useNavigation<any>();
-  const { buildingId, buildingName, locationId, floorId, startRoomId, endRoomId, userPos } = route.params;
+  const { buildingId, buildingName, locationId, floorId, startRoomId, endRoomId, userPos } =
+    route.params;
 
   // Camera & permissions
   const { hasPermission, requestPermission } = useCameraPermission();
   const [device, setDevice] = useState<CameraDevice | null>(null);
-const [availableDevices, setAvailableDevices] = useState<CameraDevice[]>([]);
+  const [availableDevices, setAvailableDevices] = useState<CameraDevice[]>([]);
   const cameraRef = useRef<Camera>(null);
 
   // App state
@@ -69,60 +69,65 @@ const [availableDevices, setAvailableDevices] = useState<CameraDevice[]>([]);
   const [heading, setHeading] = useState<number>(0);
 
   useEffect(() => {
-  let mounted = true;
-  (async () => {
-    try {
-      // Ensure we have permission before listing devices
-      const status = await Camera.getCameraPermissionStatus();
-      if (status !== 'authorized') {
-        await Camera.requestCameraPermission();
+    let mounted = true;
+    (async () => {
+      try {
+        const status = await Camera.getCameraPermissionStatus();
+        if (status !== 'authorized') {
+          await Camera.requestCameraPermission();
+        }
+
+        const devs = await Camera.getAvailableCameraDevices();
+        if (!mounted) return;
+        setAvailableDevices(devs);
+
+        const back =
+          devs.find((d) => d.position === 'back') ||
+          devs.find((d) => d.position === 'external') ||
+          devs[0] ||
+          null;
+
+        setDevice(back);
+      } catch (e) {
+        console.warn('[AR] Failed to enumerate cameras', e);
+        setDevice(null);
       }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-      const devs = await Camera.getAvailableCameraDevices();
-      if (!mounted) return;
-      setAvailableDevices(devs);
-
-      // Prefer a "back" camera, else take the first available
-      const back =
-        devs.find(d => d.position === 'back') ||
-        devs.find(d => d.position === 'external') ||
-        devs[0] ||
-        null;
-
-      setDevice(back);
-    } catch (e) {
-      console.warn('[AR] Failed to enumerate cameras', e);
-      setDevice(null);
-    }
-  })();
-  return () => { mounted = false; };
-}, []);
-
-
-  // Load indoor data + route
   useEffect(() => {
     (async () => {
       try {
         const roomSnap = await firestore()
-          .collection('locations').doc(locationId)
+          .collection('locations')
+          .doc(locationId)
           .collection('roomPOIs')
           .where('buildingId', '==', buildingId)
           .where('floorId', '==', floorId)
           .get();
-        const roomsData = roomSnap.docs.map(d => ({ id: d.id, ...d.data() } as RoomPOI));
+        const roomsData = roomSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as RoomPOI);
 
         const pathSnap = await firestore()
-          .collection('locations').doc(locationId)
+          .collection('locations')
+          .doc(locationId)
           .collection('pathPOIs')
           .where('buildingId', '==', buildingId)
           .where('floorId', '==', floorId)
           .get();
-        const pathsData = pathSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const pathsData = pathSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
         setRooms(roomsData);
         setPaths(pathsData);
 
-        const routeSteps = calculateRoute(startRoomId, endRoomId, roomsData as any, pathsData as any);
+        const routeSteps = calculateRoute(
+          startRoomId,
+          endRoomId,
+          roomsData as any,
+          pathsData as any,
+        );
         if (!routeSteps.length) {
           Alert.alert('No route', 'No path found on this floor.');
           nav.goBack();
@@ -144,20 +149,17 @@ const [availableDevices, setAvailableDevices] = useState<CameraDevice[]>([]);
     })();
   }, [buildingId, locationId, floorId, startRoomId, endRoomId, nav, userPos]);
 
-  // Request camera permission on mount if needed
   useEffect(() => {
     if (!hasPermission) {
       requestPermission().catch(() => {});
     }
   }, [hasPermission, requestPermission]);
 
-  // Start compass updates
   useEffect(() => {
     CompassHeading.start(6, ({ heading: hdg }) => setHeading(hdg));
     return () => CompassHeading.stop();
   }, []);
 
-  // Step controls
   const advance = useCallback(() => {
     if (!steps.length) return;
     if (currentStep >= steps.length - 1) {
@@ -175,7 +177,7 @@ const [availableDevices, setAvailableDevices] = useState<CameraDevice[]>([]);
   // AR targeting
   const nextWaypoint = useMemo(
     () => getNextARWaypoint(currentPos || steps[0]?.coordinates, steps),
-    [currentPos, steps]
+    [currentPos, steps],
   );
   const dest = useMemo(() => steps[steps.length - 1]?.coordinates, [steps]);
 
@@ -188,7 +190,10 @@ const [availableDevices, setAvailableDevices] = useState<CameraDevice[]>([]);
     return { direction: rel, distance, isAtDestination };
   }, [currentPos, nextWaypoint, dest, steps, heading]);
 
-  const arrowStyle = useMemo(() => [{ transform: [{ rotate: `${ar.direction}deg` }] }], [ar.direction]);
+  const arrowStyle = useMemo(
+    () => [{ transform: [{ rotate: `${ar.direction}deg` }] }],
+    [ar.direction],
+  );
   const currentInstruction = steps[currentStep]?.instruction ?? 'Follow the arrow';
 
   // Render states
@@ -198,30 +203,36 @@ const [availableDevices, setAvailableDevices] = useState<CameraDevice[]>([]);
     <View style={styles.container}>
       {/* Camera background or helpful fallback */}
       {showCamera ? (
-  <Camera ref={cameraRef} style={StyleSheet.absoluteFill} device={device!} isActive />
-) : (
-  <View style={[StyleSheet.absoluteFill, styles.fallback]}>
-    <Text style={styles.fallbackTitle}>Camera not available</Text>
-    {!hasPermission && <Text style={styles.fallbackText}>Grant camera permission and reload the app.</Text>}
-    {hasPermission && !device && (
-      <>
-        <Text style={styles.fallbackText}>No back camera reported by the OS.</Text>
-        {availableDevices.length > 0 ? (
-          <Text style={styles.fallbackText}>
-            Detected: {availableDevices.map(d => `${d.position}:${d.name ?? d.id}`).join(' | ')}
-          </Text>
-        ) : (
-          <Text style={styles.fallbackText}>Detected: none (try a real device or OEM camera enabled)</Text>
-        )}
-      </>
-    )}
-  </View>
-)}
-
+        <Camera ref={cameraRef} style={StyleSheet.absoluteFill} device={device!} isActive />
+      ) : (
+        <View style={[StyleSheet.absoluteFill, styles.fallback]}>
+          <Text style={styles.fallbackTitle}>Camera not available</Text>
+          {!hasPermission && (
+            <Text style={styles.fallbackText}>Grant camera permission and reload the app.</Text>
+          )}
+          {hasPermission && !device && (
+            <>
+              <Text style={styles.fallbackText}>No back camera reported by the OS.</Text>
+              {availableDevices.length > 0 ? (
+                <Text style={styles.fallbackText}>
+                  Detected:{' '}
+                  {availableDevices.map((d) => `${d.position}:${d.name ?? d.id}`).join(' | ')}
+                </Text>
+              ) : (
+                <Text style={styles.fallbackText}>
+                  Detected: none (try a real device or OEM camera enabled)
+                </Text>
+              )}
+            </>
+          )}
+        </View>
+      )}
 
       {/* HUD overlay */}
       <View style={styles.hud} pointerEvents="box-none">
-        <Text style={styles.title}>{buildingName} — Floor {floorId}</Text>
+        <Text style={styles.title}>
+          {buildingName} — Floor {floorId}
+        </Text>
 
         <View style={styles.arrowRow}>
           <View style={styles.arrowWrap}>
@@ -247,7 +258,8 @@ const [availableDevices, setAvailableDevices] = useState<CameraDevice[]>([]);
 
         <View style={styles.debugPill}>
           <Text style={styles.debugText}>
-            {hasPermission ? '📷 ok' : '📷 no'} • {device ? '📱 cam' : '🚫 cam'} • hdg {heading.toFixed(0)}°
+            {hasPermission ? '📷 ok' : '📷 no'} • {device ? '📱 cam' : '🚫 cam'} • hdg{' '}
+            {heading.toFixed(0)}°
           </Text>
         </View>
       </View>
@@ -265,7 +277,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 16,
   },
-  fallbackTitle: { color: '#fff', fontSize: 18, fontWeight: '700', marginBottom: 6, textAlign: 'center' },
+  fallbackTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
   fallbackText: { color: '#ccc', fontSize: 14, textAlign: 'center' },
   hud: {
     ...StyleSheet.absoluteFillObject,
@@ -275,9 +293,15 @@ const styles = StyleSheet.create({
   },
   title: { color: '#fff', fontWeight: '700', fontSize: 16, marginBottom: 12 },
   arrowRow: { alignItems: 'center', marginVertical: 12 },
-  arrowWrap: { width: ARROW_SIZE * 2, height: ARROW_SIZE * 2, alignItems: 'center', justifyContent: 'center' },
+  arrowWrap: {
+    width: ARROW_SIZE * 2,
+    height: ARROW_SIZE * 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   arrow: {
-    width: 0, height: 0,
+    width: 0,
+    height: 0,
     borderLeftWidth: ARROW_SIZE * 0.5,
     borderRightWidth: ARROW_SIZE * 0.5,
     borderBottomWidth: ARROW_SIZE * 1.2,
@@ -287,17 +311,31 @@ const styles = StyleSheet.create({
     borderBottomColor: 'white',
     opacity: 0.95,
   },
-  instruction: { color: '#fff', fontSize: 16, fontWeight: '600', textAlign: 'center', marginTop: 6 },
+  instruction: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 6,
+  },
   distance: { color: '#fff', fontSize: 14, opacity: 0.9, marginTop: 4, marginBottom: 12 },
   actionsRow: { flexDirection: 'row', gap: 12, marginTop: 8 },
   btn: { paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10 },
   btnPrimary: { backgroundColor: '#5E5CE6' },
   btnPrimaryText: { color: '#fff', fontWeight: '700' },
-  btnGhost: { borderWidth: 1, borderColor: 'rgba(255,255,255,0.6)', backgroundColor: 'rgba(0,0,0,0.25)' },
+  btnGhost: {
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
   btnGhostText: { color: '#fff', fontWeight: '700' },
   debugPill: {
-    position: 'absolute', bottom: 24, alignSelf: 'center',
-    paddingVertical: 6, paddingHorizontal: 10, borderRadius: 14,
+    position: 'absolute',
+    bottom: 24,
+    alignSelf: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 14,
     backgroundColor: 'rgba(0,0,0,0.45)',
   },
   debugText: { color: '#fff', fontSize: 12, opacity: 0.85 },

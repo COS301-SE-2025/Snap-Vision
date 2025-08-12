@@ -1,4 +1,3 @@
-// src/screens/IndoorNavigationInterfaceScreen.tsx
 import React from 'react';
 import { SafeAreaView } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -39,7 +38,7 @@ export default function IndoorNavigationInterfaceScreen() {
       floorId,
       startRoomId,
       endRoomId,
-      locationId, // forward
+      locationId,
     });
   };
 
@@ -48,7 +47,7 @@ export default function IndoorNavigationInterfaceScreen() {
       <IndoorNavigationInterfaceContent
         buildingId={buildingId}
         buildingName={buildingName}
-        locationId={locationId} // <- pass to content
+        locationId={locationId}
         onNavigationStart={handleNavigationStart}
       />
     </SafeAreaView>

@@ -1,4 +1,3 @@
-// src/components/organisms/IndoorNavigationInstructionsContent.tsx
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
