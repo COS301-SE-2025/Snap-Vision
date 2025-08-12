@@ -23,7 +23,7 @@ interface Props {
   themeColors: any;
 }
 
-const CANVAS = 1000;
+const CANVAS = 2000;
 
 export default function IndoorSchematicMap({
   rooms,
