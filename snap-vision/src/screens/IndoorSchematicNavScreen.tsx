@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet, Alert, Text, TouchableOpacity } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeContext';
@@ -9,6 +9,7 @@ import IndoorSchematicMap from '../components/organisms/IndoorSchematicMap';
 import StepsBottomSheet from '../components/molecules/StepsBottomSheet';
 import * as NavUtils from '../utils/navigationUtils';
 import { Picker } from '@react-native-picker/picker';
+import StandardPopup from '../components/atoms/StandardPopup';
 
 type ParamList = {
   IndoorSchematicNav: {
@@ -67,6 +68,12 @@ export default function IndoorSchematicNavScreen() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [currentPos, setCurrentPos] = useState<{ x: number; y: number } | null>(userPos ?? null);
 
+  // Popup state
+  const [popupVisible, setPopupVisible] = useState(false);
+const [popupTitle, setPopupTitle] = useState('');
+const [popupMessage, setPopupMessage] = useState('');
+const [popupConfirmText, setPopupConfirmText] = useState('OK');
+
   // Fetch ALL floors for this building
   useEffect(() => {
     (async () => {
@@ -115,7 +122,10 @@ export default function IndoorSchematicNavScreen() {
         }
       } catch (e) {
         console.error(e);
-        Alert.alert('Error', 'Failed to load indoor data.');
+        setPopupTitle('Error');
+setPopupMessage('Failed to load indoor data.');
+setPopupConfirmText('OK');
+setPopupVisible(true);
       } finally {
         setLoading(false);
       }
@@ -187,7 +197,10 @@ export default function IndoorSchematicNavScreen() {
         );
 
     if (!routeSteps || !routeSteps.length) {
-      Alert.alert('No route', 'No path between the selected rooms in this building.');
+      setPopupTitle('No route');
+setPopupMessage('No path between the selected rooms in this building.');
+setPopupConfirmText('OK');
+setPopupVisible(true);
       setSteps([]);
       setCurrentStep(0);
       setSheetOpen(false);
@@ -207,7 +220,10 @@ export default function IndoorSchematicNavScreen() {
   const handleAdvance = () => {
     if (!steps.length) return;
     if (currentStep >= steps.length - 1) {
-      Alert.alert('Done', 'You have reached your destination.');
+  setPopupTitle('Done');
+setPopupMessage('You have reached your destination.');
+setPopupConfirmText('OK');
+setPopupVisible(true);
       return;
     }
     const next = currentStep + 1;
@@ -332,7 +348,16 @@ export default function IndoorSchematicNavScreen() {
         >
           <Text style={{ color: colors.text, fontWeight: '700' }}>AR</Text>
         </TouchableOpacity>
+        
       )}
+      <StandardPopup
+  visible={popupVisible}
+  title={popupTitle}
+  message={popupMessage}
+  confirmText={popupConfirmText}
+  onConfirm={() => setPopupVisible(false)}
+  showCancel={false}
+/>
     </View>
   );
 }

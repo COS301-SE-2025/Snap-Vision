@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
@@ -10,6 +10,7 @@ import {
   generateDetailedDirections,
   NavigationStep,
 } from '../../utils/navigationUtils';
+import StandardPopup from '../atoms/StandardPopup';
 
 interface Props {
   buildingId: string;
@@ -39,6 +40,8 @@ export default function IndoorNavigationInstructionsContent({
   const [error, setError] = useState<string | null>(null);
   const [startRoomName, setStartRoomName] = useState('');
   const [endRoomName, setEndRoomName] = useState('');
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupProps, setPopupProps] = useState<{ title?: string; message: string; onConfirm?: () => void } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -104,9 +107,15 @@ export default function IndoorNavigationInstructionsContent({
 
   const markStepCompleted = (i: number) => {
     if (i === steps.length - 1) {
-      Alert.alert('Destination Reached!', `You have arrived at ${endRoomName}`, [
-        { text: 'Finish', onPress: onNavigationComplete },
-      ]);
+      setPopupProps({
+        title: 'Destination Reached!',
+        message: `You have arrived at ${endRoomName}`,
+        onConfirm: () => {
+          setShowPopup(false);
+          onNavigationComplete();
+        },
+      });
+      setShowPopup(true);
     } else {
       setCurrentStep(i + 1);
     }
@@ -130,10 +139,10 @@ export default function IndoorNavigationInstructionsContent({
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}> 
         <SettingsHeader title="Generating Route..." />
         <View style={styles.center}>
-          <Text style={[styles.loadingText, { color: colors.text }]}>
+          <Text style={[styles.loadingText, { color: colors.text }]}> 
             Calculating best route...
           </Text>
         </View>
@@ -143,30 +152,32 @@ export default function IndoorNavigationInstructionsContent({
 
   if (error) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}> 
         <SettingsHeader title="Navigation Error" />
         <View style={styles.center}>
           <Icon name="alert-circle" size={64} color={colors.danger} />
           <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: colors.primary }]}
-            onPress={onBack}
-          >
-            <Text style={styles.buttonText}>Go Back</Text>
-          </TouchableOpacity>
+          <StandardPopup
+            visible={true}
+            title="Navigation Error"
+            message={error}
+            onConfirm={onBack}
+            confirmText="Go Back"
+            showCancel={false}
+          />
         </View>
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}> 
       <SettingsHeader title="Indoor Navigation" />
       <View style={styles.header}>
-        <Text style={[styles.routeTitle, { color: colors.text }]}>
+        <Text style={[styles.routeTitle, { color: colors.text }]}> 
           {startRoomName} → {endRoomName}
         </Text>
-        <Text style={[styles.progressText, { color: colors.secondary }]}>
+        <Text style={[styles.progressText, { color: colors.secondary }]}> 
           Step {currentStep + 1} of {steps.length}
         </Text>
       </View>
@@ -185,7 +196,7 @@ export default function IndoorNavigationInstructionsContent({
             ]}
           >
             <View style={styles.stepHeader}>
-              <View style={[styles.stepIcon, { backgroundColor: stepColor(index) }]}>
+              <View style={[styles.stepIcon, { backgroundColor: stepColor(index) }]}> 
                 <Icon name={stepIcon(step, index)} size={20} color="#FFFFFF" />
               </View>
               <View style={styles.stepContent}>
@@ -201,7 +212,7 @@ export default function IndoorNavigationInstructionsContent({
                   {step.instruction}
                 </Text>
                 {!!step.distance && (
-                  <Text style={[styles.stepDistance, { color: colors.secondary }]}>
+                  <Text style={[styles.stepDistance, { color: colors.secondary }]}> 
                     {Math.round(step.distance)} m
                   </Text>
                 )}
@@ -230,15 +241,25 @@ export default function IndoorNavigationInstructionsContent({
 
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+          style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]} 
           onPress={onBack}
         >
           <Icon name="arrow-left" size={20} color={colors.text} />
-          <Text style={[styles.backButtonText, { color: colors.text }]}>
+          <Text style={[styles.backButtonText, { color: colors.text }]}> 
             Back to Room Selection
           </Text>
         </TouchableOpacity>
       </View>
+      <StandardPopup
+        visible={showPopup}
+        title={popupProps?.title}
+        message={popupProps?.message || ''}
+        onConfirm={() => {
+          setShowPopup(false);
+          popupProps?.onConfirm && popupProps.onConfirm();
+        }}
+        showCancel={false}
+      />
     </View>
   );
 }

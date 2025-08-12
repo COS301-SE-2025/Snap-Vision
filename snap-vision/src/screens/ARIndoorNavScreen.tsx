@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import StandardPopup from '../components/atoms/StandardPopup';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import firestore from '@react-native-firebase/firestore';
 import CompassHeading from 'react-native-compass-heading';
@@ -12,6 +13,7 @@ import {
   calculateARNavigationData,
   getARDirection,
   type NavigationStep,
+  calculateARBearing,
 } from '../utils/navigationUtils';
 
 type ParamList = {
@@ -23,6 +25,7 @@ type ParamList = {
     startRoomId: string;
     endRoomId: string;
     userPos?: { x: number; y: number } | null;
+    mapOrientationDeg?: number;
   };
 };
 
@@ -48,11 +51,29 @@ type PathPOI = {
   accessible?: boolean;
 };
 
+function normalizeDeg(a: number) {
+  let x = a % 360;
+  if (x < 0) x += 360;
+  return x;
+}
+
 export default function ARIndoorNavScreen() {
+  const [popupVisible, setPopupVisible] = useState(false);
+  const [popupTitle, setPopupTitle] = useState('');
+  const [popupMessage, setPopupMessage] = useState('');
+  const [popupConfirmText, setPopupConfirmText] = useState('OK');
   const route = useRoute<RouteProp<ParamList, 'ARIndoorNav'>>();
   const nav = useNavigation<any>();
-  const { buildingId, buildingName, locationId, floorId, startRoomId, endRoomId, userPos } =
-    route.params;
+  const {
+    buildingId,
+    buildingName,
+    locationId,
+    floorId,
+    startRoomId,
+    endRoomId,
+    userPos,
+    mapOrientationDeg = 0,
+  } = route.params;
 
   // Camera & permissions
   const { hasPermission, requestPermission } = useCameraPermission();
@@ -67,6 +88,10 @@ export default function ARIndoorNavScreen() {
   const [currentStep, setCurrentStep] = useState(0);
   const [currentPos, setCurrentPos] = useState<{ x: number; y: number } | null>(userPos ?? null);
   const [heading, setHeading] = useState<number>(0);
+
+  const [orientationOffset, setOrientationOffset] = useState<number>(
+    normalizeDeg(mapOrientationDeg),
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -98,6 +123,7 @@ export default function ARIndoorNavScreen() {
     };
   }, []);
 
+  // Load indoor data + route (per selected floor)
   useEffect(() => {
     (async () => {
       try {
@@ -129,8 +155,11 @@ export default function ARIndoorNavScreen() {
           pathsData as any,
         );
         if (!routeSteps.length) {
-          Alert.alert('No route', 'No path found on this floor.');
-          nav.goBack();
+          setPopupTitle('No route');
+          setPopupMessage('No path found on this floor.');
+          setPopupConfirmText('Go Back');
+          setPopupVisible(true);
+          setTimeout(() => nav.goBack(), 500); // auto go back after popup
           return;
         }
 
@@ -143,16 +172,17 @@ export default function ARIndoorNavScreen() {
         }
       } catch (e) {
         console.error(e);
-        Alert.alert('Error', 'Failed to load indoor AR.');
-        nav.goBack();
+        setPopupTitle('Error');
+        setPopupMessage('Failed to load indoor AR.');
+        setPopupConfirmText('Go Back');
+        setPopupVisible(true);
+        setTimeout(() => nav.goBack(), 500);
       }
     })();
   }, [buildingId, locationId, floorId, startRoomId, endRoomId, nav, userPos]);
 
   useEffect(() => {
-    if (!hasPermission) {
-      requestPermission().catch(() => {});
-    }
+    if (!hasPermission) requestPermission().catch(() => {});
   }, [hasPermission, requestPermission]);
 
   useEffect(() => {
@@ -163,7 +193,10 @@ export default function ARIndoorNavScreen() {
   const advance = useCallback(() => {
     if (!steps.length) return;
     if (currentStep >= steps.length - 1) {
-      Alert.alert('Arrived', 'You have reached your destination.');
+      setPopupTitle('Arrived');
+      setPopupMessage('You have reached your destination.');
+      setPopupConfirmText('OK');
+      setPopupVisible(true);
       return;
     }
     const next = currentStep + 1;
@@ -174,21 +207,50 @@ export default function ARIndoorNavScreen() {
 
   const cancel = useCallback(() => nav.goBack(), [nav]);
 
-  // AR targeting
-  const nextWaypoint = useMemo(
-    () => getNextARWaypoint(currentPos || steps[0]?.coordinates, steps),
-    [currentPos, steps],
+  const remainingSteps = useMemo(
+    () => (steps.length ? steps.slice(currentStep) : []),
+    [steps, currentStep],
   );
-  const dest = useMemo(() => steps[steps.length - 1]?.coordinates, [steps]);
+
+  const nextWaypoint = useMemo(
+    () => getNextARWaypoint(currentPos || remainingSteps[0]?.coordinates, remainingSteps),
+    [currentPos, remainingSteps],
+  );
+  const dest = useMemo(
+    () => (steps.length ? steps[steps.length - 1].coordinates : undefined),
+    [steps],
+  );
 
   const ar = useMemo(() => {
     if (!currentPos || !dest) return { direction: 0, distance: 0, isAtDestination: false };
+
     const target = nextWaypoint || dest;
-    // NOTE: our getARDirection signature is (currentPos, targetPos, deviceHeading)
-    const rel = getARDirection(currentPos, target, heading);
-    const { distance, isAtDestination } = calculateARNavigationData(currentPos, steps, dest);
-    return { direction: rel, distance, isAtDestination };
-  }, [currentPos, nextWaypoint, dest, steps, heading]);
+
+    const bearingMap = calculateARBearing(currentPos, target, true);
+
+    const bearingWorld = normalizeDeg(bearingMap + orientationOffset);
+
+    let rel = bearingWorld - heading;
+    if (rel > 180) rel -= 360;
+    if (rel < -180) rel += 360;
+
+    const { distance, isAtDestination } = calculateARNavigationData(
+      currentPos,
+      remainingSteps.length ? remainingSteps : steps,
+      dest,
+    );
+
+    return { direction: rel, distance, isAtDestination, bearingMap, bearingWorld };
+  }, [currentPos, nextWaypoint, dest, remainingSteps, steps, heading, orientationOffset]);
+
+  const calibrate = useCallback(() => {
+    if (!currentPos) return;
+    const target = nextWaypoint || dest;
+    if (!target) return;
+    const bearingMap = calculateARBearing(currentPos, target, true);
+    const newOffset = normalizeDeg(heading - bearingMap);
+    setOrientationOffset(newOffset);
+  }, [currentPos, nextWaypoint, dest, heading]);
 
   const arrowStyle = useMemo(
     () => [{ transform: [{ rotate: `${ar.direction}deg` }] }],
@@ -196,12 +258,11 @@ export default function ARIndoorNavScreen() {
   );
   const currentInstruction = steps[currentStep]?.instruction ?? 'Follow the arrow';
 
-  // Render states
   const showCamera = hasPermission && !!device;
 
   return (
     <View style={styles.container}>
-      {/* Camera background or helpful fallback */}
+      {/* Camera */}
       {showCamera ? (
         <Camera ref={cameraRef} style={StyleSheet.absoluteFill} device={device!} isActive />
       ) : (
@@ -228,7 +289,7 @@ export default function ARIndoorNavScreen() {
         </View>
       )}
 
-      {/* HUD overlay */}
+      {/* HUD */}
       <View style={styles.hud} pointerEvents="box-none">
         <Text style={styles.title}>
           {buildingName} — Floor {floorId}
@@ -249,6 +310,9 @@ export default function ARIndoorNavScreen() {
           <TouchableOpacity onPress={cancel} style={[styles.btn, styles.btnGhost]}>
             <Text style={styles.btnGhostText}>Cancel</Text>
           </TouchableOpacity>
+          <TouchableOpacity onPress={calibrate} style={[styles.btn, styles.btnGhost]}>
+            <Text style={styles.btnGhostText}>Calibrate</Text>
+          </TouchableOpacity>
           <TouchableOpacity onPress={advance} style={[styles.btn, styles.btnPrimary]}>
             <Text style={styles.btnPrimaryText}>
               {currentStep >= steps.length - 1 ? "I've arrived" : 'Mark step done'}
@@ -259,10 +323,18 @@ export default function ARIndoorNavScreen() {
         <View style={styles.debugPill}>
           <Text style={styles.debugText}>
             {hasPermission ? '📷 ok' : '📷 no'} • {device ? '📱 cam' : '🚫 cam'} • hdg{' '}
-            {heading.toFixed(0)}°
+            {heading.toFixed(0)}°{'  '}off {Math.round(orientationOffset)}°
           </Text>
         </View>
       </View>
+      <StandardPopup
+        visible={popupVisible}
+        title={popupTitle}
+        message={popupMessage}
+        confirmText={popupConfirmText}
+        onConfirm={() => setPopupVisible(false)}
+        showCancel={false}
+      />
     </View>
   );
 }
@@ -319,8 +391,8 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   distance: { color: '#fff', fontSize: 14, opacity: 0.9, marginTop: 4, marginBottom: 12 },
-  actionsRow: { flexDirection: 'row', gap: 12, marginTop: 8 },
-  btn: { paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10 },
+  actionsRow: { flexDirection: 'row', gap: 10, marginTop: 8 },
+  btn: { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10 },
   btnPrimary: { backgroundColor: '#5E5CE6' },
   btnPrimaryText: { color: '#fff', fontWeight: '700' },
   btnGhost: {
