@@ -37,7 +37,7 @@ import { useCompass } from '../hooks/useCompass';
 import { requestCameraPermission } from '../utils/cameraPermissions';
 import { Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { ROUTING_API } from '@env';
+// import { ROUTING_API } from '@env';
 
 type MapScreenParams = {
   lat?: string;
