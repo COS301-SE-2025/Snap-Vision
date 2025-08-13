@@ -154,4 +154,83 @@ describe('EditorContent Integration Tests', () => {
     });
   });
 
+  describe('Theme Integration', () => {
+    it('applies dark theme correctly', () => {
+      const darkColors = {
+        background: '#121212',
+        primary: '#BB86FC',
+      };
+
+      const { getByTestId, getByText } = render(
+        <ThemeProviderWrapper>
+          <AdminScreenContent colors={darkColors} {...mockHandlers} />
+        </ThemeProviderWrapper>
+      );
+
+      const container = getByTestId('editor-container');
+      expect(container.props.style).toContainEqual(
+        expect.objectContaining({ backgroundColor: darkColors.background })
+      );
+
+      const editorText = getByText('Editor');
+      expect(editorText.props.style).toMatchObject({
+        color: darkColors.primary,
+      });
+    });
+
+    it('applies light theme correctly', () => {
+      const lightColors = {
+        background: '#f5f5f5',
+        primary: '#6200EE',
+      };
+
+      const { getByTestId, getByText } = render(
+        <ThemeProviderWrapper>
+          <AdminScreenContent colors={lightColors} {...mockHandlers} />
+        </ThemeProviderWrapper>
+      );
+
+      const container = getByTestId('editor-container');
+      expect(container.props.style).toContainEqual(
+        expect.objectContaining({ backgroundColor: lightColors.background })
+      );
+
+      const dashboardText = getByText('DASHBOARD');
+      expect(dashboardText.props.style).toMatchObject({
+        color: lightColors.primary,
+      });
+    });
+  });
+
+  describe('Optional Props Handling', () => {
+    it('renders correctly without optional props', () => {
+      const { getByTestId } = render(
+        <ThemeProviderWrapper>
+          <AdminScreenContent 
+            colors={mockColors} 
+            onLoadFloorplans={mockHandlers.onLoadFloorplans} 
+            onEditFloorplans={mockHandlers.onEditFloorplans} 
+          />
+        </ThemeProviderWrapper>
+      );
+
+      expect(getByTestId('editor-container')).toBeTruthy();
+    });
+
+    it('handles optional onFloorplanEditor prop when provided', () => {
+      const { getByTestId } = render(
+        <ThemeProviderWrapper>
+          <AdminScreenContent 
+            colors={mockColors} 
+            onLoadFloorplans={mockHandlers.onLoadFloorplans} 
+            onEditFloorplans={mockHandlers.onEditFloorplans}
+            onFloorplanEditor={mockHandlers.onFloorplanEditor}
+          />
+        </ThemeProviderWrapper>
+      );
+
+      // If you have a button that uses onFloorplanEditor, you could test it here
+    });
+  });
+
   
