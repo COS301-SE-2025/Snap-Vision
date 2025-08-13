@@ -21,10 +21,7 @@ export async function getRecentlyVPOIs(userId?: string): Promise<Visit[]> {
     const currentUserId = userId || auth().currentUser?.uid;
     if (!currentUserId) return [];
 
-    const userDoc = await firestore()
-      .collection('recentlyVisited')
-      .doc(currentUserId)
-      .get();
+    const userDoc = await firestore().collection('recentlyVisited').doc(currentUserId).get();
 
     if (!userDoc.exists) {
       return [];
@@ -65,7 +62,7 @@ export async function addRecentlyVisitedPOI(visit: Omit<Visit, 'timestamp'>): Pr
       const pois: Visit[] = data.pois || [];
 
       // Prevent duplicate POIs
-      const alreadyExists = pois.some(poi => poi.poiId === poiId);
+      const alreadyExists = pois.some((poi) => poi.poiId === poiId);
       if (alreadyExists) {
         console.log(`POI ${poiId} already exists for user ${userId}`);
         return;

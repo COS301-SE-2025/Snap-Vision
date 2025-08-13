@@ -67,7 +67,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!uid) return;
-    
+
     const loadUserData = async () => {
       setLoading(true);
       try {
@@ -101,7 +101,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       // Optimistic update
-      setState(prev => {
+      setState((prev) => {
         if (prev.unlocked.has(id)) return prev;
         return {
           ...prev,
@@ -113,7 +113,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
 
       // Firestore update
       await unlockBadgeForUser(uid, id);
-      
+
       // Sync with latest data
       const snap = await getUserBadgeData(uid);
       if (snap) {
@@ -130,10 +130,10 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
     } catch (e) {
       console.error('Failed to unlock badge:', e);
       // Revert optimistic update
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
-        unlocked: new Set([...prev.unlocked].filter(b => b !== id)),
-        justUnlocked: prev.justUnlocked.filter(b => b !== id),
+        unlocked: new Set([...prev.unlocked].filter((b) => b !== id)),
+        justUnlocked: prev.justUnlocked.filter((b) => b !== id),
         points: prev.points - 50,
       }));
     }
@@ -141,10 +141,10 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
 
   const incrementRoutes = async () => {
     if (!uid) return;
-    
+
     try {
       const updated = await incrementRoutesCompletedForUser(uid);
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         routesCompleted: updated?.routesCompleted || prev.routesCompleted,
         unlocked: new Set<BadgeId>(updated?.badges || []),
@@ -157,20 +157,22 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
 
   const completeChallenge = async (challengeId: string) => {
     if (!uid) return;
-    
+
     try {
       const updated = await completeChallengeForUser(uid, challengeId);
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         points: updated?.points || prev.points,
-        completedChallenges: new Set<string>(updated?.completedChallenges || [...prev.completedChallenges, challengeId]),
+        completedChallenges: new Set<string>(
+          updated?.completedChallenges || [...prev.completedChallenges, challengeId],
+        ),
       }));
     } catch (e) {
       console.error('Failed to complete challenge:', e);
     }
   };
 
-  const clearJustUnlocked = () => setState(prev => ({ ...prev, justUnlocked: [] }));
+  const clearJustUnlocked = () => setState((prev) => ({ ...prev, justUnlocked: [] }));
 
   const getChallenges = (): Challenge[] => [
     {
