@@ -18,8 +18,10 @@ export default function AdminScreenContent({
   onFloorplanEditor,
 }: Props) {
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}
-    testID="editor-container">
+    <View
+      style={[styles.container, { backgroundColor: colors.background }]}
+      testID="editor-container"
+    >
       <Text
         style={{
           fontSize: 56,
@@ -44,10 +46,17 @@ export default function AdminScreenContent({
       >
         DASHBOARD
       </Text>
-      <View style={styles.buttonContainer}
-      testID="button-container">
-        <AppButton title="Load Floorplans" onPress={onLoadFloorplans} testID="button-Load-Floorplans" />
-        <AppButton title="Edit Floorplans" onPress={onEditFloorplans} testID="button-Edit-Floorplans"/>
+      <View style={styles.buttonContainer} testID="button-container">
+        <AppButton
+          title="Load Floorplans"
+          onPress={onLoadFloorplans}
+          testID="button-Load-Floorplans"
+        />
+        <AppButton
+          title="Edit Floorplans"
+          onPress={onEditFloorplans}
+          testID="button-Edit-Floorplans"
+        />
         {/* <AppButton title="Settings" onPress={onSettings} /> */}
       </View>
     </View>

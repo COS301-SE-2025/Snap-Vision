@@ -40,20 +40,8 @@ jest.mock('@react-navigation/native', () => ({
 // Mock child components with proper TypeScript typing
 jest.mock('../../src/components/atoms/AppButton', () => {
   const { Text, TouchableOpacity } = require('react-native');
-  return ({
-    title,
-    onPress,
-    testID,
-  }: {
-    title: string;
-    onPress: () => void;
-    testID?: string;
-  }) => (
-    <TouchableOpacity 
-      testID={testID} 
-      onPress={onPress}
-      accessibilityLabel={title}
-    >
+  return ({ title, onPress, testID }: { title: string; onPress: () => void; testID?: string }) => (
+    <TouchableOpacity testID={testID} onPress={onPress} accessibilityLabel={title}>
       <Text>{title}</Text>
     </TouchableOpacity>
   );
@@ -81,25 +69,25 @@ describe('EditorContent Integration Tests', () => {
       const { getByText, getByTestId } = render(
         <ThemeProviderWrapper>
           <AdminScreenContent colors={mockColors} {...mockHandlers} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       // Verify main container
       const container = getByTestId('editor-container');
       expect(container.props.style).toContainEqual(
-        expect.objectContaining({ backgroundColor: mockColors.background })
+        expect.objectContaining({ backgroundColor: mockColors.background }),
       );
 
       // Verify text elements
       const editorText = getByText('Editor');
       const dashboardText = getByText('DASHBOARD');
-      
+
       expect(editorText.props.style).toMatchObject({
         fontSize: 56,
         fontFamily: 'PermanentMarkerRegular',
         color: mockColors.primary,
       });
-      
+
       expect(dashboardText.props.style).toMatchObject({
         fontSize: 52,
         fontFamily: 'PermanentMarkerRegular',
@@ -118,7 +106,7 @@ describe('EditorContent Integration Tests', () => {
       const { getByTestId, getByText } = render(
         <ThemeProviderWrapper>
           <AdminScreenContent colors={mockColors} {...mockHandlers} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       const loadButton = getByTestId('button-Load-Floorplans');
@@ -136,7 +124,7 @@ describe('EditorContent Integration Tests', () => {
       const { getByTestId } = render(
         <ThemeProviderWrapper>
           <AdminScreenContent colors={mockColors} {...mockHandlers} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       fireEvent.press(getByTestId('button-Load-Floorplans'));
@@ -164,12 +152,12 @@ describe('EditorContent Integration Tests', () => {
       const { getByTestId, getByText } = render(
         <ThemeProviderWrapper>
           <AdminScreenContent colors={darkColors} {...mockHandlers} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       const container = getByTestId('editor-container');
       expect(container.props.style).toContainEqual(
-        expect.objectContaining({ backgroundColor: darkColors.background })
+        expect.objectContaining({ backgroundColor: darkColors.background }),
       );
 
       const editorText = getByText('Editor');
@@ -187,12 +175,12 @@ describe('EditorContent Integration Tests', () => {
       const { getByTestId, getByText } = render(
         <ThemeProviderWrapper>
           <AdminScreenContent colors={lightColors} {...mockHandlers} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       const container = getByTestId('editor-container');
       expect(container.props.style).toContainEqual(
-        expect.objectContaining({ backgroundColor: lightColors.background })
+        expect.objectContaining({ backgroundColor: lightColors.background }),
       );
 
       const dashboardText = getByText('DASHBOARD');
@@ -206,12 +194,12 @@ describe('EditorContent Integration Tests', () => {
     it('renders correctly without optional props', () => {
       const { getByTestId } = render(
         <ThemeProviderWrapper>
-          <AdminScreenContent 
-            colors={mockColors} 
-            onLoadFloorplans={mockHandlers.onLoadFloorplans} 
-            onEditFloorplans={mockHandlers.onEditFloorplans} 
+          <AdminScreenContent
+            colors={mockColors}
+            onLoadFloorplans={mockHandlers.onLoadFloorplans}
+            onEditFloorplans={mockHandlers.onEditFloorplans}
           />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       expect(getByTestId('editor-container')).toBeTruthy();
@@ -220,13 +208,13 @@ describe('EditorContent Integration Tests', () => {
     it('handles optional onFloorplanEditor prop when provided', () => {
       const { getByTestId } = render(
         <ThemeProviderWrapper>
-          <AdminScreenContent 
-            colors={mockColors} 
-            onLoadFloorplans={mockHandlers.onLoadFloorplans} 
+          <AdminScreenContent
+            colors={mockColors}
+            onLoadFloorplans={mockHandlers.onLoadFloorplans}
             onEditFloorplans={mockHandlers.onEditFloorplans}
             onFloorplanEditor={mockHandlers.onFloorplanEditor}
           />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       // If you have a button that uses onFloorplanEditor, you could test it here
@@ -234,37 +222,37 @@ describe('EditorContent Integration Tests', () => {
   });
 
   describe('Accessibility Integration', () => {
-  it('has proper accessibility labels for interactive elements', () => {
-    const { getByLabelText } = render(
-      <ThemeProviderWrapper>
-        <AdminScreenContent colors={mockColors} {...mockHandlers} />
-      </ThemeProviderWrapper>
-    );
+    it('has proper accessibility labels for interactive elements', () => {
+      const { getByLabelText } = render(
+        <ThemeProviderWrapper>
+          <AdminScreenContent colors={mockColors} {...mockHandlers} />
+        </ThemeProviderWrapper>,
+      );
 
-    expect(getByLabelText('Load Floorplans')).toBeTruthy();
-    expect(getByLabelText('Edit Floorplans')).toBeTruthy();
+      expect(getByLabelText('Load Floorplans')).toBeTruthy();
+      expect(getByLabelText('Edit Floorplans')).toBeTruthy();
+    });
+
+    it('has proper testIDs for testing', () => {
+      const { getByTestId } = render(
+        <ThemeProviderWrapper>
+          <AdminScreenContent colors={mockColors} {...mockHandlers} />
+        </ThemeProviderWrapper>,
+      );
+
+      expect(getByTestId('editor-container')).toBeTruthy();
+      expect(getByTestId('button-container')).toBeTruthy();
+      expect(getByTestId('button-Load-Floorplans')).toBeTruthy();
+      expect(getByTestId('button-Edit-Floorplans')).toBeTruthy();
+    });
   });
-
-  it('has proper testIDs for testing', () => {
-    const { getByTestId } = render(
-      <ThemeProviderWrapper>
-        <AdminScreenContent colors={mockColors} {...mockHandlers} />
-      </ThemeProviderWrapper>
-    );
-
-    expect(getByTestId('editor-container')).toBeTruthy();
-    expect(getByTestId('button-container')).toBeTruthy();
-    expect(getByTestId('button-Load-Floorplans')).toBeTruthy();
-    expect(getByTestId('button-Edit-Floorplans')).toBeTruthy();
-  });
-});
 
   describe('Layout Integration', () => {
     it('maintains proper layout structure', () => {
       const { getByTestId } = render(
         <ThemeProviderWrapper>
           <AdminScreenContent colors={mockColors} {...mockHandlers} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       const container = getByTestId('editor-container');
@@ -273,7 +261,7 @@ describe('EditorContent Integration Tests', () => {
           flex: 1,
           justifyContent: 'center',
           alignItems: 'center',
-        })
+        }),
       );
 
       const buttonContainer = getByTestId('button-container');
@@ -289,7 +277,7 @@ describe('EditorContent Integration Tests', () => {
       const { getByTestId } = render(
         <ThemeProviderWrapper>
           <AdminScreenContent colors={mockColors} {...mockHandlers} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       // Simulate admin loading floorplans
