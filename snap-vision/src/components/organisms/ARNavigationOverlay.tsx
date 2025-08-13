@@ -388,16 +388,16 @@ function SimpleARGuidance({
     return 'Continue';
   };
 
-  // More precise emoji logic with relaxed tolerances
-  const getDirectionEmoji = () => {
-    if (Math.abs(relativeBearing) < 35) return '↑';
-    if (relativeBearing >= 35 && relativeBearing < 80) return '⬈';
-    if (relativeBearing >= 80 && relativeBearing < 120) return '→';
-    if (relativeBearing >= 120) return '↻'; // Turn around
-    if (relativeBearing <= -35 && relativeBearing > -80) return '⬉';
-    if (relativeBearing <= -80 && relativeBearing > -120) return '←';
-    if (relativeBearing <= -120) return '↻'; // Turn around
-    return '↑';
+  // More precise direction logic with relaxed tolerances
+  const getDirectionType = () => {
+    if (Math.abs(relativeBearing) < 35) return 'up';
+    if (relativeBearing >= 35 && relativeBearing < 80) return 'up-right';
+    if (relativeBearing >= 80 && relativeBearing < 120) return 'right';
+    if (relativeBearing >= 120) return 'turn-around';
+    if (relativeBearing <= -35 && relativeBearing > -80) return 'up-left';
+    if (relativeBearing <= -80 && relativeBearing > -120) return 'left';
+    if (relativeBearing <= -120) return 'turn-around';
+    return 'up';
   };
 
   return (
@@ -416,7 +416,7 @@ function SimpleARGuidance({
             },
           ]}
         >
-          <Text style={styles.directionEmoji}>{getDirectionEmoji()}</Text>
+          <CustomDirectionArrow direction={getDirectionType()} size={60} />
         </View>
 
         {/* Direction Text */}
@@ -503,6 +503,66 @@ function calculateBearing(lat1: number, lon1: number, lat2: number, lon2: number
   const bearing = normalizeAngle(toDeg(Math.atan2(y, x)));
 
   return bearing;
+}
+
+// Custom Arrow Component for more impressive direction display
+function CustomDirectionArrow({ direction, size = 50 }: { direction: string; size?: number }) {
+  const getArrowStyle = () => {
+    const baseStyle = {
+      width: size,
+      height: size,
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const,
+    };
+
+    switch (direction) {
+      case 'up':
+        return { ...baseStyle, transform: [{ rotate: '0deg' }] };
+      case 'up-right':
+        return { ...baseStyle, transform: [{ rotate: '45deg' }] };
+      case 'right':
+        return { ...baseStyle, transform: [{ rotate: '90deg' }] };
+      case 'down-right':
+        return { ...baseStyle, transform: [{ rotate: '135deg' }] };
+      case 'down':
+        return { ...baseStyle, transform: [{ rotate: '180deg' }] };
+      case 'down-left':
+        return { ...baseStyle, transform: [{ rotate: '225deg' }] };
+      case 'left':
+        return { ...baseStyle, transform: [{ rotate: '270deg' }] };
+      case 'up-left':
+        return { ...baseStyle, transform: [{ rotate: '315deg' }] };
+      case 'turn-around':
+        return { ...baseStyle, transform: [{ rotate: '0deg' }] };
+      default:
+        return { ...baseStyle, transform: [{ rotate: '0deg' }] };
+    }
+  };
+
+  if (direction === 'turn-around') {
+    return (
+      <View style={getArrowStyle()}>
+        <View style={styles.turnAroundContainer}>
+          <View style={styles.turnAroundCircle}>
+            <Text style={styles.turnAroundText}>↻</Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={getArrowStyle()}>
+      <View style={styles.customArrowContainer}>
+        {/* Arrow Head */}
+        <View style={styles.arrowHead} />
+        {/* Arrow Body */}
+        <View style={styles.arrowBody} />
+        {/* Arrow Glow Effect */}
+        <View style={styles.arrowGlow} />
+      </View>
+    </View>
+  );
 }
 
 function normalizeAngle(angle: number): number {
@@ -829,5 +889,63 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
+  },
+
+  // Custom Arrow Styles
+  customArrowContainer: {
+    position: 'relative',
+    width: 50,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  arrowHead: {
+    position: 'absolute',
+    width: 0,
+    height: 0,
+    borderLeftWidth: 12,
+    borderRightWidth: 12,
+    borderBottomWidth: 20,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: '#FFFFFF',
+    top: 5,
+  },
+  arrowBody: {
+    position: 'absolute',
+    width: 8,
+    height: 25,
+    backgroundColor: '#FFFFFF',
+    top: 22,
+    borderRadius: 2,
+  },
+  arrowGlow: {
+    position: 'absolute',
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    top: -2,
+    left: -2,
+    zIndex: -1,
+  },
+  turnAroundContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  turnAroundCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255, 193, 7, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  turnAroundText: {
+    fontSize: 24,
+    color: '#FFFFFF',
+    fontWeight: 'bold',
   },
 });
