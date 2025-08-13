@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { BadgeId } from '../types/badges';
 import {
-  fetchBadgeSnapshot,
-  unlockBadge as unlockViaApi,
-  completeChallenge as completeChallengeApi,
-  incrementRoutesCompleted,
-} from '../api/badgeApi';
+  unlockBadgeForUser,
+  getUserBadgeData,
+  completeChallengeForUser,
+  incrementRoutesCompletedForUser,
+} from '../services/badgeService';
 import auth from '@react-native-firebase/auth';
 import { Challenge } from '../types/achievements';
 
@@ -67,10 +67,56 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!uid) return;
-    (async () => {
+    
+    const loadUserData = async () => {
       setLoading(true);
       try {
-        const snap = await fetchBadgeSnapshot(uid);
+        const snap = await getUserBadgeData(uid);
+        if (snap) {
+          setState({
+            unlocked: new Set<BadgeId>(snap.badges || []),
+            justUnlocked: [],
+            points: snap.points || 0,
+            checkIns: snap.checkIns || 0,
+            routesCompleted: snap.routesCompleted || 0,
+            purchases: snap.purchases || [],
+            completedChallenges: new Set<string>(snap.completedChallenges || []),
+          });
+        }
+      } catch (e) {
+        console.warn('Failed to load badge data:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
+  }, [uid]);
+
+  const unlock = async (id: BadgeId) => {
+    if (!uid) {
+      console.log('Unlock aborted: no UID');
+      return;
+    }
+
+    try {
+      // Optimistic update
+      setState(prev => {
+        if (prev.unlocked.has(id)) return prev;
+        return {
+          ...prev,
+          unlocked: new Set(prev.unlocked).add(id),
+          justUnlocked: [...prev.justUnlocked, id],
+          points: prev.points + 50,
+        };
+      });
+
+      // Firestore update
+      await unlockBadgeForUser(uid, id);
+      
+      // Sync with latest data
+      const snap = await getUserBadgeData(uid);
+      if (snap) {
         setState({
           unlocked: new Set<BadgeId>(snap.badges || []),
           justUnlocked: [],
@@ -80,93 +126,58 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
           purchases: snap.purchases || [],
           completedChallenges: new Set<string>(snap.completedChallenges || []),
         });
-      } catch (e) {
-        console.warn('Badge sync failed', e);
-      } finally {
-        setLoading(false);
       }
-    })();
-  }, [uid]);
-
-  const unlock = async (id: BadgeId) => {
-    console.log('unlock called with id:', id);
-    if (!uid) {
-      console.log('unlock aborted: no uid');
-      return;
-    }
-
-    setState((prev) => {
-      if (prev.unlocked.has(id)) {
-        console.log('badge already unlocked:', id);
-        return prev;
-      }
-      const unlocked = new Set(prev.unlocked).add(id);
-      console.log('unlocking badge locally:', id);
-      return {
-        ...prev,
-        unlocked,
-        justUnlocked: [...prev.justUnlocked, id],
-        points: prev.points + 50,
-      };
-    });
-
-    try {
-      const snap = await unlockViaApi(uid, id);
-      console.log('unlock API success:', snap);
-      setState({
-        unlocked: new Set<BadgeId>(snap.badges || []),
-        justUnlocked: [],
-        points: snap.points,
-        checkIns: snap.checkIns,
-        routesCompleted: snap.routesCompleted,
-        purchases: snap.purchases || [],
-        completedChallenges: new Set<string>(snap.completedChallenges || []),
-      });
     } catch (e) {
-      console.error('unlock failed, reverting', e);
+      console.error('Failed to unlock badge:', e);
+      // Revert optimistic update
+      setState(prev => ({
+        ...prev,
+        unlocked: new Set([...prev.unlocked].filter(b => b !== id)),
+        justUnlocked: prev.justUnlocked.filter(b => b !== id),
+        points: prev.points - 50,
+      }));
     }
   };
 
   const incrementRoutes = async () => {
     if (!uid) return;
+    
     try {
-      const updated = await incrementRoutesCompleted(uid);
-      setState((prev) => ({
+      const updated = await incrementRoutesCompletedForUser(uid);
+      setState(prev => ({
         ...prev,
-        routesCompleted: updated.routesCompleted,
-        unlocked: new Set(updated.badges || []),
-        justUnlocked: (updated.badges || []).filter((b: BadgeId) => !prev.unlocked.has(b)),
+        routesCompleted: updated?.routesCompleted || prev.routesCompleted,
+        unlocked: new Set<BadgeId>(updated?.badges || []),
+        justUnlocked: (updated?.badges || []).filter((b: BadgeId) => !prev.unlocked.has(b)),
       }));
     } catch (e) {
       console.error('Failed to increment routes:', e);
     }
   };
 
-  const clearJustUnlocked = () => setState((prev) => ({ ...prev, justUnlocked: [] }));
-
   const completeChallenge = async (challengeId: string) => {
     if (!uid) return;
-
+    
     try {
-      const updatedData = await completeChallengeApi(uid, challengeId);
-
-      setState((prev) => ({
+      const updated = await completeChallengeForUser(uid, challengeId);
+      setState(prev => ({
         ...prev,
-        points: updatedData.points,
-        completedChallenges: new Set<string>(
-          updatedData.completedChallenges || [...prev.completedChallenges, challengeId],
-        ),
+        points: updated?.points || prev.points,
+        completedChallenges: new Set<string>(updated?.completedChallenges || [...prev.completedChallenges, challengeId]),
       }));
     } catch (e) {
-      console.error('Complete challenge failed', e);
+      console.error('Failed to complete challenge:', e);
     }
   };
+
+  const clearJustUnlocked = () => setState(prev => ({ ...prev, justUnlocked: [] }));
+
   const getChallenges = (): Challenge[] => [
     {
       id: 'earn_150_pts',
       title: 'Earn 150 Points',
       description: 'Unlock the Point Collector badge',
-      isCompleted: state.completedChallenges.has('earn_150_pts'), // <-- only completedChallenges
+      isCompleted: state.completedChallenges.has('earn_150_pts'),
       icon: 'wallet',
       type: 'current',
     },
@@ -208,14 +219,14 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
     state,
     setState,
     unlock,
-    incrementRoutes: async () => {},
-    incrementCheckIns: async () => {},
+    incrementRoutes,
+    incrementCheckIns: async () => {}, // Implement if needed
     clearJustUnlocked,
     getChallenges,
     completeChallenge,
     setNavigationStartTime: (time) => setNavigationStartTime(time),
     maybeUnlockFastFinisher: async () => {
-      if (!navigationStartTime) return;
+      if (!navigationStartTime || !uid) return;
       const elapsed = (Date.now() - navigationStartTime) / 1000;
       if (elapsed <= 300 && !state.unlocked.has('fast-finisher')) {
         await unlock('fast-finisher');
