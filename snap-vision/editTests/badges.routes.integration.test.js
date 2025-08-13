@@ -24,7 +24,7 @@ beforeAll(async () => {
     checkIns: 0,
   });
 
-  server = require("../../index");
+  server = require("../../snap-vision-backend/index");
 });
 
 afterAll(async () => {
