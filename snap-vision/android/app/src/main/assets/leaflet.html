@@ -82,12 +82,6 @@
       let poiData = [];
       let crowdData = {}; // Store crowd data by buildingId
       let isNavigating = false; // Track navigation state
-      
-      // Map rotation variables
-      let mapRotationEnabled = false; // Toggle for rotation mode
-      let currentMapRotation = 0; // Current rotation angle in degrees
-      let lastLocations = []; // Store last few locations for movement calculation
-      let rotationUpdateTimeout = null; // Debounce rotation updates
 
       // Reported crowd densities and corresponding emoji/icons
       const crowdEmojis = {
@@ -170,178 +164,42 @@
 
       // Function to update user location
       window.updateUserLocation = function (lat, lon, centerMap = false, zoomLevel = null) {
+        console.log('🗺️ updateUserLocation called:', {
+          lat,
+          lon,
+          centerMap,
+          zoomLevel,
+          mapLoaded: map && map._loaded,
+        });
         const coords = [lat, lon];
-        if (!map || !map._loaded) return; // Check if map is fully loaded
+        if (!map || !map._loaded) {
+          console.log('❌ Map not loaded yet, cannot update user location');
+          return; // Check if map is fully loaded
+        }
 
         try {
           if (centerMap) {
             if (zoomLevel !== null) {
+              console.log('🎯 Centering map with zoom level:', zoomLevel);
               map.setView(coords, zoomLevel);
             } else {
+              console.log('🎯 Centering map with default zoom');
               map.setView(coords, 16);
             }
           }
 
           if (userMarker) {
+            console.log('📍 Updating existing user marker position');
             userMarker.setLatLng(coords);
           } else {
+            console.log('📍 Creating new user marker');
             userMarker = L.marker(coords).addTo(map).bindPopup('📍 You are here!').openPopup();
           }
-
-          // Update location history for movement direction calculation
-          if (mapRotationEnabled) {
-            updateLocationHistory(lat, lon);
-          }
+          console.log('✅ User location updated successfully');
         } catch (error) {
-          console.error('Error updating user location:', error);
+          console.error('❌ Error updating user location:', error);
         }
       };
-
-      // Function to toggle map rotation mode
-      window.setMapRotationMode = function(enabled) {
-        mapRotationEnabled = enabled;
-        if (!enabled) {
-          // Reset map rotation to north-up
-          rotateMap(0);
-          lastLocations = [];
-        }
-      };
-
-      // Function to update location history and calculate movement direction
-      function updateLocationHistory(lat, lon) {
-        const newLocation = { lat, lon, timestamp: Date.now() };
-        lastLocations.push(newLocation);
-        
-        // Keep only last 5 locations (for smoothing)
-        if (lastLocations.length > 5) {
-          lastLocations.shift();
-        }
-
-        // Calculate movement bearing if we have enough points
-        if (lastLocations.length >= 2) {
-          clearTimeout(rotationUpdateTimeout);
-          rotationUpdateTimeout = setTimeout(() => {
-            updateMapRotationFromMovement();
-          }, 200); // Debounce updates
-        }
-      }
-
-      // Function to calculate movement direction and rotate map
-      function updateMapRotationFromMovement() {
-        if (!mapRotationEnabled || lastLocations.length < 2) return;
-
-        try {
-          // Use the two most recent locations to calculate bearing
-          const current = lastLocations[lastLocations.length - 1];
-          const previous = lastLocations[lastLocations.length - 2];
-
-          // Calculate distance to ensure we've moved enough
-          const distance = calculateDistanceBetweenPoints(
-            previous.lat, previous.lon,
-            current.lat, current.lon
-          );
-
-          // Only update rotation if we've moved at least 2 meters
-          if (distance > 0.000002) { // Approximately 2 meters in degrees
-            const bearing = calculateBearing(
-              previous.lat, previous.lon,
-              current.lat, current.lon
-            );
-
-            // Smooth the rotation change to avoid jittery movement
-            const targetRotation = -bearing; // Negative because we want forward to be up
-            const currentRotation = currentMapRotation;
-            
-            let rotationDiff = targetRotation - currentRotation;
-            
-            // Handle angle wraparound
-            if (rotationDiff > 180) rotationDiff -= 360;
-            if (rotationDiff < -180) rotationDiff += 360;
-            
-            // Apply smoothing - only rotate if change is significant
-            if (Math.abs(rotationDiff) > 5) {
-              const smoothedRotation = currentRotation + (rotationDiff * 0.3); // 30% of the change
-              rotateMap(smoothedRotation);
-            }
-          }
-        } catch (error) {
-          console.error('Error updating map rotation:', error);
-        }
-      }
-
-      // Function to rotate the map
-      function rotateMap(degrees) {
-        if (!map || !map._loaded) return;
-        
-        try {
-          console.log(`Rotating map to ${degrees}°`);
-          currentMapRotation = degrees;
-          const mapContainer = map.getContainer();
-          
-          // Apply rotation transform
-          mapContainer.style.transform = `rotate(${degrees}deg)`;
-          console.log(`Applied transform: rotate(${degrees}deg)`);
-          
-          // Counter-rotate controls and markers to keep them readable
-          const controls = mapContainer.querySelectorAll('.leaflet-control');
-          controls.forEach(control => {
-            control.style.transform = `rotate(${-degrees}deg)`;
-          });
-
-          // Counter-rotate POI labels
-          const poiLabels = mapContainer.querySelectorAll('.poi-label');
-          poiLabels.forEach(label => {
-            label.style.transform = `rotate(${-degrees}deg)`;
-          });
-
-          // Force map to refresh its size and position
-          setTimeout(() => {
-            if (map && map._loaded) {
-              map.invalidateSize();
-            }
-          }, 50);
-        } catch (error) {
-          console.error('Error rotating map:', error);
-        }
-      }
-
-      // Function to manually set map rotation (for compass-based rotation)
-      window.setMapRotation = function(degrees) {
-        console.log(`setMapRotation called: ${degrees}°, enabled: ${mapRotationEnabled}`);
-        if (mapRotationEnabled) {
-          console.log(`Applying rotation: ${degrees}°`);
-          rotateMap(-degrees); // Negative to make north point up
-        }
-      };
-
-      // Helper function to calculate distance between two points
-      function calculateDistanceBetweenPoints(lat1, lon1, lat2, lon2) {
-        const R = 6371e3; // Earth's radius in meters
-        const φ1 = lat1 * Math.PI/180;
-        const φ2 = lat2 * Math.PI/180;
-        const Δφ = (lat2-lat1) * Math.PI/180;
-        const Δλ = (lon2-lon1) * Math.PI/180;
-
-        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                  Math.cos(φ1) * Math.cos(φ2) *
-                  Math.sin(Δλ/2) * Math.sin(Δλ/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-        return R * c / 111320; // Convert to approximate degrees
-      }
-
-      // Helper function to calculate bearing between two points
-      function calculateBearing(lat1, lon1, lat2, lon2) {
-        const φ1 = lat1 * Math.PI/180;
-        const φ2 = lat2 * Math.PI/180;
-        const Δλ = (lon2-lon1) * Math.PI/180;
-
-        const y = Math.sin(Δλ) * Math.cos(φ2);
-        const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
-
-        const θ = Math.atan2(y, x);
-        return (θ * 180/Math.PI + 360) % 360; // Convert to degrees
-      }
 
       // Updated function to store crowd data without adding markers
       window.updateCrowdDensity = function (lat, lon, density, buildingId) {

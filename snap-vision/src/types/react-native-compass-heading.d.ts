@@ -5,11 +5,8 @@ declare module 'react-native-compass-heading' {
   }
 
   export default class CompassHeading {
-    static start(
-      degreeUpdateRate: number,
-      callback: (data: CompassData) => void
-    ): void;
-    
+    static start(degreeUpdateRate: number, callback: (data: CompassData) => void): void;
+
     static stop(): void;
   }
 }
