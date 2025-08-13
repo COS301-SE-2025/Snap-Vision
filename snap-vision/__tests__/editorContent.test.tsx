@@ -114,3 +114,61 @@ describe('AdminScreenContent', () => {
     );
   });
 
+  it('does not render the Settings button when not in use', () => {
+    const { queryByTestId } = render(
+      <AdminScreenContent colors={mockColors} {...mockHandlers} />
+    );
+    expect(queryByTestId('button-Settings')).toBeNull();
+  });
+
+  it('matches the button container styles', () => {
+    const { getByTestId } = render(
+      <AdminScreenContent colors={mockColors} {...mockHandlers} />
+    );
+
+    const buttonContainer = getByTestId('button-container');
+    expect(buttonContainer.props.style).toEqual({
+      width: '100%',
+      maxWidth: 300,
+    });
+  });
+
+  it('renders with minimal required props', () => {
+    const minimalProps = {
+      colors: mockColors,
+      onLoadFloorplans: jest.fn(),
+      onEditFloorplans: jest.fn(),
+    };
+    
+    const { getByText } = render(
+      <AdminScreenContent {...minimalProps} />
+    );
+    expect(getByText('Editor')).toBeTruthy();
+  });
+it('renders action buttons with correct props', () => {
+    const { getByTestId } = render(
+      <AdminScreenContent colors={mockColors} {...mockHandlers} />
+    );
+
+    const loadButton = getByTestId('button-Load-Floorplans');
+    const editButton = getByTestId('button-Edit-Floorplans');
+
+    expect(loadButton).toBeTruthy();
+    expect(editButton).toBeTruthy();
+    expect(loadButton.props.accessibilityLabel).toBe('Load Floorplans');
+    expect(editButton.props.accessibilityLabel).toBe('Edit Floorplans');
+  });
+
+  it('calls the correct handlers when buttons are pressed', () => {
+    const { getByTestId } = render(
+      <AdminScreenContent colors={mockColors} {...mockHandlers} />
+    );
+
+    fireEvent.press(getByTestId('button-Load-Floorplans'));
+    expect(mockHandlers.onLoadFloorplans).toHaveBeenCalledTimes(1);
+
+    fireEvent.press(getByTestId('button-Edit-Floorplans'));
+    expect(mockHandlers.onEditFloorplans).toHaveBeenCalledTimes(1);
+  });
+
+});
