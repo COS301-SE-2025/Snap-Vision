@@ -179,7 +179,6 @@ describe('ARNavigationOverlay Component Integration', () => {
 
       expect(() => render(<ARNavigationOverlay {...mockProps} />)).not.toThrow();
     });
-
   });
 
   describe('Camera Integration', () => {
