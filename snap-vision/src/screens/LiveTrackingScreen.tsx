@@ -10,7 +10,6 @@ import { getThemeColors } from '../theme';
 
 export default function LiveTrackingScreen() {
   const screenWidth = Dimensions.get('window').width;
-  const screenHeight = Dimensions.get('window').height * 0.8;
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const webViewRef = useRef<WebView>(null);
@@ -27,8 +26,8 @@ export default function LiveTrackingScreen() {
 
   // Add state for floorplan image and fingerprints
   const [floorplanImage, setFloorplanImage] = useState<string | null>(null);
-  const [showFingerprints, setShowFingerprints] = useState(true); // NEW: Toggle fingerprint visibility
-  const [fingerprints, setFingerprints] = useState<any[]>([]); // NEW: Store fingerprints
+  const [showFingerprints, setShowFingerprints] = useState(true);
+  const [fingerprints, setFingerprints] = useState<any[]>([]);
 
   useEffect(() => {
     if (position) {
@@ -47,7 +46,7 @@ export default function LiveTrackingScreen() {
     `);
   };
 
-  // NEW: Load fingerprints for debugging
+  // Load fingerprints for debugging
   const loadFingerprints = async () => {
     if (!detectedLocation) return;
 
@@ -113,7 +112,7 @@ export default function LiveTrackingScreen() {
     loadFloorplan();
   }, [detectedLocation]);
 
-  // FIXED: Use EXACT same HTML structure as AdminIndoorPositioningContent
+  // Use EXACT same HTML structure as AdminIndoorPositioningContent
   const getHTML = () => {
     if (!floorplanImage) return '<html><body>Loading...</body></html>';
 
@@ -126,15 +125,8 @@ export default function LiveTrackingScreen() {
       )
       .join('');
 
-    // Current position marker (SAME as admin page blue marker, but green)
-    const currentMarker = position
-      ? `<div id="marker"
-            style="position:absolute;left:${position.x * 100}%;top:${position.y * 100}%;
-            transform:translate(-50%,-50%);
-            width:16px;height:16px;border-radius:8px;
-            background:green;border:2px solid white;
-            cursor:pointer;z-index:10;"></div>`
-      : '';
+    // Current position marker (green instead of blue) - NO INITIAL RENDER
+    const currentMarker = '';
 
     return `
       <!DOCTYPE html>
@@ -187,13 +179,31 @@ export default function LiveTrackingScreen() {
             .marker:hover {
               transform: translate(-50%, -50%) scale(1.2);
             }
-            #marker {
-              background-color: green;
-              width: 16px;
-              height: 16px;
-              border-radius: 8px;
-              z-index: 10;
-              pointer-events: auto;
+            #current-position {
+              background-color: #4CAF50;
+              width: 10px;
+              height: 10px;
+              border: 3px solid white;
+              border-radius: 50%;
+              z-index: 100;
+              box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
+              animation: pulse 2s infinite;
+              pointer-events: none;
+              transition: all 0.8s ease-out;
+            }
+            @keyframes pulse {
+              0% { 
+                box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
+                transform: translate(-50%, -50%) scale(1);
+              }
+              50% { 
+                box-shadow: 0 0 25px rgba(76, 175, 80, 1);
+                transform: translate(-50%, -50%) scale(1.1);
+              }
+              100% { 
+                box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
+                transform: translate(-50%, -50%) scale(1);
+              }
             }
           </style>
         </head>
@@ -231,11 +241,22 @@ export default function LiveTrackingScreen() {
             }
 
             function updateMarkerScales() {
-              const markers = document.querySelectorAll('.marker, #marker');
+              const currentPosMarker = document.getElementById('current-position');
+              const markers = document.querySelectorAll('.marker');
               const inverseScale = 1 / currentScale;
               
+              // Update current position marker
+              if (currentPosMarker) {
+                const originalTransform = currentPosMarker.style.transform;
+                if (originalTransform.includes('translate')) {
+                  currentPosMarker.style.transform = originalTransform.replace(/scale\\([^)]*\\)/, '') + \` scale(\${inverseScale})\`;
+                } else {
+                  currentPosMarker.style.transform = \`translate(-50%, -50%) scale(\${inverseScale})\`;
+                }
+              }
+
+              // Update fingerprint markers
               markers.forEach(marker => {
-                // Keep markers at consistent visual size regardless of zoom
                 const originalTransform = marker.style.transform;
                 if (originalTransform.includes('translate')) {
                   marker.style.transform = originalTransform.replace(/scale\\([^)]*\\)/, '') + \` scale(\${inverseScale})\`;
@@ -254,7 +275,6 @@ export default function LiveTrackingScreen() {
             // Handle marker clicks (fingerprints)
             function onMarkerClick(markerId) {
               console.log('🔍 Clicked fingerprint:', markerId);
-              // Find the fingerprint data
               const fingerprints = ${JSON.stringify(fingerprints)};
               const fp = fingerprints.find(f => f.id === markerId);
               if (fp) {
@@ -262,57 +282,40 @@ export default function LiveTrackingScreen() {
               }
             }
 
-            // CRITICAL: Update position using EXACT same logic as admin page
+            // PREVIOUS VERSION: Smooth position updates with CSS transitions
             window.updatePosition = function(x, y) {
-              console.log('🎯 updatePosition called with coordinates:', x, y);
-              
-              let marker = document.getElementById('marker');
+              let marker = document.getElementById('current-position');
               if (!marker) {
+                // Create marker only once with previous styling
                 marker = document.createElement('div');
-                marker.id = 'marker';
+                marker.id = 'current-position';
                 marker.style.cssText = \`
                   position: absolute; 
-                  width: 16px; 
-                  height: 16px; 
-                  background-color: green; 
-                  border: 2px solid white;
-                  border-radius: 8px; 
-                  transform: translate(-50%, -50%);
-                  box-shadow: 0 0 3px rgba(0,0,0,0.5);
-                  cursor: pointer;
-                  z-index: 10;
-                  pointer-events: auto;
+                  width: 14px; 
+                  height: 14px; 
+                  background: #4CAF50; 
+                  border: 2px solid white; 
+                  border-radius: 50%; 
+                  z-index: 100;
+                  box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
+                  animation: pulse 2s infinite;
+                  pointer-events: none;
+                  transition: all 0.8s ease-out;
                 \`;
                 zoomableArea.appendChild(marker);
               }
               
-              // SAME positioning logic as admin page - just set left/top percentages
+              // Smooth position updates using CSS transitions
               marker.style.left = (x * 100) + '%';
               marker.style.top = (y * 100) + '%';
-              marker.style.transform = 'translate(-50%, -50%)';
               
-              // Apply current scale
               updateMarkerScales();
-              
-              console.log('📍 Position marker updated to:', {
-                coordinates: { x, y },
-                percentages: { left: (x * 100) + '%', top: (y * 100) + '%' }
-              });
-              
-              // Compare with fingerprints
-              console.log('🔍 Fingerprint comparison:');
-              const fingerprints = ${JSON.stringify(fingerprints)};
-              fingerprints.forEach((fp, i) => {
-                const distance = Math.sqrt(Math.pow(x - fp.x, 2) + Math.pow(y - fp.y, 2));
-                console.log(\`  \${i + 1}. \${fp.description} at (\${fp.x.toFixed(3)}, \${fp.y.toFixed(3)}) - Distance: \${distance.toFixed(3)}\`);
-              });
             };
 
             // EXACT SAME touch event handlers as AdminIndoorPositioningContent
             document.addEventListener('touchstart', function(e) {
               touchHandled = false;
               
-              // Clear any pending tap timeout
               if (tapTimeout) {
                 clearTimeout(tapTimeout);
                 tapTimeout = null;
@@ -348,11 +351,9 @@ export default function LiveTrackingScreen() {
                 if (startDistance > 0) {
                   const newScale = Math.min(Math.max(currentScale * (distance / startDistance), 0.5), 5);
                   
-                  // Get pinch center
                   const pinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
                   const pinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
                   
-                  // Calculate new offset to zoom around pinch center
                   const scaleDiff = newScale - currentScale;
                   const rect = container.getBoundingClientRect();
                   
@@ -405,11 +406,9 @@ export default function LiveTrackingScreen() {
                 const clickDuration = Date.now() - clickStartTime;
                 const currentTime = Date.now();
                 
-                // Handle single tap - only if not handled by other touch events
                 if (clickDuration < 300 && clickStartTime > 0 && !touchHandled) {
-                  // Check for double tap
                   if (currentTime - lastTapTime < 300) {
-                    // Double tap detected - reset zoom
+                    // Double tap - reset zoom
                     currentScale = 1;
                     currentOffsetX = 0;
                     currentOffsetY = 0;
@@ -417,8 +416,6 @@ export default function LiveTrackingScreen() {
                     updateMarkerScales();
                     lastTapTime = 0;
                   } else {
-                    // Single tap - log coordinates
-                    console.log('👆 Single tap detected');
                     lastTapTime = currentTime;
                   }
                 }
@@ -432,15 +429,6 @@ export default function LiveTrackingScreen() {
               console.log('🖼️ Floorplan image loaded with same scaling as admin page');
               updateMarkerScales();
             });
-
-            // Store last position for repositioning after zoom/pan
-            const originalUpdatePosition = window.updatePosition;
-            window.updatePosition = function(x, y) {
-              window.lastPosition = { x, y };
-              if (originalUpdatePosition) {
-                originalUpdatePosition(x, y);
-              }
-            };
           </script>
         </body>
       </html>
@@ -482,7 +470,7 @@ export default function LiveTrackingScreen() {
         {detectedLocation.buildingName} - Floor {detectedLocation.floorId}
       </Text>
       
-      {/* NEW: Fingerprint toggle button */}
+      {/* Fingerprint toggle button */}
       <TouchableOpacity 
         style={[styles.toggleButton, { backgroundColor: showFingerprints ? colors.primary : colors.card }]}
         onPress={() => setShowFingerprints(!showFingerprints)}
@@ -492,7 +480,7 @@ export default function LiveTrackingScreen() {
         </Text>
       </TouchableOpacity>
       
-      {/* FIXED: Use same 300px height as admin page */}
+      {/* Use same 300px height as admin page */}
       <View style={[styles.mapArea, { width: screenWidth, height: 300 }]}>
         {loading && <ActivityIndicator size="large" color="gray" />}
         {error && <Text style={styles.error}>{error}</Text>}
@@ -530,7 +518,6 @@ export default function LiveTrackingScreen() {
         Confidence: {(detectedLocation.confidence * 100).toFixed(1)}%
       </Text>
       
-      {/* Enhanced fingerprint debug info */}
       {showFingerprints && fingerprints.length > 0 && (
         <View style={styles.debugContainer}>
           <Text style={styles.debugText}>
@@ -562,7 +549,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     color: '#fff',
   },
-  // NEW: Styles for fingerprint toggle
   toggleButton: {
     marginTop: 10,
     paddingHorizontal: 16,
@@ -613,7 +599,6 @@ const styles = StyleSheet.create({
     color: 'red',
     marginTop: 10,
   },
-  // Enhanced debug styles
   debugContainer: {
     marginTop: 10,
     alignItems: 'center',
