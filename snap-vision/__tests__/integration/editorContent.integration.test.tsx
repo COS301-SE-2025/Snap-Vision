@@ -233,4 +233,72 @@ describe('EditorContent Integration Tests', () => {
     });
   });
 
-  
+  describe('Accessibility Integration', () => {
+  it('has proper accessibility labels for interactive elements', () => {
+    const { getByLabelText } = render(
+      <ThemeProviderWrapper>
+        <AdminScreenContent colors={mockColors} {...mockHandlers} />
+      </ThemeProviderWrapper>
+    );
+
+    expect(getByLabelText('Load Floorplans')).toBeTruthy();
+    expect(getByLabelText('Edit Floorplans')).toBeTruthy();
+  });
+
+  it('has proper testIDs for testing', () => {
+    const { getByTestId } = render(
+      <ThemeProviderWrapper>
+        <AdminScreenContent colors={mockColors} {...mockHandlers} />
+      </ThemeProviderWrapper>
+    );
+
+    expect(getByTestId('editor-container')).toBeTruthy();
+    expect(getByTestId('button-container')).toBeTruthy();
+    expect(getByTestId('button-Load-Floorplans')).toBeTruthy();
+    expect(getByTestId('button-Edit-Floorplans')).toBeTruthy();
+  });
+});
+
+  describe('Layout Integration', () => {
+    it('maintains proper layout structure', () => {
+      const { getByTestId } = render(
+        <ThemeProviderWrapper>
+          <AdminScreenContent colors={mockColors} {...mockHandlers} />
+        </ThemeProviderWrapper>
+      );
+
+      const container = getByTestId('editor-container');
+      expect(container.props.style).toContainEqual(
+        expect.objectContaining({
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+        })
+      );
+
+      const buttonContainer = getByTestId('button-container');
+      expect(buttonContainer.props.style).toEqual({
+        width: '100%',
+        maxWidth: 300,
+      });
+    });
+  });
+
+  describe('Complete Workflow', () => {
+    it('executes complete admin workflow', () => {
+      const { getByTestId } = render(
+        <ThemeProviderWrapper>
+          <AdminScreenContent colors={mockColors} {...mockHandlers} />
+        </ThemeProviderWrapper>
+      );
+
+      // Simulate admin loading floorplans
+      fireEvent.press(getByTestId('button-Load-Floorplans'));
+      expect(mockHandlers.onLoadFloorplans).toHaveBeenCalledTimes(1);
+
+      // Simulate admin editing floorplans
+      fireEvent.press(getByTestId('button-Edit-Floorplans'));
+      expect(mockHandlers.onEditFloorplans).toHaveBeenCalledTimes(1);
+    });
+  });
+});
