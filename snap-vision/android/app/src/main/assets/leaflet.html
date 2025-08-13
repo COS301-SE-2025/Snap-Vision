@@ -271,53 +271,73 @@
         let crowdHtml = '';
         if (crowdInfo) {
           crowdHtml = `
-          <div class="crowd-info">
-            <span class="crowd-indicator">${crowdInfo.emoji}</span>
-            <strong>Crowd: ${crowdInfo.label}</strong><br>
-            <small>Updated recently • Expires in 1 hour</small>
-          </div>
-          `;
+      <div class="crowd-info">
+        <span class="crowd-indicator">${crowdInfo.emoji}</span>
+        <strong>Crowd: ${crowdInfo.label}</strong><br>
+        <small>Updated recently • Expires in 1 hour</small>
+      </div>
+    `;
         }
 
         let adminButtons = '';
         if (window.isAdmin) {
           adminButtons = `
-            <div style="margin-top: 8px;">
-              <button onclick="window.showAdminActions('${buildingId}')" style="
-                padding: 6px 12px;
-                background-color: #FF9800;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 12px;
-                width: 100%;
-              ">Admin Actions</button>
-            </div>
-          `;
+      <div style="margin-top: 8px;">
+        <button onclick="window.showAdminActions('${buildingId}')" style="
+          padding: 6px 12px;
+          background-color: #FF9800;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 12px;
+          width: 100%;
+        ">Admin Actions</button>
+      </div>
+    `;
         }
 
         return `
-          <div style="text-align: center; min-width: 150px;">
-            <div style="margin-bottom: 8px;">
-              <strong>🏢 ${poi.name || 'Unnamed Building'}</strong>
-            </div>
-            ${crowdHtml}
-            <div style="margin-top: 8px;">
-              <button onclick="window.navigateToPOI('${poi.id}')" style="
-                padding: 6px 12px;
-                background-color: #007bff;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 12px;
-                width: 100%;
-              ">Navigate Here</button>
-            </div>
-            ${adminButtons}
-          </div>
-        `;
+    <div style="text-align: center; min-width: 150px;">
+      <div style="margin-bottom: 8px;">
+        <strong>🏢 ${poi.name || 'Unnamed Building'}</strong>
+      </div>
+
+      ${crowdHtml}
+
+      <!-- Navigate Here -->
+      <div style="margin-top: 8px;">
+        <button onclick="window.navigateToPOI('${poi.id}')" style="
+          padding: 6px 12px;
+          background-color: #007bff;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 12px;
+          width: 100%;
+        ">Navigate Here</button>
+      </div>
+
+      <!-- Admin (optional) -->
+      ${adminButtons}
+
+      <!-- Indoor navigation (ALWAYS last, under both) -->
+      <div style="margin-top: 8px;">
+        <button onclick="window.indoorNavToPOI('${poi.id}')" style="
+          padding: 10px 12px;
+          background-color: #5E5CE6;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          font-weight: bold;
+          font-size: 12px;
+          width: 100%;
+        ">Indoor navigation</button>
+      </div>
+    </div>
+  `;
       }
 
       // Function specifically for navigation
@@ -337,6 +357,30 @@
               }),
             );
           }
+        }
+      };
+
+      window.indoorNavToPOI = function (poiId) {
+        const selectedMarker = poiMarkers.find((m) => m.poiData && m.poiData.id === poiId);
+        if (!selectedMarker) return;
+
+        const props = selectedMarker.poiData || {};
+        try {
+          map.closePopup();
+        } catch (e) {}
+
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage(
+            JSON.stringify({
+              type: 'INDOOR_NAV_FROM_MAP',
+              payload: {
+                id: props.id,
+                name: props.name,
+                // adjust if your POI carries location differently:
+                locationId: props.location || props.locationId || null,
+              },
+            }),
+          );
         }
       };
 

@@ -25,6 +25,8 @@ interface RoomPOI {
   coordinates: { x: number; y: number };
   type: string;
   description: string | null;
+  isEntrance?: boolean;
+  connectorGroupId?: string;
 }
 
 interface PathPOI {
@@ -48,7 +50,6 @@ export default function AdminFloorplanEditorContent() {
   const colors = getThemeColors(isDark);
   const isDarkMode = isDark;
 
-  // Define all hooks at the top level before any conditional returns
   const webViewRef = useRef<WebView>(null);
   const [roomMarkers, setRoomMarkers] = useState<RoomPOI[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -57,40 +58,29 @@ export default function AdminFloorplanEditorContent() {
     name: '',
     type: 'classroom',
     description: '',
+    isEntrance: false,
+    connectorGroupId: '',
   });
   const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Path creation state
   const [pathMarkers, setPathMarkers] = useState<PathPOI[]>([]);
   const [isPathMode, setIsPathMode] = useState(false);
   const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
   const [currentPath, setCurrentPath] = useState<{ x: number; y: number }[]>([]);
+  const [selectedPathId, setSelectedPathId] = useState<string | null>(null);
 
-  // Popup states
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
-  // Get route params with a safe default
-  // if (!route.params) {
-  //   return (
-  //     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-  //       <Text>Missing route parameters. Please go back and try again.</Text>
-  //     </View>
-  //   );
-  // }
-
   const { buildingId, floorLabel, imageUri, locationId } = route.params;
 
-  // IMPORTANT: Place all useEffect hooks before any conditional returns
-  // Load existing room POIs
   useEffect(() => {
-    // Only load POIs if we have valid parameters
     if (!route.params || !buildingId || !floorLabel) {
-      return; // Skip loading if we don't have valid params
+      return;
     }
 
     const loadRoomPOIs = async () => {
@@ -106,7 +96,6 @@ export default function AdminFloorplanEditorContent() {
         }));
         setRoomMarkers(markers as RoomPOI[]);
 
-        // Add markers to WebView when it's ready
         if (markers.length > 0) {
           setTimeout(() => {
             markers.forEach((marker) => {
@@ -115,7 +104,7 @@ export default function AdminFloorplanEditorContent() {
                 true;
               `);
             });
-          }, 1000); // Wait for WebView to load
+          }, 1000);
         }
       } catch (error) {
         console.error('Error loading room POIs:', error);
@@ -123,9 +112,8 @@ export default function AdminFloorplanEditorContent() {
     };
 
     loadRoomPOIs();
-  }, [buildingId, floorLabel, route.params]);
+  }, [buildingId, floorLabel, route.params, locationId]);
 
-  // Load existing paths
   useEffect(() => {
     if (!route.params || !buildingId || !floorLabel) return;
 
@@ -142,7 +130,6 @@ export default function AdminFloorplanEditorContent() {
         }));
         setPathMarkers(paths);
 
-        // Draw paths on WebView
         if (paths.length > 0) {
           setTimeout(() => {
             const pathData = paths.map((path) => ({
@@ -161,13 +148,41 @@ export default function AdminFloorplanEditorContent() {
     };
 
     loadPaths();
-  }, [buildingId, floorLabel, route.params]);
+  }, [buildingId, floorLabel, route.params, locationId]);
 
-  // Generate SVG path string from waypoints
+  const handleSelectPath = (pathId: string) => {
+    setSelectedPathId(pathId);
+    webViewRef.current?.injectJavaScript(`
+    document.querySelectorAll('.path-line').forEach(p => {
+      p.setAttribute('stroke', p.getAttribute('data-path-id') === '${pathId}' ? '#FF9800' : '${colors.primary}');
+      p.setAttribute('opacity', p.getAttribute('data-path-id') === '${pathId}' ? '1' : '0.8');
+      p.setAttribute('stroke-width', p.getAttribute('data-path-id') === '${pathId}' ? '2.5' : '1');
+    });
+    true;
+  `);
+  };
+
+  const deleteSelectedPath = async () => {
+    if (!selectedPathId) return;
+    try {
+      await firestore().collection(`locations/${locationId}/pathPOIs`).doc(selectedPathId).delete();
+      setPathMarkers(pathMarkers.filter((p) => p.id !== selectedPathId));
+      setSelectedPathId(null);
+      webViewRef.current?.injectJavaScript(`
+      document.querySelectorAll('.path-line[data-path-id="${selectedPathId}"]').forEach(p => p.remove());
+      true;
+    `);
+      setSuccessMessage('Path deleted successfully');
+      setShowSuccessPopup(true);
+    } catch (error) {
+      setErrorMessage('Failed to delete path');
+      setShowErrorPopup(true);
+    }
+  };
+
   const generatePathSVG = (waypoints: { x: number; y: number }[]) => {
     if (waypoints.length < 2) return '';
 
-    // Convert relative coordinates (0-1) to SVG coordinates (0-100)
     let pathString = `M ${waypoints[0].x * 100} ${waypoints[0].y * 100}`;
     for (let i = 1; i < waypoints.length; i++) {
       pathString += ` L ${waypoints[i].x * 100} ${waypoints[i].y * 100}`;
@@ -175,7 +190,6 @@ export default function AdminFloorplanEditorContent() {
     return pathString;
   };
 
-  // Calculate path distance
   const calculatePathDistance = (waypoints: { x: number; y: number }[]) => {
     let totalDistance = 0;
     for (let i = 1; i < waypoints.length; i++) {
@@ -186,7 +200,6 @@ export default function AdminFloorplanEditorContent() {
     return totalDistance;
   };
 
-  // Toggle path creation mode
   const togglePathMode = () => {
     const newPathMode = !isPathMode;
     setIsPathMode(newPathMode);
@@ -199,7 +212,6 @@ export default function AdminFloorplanEditorContent() {
     `);
   };
 
-  // Save path to Firestore
   const savePath = async () => {
     if (selectedRooms.length !== 2 || currentPath.length < 2) {
       setErrorMessage('Please select two rooms and add waypoints to create a path');
@@ -210,7 +222,6 @@ export default function AdminFloorplanEditorContent() {
     try {
       const pathId = `path_${buildingId.replace(/\//g, '_')}_${floorLabel.replace(/\s/g, '_')}_${Date.now()}`;
 
-      // Get room coordinates for start and end points
       const startRoom = roomMarkers.find((r) => r.id === selectedRooms[0]);
       const endRoom = roomMarkers.find((r) => r.id === selectedRooms[1]);
 
@@ -220,7 +231,6 @@ export default function AdminFloorplanEditorContent() {
         return;
       }
 
-      // Create waypoints array including start and end room positions
       const waypoints = [startRoom.coordinates, ...currentPath, endRoom.coordinates];
 
       const pathPOI: PathPOI = {
@@ -229,7 +239,7 @@ export default function AdminFloorplanEditorContent() {
         floorId: floorLabel,
         startRoomId: selectedRooms[0],
         endRoomId: selectedRooms[1],
-        waypoints: waypoints, // This includes start, middle waypoints, and end
+        waypoints: waypoints,
         distance: calculatePathDistance(waypoints),
         accessible: true,
         createdAt: new Date().toISOString(),
@@ -239,7 +249,6 @@ export default function AdminFloorplanEditorContent() {
 
       setPathMarkers([...pathMarkers, pathPOI]);
 
-      // Draw the new path - use the full waypoints array
       const pathData = {
         id: pathId,
         d: generatePathSVG(waypoints),
@@ -250,7 +259,6 @@ export default function AdminFloorplanEditorContent() {
         true;
       `);
 
-      // Reset path creation
       setIsPathMode(false);
       setSelectedRooms([]);
       setCurrentPath([]);
@@ -269,8 +277,6 @@ export default function AdminFloorplanEditorContent() {
     }
   };
 
-  // After all hooks, we can have conditional returns
-  // Add defensive check for route.params
   if (!route.params) {
     return (
       <View
@@ -298,7 +304,6 @@ export default function AdminFloorplanEditorContent() {
     );
   }
 
-  // Additional safety check for each parameter
   if (!buildingId || !floorLabel || !imageUri) {
     return (
       <View
@@ -396,14 +401,14 @@ export default function AdminFloorplanEditorContent() {
             border-radius: 4px;
             white-space: nowrap;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            pointer-events: none;
+            pointer-events: auto;
             transform-origin: center top;
           }
           .path-line {
             stroke: ${colors.primary};
-            stroke-width: 3;
+            stroke-width: 1;
             fill: none;
-            stroke-dasharray: 5,5;
+            stroke-dasharray: 3,3;
             opacity: 0.8;
             vector-effect: non-scaling-stroke;
           }
@@ -422,17 +427,29 @@ export default function AdminFloorplanEditorContent() {
           .path-waypoint:hover {
             background-color: #ff9800;
           }
+            .path-line {
+          stroke: ${colors.primary};
+          stroke-width: 1;
+          fill: none;
+          stroke-dasharray: 3,3;
+          opacity: 0.8;
+          vector-effect: non-scaling-stroke;
+          cursor: pointer;
+          transition: stroke 0.2s, opacity 0.2s, stroke-width 0.2s;
+        }
         </style>
       </head>
       <body>
         <div id="container">
           <div id="zoomable-area">
             <img id="floorplan" src="${imageUri}" onerror="console.error('Failed to load image: ' + this.src);" />
-            <svg id="path-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5;" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+            <svg id="path-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: auto; z-index: 5;" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
           </div>
         </div>
         
         <script>
+
+        
           const container = document.getElementById('container');
           const zoomableArea = document.getElementById('zoomable-area');
           const floorplan = document.getElementById('floorplan');
@@ -544,6 +561,13 @@ export default function AdminFloorplanEditorContent() {
               pathElement.setAttribute('class', 'path-line');
               pathElement.setAttribute('d', path.d);
               pathElement.setAttribute('data-path-id', path.id);
+               pathElement.onclick = function(e) {
+              e.stopPropagation();
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'select_path',
+                pathId: path.id
+              }));
+            };
               pathSvg.appendChild(pathElement);
             });
           };
@@ -554,6 +578,13 @@ export default function AdminFloorplanEditorContent() {
             pathElement.setAttribute('class', 'path-line');
             pathElement.setAttribute('d', pathData.d);
             pathElement.setAttribute('data-path-id', pathData.id);
+            pathElement.onclick = function(e) {
+            e.stopPropagation();
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'select_path',
+              pathId: pathData.id
+            }));
+          };
             pathSvg.appendChild(pathElement);
           };
           
@@ -842,6 +873,8 @@ export default function AdminFloorplanEditorContent() {
             name: '',
             type: 'classroom',
             description: '',
+            isEntrance: false,
+            connectorGroupId: '',
           });
           setIsModalVisible(true);
         }
@@ -860,6 +893,8 @@ export default function AdminFloorplanEditorContent() {
               name: roomToEdit.name,
               type: roomToEdit.type,
               description: roomToEdit.description || '',
+              isEntrance: !!roomToEdit.isEntrance,
+              connectorGroupId: roomToEdit.connectorGroupId || '',
             });
             setIsModalVisible(true);
           }
@@ -870,6 +905,8 @@ export default function AdminFloorplanEditorContent() {
         setCurrentPath(data.currentPath);
       } else if (data.type === 'waypoint_removed') {
         setCurrentPath(data.currentPath);
+      } else if (data.type === 'select_path') {
+        handleSelectPath(data.pathId);
       }
     } catch (e) {
       console.error('Error parsing WebView message:', e);
@@ -909,6 +946,8 @@ export default function AdminFloorplanEditorContent() {
         },
         type: roomData.type,
         description: roomData.description || null,
+        isEntrance: !!roomData.isEntrance, // NEW
+        connectorGroupId: roomData.connectorGroupId || '',
       };
 
       // Save to Firestore
@@ -933,7 +972,13 @@ export default function AdminFloorplanEditorContent() {
       `);
 
       // Reset form
-      setRoomData({ name: '', type: 'classroom', description: '' });
+      setRoomData({
+        name: '',
+        type: 'classroom',
+        description: '',
+        isEntrance: false,
+        connectorGroupId: '',
+      });
       setIsEditing(false);
       setEditingRoomId(null);
       setIsModalVisible(false);
@@ -967,7 +1012,13 @@ export default function AdminFloorplanEditorContent() {
       `);
 
       // Reset form and close modal
-      setRoomData({ name: '', type: 'classroom', description: '' });
+      setRoomData({
+        name: '',
+        type: 'classroom',
+        description: '',
+        isEntrance: false,
+        connectorGroupId: '',
+      });
       setIsEditing(false);
       setEditingRoomId(null);
       setIsModalVisible(false);
@@ -1050,7 +1101,18 @@ export default function AdminFloorplanEditorContent() {
       <View style={[styles.footer, { borderTopColor: colors.border }]}>
         <Text style={[styles.footerText, { color: colors.text }]}>
           {roomMarkers.length} rooms • {pathMarkers.length} paths
+          {selectedPathId && (
+            <Text style={{ color: '#FF9800', marginLeft: 12 }}> Selected Path</Text>
+          )}
         </Text>
+        {selectedPathId && (
+          <TouchableOpacity
+            onPress={deleteSelectedPath}
+            style={[styles.doneButton, { backgroundColor: '#D32F2F', marginRight: 8 }]}
+          >
+            <Text style={styles.doneButtonText}>Delete Path</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={[styles.doneButton, { backgroundColor: colors.primary }]}
@@ -1088,31 +1150,76 @@ export default function AdminFloorplanEditorContent() {
           <View style={styles.typeSelector}>
             <Text style={{ color: colors.text, marginBottom: 8 }}>Room Type:</Text>
             <View style={styles.typeOptions}>
-              {['classroom', 'office', 'lab', 'restroom', 'stairs', 'elevator'].map((type) => (
-                <TouchableOpacity
-                  key={type}
-                  onPress={() => setRoomData({ ...roomData, type })}
-                  style={[
-                    styles.typeOption,
-                    {
-                      backgroundColor: roomData.type === type ? colors.primary : colors.card,
-                      borderColor: colors.border,
-                      borderWidth: 1,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={{
-                      color: roomData.type === type ? '#FFFFFF' : colors.text,
-                      fontSize: 14,
-                    }}
+              {['classroom', 'office', 'lab', 'restroom', 'stairs', 'elevator', 'entrance'].map(
+                (type) => (
+                  <TouchableOpacity
+                    key={type}
+                    onPress={() => setRoomData({ ...roomData, type })}
+                    style={[
+                      styles.typeOption,
+                      {
+                        backgroundColor: roomData.type === type ? colors.primary : colors.card,
+                        borderColor: colors.border,
+                        borderWidth: 1,
+                      },
+                    ]}
                   >
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text
+                      style={{
+                        color: roomData.type === type ? '#FFFFFF' : colors.text,
+                        fontSize: 14,
+                      }}
+                    >
+                      {type.charAt(0).toUpperCase() + type.slice(1)}
+                    </Text>
+                  </TouchableOpacity>
+                ),
+              )}
             </View>
           </View>
+
+          {/* Entrance toggle (independent of type) */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+            <Text style={{ color: colors.text, marginRight: 8 }}>Mark as entrance</Text>
+            <TouchableOpacity
+              onPress={() => setRoomData({ ...roomData, isEntrance: !roomData.isEntrance })}
+              style={{
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 6,
+                backgroundColor: roomData.isEntrance ? colors.primary : colors.card,
+                borderWidth: 1,
+                borderColor: colors.border,
+              }}
+            >
+              <Text style={{ color: roomData.isEntrance ? '#fff' : colors.text }}>
+                {roomData.isEntrance ? 'Yes' : 'No'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Connector ID for stairs/elevator */}
+          {(roomData.type === 'stairs' || roomData.type === 'elevator') && (
+            <>
+              <Text style={{ color: colors.text, marginBottom: 6 }}>
+                Connector Group ID (link stairs/elevators across floors)
+              </Text>
+              <TextInput
+                placeholder="e.g., stairs-A"
+                value={roomData.connectorGroupId}
+                onChangeText={(text) => setRoomData({ ...roomData, connectorGroupId: text })}
+                style={[
+                  styles.input,
+                  {
+                    borderColor: colors.border,
+                    color: colors.text,
+                    backgroundColor: colors.background,
+                  },
+                ]}
+                placeholderTextColor={colors.secondary}
+              />
+            </>
+          )}
 
           <TextInput
             placeholder="Description (optional)"
