@@ -57,6 +57,10 @@
         background-color: rgba(240, 240, 240, 0.8);
         font-size: 12px;
       }
+      /* Move zoom controls down to avoid overlap with turn-by-turn directions */
+      .leaflet-control-zoom {
+        margin-top: 200px !important;
+      }
     </style>
   </head>
   <body>
@@ -160,21 +164,40 @@
 
       // Function to update user location
       window.updateUserLocation = function (lat, lon, centerMap = false, zoomLevel = null) {
+        console.log('🗺️ updateUserLocation called:', {
+          lat,
+          lon,
+          centerMap,
+          zoomLevel,
+          mapLoaded: map && map._loaded,
+        });
         const coords = [lat, lon];
-        if (!map) return;
-
-        if (centerMap) {
-          if (zoomLevel !== null) {
-            map.setView(coords, zoomLevel);
-          } else {
-            map.setView(coords, 16);
-          }
+        if (!map || !map._loaded) {
+          console.log('❌ Map not loaded yet, cannot update user location');
+          return; // Check if map is fully loaded
         }
 
-        if (userMarker) {
-          userMarker.setLatLng(coords);
-        } else {
-          userMarker = L.marker(coords).addTo(map).bindPopup('📍 You are here!').openPopup();
+        try {
+          if (centerMap) {
+            if (zoomLevel !== null) {
+              console.log('🎯 Centering map with zoom level:', zoomLevel);
+              map.setView(coords, zoomLevel);
+            } else {
+              console.log('🎯 Centering map with default zoom');
+              map.setView(coords, 16);
+            }
+          }
+
+          if (userMarker) {
+            console.log('📍 Updating existing user marker position');
+            userMarker.setLatLng(coords);
+          } else {
+            console.log('📍 Creating new user marker');
+            userMarker = L.marker(coords).addTo(map).bindPopup('📍 You are here!').openPopup();
+          }
+          console.log('✅ User location updated successfully');
+        } catch (error) {
+          console.error('❌ Error updating user location:', error);
         }
       };
 
@@ -391,51 +414,59 @@
 
       // Function to display POIs on the map
       window.displayPOIs = function (pois) {
-        if (!map || !Array.isArray(pois)) return;
+        if (!map || !map._loaded || !Array.isArray(pois)) return;
 
-        // Remove all existing POI markers
-        poiMarkers.forEach((marker) => map.removeLayer(marker));
-        poiMarkers = [];
-        poiData = pois;
-
-        pois.forEach((poi) => {
-          if (!poi.centroid || !poi.centroid.latitude || !poi.centroid.longitude) return;
-          const coords = [poi.centroid.latitude, poi.centroid.longitude];
-
-          const poiIcon = L.divIcon({
-            className: 'poi-marker',
-            html: '',
-            iconSize: [12, 12],
-            iconAnchor: [6, 6],
-          });
-
-          const marker = L.marker(coords, { icon: poiIcon }).bindPopup(getPopupContent(poi));
-
-          // When marker is clicked, hide all others and show only this one
-          marker.on('click', function (e) {
-            if (!isNavigating) {
-              // Only allow POI interactions when not navigating
-              hideOtherPOIMarkers(marker);
-              // Update popup content before opening
-              updatePopupContent(marker);
-              marker.openPopup();
-              // Listen for popup close to restore all markers
-              marker.once('popupclose', function () {
-                if (!isNavigating) {
-                  // Only restore markers if not navigating
-                  showAllPOIMarkers();
-                }
-              });
+        try {
+          // Remove all existing POI markers
+          poiMarkers.forEach((marker) => {
+            if (map.hasLayer(marker)) {
+              map.removeLayer(marker);
             }
           });
+          poiMarkers = [];
+          poiData = pois;
 
-          marker.poiData = poi;
-          poiMarkers.push(marker);
-        });
+          pois.forEach((poi) => {
+            if (!poi.centroid || !poi.centroid.latitude || !poi.centroid.longitude) return;
+            const coords = [poi.centroid.latitude, poi.centroid.longitude];
 
-        // Show markers only if zoom level is sufficient and not navigating
-        if (map.getZoom() >= 16 && !isNavigating) {
-          showAllPOIMarkers();
+            const poiIcon = L.divIcon({
+              className: 'poi-marker',
+              html: '',
+              iconSize: [12, 12],
+              iconAnchor: [6, 6],
+            });
+
+            const marker = L.marker(coords, { icon: poiIcon }).bindPopup(getPopupContent(poi));
+
+            // When marker is clicked, hide all others and show only this one
+            marker.on('click', function (e) {
+              if (!isNavigating) {
+                // Only allow POI interactions when not navigating
+                hideOtherPOIMarkers(marker);
+                // Update popup content before opening
+                updatePopupContent(marker);
+                marker.openPopup();
+                // Listen for popup close to restore all markers
+                marker.once('popupclose', function () {
+                  if (!isNavigating) {
+                    // Only restore markers if not navigating
+                    showAllPOIMarkers();
+                  }
+                });
+              }
+            });
+
+            marker.poiData = poi;
+            poiMarkers.push(marker);
+          });
+
+          // Show markers only if zoom level is sufficient and not navigating
+          if (map.getZoom() >= 16 && !isNavigating) {
+            showAllPOIMarkers();
+          }
+        } catch (error) {
+          console.error('Error displaying POIs:', error);
         }
       };
 
@@ -571,42 +602,46 @@
       };
 
       window.drawRoute = function (coords) {
-        if (!map || !Array.isArray(coords)) return;
+        if (!map || !map._loaded || !Array.isArray(coords)) return; // Check if map is fully loaded
 
-        // Remove existing route if already present
-        if (window.routeLayer) {
-          map.removeLayer(window.routeLayer);
-          window.routeLayer = null;
+        try {
+          // Remove existing route if already present
+          if (window.routeLayer) {
+            map.removeLayer(window.routeLayer);
+            window.routeLayer = null;
+          }
+
+          // Remove previous destination marker
+          if (destinationMarker) {
+            map.removeLayer(destinationMarker);
+            destinationMarker = null;
+          }
+
+          // Remove previous end circle
+          if (endCircle) {
+            map.removeLayer(endCircle);
+            endCircle = null;
+          }
+
+          // DO NOT add or remove any start marker or startCircle here!
+
+          const latlngs = coords.map(([lon, lat]) => [lat, lon]);
+
+          window.routeLayer = L.polyline(latlngs, {
+            color: 'blue',
+            weight: 6,
+            opacity: 1,
+            dashArray: '8,6',
+          }).addTo(map);
+
+          // Only add end marker/circle
+          endCircle = L.circle(latlngs[latlngs.length - 1], { radius: 5, color: 'red' }).addTo(map);
+          destinationMarker = L.marker(latlngs[latlngs.length - 1])
+            .addTo(map)
+            .bindPopup('🏁 End');
+        } catch (error) {
+          console.error('Error drawing route:', error);
         }
-
-        // Remove previous destination marker
-        if (destinationMarker) {
-          map.removeLayer(destinationMarker);
-          destinationMarker = null;
-        }
-
-        // Remove previous end circle
-        if (endCircle) {
-          map.removeLayer(endCircle);
-          endCircle = null;
-        }
-
-        // DO NOT add or remove any start marker or startCircle here!
-
-        const latlngs = coords.map(([lon, lat]) => [lat, lon]);
-
-        window.routeLayer = L.polyline(latlngs, {
-          color: 'blue',
-          weight: 6,
-          opacity: 1,
-          dashArray: '8,6',
-        }).addTo(map);
-
-        // Only add end marker/circle
-        endCircle = L.circle(latlngs[latlngs.length - 1], { radius: 5, color: 'red' }).addTo(map);
-        destinationMarker = L.marker(latlngs[latlngs.length - 1])
-          .addTo(map)
-          .bindPopup('🏁 End');
 
         const bounds = window.routeLayer.getBounds();
         map.fitBounds(bounds.pad(0.3));
@@ -614,29 +649,33 @@
 
       // Added this new function to update route progress visually
       window.updateRouteProgress = function (pointIndex, progressRatio) {
-        if (!window.routeLayer || !map) return;
+        if (!window.routeLayer || !map || !map._loaded) return;
 
-        const allPoints = window.routeLayer.getLatLngs();
-        if (!allPoints || allPoints.length === 0) return;
+        try {
+          const allPoints = window.routeLayer.getLatLngs();
+          if (!allPoints || allPoints.length === 0) return;
 
-        // Calculate how many points to include in the progress line
-        const pointCount = Math.ceil(allPoints.length * progressRatio);
+          // Calculate how many points to include in the progress line
+          const pointCount = Math.ceil(allPoints.length * progressRatio);
 
-        // Make sure we're not exceeding the array bounds
-        const endIndex = Math.min(pointCount, allPoints.length);
-        const progressPoints = allPoints.slice(0, endIndex);
+          // Make sure we're not exceeding the array bounds
+          const endIndex = Math.min(pointCount, allPoints.length);
+          const progressPoints = allPoints.slice(0, endIndex);
 
-        // Remove existing progress line if it exists
-        if (window.progressLine) {
-          map.removeLayer(window.progressLine);
+          // Remove existing progress line if it exists
+          if (window.progressLine) {
+            map.removeLayer(window.progressLine);
+          }
+
+          // Create a new progress line
+          window.progressLine = L.polyline(progressPoints, {
+            color: '#4CAF50', // Green color for progress
+            weight: 6,
+            opacity: 0.8,
+          }).addTo(map);
+        } catch (error) {
+          console.error('Error updating route progress:', error);
         }
-
-        // Create a new progress line
-        window.progressLine = L.polyline(progressPoints, {
-          color: '#4CAF50', // Green color for progress
-          weight: 6,
-          opacity: 0.8,
-        }).addTo(map);
       };
 
       // Function to show indoor map with room POIs

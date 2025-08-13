@@ -33,7 +33,7 @@ import { useBadges } from '../context/BadgeContext';
 import { useAccessibility } from '../context/AccessibilityContext';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import ARNavigationOverlay from '../components/organisms/ARNavigationOverlay';
-import { useCompass } from '../hooks/useCompass';
+import { useCompass } from '../hooks/useCompass'; // Needed for AR navigation functionality
 import { requestCameraPermission } from '../utils/cameraPermissions';
 import { Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
@@ -44,12 +44,12 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'http://10.0.0.15:3000';
+const ROUTING_API_BASE = 'http://192.168.0.133:3000'; // <-- Use your correct backend IP here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
 // L wifi: 192.168.0.127
-// T home: 192.168.0.118
+// T home: 192.168.0.133
 // T data: 192.168.43.155
 // Th home: 10.0.0.9
 // T Durban: 192.168.1.93
@@ -89,6 +89,14 @@ const MapScreen = () => {
   const [routeProgress, setRouteProgress] = useState(0);
   const [distanceToDestination, setDistanceToDestination] = useState<number | null>(null);
   const [estimatedTime, setEstimatedTime] = useState<number | null>(null);
+
+  // Enhanced progress tracking
+  const [distanceWalked, setDistanceWalked] = useState(0); // Never decreases
+  const [originalRouteDistance, setOriginalRouteDistance] = useState<number | null>(null); // Set when navigation starts
+  const [startLocation, setStartLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null); // Starting point
 
   const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
   const [pois, setPOIs] = useState<any[]>([]);
@@ -133,7 +141,7 @@ const MapScreen = () => {
 
   // AR Navigation state
   const [showAR, setShowAR] = useState(false);
-  const deviceHeading = useCompass();
+  const deviceHeading = useCompass(); // This is needed for AR navigation functionality
   const [isNavigationMinimized, setIsNavigationMinimized] = useState(false);
 
   //haptic feedback options
@@ -163,6 +171,8 @@ const MapScreen = () => {
     onConfirm: () => void;
   } | null>(null);
   const [showDestinationReachedPopup, setShowDestinationReachedPopup] = useState(false);
+  const [showLocationRefreshPopup, setShowLocationRefreshPopup] = useState(false);
+  const [isRefreshingLocation, setIsRefreshingLocation] = useState(false);
 
   //Fetch Locations
   useEffect(() => {
@@ -298,26 +308,36 @@ const MapScreen = () => {
     }
   }, [isAdmin, isMapReady, pois]);
 
+  // Send current location to map when map becomes ready
+  useEffect(() => {
+    if (isMapReady && currentLocation && webViewRef.current) {
+      console.log('🗺️ Map is now ready and we have location, sending to WebView:', currentLocation);
+      const zoomLevel = isNavigating ? 18 : 16;
+      const jsCode = `window.updateUserLocation && window.updateUserLocation(${currentLocation.latitude}, ${currentLocation.longitude}, true, ${zoomLevel});`;
+      webViewRef.current.injectJavaScript(jsCode);
+    }
+  }, [isMapReady, currentLocation, isNavigating]);
+
   const sendLocationToWebView = (lat: number, lon: number, centerMap = false) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
+    console.log('📍 Sending location to WebView:', { lat, lon, centerMap, isMapReady });
+
+    // Only inject JavaScript if the map is ready
+    if (!isMapReady || !webViewRef.current) {
+      console.log('⚠️ Map not ready or WebView not available, storing location for later');
+      return;
+    }
 
     const zoomLevel = isNavigating ? 18 : 16;
 
     const jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap}, ${zoomLevel});`;
-    webViewRef.current?.injectJavaScript(jsCode);
+    console.log('📤 Injecting location JavaScript:', jsCode);
+    webViewRef.current.injectJavaScript(jsCode);
 
     if (isNavigating && lastRoute.current && lastRoute.current.length > 0) {
       setStatus(`Updating location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
       updateNavigationProgress(lat, lon);
     }
-  };
-
-  const fetchRoomsForBuilding = async (locationId: string, buildingId: string) => {
-    const snap = await firestore()
-      .collection(`locations/${locationId}/roomPOIs`)
-      .where('buildingId', '==', buildingId)
-      .get();
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   };
 
   // Replace your requestLocation function with this enhanced version
@@ -342,12 +362,15 @@ const MapScreen = () => {
           results['android.permission.ACCESS_COARSE_LOCATION'] === 'granted';
 
         if (!fineLocationGranted && !coarseLocationGranted) {
-          setError('Location permissions denied. Please enable in Settings.');
+          setErrorPopupMessage(
+            'Location permissions denied. Please enable location access in your device settings and try again.',
+          );
+          setShowErrorPopup(true);
           return;
         }
 
         // Android 12+ specific: Check if we need to request precise location
-        if (Platform.Version >= 31) {
+        if (Number(Platform.Version) >= 31) {
           // Android 12 = API 31
           try {
             // Try to get high accuracy first
@@ -371,7 +394,7 @@ const MapScreen = () => {
                   },
                   (fallbackError) => {
                     console.error('❌ All location attempts failed:', fallbackError);
-                    setError('Unable to get location. Check GPS settings.');
+                    setShowLocationRefreshPopup(true);
                   },
                   { enableHighAccuracy: false, timeout: 20000, maximumAge: 30000 },
                 );
@@ -381,6 +404,7 @@ const MapScreen = () => {
           } catch (err) {
             console.error('❌ Location request failed:', err);
             setError('Location service error');
+            setShowLocationRefreshPopup(true);
           }
         } else {
           // Pre-Android 12 behavior
@@ -393,7 +417,7 @@ const MapScreen = () => {
             },
             (error) => {
               console.error('❌ Location error:', error);
-              setError('Failed to get location');
+              setShowLocationRefreshPopup(true);
             },
             { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
           );
@@ -401,7 +425,74 @@ const MapScreen = () => {
       }
     } catch (err) {
       console.error('❌ Permission request failed:', err);
-      setError('Permission request failed');
+      setShowLocationRefreshPopup(true);
+    }
+  };
+
+  // Initial location request on component mount
+  useEffect(() => {
+    console.log('🚀 MapScreen mounted, requesting initial location...');
+    // Small delay to ensure component is fully mounted
+    const timer = setTimeout(() => {
+      try {
+        if (requestLocation && typeof requestLocation === 'function') {
+          requestLocation();
+        } else {
+          console.error('❌ requestLocation is not available');
+        }
+      } catch (error) {
+        console.error('❌ Error calling requestLocation:', error);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []); // Empty dependency array is fine, we want this to run only once
+
+  // Enhanced location refresh function
+  const refreshLocation = async () => {
+    setIsRefreshingLocation(true);
+    setShowLocationRefreshPopup(false); // Close the popup
+    setTempMessage('Refreshing location...');
+    setError(null); // Clear any existing errors
+
+    try {
+      // Stop any existing location watching
+      if (watchIdRef.current) {
+        Geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+
+      // Clear current location state
+      setCurrentLocation(null);
+
+      // Re-request location with fresh permissions
+      await requestLocation();
+
+      // If we still don't have location after a delay, show manual refresh option
+      setTimeout(() => {
+        if (!currentLocation && !isRefreshingLocation) {
+          setShowLocationRefreshPopup(true);
+        }
+      }, 3000);
+    } catch (error) {
+      console.error('❌ Location refresh failed:', error);
+      setShowLocationRefreshPopup(true);
+    } finally {
+      setIsRefreshingLocation(false);
+    }
+  };
+
+  // Manual map refresh (reload WebView)
+  const refreshMap = () => {
+    setShowLocationRefreshPopup(false); // Close the popup
+    setTempMessage('Refreshing map...');
+    setIsMapReady(false);
+    setCurrentLocation(null);
+    setError(null);
+
+    // Reload the WebView
+    if (webViewRef.current) {
+      webViewRef.current.reload();
     }
   };
 
@@ -499,8 +590,17 @@ const MapScreen = () => {
 
       // === Handle simple message ===
       if (data === 'MAP_READY') {
+        console.log('🗺️ Map is ready!');
         setStatus('Map loaded');
         setIsMapReady(true);
+
+        // If we already have a location, send it to the map immediately
+        if (currentLocation) {
+          console.log('📍 Sending existing location to newly ready map:', currentLocation);
+          sendLocationToWebView(currentLocation.latitude, currentLocation.longitude, true);
+        }
+
+        // Request fresh location
         requestLocation();
 
         if (lastRoute.current.length > 0) {
@@ -790,13 +890,20 @@ const MapScreen = () => {
     setSteps([]);
     setCurrentStep(0);
 
+    // Reset enhanced progress tracking
+    setDistanceWalked(0);
+    setStartLocation(null);
+    setOriginalRouteDistance(null);
+
     // Stop navigation if it's active
     if (isNavigating) {
       stopNavigation();
     }
 
     // Clear route from map
-    webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+    if (isMapReady && webViewRef.current) {
+      webViewRef.current.injectJavaScript('window.clearRoute && window.clearRoute();');
+    }
     lastRoute.current = [];
 
     // Reset status
@@ -806,7 +913,11 @@ const MapScreen = () => {
     setError(null);
 
     // Hide POI markers and show all markers again
-    webViewRef.current?.injectJavaScript('window.showAllPOIMarkers && window.showAllPOIMarkers();');
+    if (isMapReady && webViewRef.current) {
+      webViewRef.current.injectJavaScript(
+        'window.showAllPOIMarkers && window.showAllPOIMarkers();',
+      );
+    }
   };
 
   const shareLocation = async () => {
@@ -874,8 +985,10 @@ const MapScreen = () => {
       const timeMinutes = Math.round(totalDistance / (1.4 * 60));
       setEstimatedTime(timeMinutes);
 
-      const jsRouteCode = `window.drawRoute && window.drawRoute(${JSON.stringify(coordinates)});`;
-      webViewRef.current?.injectJavaScript(jsRouteCode);
+      if (isMapReady && webViewRef.current) {
+        const jsRouteCode = `window.drawRoute && window.drawRoute(${JSON.stringify(coordinates)});`;
+        webViewRef.current.injectJavaScript(jsRouteCode);
+      }
       setStatus('Route found!');
       const stepsArr = data.features?.[0]?.properties?.segments?.[0]?.steps || [];
       setSteps(stepsArr);
@@ -908,6 +1021,13 @@ const MapScreen = () => {
     setStatus('Navigation started');
     setRouteProgress(0);
     setNavigationStartTime(Date.now());
+
+    // Initialize enhanced progress tracking
+    setDistanceWalked(0);
+    setStartLocation(currentLocation);
+    if (distanceToDestination !== null) {
+      setOriginalRouteDistance(distanceToDestination);
+    }
 
     // Start watching position with higher frequency
     if (watchIdRef.current) {
@@ -944,24 +1064,50 @@ const MapScreen = () => {
 
     setIsNavigating(false);
     setStatus('Navigation stopped');
-    webViewRef.current?.injectJavaScript(
-      'window.setNavigationState && window.setNavigationState(false);',
-    );
+    if (isMapReady && webViewRef.current) {
+      webViewRef.current.injectJavaScript(
+        'window.setNavigationState && window.setNavigationState(false);',
+      );
+    }
 
     if (currentLocation) {
       sendLocationToWebView(currentLocation.latitude, currentLocation.longitude, true);
     }
 
     // Clear progress line
-    webViewRef.current?.injectJavaScript(
-      'if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }',
-    );
+    if (isMapReady && webViewRef.current) {
+      webViewRef.current.injectJavaScript(
+        'if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }',
+      );
+    }
+
+    // Reset enhanced progress tracking when stopping
+    setDistanceWalked(0);
+    setStartLocation(null);
+    setOriginalRouteDistance(null);
   };
 
   // Update the updateNavigationProgress function to check for destination arrival
   const updateNavigationProgress = (latitude: number, longitude: number) => {
+    // Add safety check at the beginning
     if (!lastRoute.current || lastRoute.current.length === 0) {
+      console.warn('No route data available for progress update');
       return;
+    }
+
+    // Calculate distance walked from start location (never decreases)
+    if (startLocation && isNavigating) {
+      const totalWalked = getDistanceMeters(
+        startLocation.latitude,
+        startLocation.longitude,
+        latitude,
+        longitude,
+      );
+
+      // Only update if we've walked further (prevents decrease on rerouting)
+      if (totalWalked > distanceWalked) {
+        setDistanceWalked(totalWalked);
+      }
     }
 
     // Find closest point on the route
@@ -970,6 +1116,13 @@ const MapScreen = () => {
 
     for (let i = 0; i < lastRoute.current.length; i++) {
       const routePoint = lastRoute.current[i];
+
+      // Add safety check for each route point
+      if (!Array.isArray(routePoint) || routePoint.length < 2) {
+        console.warn('Invalid route point at index', i, routePoint);
+        continue;
+      }
+
       const distance = getDistanceMeters(
         latitude,
         longitude,
@@ -1031,9 +1184,27 @@ const MapScreen = () => {
       let minDist = Infinity;
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
-        const [lon, lat] = step.way_points
-          ? lastRoute.current[step.way_points[0]]
-          : lastRoute.current[0];
+
+        // Fix: Add safety checks before destructuring
+        let stepCoordinate;
+        if (
+          step.way_points &&
+          step.way_points[0] !== undefined &&
+          lastRoute.current[step.way_points[0]]
+        ) {
+          stepCoordinate = lastRoute.current[step.way_points[0]];
+        } else if (lastRoute.current[0]) {
+          stepCoordinate = lastRoute.current[0];
+        } else {
+          continue; // Skip this iteration if no valid coordinate
+        }
+
+        // Additional safety check - ensure stepCoordinate is an array with 2 elements
+        if (!Array.isArray(stepCoordinate) || stepCoordinate.length < 2) {
+          continue;
+        }
+
+        const [lon, lat] = stepCoordinate;
         const dist = getDistanceMeters(latitude, longitude, lat, lon);
         if (dist < minDist) {
           minDist = dist;
@@ -1061,11 +1232,21 @@ const MapScreen = () => {
     // Update distance to destination
     setDistanceToDestination(distanceToEnd);
 
-    // Keep status update brief to avoid UI clutter
-    setStatus(`Progress: ${newProgress}%`);
+    // Show enhanced status with distance walked and remaining
+    const walkedFormatted =
+      distanceWalked >= 1000
+        ? `${(distanceWalked / 1000).toFixed(1)}km walked`
+        : `${Math.round(distanceWalked)}m walked`;
+
+    const remainingFormatted =
+      distanceToEnd >= 1000
+        ? `${(distanceToEnd / 1000).toFixed(1)}km remaining`
+        : `${Math.round(distanceToEnd)}m remaining`;
+
+    setStatus(`${walkedFormatted} • ${remainingFormatted}`);
 
     // Update route progress visually
-    if (webViewRef.current) {
+    if (webViewRef.current && isMapReady) {
       const jsProgressCode = `
         if (window.updateRouteProgress) {
           window.updateRouteProgress(${closestPointIndex}, ${progressValue / 100});
@@ -1127,8 +1308,15 @@ const MapScreen = () => {
     setSelectedFeature(null);
     setSelectedPOI(null);
 
+    // Reset enhanced progress tracking
+    setDistanceWalked(0);
+    setStartLocation(null);
+    setOriginalRouteDistance(null);
+
     // Clear the route from the map
-    webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+    if (isMapReady && webViewRef.current) {
+      webViewRef.current.injectJavaScript('window.clearRoute && window.clearRoute();');
+    }
     lastRoute.current = [];
 
     // Show destination reached message
@@ -1168,8 +1356,10 @@ const MapScreen = () => {
         });
 
       // Update UI
-      const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${selectedPOI.centroid.latitude}, ${selectedPOI.centroid.longitude}, '${selectedDensity}', '${selectedPOI.id}');`;
-      webViewRef.current?.injectJavaScript(jsCrowdCode);
+      if (isMapReady && webViewRef.current) {
+        const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${selectedPOI.centroid.latitude}, ${selectedPOI.centroid.longitude}, '${selectedDensity}', '${selectedPOI.id}');`;
+        webViewRef.current.injectJavaScript(jsCrowdCode);
+      }
       setShowCrowdPopup(false);
       setStatus(`Crowd density reported for ${selectedPOI.name}`);
     } catch (error) {
@@ -1397,6 +1587,11 @@ const MapScreen = () => {
     webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
     lastRoute.current = [];
 
+    // Reset enhanced progress tracking for new destination
+    setDistanceWalked(0);
+    setStartLocation(null);
+    setOriginalRouteDistance(null);
+
     setDestination(poi.name);
     setDestinationCoords([poi.centroid.longitude, poi.centroid.latitude]);
     setPOISuggestions([]);
@@ -1431,7 +1626,7 @@ const MapScreen = () => {
 
           // Android 12+ requires different options
           const watchOptions =
-            Platform.Version >= 31
+            Number(Platform.Version) >= 31
               ? {
                   enableHighAccuracy: fineGranted, // Use high accuracy only if fine location granted
                   distanceFilter: 3,
@@ -1567,7 +1762,14 @@ const MapScreen = () => {
 
       const jsRouteCode = `window.drawRoute && window.drawRoute(${JSON.stringify(coordinates)});`;
       webViewRef.current?.injectJavaScript(jsRouteCode);
-      setStatus('Route updated!');
+
+      // Enhanced status message showing rerouting doesn't reset progress
+      const walkedFormatted =
+        distanceWalked >= 1000
+          ? `${(distanceWalked / 1000).toFixed(1)}km walked`
+          : `${Math.round(distanceWalked)}m walked`;
+
+      setStatus(`Route updated! ${walkedFormatted} progress preserved`);
     } catch (error) {
       console.error('Route fetch error:', error);
       setError('Failed to fetch or draw route');
@@ -1685,6 +1887,20 @@ const MapScreen = () => {
 
     return () => clearInterval(progressInterval);
   }, [isNavigating, currentLocation]);
+
+  // Check for location availability after map loads
+  useEffect(() => {
+    if (isMapReady && !currentLocation && !isRefreshingLocation) {
+      // Wait 5 seconds after map is ready, then show location prompt if still no location
+      const locationTimeout = setTimeout(() => {
+        if (!currentLocation && !showLocationRefreshPopup) {
+          setShowLocationRefreshPopup(true);
+        }
+      }, 5000);
+
+      return () => clearTimeout(locationTimeout);
+    }
+  }, [isMapReady, currentLocation, isRefreshingLocation, showLocationRefreshPopup]);
 
   // Dynamically request location updates every 3 seconds
   useEffect(() => {
@@ -1884,6 +2100,8 @@ const MapScreen = () => {
           onCancelRoute={cancelRoute}
           progress={routeProgress}
           distance={distanceToDestination}
+          distanceWalked={distanceWalked}
+          originalRouteDistance={originalRouteDistance}
           time={estimatedTime}
           destination={destination}
           isVoiceEnabled={isVoiceEnabled}
@@ -1893,7 +2111,7 @@ const MapScreen = () => {
           showAR={showAR}
           onToggleAR={handleARToggle}
           destinationCoords={destinationCoords}
-          isMinimized={showAR && isNavigationMinimized}
+          isMinimized={isNavigationMinimized}
           onToggleMinimize={handleNavigationMinimize}
         />
       )}
@@ -2086,7 +2304,32 @@ const MapScreen = () => {
         onReportIn={() => setShowReportTooltip(true)}
         onReportOut={() => setShowReportTooltip(false)}
         color={colors.primary}
+        onToggleMapRotation={toggleMapRotation}
       />
+
+      {/* Location Refresh Button - shown when no location available */}
+      {!currentLocation && (
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            bottom: 160, // Above the MapActionsPanel
+            right: 20,
+            backgroundColor: colors.primary,
+            paddingVertical: 12,
+            paddingHorizontal: 16,
+            borderRadius: 8,
+            elevation: 4,
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}
+          onPress={refreshLocation}
+          disabled={isRefreshingLocation}
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold', marginRight: 8 }}>
+            {isRefreshingLocation ? 'Finding Location...' : '📍 Find My Location'}
+          </Text>
+        </TouchableOpacity>
+      )}
 
       {/* AR Navigation Overlay */}
       {showAR && isNavigating && destinationCoords && currentLocation && (
@@ -2101,6 +2344,9 @@ const MapScreen = () => {
           }}
           deviceHeading={deviceHeading}
           navigationSteps={steps}
+          routeCoordinates={lastRoute.current} // Pass the actual route
+          currentRouteIndex={Math.floor((routeProgress / 100) * (lastRoute.current.length - 1))} // Current position on route
+          showMiniMap={true} // Enable mini map overlay
         />
       )}
 
@@ -2109,7 +2355,7 @@ const MapScreen = () => {
           onPress={() => setShowDirectionsSheet(true)}
           style={{
             position: 'absolute',
-            top: 59,
+            top: 20, // Moved back up to original position
             left: 20,
             right: 20,
             backgroundColor: colors.card,
@@ -2309,6 +2555,150 @@ const MapScreen = () => {
           setStatus('Ready for navigation');
         }}
         showCancel={false}
+      />
+
+      {/* Location Error Banner - Non-modal but centered like a popup */}
+      {showLocationRefreshPopup && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1003,
+            pointerEvents: 'box-none', // Allow touches through the transparent area
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: isDark ? '#2c2c2c' : 'white',
+              borderRadius: 16,
+              padding: 24,
+              marginHorizontal: 48, // Increased from 32 to add more space from edges
+              maxWidth: 360, // Reduced from 400 to make it narrower
+              width: '100%',
+              elevation: 8,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              pointerEvents: 'auto', // Block touches on the popup itself
+            }}
+          >
+            {/* Close button */}
+            <TouchableOpacity
+              style={{
+                position: 'absolute',
+                top: 12,
+                right: 12,
+                padding: 8,
+                zIndex: 1,
+              }}
+              onPress={() => setShowLocationRefreshPopup(false)}
+            >
+              <Text
+                style={{
+                  color: isDark ? '#ccc' : '#666',
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                }}
+              >
+                ×
+              </Text>
+            </TouchableOpacity>
+
+            {/* Title */}
+            <Text
+              style={{
+                color: isDark ? 'white' : colors.text,
+                fontSize: 18,
+                fontWeight: 'bold',
+                marginBottom: 12,
+                textAlign: 'center',
+                paddingRight: 32, // Space for close button
+              }}
+            >
+              Location Not Found
+            </Text>
+
+            {/* Message */}
+            <Text
+              style={{
+                color: isDark ? '#ccc' : colors.text,
+                fontSize: 14,
+                marginBottom: 20,
+                lineHeight: 20,
+                textAlign: 'center',
+              }}
+            >
+              Unable to find your location. This can happen indoors or in areas with poor GPS
+              signal.
+            </Text>
+
+            {/* Action buttons in vertical layout */}
+            <View style={{ flexDirection: 'column', gap: 12 }}>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: colors.primary,
+                  paddingVertical: 14,
+                  paddingHorizontal: 24,
+                  borderRadius: 8,
+                }}
+                onPress={refreshLocation}
+              >
+                <Text
+                  style={{
+                    color: 'white',
+                    fontSize: 16,
+                    fontWeight: '600',
+                    textAlign: 'center',
+                  }}
+                >
+                  Retry Location
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{
+                  backgroundColor: 'transparent',
+                  paddingVertical: 14,
+                  paddingHorizontal: 24,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: colors.primary,
+                }}
+                onPress={refreshMap}
+              >
+                <Text
+                  style={{
+                    color: colors.primary,
+                    fontSize: 16,
+                    fontWeight: '600',
+                    textAlign: 'center',
+                  }}
+                >
+                  Refresh Map
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Location Refresh Popup */}
+      <StandardPopup
+        visible={false} // Disabled - using custom non-modal popup instead
+        title="Location Not Found"
+        message="Unable to find your location. This can happen indoors or in areas with poor GPS signal. Try 'Retry Location' or 'Refresh Map' for a complete reset."
+        onConfirm={refreshLocation}
+        onCancel={refreshMap}
+        confirmText="Retry Location"
+        cancelText="Refresh Map"
+        showCancel={true}
+        verticalButtons={true}
       />
     </View>
   );
