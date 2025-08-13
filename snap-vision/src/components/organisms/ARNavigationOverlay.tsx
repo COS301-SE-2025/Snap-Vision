@@ -11,6 +11,7 @@ interface Props {
   navigationSteps?: any[];
   routeCoordinates?: [number, number][];
   currentRouteIndex?: number;
+  showMiniMap?: boolean;
 }
 
 export default function ARNavigationOverlay({
@@ -20,18 +21,19 @@ export default function ARNavigationOverlay({
   navigationSteps = [],
   routeCoordinates = [],
   currentRouteIndex = 0,
+  showMiniMap = true,
 }: Props) {
   const devices = useCameraDevices();
-  const device = devices.find(d => d.position === 'back') 
-    || devices.find(d => d.position === 'external') 
-    || devices[0];
+  const device =
+    devices.find((d) => d.position === 'back') ||
+    devices.find((d) => d.position === 'external') ||
+    devices[0];
   const { hasPermission, requestPermission } = useCameraPermission();
 
   const [isActive, setIsActive] = useState(false);
   const [deviceError, setDeviceError] = useState<string | null>(null);
-  const [showDebugInfo, setShowDebugInfo] = useState(false);
   const [nextInstruction, setNextInstruction] = useState<string>('');
-  const [compassOffset, setCompassOffset] = useState(0); // No initial offset
+  const [isMiniMapCollapsed, setIsMiniMapCollapsed] = useState(false);
 
   useEffect(() => {
     if (!hasPermission) {
@@ -72,12 +74,11 @@ export default function ARNavigationOverlay({
       <View style={styles.container}>
         <View style={styles.placeholder}>
           <Text style={styles.placeholderText}>{deviceError || 'Initializing camera...'}</Text>
-          <SimpleARFallback 
+          <SimpleARFallback
             currentLocation={currentLocation}
             destinationCoords={destinationCoords}
             deviceHeading={deviceHeading}
             nextInstruction={nextInstruction}
-            compassOffset={compassOffset}
           />
         </View>
       </View>
@@ -97,54 +98,205 @@ export default function ARNavigationOverlay({
       />
 
       {/* Simple AR Guidance Overlay */}
-      <SimpleARGuidance 
+      <SimpleARGuidance
         currentLocation={currentLocation}
         destinationCoords={destinationCoords}
         deviceHeading={deviceHeading}
         nextInstruction={nextInstruction}
         routeCoordinates={routeCoordinates}
         currentRouteIndex={currentRouteIndex}
-        compassOffset={compassOffset}
-        setCompassOffset={setCompassOffset}
       />
 
-      {/* Debug Toggle */}
-      <TouchableOpacity 
-        style={styles.debugToggle} 
-        onPress={() => setShowDebugInfo(!showDebugInfo)}
-      >
-        <Text style={styles.debugToggleText}>
-          {showDebugInfo ? '📊 Hide' : 'ℹ️ Info'}
-        </Text>
+      {/* Mini Map Overlay */}
+      {showMiniMap && currentLocation && destinationCoords && routeCoordinates.length > 0 && (
+        <MiniMapOverlay
+          currentLocation={currentLocation}
+          destinationCoords={destinationCoords}
+          routeCoordinates={routeCoordinates}
+          currentRouteIndex={currentRouteIndex}
+          deviceHeading={deviceHeading}
+          isCollapsed={isMiniMapCollapsed}
+          onToggleCollapse={() => setIsMiniMapCollapsed(!isMiniMapCollapsed)}
+        />
+      )}
+    </View>
+  );
+}
+
+// Mini Map Overlay Component
+function MiniMapOverlay({
+  currentLocation,
+  destinationCoords,
+  routeCoordinates,
+  currentRouteIndex,
+  deviceHeading,
+  isCollapsed,
+  onToggleCollapse,
+}: {
+  currentLocation: { x: number; y: number };
+  destinationCoords: { x: number; y: number };
+  routeCoordinates: [number, number][];
+  currentRouteIndex: number;
+  deviceHeading: number;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
+}) {
+  // Calculate bounds for the mini map
+  const allPoints = [
+    [currentLocation.x, currentLocation.y],
+    [destinationCoords.x, destinationCoords.y],
+    ...routeCoordinates,
+  ];
+
+  const bounds = {
+    minLat: Math.min(...allPoints.map((p) => p[1])),
+    maxLat: Math.max(...allPoints.map((p) => p[1])),
+    minLng: Math.min(...allPoints.map((p) => p[0])),
+    maxLng: Math.max(...allPoints.map((p) => p[0])),
+  };
+
+  // Add padding to bounds
+  const latPadding = (bounds.maxLat - bounds.minLat) * 0.1;
+  const lngPadding = (bounds.maxLng - bounds.minLng) * 0.1;
+
+  bounds.minLat -= latPadding;
+  bounds.maxLat += latPadding;
+  bounds.minLng -= lngPadding;
+  bounds.maxLng += lngPadding;
+
+  // Convert real coordinates to mini map coordinates
+  const coordToMiniMap = (lng: number, lat: number) => {
+    const x = ((lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)) * 140; // 140 = minimap width - padding
+    const y = ((bounds.maxLat - lat) / (bounds.maxLat - bounds.minLat)) * 140; // Flip Y axis
+    return { x: Math.max(10, Math.min(150, x)), y: Math.max(10, Math.min(150, y)) };
+  };
+
+  const currentPos = coordToMiniMap(currentLocation.x, currentLocation.y);
+  const destPos = coordToMiniMap(destinationCoords.x, destinationCoords.y);
+
+  // Use actual route start and end points for better alignment
+  const routeStartPos =
+    routeCoordinates.length > 0
+      ? coordToMiniMap(routeCoordinates[0][0], routeCoordinates[0][1])
+      : currentPos;
+  const routeEndPos =
+    routeCoordinates.length > 0
+      ? coordToMiniMap(
+          routeCoordinates[routeCoordinates.length - 1][0],
+          routeCoordinates[routeCoordinates.length - 1][1],
+        )
+      : destPos;
+
+  // Get upcoming route points for preview
+  const upcomingPoints = routeCoordinates.slice(currentRouteIndex, currentRouteIndex + 10);
+
+  return (
+    <View style={[styles.miniMapContainer, isCollapsed && styles.miniMapCollapsed]}>
+      <TouchableOpacity style={styles.miniMapHeader} onPress={onToggleCollapse} activeOpacity={0.7}>
+        <Text style={styles.miniMapTitle}>{isCollapsed ? 'Map' : 'Route Overview'}</Text>
+        <Text style={styles.miniMapToggle}>{isCollapsed ? '▲' : '▼'}</Text>
       </TouchableOpacity>
 
-      {/* Debug Info */}
-      {showDebugInfo && (
-        <View style={styles.debugInfo}>
-          <Text style={styles.debugText}>Route Points: {routeCoordinates.length}</Text>
-          <Text style={styles.debugText}>Current Index: {currentRouteIndex}</Text>
-          <Text style={styles.debugText}>Device Heading: {Math.round(deviceHeading)}°</Text>
-          {currentLocation && (
-            <Text style={styles.debugText}>
-              Location: {currentLocation.y.toFixed(4)}, {currentLocation.x.toFixed(4)}
+      {!isCollapsed && (
+        <>
+          <View style={styles.miniMapCanvas}>
+            {/* Route Path */}
+            {routeCoordinates.length > 1 && (
+              <View style={styles.routePath}>
+                {routeCoordinates.slice(0, -1).map((point, index) => {
+                  const start = coordToMiniMap(point[0], point[1]);
+                  const end = coordToMiniMap(
+                    routeCoordinates[index + 1][0],
+                    routeCoordinates[index + 1][1],
+                  );
+
+                  const length = Math.sqrt(
+                    Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2),
+                  );
+                  const angle = Math.atan2(end.y - start.y, end.x - start.x) * (180 / Math.PI);
+
+                  return (
+                    <View
+                      key={index}
+                      style={[
+                        styles.routeSegment,
+                        {
+                          left: start.x,
+                          top: start.y - 1, // Center the line vertically
+                          width: length,
+                          transform: [{ rotate: `${angle}deg` }],
+                          opacity: index < currentRouteIndex ? 0.3 : 1, // Dim completed segments
+                        },
+                      ]}
+                    />
+                  );
+                })}
+              </View>
+            )}
+
+            {/* Current Location Marker with heading - positioned at route start */}
+            <View
+              style={[
+                styles.currentLocationMarker,
+                {
+                  left: routeStartPos.x - 8,
+                  top: routeStartPos.y - 8,
+                  transform: [{ rotate: `${deviceHeading}deg` }],
+                },
+              ]}
+            >
+              <Text style={styles.currentLocationIcon}>📍</Text>
+            </View>
+
+            {/* Destination Marker - positioned at route end */}
+            <View
+              style={[
+                styles.destinationMarker,
+                { left: routeEndPos.x - 6, top: routeEndPos.y - 6 },
+              ]}
+            >
+              <Text style={styles.destinationIcon}>🎯</Text>
+            </View>
+
+            {/* Upcoming waypoints */}
+            {upcomingPoints.slice(1, 4).map((point, index) => {
+              const pos = coordToMiniMap(point[0], point[1]);
+              return (
+                <View
+                  key={index}
+                  style={[styles.waypointMarker, { left: pos.x - 3, top: pos.y - 3 }]}
+                />
+              );
+            })}
+          </View>
+
+          <View style={styles.miniMapFooter}>
+            <Text style={styles.miniMapDistance}>
+              {Math.round(
+                calculateDistance(
+                  currentLocation.y,
+                  currentLocation.x,
+                  destinationCoords.y,
+                  destinationCoords.x,
+                ),
+              )}
+              m remaining
             </Text>
-          )}
-        </View>
+          </View>
+        </>
       )}
     </View>
   );
 }
 
 //AR Guidance Component
-function SimpleARGuidance({ 
-  currentLocation, 
-  destinationCoords, 
+function SimpleARGuidance({
+  currentLocation,
+  destinationCoords,
   deviceHeading,
   nextInstruction,
   routeCoordinates,
   currentRouteIndex,
-  compassOffset,
-  setCompassOffset
 }: {
   currentLocation: { x: number; y: number } | null;
   destinationCoords: { x: number; y: number } | null;
@@ -152,45 +304,52 @@ function SimpleARGuidance({
   nextInstruction: string;
   routeCoordinates: [number, number][];
   currentRouteIndex: number;
-  compassOffset: number;
-  setCompassOffset: (offset: number) => void;
 }) {
   // Add bearing smoothing to prevent flickering
   const [bearingHistory, setBearingHistory] = useState<number[]>([]);
   const [smoothedBearing, setSmoothedBearing] = useState<number | null>(null);
 
-  if (!currentLocation || !destinationCoords) return null;
+  // Calculate raw bearing first (before early return)
+  const rawBearing =
+    currentLocation && destinationCoords
+      ? (() => {
+          // FIXED: Use the actual route coordinates correctly
+          // routeCoordinates are in [longitude, latitude] format from the routing API
+          let nextPoint: [number, number];
 
-  // FIXED: Use the actual route coordinates correctly
-  // routeCoordinates are in [longitude, latitude] format from the routing API
-  let nextPoint: [number, number];
-  
-  if (routeCoordinates.length > 0) {
-    // Find the next point ahead in the route
-    const lookAheadDistance = 1; // Reduced look ahead for more accurate direction
-    const nextIndex = Math.min(currentRouteIndex + lookAheadDistance, routeCoordinates.length - 1);
-    nextPoint = routeCoordinates[nextIndex];
-  } else {
-    // Fallback to destination if no route
-    nextPoint = [destinationCoords.x, destinationCoords.y];
-  }
+          if (routeCoordinates.length > 0) {
+            // Find the next point ahead in the route
+            const lookAheadDistance = 1; // Reduced look ahead for more accurate direction
+            const nextIndex = Math.min(
+              currentRouteIndex + lookAheadDistance,
+              routeCoordinates.length - 1,
+            );
+            nextPoint = routeCoordinates[nextIndex];
+          } else {
+            // Fallback to destination if no route
+            nextPoint = [destinationCoords.x, destinationCoords.y];
+          }
 
-  // Ensure coordinates are in the right order
-  // currentLocation: { x: longitude, y: latitude }
-  // nextPoint: [longitude, latitude]
-  // calculateBearing expects (lat1, lon1, lat2, lon2)
-  const rawBearing = calculateBearing(
-    currentLocation.y, // current latitude
-    currentLocation.x, // current longitude
-    nextPoint[1],      // target latitude
-    nextPoint[0]       // target longitude
-  );
-  
+          // Ensure coordinates are in the right order
+          // currentLocation: { x: longitude, y: latitude }
+          // nextPoint: [longitude, latitude]
+          // calculateBearing expects (lat1, lon1, lat2, lon2)
+          return calculateBearing(
+            currentLocation.y, // current latitude
+            currentLocation.x, // current longitude
+            nextPoint[1], // target latitude
+            nextPoint[0], // target longitude
+          );
+        })()
+      : 0;
+
   // Smooth the bearing to prevent flickering
   useEffect(() => {
-    setBearingHistory(prev => {
+    if (!currentLocation || !destinationCoords) return;
+
+    setBearingHistory((prev) => {
       const newHistory = [...prev, rawBearing].slice(-5); // Keep last 5 readings
-      
+
       // Calculate weighted average (more weight to recent readings)
       let weightedSum = 0;
       let totalWeight = 0;
@@ -199,145 +358,85 @@ function SimpleARGuidance({
         weightedSum += bearing * weight;
         totalWeight += weight;
       });
-      
+
       const smoothed = weightedSum / totalWeight;
       setSmoothedBearing(smoothed);
-      
+
       return newHistory;
     });
-  }, [rawBearing]);
-  
+  }, [rawBearing, currentLocation, destinationCoords]);
+
+  if (!currentLocation || !destinationCoords) return null;
+
   // Use smoothed bearing if available, otherwise use raw
   const bearing = smoothedBearing !== null ? smoothedBearing : rawBearing;
-  
+
   const normalizedDeviceHeading = ((deviceHeading % 360) + 360) % 360;
   const relativeBearing = normalizeAngle(bearing - normalizedDeviceHeading);
-  
-  const distance = calculateDistance(
-    currentLocation.y, // current latitude
-    currentLocation.x, // current longitude
-    nextPoint[1],      // target latitude
-    nextPoint[0]       // target longitude
-  );
 
   //direction logic with relaxed tolerances - 35 degrees for straight
   const getDirectionInstruction = () => {
     const absRelativeBearing = Math.abs(relativeBearing);
-    
-    if (absRelativeBearing < 35) return "Continue Straight"; // Set to 35 but can increase to about 45
-    if (relativeBearing >= 35 && relativeBearing < 80) return "Turn Right";
-    if (relativeBearing >= 80 && relativeBearing < 120) return "Sharp Right";
-    if (relativeBearing >= 120) return "Turn Around";
-    if (relativeBearing <= -35 && relativeBearing > -80) return "Turn Left";
-    if (relativeBearing <= -80 && relativeBearing > -120) return "Sharp Left";
-    if (relativeBearing <= -120) return "Turn Around";
-    return "Continue";
+
+    if (absRelativeBearing < 35) return 'Continue Straight'; // Set to 35 but can increase to about 45
+    if (relativeBearing >= 35 && relativeBearing < 80) return 'Turn Right';
+    if (relativeBearing >= 80 && relativeBearing < 120) return 'Sharp Right';
+    if (relativeBearing >= 120) return 'Turn Around';
+    if (relativeBearing <= -35 && relativeBearing > -80) return 'Turn Left';
+    if (relativeBearing <= -80 && relativeBearing > -120) return 'Sharp Left';
+    if (relativeBearing <= -120) return 'Turn Around';
+    return 'Continue';
   };
 
   // More precise emoji logic with relaxed tolerances
   const getDirectionEmoji = () => {
-    if (Math.abs(relativeBearing) < 35) return "⬆️";
-    if (relativeBearing >= 35 && relativeBearing < 80) return "↗️";
-    if (relativeBearing >= 80 && relativeBearing < 120) return "➡️";
-    if (relativeBearing >= 120) return "🔄"; // Turn around
-    if (relativeBearing <= -35 && relativeBearing > -80) return "↖️";
-    if (relativeBearing <= -80 && relativeBearing > -120) return "⬅️";
-    if (relativeBearing <= -120) return "🔄"; // Turn around
-    return "⬆️";
+    if (Math.abs(relativeBearing) < 35) return '↑';
+    if (relativeBearing >= 35 && relativeBearing < 80) return '⬈';
+    if (relativeBearing >= 80 && relativeBearing < 120) return '→';
+    if (relativeBearing >= 120) return '↻'; // Turn around
+    if (relativeBearing <= -35 && relativeBearing > -80) return '⬉';
+    if (relativeBearing <= -80 && relativeBearing > -120) return '←';
+    if (relativeBearing <= -120) return '↻'; // Turn around
+    return '↑';
   };
 
   return (
     <>
       {/* AR Navigation with Arrow and Direction */}
       <View style={styles.mainGuidanceContainer}>
-        <View style={styles.debugInfoAboveArrow}>
-          <Text style={styles.compassCalibrationText}>
-            🧭 PURE COMPASS TEST (react-native-compass-heading)
-          </Text>
-          
-          <Text style={styles.compassCalibrationText}>
-            Raw Device: {Math.round(deviceHeading)}° | Final: {Math.round(normalizedDeviceHeading)}°
-          </Text>
-          
-          <Text style={styles.bearingDebugText}>
-            📍 True Bearing: {Math.round(bearing)}° | Compass: {Math.round(normalizedDeviceHeading)}° | Relative: {Math.round(relativeBearing)}°
-          </Text>
-          
-          <Text style={styles.bearingDebugText}>
-            🎯 Mode: COMPASS ONLY - Works Stationary & Moving
-          </Text>
-        </View>
-
         {/* Direction Circle with Arrow */}
-        <View style={[
-          styles.directionCircle,
-          { backgroundColor: Math.abs(relativeBearing) < 35 ? 'rgba(76, 175, 80, 0.8)' : 'rgba(244, 67, 54, 0.8)' }
-        ]}>
-          <Text style={styles.directionEmoji}>
-            {getDirectionEmoji()}
-          </Text>
+        <View
+          style={[
+            styles.directionCircle,
+            {
+              backgroundColor:
+                Math.abs(relativeBearing) < 35
+                  ? 'rgba(76, 175, 80, 0.8)'
+                  : 'rgba(244, 67, 54, 0.8)',
+            },
+          ]}
+        >
+          <Text style={styles.directionEmoji}>{getDirectionEmoji()}</Text>
         </View>
 
         {/* Direction Text */}
-        <Text style={styles.directionText}>
-          {getDirectionInstruction()}
-        </Text>
-
-        {/* Distance Text */}
-        <Text style={styles.distanceText}>
-          {Math.round(distance)}m to destination
-        </Text>
-      </View>
-
-      {/* Compass Calibration Controls */}
-      <View style={styles.calibrationContainer}>
-        <TouchableOpacity 
-          style={styles.calibrateButton}
-          onPress={() => setCompassOffset(compassOffset - 90)}
-        >
-          <Text style={styles.calibrateButtonText}>-90°</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.calibrateButton}
-          onPress={() => setCompassOffset(compassOffset - 10)}
-        >
-          <Text style={styles.calibrateButtonText}>-10°</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.offsetText}>Offset: {compassOffset}°</Text>
-
-        <TouchableOpacity 
-          style={styles.calibrateButton}
-          onPress={() => setCompassOffset(compassOffset + 10)}
-        >
-          <Text style={styles.calibrateButtonText}>+10°</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.calibrateButton}
-          onPress={() => setCompassOffset(compassOffset + 90)}
-        >
-          <Text style={styles.calibrateButtonText}>+90°</Text>
-        </TouchableOpacity>
+        <Text style={styles.directionText}>{getDirectionInstruction()}</Text>
       </View>
     </>
   );
 }
 
 // Simple fallback without camera
-function SimpleARFallback({ 
-  currentLocation, 
-  destinationCoords, 
+function SimpleARFallback({
+  currentLocation,
+  destinationCoords,
   deviceHeading,
   nextInstruction,
-  compassOffset
 }: {
   currentLocation: { x: number; y: number } | null;
   destinationCoords: { x: number; y: number } | null;
   deviceHeading: number;
   nextInstruction: string;
-  compassOffset: number;
 }) {
   if (!currentLocation || !destinationCoords) return null;
 
@@ -346,9 +445,9 @@ function SimpleARFallback({
     currentLocation.y, // latitude
     currentLocation.x, // longitude
     destinationCoords.y, // destination latitude
-    destinationCoords.x  // destination longitude
+    destinationCoords.x, // destination longitude
   );
-  
+
   // NO OFFSETS - Pure raw readings from react-native-compass-heading library
   const normalizedHeading = ((deviceHeading % 360) + 360) % 360;
   const relativeBearing = normalizeAngle(bearing - normalizedHeading);
@@ -356,35 +455,22 @@ function SimpleARFallback({
     currentLocation.y, // latitude
     currentLocation.x, // longitude
     destinationCoords.y, // destination latitude
-    destinationCoords.x  // destination longitude
+    destinationCoords.x, // destination longitude
   );
 
   return (
     <View style={styles.fallbackContainer}>
       <Text style={styles.fallbackTitle}>AR Navigation</Text>
-      
-      <View style={[
-        styles.fallbackArrow,
-        { transform: [{ rotate: `${relativeBearing}deg` }] }
-      ]}>
+
+      <View style={[styles.fallbackArrow, { transform: [{ rotate: `${relativeBearing}deg` }] }]}>
         <Text style={styles.fallbackArrowText}>↑</Text>
       </View>
-      
+
       <Text style={styles.fallbackDistance}>
-        {Math.round(distance)}m to destination
+        {distance >= 1000 ? `${(distance / 1000).toFixed(1)}km` : `${Math.round(distance)}m`}
       </Text>
-      
-      {/* Debug info for fallback */}
-      <Text style={styles.fallbackInstruction}>
-        True Bearing: {Math.round(bearing)}°
-        {bearing > 135 && bearing < 225 ? ' (SOUTH)' : ''}
-      </Text>
-      
-      {nextInstruction && (
-        <Text style={styles.fallbackInstruction}>
-          {nextInstruction}
-        </Text>
-      )}
+
+      {nextInstruction && <Text style={styles.fallbackInstruction}>{nextInstruction}</Text>}
     </View>
   );
 }
@@ -405,27 +491,17 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 function calculateBearing(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const toRad = (x: number) => (x * Math.PI) / 180;
   const toDeg = (x: number) => (x * 180) / Math.PI;
-  
+
   const dLon = toRad(lon2 - lon1);
   const lat1Rad = toRad(lat1);
   const lat2Rad = toRad(lat2);
-  
+
   const y = Math.sin(dLon) * Math.cos(lat2Rad);
-  const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
-  
+  const x =
+    Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
+
   const bearing = normalizeAngle(toDeg(Math.atan2(y, x)));
-  
-  // Debug log to verify calculation
-  console.log('BEARING CALC:', {
-    from: [lat1, lon1],
-    to: [lat2, lon2],
-    dLon: toDeg(dLon),
-    y: y.toFixed(4),
-    x: x.toFixed(4),
-    atan2: toDeg(Math.atan2(y, x)).toFixed(1),
-    finalBearing: bearing.toFixed(1)
-  });
-  
+
   return bearing;
 }
 
@@ -458,11 +534,11 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     textAlign: 'center',
   },
-  
+
   // Main AR Guidance
   mainGuidanceContainer: {
     position: 'absolute',
-    top: screenHeight * 0.25,
+    top: screenHeight * 0.375, // Moved down slightly from 0.35 for better positioning
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -531,11 +607,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     fontWeight: 'bold',
   },
-  
+
   // Instruction Bar
   instructionBar: {
     position: 'absolute',
-    top: 80,
+    top: 20, // Aligned with turn-by-turn directions in MapScreen
     left: 20,
     right: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -550,7 +626,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
   },
-  
+
   // Debug
   debugToggle: {
     position: 'absolute',
@@ -582,7 +658,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginVertical: 2,
   },
-  
+
   // Fallback Mode
   fallbackContainer: {
     alignItems: 'center',
@@ -654,5 +730,104 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+
+  // Mini Map Styles
+  miniMapContainer: {
+    position: 'absolute',
+    top: 70, // distanc from top of screen
+    right: 20,
+    width: 160,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    zIndex: 5,
+  },
+  miniMapHeader: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  miniMapTitle: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  miniMapToggle: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  miniMapCollapsed: {
+    height: 'auto',
+  },
+  miniMapCanvas: {
+    width: 160,
+    height: 160,
+    position: 'relative',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+  },
+  miniMapFooter: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+  },
+  miniMapDistance: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  routePath: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+  },
+  routeSegment: {
+    position: 'absolute',
+    height: 2,
+    backgroundColor: '#4CAF50',
+    transformOrigin: 'left center',
+  },
+  currentLocationMarker: {
+    position: 'absolute',
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#2196F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  currentLocationIcon: {
+    fontSize: 8,
+    color: 'white',
+  },
+  destinationMarker: {
+    position: 'absolute',
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#F44336',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  destinationIcon: {
+    fontSize: 8,
+  },
+  waypointMarker: {
+    position: 'absolute',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
   },
 });
