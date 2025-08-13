@@ -11,7 +11,7 @@ app.get("/", (req, res) => {
   res.send("Snap Vision backend is running");
 });
 
-app.use("/api/badges", require("./src/routes/badges"));
+//app.use("/api/badges", require("./src/routes/badges"));
 
 app.get("/api/directions", async (req, res) => {
   const { start, end, mode = "foot-walking" } = req.query;
