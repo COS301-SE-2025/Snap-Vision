@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
+import storage from '@react-native-firebase/storage';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
@@ -10,6 +11,7 @@ import StepsBottomSheet from '../components/molecules/StepsBottomSheet';
 import * as NavUtils from '../utils/navigationUtils';
 import { Picker } from '@react-native-picker/picker';
 import StandardPopup from '../components/atoms/StandardPopup';
+import AppSecondaryButton from '../components/atoms/AppSecondaryButton';
 
 type ParamList = {
   IndoorSchematicNav: {
@@ -70,9 +72,13 @@ export default function IndoorSchematicNavScreen() {
 
   // Popup state
   const [popupVisible, setPopupVisible] = useState(false);
-const [popupTitle, setPopupTitle] = useState('');
-const [popupMessage, setPopupMessage] = useState('');
-const [popupConfirmText, setPopupConfirmText] = useState('OK');
+  const [popupTitle, setPopupTitle] = useState('');
+  const [popupMessage, setPopupMessage] = useState('');
+  const [popupConfirmText, setPopupConfirmText] = useState('OK');
+
+  // Floorplan image state
+  const [floorplanUrl, setFloorplanUrl] = useState<string | null>(null);
+  const [floorplanLoading, setFloorplanLoading] = useState<boolean>(false);
 
   // Fetch ALL floors for this building
   useEffect(() => {
@@ -108,7 +114,7 @@ const [popupConfirmText, setPopupConfirmText] = useState('OK');
           setSelectedFloorId(floorSet[0] || initialFloorId);
         }
 
-        //Place user at entrance if nothing selected
+        // Place user at entrance if nothing selected
         if (!userPos) {
           const initFloor = floorSet.includes(initialFloorId)
             ? initialFloorId
@@ -123,22 +129,85 @@ const [popupConfirmText, setPopupConfirmText] = useState('OK');
       } catch (e) {
         console.error(e);
         setPopupTitle('Error');
-setPopupMessage('Failed to load indoor data.');
-setPopupConfirmText('OK');
-setPopupVisible(true);
+        setPopupMessage('Failed to load indoor data.');
+        setPopupConfirmText('OK');
+        setPopupVisible(true);
       } finally {
         setLoading(false);
       }
     })();
   }, [buildingId, locationId]);
 
+  // Fetch floorplan image whenever floor changes
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchFloorplan() {
+      try {
+        setFloorplanLoading(true);
+        setFloorplanUrl(null);
+
+        // Firestore: locations/{locationId}/buildingPOIs/{buildingId}/floorplans (filter by floorId)
+        const fpSnap = await firestore()
+          .collection('locations')
+          .doc(locationId)
+          .collection('buildingPOIs')
+          .doc(buildingId)
+          .collection('floorplans')
+          .where('floorId', '==', selectedFloorId)
+          .limit(1)
+          .get();
+
+        let url: string | null = null;
+
+        if (!fpSnap.empty) {
+          const data: any = fpSnap.docs[0].data();
+          url = data?.imageUrl || data?.url || null;
+
+          // If only a storagePath is stored, resolve it
+          const storagePath: string | undefined = data?.storagePath;
+          if (!url && storagePath) {
+            try {
+              url = await storage().ref(storagePath).getDownloadURL();
+            } catch (e) {
+              console.warn('getDownloadURL failed for', storagePath, e);
+            }
+          }
+        }
+
+        if (!url) {
+          try {
+            const baseRef = storage().ref(`floorplans/${locationId}/${buildingId}`);
+            const list = await baseRef.listAll();
+            const match =
+              list.items.find((it) =>
+                it.name.toLowerCase().includes(String(selectedFloorId).toLowerCase()),
+              ) || list.items[0];
+            if (match) url = await match.getDownloadURL();
+          } catch (e) {
+            console.warn('Storage folder fallback failed', e);
+          }
+        }
+
+        if (!cancelled) setFloorplanUrl(url ?? null);
+      } catch (e) {
+        console.warn('Floorplan fetch failed', e);
+        if (!cancelled) setFloorplanUrl(null);
+      } finally {
+        if (!cancelled) setFloorplanLoading(false);
+      }
+    }
+
+    fetchFloorplan();
+    return () => {
+      cancelled = true;
+    };
+  }, [buildingId, locationId, selectedFloorId]);
+
   const roomsOnSelectedFloor = useMemo(
     () => allRooms.filter((r) => r.floorId === selectedFloorId),
     [allRooms, selectedFloorId],
   );
-
-  // DO NOT reset start/end when changing floors — multi-floor selection depends on this
-  // (User can pick start on one floor, switch floor, pick destination)
 
   const resetRoute = () => {
     setStartId(null);
@@ -175,7 +244,6 @@ setPopupVisible(true);
   useEffect(() => {
     if (!startId || !endId) return;
 
-    // Prefer multi-floor function if present
     const hasMulti = typeof (NavUtils as any).calculateMultiFloorRoute === 'function';
 
     const routeSteps: NavUtils.NavigationStep[] = hasMulti
@@ -188,19 +256,13 @@ setPopupVisible(true);
             accessible: false,
           },
         )
-      : NavUtils.calculateRoute(
-          startId,
-          endId,
-          // single-floor fallback: try to route on whichever floors contain the nodes
-          allRooms as any,
-          allPaths as any,
-        );
+      : NavUtils.calculateRoute(startId, endId, allRooms as any, allPaths as any);
 
     if (!routeSteps || !routeSteps.length) {
       setPopupTitle('No route');
-setPopupMessage('No path between the selected rooms in this building.');
-setPopupConfirmText('OK');
-setPopupVisible(true);
+      setPopupMessage('No path between the selected rooms in this building.');
+      setPopupConfirmText('OK');
+      setPopupVisible(true);
       setSteps([]);
       setCurrentStep(0);
       setSheetOpen(false);
@@ -220,10 +282,11 @@ setPopupVisible(true);
   const handleAdvance = () => {
     if (!steps.length) return;
     if (currentStep >= steps.length - 1) {
-  setPopupTitle('Done');
-setPopupMessage('You have reached your destination.');
-setPopupConfirmText('OK');
-setPopupVisible(true);
+      setPopupTitle('Done');
+      setPopupMessage('You have reached your destination.');
+      setPopupConfirmText('OK');
+      setPopupVisible(true);
+      resetRoute();
       return;
     }
     const next = currentStep + 1;
@@ -273,7 +336,7 @@ setPopupVisible(true);
 
       {/* Top bar: floor picker */}
       <View style={styles.topBar}>
-        <Text style={{ color: colors.text, fontWeight: '700' }}></Text>
+        {/* <Text style={{ color: colors.text, fontWeight: '700' }}>Floor</Text> */}
         <Picker
           selectedValue={selectedFloorId}
           onValueChange={(v) => setSelectedFloorId(String(v))}
@@ -294,19 +357,28 @@ setPopupVisible(true);
         <Text style={{ color: colors.text, fontWeight: '600' }}>{prompt}</Text>
       </View>
 
-      {/* Schematic map (only selected-floor rooms) */}
-      <IndoorSchematicMap
-        rooms={roomsOnSelectedFloor}
-        startId={startId || undefined}
-        endId={endId || undefined}
-        routePolyline={remainingPolyline}
-        completedPolyline={completedPolyline}
-        onSelectRoom={onSelectRoom}
-        themeColors={colors}
-        currentPos={currentPos || undefined}
-      />
+      {/* Map area with floorplan */}
+      <View style={{ flex: 1 }}>
+        {floorplanLoading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator />
+          </View>
+        )}
+        <IndoorSchematicMap
+          rooms={roomsOnSelectedFloor}
+          startId={startId || undefined}
+          endId={endId || undefined}
+          routePolyline={remainingPolyline}
+          completedPolyline={completedPolyline}
+          onSelectRoom={onSelectRoom}
+          themeColors={colors}
+          currentPos={currentPos || undefined}
+          floorplanUrl={floorplanUrl || undefined}
+        />
+      </View>
 
-      {/* Directions sheet */}
+      {/* { !!Uncomment to show Bottom sheet with step-by-step directions!!} */}
+      {/* Directions sheet
       <StepsBottomSheet
         visible={sheetOpen}
         onClose={() => setSheetOpen(false)}
@@ -315,7 +387,16 @@ setPopupVisible(true);
         colors={colors}
         currentStep={currentStep}
         onAdvance={handleAdvance}
-      />
+      /> */}
+
+      {steps.length > 0 && (
+        <AppSecondaryButton
+          title="Proceed"
+          onPress={handleAdvance}
+          style={styles.proceedBtn}
+          testID="proceed-btn"
+        />
+      )}
 
       {/* Floating Directions button */}
       {!sheetOpen && steps.length > 0 && (
@@ -330,8 +411,8 @@ setPopupVisible(true);
         </TouchableOpacity>
       )}
 
-      {/* Floating AR button (launches AR for the *currently selected* floor) */}
-      {steps.length > 0 && startId && endId && (
+      {/* Floating AR button Uncomment to see AR */}
+      {/* {steps.length > 0 && startId && endId && (
         <TouchableOpacity
           onPress={() =>
             navigation.navigate('ARIndoorNav', {
@@ -348,16 +429,16 @@ setPopupVisible(true);
         >
           <Text style={{ color: colors.text, fontWeight: '700' }}>AR</Text>
         </TouchableOpacity>
-        
-      )}
+      )} */}
+
       <StandardPopup
-  visible={popupVisible}
-  title={popupTitle}
-  message={popupMessage}
-  confirmText={popupConfirmText}
-  onConfirm={() => setPopupVisible(false)}
-  showCancel={false}
-/>
+        visible={popupVisible}
+        title={popupTitle}
+        message={popupMessage}
+        confirmText={popupConfirmText}
+        onConfirm={() => setPopupVisible(false)}
+        showCancel={false}
+      />
     </View>
   );
 }
@@ -369,7 +450,7 @@ const styles = StyleSheet.create({
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
@@ -381,6 +462,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     marginBottom: 6,
+  },
+
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 5,
   },
 
   fab: {
@@ -396,11 +484,18 @@ const styles = StyleSheet.create({
   fabAR: {
     position: 'absolute',
     right: 16,
-    bottom: 74, // stacked above the Directions FAB
+    bottom: 74,
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 24,
     borderWidth: 1,
     elevation: 4,
+  },
+
+  proceedBtn: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 50,
   },
 });

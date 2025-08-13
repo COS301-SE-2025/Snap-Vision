@@ -89,6 +89,10 @@ export default function ARIndoorNavScreen() {
   const [currentPos, setCurrentPos] = useState<{ x: number; y: number } | null>(userPos ?? null);
   const [heading, setHeading] = useState<number>(0);
 
+  const [onPopupConfirm, setOnPopupConfirm] = useState<() => void>(
+    () => () => setPopupVisible(false),
+  );
+
   const [orientationOffset, setOrientationOffset] = useState<number>(
     normalizeDeg(mapOrientationDeg),
   );
@@ -123,7 +127,6 @@ export default function ARIndoorNavScreen() {
     };
   }, []);
 
-  // Load indoor data + route (per selected floor)
   useEffect(() => {
     (async () => {
       try {
@@ -159,7 +162,7 @@ export default function ARIndoorNavScreen() {
           setPopupMessage('No path found on this floor.');
           setPopupConfirmText('Go Back');
           setPopupVisible(true);
-          setTimeout(() => nav.goBack(), 500); // auto go back after popup
+          setTimeout(() => nav.goBack(), 500);
           return;
         }
 
@@ -196,6 +199,10 @@ export default function ARIndoorNavScreen() {
       setPopupTitle('Arrived');
       setPopupMessage('You have reached your destination.');
       setPopupConfirmText('OK');
+      setOnPopupConfirm(() => () => {
+        setPopupVisible(false);
+        nav.goBack();
+      });
       setPopupVisible(true);
       return;
     }

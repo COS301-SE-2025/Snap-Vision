@@ -1,12 +1,20 @@
-import React, { useMemo } from 'react';
-import { View, StyleSheet } from 'react-native';
-import Svg, { G, Circle, Text as SvgText, Polyline, Path } from 'react-native-svg';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
+import { View, StyleSheet, Dimensions } from 'react-native';
+import Svg, {
+  G,
+  Circle,
+  Text as SvgText,
+  Polyline,
+  Path,
+  Image as SvgImage,
+  Rect,
+} from 'react-native-svg';
 import SvgPanZoom from 'react-native-svg-pan-zoom';
 
 type RoomPOI = {
   id: string;
   name: string;
-  coordinates: { x: number; y: number }; // normalized 0..1
+  coordinates: { x: number; y: number };
   type?: string;
   isEntrance?: boolean;
 };
@@ -20,9 +28,10 @@ interface Props {
   currentPos?: { x: number; y: number };
   onSelectRoom: (roomId: string) => void;
   themeColors: any;
+  floorplanUrl?: string;
 }
 
-const CANVAS = 2000;
+const CANVAS = 1000;
 
 export default function IndoorSchematicMap({
   rooms,
@@ -33,14 +42,22 @@ export default function IndoorSchematicMap({
   currentPos,
   onSelectRoom,
   themeColors,
+  floorplanUrl,
 }: Props) {
-  const roomMap = useMemo(() => new Map(rooms.map((r) => [r.id, r])), [rooms]);
+  const [initialZoom, setInitialZoom] = useState(1);
+
+  useEffect(() => {
+    const { width, height } = Dimensions.get('window');
+    const zoom = Math.min(width, height) / CANVAS;
+    setInitialZoom(zoom);
+  }, []);
+
   const routePoints = useMemo(
     () => routePolyline.map((pt) => [pt.x * CANVAS, pt.y * CANVAS] as [number, number]),
     [routePolyline],
   );
 
-  const completedPoints = useMemo(
+  const donePoints = useMemo(
     () => completedPolyline.map((pt) => [pt.x * CANVAS, pt.y * CANVAS] as [number, number]),
     [completedPolyline],
   );
@@ -48,94 +65,110 @@ export default function IndoorSchematicMap({
   return (
     <View style={styles.container}>
       <SvgPanZoom
+        style={styles.panZoom}
         canvasWidth={CANVAS}
         canvasHeight={CANVAS}
-        minScale={0.6}
-        maxScale={3}
-        initialZoom={1}
+        minScale={initialZoom}
+        maxScale={5}
+        initialZoom={initialZoom}
+        panEnabled={false}
+        pinchEnabled={true}
+        doubleTapEnabled={true}
+        center={{ x: CANVAS / 2, y: CANVAS / 2 }}
       >
         <Svg width={CANVAS} height={CANVAS} viewBox={`0 0 ${CANVAS} ${CANVAS}`}>
-          <G>
-            {completedPoints.length > 1 && (
-              <Polyline
-                points={completedPoints.map(([x, y]) => `${x},${y}`).join(' ')}
-                stroke={themeColors.text}
-                strokeWidth={5}
-                opacity={0.5}
-                fill="none"
+          <Rect x={0} y={0} width={CANVAS} height={CANVAS} fill="transparent" />
+
+          {/* Background floorplan image */}
+          {floorplanUrl ? (
+            <SvgImage
+              x={0}
+              y={0}
+              width={CANVAS}
+              height={CANVAS}
+              preserveAspectRatio="xMidYMid meet"
+              href={{ uri: floorplanUrl }}
+              opacity={1}
+            />
+          ) : null}
+
+          {/* Completed segment (behind remaining) */}
+          {donePoints.length > 1 && (
+            <Polyline
+              points={donePoints.map(([x, y]) => `${x},${y}`).join(' ')}
+              stroke={themeColors.text}
+              strokeWidth={8}
+              opacity={0.85}
+              fill="none"
+            />
+          )}
+
+          {/* Remaining route */}
+          {routePoints.length > 1 && (
+            <Polyline
+              points={routePoints.map(([x, y]) => `${x},${y}`).join(' ')}
+              stroke={themeColors.primary}
+              strokeWidth={6}
+              fill="none"
+            />
+          )}
+
+          {/* Current position */}
+          {currentPos && (
+            <G>
+              <Circle
+                cx={currentPos.x * CANVAS}
+                cy={currentPos.y * CANVAS}
+                r={10}
+                fill={themeColors.primary}
+                opacity={0.25}
               />
-            )}
-
-            {/* Remaining route (on top) */}
-            {routePoints.length > 1 && (
-              <Polyline
-                points={routePoints.map(([x, y]) => `${x},${y}`).join(' ')}
-                stroke={themeColors.primary}
-                strokeWidth={6}
-                fill="none"
+              <Circle
+                cx={currentPos.x * CANVAS}
+                cy={currentPos.y * CANVAS}
+                r={5}
+                fill={themeColors.primary}
               />
-            )}
+            </G>
+          )}
 
-            {/* Current position (you are here) */}
-            {currentPos && (
-              <G>
-                <Circle
-                  cx={currentPos.x * CANVAS}
-                  cy={currentPos.y * CANVAS}
-                  r={10}
-                  fill={themeColors.primary}
-                  opacity={0.25}
-                />
-                <Circle
-                  cx={currentPos.x * CANVAS}
-                  cy={currentPos.y * CANVAS}
-                  r={5}
-                  fill={themeColors.primary}
-                />
-              </G>
-            )}
+          {/* Rooms */}
+          {rooms.map((r) => {
+            const x = r.coordinates.x * CANVAS;
+            const y = r.coordinates.y * CANVAS;
+            const isStart = r.id === startId;
+            const isEnd = r.id === endId;
+            const fill = isStart
+              ? themeColors.success || '#4CAF50'
+              : isEnd
+                ? themeColors.primary
+                : themeColors.card;
 
-            {/* Rooms */}
-            {rooms.map((r) => {
-              const x = r.coordinates.x * CANVAS;
-              const y = r.coordinates.y * CANVAS;
-              const isStart = r.id === startId;
-              const isEnd = r.id === endId;
-              const fill = isStart
-                ? themeColors.success || '#4CAF50'
-                : isEnd
-                  ? themeColors.primary
-                  : themeColors.card;
-
-              return (
-                <G key={r.id}>
-                  {/* Entrance badge (small flag above the node) */}
-                  {(r.isEntrance || r.type === 'entrance') && (
-                    <Path
-                      d={`M ${x - 6} ${y - 18} l 12 0 l 0 10 l -12 0 Z`}
-                      fill={themeColors.warning || '#FFB300'}
-                    />
-                  )}
-
-                  {/* Tappable node */}
-                  <Circle
-                    cx={x}
-                    cy={y}
-                    r={12}
-                    stroke={themeColors.border}
-                    strokeWidth={2}
-                    fill={fill}
-                    onPressIn={() => onSelectRoom(r.id)}
+            return (
+              <G key={r.id}>
+                {(r.isEntrance || r.type === 'entrance') && (
+                  <Path
+                    d={`M ${x - 6} ${y - 18} l 12 0 l 0 10 l -12 0 Z`}
+                    fill={themeColors.warning || '#FFB300'}
                   />
+                )}
 
-                  {/* Label */}
-                  <SvgText x={x + 16} y={y + 4} fontSize={16} fill={themeColors.text}>
-                    {r.name}
-                  </SvgText>
-                </G>
-              );
-            })}
-          </G>
+                <Circle
+                  cx={x}
+                  cy={y}
+                  r={12}
+                  stroke={themeColors.border}
+                  strokeWidth={2}
+                  fill={fill}
+                  onPressIn={() => onSelectRoom(r.id)}
+                />
+
+                <SvgText x={x + 16} y={y + 4} fontSize={16} fill={themeColors.secondary}>
+                  {r.name}
+                </SvgText>
+              </G>
+            );
+          })}
         </Svg>
       </SvgPanZoom>
     </View>
@@ -144,4 +177,5 @@ export default function IndoorSchematicMap({
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  panZoom: { flex: 1 },
 });

@@ -500,22 +500,13 @@ export interface ARNavigationData {
 export const calculateARBearing = (
   currentPos: { x: number; y: number },
   targetPos: { x: number; y: number },
-  screenYDown: boolean = true,
+  _screenYDown: boolean = true, // kept for signature, but not needed
 ): number => {
   const dx = targetPos.x - currentPos.x;
   const dy = targetPos.y - currentPos.y;
-
-  let angleDeg: number;
-
-  if (screenYDown) {
-    angleDeg = Math.atan2(dx, dy) * (180 / Math.PI);
-    angleDeg = (angleDeg + 180) % 360;
-  } else {
-    angleDeg = Math.atan2(dx, -dy) * (180 / Math.PI);
-    angleDeg = (angleDeg + 360) % 360;
-  }
-
-  return angleDeg;
+  // Screen coordinates (Y down). 0° = up (negative Y), increases clockwise
+  const angleDeg = Math.atan2(dx, -dy) * (180 / Math.PI);
+  return (angleDeg + 360) % 360;
 };
 
 export const getNextARWaypoint = (

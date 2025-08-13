@@ -41,7 +41,11 @@ export default function IndoorNavigationInstructionsContent({
   const [startRoomName, setStartRoomName] = useState('');
   const [endRoomName, setEndRoomName] = useState('');
   const [showPopup, setShowPopup] = useState(false);
-  const [popupProps, setPopupProps] = useState<{ title?: string; message: string; onConfirm?: () => void } | null>(null);
+  const [popupProps, setPopupProps] = useState<{
+    title?: string;
+    message: string;
+    onConfirm?: () => void;
+  } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -139,10 +143,10 @@ export default function IndoorNavigationInstructionsContent({
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}> 
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <SettingsHeader title="Generating Route..." />
         <View style={styles.center}>
-          <Text style={[styles.loadingText, { color: colors.text }]}> 
+          <Text style={[styles.loadingText, { color: colors.text }]}>
             Calculating best route...
           </Text>
         </View>
@@ -152,7 +156,7 @@ export default function IndoorNavigationInstructionsContent({
 
   if (error) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}> 
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <SettingsHeader title="Navigation Error" />
         <View style={styles.center}>
           <Icon name="alert-circle" size={64} color={colors.danger} />
@@ -171,13 +175,13 @@ export default function IndoorNavigationInstructionsContent({
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}> 
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title="Indoor Navigation" />
       <View style={styles.header}>
-        <Text style={[styles.routeTitle, { color: colors.text }]}> 
+        <Text style={[styles.routeTitle, { color: colors.text }]}>
           {startRoomName} → {endRoomName}
         </Text>
-        <Text style={[styles.progressText, { color: colors.secondary }]}> 
+        <Text style={[styles.progressText, { color: colors.secondary }]}>
           Step {currentStep + 1} of {steps.length}
         </Text>
       </View>
@@ -196,7 +200,7 @@ export default function IndoorNavigationInstructionsContent({
             ]}
           >
             <View style={styles.stepHeader}>
-              <View style={[styles.stepIcon, { backgroundColor: stepColor(index) }]}> 
+              <View style={[styles.stepIcon, { backgroundColor: stepColor(index) }]}>
                 <Icon name={stepIcon(step, index)} size={20} color="#FFFFFF" />
               </View>
               <View style={styles.stepContent}>
@@ -212,7 +216,7 @@ export default function IndoorNavigationInstructionsContent({
                   {step.instruction}
                 </Text>
                 {!!step.distance && (
-                  <Text style={[styles.stepDistance, { color: colors.secondary }]}> 
+                  <Text style={[styles.stepDistance, { color: colors.secondary }]}>
                     {Math.round(step.distance)} m
                   </Text>
                 )}
@@ -241,11 +245,11 @@ export default function IndoorNavigationInstructionsContent({
 
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]} 
+          style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
           onPress={onBack}
         >
           <Icon name="arrow-left" size={20} color={colors.text} />
-          <Text style={[styles.backButtonText, { color: colors.text }]}> 
+          <Text style={[styles.backButtonText, { color: colors.text }]}>
             Back to Room Selection
           </Text>
         </TouchableOpacity>

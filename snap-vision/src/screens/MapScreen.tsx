@@ -44,7 +44,7 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = ROUTING_API;
+const ROUTING_API_BASE = 'http://10.0.0.15:3000';
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1

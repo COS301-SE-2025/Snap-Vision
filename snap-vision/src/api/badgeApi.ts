@@ -3,7 +3,7 @@ import { BadgeId } from '../types/badges';
 import { BADGE_API_BASE } from '@env';
 
 // Android emulator uses 10.0.2.2 to access localhost on your PC
-const BASE = BADGE_API_BASE;
+const BASE = 'http://10.0.0.15:3000/api/badges';
 
 export async function fetchBadgeSnapshot(uid: string) {
   const res = await fetch(`${BASE}/${uid}`);
