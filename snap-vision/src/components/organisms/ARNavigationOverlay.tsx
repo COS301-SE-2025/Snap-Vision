@@ -391,10 +391,10 @@ function SimpleARGuidance({
   // More precise emoji logic with relaxed tolerances
   const getDirectionEmoji = () => {
     if (Math.abs(relativeBearing) < 35) return '↑';
-    if (relativeBearing >= 35 && relativeBearing < 80) return '↗';
+    if (relativeBearing >= 35 && relativeBearing < 80) return '⬈';
     if (relativeBearing >= 80 && relativeBearing < 120) return '→';
     if (relativeBearing >= 120) return '↻'; // Turn around
-    if (relativeBearing <= -35 && relativeBearing > -80) return '↖';
+    if (relativeBearing <= -35 && relativeBearing > -80) return '⬉';
     if (relativeBearing <= -80 && relativeBearing > -120) return '←';
     if (relativeBearing <= -120) return '↻'; // Turn around
     return '↑';
