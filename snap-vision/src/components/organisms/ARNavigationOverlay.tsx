@@ -24,9 +24,10 @@ export default function ARNavigationOverlay({
   showMiniMap = true,
 }: Props) {
   const devices = useCameraDevices();
-  const device = devices.find(d => d.position === 'back') 
-    || devices.find(d => d.position === 'external') 
-    || devices[0];
+  const device =
+    devices.find((d) => d.position === 'back') ||
+    devices.find((d) => d.position === 'external') ||
+    devices[0];
   const { hasPermission, requestPermission } = useCameraPermission();
 
   const [isActive, setIsActive] = useState(false);
@@ -73,7 +74,7 @@ export default function ARNavigationOverlay({
       <View style={styles.container}>
         <View style={styles.placeholder}>
           <Text style={styles.placeholderText}>{deviceError || 'Initializing camera...'}</Text>
-          <SimpleARFallback 
+          <SimpleARFallback
             currentLocation={currentLocation}
             destinationCoords={destinationCoords}
             deviceHeading={deviceHeading}
@@ -97,7 +98,7 @@ export default function ARNavigationOverlay({
       />
 
       {/* Simple AR Guidance Overlay */}
-      <SimpleARGuidance 
+      <SimpleARGuidance
         currentLocation={currentLocation}
         destinationCoords={destinationCoords}
         deviceHeading={deviceHeading}
@@ -146,59 +147,56 @@ function MiniMapOverlay({
     [destinationCoords.x, destinationCoords.y],
     ...routeCoordinates,
   ];
-  
+
   const bounds = {
-    minLat: Math.min(...allPoints.map(p => p[1])),
-    maxLat: Math.max(...allPoints.map(p => p[1])),
-    minLng: Math.min(...allPoints.map(p => p[0])),
-    maxLng: Math.max(...allPoints.map(p => p[0])),
+    minLat: Math.min(...allPoints.map((p) => p[1])),
+    maxLat: Math.max(...allPoints.map((p) => p[1])),
+    minLng: Math.min(...allPoints.map((p) => p[0])),
+    maxLng: Math.max(...allPoints.map((p) => p[0])),
   };
-  
+
   // Add padding to bounds
   const latPadding = (bounds.maxLat - bounds.minLat) * 0.1;
   const lngPadding = (bounds.maxLng - bounds.minLng) * 0.1;
-  
+
   bounds.minLat -= latPadding;
   bounds.maxLat += latPadding;
   bounds.minLng -= lngPadding;
   bounds.maxLng += lngPadding;
-  
+
   // Convert real coordinates to mini map coordinates
   const coordToMiniMap = (lng: number, lat: number) => {
     const x = ((lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)) * 140; // 140 = minimap width - padding
     const y = ((bounds.maxLat - lat) / (bounds.maxLat - bounds.minLat)) * 140; // Flip Y axis
     return { x: Math.max(10, Math.min(150, x)), y: Math.max(10, Math.min(150, y)) };
   };
-  
+
   const currentPos = coordToMiniMap(currentLocation.x, currentLocation.y);
   const destPos = coordToMiniMap(destinationCoords.x, destinationCoords.y);
-  
+
   // Use actual route start and end points for better alignment
-  const routeStartPos = routeCoordinates.length > 0 
-    ? coordToMiniMap(routeCoordinates[0][0], routeCoordinates[0][1])
-    : currentPos;
-  const routeEndPos = routeCoordinates.length > 0 
-    ? coordToMiniMap(routeCoordinates[routeCoordinates.length - 1][0], routeCoordinates[routeCoordinates.length - 1][1])
-    : destPos;
-  
+  const routeStartPos =
+    routeCoordinates.length > 0
+      ? coordToMiniMap(routeCoordinates[0][0], routeCoordinates[0][1])
+      : currentPos;
+  const routeEndPos =
+    routeCoordinates.length > 0
+      ? coordToMiniMap(
+          routeCoordinates[routeCoordinates.length - 1][0],
+          routeCoordinates[routeCoordinates.length - 1][1],
+        )
+      : destPos;
+
   // Get upcoming route points for preview
   const upcomingPoints = routeCoordinates.slice(currentRouteIndex, currentRouteIndex + 10);
-  
+
   return (
     <View style={[styles.miniMapContainer, isCollapsed && styles.miniMapCollapsed]}>
-      <TouchableOpacity 
-        style={styles.miniMapHeader}
-        onPress={onToggleCollapse}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.miniMapTitle}>
-          {isCollapsed ? 'Map' : 'Route Overview'}
-        </Text>
-        <Text style={styles.miniMapToggle}>
-          {isCollapsed ? '▲' : '▼'}
-        </Text>
+      <TouchableOpacity style={styles.miniMapHeader} onPress={onToggleCollapse} activeOpacity={0.7}>
+        <Text style={styles.miniMapTitle}>{isCollapsed ? 'Map' : 'Route Overview'}</Text>
+        <Text style={styles.miniMapToggle}>{isCollapsed ? '▲' : '▼'}</Text>
       </TouchableOpacity>
-      
+
       {!isCollapsed && (
         <>
           <View style={styles.miniMapCanvas}>
@@ -207,11 +205,16 @@ function MiniMapOverlay({
               <View style={styles.routePath}>
                 {routeCoordinates.slice(0, -1).map((point, index) => {
                   const start = coordToMiniMap(point[0], point[1]);
-                  const end = coordToMiniMap(routeCoordinates[index + 1][0], routeCoordinates[index + 1][1]);
-                  
-                  const length = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+                  const end = coordToMiniMap(
+                    routeCoordinates[index + 1][0],
+                    routeCoordinates[index + 1][1],
+                  );
+
+                  const length = Math.sqrt(
+                    Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2),
+                  );
                   const angle = Math.atan2(end.y - start.y, end.x - start.x) * (180 / Math.PI);
-                  
+
                   return (
                     <View
                       key={index}
@@ -230,47 +233,54 @@ function MiniMapOverlay({
                 })}
               </View>
             )}
-            
+
             {/* Current Location Marker with heading - positioned at route start */}
-            <View 
+            <View
               style={[
-                styles.currentLocationMarker, 
-                { 
-                  left: routeStartPos.x - 8, 
+                styles.currentLocationMarker,
+                {
+                  left: routeStartPos.x - 8,
                   top: routeStartPos.y - 8,
-                  transform: [{ rotate: `${deviceHeading}deg` }]
-                }
+                  transform: [{ rotate: `${deviceHeading}deg` }],
+                },
               ]}
             >
               <Text style={styles.currentLocationIcon}>📍</Text>
             </View>
-            
+
             {/* Destination Marker - positioned at route end */}
-            <View style={[styles.destinationMarker, { left: routeEndPos.x - 6, top: routeEndPos.y - 6 }]}>
+            <View
+              style={[
+                styles.destinationMarker,
+                { left: routeEndPos.x - 6, top: routeEndPos.y - 6 },
+              ]}
+            >
               <Text style={styles.destinationIcon}>🎯</Text>
             </View>
-            
+
             {/* Upcoming waypoints */}
             {upcomingPoints.slice(1, 4).map((point, index) => {
               const pos = coordToMiniMap(point[0], point[1]);
               return (
-                <View 
+                <View
                   key={index}
-                  style={[
-                    styles.waypointMarker, 
-                    { left: pos.x - 3, top: pos.y - 3 }
-                  ]}
+                  style={[styles.waypointMarker, { left: pos.x - 3, top: pos.y - 3 }]}
                 />
               );
             })}
           </View>
-          
+
           <View style={styles.miniMapFooter}>
             <Text style={styles.miniMapDistance}>
-              {Math.round(calculateDistance(
-                currentLocation.y, currentLocation.x,
-                destinationCoords.y, destinationCoords.x
-              ))}m remaining
+              {Math.round(
+                calculateDistance(
+                  currentLocation.y,
+                  currentLocation.x,
+                  destinationCoords.y,
+                  destinationCoords.x,
+                ),
+              )}
+              m remaining
             </Text>
           </View>
         </>
@@ -280,13 +290,13 @@ function MiniMapOverlay({
 }
 
 //AR Guidance Component
-function SimpleARGuidance({ 
-  currentLocation, 
-  destinationCoords, 
+function SimpleARGuidance({
+  currentLocation,
+  destinationCoords,
   deviceHeading,
   nextInstruction,
   routeCoordinates,
-  currentRouteIndex
+  currentRouteIndex,
 }: {
   currentLocation: { x: number; y: number } | null;
   destinationCoords: { x: number; y: number } | null;
@@ -299,38 +309,47 @@ function SimpleARGuidance({
   const [bearingHistory, setBearingHistory] = useState<number[]>([]);
   const [smoothedBearing, setSmoothedBearing] = useState<number | null>(null);
 
-  if (!currentLocation || !destinationCoords) return null;
+  // Calculate raw bearing first (before early return)
+  const rawBearing =
+    currentLocation && destinationCoords
+      ? (() => {
+          // FIXED: Use the actual route coordinates correctly
+          // routeCoordinates are in [longitude, latitude] format from the routing API
+          let nextPoint: [number, number];
 
-  // FIXED: Use the actual route coordinates correctly
-  // routeCoordinates are in [longitude, latitude] format from the routing API
-  let nextPoint: [number, number];
-  
-  if (routeCoordinates.length > 0) {
-    // Find the next point ahead in the route
-    const lookAheadDistance = 1; // Reduced look ahead for more accurate direction
-    const nextIndex = Math.min(currentRouteIndex + lookAheadDistance, routeCoordinates.length - 1);
-    nextPoint = routeCoordinates[nextIndex];
-  } else {
-    // Fallback to destination if no route
-    nextPoint = [destinationCoords.x, destinationCoords.y];
-  }
+          if (routeCoordinates.length > 0) {
+            // Find the next point ahead in the route
+            const lookAheadDistance = 1; // Reduced look ahead for more accurate direction
+            const nextIndex = Math.min(
+              currentRouteIndex + lookAheadDistance,
+              routeCoordinates.length - 1,
+            );
+            nextPoint = routeCoordinates[nextIndex];
+          } else {
+            // Fallback to destination if no route
+            nextPoint = [destinationCoords.x, destinationCoords.y];
+          }
 
-  // Ensure coordinates are in the right order
-  // currentLocation: { x: longitude, y: latitude }
-  // nextPoint: [longitude, latitude]
-  // calculateBearing expects (lat1, lon1, lat2, lon2)
-  const rawBearing = calculateBearing(
-    currentLocation.y, // current latitude
-    currentLocation.x, // current longitude
-    nextPoint[1],      // target latitude
-    nextPoint[0]       // target longitude
-  );
-  
+          // Ensure coordinates are in the right order
+          // currentLocation: { x: longitude, y: latitude }
+          // nextPoint: [longitude, latitude]
+          // calculateBearing expects (lat1, lon1, lat2, lon2)
+          return calculateBearing(
+            currentLocation.y, // current latitude
+            currentLocation.x, // current longitude
+            nextPoint[1], // target latitude
+            nextPoint[0], // target longitude
+          );
+        })()
+      : 0;
+
   // Smooth the bearing to prevent flickering
   useEffect(() => {
-    setBearingHistory(prev => {
+    if (!currentLocation || !destinationCoords) return;
+
+    setBearingHistory((prev) => {
       const newHistory = [...prev, rawBearing].slice(-5); // Keep last 5 readings
-      
+
       // Calculate weighted average (more weight to recent readings)
       let weightedSum = 0;
       let totalWeight = 0;
@@ -339,44 +358,46 @@ function SimpleARGuidance({
         weightedSum += bearing * weight;
         totalWeight += weight;
       });
-      
+
       const smoothed = weightedSum / totalWeight;
       setSmoothedBearing(smoothed);
-      
+
       return newHistory;
     });
-  }, [rawBearing]);
-  
+  }, [rawBearing, currentLocation, destinationCoords]);
+
+  if (!currentLocation || !destinationCoords) return null;
+
   // Use smoothed bearing if available, otherwise use raw
   const bearing = smoothedBearing !== null ? smoothedBearing : rawBearing;
-  
+
   const normalizedDeviceHeading = ((deviceHeading % 360) + 360) % 360;
   const relativeBearing = normalizeAngle(bearing - normalizedDeviceHeading);
 
   //direction logic with relaxed tolerances - 35 degrees for straight
   const getDirectionInstruction = () => {
     const absRelativeBearing = Math.abs(relativeBearing);
-    
-    if (absRelativeBearing < 35) return "Continue Straight"; // Set to 35 but can increase to about 45
-    if (relativeBearing >= 35 && relativeBearing < 80) return "Turn Right";
-    if (relativeBearing >= 80 && relativeBearing < 120) return "Sharp Right";
-    if (relativeBearing >= 120) return "Turn Around";
-    if (relativeBearing <= -35 && relativeBearing > -80) return "Turn Left";
-    if (relativeBearing <= -80 && relativeBearing > -120) return "Sharp Left";
-    if (relativeBearing <= -120) return "Turn Around";
-    return "Continue";
+
+    if (absRelativeBearing < 35) return 'Continue Straight'; // Set to 35 but can increase to about 45
+    if (relativeBearing >= 35 && relativeBearing < 80) return 'Turn Right';
+    if (relativeBearing >= 80 && relativeBearing < 120) return 'Sharp Right';
+    if (relativeBearing >= 120) return 'Turn Around';
+    if (relativeBearing <= -35 && relativeBearing > -80) return 'Turn Left';
+    if (relativeBearing <= -80 && relativeBearing > -120) return 'Sharp Left';
+    if (relativeBearing <= -120) return 'Turn Around';
+    return 'Continue';
   };
 
   // More precise emoji logic with relaxed tolerances
   const getDirectionEmoji = () => {
-    if (Math.abs(relativeBearing) < 35) return "⬆️";
-    if (relativeBearing >= 35 && relativeBearing < 80) return "↗️";
-    if (relativeBearing >= 80 && relativeBearing < 120) return "➡️";
-    if (relativeBearing >= 120) return "🔄"; // Turn around
-    if (relativeBearing <= -35 && relativeBearing > -80) return "↖️";
-    if (relativeBearing <= -80 && relativeBearing > -120) return "⬅️";
-    if (relativeBearing <= -120) return "🔄"; // Turn around
-    return "⬆️";
+    if (Math.abs(relativeBearing) < 35) return '↑';
+    if (relativeBearing >= 35 && relativeBearing < 80) return '↗';
+    if (relativeBearing >= 80 && relativeBearing < 120) return '→';
+    if (relativeBearing >= 120) return '↻'; // Turn around
+    if (relativeBearing <= -35 && relativeBearing > -80) return '↖';
+    if (relativeBearing <= -80 && relativeBearing > -120) return '←';
+    if (relativeBearing <= -120) return '↻'; // Turn around
+    return '↑';
   };
 
   return (
@@ -384,30 +405,33 @@ function SimpleARGuidance({
       {/* AR Navigation with Arrow and Direction */}
       <View style={styles.mainGuidanceContainer}>
         {/* Direction Circle with Arrow */}
-        <View style={[
-          styles.directionCircle,
-          { backgroundColor: Math.abs(relativeBearing) < 35 ? 'rgba(76, 175, 80, 0.8)' : 'rgba(244, 67, 54, 0.8)' }
-        ]}>
-          <Text style={styles.directionEmoji}>
-            {getDirectionEmoji()}
-          </Text>
+        <View
+          style={[
+            styles.directionCircle,
+            {
+              backgroundColor:
+                Math.abs(relativeBearing) < 35
+                  ? 'rgba(76, 175, 80, 0.8)'
+                  : 'rgba(244, 67, 54, 0.8)',
+            },
+          ]}
+        >
+          <Text style={styles.directionEmoji}>{getDirectionEmoji()}</Text>
         </View>
 
         {/* Direction Text */}
-        <Text style={styles.directionText}>
-          {getDirectionInstruction()}
-        </Text>
+        <Text style={styles.directionText}>{getDirectionInstruction()}</Text>
       </View>
     </>
   );
 }
 
 // Simple fallback without camera
-function SimpleARFallback({ 
-  currentLocation, 
-  destinationCoords, 
+function SimpleARFallback({
+  currentLocation,
+  destinationCoords,
   deviceHeading,
-  nextInstruction
+  nextInstruction,
 }: {
   currentLocation: { x: number; y: number } | null;
   destinationCoords: { x: number; y: number } | null;
@@ -421,9 +445,9 @@ function SimpleARFallback({
     currentLocation.y, // latitude
     currentLocation.x, // longitude
     destinationCoords.y, // destination latitude
-    destinationCoords.x  // destination longitude
+    destinationCoords.x, // destination longitude
   );
-  
+
   // NO OFFSETS - Pure raw readings from react-native-compass-heading library
   const normalizedHeading = ((deviceHeading % 360) + 360) % 360;
   const relativeBearing = normalizeAngle(bearing - normalizedHeading);
@@ -431,25 +455,22 @@ function SimpleARFallback({
     currentLocation.y, // latitude
     currentLocation.x, // longitude
     destinationCoords.y, // destination latitude
-    destinationCoords.x  // destination longitude
+    destinationCoords.x, // destination longitude
   );
 
   return (
     <View style={styles.fallbackContainer}>
       <Text style={styles.fallbackTitle}>AR Navigation</Text>
-      
-      <View style={[
-        styles.fallbackArrow,
-        { transform: [{ rotate: `${relativeBearing}deg` }] }
-      ]}>
+
+      <View style={[styles.fallbackArrow, { transform: [{ rotate: `${relativeBearing}deg` }] }]}>
         <Text style={styles.fallbackArrowText}>↑</Text>
       </View>
-      
-      {nextInstruction && (
-        <Text style={styles.fallbackInstruction}>
-          {nextInstruction}
-        </Text>
-      )}
+
+      <Text style={styles.fallbackDistance}>
+        {distance >= 1000 ? `${(distance / 1000).toFixed(1)}km` : `${Math.round(distance)}m`}
+      </Text>
+
+      {nextInstruction && <Text style={styles.fallbackInstruction}>{nextInstruction}</Text>}
     </View>
   );
 }
@@ -470,16 +491,17 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 function calculateBearing(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const toRad = (x: number) => (x * Math.PI) / 180;
   const toDeg = (x: number) => (x * 180) / Math.PI;
-  
+
   const dLon = toRad(lon2 - lon1);
   const lat1Rad = toRad(lat1);
   const lat2Rad = toRad(lat2);
-  
+
   const y = Math.sin(dLon) * Math.cos(lat2Rad);
-  const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
-  
+  const x =
+    Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
+
   const bearing = normalizeAngle(toDeg(Math.atan2(y, x)));
-  
+
   return bearing;
 }
 
@@ -512,7 +534,7 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     textAlign: 'center',
   },
-  
+
   // Main AR Guidance
   mainGuidanceContainer: {
     position: 'absolute',
@@ -585,7 +607,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     fontWeight: 'bold',
   },
-  
+
   // Instruction Bar
   instructionBar: {
     position: 'absolute',
@@ -604,7 +626,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
   },
-  
+
   // Debug
   debugToggle: {
     position: 'absolute',
@@ -636,7 +658,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginVertical: 2,
   },
-  
+
   // Fallback Mode
   fallbackContainer: {
     alignItems: 'center',
@@ -709,7 +731,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
-  
+
   // Mini Map Styles
   miniMapContainer: {
     position: 'absolute',

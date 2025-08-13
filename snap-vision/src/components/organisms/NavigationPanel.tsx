@@ -71,11 +71,11 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
     if (!originalRouteDistance || originalRouteDistance === 0 || distance === null) {
       return progress; // Fallback to route progress if no distance data
     }
-    
+
     // Calculate progress based on how much distance is left vs original distance
     const remainingPercent = (distance / originalRouteDistance) * 100;
     const completionPercent = Math.max(0, Math.min(100, 100 - remainingPercent));
-    
+
     // Use the higher of route progress or distance-based progress to prevent decreases
     return Math.max(progress, Math.round(completionPercent));
   };
@@ -83,7 +83,7 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
   // Format distance remaining for display
   const formatDistanceRemaining = (meters: number | null) => {
     if (meters === null) return '';
-    
+
     if (meters >= 1000) {
       return `${(meters / 1000).toFixed(1)}km left`;
     } else {
@@ -105,12 +105,13 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
   // Minimized version (works for both AR and 2D modes)
   if (isMinimized) {
     const completionPercent = getCompletionPercentage();
-    
+
     return (
       <View style={[styles.minimizedContainer, { backgroundColor: colors.card }]}>
         <Pressable style={styles.minimizedContent} onPress={onToggleMinimize}>
           <Text style={[styles.minimizedText, { color: colors.text }]} numberOfLines={1}>
-            {destination} • {formatDistanceRemaining(distance)} • {formatTime(time)} • {completionPercent}%
+            {destination} • {formatDistanceRemaining(distance)} • {formatTime(time)} •{' '}
+            {completionPercent}%
           </Text>
           <Icon name="chevron-up" size={16} color={colors.text} />
         </Pressable>
@@ -233,7 +234,12 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
                 ]}
                 onPress={onToggleAR}
               >
-                <Icon name="camera-outline" size={24} color="#fff" style={styles.primaryButtonIcon} />
+                <Icon
+                  name="camera-outline"
+                  size={24}
+                  color="#fff"
+                  style={styles.primaryButtonIcon}
+                />
                 <Text style={styles.primaryButtonLabel}>{showAR ? 'AR On' : 'AR'}</Text>
               </Pressable>
             )}
@@ -249,10 +255,10 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
                   ]}
                   onPress={onToggleVoice}
                 >
-                  <Icon 
-                    name={isVoiceEnabled ? "volume-high" : "volume-off"} 
-                    size={16} 
-                    color="#fff" 
+                  <Icon
+                    name={isVoiceEnabled ? 'volume-high' : 'volume-off'}
+                    size={16}
+                    color="#fff"
                   />
                 </Pressable>
               )}
@@ -260,8 +266,8 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
               {/* Start/Stop Button - Compact when AR is available, otherwise primary */}
               <Pressable
                 style={[
-                  isNavigating && destinationCoords && onToggleAR 
-                    ? styles.compactButton 
+                  isNavigating && destinationCoords && onToggleAR
+                    ? styles.compactButton
                     : styles.primaryActionButton,
                   { backgroundColor: isNavigating ? '#E53935' : colors.primary },
                 ]}
@@ -269,10 +275,10 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
                 disabled={isLoading}
               >
                 {isNavigating && destinationCoords && onToggleAR ? (
-                  <Icon 
-                    name={isLoading ? "loading" : isNavigating ? "stop" : "play"} 
-                    size={16} 
-                    color="#fff" 
+                  <Icon
+                    name={isLoading ? 'loading' : isNavigating ? 'stop' : 'play'}
+                    size={16}
+                    color="#fff"
                   />
                 ) : (
                   <>
@@ -464,7 +470,7 @@ const styles = StyleSheet.create({
   voiceSection: {
     marginTop: 4,
   },
-  
+
   // New Single Row Priority Styles
   singleRowContainer: {
     flexDirection: 'row',

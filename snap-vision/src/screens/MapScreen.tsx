@@ -32,7 +32,7 @@ import { useBadges } from '../context/BadgeContext';
 import { useAccessibility } from '../context/AccessibilityContext';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import ARNavigationOverlay from '../components/organisms/ARNavigationOverlay';
-import { useCompass } from '../hooks/useCompass';
+import { useCompass } from '../hooks/useCompass'; // Needed for AR navigation functionality
 import { requestCameraPermission } from '../utils/cameraPermissions';
 import { Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
@@ -42,7 +42,7 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'http://192.168.43.155:3000'; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = 'http://192.168.0.133:3000'; // <-- Use your correct backend IP here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
@@ -87,11 +87,14 @@ const MapScreen = () => {
   const [routeProgress, setRouteProgress] = useState(0);
   const [distanceToDestination, setDistanceToDestination] = useState<number | null>(null);
   const [estimatedTime, setEstimatedTime] = useState<number | null>(null);
-  
+
   // Enhanced progress tracking
   const [distanceWalked, setDistanceWalked] = useState(0); // Never decreases
   const [originalRouteDistance, setOriginalRouteDistance] = useState<number | null>(null); // Set when navigation starts
-  const [startLocation, setStartLocation] = useState<{latitude: number; longitude: number} | null>(null); // Starting point
+  const [startLocation, setStartLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null); // Starting point
 
   const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
   const [pois, setPOIs] = useState<any[]>([]);
@@ -133,13 +136,8 @@ const MapScreen = () => {
 
   // AR Navigation state
   const [showAR, setShowAR] = useState(false);
-  const deviceHeading = useCompass();
+  const deviceHeading = useCompass(); // This is needed for AR navigation functionality
   const [isNavigationMinimized, setIsNavigationMinimized] = useState(false);
-
-  // Map rotation state
-  const [isMapRotationEnabled, setIsMapRotationEnabled] = useState(false);
-  const [lastLocationUpdate, setLastLocationUpdate] = useState<{latitude: number; longitude: number; timestamp: number} | null>(null);
-  const [movementBearing, setMovementBearing] = useState<number | null>(null);
 
   //haptic feedback options
   const hapticOptions = {
@@ -217,130 +215,41 @@ const MapScreen = () => {
     }
   }, [isAdmin, isMapReady, pois]);
 
-  // Handle compass-based map rotation when stationary
+  // Send current location to map when map becomes ready
   useEffect(() => {
-    if (isMapRotationEnabled) {
-      // Always use compass heading when rotation is enabled
-      // Priority: movement bearing if available and recent, otherwise compass
-      const shouldUseCompass = !movementBearing || 
-        (lastLocationUpdate && Date.now() - lastLocationUpdate.timestamp > 3000); // Use compass if no movement for 3 seconds
-      
-      if (shouldUseCompass) {
-        console.log(`Using compass rotation: ${deviceHeading}°`);
-        sendCompassRotationToMap(deviceHeading);
-      }
+    if (isMapReady && currentLocation && webViewRef.current) {
+      console.log('🗺️ Map is now ready and we have location, sending to WebView:', currentLocation);
+      const zoomLevel = isNavigating ? 18 : 16;
+      const jsCode = `window.updateUserLocation && window.updateUserLocation(${currentLocation.latitude}, ${currentLocation.longitude}, true, ${zoomLevel});`;
+      webViewRef.current.injectJavaScript(jsCode);
     }
-  }, [deviceHeading, isMapRotationEnabled, movementBearing, lastLocationUpdate]);
+  }, [isMapReady, currentLocation, isNavigating]);
 
   const sendLocationToWebView = (lat: number, lon: number, centerMap = false) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
+    console.log('📍 Sending location to WebView:', { lat, lon, centerMap, isMapReady });
 
     // Only inject JavaScript if the map is ready
     if (!isMapReady || !webViewRef.current) {
+      console.log('⚠️ Map not ready or WebView not available, storing location for later');
       return;
     }
 
     const zoomLevel = isNavigating ? 18 : 16;
 
     const jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap}, ${zoomLevel});`;
+    console.log('📤 Injecting location JavaScript:', jsCode);
     webViewRef.current.injectJavaScript(jsCode);
 
     if (isNavigating && lastRoute.current && lastRoute.current.length > 0) {
       setStatus(`Updating location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
       updateNavigationProgress(lat, lon);
     }
-
-    // Update movement bearing for map rotation
-    updateMovementDirection(lat, lon);
   };
 
-  // Function to toggle map rotation mode
+  // Function to toggle map rotation mode (functionality removed)
   const toggleMapRotation = () => {
-    const newRotationState = !isMapRotationEnabled;
-    setIsMapRotationEnabled(newRotationState);
-    
-    if (webViewRef.current) {
-      const jsCode = `window.setMapRotationMode && window.setMapRotationMode(${newRotationState});`;
-      webViewRef.current.injectJavaScript(jsCode);
-    }
-  };
-
-  // Function to update movement direction for map rotation
-  const updateMovementDirection = (lat: number, lon: number) => {
-    if (!isMapRotationEnabled) return;
-
-    const currentTime = Date.now();
-    const newLocation = { latitude: lat, longitude: lon, timestamp: currentTime };
-
-    if (lastLocationUpdate) {
-      const timeDiff = currentTime - lastLocationUpdate.timestamp;
-      const distance = calculateDistance(
-        lastLocationUpdate.latitude,
-        lastLocationUpdate.longitude,
-        lat,
-        lon
-      );
-
-      // Lowered thresholds for more responsive rotation
-      if (distance > 0.5 && timeDiff > 500) { // 0.5 meters and 0.5 seconds
-        const bearing = calculateBearing(
-          lastLocationUpdate.latitude,
-          lastLocationUpdate.longitude,
-          lat,
-          lon
-        );
-        
-        console.log(`Movement detected: ${distance.toFixed(2)}m, bearing: ${bearing.toFixed(1)}°`);
-        setMovementBearing(bearing);
-        setLastLocationUpdate(newLocation);
-        
-        // Immediately send rotation to WebView
-        if (webViewRef.current) {
-          const jsCode = `window.setMapRotation && window.setMapRotation(${bearing});`;
-          webViewRef.current.injectJavaScript(jsCode);
-        }
-      }
-    } else {
-      setLastLocationUpdate(newLocation);
-    }
-  };
-
-  // Function to calculate distance between two coordinates (in meters)
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371e3; // Earth's radius in meters
-    const φ1 = lat1 * Math.PI/180;
-    const φ2 = lat2 * Math.PI/180;
-    const Δφ = (lat2-lat1) * Math.PI/180;
-    const Δλ = (lon2-lon1) * Math.PI/180;
-
-    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ/2) * Math.sin(Δλ/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-    return R * c;
-  };
-
-  // Function to calculate bearing between two coordinates
-  const calculateBearing = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const φ1 = lat1 * Math.PI/180;
-    const φ2 = lat2 * Math.PI/180;
-    const Δλ = (lon2-lon1) * Math.PI/180;
-
-    const y = Math.sin(Δλ) * Math.cos(φ2);
-    const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
-
-    const θ = Math.atan2(y, x);
-    return (θ * 180/Math.PI + 360) % 360;
-  };
-
-  // Function to send compass rotation to map (fallback when not moving)
-  const sendCompassRotationToMap = (heading: number) => {
-    if (isMapRotationEnabled && webViewRef.current) {
-      console.log(`Sending compass rotation to map: ${heading}°`);
-      const jsCode = `window.setMapRotation && window.setMapRotation(${heading});`;
-      webViewRef.current.injectJavaScript(jsCode);
-    }
+    // Map rotation functionality removed
   };
 
   // Replace your requestLocation function with this enhanced version
@@ -365,7 +274,9 @@ const MapScreen = () => {
           results['android.permission.ACCESS_COARSE_LOCATION'] === 'granted';
 
         if (!fineLocationGranted && !coarseLocationGranted) {
-          setErrorPopupMessage('Location permissions denied. Please enable location access in your device settings and try again.');
+          setErrorPopupMessage(
+            'Location permissions denied. Please enable location access in your device settings and try again.',
+          );
           setShowErrorPopup(true);
           return;
         }
@@ -430,13 +341,32 @@ const MapScreen = () => {
     }
   };
 
+  // Initial location request on component mount
+  useEffect(() => {
+    console.log('🚀 MapScreen mounted, requesting initial location...');
+    // Small delay to ensure component is fully mounted
+    const timer = setTimeout(() => {
+      try {
+        if (requestLocation && typeof requestLocation === 'function') {
+          requestLocation();
+        } else {
+          console.error('❌ requestLocation is not available');
+        }
+      } catch (error) {
+        console.error('❌ Error calling requestLocation:', error);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []); // Empty dependency array is fine, we want this to run only once
+
   // Enhanced location refresh function
   const refreshLocation = async () => {
     setIsRefreshingLocation(true);
     setShowLocationRefreshPopup(false); // Close the popup
     setTempMessage('Refreshing location...');
     setError(null); // Clear any existing errors
-    
+
     try {
       // Stop any existing location watching
       if (watchIdRef.current) {
@@ -446,17 +376,16 @@ const MapScreen = () => {
 
       // Clear current location state
       setCurrentLocation(null);
-      
+
       // Re-request location with fresh permissions
       await requestLocation();
-      
+
       // If we still don't have location after a delay, show manual refresh option
       setTimeout(() => {
         if (!currentLocation && !isRefreshingLocation) {
           setShowLocationRefreshPopup(true);
         }
       }, 3000);
-      
     } catch (error) {
       console.error('❌ Location refresh failed:', error);
       setShowLocationRefreshPopup(true);
@@ -472,7 +401,7 @@ const MapScreen = () => {
     setIsMapReady(false);
     setCurrentLocation(null);
     setError(null);
-    
+
     // Reload the WebView
     if (webViewRef.current) {
       webViewRef.current.reload();
@@ -571,8 +500,17 @@ const MapScreen = () => {
 
       // === Handle simple message ===
       if (data === 'MAP_READY') {
+        console.log('🗺️ Map is ready!');
         setStatus('Map loaded');
         setIsMapReady(true);
+
+        // If we already have a location, send it to the map immediately
+        if (currentLocation) {
+          console.log('📍 Sending existing location to newly ready map:', currentLocation);
+          sendLocationToWebView(currentLocation.latitude, currentLocation.longitude, true);
+        }
+
+        // Request fresh location
         requestLocation();
 
         if (lastRoute.current.length > 0) {
@@ -793,7 +731,7 @@ const MapScreen = () => {
     setSelectedPOI(null);
     setSteps([]);
     setCurrentStep(0);
-    
+
     // Reset enhanced progress tracking
     setDistanceWalked(0);
     setStartLocation(null);
@@ -818,7 +756,9 @@ const MapScreen = () => {
 
     // Hide POI markers and show all markers again
     if (isMapReady && webViewRef.current) {
-      webViewRef.current.injectJavaScript('window.showAllPOIMarkers && window.showAllPOIMarkers();');
+      webViewRef.current.injectJavaScript(
+        'window.showAllPOIMarkers && window.showAllPOIMarkers();',
+      );
     }
   };
 
@@ -923,21 +863,12 @@ const MapScreen = () => {
     setStatus('Navigation started');
     setRouteProgress(0);
     setNavigationStartTime(Date.now());
-    
+
     // Initialize enhanced progress tracking
     setDistanceWalked(0);
     setStartLocation(currentLocation);
     if (distanceToDestination !== null) {
       setOriginalRouteDistance(distanceToDestination);
-    }
-
-    // Enable map rotation during navigation for better experience
-    if (!isMapRotationEnabled) {
-      setIsMapRotationEnabled(true);
-      if (webViewRef.current) {
-        const jsCode = `window.setMapRotationMode && window.setMapRotationMode(true);`;
-        webViewRef.current.injectJavaScript(jsCode);
-      }
     }
 
     // Start watching position with higher frequency
@@ -991,7 +922,7 @@ const MapScreen = () => {
         'if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }',
       );
     }
-    
+
     // Reset enhanced progress tracking when stopping
     setDistanceWalked(0);
     setStartLocation(null);
@@ -1012,9 +943,9 @@ const MapScreen = () => {
         startLocation.latitude,
         startLocation.longitude,
         latitude,
-        longitude
+        longitude,
       );
-      
+
       // Only update if we've walked further (prevents decrease on rerouting)
       if (totalWalked > distanceWalked) {
         setDistanceWalked(totalWalked);
@@ -1027,13 +958,13 @@ const MapScreen = () => {
 
     for (let i = 0; i < lastRoute.current.length; i++) {
       const routePoint = lastRoute.current[i];
-      
+
       // Add safety check for each route point
       if (!Array.isArray(routePoint) || routePoint.length < 2) {
         console.warn('Invalid route point at index', i, routePoint);
         continue;
       }
-      
+
       const distance = getDistanceMeters(
         latitude,
         longitude,
@@ -1095,22 +1026,26 @@ const MapScreen = () => {
       let minDist = Infinity;
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
-        
+
         // Fix: Add safety checks before destructuring
         let stepCoordinate;
-        if (step.way_points && step.way_points[0] !== undefined && lastRoute.current[step.way_points[0]]) {
+        if (
+          step.way_points &&
+          step.way_points[0] !== undefined &&
+          lastRoute.current[step.way_points[0]]
+        ) {
           stepCoordinate = lastRoute.current[step.way_points[0]];
         } else if (lastRoute.current[0]) {
           stepCoordinate = lastRoute.current[0];
         } else {
           continue; // Skip this iteration if no valid coordinate
         }
-        
+
         // Additional safety check - ensure stepCoordinate is an array with 2 elements
         if (!Array.isArray(stepCoordinate) || stepCoordinate.length < 2) {
           continue;
         }
-        
+
         const [lon, lat] = stepCoordinate;
         const dist = getDistanceMeters(latitude, longitude, lat, lon);
         if (dist < minDist) {
@@ -1140,13 +1075,15 @@ const MapScreen = () => {
     setDistanceToDestination(distanceToEnd);
 
     // Show enhanced status with distance walked and remaining
-    const walkedFormatted = distanceWalked >= 1000 
-      ? `${(distanceWalked / 1000).toFixed(1)}km walked` 
-      : `${Math.round(distanceWalked)}m walked`;
-    
-    const remainingFormatted = distanceToEnd >= 1000 
-      ? `${(distanceToEnd / 1000).toFixed(1)}km remaining` 
-      : `${Math.round(distanceToEnd)}m remaining`;
+    const walkedFormatted =
+      distanceWalked >= 1000
+        ? `${(distanceWalked / 1000).toFixed(1)}km walked`
+        : `${Math.round(distanceWalked)}m walked`;
+
+    const remainingFormatted =
+      distanceToEnd >= 1000
+        ? `${(distanceToEnd / 1000).toFixed(1)}km remaining`
+        : `${Math.round(distanceToEnd)}m remaining`;
 
     setStatus(`${walkedFormatted} • ${remainingFormatted}`);
 
@@ -1212,7 +1149,7 @@ const MapScreen = () => {
     setEstimatedTime(null);
     setSelectedFeature(null);
     setSelectedPOI(null);
-    
+
     // Reset enhanced progress tracking
     setDistanceWalked(0);
     setStartLocation(null);
@@ -1491,7 +1428,7 @@ const MapScreen = () => {
     // Clear any existing route
     webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
     lastRoute.current = [];
-    
+
     // Reset enhanced progress tracking for new destination
     setDistanceWalked(0);
     setStartLocation(null);
@@ -1667,12 +1604,13 @@ const MapScreen = () => {
 
       const jsRouteCode = `window.drawRoute && window.drawRoute(${JSON.stringify(coordinates)});`;
       webViewRef.current?.injectJavaScript(jsRouteCode);
-      
+
       // Enhanced status message showing rerouting doesn't reset progress
-      const walkedFormatted = distanceWalked >= 1000 
-        ? `${(distanceWalked / 1000).toFixed(1)}km walked` 
-        : `${Math.round(distanceWalked)}m walked`;
-      
+      const walkedFormatted =
+        distanceWalked >= 1000
+          ? `${(distanceWalked / 1000).toFixed(1)}km walked`
+          : `${Math.round(distanceWalked)}m walked`;
+
       setStatus(`Route updated! ${walkedFormatted} progress preserved`);
     } catch (error) {
       console.error('Route fetch error:', error);
@@ -1956,7 +1894,6 @@ const MapScreen = () => {
         onReportIn={() => setShowReportTooltip(true)}
         onReportOut={() => setShowReportTooltip(false)}
         color={colors.primary}
-        isMapRotationEnabled={isMapRotationEnabled}
         onToggleMapRotation={toggleMapRotation}
       />
 
@@ -2212,31 +2149,35 @@ const MapScreen = () => {
 
       {/* Location Error Banner - Non-modal but centered like a popup */}
       {showLocationRefreshPopup && (
-        <View style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1003,
-          pointerEvents: 'box-none', // Allow touches through the transparent area
-        }}>
-          <View style={{
-            backgroundColor: isDark ? '#2c2c2c' : 'white',
-            borderRadius: 16,
-            padding: 24,
-            marginHorizontal: 48, // Increased from 32 to add more space from edges
-            maxWidth: 360, // Reduced from 400 to make it narrower
-            width: '100%',
-            elevation: 8,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3,
-            shadowRadius: 8,
-            pointerEvents: 'auto', // Block touches on the popup itself
-          }}>
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1003,
+            pointerEvents: 'box-none', // Allow touches through the transparent area
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: isDark ? '#2c2c2c' : 'white',
+              borderRadius: 16,
+              padding: 24,
+              marginHorizontal: 48, // Increased from 32 to add more space from edges
+              maxWidth: 360, // Reduced from 400 to make it narrower
+              width: '100%',
+              elevation: 8,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              pointerEvents: 'auto', // Block touches on the popup itself
+            }}
+          >
             {/* Close button */}
             <TouchableOpacity
               style={{
@@ -2248,34 +2189,43 @@ const MapScreen = () => {
               }}
               onPress={() => setShowLocationRefreshPopup(false)}
             >
-              <Text style={{ 
-                color: isDark ? '#ccc' : '#666', 
-                fontSize: 20, 
-                fontWeight: 'bold' 
-              }}>×</Text>
+              <Text
+                style={{
+                  color: isDark ? '#ccc' : '#666',
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                }}
+              >
+                ×
+              </Text>
             </TouchableOpacity>
 
             {/* Title */}
-            <Text style={{
-              color: isDark ? 'white' : colors.text,
-              fontSize: 18,
-              fontWeight: 'bold',
-              marginBottom: 12,
-              textAlign: 'center',
-              paddingRight: 32, // Space for close button
-            }}>
+            <Text
+              style={{
+                color: isDark ? 'white' : colors.text,
+                fontSize: 18,
+                fontWeight: 'bold',
+                marginBottom: 12,
+                textAlign: 'center',
+                paddingRight: 32, // Space for close button
+              }}
+            >
               Location Not Found
             </Text>
 
             {/* Message */}
-            <Text style={{
-              color: isDark ? '#ccc' : colors.text,
-              fontSize: 14,
-              marginBottom: 20,
-              lineHeight: 20,
-              textAlign: 'center',
-            }}>
-              Unable to find your location. This can happen indoors or in areas with poor GPS signal.
+            <Text
+              style={{
+                color: isDark ? '#ccc' : colors.text,
+                fontSize: 14,
+                marginBottom: 20,
+                lineHeight: 20,
+                textAlign: 'center',
+              }}
+            >
+              Unable to find your location. This can happen indoors or in areas with poor GPS
+              signal.
             </Text>
 
             {/* Action buttons in vertical layout */}
@@ -2289,16 +2239,18 @@ const MapScreen = () => {
                 }}
                 onPress={refreshLocation}
               >
-                <Text style={{
-                  color: 'white',
-                  fontSize: 16,
-                  fontWeight: '600',
-                  textAlign: 'center',
-                }}>
+                <Text
+                  style={{
+                    color: 'white',
+                    fontSize: 16,
+                    fontWeight: '600',
+                    textAlign: 'center',
+                  }}
+                >
                   Retry Location
                 </Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={{
                   backgroundColor: 'transparent',
@@ -2310,12 +2262,14 @@ const MapScreen = () => {
                 }}
                 onPress={refreshMap}
               >
-                <Text style={{
-                  color: colors.primary,
-                  fontSize: 16,
-                  fontWeight: '600',
-                  textAlign: 'center',
-                }}>
+                <Text
+                  style={{
+                    color: colors.primary,
+                    fontSize: 16,
+                    fontWeight: '600',
+                    textAlign: 'center',
+                  }}
+                >
                   Refresh Map
                 </Text>
               </TouchableOpacity>

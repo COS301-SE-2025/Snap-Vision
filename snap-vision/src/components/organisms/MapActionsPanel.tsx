@@ -88,13 +88,19 @@ const MapActionsPanel = ({
         <>
           <View style={styles.spacer} />
           <ActionButtonWithTooltip
-            icon={<Icon name={isMapRotationEnabled ? "compass" : "compass-outline"} size={30} color="white" />}
+            icon={
+              <Icon
+                name={isMapRotationEnabled ? 'compass' : 'compass-outline'}
+                size={30}
+                color="white"
+              />
+            }
             onPress={onToggleMapRotation}
             onPressIn={() => {}}
             onPressOut={() => {}}
             showTooltip={false}
             backgroundColor={isMapRotationEnabled ? colors.secondary : colors.primary}
-            tooltipText={isMapRotationEnabled ? "Disable Heading-Up" : "Enable Heading-Up"}
+            tooltipText={isMapRotationEnabled ? 'Disable Heading-Up' : 'Enable Heading-Up'}
           />
         </>
       )}

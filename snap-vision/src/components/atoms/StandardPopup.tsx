@@ -58,8 +58,8 @@ export default function StandardPopup({
               <TouchableOpacity
                 activeOpacity={0.7}
                 style={[
-                  verticalButtons ? styles.buttonOutlineVertical : styles.buttonOutline, 
-                  { borderColor: colors.border }
+                  verticalButtons ? styles.buttonOutlineVertical : styles.buttonOutline,
+                  { borderColor: colors.border },
                 ]}
                 onPress={onCancel}
               >
@@ -69,8 +69,8 @@ export default function StandardPopup({
             <TouchableOpacity
               activeOpacity={0.8}
               style={[
-                verticalButtons ? styles.buttonFilledVertical : styles.buttonFilled, 
-                { backgroundColor: colors.primary }
+                verticalButtons ? styles.buttonFilledVertical : styles.buttonFilled,
+                { backgroundColor: colors.primary },
               ]}
               onPress={onConfirm}
             >
