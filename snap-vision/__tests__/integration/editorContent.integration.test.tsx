@@ -131,4 +131,27 @@ describe('EditorContent Integration Tests', () => {
     });
   });
 
+  describe('Button Action Integration', () => {
+    it('calls the correct handlers when buttons are pressed', () => {
+      const { getByTestId } = render(
+        <ThemeProviderWrapper>
+          <AdminScreenContent colors={mockColors} {...mockHandlers} />
+        </ThemeProviderWrapper>
+      );
+
+      fireEvent.press(getByTestId('button-Load-Floorplans'));
+      expect(mockHandlers.onLoadFloorplans).toHaveBeenCalledTimes(1);
+
+      fireEvent.press(getByTestId('button-Edit-Floorplans'));
+      expect(mockHandlers.onEditFloorplans).toHaveBeenCalledTimes(1);
+    });
+
+    it('integrates with navigation when buttons are pressed', () => {
+      // If your buttons should navigate somewhere, you can test that here
+      // For example, if you modify the component to use navigation:
+      // fireEvent.press(getByTestId('some-button'));
+      // expect(mockNavigation.navigate).toHaveBeenCalledWith('SomeScreen');
+    });
+  });
+
   
