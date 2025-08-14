@@ -1,5 +1,27 @@
 jest.mock('react-native/Libraries/EventEmitter/NativeEventEmitter');
 
+// Mock React Native Dimensions globally
+jest.mock('react-native', () => {
+  const RN = jest.requireActual('react-native');
+
+  // Mock problematic components that cause TurboModule issues
+  RN.DevMenu = {};
+  RN.ProgressBarAndroid = RN.View;
+  RN.Clipboard = {
+    getString: jest.fn(),
+    setString: jest.fn(),
+  };
+
+  // Mock Dimensions
+  RN.Dimensions = {
+    get: jest.fn(() => ({ width: 375, height: 667 })),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+  };
+
+  return RN;
+});
+
 jest.mock('@react-native-firebase/app', () => ({
   initializeApp: jest.fn(),
 }));

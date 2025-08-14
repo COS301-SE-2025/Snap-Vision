@@ -369,7 +369,7 @@ export default function AdminLoadFloorplansContent() {
                 value={selectedBuildingId}
                 setValue={(val) => {
                   const buildingId = val();
-                  setSelectedBuildingId(val);
+                  setSelectedBuildingId(buildingId);
                   const selected = buildings.find((b) => b.id === buildingId);
                   if (selected) {
                     setSelectedBuilding(selected);
