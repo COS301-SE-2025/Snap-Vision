@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native
 import StandardPopup from '../components/atoms/StandardPopup';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import firestore from '@react-native-firebase/firestore';
-import CompassHeading from 'react-native-compass-heading';
+//import CompassHeading from 'react-native-compass-heading';
 import { Camera, useCameraPermission } from 'react-native-vision-camera';
 import type { CameraDevice } from 'react-native-vision-camera';
 import {

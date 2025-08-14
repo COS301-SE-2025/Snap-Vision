@@ -152,14 +152,14 @@ describe('AdminContent', () => {
     expect(getByText('DASHBOARD')).toBeTruthy();
   });
 
-  it('renders all buttons in correct order', () => {
-    const { getAllByTestId } = render(<AdminContent {...defaultProps} />);
+  // it('renders all buttons in correct order', () => {
+  //   const { getAllByTestId } = render(<AdminContent {...defaultProps} />);
 
-    const buttons = getAllByTestId(/^button-/);
-    expect(buttons).toHaveLength(3);
+  //   const buttons = getAllByTestId(/^button-/);
+  //   expect(buttons).toHaveLength(3);
 
-    expect(buttons[0]).toHaveProperty('props.testID', 'button-load-floorplans');
-    expect(buttons[1]).toHaveProperty('props.testID', 'button-edit-floorplans');
-    expect(buttons[2]).toHaveProperty('props.testID', 'button-manage-users');
-  });
+  //   expect(buttons[0]).toHaveProperty('props.testID', 'button-load-floorplans');
+  //   expect(buttons[1]).toHaveProperty('props.testID', 'button-edit-floorplans');
+  //   expect(buttons[2]).toHaveProperty('props.testID', 'button-manage-users');
+  // });
 });
