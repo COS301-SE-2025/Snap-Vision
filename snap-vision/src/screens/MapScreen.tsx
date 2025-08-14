@@ -247,11 +247,6 @@ const MapScreen = () => {
     }
   };
 
-  // Function to toggle map rotation mode (functionality removed)
-  const toggleMapRotation = () => {
-    // Map rotation functionality removed
-  };
-
   // Replace your requestLocation function with this enhanced version
   const requestLocation = async () => {
     try {
@@ -1894,7 +1889,6 @@ const MapScreen = () => {
         onReportIn={() => setShowReportTooltip(true)}
         onReportOut={() => setShowReportTooltip(false)}
         color={colors.primary}
-        onToggleMapRotation={toggleMapRotation}
       />
 
       {/* Location Refresh Button - shown when no location available */}
