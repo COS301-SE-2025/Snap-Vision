@@ -1,417 +1,445 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
-  TouchableOpacity,
+  StyleSheet,
   ActivityIndicator,
-  Alert,
+  TouchableOpacity,
 } from 'react-native';
-import AppButton from '../atoms/AppButton';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
+import DropDownPicker from 'react-native-dropdown-picker';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
+
 import AppSecondaryButton from '../atoms/AppSecondaryButton';
 import SettingsHeader from '../molecules/SettingsHeader';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
+import StandardPopup from '../atoms/StandardPopup';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
-import firestore from '@react-native-firebase/firestore';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import RNFS from 'react-native-fs';
-import { launchImageLibrary } from 'react-native-image-picker';
-
-interface Floorplan {
-  id: string;
-  buildingId: string;
-  buildingName: string;
-  floorLabel: string;
-  lastModified: string;
-  localUri?: string;
-}
 
 type RootStackParamList = {
   AdminEditFloorplansScreen: undefined;
   AdminLoadFloorplansScreen: undefined;
-  AdminFloorplanEditor: { buildingId: string; floorLabel: string; imageUri?: string };
+  AdminFloorplanEditor: {
+    locationId: string;
+    buildingId: string;
+    floorLabel: string;
+    imageUri?: string;
+  };
 };
+
+interface FloorplanMeta {
+  locationId: string;
+  buildingId: string;
+  buildingName: string;
+  floorLabel: string;
+  timestamp: string;
+  downloadURL: string;
+  id: string;
+}
 
 export default function AdminEditFloorplansContent() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
-  const [floorplans, setFloorplans] = useState<Floorplan[]>([]);
-  const [selectedFloorplan, setSelectedFloorplan] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [role, setRole] = useState<string | null>(null);
+  const [adminLocations, setAdminLocations] = useState<string[]>([]);
+  const [floorplans, setFloorplans] = useState<FloorplanMeta[]>([]);
+  const [locations, setLocations] = useState<{ id: string; name: string }[]>([]);
+  const [buildings, setBuildings] = useState<{ id: string; name: string }[]>([]);
+
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
+  const [selectedFloorplan, setSelectedFloorplan] = useState<FloorplanMeta | null>(null);
+
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch floorplans data from AsyncStorage and Firestore
+  const [buildingDropdownOpen, setBuildingDropdownOpen] = useState(false);
+  const [buildingDropdownItems, setBuildingDropdownItems] = useState<
+    { label: string; value: string }[]
+  >([]);
+
+  // Added state for floor dropdown open
+  const [floorDropdownOpen, setFloorDropdownOpen] = useState(false);
+
+  // Popup states
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+
   useEffect(() => {
-    const fetchFloorplans = async () => {
+    const fetchUserInfo = async () => {
+      const uid = auth().currentUser?.uid;
+      if (!uid) return;
+      const doc = await firestore().doc(`userInformation/${uid}`).get();
+      const data = doc.data();
+      setRole(data?.role || 'user');
+      setAdminLocations(data?.adminLocations || []);
+    };
+    fetchUserInfo();
+  }, []);
+
+  useEffect(() => {
+    const fetchLocationsAndBuildings = async () => {
       try {
         setIsLoading(true);
-        // Get floorplan metadata from AsyncStorage
-        const keys = await AsyncStorage.getAllKeys();
-        const floorplanKeys = keys.filter((key) => key.startsWith('floorplan_'));
-
-        const floorplanData = await Promise.all(
-          floorplanKeys.map(async (key) => {
-            const data = await AsyncStorage.getItem(key);
-            return data ? JSON.parse(data) : null;
-          }),
-        );
-
-        // Filter out null values and format data
-        const validFloorplans = floorplanData.filter(Boolean).map((fp) => ({
-          id: `${fp.buildingId}_${fp.floorLabel}`,
-          buildingId: fp.buildingId,
-          buildingName: fp.buildingName || fp.buildingId,
-          floorLabel: fp.floorLabel,
-          lastModified: fp.timestamp || new Date().toISOString(),
-          localUri: fp.uri,
+        const locSnap = await firestore().collection('locations').get();
+        const allLocations = locSnap.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data().name || doc.id,
         }));
 
-        setFloorplans(validFloorplans);
+        const filteredLocations =
+          role === 'editor'
+            ? allLocations.filter((loc) => adminLocations.includes(loc.id))
+            : allLocations;
+
+        setLocations(filteredLocations);
       } catch (err) {
-        console.error('Error fetching floorplans:', err);
+        console.error(err);
+        setError('Failed to load locations');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (role) fetchLocationsAndBuildings();
+  }, [role, adminLocations]);
+
+  useEffect(() => {
+    const fetchBuildings = async () => {
+      if (!selectedLocation) return;
+      setIsLoading(true);
+
+      try {
+        const buildingSnap = await firestore()
+          .collection(`locations/${selectedLocation}/buildingPOIs`)
+          .get();
+
+        const buildingList = buildingSnap.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data().name || doc.id,
+        }));
+
+        setBuildings(buildingList);
+        setBuildingDropdownItems(buildingList.map((b) => ({ label: b.name, value: b.id })));
+        setSelectedBuildingId(null);
+        setSelectedFloorplan(null);
+        setFloorplans([]);
+      } catch (err) {
+        console.error(err);
+        setError('Failed to load buildings');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (selectedLocation) fetchBuildings();
+  }, [selectedLocation]);
+
+  useEffect(() => {
+    const fetchFloorplans = async () => {
+      if (!selectedLocation || !selectedBuildingId) return;
+
+      setIsLoading(true);
+      try {
+        const snap = await firestore()
+          .collection(`locations/${selectedLocation}/buildingPOIs/${selectedBuildingId}/floorplans`)
+          .get();
+
+        const newFloorplans: FloorplanMeta[] = snap.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            locationId: selectedLocation,
+            buildingId: selectedBuildingId,
+            buildingName:
+              buildings.find((b) => b.id === selectedBuildingId)?.name || selectedBuildingId,
+            floorLabel: data.floorLabel || doc.id,
+            downloadURL: data.downloadURL,
+            timestamp: data.timestamp?.toDate()?.toISOString() || '',
+            id: `${selectedBuildingId}_${data.floorLabel || doc.id}`,
+          };
+        });
+
+        console.log('✅ Floorplans loaded:', newFloorplans);
+        setFloorplans(newFloorplans);
+        setSelectedFloorplan(null);
+      } catch (err) {
+        console.error(err);
         setError('Failed to load floorplans');
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchFloorplans();
-  }, []);
+    if (selectedBuildingId) fetchFloorplans();
+  }, [selectedBuildingId]);
 
-  const handleUploadUpdated = async () => {
+  const handleEditPOIs = () => {
     if (!selectedFloorplan) return;
-
-    try {
-      // Using launchImageLibrary instead of DocumentPicker
-      const result = await launchImageLibrary({
-        mediaType: 'photo',
-        quality: 0.8,
-        selectionLimit: 1,
-      });
-
-      // Check if user canceled or if there are no assets
-      if (result.didCancel || !result.assets || result.assets.length === 0) {
-        return;
-      }
-
-      const selectedImage = result.assets[0];
-      if (!selectedImage.uri) {
-        throw new Error('Selected image has no URI');
-      }
-
-      // Get selected floorplan data
-      const floorplan = floorplans.find((fp) => fp.id === selectedFloorplan);
-      if (!floorplan) return;
-
-      // Create directory if it doesn't exist
-      const dirPath = `${RNFS.DocumentDirectoryPath}/floorplans`;
-      await RNFS.mkdir(dirPath, { NSURLIsExcludedFromBackupKey: true });
-
-      // Generate file name and path
-      const fileExtension = selectedImage.type?.includes('png') ? '.png' : '.jpg';
-      const fileName = `${floorplan.buildingId}_${floorplan.floorLabel.replace(/\s+/g, '_')}${fileExtension}`;
-      const destPath = `${dirPath}/${fileName}`;
-
-      // Copy file to app's documents directory
-      await RNFS.copyFile(selectedImage.uri, destPath);
-
-      // Update AsyncStorage with new URI
-      const storageKey = `floorplan_${floorplan.buildingId}_${floorplan.floorLabel}`;
-      const existingData = await AsyncStorage.getItem(storageKey);
-      const updatedData = existingData ? JSON.parse(existingData) : {};
-      updatedData.uri = `file://${destPath}`;
-      updatedData.timestamp = new Date().toISOString();
-
-      await AsyncStorage.setItem(storageKey, JSON.stringify(updatedData));
-
-      // Update UI
-      setFloorplans((prev) =>
-        prev.map((fp) =>
-          fp.id === selectedFloorplan
-            ? { ...fp, localUri: `file://${destPath}`, lastModified: new Date().toISOString() }
-            : fp,
-        ),
-      );
-
-      Alert.alert('Success', 'Floorplan updated successfully');
-    } catch (err) {
-      console.error('Error updating floorplan:', err);
-      setError(
-        `Failed to update floorplan: ${err instanceof Error ? err.message : 'Unknown error'}`,
-      );
-    }
-  };
-
-  const handleAddNewFloorplan = () => {
-    // Navigate to the floorplan creation screen
-    navigation.navigate('AdminLoadFloorplansScreen');
-  };
-
-  const handleEditRooms = () => {
-    if (!selectedFloorplan) {
-      setError('Please select a floorplan first');
-      return;
-    }
-
-    const floorplan = floorplans.find((fp) => fp.id === selectedFloorplan);
-    if (!floorplan) {
-      setError('Selected floorplan not found');
-      return;
-    }
-
-    if (!floorplan.localUri) {
-      setError('Floorplan image not found. Please update the floorplan first');
-      return;
-    }
-
-    // Navigate to the floorplan editor
     navigation.navigate('AdminFloorplanEditor', {
-      buildingId: floorplan.buildingId,
-      floorLabel: floorplan.floorLabel,
-      imageUri: floorplan.localUri,
+      locationId: selectedFloorplan.locationId,
+      buildingId: selectedFloorplan.buildingId,
+      floorLabel: selectedFloorplan.floorLabel,
+      imageUri: selectedFloorplan.downloadURL,
     });
   };
 
-  const handleDeleteFloorplan = async () => {
+  const handleDeleteFloorplan = () => {
     if (!selectedFloorplan) return;
-
-    Alert.alert(
-      'Delete Floorplan',
-      'Are you sure you want to delete this floorplan? This will also delete all associated room POIs.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setIsLoading(true);
-              const floorplan = floorplans.find((fp) => fp.id === selectedFloorplan);
-              if (!floorplan) return;
-
-              // Delete from AsyncStorage
-              await AsyncStorage.removeItem(
-                `floorplan_${floorplan.buildingId}_${floorplan.floorLabel}`,
-              );
-
-              // Delete associated room POIs from Firestore
-              const snapshot = await firestore()
-                .collection('RoomPOIs')
-                .where('buildingId', '==', floorplan.buildingId)
-                .where('floorId', '==', floorplan.floorLabel)
-                .get();
-
-              const batch = firestore().batch();
-              snapshot.docs.forEach((doc) => {
-                batch.delete(doc.ref);
-              });
-
-              await batch.commit();
-
-              // Remove from local file system
-              if (floorplan.localUri) {
-                try {
-                  await RNFS.unlink(floorplan.localUri.replace('file://', ''));
-                } catch (fileErr) {
-                  console.warn('Error deleting floorplan file:', fileErr);
-                  // Continue with deletion even if file removal fails
-                }
-              }
-
-              // Update UI
-              setFloorplans((prev) => prev.filter((fp) => fp.id !== selectedFloorplan));
-              setSelectedFloorplan(null);
-              setIsLoading(false);
-
-              Alert.alert('Success', 'Floorplan and associated POIs deleted');
-            } catch (err) {
-              setIsLoading(false);
-              console.error('Error deleting floorplan:', err);
-              setError('Failed to delete floorplan');
-            }
-          },
-        },
-      ],
-    );
+    setShowDeleteConfirmation(true);
   };
 
-  if (isLoading) {
-    return (
-      <View
-        style={[
-          styles.container,
-          { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
-        ]}
-      >
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ color: colors.text, marginTop: 16 }}>Loading floorplans...</Text>
-      </View>
-    );
-  }
+  const confirmDeleteFloorplan = async () => {
+    if (!selectedFloorplan) return;
+
+    try {
+      setIsLoading(true);
+      const { locationId, buildingId, floorLabel } = selectedFloorplan;
+
+      await firestore()
+        .doc(`locations/${locationId}/buildingPOIs/${buildingId}/floorplans/${floorLabel}`)
+        .delete();
+
+      const roomSnap = await firestore()
+        .collection(`locations/${locationId}/roomPOIs`)
+        .where('buildingId', '==', buildingId)
+        .where('floorId', '==', floorLabel)
+        .get();
+
+      const pathSnap = await firestore()
+        .collection(`locations/${locationId}/pathPOIs`)
+        .where('buildingId', '==', buildingId)
+        .where('floorId', '==', floorLabel)
+        .get();
+
+      const batch = firestore().batch();
+      roomSnap.forEach((doc) => batch.delete(doc.ref));
+      pathSnap.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+
+      setFloorplans((prev) => prev.filter((fp) => fp.id !== selectedFloorplan.id));
+      setSelectedFloorplan(null);
+      setSuccessMessage('Floorplan and POIs removed successfully.');
+      setShowSuccessPopup(true);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to delete floorplan');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title="Edit Floorplans" />
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
-        {/* Error Display */}
+
+      {isLoading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={{ color: colors.text, marginTop: 16 }}>Loading...</Text>
+        </View>
+      )}
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {error && (
           <View style={[styles.errorContainer, { backgroundColor: colors.danger }]}>
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
 
-        {/* Add New Floorplan Button */}
-        <AppButton
-          title="Add New Floorplan"
-          onPress={handleAddNewFloorplan}
-          style={{ marginBottom: 24 }}
-        />
-
-        {/* Step 1: Select Floorplan */}
-        <Text style={[styles.label, { color: colors.primary }]}>Select Existing Floorplan</Text>
-        {floorplans.length === 0 ? (
-          <Text style={{ color: colors.text, fontStyle: 'italic', marginBottom: 16 }}>
-            No floorplans available. Add a new floorplan to get started.
+        {/* Step 1: Select Location */}
+        <View style={styles.sectionContainer}>
+          <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+            Step 1: Select Location
           </Text>
-        ) : (
-          <View style={styles.floorplanList}>
-            {floorplans.map((fp) => (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.buildingList}
+          >
+            {locations.map((loc) => (
               <TouchableOpacity
-                key={fp.id}
+                key={loc.id}
                 style={[
-                  styles.floorplanItem,
-                  { backgroundColor: selectedFloorplan === fp.id ? colors.primary : colors.card },
+                  styles.buildingItem,
+                  { backgroundColor: selectedLocation === loc.id ? colors.primary : colors.card },
                 ]}
-                onPress={() => setSelectedFloorplan(fp.id)}
+                onPress={() => {
+                  setSelectedLocation(loc.id);
+                  setSelectedBuildingId(null);
+                  setSelectedFloorplan(null);
+                }}
               >
-                <Text
-                  style={{
-                    color: selectedFloorplan === fp.id ? colors.background : colors.text,
-                    fontWeight: '500',
-                  }}
-                >
-                  {fp.buildingName}
-                </Text>
-                <Text
-                  style={{
-                    color: selectedFloorplan === fp.id ? colors.background : colors.text,
-                    fontSize: 12,
-                  }}
-                >
-                  {fp.floorLabel}
+                <Text style={{ color: selectedLocation === loc.id ? '#FFF' : colors.text }}>
+                  {loc.name}
                 </Text>
               </TouchableOpacity>
             ))}
+          </ScrollView>
+        </View>
+
+        {/* Step 2: Select Building */}
+        {selectedLocation && (
+          <View style={styles.sectionContainer}>
+            <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+              Step 2: Select Building
+            </Text>
+            <DropDownPicker
+              open={buildingDropdownOpen}
+              setOpen={setBuildingDropdownOpen}
+              items={buildingDropdownItems}
+              setItems={setBuildingDropdownItems}
+              value={selectedBuildingId}
+              setValue={(val) => {
+                setSelectedBuildingId(val());
+              }}
+              searchable
+              placeholder="Select a building"
+              zIndex={3000}
+              zIndexInverse={1000}
+              style={{
+                backgroundColor: colors.card,
+                borderColor: colors.primary,
+              }}
+              dropDownContainerStyle={{
+                backgroundColor: colors.card,
+                borderColor: colors.primary,
+              }}
+              textStyle={{ color: colors.text }}
+              searchTextInputStyle={{ color: colors.text }}
+            />
           </View>
         )}
 
-        {/* Action Buttons for Selected Floorplan */}
+        {/* Step 3: Select Floor */}
+        {selectedBuildingId && (
+          <View style={styles.sectionContainer}>
+            <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+              Step 3: Select Floor
+            </Text>
+            <DropDownPicker
+              open={floorDropdownOpen}
+              setOpen={setFloorDropdownOpen}
+              items={floorplans.map((fp) => ({
+                label: `Floor ${fp.floorLabel}`,
+                value: fp.id,
+              }))}
+              value={selectedFloorplan?.id || null}
+              setValue={(val) => {
+                const match = floorplans.find((f) => f.id === val());
+                setSelectedFloorplan(match || null);
+              }}
+              searchable
+              placeholder="Select a floor"
+              style={{
+                backgroundColor: colors.card,
+                borderColor: colors.primary,
+              }}
+              dropDownContainerStyle={{
+                backgroundColor: colors.card,
+                borderColor: colors.primary,
+              }}
+              textStyle={{ color: colors.text }}
+              searchTextInputStyle={{ color: colors.text }}
+            />
+          </View>
+        )}
+
+        {/* Step 4: Edit or Delete */}
         {selectedFloorplan && (
-          <View style={styles.actionContainer}>
-            <Text style={[styles.sectionHeader, { color: colors.primary }]}>Floorplan Actions</Text>
-
-            <View
-              style={[
-                styles.selectedDetails,
-                { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 },
-              ]}
-            >
-              {floorplans.find((fp) => fp.id === selectedFloorplan) && (
-                <>
-                  <Text style={[styles.detailText, { color: colors.text }]}>
-                    <Text style={{ fontWeight: 'bold' }}>Building: </Text>
-                    {floorplans.find((fp) => fp.id === selectedFloorplan)?.buildingName}
-                  </Text>
-                  <Text style={[styles.detailText, { color: colors.text }]}>
-                    <Text style={{ fontWeight: 'bold' }}>Floor: </Text>
-                    {floorplans.find((fp) => fp.id === selectedFloorplan)?.floorLabel}
-                  </Text>
-                  <Text style={[styles.detailText, { color: colors.text }]}>
-                    <Text style={{ fontWeight: 'bold' }}>Last Modified: </Text>
-                    {new Date(
-                      floorplans.find((fp) => fp.id === selectedFloorplan)?.lastModified || '',
-                    ).toLocaleString()}
-                  </Text>
-                </>
-              )}
-            </View>
-
-            {/* Edit Room POIs button */}
+          <View style={styles.sectionContainer}>
+            <Text style={{ color: colors.text }}>
+              <Text style={{ fontWeight: 'bold' }}>Floor Label: </Text>
+              {selectedFloorplan.floorLabel}
+            </Text>
+            <Text style={{ color: colors.text }}>
+              <Text style={{ fontWeight: 'bold' }}>Last Modified: </Text>
+              {new Date(selectedFloorplan.timestamp).toLocaleString()}
+            </Text>
             <AppSecondaryButton
               title="Edit Room POIs"
-              onPress={handleEditRooms}
-              style={{
-                marginTop: 16,
-              }}
+              onPress={handleEditPOIs}
+              style={{ marginTop: 16 }}
             />
-
-            {/* Delete Floorplan button */}
             <AppSecondaryButton
               title="Delete Floorplan"
               onPress={handleDeleteFloorplan}
-              style={{
-                marginTop: 16,
-              }}
+              style={{ marginTop: 12 }}
             />
           </View>
         )}
       </ScrollView>
+
+      {/* Delete Confirmation Popup */}
+      <StandardPopup
+        visible={showDeleteConfirmation}
+        title="Delete Floorplan"
+        message="Are you sure you want to delete this floorplan? This action cannot be undone."
+        onConfirm={() => {
+          setShowDeleteConfirmation(false);
+          confirmDeleteFloorplan();
+        }}
+        onCancel={() => setShowDeleteConfirmation(false)}
+        confirmText="Delete"
+        cancelText="Cancel"
+        showCancel={true}
+      />
+
+      {/* Success Popup */}
+      <StandardPopup
+        visible={showSuccessPopup}
+        title="Success"
+        message={successMessage}
+        onConfirm={() => setShowSuccessPopup(false)}
+        confirmText="OK"
+        showCancel={false}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  sectionHeader: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  floorplanList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 24,
-  },
-  floorplanItem: {
-    padding: 12,
-    borderRadius: 8,
-    marginRight: 8,
-    marginBottom: 8,
-    minWidth: 100,
-  },
-  actionContainer: {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#ddd',
-  },
-  selectedDetails: {
-    marginBottom: 16,
-    padding: 12,
-    borderRadius: 8,
-  },
-  detailText: {
-    marginBottom: 4,
-    fontSize: 14,
+  container: { flex: 1 },
+  content: { flex: 1, paddingHorizontal: 16 },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
   },
   errorContainer: {
     padding: 12,
     borderRadius: 8,
-    marginBottom: 16,
+    marginVertical: 16,
   },
   errorText: {
     color: 'white',
     fontWeight: '500',
+  },
+  sectionContainer: {
+    marginBottom: 24,
+    padding: 16,
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    borderRadius: 8,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  buildingList: {
+    paddingVertical: 8,
+  },
+  buildingItem: {
+    padding: 12,
+    borderRadius: 8,
+    marginRight: 8,
+    minWidth: 100,
+    alignItems: 'center',
   },
 });

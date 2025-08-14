@@ -1,0 +1,746 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Leaflet Map</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <style>
+      html,
+      body,
+      #map {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      .leaflet-popup-content-wrapper {
+        font-size: 14px;
+      }
+      .poi-marker {
+        background-color: #007bff;
+        border: 2px solid white;
+        border-radius: 50%;
+        width: 12px;
+        height: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+      .poi-marker:hover {
+        background-color: #0056b3;
+        transform: scale(1.2);
+        cursor: pointer;
+      }
+      .poi-label {
+        background-color: rgba(255, 255, 255, 0.9);
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-size: 12px;
+        font-weight: bold;
+        color: #333;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        pointer-events: none;
+      }
+      .crowd-indicator {
+        display: inline-block;
+        margin-right: 5px;
+        font-size: 14px;
+      }
+      .crowd-info {
+        margin: 5px 0;
+        padding: 5px;
+        border-radius: 4px;
+        background-color: rgba(240, 240, 240, 0.8);
+        font-size: 12px;
+      }
+      /* Move zoom controls down to avoid overlap with turn-by-turn directions */
+      .leaflet-control-zoom {
+        margin-top: 200px !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script>
+      window.isAdmin = false; // default
+      window.setAdminMode = function (flag) {
+        window.isAdmin = flag;
+      };
+
+      let map;
+      let userMarker = null;
+      let destinationMarker = null;
+      let endCircle = null;
+      let startCircle = null;
+      let poiMarkers = [];
+      let poiData = [];
+      let crowdData = {}; // Store crowd data by buildingId
+      let isNavigating = false; // Track navigation state
+
+      // Reported crowd densities and corresponding emoji/icons
+      const crowdEmojis = {
+        empty: '🟢',
+        light: '🟡',
+        moderate: '🟠',
+        crowded: '🔴',
+        overcrowded: '⚫',
+      };
+
+      const crowdLabels = {
+        empty: 'Empty',
+        light: 'Light Crowd',
+        moderate: 'Moderate Crowd',
+        crowded: 'Very High Crowd',
+        overcrowded: 'Overcrowded',
+      };
+
+      // Handle uncaught errors
+      window.onerror = function (message, source, lineno, colno, error) {
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage(
+            JSON.stringify({
+              type: 'ERROR',
+              message,
+              source,
+              line: lineno,
+              column: colno,
+              stack: error?.stack,
+            }),
+          );
+        }
+      };
+
+      function initMap() {
+        map = L.map('map', {
+          zoomControl: true,
+          attributionControl: true,
+          preferCanvas: true,
+          center: [-25.7557, 28.2314],
+          zoom: 20,
+          maxZoom: 25,
+        });
+
+        L.tileLayer(
+          'https://api.maptiler.com/maps/basic-v2/{z}/{x}/{y}.png?key=MAPTILER_API_KEY_PLACEHOLDER',
+          {
+            attribution: '© OpenStreetMap contributors & MapTiler',
+            tileSize: 512,
+            zoomOffset: -1,
+            detectRetina: true,
+            maxZoom: 25,
+            crossOrigin: 'anonymous',
+          },
+        ).addTo(map);
+
+        map.on('zoomend', function () {
+          const zoom = map.getZoom();
+          if (zoom >= 16 && !isNavigating) {
+            // Only show POIs when not navigating
+            showAllPOIMarkers();
+          } else {
+            // Hide all POI markers when zoomed out or navigating
+            poiMarkers.forEach((marker) => {
+              if (map.hasLayer(marker)) {
+                map.removeLayer(marker);
+              }
+            });
+          }
+        });
+
+        // Tell React Native that the map is ready
+        setTimeout(() => {
+          map.invalidateSize();
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage('MAP_READY');
+          }
+        }, 500);
+      }
+
+      // Function to update user location
+      window.updateUserLocation = function (lat, lon, centerMap = false, zoomLevel = null) {
+        console.log('🗺️ updateUserLocation called:', {
+          lat,
+          lon,
+          centerMap,
+          zoomLevel,
+          mapLoaded: map && map._loaded,
+        });
+        const coords = [lat, lon];
+        if (!map || !map._loaded) {
+          console.log('❌ Map not loaded yet, cannot update user location');
+          return; // Check if map is fully loaded
+        }
+
+        try {
+          if (centerMap) {
+            if (zoomLevel !== null) {
+              console.log('🎯 Centering map with zoom level:', zoomLevel);
+              map.setView(coords, zoomLevel);
+            } else {
+              console.log('🎯 Centering map with default zoom');
+              map.setView(coords, 16);
+            }
+          }
+
+          if (userMarker) {
+            console.log('📍 Updating existing user marker position');
+            userMarker.setLatLng(coords);
+          } else {
+            console.log('📍 Creating new user marker');
+            userMarker = L.marker(coords).addTo(map).bindPopup('📍 You are here!').openPopup();
+          }
+          console.log('✅ User location updated successfully');
+        } catch (error) {
+          console.error('❌ Error updating user location:', error);
+        }
+      };
+
+      // Updated function to store crowd data without adding markers
+      window.updateCrowdDensity = function (lat, lon, density, buildingId) {
+        if (!map) return;
+
+        // Store the crowd data for this building
+        crowdData[buildingId] = {
+          density: density,
+          label: crowdLabels[density] || 'Unknown',
+          emoji: crowdEmojis[density] || '❓',
+          timestamp: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        };
+
+        // Update any open popups if this building is currently shown
+        const marker = poiMarkers.find((m) => m.poiData && m.poiData.id === buildingId);
+        if (marker && marker.isPopupOpen()) {
+          updatePopupContent(marker);
+        }
+      };
+
+      // Function to clear all crowd data
+      window.clearCrowdData = function () {
+        crowdData = {};
+      };
+
+      // Function to remove a POI marker by ID
+      window.removePOIById = function (poiId) {
+        // Exit if no map
+        if (!map) return;
+
+        console.log('Attempting to remove POI marker with ID:', poiId);
+
+        // Find the marker by ID
+        let markerToRemove = null;
+        let markerIndex = -1;
+
+        for (let i = 0; i < poiMarkers.length; i++) {
+          const marker = poiMarkers[i];
+          if (marker && marker.poiId === poiId) {
+            markerToRemove = marker;
+            markerIndex = i;
+            break;
+          }
+        }
+
+        // Remove the marker if found
+        if (markerToRemove) {
+          console.log('Found marker to remove at index:', markerIndex);
+          if (map.hasLayer(markerToRemove)) {
+            map.removeLayer(markerToRemove);
+          }
+          // Remove from arrays
+          poiMarkers.splice(markerIndex, 1);
+          poiData = poiData.filter((p) => p.id !== poiId);
+
+          return true;
+        }
+
+        console.log('Marker not found for removal');
+        return false;
+      };
+
+      // Helper function to create popup content with crowd info
+      function getPopupContent(poi) {
+        const buildingId = poi.id;
+        const crowdInfo = crowdData[buildingId];
+
+        let crowdHtml = '';
+        if (crowdInfo) {
+          crowdHtml = `
+      <div class="crowd-info">
+        <span class="crowd-indicator">${crowdInfo.emoji}</span>
+        <strong>Crowd: ${crowdInfo.label}</strong><br>
+        <small>Updated recently • Expires in 1 hour</small>
+      </div>
+    `;
+        }
+
+        let adminButtons = '';
+        if (window.isAdmin) {
+          adminButtons = `
+      <div style="margin-top: 8px;">
+        <button onclick="window.showAdminActions('${buildingId}')" style="
+          padding: 6px 12px;
+          background-color: #FF9800;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 12px;
+          width: 100%;
+        ">Admin Actions</button>
+      </div>
+    `;
+        }
+
+        return `
+    <div style="text-align: center; min-width: 150px;">
+      <div style="margin-bottom: 8px;">
+        <strong>🏢 ${poi.name || 'Unnamed Building'}</strong>
+      </div>
+
+      ${crowdHtml}
+
+      <!-- Navigate Here -->
+      <div style="margin-top: 8px;">
+        <button onclick="window.navigateToPOI('${poi.id}')" style="
+          padding: 6px 12px;
+          background-color: #007bff;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 12px;
+          width: 100%;
+        ">Navigate Here</button>
+      </div>
+
+      <!-- Admin (optional) -->
+      ${adminButtons}
+
+      <!-- Indoor navigation (ALWAYS last, under both) -->
+      <div style="margin-top: 8px;">
+        <button onclick="window.indoorNavToPOI('${poi.id}')" style="
+          padding: 10px 12px;
+          background-color: #5E5CE6;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          font-weight: bold;
+          font-size: 12px;
+          width: 100%;
+        ">Indoor navigation</button>
+      </div>
+    </div>
+  `;
+      }
+
+      // Function specifically for navigation
+      window.navigateToPOI = function (poiId) {
+        console.log('Navigating to POI with ID:', poiId);
+        const selectedMarker = poiMarkers.find(
+          (marker) => marker.poiData && marker.poiData.id === poiId,
+        );
+        if (selectedMarker) {
+          hideOtherPOIMarkers(selectedMarker);
+
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(
+              JSON.stringify({
+                type: 'POI_SELECTED',
+                poi: selectedMarker.poiData,
+              }),
+            );
+          }
+        }
+      };
+
+      window.indoorNavToPOI = function (poiId) {
+        const selectedMarker = poiMarkers.find((m) => m.poiData && m.poiData.id === poiId);
+        if (!selectedMarker) return;
+
+        const props = selectedMarker.poiData || {};
+        try {
+          map.closePopup();
+        } catch (e) {}
+
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage(
+            JSON.stringify({
+              type: 'INDOOR_NAV_FROM_MAP',
+              payload: {
+                id: props.id,
+                name: props.name,
+                // adjust if your POI carries location differently:
+                locationId: props.location || props.locationId || null,
+              },
+            }),
+          );
+        }
+      };
+
+      // Function specifically for admin actions
+      window.showAdminActions = function (poiId) {
+        console.log('Showing admin actions for POI with ID:', poiId);
+        const selectedMarker = poiMarkers.find(
+          (marker) => marker.poiData && marker.poiData.id === poiId,
+        );
+        if (selectedMarker) {
+          hideOtherPOIMarkers(selectedMarker);
+
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(
+              JSON.stringify({
+                type: 'ADMIN_POI_SELECTED',
+                poi: selectedMarker.poiData,
+              }),
+            );
+          }
+        }
+      };
+
+      // Function to update popup content with latest crowd data
+      function updatePopupContent(marker) {
+        if (marker && marker.getPopup()) {
+          const popupContent = getPopupContent(marker.poiData);
+          marker.setPopupContent(popupContent);
+        }
+      }
+
+      // Function to display POIs on the map
+      window.displayPOIs = function (pois) {
+        if (!map || !map._loaded || !Array.isArray(pois)) return;
+
+        try {
+          // Remove all existing POI markers
+          poiMarkers.forEach((marker) => {
+            if (map.hasLayer(marker)) {
+              map.removeLayer(marker);
+            }
+          });
+          poiMarkers = [];
+          poiData = pois;
+
+          pois.forEach((poi) => {
+            if (!poi.centroid || !poi.centroid.latitude || !poi.centroid.longitude) return;
+            const coords = [poi.centroid.latitude, poi.centroid.longitude];
+
+            const poiIcon = L.divIcon({
+              className: 'poi-marker',
+              html: '',
+              iconSize: [12, 12],
+              iconAnchor: [6, 6],
+            });
+
+            const marker = L.marker(coords, { icon: poiIcon }).bindPopup(getPopupContent(poi));
+
+            // When marker is clicked, hide all others and show only this one
+            marker.on('click', function (e) {
+              if (!isNavigating) {
+                // Only allow POI interactions when not navigating
+                hideOtherPOIMarkers(marker);
+                // Update popup content before opening
+                updatePopupContent(marker);
+                marker.openPopup();
+                // Listen for popup close to restore all markers
+                marker.once('popupclose', function () {
+                  if (!isNavigating) {
+                    // Only restore markers if not navigating
+                    showAllPOIMarkers();
+                  }
+                });
+              }
+            });
+
+            marker.poiData = poi;
+            poiMarkers.push(marker);
+          });
+
+          // Show markers only if zoom level is sufficient and not navigating
+          if (map.getZoom() >= 16 && !isNavigating) {
+            showAllPOIMarkers();
+          }
+        } catch (error) {
+          console.error('Error displaying POIs:', error);
+        }
+      };
+
+      window.clearAllPOIMarkers = function () {
+        if (!map) return;
+
+        // Remove all existing POI markers
+        poiMarkers.forEach((marker) => {
+          if (map.hasLayer(marker)) {
+            map.removeLayer(marker);
+          }
+        });
+        poiMarkers = [];
+        poiData = [];
+        map.invalidateSize();
+      };
+
+      function showAllPOIMarkers() {
+        if (!isNavigating) {
+          // Only show POI markers when not navigating
+          poiMarkers.forEach((marker) => {
+            if (!map.hasLayer(marker)) {
+              marker.addTo(map);
+            }
+          });
+        }
+      }
+
+      function hideOtherPOIMarkers(selectedMarker) {
+        poiMarkers.forEach((marker) => {
+          if (marker !== selectedMarker && map.hasLayer(marker)) {
+            map.removeLayer(marker);
+          }
+        });
+      }
+
+      window.closePOIPopup = function () {
+        map.closePopup();
+        if (!isNavigating) {
+          // Only restore markers if not navigating
+          showAllPOIMarkers();
+        }
+      };
+
+      window.selectPOI = function (poiId) {
+        console.log('Selecting POI with ID:', poiId);
+        const selectedMarker = poiMarkers.find(
+          (marker) => marker.poiData && marker.poiData.id === poiId,
+        );
+        if (selectedMarker) {
+          hideOtherPOIMarkers(selectedMarker);
+
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(
+              JSON.stringify({
+                type: 'POI_SELECTED',
+                poi: selectedMarker.poiData,
+              }),
+            );
+          }
+        }
+      };
+
+      // New functions to control navigation state
+      window.setNavigationState = function (navigating) {
+        isNavigating = navigating;
+
+        if (navigating) {
+          // Hide all POI markers when navigation starts
+          poiMarkers.forEach((marker) => {
+            if (map.hasLayer(marker)) {
+              map.removeLayer(marker);
+            }
+          });
+          // Close any open popups
+          map.closePopup();
+        } else {
+          // Show POI markers when navigation stops (if zoom level is appropriate)
+          if (map.getZoom() >= 16) {
+            showAllPOIMarkers();
+          }
+        }
+      };
+
+      // Start the map
+      try {
+        initMap();
+      } catch (e) {
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage(
+            JSON.stringify({
+              type: 'ERROR',
+              message: e.message,
+              stack: e.stack,
+            }),
+          );
+        }
+      }
+
+      // Function to clear the destination marker and end circle
+      window.clearDestinationMarker = function () {
+        if (destinationMarker) {
+          map.removeLayer(destinationMarker);
+          destinationMarker = null;
+        }
+        if (endCircle) {
+          map.removeLayer(endCircle);
+          endCircle = null;
+        }
+      };
+
+      // Clear all route-related elements
+      window.clearRoute = function () {
+        if (window.routeLayer) {
+          map.removeLayer(window.routeLayer);
+          window.routeLayer = null;
+        }
+
+        if (destinationMarker) {
+          map.removeLayer(destinationMarker);
+          destinationMarker = null;
+        }
+
+        if (endCircle) {
+          map.removeLayer(endCircle);
+          endCircle = null;
+        }
+
+        if (window.progressLine) {
+          map.removeLayer(window.progressLine);
+          window.progressLine = null;
+        }
+      };
+
+      window.drawRoute = function (coords) {
+        if (!map || !map._loaded || !Array.isArray(coords)) return; // Check if map is fully loaded
+
+        try {
+          // Remove existing route if already present
+          if (window.routeLayer) {
+            map.removeLayer(window.routeLayer);
+            window.routeLayer = null;
+          }
+
+          // Remove previous destination marker
+          if (destinationMarker) {
+            map.removeLayer(destinationMarker);
+            destinationMarker = null;
+          }
+
+          // Remove previous end circle
+          if (endCircle) {
+            map.removeLayer(endCircle);
+            endCircle = null;
+          }
+
+          // DO NOT add or remove any start marker or startCircle here!
+
+          const latlngs = coords.map(([lon, lat]) => [lat, lon]);
+
+          window.routeLayer = L.polyline(latlngs, {
+            color: 'blue',
+            weight: 6,
+            opacity: 1,
+            dashArray: '8,6',
+          }).addTo(map);
+
+          // Only add end marker/circle
+          endCircle = L.circle(latlngs[latlngs.length - 1], { radius: 5, color: 'red' }).addTo(map);
+          destinationMarker = L.marker(latlngs[latlngs.length - 1])
+            .addTo(map)
+            .bindPopup('🏁 End');
+        } catch (error) {
+          console.error('Error drawing route:', error);
+        }
+
+        const bounds = window.routeLayer.getBounds();
+        map.fitBounds(bounds.pad(0.3));
+      };
+
+      // Added this new function to update route progress visually
+      window.updateRouteProgress = function (pointIndex, progressRatio) {
+        if (!window.routeLayer || !map || !map._loaded) return;
+
+        try {
+          const allPoints = window.routeLayer.getLatLngs();
+          if (!allPoints || allPoints.length === 0) return;
+
+          // Calculate how many points to include in the progress line
+          const pointCount = Math.ceil(allPoints.length * progressRatio);
+
+          // Make sure we're not exceeding the array bounds
+          const endIndex = Math.min(pointCount, allPoints.length);
+          const progressPoints = allPoints.slice(0, endIndex);
+
+          // Remove existing progress line if it exists
+          if (window.progressLine) {
+            map.removeLayer(window.progressLine);
+          }
+
+          // Create a new progress line
+          window.progressLine = L.polyline(progressPoints, {
+            color: '#4CAF50', // Green color for progress
+            weight: 6,
+            opacity: 0.8,
+          }).addTo(map);
+        } catch (error) {
+          console.error('Error updating route progress:', error);
+        }
+      };
+
+      // Function to show indoor map with room POIs
+      window.showIndoorMap = function (imageUrl, roomPOIs) {
+        // Hide outdoor map
+        map.removeLayer(tileLayer);
+
+        // Show indoor map
+        const bounds = [
+          [0, 0],
+          [1, 1],
+        ];
+        const image = L.imageOverlay(imageUrl, bounds).addTo(map);
+        map.fitBounds(bounds);
+
+        // Add room POIs
+        if (roomPOIs && Array.isArray(roomPOIs)) {
+          roomPOIs.forEach((poi) => {
+            const marker = L.marker([poi.coordinates.y, poi.coordinates.x], {
+              icon: L.divIcon({
+                className: 'room-marker',
+                html: `<div class="room-marker-inner" style="background-color: ${getColorForType(poi.type)}"></div>`,
+                iconSize: [12, 12],
+              }),
+            }).addTo(map);
+
+            marker.bindPopup(`<b>${poi.name}</b><br>${poi.type || ''}<br>${poi.description || ''}`);
+          });
+        }
+      };
+
+      // Helper function to get color based on room type
+      function getColorForType(type) {
+        switch (type) {
+          case 'classroom':
+            return '#3388ff';
+          case 'office':
+            return '#33cc33';
+          case 'lab':
+            return '#ff8800';
+          case 'restroom':
+            return '#cc33ff';
+          case 'stairs':
+            return '#ffcc00';
+          case 'elevator':
+            return '#ff3333';
+          default:
+            return '#3388ff';
+        }
+      }
+
+      //Get co-ords when admin taps the map
+      window.enableAdminPOICreation = function () {
+        map.once('click', (e) => {
+          const lat = e.latlng.lat;
+          const lon = e.latlng.lng;
+          window.ReactNativeWebView.postMessage(
+            JSON.stringify({
+              type: 'ADMIN_ADD_POI',
+              lat,
+              lon,
+            }),
+          );
+        });
+      };
+    </script>
+  </body>
+</html>

@@ -1,6 +1,6 @@
 //snap-vision\src\theme\colours.ts
 export const lightColors = {
-  background: '#ffffff',
+  background: '#f9eadaff',
   text: '#2f6e83',
   subtleText: '#666666',
   border: '#ddd',

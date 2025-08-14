@@ -6,12 +6,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import AppInput from '../atoms/AppInput';
 import AppButton from '../atoms/AppButton';
 import AppSecondaryButton from '../atoms/AppSecondaryButton';
 import SettingsHeader from '../molecules/SettingsHeader';
+import StandardPopup from '../atoms/StandardPopup';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeContext';
@@ -20,6 +20,9 @@ import RNFS from 'react-native-fs';
 import * as ImagePicker from 'react-native-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
+import DropDownPicker from 'react-native-dropdown-picker';
+import storage from '@react-native-firebase/storage';
 
 // Interface for building data from UPcampusPOIs
 interface Building {
@@ -47,37 +50,102 @@ export default function AdminLoadFloorplansContent() {
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
 
-  // Fetch all buildings from UPcampusPOIs collection
+  // const [locations, setLocations] = useState<{ id: string; name: string }[]>([]);
+  // const [selectedLocation, setSelectedLocation] = useState<string>('');
+  // const [userRole, setUserRole] = useState<'admin' | 'editor' | 'user'>();
+  // const [adminLocations, setAdminLocations] = useState<string[]>([]);
+
+  // const [buildingDropdownOpen, setBuildingDropdownOpen] = useState(false);
+  // const [buildingDropdownItems, setBuildingDropdownItems] = useState<
+  //   { label: string; value: string }[]
+  // >([]);
+  // const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
+
+  const [locations, setLocations] = useState<{ id: string; name: string }[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<string>('');
+  const [userRole, setUserRole] = useState<'admin' | 'editor' | 'user'>();
+  const [adminLocations, setAdminLocations] = useState<string[]>([]);
+
+  const [buildingDropdownOpen, setBuildingDropdownOpen] = useState(false);
+  const [buildingDropdownItems, setBuildingDropdownItems] = useState<
+    { label: string; value: string }[]
+  >([]);
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
+
+  // Popup states
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showNavigationConfirm, setShowNavigationConfirm] = useState(false);
+  const [uploadedData, setUploadedData] = useState<{
+    buildingId: string;
+    floorLabel: string;
+    imageUri: string;
+    locationId: string;
+  } | null>(null);
+
+  // Fetch all buildings from new Firestore structure (dynamically gets location)
   useEffect(() => {
+    if (!selectedLocation) return;
+
     const fetchBuildings = async () => {
-      try {
-        setIsLoading(true);
-        const snapshot = await firestore()
-          .collection('UPcampusPOIs')
-          .where('type', '==', 'building')
-          .get();
+      setIsLoading(true);
+      const snapshot = await firestore()
+        .collection(`locations/${selectedLocation}/buildingPOIs`)
+        .get();
 
-        const buildingsData = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            name: data.name || 'Unnamed Building',
-            centroid: data.centroid,
-          };
-        });
+      const buildingsData = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data.name || 'Unnamed Building',
+          centroid: data.centroid,
+          floors: data.floors || 1,
+        };
+      });
 
-        setBuildings(buildingsData);
-        setIsLoading(false);
-      } catch (err) {
-        console.error('Error fetching buildings:', err);
-        setError('Failed to load buildings. Please try again.');
-        setIsLoading(false);
-      }
+      setBuildings(buildingsData);
+      setBuildingDropdownItems(
+        buildingsData.map((b) => ({
+          label: b.name,
+          value: b.id,
+        })),
+      );
+
+      setIsLoading(false);
     };
 
     fetchBuildings();
+  }, [selectedLocation]);
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      const userId = (await auth().currentUser)?.uid;
+      if (!userId) return;
+
+      const userSnap = await firestore().doc(`userInformation/${userId}`).get();
+      const data = userSnap.data();
+      setUserRole(data?.role);
+      setAdminLocations(data?.adminLocations || []);
+    };
+
+    fetchUserInfo();
   }, []);
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      const snapshot = await firestore().collection('locations').get();
+      const allLocations = snapshot.docs.map((doc) => ({ id: doc.id, name: doc.data().name }));
+
+      if (userRole === 'admin') {
+        setLocations(allLocations);
+      } else if (userRole === 'editor') {
+        setLocations(allLocations.filter((loc) => adminLocations.includes(loc.id)));
+      }
+    };
+
+    if (userRole) fetchLocations();
+  }, [userRole, adminLocations]);
 
   // Handle file selection
   const handlePickDocument = async () => {
@@ -87,90 +155,106 @@ export default function AdminLoadFloorplansContent() {
         quality: 0.8,
       });
 
-      if (result.assets && result.assets[0]) {
-        setFileUri(result.assets[0].uri ?? null);
-        setFileName(result.assets[0].fileName || 'floorplan.jpg');
+      if (!result.didCancel && result.assets?.length > 0) {
+        const asset = result.assets[0];
+        if (asset.uri && asset.fileName) {
+          setFileUri(asset.uri);
+          setFileName(asset.fileName);
+        } else if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
+          setError('Please select an image smaller than 5MB.');
+          setShowErrorPopup(true);
+          return;
+        } else {
+          setError('Invalid image selected. Please try again.');
+          setShowErrorPopup(true);
+        }
+      } else if (result.errorMessage) {
+        setError(`Image Picker error: ${result.errorMessage}`);
+        setShowErrorPopup(true);
       }
     } catch (err) {
       console.error('Error picking image:', err);
       setError('Failed to select image');
+      setShowErrorPopup(true);
     }
   };
 
   // Handle floorplan upload
   const handleUpload = async () => {
-    if (!selectedBuilding) {
-      setError('Please select a building');
+    setError(null);
+
+    if (!selectedBuilding || !selectedLocation) {
+      setError('Please select a building and location');
+      setShowErrorPopup(true);
       return;
     }
 
-    if (!floorLabel) {
-      setError('Please enter a floor label');
+    if (!userRole) {
+      setError('User access not yet loaded. Please wait...');
+      setShowErrorPopup(true);
+      return;
+    }
+
+    if (userRole === 'editor' && !adminLocations.includes(selectedLocation)) {
+      setError("You're not allowed to upload to this location.");
+      setShowErrorPopup(true);
+      return;
+    }
+
+    if (isNaN(Number(floorLabel)) || Number(floorLabel) < 1) {
+      setError('Please enter a valid floor number (1 or higher)');
+      setShowErrorPopup(true);
       return;
     }
 
     if (!fileUri) {
       setError('Please select a floorplan file');
+      setShowErrorPopup(true);
       return;
     }
 
     try {
       setIsLoading(true);
 
-      // Create directory if it doesn't exist
-      const dirPath = `${RNFS.DocumentDirectoryPath}/floorplans`;
-      await RNFS.mkdir(dirPath, { NSURLIsExcludedFromBackupKey: true });
+      const floorNumber = floorLabel;
+      const storagePath = `floorplans/${selectedLocation}/${selectedBuilding.id}/${floorNumber}.jpg`;
+      console.log('Uploading to:', storagePath);
+      console.log('Current user UID:', auth().currentUser?.uid);
 
-      // Generate safe filename
-      const fileExt = fileName.substring(fileName.lastIndexOf('.'));
-      const safeFileName = `${selectedBuilding.id}_${floorLabel.replace(/\s+/g, '_')}${fileExt}`;
-      const destPath = `${dirPath}/${safeFileName}`;
+      // Upload to Firebase Storage
+      const reference = storage().ref(storagePath);
+      await reference.putFile(fileUri);
 
-      // Copy file to app documents directory
-      await RNFS.copyFile(fileUri, destPath);
+      const downloadURL = await reference.getDownloadURL();
 
-      // Create floorplan metadata
-      const floorplanId = `${selectedBuilding.id}_${floorLabel.replace(/\s+/g, '_')}`;
-      const floorplanData = {
-        id: floorplanId,
-        buildingId: selectedBuilding.id,
-        buildingName: selectedBuilding.name,
-        floorLabel: floorLabel,
-        uri: `file://${destPath}`,
-        timestamp: new Date().toISOString(),
-        status: 'active',
-      };
-
-      // Save to AsyncStorage
-      await AsyncStorage.setItem(`floorplan_${floorplanId}`, JSON.stringify(floorplanData));
-
-      setIsLoading(false);
-      Alert.alert(
-        'Success',
-        'Floorplan uploaded successfully. Would you like to add room POIs now?',
-        [
-          { text: 'Later', style: 'cancel' },
-          {
-            text: 'Add POIs',
-            onPress: () =>
-              navigation.navigate('FloorplanEditor', {
-                buildingId: selectedBuilding.id,
-                floorLabel: floorLabel,
-                imageUri: `file://${destPath}`,
-              }),
-          },
-        ],
+      // Create metadata
+      const floorplanDocRef = firestore().doc(
+        `locations/${selectedLocation}/buildingPOIs/${selectedBuilding.id}/floorplans/${floorNumber}`,
       );
 
-      // Reset form
-      setBuildingName('');
-      setFloorLabel('');
-      setSelectedBuilding(null);
-      setFileUri(null);
-      setFileName('');
+      await floorplanDocRef.set({
+        buildingId: selectedBuilding.id,
+        floorLabel: floorNumber,
+        downloadURL,
+        timestamp: firestore.FieldValue.serverTimestamp(),
+        uploadedBy: auth().currentUser?.uid,
+      });
+
+      setIsLoading(false);
+
+      // Store upload data for potential navigation
+      setUploadedData({
+        buildingId: selectedBuilding.id,
+        floorLabel,
+        imageUri: downloadURL,
+        locationId: selectedLocation,
+      });
+
+      setShowSuccessPopup(true);
     } catch (err) {
       console.error('Error uploading floorplan:', err);
       setError('Failed to upload floorplan');
+      setShowErrorPopup(true);
       setIsLoading(false);
     }
   };
@@ -179,6 +263,37 @@ export default function AdminLoadFloorplansContent() {
   const handleBuildingSelect = (building: Building) => {
     setSelectedBuilding(building);
     setBuildingName(building.name);
+  };
+
+  // Handle success popup confirmation
+  const handleSuccessConfirm = () => {
+    setShowSuccessPopup(false);
+    setShowNavigationConfirm(true);
+  };
+
+  // Handle navigation to POI editor
+  const handleNavigateToPOIEditor = () => {
+    if (uploadedData) {
+      navigation.navigate('AdminFloorplanEditor', uploadedData);
+    }
+    handleResetForm();
+  };
+
+  // Handle "Later" option
+  const handleLater = () => {
+    handleResetForm();
+  };
+
+  // Reset form after successful upload
+  const handleResetForm = () => {
+    setShowNavigationConfirm(false);
+    setBuildingName('');
+    setFloorLabel('');
+    setSelectedBuilding(null);
+    setSelectedBuildingId(null);
+    setFileUri(null);
+    setFileName('');
+    setUploadedData(null);
   };
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -192,12 +307,45 @@ export default function AdminLoadFloorplansContent() {
       )}
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Error message */}
-        {error && (
-          <View style={[styles.errorContainer, { backgroundColor: colors.danger }]}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
+        <View style={styles.inputSection}>
+          {/* Error Popup */}
+          <StandardPopup
+            visible={showErrorPopup && !!error}
+            title="Error"
+            message={error || ''}
+            onConfirm={() => {
+              setShowErrorPopup(false);
+              setError(null);
+            }}
+            showCancel={false}
+          />
+          <Text style={[styles.inputTitle, { color: colors.primary }]}>Select a Location</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.buildingList}
+          >
+            {locations.map((loc) => (
+              <TouchableOpacity
+                key={loc.id}
+                style={[
+                  styles.buildingItem,
+                  {
+                    backgroundColor: selectedLocation === loc.id ? colors.primary : colors.card,
+                  },
+                ]}
+                onPress={() => {
+                  setSelectedLocation(loc.id);
+                  setSelectedBuilding(null); // reset building
+                }}
+              >
+                <Text style={{ color: selectedLocation === loc.id ? '#FFF' : colors.text }}>
+                  {loc.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
 
         {/* Step 1: Select Building */}
         <View style={styles.sectionContainer}>
@@ -211,55 +359,45 @@ export default function AdminLoadFloorplansContent() {
               No buildings available. Please check your connection.
             </Text>
           ) : (
-            <View style={styles.buildingSelector}>
+            <View style={{ zIndex: 3000, marginBottom: 16 }}>
               <Text style={[styles.inputTitle, { color: colors.primary }]}>Select a Building</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.buildingList}
-              >
-                {buildings.map((building) => (
-                  <TouchableOpacity
-                    key={building.id}
-                    style={[
-                      styles.buildingItem,
-                      {
-                        backgroundColor:
-                          selectedBuilding?.id === building.id ? colors.primary : colors.card,
-                      },
-                    ]}
-                    onPress={() => handleBuildingSelect(building)}
-                  >
-                    <Text
-                      style={{
-                        color: selectedBuilding?.id === building.id ? '#FFFFFF' : colors.text,
-                      }}
-                    >
-                      {building.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              <DropDownPicker
+                open={buildingDropdownOpen}
+                setOpen={setBuildingDropdownOpen}
+                items={buildingDropdownItems}
+                setItems={setBuildingDropdownItems}
+                value={selectedBuildingId}
+                setValue={(val) => {
+                  const buildingId = val();
+                  setSelectedBuildingId(buildingId);
+                  const selected = buildings.find((b) => b.id === buildingId);
+                  if (selected) {
+                    setSelectedBuilding(selected);
+                    setBuildingName(selected.name);
+                  }
+                }}
+                searchable={true}
+                searchPlaceholder="Search for a building..."
+                placeholder="Select a building"
+                zIndex={3000}
+                zIndexInverse={1000}
+                style={{
+                  backgroundColor: colors.card,
+                  borderColor: colors.primary,
+                }}
+                dropDownContainerStyle={{
+                  backgroundColor: colors.card,
+                  borderColor: colors.primary,
+                }}
+                textStyle={{
+                  color: colors.text,
+                }}
+                searchTextInputStyle={{
+                  color: colors.text,
+                }}
+              />
             </View>
           )}
-
-          {/* Or manually enter building name */}
-          <Text style={[styles.orText, { color: colors.text }]}>OR</Text>
-
-          <View style={styles.inputSection}>
-            <Text style={[styles.inputTitle, { color: colors.primary }]}>Building Name</Text>
-            <AppInput
-              placeholder="Enter the building's name"
-              value={buildingName}
-              onChangeText={setBuildingName}
-              style={[
-                styles.textField,
-                { borderColor: colors.primary, color: colors.text, backgroundColor: colors.card },
-              ]}
-              placeholderTextColor={colors.secondary}
-            />
-            <Text style={[styles.infoText, { color: colors.secondary }]}>e.g. Science Hall</Text>
-          </View>
         </View>
 
         {/* Step 2: Floor Label */}
@@ -271,15 +409,24 @@ export default function AdminLoadFloorplansContent() {
           <View style={styles.inputSection}>
             <Text style={[styles.inputTitle, { color: colors.primary }]}>Floor Number / Label</Text>
             <AppInput
-              placeholder="e.g., Floor 2, Basement"
+              placeholder="Enter floor number (e.g., 1, 2, 3...)"
               value={floorLabel}
-              onChangeText={setFloorLabel}
+              onChangeText={(text) => {
+                // Remove any non-digit characters and block leading zero
+                const cleaned = text.replace(/[^0-9]/g, '');
+                if (cleaned === '' || parseInt(cleaned) >= 1) {
+                  setFloorLabel(cleaned);
+                }
+              }}
+              keyboardType="number-pad"
+              maxLength={2} // optional: block large numbers like 100+
               style={[
                 styles.textField,
                 { borderColor: colors.primary, color: colors.text, backgroundColor: colors.card },
               ]}
               placeholderTextColor={colors.secondary}
             />
+
             <Text style={[styles.infoText, { color: colors.secondary }]}>
               Specify the floor designation
             </Text>
@@ -322,6 +469,28 @@ export default function AdminLoadFloorplansContent() {
           />
         </View>
       </ScrollView>
+
+      {/* Success Popup */}
+      <StandardPopup
+        visible={showSuccessPopup}
+        title="Upload Successful"
+        message="Floorplan uploaded successfully!"
+        onConfirm={handleSuccessConfirm}
+        confirmText="Continue"
+        showCancel={false}
+      />
+
+      {/* Navigation Confirmation Popup */}
+      <StandardPopup
+        visible={showNavigationConfirm}
+        title="Add Room POIs"
+        message="Would you like to add room POIs now?"
+        onConfirm={handleNavigateToPOIEditor}
+        onCancel={handleLater}
+        confirmText="Add POIs"
+        cancelText="Later"
+        showCancel={true}
+      />
     </View>
   );
 }

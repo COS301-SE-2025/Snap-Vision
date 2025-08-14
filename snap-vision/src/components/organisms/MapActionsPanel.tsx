@@ -9,6 +9,8 @@ interface Props {
   currentLocation: boolean;
   onShare: () => void;
   onReport: () => void;
+  onAddPOI?: () => void; // New prop for adding POIs
+  isAdmin?: boolean; // New prop to check if user is admin
   shareTooltip: boolean;
   reportTooltip: boolean;
   onShareIn: () => void;
@@ -22,6 +24,8 @@ const MapActionsPanel = ({
   currentLocation,
   onShare,
   onReport,
+  onAddPOI,
+  isAdmin,
   shareTooltip,
   reportTooltip,
   onShareIn,
@@ -45,7 +49,9 @@ const MapActionsPanel = ({
         backgroundColor={colors.primary}
         tooltipText="Share Location"
       />
+
       <View style={styles.spacer} />
+
       <ActionButtonWithTooltip
         icon={<Icon name="people" size={30} color="white" />}
         onPress={onReport}
@@ -55,6 +61,22 @@ const MapActionsPanel = ({
         backgroundColor={colors.primary}
         tooltipText="Report Crowds"
       />
+
+      {/* Admin-only Add POI button */}
+      {isAdmin && onAddPOI && (
+        <>
+          <View style={styles.spacer} />
+          <ActionButtonWithTooltip
+            icon={<Icon name="business" size={30} color="white" />}
+            onPress={onAddPOI}
+            onPressIn={() => {}}
+            onPressOut={() => {}}
+            showTooltip={false}
+            backgroundColor={colors.primary}
+            tooltipText="Add Building"
+          />
+        </>
+      )}
     </View>
   );
 };

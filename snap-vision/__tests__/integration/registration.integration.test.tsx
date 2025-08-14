@@ -1,6 +1,12 @@
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  setItem: jest.fn(() => Promise.resolve(null)),
+  getItem: jest.fn(() => Promise.resolve(null)),
+  removeItem: jest.fn(() => Promise.resolve(null)),
+  clear: jest.fn(() => Promise.resolve(null)),
+}));
+
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import { Alert } from 'react-native';
 import RegistrationScreen from '../../src/screens/RegistrationScreen';
 import RegisterForm from '../../src/components/organisms/RegisterForm';
 
@@ -18,8 +24,28 @@ jest.mock('@react-native-firebase/firestore', () => () => ({
   }),
 }));
 
-// Mock Alert
-jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+// Mock StandardPopup component
+const mockStandardPopup = jest.fn();
+jest.mock('../../src/components/atoms/StandardPopup', () => {
+  return jest.fn(({ visible, title, message, onClose, showCloseButton }) => {
+    const { View, Text, TouchableOpacity } = require('react-native');
+
+    // Call the mock function to track calls
+    mockStandardPopup({ visible, title, message, onClose, showCloseButton });
+
+    // Return a proper React component
+    if (!visible) return null;
+    return (
+      <View testID="standard-popup">
+        <Text testID="popup-title">{title}</Text>
+        <Text testID="popup-message">{message}</Text>
+        <TouchableOpacity onPress={onClose} testID="popup-close">
+          <Text>Close</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  });
+});
 
 // Mock Navigation
 const mockNavigate = jest.fn();
@@ -115,22 +141,22 @@ jest.mock('../../src/components/atoms/AppButton', () => {
 });
 
 // Mock RememberMe
-jest.mock('../../src/components/molecules/RememberMe', () => {
-  const React = require('react');
-  const { View, Text, TouchableOpacity } = require('react-native');
-  return function MockRememberMe({ rememberMe, onToggle, onForgotPassword }) {
-    return (
-      <View>
-        <TouchableOpacity testID="remember-me-toggle" onPress={onToggle}>
-          <Text>Remember me</Text>
-        </TouchableOpacity>
-        <TouchableOpacity testID="forgot-password" onPress={onForgotPassword}>
-          <Text>Forgot Password?</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
-});
+// jest.mock('../../src/components/molecules/RememberMe', () => {
+//   const React = require('react');
+//   const { View, Text, TouchableOpacity } = require('react-native');
+//   return function MockRememberMe({ rememberMe, onToggle, onForgotPassword }) {
+//     return (
+//       <View>
+//         <TouchableOpacity testID="remember-me-toggle" onPress={onToggle}>
+//           <Text>Remember me</Text>
+//         </TouchableOpacity>
+//         <TouchableOpacity testID="forgot-password" onPress={onForgotPassword}>
+//           <Text>Forgot Password?</Text>
+//         </TouchableOpacity>
+//       </View>
+//     );
+//   };
+// });
 
 describe('Registration Integration Tests', () => {
   beforeAll(() => {
@@ -143,6 +169,7 @@ describe('Registration Integration Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockStandardPopup.mockClear();
     mockCreateUserWithEmailAndPassword.mockReset();
     mockSet.mockReset();
     mockUnlock.mockReset();
@@ -167,7 +194,13 @@ describe('Registration Integration Tests', () => {
     const { getByTestId, getAllByTestId } = render(<RegisterForm />);
     fireEvent.press(getByTestId('register-button'));
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Error', 'Please fill in all fields');
+      expect(mockStandardPopup).toHaveBeenCalledWith({
+        visible: true,
+        title: 'Registration Error',
+        message: 'Please fill in all fields',
+        onClose: expect.any(Function),
+        showCloseButton: true,
+      });
     });
 
     const inputs = getAllByTestId('input');
@@ -177,7 +210,13 @@ describe('Registration Integration Tests', () => {
     fireEvent.changeText(inputs[3], 'Password1!');
     fireEvent.press(getByTestId('register-button'));
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Error', 'Please enter a valid email address');
+      expect(mockStandardPopup).toHaveBeenCalledWith({
+        visible: true,
+        title: 'Registration Error',
+        message: 'Please enter a valid email address',
+        onClose: expect.any(Function),
+        showCloseButton: true,
+      });
     });
 
     fireEvent.changeText(inputs[1], 'test@example.com');
@@ -185,17 +224,27 @@ describe('Registration Integration Tests', () => {
     fireEvent.changeText(inputs[3], 'short');
     fireEvent.press(getByTestId('register-button'));
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith(
-        'Error',
-        'Password must be at least 8 characters, include a capital letter, number, and special character.',
-      );
+      expect(mockStandardPopup).toHaveBeenCalledWith({
+        visible: true,
+        title: 'Registration Error',
+        message:
+          'Password must be at least 8 characters, include a capital letter, number, and special character.',
+        onClose: expect.any(Function),
+        showCloseButton: true,
+      });
     });
 
     fireEvent.changeText(inputs[2], 'Password1!');
     fireEvent.changeText(inputs[3], 'Password2!');
     fireEvent.press(getByTestId('register-button'));
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Error', 'Passwords do not match');
+      expect(mockStandardPopup).toHaveBeenCalledWith({
+        visible: true,
+        title: 'Registration Error',
+        message: 'Passwords do not match',
+        onClose: expect.any(Function),
+        showCloseButton: true,
+      });
     });
   });
 
@@ -209,10 +258,13 @@ describe('Registration Integration Tests', () => {
     fireEvent.changeText(inputs[3], 'Password1!');
     fireEvent.press(getByTestId('register-button'));
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith(
-        'Registration Error',
-        'This email is already registered.',
-      );
+      expect(mockStandardPopup).toHaveBeenCalledWith({
+        visible: true,
+        title: 'Registration Error',
+        message: 'This email is already registered.',
+        onClose: expect.any(Function),
+        showCloseButton: true,
+      });
     });
   });
 
@@ -226,7 +278,13 @@ describe('Registration Integration Tests', () => {
     fireEvent.changeText(inputs[3], 'Password1!');
     fireEvent.press(getByTestId('register-button'));
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Error', 'Registration failed.');
+      expect(mockStandardPopup).toHaveBeenCalledWith({
+        visible: true,
+        title: 'Registration Error',
+        message: 'Registration failed.',
+        onClose: expect.any(Function),
+        showCloseButton: true,
+      });
     });
   });
 
@@ -253,9 +311,15 @@ describe('Registration Integration Tests', () => {
         role: 'user',
       });
       expect(mockUnlock).toHaveBeenCalledWith('first-login');
-      expect(Alert.alert).toHaveBeenCalledWith('Success', 'Account created!');
+      expect(mockStandardPopup).toHaveBeenCalledWith({
+        visible: true,
+        title: 'Registration Successful',
+        message: 'Your account has been created successfully!',
+        onClose: expect.any(Function),
+        showCloseButton: true,
+      });
     });
-    expect(await findByText('Account created!')).toBeTruthy();
+    expect(await findByText('Your account has been created successfully!')).toBeTruthy();
   });
 
   // --- Additional tests for more coverage ---
@@ -295,13 +359,13 @@ describe('Registration Integration Tests', () => {
     fireEvent.press(confirmToggle);
   });
 
-  it('toggles remember me', () => {
-    const { getByTestId } = render(<RegisterForm />);
-    fireEvent.press(getByTestId('remember-me-toggle'));
-  });
+  // it('toggles remember me', () => {
+  //   const { getByTestId } = render(<RegisterForm />);
+  //   fireEvent.press(getByTestId('remember-me-toggle'));
+  // });
 
-  it('calls forgot password handler', () => {
-    const { getByTestId } = render(<RegisterForm />);
-    fireEvent.press(getByTestId('forgot-password'));
-  });
+  // it('calls forgot password handler', () => {
+  //   const { getByTestId } = render(<RegisterForm />);
+  //   fireEvent.press(getByTestId('forgot-password'));
+  // });
 });

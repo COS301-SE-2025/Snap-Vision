@@ -2,9 +2,7 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel target="17">
-      <module name="snapVision.react-native-firebase_storage" target="21" />
-      <module name="snapVision.react-native-fs" target="21" />
-      <module name="snapVision.react-native-image-picker" target="21" />
+      <module name="snapVision.react-native-wifi-reborn" target="21" />
     </bytecodeTargetLevel>
   </component>
 </project>

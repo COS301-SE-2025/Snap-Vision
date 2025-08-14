@@ -1,3 +1,4 @@
+//C:\Users\bahiy\snapvision\Snap-Vision\snap-vision\src\components\organisms\AdminContent.tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import AppButton from '../atoms/AppButton';
@@ -6,8 +7,9 @@ interface Props {
   colors: any;
   onLoadFloorplans: () => void;
   onEditFloorplans: () => void;
-  onSettings: () => void;
+  //onSettings: () => void;
   onManageUsers: () => void;
+  onIndoorPositioning: () => void;
   onFloorplanEditor?: () => void;
 }
 
@@ -15,8 +17,9 @@ export default function AdminScreenContent({
   colors,
   onLoadFloorplans,
   onEditFloorplans,
-  onSettings,
+  //onSettings,
   onManageUsers,
+  onIndoorPositioning,
   onFloorplanEditor,
 }: Props) {
   return (
@@ -48,7 +51,8 @@ export default function AdminScreenContent({
       <View style={styles.buttonContainer}>
         <AppButton title="Load Floorplans" onPress={onLoadFloorplans} />
         <AppButton title="Edit Floorplans" onPress={onEditFloorplans} />
-        <AppButton title="Settings" onPress={onSettings} />
+        <AppButton title="Indoor Positioning" onPress={onIndoorPositioning} />
+        {/* //<AppButton title="Settings" onPress={onSettings} /> */}
         <AppButton title="Manage Users" onPress={onManageUsers} />
       </View>
     </View>
