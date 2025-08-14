@@ -1,5 +1,6 @@
 # this file is used to convert a GeoJSON file of Points of Interest (POIs) into a format suitable for Firestore
 # it extracts relevant properties and computes the centroid of each geometry
+# remeber to change the name of output file
 # run with `python convert.py` :)
 
 import json
