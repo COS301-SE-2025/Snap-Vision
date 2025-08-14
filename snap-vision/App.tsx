@@ -1,8 +1,7 @@
 import { LogBox } from 'react-native';
 LogBox.ignoreLogs(['Text strings must be rendered within a <Text> component']);
-// App.tsx
-import React, { useEffect, useRef, useState } from 'react';
-import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from './src/screens/LoginScreen';
 import RegistrationScreen from './src/screens/RegistrationScreen';
@@ -10,7 +9,6 @@ import BottomTabs from './src/navigation/BottomTabs';
 import AdminLoadFloorplansScreen from './src/screens/AdminLoadFloorplansScreen';
 import AdminEditFloorplansScreen from './src/screens/AdminEditFloorplansScreen';
 import AdminFloorplanEditorScreen from './src/screens/AdminFloorplanEditorScreen';
-import AdminSettingsFrom from './editTests/AdminSettingsForm';
 import { ThemeProvider } from './src/theme/ThemeContext';
 import ManageUsersScreen from './src/screens/ManageUsersScreen';
 import { Linking } from 'react-native';

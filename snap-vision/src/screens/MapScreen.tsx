@@ -1,4 +1,3 @@
-// src/screens/MapScreen.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -44,7 +43,7 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = ROUTING_API; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = 'http://192.168.43.155:3000'; // <-- Use your correct backend IP here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
@@ -53,6 +52,8 @@ const ROUTING_API_BASE = ROUTING_API; // <-- Use your correct backend IP here
 // T data: 192.168.43.155
 // Th home: 10.0.0.9
 // T Durban: 192.168.1.93
+// S home:  192.168.0.197
+// L harties: 192.168.101.238
 
 const MapScreen = () => {
   const lastRoute = useRef<any[]>([]);

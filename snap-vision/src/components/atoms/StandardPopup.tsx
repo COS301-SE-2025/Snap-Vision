@@ -1,3 +1,4 @@
+//Snap-Vision\snap-vision\src\components\atoms\StandardPopup.tsx
 import React from 'react';
 import {
   Modal,
