@@ -40,11 +40,21 @@ jest.mock('@react-navigation/native', () => ({
 // Mock child components with proper TypeScript typing
 jest.mock('../../src/components/atoms/AppButton', () => {
   const { Text, TouchableOpacity } = require('react-native');
-  return ({ title, onPress, testID }: { title: string; onPress: () => void; testID?: string }) => (
+  const MockAppButton = ({
+    title,
+    onPress,
+    testID,
+  }: {
+    title: string;
+    onPress: () => void;
+    testID?: string;
+  }) => (
     <TouchableOpacity testID={testID} onPress={onPress} accessibilityLabel={title}>
       <Text>{title}</Text>
     </TouchableOpacity>
   );
+  MockAppButton.displayName = 'MockAppButton';
+  return MockAppButton;
 });
 
 describe('EditorContent Integration Tests', () => {
