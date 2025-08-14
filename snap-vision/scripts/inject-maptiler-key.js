@@ -1,4 +1,3 @@
-// scripts/inject-maptiler-key.js
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
