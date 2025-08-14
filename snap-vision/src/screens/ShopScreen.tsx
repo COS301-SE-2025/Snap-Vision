@@ -4,160 +4,54 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 import { useBadges } from '../context/BadgeContext';
-import { purchaseItem } from '../api/badgeApi';
+import { purchaseItemForUser } from '../services/badgeService';
 import auth from '@react-native-firebase/auth';
-import PurchasePopup from '../components/molecules/PurchasePopup'; // Adjust the path as needed
+import PurchasePopup from '../components/molecules/PurchasePopup';
+import SettingsHeader from '../components/molecules/SettingsHeader';
 import StandardPopup from '../components/atoms/StandardPopup';
 
-const SHOP_ITEMS = [
-  {
-    id: 'arrow-classic',
-    title: 'Classic Arrow',
-    description: 'Standard AR direction arrow',
-    icon: 'arrow-forward',
-    cost: 50,
-  },
-  {
-    id: 'arrow-flame',
-    title: 'Flame Arrow',
-    description: 'Burning animated arrow',
-    icon: 'flame',
-    cost: 100,
-  },
-  {
-    id: 'arrow-neon',
-    title: 'Neon Pulse',
-    description: 'Cool glowing arrow',
-    icon: 'flash',
-    cost: 150,
-  },
-  {
-    id: 'retro-map',
-    title: 'Retro Map Skin',
-    description: '8-bit nostalgic overlay',
-    icon: 'game-controller',
-    cost: 120,
-  },
-  {
-    id: 'double-points',
-    title: 'Double Points',
-    description: 'Earn double points for next route',
-    icon: 'rocket',
-    cost: 200,
-  },
+// Define the shape of shop items
+export interface ShopItem {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  cost: number;
+}
 
-  {
-    id: 'stealth-arrow',
-    title: 'Stealth Arrow',
-    description: 'Invisible until fired',
-    icon: 'eye-off',
-    cost: 180,
-  },
+const SHOP_ITEMS: ShopItem[] = [
+  { id: 'arrow-classic', title: 'Classic Arrow', description: 'Standard AR direction arrow', icon: 'arrow-forward', cost: 50 },
+  { id: 'arrow-flame', title: 'Flame Arrow', description: 'Burning animated arrow', icon: 'flame', cost: 100 },
+  { id: 'arrow-neon', title: 'Neon Pulse', description: 'Cool glowing arrow', icon: 'flash', cost: 150 },
+  { id: 'retro-map', title: 'Retro Map Skin', description: '8-bit nostalgic overlay', icon: 'game-controller', cost: 120 },
+  { id: 'double-points', title: 'Double Points', description: 'Earn double points for next route', icon: 'rocket', cost: 200 },
+  { id: 'stealth-arrow', title: 'Stealth Arrow', description: 'Invisible until fired', icon: 'eye-off', cost: 180 },
   { id: 'ice-arrow', title: 'Ice Arrow', description: 'Freezes targets', icon: 'snow', cost: 160 },
-  {
-    id: 'lightning-arrow',
-    title: 'Lightning Bolt',
-    description: 'Shocking strike',
-    icon: 'flash-outline',
-    cost: 175,
-  },
-  {
-    id: 'golden-arrow',
-    title: 'Golden Arrow',
-    description: 'Premium gold look',
-    icon: 'star',
-    cost: 220,
-  },
-  {
-    id: 'laser-pointer',
-    title: 'Laser Pointer',
-    description: 'Precision targeting',
-    icon: 'laser',
-    cost: 210,
-  },
-  {
-    id: 'explosive-arrow',
-    title: 'Explosive Arrow',
-    description: 'Area damage',
-    icon: 'bomb',
-    cost: 230,
-  },
-  {
-    id: 'shadow-arrow',
-    title: 'Shadow Arrow',
-    description: 'Silent but deadly',
-    icon: 'moon',
-    cost: 190,
-  },
-  {
-    id: 'plasma-arrow',
-    title: 'Plasma Arrow',
-    description: 'Futuristic tech',
-    icon: 'ellipse-outline',
-    cost: 250,
-  },
-  {
-    id: 'vortex-arrow',
-    title: 'Vortex Arrow',
-    description: 'Sucks in targets',
-    icon: 'git-branch',
-    cost: 270,
-  },
-  {
-    id: 'fireworks-arrow',
-    title: 'Fireworks Arrow',
-    description: 'Spectacular display',
-    icon: 'sparkles',
-    cost: 140,
-  },
-  {
-    id: 'rainbow-arrow',
-    title: 'Rainbow Arrow',
-    description: 'Colorful streak',
-    icon: 'color-palette',
-    cost: 130,
-  },
-  {
-    id: 'phantom-arrow',
-    title: 'Phantom Arrow',
-    description: 'Ghostly effect',
-    icon: 'git-commit',
-    cost: 160,
-  },
-  {
-    id: 'electric-arrow',
-    title: 'Electric Arrow',
-    description: 'Zaps enemies',
-    icon: 'zap',
-    cost: 200,
-  },
-  {
-    id: 'meteor-arrow',
-    title: 'Meteor Arrow',
-    description: 'Burns like a meteor',
-    icon: 'sunny',
-    cost: 240,
-  },
-  {
-    id: 'frost-arrow',
-    title: 'Frost Arrow',
-    description: 'Chills air on hit',
-    icon: 'cloud',
-    cost: 170,
-  },
+  { id: 'lightning-arrow', title: 'Lightning Bolt', description: 'Shocking strike', icon: 'flash-outline', cost: 175 },
+  { id: 'golden-arrow', title: 'Golden Arrow', description: 'Premium gold look', icon: 'star', cost: 220 },
+  { id: 'laser-pointer', title: 'Laser Pointer', description: 'Precision targeting', icon: 'laser', cost: 210 },
+  { id: 'explosive-arrow', title: 'Explosive Arrow', description: 'Area damage', icon: 'bomb', cost: 230 },
+  { id: 'shadow-arrow', title: 'Shadow Arrow', description: 'Silent but deadly', icon: 'moon', cost: 190 },
+  { id: 'plasma-arrow', title: 'Plasma Arrow', description: 'Futuristic tech', icon: 'ellipse-outline', cost: 250 },
+  { id: 'vortex-arrow', title: 'Vortex Arrow', description: 'Sucks in targets', icon: 'git-branch', cost: 270 },
+  { id: 'fireworks-arrow', title: 'Fireworks Arrow', description: 'Spectacular display', icon: 'sparkles', cost: 140 },
+  { id: 'rainbow-arrow', title: 'Rainbow Arrow', description: 'Colorful streak', icon: 'color-palette', cost: 130 },
+  { id: 'phantom-arrow', title: 'Phantom Arrow', description: 'Ghostly effect', icon: 'git-commit', cost: 160 },
+  { id: 'electric-arrow', title: 'Electric Arrow', description: 'Zaps enemies', icon: 'zap', cost: 200 },
+  { id: 'meteor-arrow', title: 'Meteor Arrow', description: 'Burns like a meteor', icon: 'sunny', cost: 240 },
+  { id: 'frost-arrow', title: 'Frost Arrow', description: 'Chills air on hit', icon: 'cloud', cost: 170 },
 ];
 
 export default function ShopScreen({ navigation }: { navigation: any }) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const { state, setState } = useBadges();
-  const [popupItem, setPopupItem] = useState<{ title: string; cost: number } | null>(null);
 
-  // Popup states
+  const [popupItem, setPopupItem] = useState<{ title: string; cost: number } | null>(null);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [errorPopupMessage, setErrorPopupMessage] = useState('');
 
-  const handlePurchase = async (item: any) => {
+  const handlePurchase = async (item: ShopItem) => {
     const uid = auth().currentUser?.uid;
     if (!uid) {
       setErrorPopupMessage('Not logged in');
@@ -172,17 +66,17 @@ export default function ShopScreen({ navigation }: { navigation: any }) {
     }
 
     try {
-      const updatedData = await purchaseItem(uid, {
+      const updatedData = await purchaseItemForUser(uid, {
         itemId: item.id,
         name: item.title,
         type: 'shop',
         cost: item.cost,
       });
 
-      setState((prev: any) => ({
+      setState((prev) => ({
         ...prev,
-        points: updatedData.points,
-        purchases: updatedData.purchases,
+        points: updatedData?.points ?? prev.points,
+        purchases: updatedData?.purchases ?? prev.purchases,
       }));
 
       setPopupItem({ title: item.title, cost: item.cost });
@@ -193,8 +87,8 @@ export default function ShopScreen({ navigation }: { navigation: any }) {
     }
   };
 
-  const renderItem = ({ item }: { item: (typeof SHOP_ITEMS)[0] }) => {
-    const isOwned = state.purchases?.some((p: any) => p.itemId === item.id);
+  const renderItem = ({ item }: { item: ShopItem }) => {
+    const isOwned = state.purchases?.some((p) => p.itemId === item.id);
 
     return (
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -204,7 +98,7 @@ export default function ShopScreen({ navigation }: { navigation: any }) {
         <TouchableOpacity
           style={[styles.buyButton, { backgroundColor: isOwned ? colors.border : colors.primary }]}
           onPress={() => handlePurchase(item)}
-          disabled={state.points < item.cost || isOwned}
+          disabled={isOwned}
         >
           <Text style={styles.buyText}>{isOwned ? 'Owned' : `${item.cost} pts`}</Text>
         </TouchableOpacity>
@@ -214,23 +108,14 @@ export default function ShopScreen({ navigation }: { navigation: any }) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={24} color={colors.primary} />
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.primary }]}>Shop</Text>
-        <View style={{ width: 24 }} /> {/* Placeholder */}
-      </View>
-
+      <SettingsHeader title="Shop" />
       <Text style={[styles.subtitle, { color: colors.text }]}>Spend your points wisely!</Text>
 
-      {/* Grid List */}
       <FlatList
         data={SHOP_ITEMS}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        numColumns={2} // <-- 2 cards per row; change as needed
+        numColumns={2}
         columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 16 }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 16 }}
@@ -244,7 +129,6 @@ export default function ShopScreen({ navigation }: { navigation: any }) {
         />
       )}
 
-      {/* Error Popup */}
       <StandardPopup
         visible={showErrorPopup}
         title="Error"
@@ -257,18 +141,15 @@ export default function ShopScreen({ navigation }: { navigation: any }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
+  container: { flex: 1 },
+  subtitle: {
+    fontSize: 14,
+    marginBottom: 16,
+    marginTop: 8,
+    paddingHorizontal: 16,
   },
-  title: { fontSize: 22, fontWeight: 'bold' },
-  subtitle: { fontSize: 14, marginBottom: 16 },
   card: {
     flex: 1,
-    // width removed to allow flex in FlatList with numColumns
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,

@@ -30,6 +30,8 @@ import AuthResolverScreen from './src/screens/AuthResolverScreen';
 import BuildingSelectionScreen from './src/screens/BuildingSelectionScreen';
 import IndoorNavigationInterfaceScreen from './src/screens/IndoorNavigationInterfaceScreen';
 import IndoorNavigationInstructionsScreen from './src/screens/IndoorNavigationInstructionsScreen';
+import IndoorSchematicNavScreen from './src/screens/IndoorSchematicNavScreen';
+import ARIndoorNavScreen from './src/screens/ARIndoorNavScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -101,6 +103,12 @@ function AppInner() {
             <Stack.Screen
               name="IndoorNavigationInstructions"
               component={IndoorNavigationInstructionsScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen name="IndoorSchematicNav" component={IndoorSchematicNavScreen} />
+            <Stack.Screen
+              name="ARIndoorNav"
+              component={ARIndoorNavScreen}
               options={{ headerShown: false }}
             />
           </Stack.Navigator>
