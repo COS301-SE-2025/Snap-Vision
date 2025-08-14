@@ -32,21 +32,34 @@ export default function AdminIndoorPositioningContent() {
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [selectedFloorplan, setSelectedFloorplan] = useState<any | null>(null);
   const [selectedBuildingName, setSelectedBuildingName] = useState<string | null>(null);
-  const [buildingDropdownItems, setBuildingDropdownItems] = useState<{ label: string; value: string }[]>([]);
+  const [buildingDropdownItems, setBuildingDropdownItems] = useState<
+    { label: string; value: string }[]
+  >([]);
   const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [pointName, setPointName] = useState('');
-  const [existingPoints, setExistingPoints] = useState<{ id: string; x: number; y: number; description?: string }[]>([]);
+  const [existingPoints, setExistingPoints] = useState<
+    { id: string; x: number; y: number; description?: string }[]
+  >([]);
   const [buildingDropdownOpen, setBuildingDropdownOpen] = useState(false);
   const [floorDropdownOpen, setFloorDropdownOpen] = useState(false);
 
   // Popup states
   const [showPointInfoPopup, setShowPointInfoPopup] = useState(false);
-  const [selectedPointInfo, setSelectedPointInfo] = useState<{ id: string; x: number; y: number; description?: string } | null>(null);
+  const [selectedPointInfo, setSelectedPointInfo] = useState<{
+    id: string;
+    x: number;
+    y: number;
+    description?: string;
+  } | null>(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [pointToDelete, setPointToDelete] = useState<{ id: string; description?: string } | null>(null);
+  const [pointToDelete, setPointToDelete] = useState<{ id: string; description?: string } | null>(
+    null,
+  );
   const [showCoordinatesPopup, setShowCoordinatesPopup] = useState(false);
-  const [selectedCoordinates, setSelectedCoordinates] = useState<{ x: number; y: number } | null>(null);
+  const [selectedCoordinates, setSelectedCoordinates] = useState<{ x: number; y: number } | null>(
+    null,
+  );
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -63,8 +76,9 @@ export default function AdminIndoorPositioningContent() {
   useEffect(() => {
     const fetchLocations = async () => {
       const locSnap = await firestore().collection('locations').get();
-      const all = locSnap.docs.map(doc => ({ id: doc.id, name: doc.data().name || doc.id }));
-      const filtered = role === 'editor' ? all.filter(loc => adminLocations.includes(loc.id)) : all;
+      const all = locSnap.docs.map((doc) => ({ id: doc.id, name: doc.data().name || doc.id }));
+      const filtered =
+        role === 'editor' ? all.filter((loc) => adminLocations.includes(loc.id)) : all;
       setLocations(filtered);
     };
     if (role) fetchLocations();
@@ -74,7 +88,7 @@ export default function AdminIndoorPositioningContent() {
     const fetchBuildings = async () => {
       if (!selectedLocation) return;
       const snap = await firestore().collection(`locations/${selectedLocation}/buildingPOIs`).get();
-      const list = snap.docs.map(doc => ({ id: doc.id, name: doc.data().name || doc.id }));
+      const list = snap.docs.map((doc) => ({ id: doc.id, name: doc.data().name || doc.id }));
       setBuildings(list);
       setBuildingDropdownItems(list.map((b) => ({ label: b.name, value: b.id })));
       setSelectedBuildingId(null);
@@ -89,7 +103,7 @@ export default function AdminIndoorPositioningContent() {
       const snap = await firestore()
         .collection(`locations/${selectedLocation}/buildingPOIs/${selectedBuildingId}/floorplans`)
         .get();
-      const list = snap.docs.map(doc => {
+      const list = snap.docs.map((doc) => {
         const d = doc.data();
         return {
           locationId: selectedLocation,
@@ -112,7 +126,7 @@ export default function AdminIndoorPositioningContent() {
       .where('floorId', '==', selectedFloorplan.floorLabel)
       .get();
 
-    const list = snap.docs.map(doc => {
+    const list = snap.docs.map((doc) => {
       const data = doc.data();
       return {
         id: doc.id,
@@ -124,7 +138,9 @@ export default function AdminIndoorPositioningContent() {
 
     console.log('📌 Stored WiFi fingerprint locations:');
     list.forEach((point, i) => {
-      console.log(`  ${i + 1}. ${point.description} at (${point.x?.toFixed(3)}, ${point.y?.toFixed(3)})`);
+      console.log(
+        `  ${i + 1}. ${point.description} at (${point.x?.toFixed(3)}, ${point.y?.toFixed(3)})`,
+      );
     });
 
     setExistingPoints(list);
@@ -143,7 +159,7 @@ export default function AdminIndoorPositioningContent() {
         setShowCoordinatesPopup(true);
       } else if (data.type === 'marker_click' && data.id) {
         // Find the point info and show popup
-        const point = existingPoints.find(p => p.id === data.id);
+        const point = existingPoints.find((p) => p.id === data.id);
         if (point) {
           setSelectedPointInfo(point);
           setShowPointInfoPopup(true);
@@ -156,13 +172,13 @@ export default function AdminIndoorPositioningContent() {
 
   const handleDeletePoint = async () => {
     if (!pointToDelete) return;
-    
+
     try {
       await firestore()
         .collection(`locations/${selectedLocation}/wifiFingerprints`)
         .doc(pointToDelete.id)
         .delete();
-      
+
       await fetchPoints();
       setShowDeleteConfirmation(false);
       setPointToDelete(null);
@@ -174,9 +190,11 @@ export default function AdminIndoorPositioningContent() {
   const getHTML = () => {
     const markers = existingPoints
       .map(
-        (p) => `<div onclick="onMarkerClick('${p.id}')" data-id="${p.id}" class="marker" style="position:absolute;left:${p.x * 100}%;top:${p.y * 100}%;
+        (
+          p,
+        ) => `<div onclick="onMarkerClick('${p.id}')" data-id="${p.id}" class="marker" style="position:absolute;left:${p.x * 100}%;top:${p.y * 100}%;
           transform:translate(-50%,-50%);width:12px;height:12px;border-radius:6px;
-          background:red;border:2px solid white;cursor:pointer;z-index:5;"></div>`
+          background:red;border:2px solid white;cursor:pointer;z-index:5;"></div>`,
       )
       .join('');
 
@@ -572,7 +590,12 @@ export default function AdminIndoorPositioningContent() {
               Step 4: Tap WiFi Points to View Info, or Tap Empty Space to Add New Point
             </Text>
             <View style={{ height: 300, marginVertical: 12 }}>
-              <WebView ref={webViewRef} source={{ html: getHTML() }} onMessage={handleMessage} originWhitelist={['*']} />
+              <WebView
+                ref={webViewRef}
+                source={{ html: getHTML() }}
+                onMessage={handleMessage}
+                originWhitelist={['*']}
+              />
             </View>
 
             {coords && (
@@ -623,9 +646,10 @@ export default function AdminIndoorPositioningContent() {
       <StandardPopup
         visible={showCoordinatesPopup}
         title="Coordinates Selected"
-        message={selectedCoordinates ? 
-          ` Location Selected\n\nCoordinates:\nX: ${selectedCoordinates.x.toFixed(3)}\nY: ${selectedCoordinates.y.toFixed(3)}\n\nYou can now add a WiFi fingerprint at this location.` 
-          : ''
+        message={
+          selectedCoordinates
+            ? ` Location Selected\n\nCoordinates:\nX: ${selectedCoordinates.x.toFixed(3)}\nY: ${selectedCoordinates.y.toFixed(3)}\n\nYou can now add a WiFi fingerprint at this location.`
+            : ''
         }
         onConfirm={() => {
           setShowCoordinatesPopup(false);
@@ -645,16 +669,17 @@ export default function AdminIndoorPositioningContent() {
       <StandardPopup
         visible={showPointInfoPopup}
         title="WiFi Point Information"
-        message={selectedPointInfo ? 
-          ` ${selectedPointInfo.description || 'WiFi Point'}\n\nCoordinates:\nX: ${selectedPointInfo.x.toFixed(3)}\nY: ${selectedPointInfo.y.toFixed(3)}` 
-          : ''
+        message={
+          selectedPointInfo
+            ? ` ${selectedPointInfo.description || 'WiFi Point'}\n\nCoordinates:\nX: ${selectedPointInfo.x.toFixed(3)}\nY: ${selectedPointInfo.y.toFixed(3)}`
+            : ''
         }
         onConfirm={() => {
           setShowPointInfoPopup(false);
           // Show delete confirmation
           setPointToDelete({
             id: selectedPointInfo?.id || '',
-            description: selectedPointInfo?.description || 'WiFi Point'
+            description: selectedPointInfo?.description || 'WiFi Point',
           });
           setShowDeleteConfirmation(true);
         }}

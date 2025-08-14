@@ -6,7 +6,7 @@ export async function scanForWiFiNetworks() {
     console.log('WiFi scan results:', results);
 
     if (!Array.isArray(results)) {
-      console.warn("WiFi scan returned non-array:", results);
+      console.warn('WiFi scan returned non-array:', results);
       return [];
     }
 
@@ -17,7 +17,7 @@ export async function scanForWiFiNetworks() {
       frequency: wifi.frequency,
     }));
   } catch (error) {
-    console.error("Wi-Fi scan failed:", error);
+    console.error('Wi-Fi scan failed:', error);
     return [];
   }
 }
