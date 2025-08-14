@@ -18,9 +18,6 @@ interface Props {
   onReportIn: () => void;
   onReportOut: () => void;
   color: string;
-  // Map rotation props
-  isMapRotationEnabled?: boolean;
-  onToggleMapRotation?: () => void;
 }
 
 const MapActionsPanel = ({
@@ -35,8 +32,6 @@ const MapActionsPanel = ({
   onShareOut,
   onReportIn,
   onReportOut,
-  isMapRotationEnabled,
-  onToggleMapRotation,
 }: Props) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
@@ -79,28 +74,6 @@ const MapActionsPanel = ({
             showTooltip={false}
             backgroundColor={colors.primary}
             tooltipText="Add Building"
-          />
-        </>
-      )}
-
-      {/* Map rotation toggle button */}
-      {onToggleMapRotation && (
-        <>
-          <View style={styles.spacer} />
-          <ActionButtonWithTooltip
-            icon={
-              <Icon
-                name={isMapRotationEnabled ? 'compass' : 'compass-outline'}
-                size={30}
-                color="white"
-              />
-            }
-            onPress={onToggleMapRotation}
-            onPressIn={() => {}}
-            onPressOut={() => {}}
-            showTooltip={false}
-            backgroundColor={isMapRotationEnabled ? colors.secondary : colors.primary}
-            tooltipText={isMapRotationEnabled ? 'Disable Heading-Up' : 'Enable Heading-Up'}
           />
         </>
       )}

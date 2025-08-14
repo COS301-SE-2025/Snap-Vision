@@ -201,7 +201,8 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
             </View>
           )}
 
-          {(isNavigating || progress > 0 || distanceWalked > 0) && (
+          {/* Progress Bar - Commented out temporarily */}
+          {/* {(isNavigating || progress > 0 || distanceWalked > 0) && (
             <View style={[styles.progressContainer, { backgroundColor: colors.border }]}>
               <View
                 style={[
@@ -218,7 +219,7 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
                 {getCompletionPercentage()}%
               </Text>
             </View>
-          )}
+          )} */}
 
           {/* Single Row Priority Layout */}
           <View style={styles.singleRowContainer}>

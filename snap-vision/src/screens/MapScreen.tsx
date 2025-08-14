@@ -44,7 +44,7 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'http://192.168.0.133:3000'; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = ROUTING_API;// <-- Use your correct backend IP here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
@@ -1935,6 +1935,16 @@ const MapScreen = () => {
     };
   }, []);
 
+  function toggleMapRotation(): void {
+    if (webViewRef.current && isMapReady) {
+      webViewRef.current.injectJavaScript(`
+        if (window.toggleMapRotation) {
+          window.toggleMapRotation();
+        }
+      `);
+      setTempMessage('Toggled map rotation');
+    }
+  }
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {showCrowdPopup && (
@@ -2304,7 +2314,6 @@ const MapScreen = () => {
         onReportIn={() => setShowReportTooltip(true)}
         onReportOut={() => setShowReportTooltip(false)}
         color={colors.primary}
-        onToggleMapRotation={toggleMapRotation}
       />
 
       {/* Location Refresh Button - shown when no location available */}

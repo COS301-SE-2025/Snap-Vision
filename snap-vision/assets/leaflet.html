@@ -1,3 +1,98 @@
+ironstarks
+iron.starks
+Invisible
+
+ironstarks — 10/21/24, 3:00 PM
+hi
+Attachment file type: acrobat
+COS214_Tut10 NuW .pdf
+1.67 MB
+thuwayba — 10/21/24, 3:01 PM
+Attachment file type: archive
+Prac 5.zip
+8.57 MB
+thuwayba — 10/21/24, 3:26 PM
+section .data
+    format db 'P6', 0             ; Expected PPM format
+    mode db 'rb', 0               ; Mode: read binary
+    header_buffer resb 512        ; Reserve 512 bytes for the header buffer
+    pixel_size equ 40             ; Each PixelNode is 40 bytes
+Expand
+message.txt
+6 KB
+ironstarks — 10/21/24, 3:37 PM
+Final Notes
+
+https://iwandejong.notion.site/Final-Notes-6c29aef2bc25451583618081bbe8fa1e
+Iwan's Notion on Notion
+Final Notes | Notion
+L1: Administration
+Final Notes | Notion
+thuwayba — 5/21/25, 11:30 PM
+Once you're done in android studio (it's running)
+
+open vscode, cd to snap-vision, npx react-native start
+
+should show up on phone, might take some time to load, press r in vscode terminal to reload
+ironstarks — 5/21/25, 11:59 PM
+Execution failed for task ':react-native-reanimated:buildCMakeDebug[x86_64][reanimated,worklets]'.
+> com.android.ide.common.process.ProcessException: ninja: Entering directory `C:\Users\Lekisha\Documents\cos301\snap_vision\Snap-Vision\snap-vision\node_modules\react-native-reanimated\android\.cxx\Debug\5o3a4q42\x86_64'
+  [0/2] Re-checking globbed directories...
+  ninja: build stopped: .
+
+* Try:
+Expand
+message.txt
+23 KB
+ironstarks — 5/25/25, 10:03 PM
+this was login.tsx
+login.tsx 
+
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { auth } from '../firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+Expand
+message.txt
+3 KB
+thuwayba — 7/28/25, 2:02 PM
+pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
+plugins { id("com.facebook.react.settings") }
+extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
+rootProject.name = 'snapVision'
+include ':app'
+includeBuild('../node_modules/@react-native/gradle-plugin')
+include ':react-native-worklets-core'
+project(':react-native-worklets-core').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-worklets-core/android')
+apply plugin: "com.android.application"
+apply plugin: "org.jetbrains.kotlin.android"
+apply plugin: "com.facebook.react"
+apply plugin: 'kotlin-android'
+apply plugin: 'com.google.gms.google-services'
+Expand
+message.txt
+6 KB
+thuwayba — 7/28/25, 3:03 PM
+find_package(react-native-worklets-core REQUIRED CONFIG)
+
+target_link_libraries(
+  VisionCamera
+  react-native-worklets-core::rnworklets
+)
+thuwayba — 2:47 PM
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Leaflet Map</title>
+    <meta
+Expand
+message.txt
+24 KB
+﻿
+thuwayba
+thuwaybadawood
+ 
 <!doctype html>
 <html>
   <head>
@@ -127,7 +222,7 @@
         });
 
         L.tileLayer(
-          'https://api.maptiler.com/maps/basic-v2/{z}/{x}/{y}.png?key=xUUmaj1CwbUxWTcxxbmb',
+          'https://api.maptiler.com/maps/basic-v2/{z}/{x}/{y}.png?key=MAPTILER_API_KEY_PLACEHOLDER',
           {
             attribution: '© OpenStreetMap contributors & MapTiler',
             tileSize: 512,
@@ -744,3 +839,5 @@
     </script>
   </body>
 </html>
+message.txt
+24 KB

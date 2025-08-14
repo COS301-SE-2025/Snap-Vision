@@ -2,6 +2,7 @@
 const { defineConfig } = require('eslint/config');
 const expoConfig = require('eslint-config-expo/flat');
 const prettierPlugin = require('eslint-plugin-prettier');
+const globals = require('globals');
 
 module.exports = defineConfig([
   ...expoConfig,
@@ -23,6 +24,14 @@ module.exports = defineConfig([
     },
     rules: {
       'prettier/prettier': 'error',
+    },
+  },
+  {
+    files: ['scripts/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
     },
   },
 ]);
