@@ -2314,7 +2314,6 @@ const MapScreen = () => {
         onReportIn={() => setShowReportTooltip(true)}
         onReportOut={() => setShowReportTooltip(false)}
         color={colors.primary}
-        onToggleMapRotation={toggleMapRotation}
       />
 
       {/* Location Refresh Button - shown when no location available */}
