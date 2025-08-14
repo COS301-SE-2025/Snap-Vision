@@ -69,4 +69,4 @@ node_modules/
 .dataconnect
 
 # maptiler api key 
-android/app/src/main/assets/leaflet.html
+snap-vision/android/app/src/main/assets/leaflet.html
