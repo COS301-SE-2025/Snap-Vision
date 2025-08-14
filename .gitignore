@@ -70,3 +70,6 @@ node_modules/
 
 # maptiler api key 
 snap-vision/android/app/src/main/assets/leaflet.html
+
+# Firebase configuration files
+snap-vision/android/app/google-services.json
