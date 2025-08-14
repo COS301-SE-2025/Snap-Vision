@@ -21,6 +21,7 @@ interface Props {
   confirmText?: string;
   cancelText?: string;
   showCancel?: boolean;
+  verticalButtons?: boolean; // New prop for vertical button layout
 }
 
 export default function StandardPopup({
@@ -31,7 +32,8 @@ export default function StandardPopup({
   onCancel,
   confirmText = 'OK',
   cancelText = 'Cancel',
-  showCancel = true,
+  showCancel = false,
+  verticalButtons = false, // Default to horizontal layout
 }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
@@ -52,11 +54,14 @@ export default function StandardPopup({
           <Text style={[styles.title, { color: colors.primary }]}>{title}</Text>
           <Text style={[styles.message, { color: colors.text }]}>{message}</Text>
 
-          <View style={styles.buttonRow}>
+          <View style={[verticalButtons ? styles.buttonColumn : styles.buttonRow]}>
             {showCancel && (
               <TouchableOpacity
                 activeOpacity={0.7}
-                style={[styles.buttonOutline, { borderColor: colors.border }]}
+                style={[
+                  verticalButtons ? styles.buttonOutlineVertical : styles.buttonOutline,
+                  { borderColor: colors.border },
+                ]}
                 onPress={onCancel}
               >
                 <Text style={[styles.buttonText, { color: colors.text }]}>{cancelText}</Text>
@@ -64,7 +69,10 @@ export default function StandardPopup({
             )}
             <TouchableOpacity
               activeOpacity={0.8}
-              style={[styles.buttonFilled, { backgroundColor: colors.primary }]}
+              style={[
+                verticalButtons ? styles.buttonFilledVertical : styles.buttonFilled,
+                { backgroundColor: colors.primary },
+              ]}
               onPress={onConfirm}
             >
               <Text style={[styles.buttonTextFilled]}>{confirmText}</Text>
@@ -115,6 +123,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 16, // note: gap works only RN 0.71+, else use marginHorizontal on buttons
   },
+  buttonColumn: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 12, // Vertical spacing between buttons
+  },
   buttonOutline: {
     paddingVertical: 12,
     paddingHorizontal: 30,
@@ -124,6 +137,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minWidth: 100,
   },
+  buttonOutlineVertical: {
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%', // Full width for vertical layout
+  },
   buttonFilled: {
     paddingVertical: 12,
     paddingHorizontal: 30,
@@ -131,6 +153,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     minWidth: 100,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 6,
+  },
+  buttonFilledVertical: {
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%', // Full width for vertical layout
     shadowColor: '#000',
     shadowOpacity: 0.25,
     shadowRadius: 4,

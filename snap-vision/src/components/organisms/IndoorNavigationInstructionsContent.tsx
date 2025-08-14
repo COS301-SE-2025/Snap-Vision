@@ -1,23 +1,23 @@
-// src/components/organisms/IndoorNavigationInstructionsContent.tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
+import firestore from '@react-native-firebase/firestore';
+import SettingsHeader from '../molecules/SettingsHeader';
 import {
-  NavigationGraph,
   calculateRoute,
   generateDetailedDirections,
   NavigationStep,
 } from '../../utils/navigationUtils';
-import firestore from '@react-native-firebase/firestore';
-import SettingsHeader from '../molecules/SettingsHeader';
+import StandardPopup from '../atoms/StandardPopup';
 
 interface Props {
   buildingId: string;
   floorId: string;
   startRoomId: string;
   endRoomId: string;
+  locationId: string;
   onNavigationComplete: () => void;
   onBack: () => void;
 }
@@ -27,6 +27,7 @@ export default function IndoorNavigationInstructionsContent({
   floorId,
   startRoomId,
   endRoomId,
+  locationId,
   onNavigationComplete,
   onBack,
 }: Props) {
@@ -39,131 +40,112 @@ export default function IndoorNavigationInstructionsContent({
   const [error, setError] = useState<string | null>(null);
   const [startRoomName, setStartRoomName] = useState('');
   const [endRoomName, setEndRoomName] = useState('');
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupProps, setPopupProps] = useState<{
+    title?: string;
+    message: string;
+    onConfirm?: () => void;
+  } | null>(null);
 
   useEffect(() => {
-    generateNavigationSteps();
-  }, [startRoomId, endRoomId]);
+    (async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
 
-  const generateNavigationSteps = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
+        const roomsSnap = await firestore()
+          .collection('locations')
+          .doc(locationId)
+          .collection('roomPOIs')
+          .where('buildingId', '==', buildingId)
+          .where('floorId', '==', floorId)
+          .get();
 
-      console.log('Generating navigation steps for:', {
-        buildingId,
-        floorId,
-        startRoomId,
-        endRoomId,
+        const rooms = roomsSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as any[];
+
+        const pathsSnap = await firestore()
+          .collection('locations')
+          .doc(locationId)
+          .collection('pathPOIs')
+          .where('buildingId', '==', buildingId)
+          .where('floorId', '==', floorId)
+          .get();
+
+        const paths = pathsSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as any[];
+
+        if (!rooms.length) {
+          setError('No rooms found for this floor');
+          return;
+        }
+        if (!paths.length) {
+          setError('No navigation paths available for this floor');
+          return;
+        }
+
+        const startRoom = rooms.find((r) => r.id === startRoomId);
+        const endRoom = rooms.find((r) => r.id === endRoomId);
+        if (!startRoom || !endRoom) {
+          setError('Selected rooms not found');
+          return;
+        }
+
+        setStartRoomName(startRoom.name || startRoomId);
+        setEndRoomName(endRoom.name || endRoomId);
+
+        const routeSteps = calculateRoute(startRoomId, endRoomId, rooms, paths);
+        if (!routeSteps.length) {
+          setError('No route found between selected rooms');
+          return;
+        }
+
+        const detailed = generateDetailedDirections(routeSteps);
+        setSteps(detailed);
+      } catch (e) {
+        console.error(e);
+        setError('Failed to generate navigation route');
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, [buildingId, floorId, startRoomId, endRoomId, locationId]);
+
+  const markStepCompleted = (i: number) => {
+    if (i === steps.length - 1) {
+      setPopupProps({
+        title: 'Destination Reached!',
+        message: `You have arrived at ${endRoomName}`,
+        onConfirm: () => {
+          setShowPopup(false);
+          onNavigationComplete();
+        },
       });
-
-      // Load room data
-      const roomsSnapshot = await firestore()
-        .collection('RoomPOIs')
-        .where('buildingId', '==', buildingId)
-        .where('floorId', '==', floorId)
-        .get();
-
-      const rooms = roomsSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      // Load path data
-      const pathsSnapshot = await firestore()
-        .collection('PathPOIs')
-        .where('buildingId', '==', buildingId)
-        .where('floorId', '==', floorId)
-        .get();
-
-      const paths = pathsSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      if (rooms.length === 0) {
-        setError('No rooms found for this floor');
-        return;
-      }
-
-      if (paths.length === 0) {
-        setError('No navigation paths available for this floor');
-        return;
-      }
-
-      // Find start and end rooms
-      const startRoom = rooms.find((r) => r.id === startRoomId);
-      const endRoom = rooms.find((r) => r.id === endRoomId);
-
-      if (!startRoom || !endRoom) {
-        setError('Selected rooms not found');
-        return;
-      }
-
-      setStartRoomName(startRoom.name);
-      setEndRoomName(endRoom.name);
-
-      // Calculate route
-      const routeSteps = calculateRoute(startRoomId, endRoomId, rooms, paths);
-
-      if (routeSteps.length === 0) {
-        setError('No route found between selected rooms');
-        return;
-      }
-
-      // Generate detailed directions
-      const detailedSteps = generateDetailedDirections(routeSteps);
-      setSteps(detailedSteps);
-    } catch (error) {
-      console.error('Error generating navigation steps:', error);
-      setError('Failed to generate navigation route');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const markStepCompleted = (stepIndex: number) => {
-    if (stepIndex === steps.length - 1) {
-      // Reached destination
-      Alert.alert('Destination Reached!', `You have arrived at ${endRoomName}`, [
-        { text: 'Finish', onPress: onNavigationComplete },
-      ]);
+      setShowPopup(true);
     } else {
-      setCurrentStep(stepIndex + 1);
+      setCurrentStep(i + 1);
     }
   };
 
-  const getStepIcon = (step: NavigationStep, index: number) => {
-    if (index < currentStep) {
-      return 'check-circle';
-    }
-
-    switch (step.type) {
-      case 'start':
-        return 'play-circle';
-      case 'turn':
-        return step.instruction.includes('left') ? 'arrow-left' : 'arrow-right';
-      case 'destination':
-        return 'flag-checkered';
-      default:
-        return 'arrow-up';
-    }
+  const stepIcon = (step: NavigationStep, index: number) => {
+    if (index < currentStep) return 'check-circle';
+    if (step.type === 'start') return 'play-circle';
+    if (step.type === 'destination') return 'flag-checkered';
+    if (step.type === 'turn')
+      return step.instruction.includes('left') ? 'arrow-left' : 'arrow-right';
+    return 'arrow-up';
   };
 
-  const getStepColor = (index: number) => {
-    if (index < currentStep) {
-      return colors.success || '#4CAF50';
-    } else if (index === currentStep) {
-      return colors.primary;
-    } else {
-      return colors.secondary;
-    }
-  };
+  const stepColor = (index: number) =>
+    index < currentStep
+      ? colors.success || '#4CAF50'
+      : index === currentStep
+        ? colors.primary
+        : colors.secondary;
 
   if (isLoading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <SettingsHeader title="Generating Route..." />
-        <View style={styles.centerContainer}>
+        <View style={styles.center}>
           <Text style={[styles.loadingText, { color: colors.text }]}>
             Calculating best route...
           </Text>
@@ -176,15 +158,17 @@ export default function IndoorNavigationInstructionsContent({
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <SettingsHeader title="Navigation Error" />
-        <View style={styles.centerContainer}>
+        <View style={styles.center}>
           <Icon name="alert-circle" size={64} color={colors.danger} />
           <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: colors.primary }]}
-            onPress={onBack}
-          >
-            <Text style={styles.buttonText}>Go Back</Text>
-          </TouchableOpacity>
+          <StandardPopup
+            visible={true}
+            title="Navigation Error"
+            message={error}
+            onConfirm={onBack}
+            confirmText="Go Back"
+            showCancel={false}
+          />
         </View>
       </View>
     );
@@ -193,7 +177,6 @@ export default function IndoorNavigationInstructionsContent({
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title="Indoor Navigation" />
-
       <View style={styles.header}>
         <Text style={[styles.routeTitle, { color: colors.text }]}>
           {startRoomName} → {endRoomName}
@@ -217,8 +200,8 @@ export default function IndoorNavigationInstructionsContent({
             ]}
           >
             <View style={styles.stepHeader}>
-              <View style={[styles.stepIcon, { backgroundColor: getStepColor(index) }]}>
-                <Icon name={getStepIcon(step, index)} size={20} color="#FFFFFF" />
+              <View style={[styles.stepIcon, { backgroundColor: stepColor(index) }]}>
+                <Icon name={stepIcon(step, index)} size={20} color="#FFFFFF" />
               </View>
               <View style={styles.stepContent}>
                 <Text
@@ -232,29 +215,28 @@ export default function IndoorNavigationInstructionsContent({
                 >
                   {step.instruction}
                 </Text>
-                {step.distance && (
+                {!!step.distance && (
                   <Text style={[styles.stepDistance, { color: colors.secondary }]}>
-                    Total distance: {Math.round(step.distance * 100)}m
+                    {Math.round(step.distance)} m
                   </Text>
                 )}
               </View>
             </View>
 
-            {index === currentStep && index < steps.length - 1 && (
+            {index === currentStep && (
               <TouchableOpacity
-                style={[styles.completeButton, { backgroundColor: colors.primary }]}
+                style={[
+                  styles.completeButton,
+                  {
+                    backgroundColor:
+                      index === steps.length - 1 ? colors.success || '#4CAF50' : colors.primary,
+                  },
+                ]}
                 onPress={() => markStepCompleted(index)}
               >
-                <Text style={styles.completeButtonText}>I&#39;ve completed this step</Text>
-              </TouchableOpacity>
-            )}
-
-            {index === currentStep && index === steps.length - 1 && (
-              <TouchableOpacity
-                style={[styles.completeButton, { backgroundColor: colors.success || '#4CAF50' }]}
-                onPress={() => markStepCompleted(index)}
-              >
-                <Text style={styles.completeButtonText}>I&#39;ve arrived!</Text>
+                <Text style={styles.completeButtonText}>
+                  {index === steps.length - 1 ? "I've arrived!" : "I've completed this step"}
+                </Text>
               </TouchableOpacity>
             )}
           </View>
@@ -272,40 +254,28 @@ export default function IndoorNavigationInstructionsContent({
           </Text>
         </TouchableOpacity>
       </View>
+      <StandardPopup
+        visible={showPopup}
+        title={popupProps?.title}
+        message={popupProps?.message || ''}
+        onConfirm={() => {
+          setShowPopup(false);
+          popupProps?.onConfirm && popupProps.onConfirm();
+        }}
+        showCancel={false}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    padding: 16,
-    alignItems: 'center',
-  },
-  routeTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  progressText: {
-    fontSize: 14,
-  },
-  stepsList: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  stepItem: {
-    marginBottom: 12,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-  },
-  stepHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
+  container: { flex: 1 },
+  header: { padding: 16, alignItems: 'center' },
+  routeTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 4 },
+  progressText: { fontSize: 14 },
+  stepsList: { flex: 1, paddingHorizontal: 16 },
+  stepItem: { marginBottom: 12, padding: 16, borderRadius: 12, borderWidth: 2 },
+  stepHeader: { flexDirection: 'row', alignItems: 'flex-start' },
   stepIcon: {
     width: 40,
     height: 40,
@@ -314,31 +284,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
-  stepContent: {
-    flex: 1,
-  },
-  stepInstruction: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  stepDistance: {
-    fontSize: 14,
-  },
-  completeButton: {
-    marginTop: 12,
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  completeButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  footer: {
-    padding: 16,
-  },
+  stepContent: { flex: 1 },
+  stepInstruction: { fontSize: 16, fontWeight: '600', marginBottom: 4 },
+  stepDistance: { fontSize: 14 },
+  completeButton: { marginTop: 12, padding: 12, borderRadius: 8, alignItems: 'center' },
+  completeButtonText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+  footer: { padding: 16 },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -348,33 +299,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 8,
   },
-  backButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  loadingText: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  errorText: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginVertical: 16,
-  },
-  button: {
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 16,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  backButtonText: { fontSize: 16, fontWeight: '500' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 },
+  loadingText: { fontSize: 16, textAlign: 'center' },
+  errorText: { fontSize: 16, textAlign: 'center', marginVertical: 16 },
+  button: { padding: 12, borderRadius: 8, marginTop: 16 },
+  buttonText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
 });

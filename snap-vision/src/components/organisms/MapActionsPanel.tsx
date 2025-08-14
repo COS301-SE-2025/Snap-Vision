@@ -69,6 +69,9 @@ const MapActionsPanel = ({
           <ActionButtonWithTooltip
             icon={<Icon name="business" size={30} color="white" />}
             onPress={onAddPOI}
+            onPressIn={() => {}}
+            onPressOut={() => {}}
+            showTooltip={false}
             backgroundColor={colors.primary}
             tooltipText="Add Building"
           />

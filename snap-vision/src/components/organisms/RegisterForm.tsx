@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import AppInput from '../atoms/AppInput';
 import AppButton from '../atoms/AppButton';
+import StandardPopup from '../atoms/StandardPopup';
 import auth from '@react-native-firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -42,6 +43,11 @@ export default function RegisterForm() {
   const [successMessage, setSuccessMessage] = useState('');
   const { unlock } = useBadges();
 
+  // Popup states
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [errorPopupMessage, setErrorPopupMessage] = useState('');
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+
   const handleRegister = async () => {
     const newErrors = { username: '', email: '', password: '', confirmPassword: '' };
     let hasError = false;
@@ -75,13 +81,17 @@ export default function RegisterForm() {
     if (hasError) {
       setErrors(newErrors);
       if (newErrors.username) {
-        Alert.alert('Error', 'Please fill in all fields');
+        setErrorPopupMessage('Please fill in all fields');
+        setShowErrorPopup(true);
       } else if (newErrors.email === 'Invalid email format.') {
-        Alert.alert('Error', 'Please enter a valid email address');
+        setErrorPopupMessage('Please enter a valid email address');
+        setShowErrorPopup(true);
       } else if (newErrors.password) {
-        Alert.alert('Error', newErrors.password);
+        setErrorPopupMessage(newErrors.password);
+        setShowErrorPopup(true);
       } else if (newErrors.confirmPassword) {
-        Alert.alert('Error', 'Passwords do not match');
+        setErrorPopupMessage('Passwords do not match');
+        setShowErrorPopup(true);
       }
       return;
     }
@@ -99,20 +109,8 @@ export default function RegisterForm() {
 
       setHasSeenLanding(false); // triggers Landing screen on registration
       unlock('first-login');
-      Alert.alert('Success', 'Account created!');
+      setShowSuccessPopup(true);
       setSuccessMessage('Account created!');
-
-      setTimeout(() => {
-        if (coords && coords.lat && coords.lng) {
-          navigation.replace('Tabs', {
-            screen: 'Map',
-            params: { lat: coords.lat, lng: coords.lng },
-          });
-          setCoords(null);
-        } else {
-          navigation.replace('Tabs');
-        }
-      }, 1000);
     } catch (error: any) {
       const errorMessages: { [key: string]: string } = {
         'auth/email-already-in-use': 'This email is already registered.',
@@ -121,14 +119,32 @@ export default function RegisterForm() {
       };
       const msg = errorMessages[error?.code] || 'Registration failed.';
       if (error?.code === 'auth/email-already-in-use') {
-        Alert.alert('Registration Error', 'This email is already registered.');
+        setErrorPopupMessage('This email is already registered.');
+        setShowErrorPopup(true);
       } else {
-        Alert.alert('Error', msg);
+        setErrorPopupMessage(msg);
+        setShowErrorPopup(true);
       }
       setErrors({
         ...newErrors,
         email: msg,
       });
+    }
+  };
+
+  // Handle success popup confirmation
+  const handleSuccessConfirm = () => {
+    setShowSuccessPopup(false);
+
+    // Navigate after popup is dismissed
+    if (coords && coords.lat && coords.lng) {
+      navigation.replace('Tabs', {
+        screen: 'Map',
+        params: { lat: coords.lat, lng: coords.lng },
+      });
+      setCoords(null);
+    } else {
+      navigation.replace('Tabs');
     }
   };
 
@@ -219,6 +235,24 @@ export default function RegisterForm() {
         <Text style={[styles.orText, { color: colors.secondary }]}>Register With</Text>
         <View style={[styles.line, { backgroundColor: colors.secondary }]} />
       </View>
+
+      {/* Error Popup */}
+      <StandardPopup
+        visible={showErrorPopup}
+        title="Registration Error"
+        message={errorPopupMessage}
+        onClose={() => setShowErrorPopup(false)}
+        showCloseButton={true}
+      />
+
+      {/* Success Popup */}
+      <StandardPopup
+        visible={showSuccessPopup}
+        title="Registration Successful"
+        message="Your account has been created successfully!"
+        onClose={handleSuccessConfirm}
+        showCloseButton={true}
+      />
     </View>
   );
 }

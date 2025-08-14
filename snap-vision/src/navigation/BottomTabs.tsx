@@ -4,8 +4,9 @@ import HomeScreen from '../screens/HomeScreen';
 import MapScreen from '../screens/MapScreen';
 import AchievementsScreen from '../screens/AchievementsScreen';
 import SettingsNavigator from './SettingsNavigator';
-import AdminScreen from '../screens/AdminScreen';
+import AdminNavigator from './AdminNavigator';
 import BuildingSelectionScreen from '../screens/BuildingSelectionScreen';
+import LiveTrackingScreen from '../screens/LiveTrackingScreen';
 import TabBarIcon from '../components/molecules/TabBarIcon';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
@@ -39,14 +40,14 @@ export default function BottomTabs() {
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Map" component={MapScreen} />
-      <Tab.Screen
+      {/* <Tab.Screen
         name="Indoor"
         component={BuildingSelectionScreen}
         options={{ title: 'Indoor Nav' }}
-      />
+      /> */}
       <Tab.Screen name="Achievements" component={AchievementsScreen} />
       <Tab.Screen name="Settings" component={SettingsNavigator} />
-      {role === 'admin' && <Tab.Screen name="Admin" component={AdminScreen} />}
+      {role === 'admin' && <Tab.Screen name="Admin" component={AdminNavigator} />}
       {role === 'editor' && <Tab.Screen name="Editor" component={EditorScreen} />}
     </Tab.Navigator>
   );
