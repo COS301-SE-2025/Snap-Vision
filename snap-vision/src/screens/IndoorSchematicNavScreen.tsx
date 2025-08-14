@@ -378,7 +378,7 @@ export default function IndoorSchematicNavScreen() {
       </View>
 
       {/* { !!Uncomment to show Bottom sheet with step-by-step directions!!} */}
-      {/* Directions sheet
+      {/*Directions sheet*/}
       <StepsBottomSheet
         visible={sheetOpen}
         onClose={() => setSheetOpen(false)}
@@ -387,9 +387,9 @@ export default function IndoorSchematicNavScreen() {
         colors={colors}
         currentStep={currentStep}
         onAdvance={handleAdvance}
-      /> */}
+      /> 
 
-      {steps.length > 0 && (
+      {steps.length > 0 && !sheetOpen &&(
         <AppSecondaryButton
           title="Proceed"
           onPress={handleAdvance}

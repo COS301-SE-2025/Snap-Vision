@@ -10,6 +10,9 @@ import { getThemeColors } from '../../theme';
 import firestore from '@react-native-firebase/firestore';
 import type { StackNavigationProp } from '@react-navigation/stack';
 
+const FLOORPLAN_CONTAINER_WIDTH = 360;
+const FLOORPLAN_CONTAINER_HEIGHT = 300;
+
 type FloorplanEditorScreenRouteParams = {
   locationId: string;
   buildingId: string;
@@ -1080,12 +1083,13 @@ export default function AdminFloorplanEditorContent() {
         </View>
       </View>
 
+      <View style={styles.fixedFloorplanContainer}>
       <WebView
         ref={webViewRef}
         originWhitelist={['*']}
         source={{ html: getHTML() }}
         onMessage={handleMessage}
-        style={styles.webview}
+        style={styles.fixedWebView}
         injectedJavaScriptBeforeContentLoaded={`
           window.isDarkMode = ${isDarkMode};
           window.themeColors = {
@@ -1097,6 +1101,7 @@ export default function AdminFloorplanEditorContent() {
           true;
         `}
       />
+      </View>
 
       <View style={[styles.footer, { borderTopColor: colors.border }]}>
         <Text style={[styles.footerText, { color: colors.text }]}>
@@ -1315,6 +1320,22 @@ export default function AdminFloorplanEditorContent() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+    fixedFloorplanContainer: {
+    width: FLOORPLAN_CONTAINER_WIDTH,
+    height: FLOORPLAN_CONTAINER_HEIGHT,
+    alignSelf: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 2,
+    marginVertical: 16,
+  },
+  fixedWebView: {
+    width: FLOORPLAN_CONTAINER_WIDTH,
+    height: FLOORPLAN_CONTAINER_HEIGHT,
+    backgroundColor: '#fff',
+    borderRadius: 16,
   },
   header: {
     padding: 16,
