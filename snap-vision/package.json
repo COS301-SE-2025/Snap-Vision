@@ -45,6 +45,7 @@
     "react-native-linear-gradient": "^2.8.3",
     "react-native-maps": "^1.23.8",
     "react-native-modal": "^14.0.0-rc.1",
+    "react-native-permissions": "^5.4.1",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "^5.4.1",
     "react-native-screens": "~4.10.0",
@@ -58,6 +59,7 @@
     "react-native-vision-camera": "^4.7.1",
     "react-native-web": "~0.20.0",
     "react-native-webview": "^13.13.5",
+    "react-native-wifi-reborn": "^4.13.6",
     "react-native-worklets-core": "^1.6.0",
     "react-test-renderer": "^19.0.0",
     "react-vision-camera": "^1.0.1"

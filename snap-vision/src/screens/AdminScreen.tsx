@@ -5,14 +5,7 @@ import { getThemeColors } from '../theme';
 import { useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import AdminContent from '../components/organisms/AdminContent';
-
-type AdminStackParamList = {
-  AdminLoadFloorplans: undefined;
-  AdminEditFloorplans: undefined;
-  //AdminSettings: undefined;
-  AdminManageUsers: undefined;
-  AdminFloorplanEditor: undefined;
-};
+import type { AdminStackParamList } from '../navigation/AdminNavigator';
 
 type AdminNavigationProp = NavigationProp<AdminStackParamList>;
 
@@ -30,8 +23,19 @@ const AdminScreen = () => {
   // const handleSettings = () => {
   //   navigation.navigate('AdminSettings');
   // };
+  // const handleSettings = () => {
+  //   navigation.navigate('AdminSettings');
+  // };
   const handleManageUsers = () => {
     navigation.navigate('AdminManageUsers');
+  };
+  const handleIndoorPositioning = () => {
+    // Navigate to building/floor selection for indoor positioning
+    // For now, we'll use a default building/floor - you can add a picker later
+    navigation.navigate('AdminIndoorPositioning', {
+      buildingId: 'default',
+      floorId: 'default',
+    });
   };
 
   return (
@@ -39,8 +43,9 @@ const AdminScreen = () => {
       colors={colors}
       onLoadFloorplans={handleLoadFloorplans}
       onEditFloorplans={handleEditFloorplans}
-      //onSettings={handleSettings}
+      // onSettings={handleSettings}
       onManageUsers={handleManageUsers}
+      onIndoorPositioning={handleIndoorPositioning}
     />
   );
 };

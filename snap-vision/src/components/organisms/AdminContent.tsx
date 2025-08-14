@@ -9,6 +9,7 @@ interface Props {
   onEditFloorplans: () => void;
   //onSettings: () => void;
   onManageUsers: () => void;
+  onIndoorPositioning: () => void;
   onFloorplanEditor?: () => void;
 }
 
@@ -18,6 +19,7 @@ export default function AdminScreenContent({
   onEditFloorplans,
   //onSettings,
   onManageUsers,
+  onIndoorPositioning,
   onFloorplanEditor,
 }: Props) {
   return (
@@ -49,6 +51,7 @@ export default function AdminScreenContent({
       <View style={styles.buttonContainer}>
         <AppButton title="Load Floorplans" onPress={onLoadFloorplans} />
         <AppButton title="Edit Floorplans" onPress={onEditFloorplans} />
+        <AppButton title="Indoor Positioning" onPress={onIndoorPositioning} />
         {/* //<AppButton title="Settings" onPress={onSettings} /> */}
         <AppButton title="Manage Users" onPress={onManageUsers} />
       </View>

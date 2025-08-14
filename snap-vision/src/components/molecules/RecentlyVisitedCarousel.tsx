@@ -1,25 +1,46 @@
 import React from 'react';
-import { FlatList, Image, TouchableOpacity, Text, View, StyleSheet } from 'react-native';
+import { FlatList, TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import { Visit } from '../../services/firebase/recentlyVService';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
 
 const RecentlyVisitedCarousel = ({ visits }: { visits: Visit[] }) => {
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
+
   if (visits.length === 0) {
     return (
       <View style={{ padding: 10 }}>
-        <Text style={{ color: '#666', textAlign: 'center' }}>No recently visited locations.</Text>
+        <Text style={{ color: colors.text, textAlign: 'center' }}>
+          No recently visited locations.
+        </Text>
       </View>
     );
   }
+
   return (
     <FlatList
-      horizontal={true}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.listContainer}
       data={visits}
-      keyExtractor={(item, index) => item.id || item.poiId || index.toString()} // Ensure a unique key for each item
+      keyExtractor={(item, index) => item.id || item.poiId || index.toString()}
       renderItem={({ item }) => (
-        <TouchableOpacity style={styles.card} onPress={() => console.log('Selected:', item.name)}>
-          <Text style={styles.name}>{item.name}</Text>
+        <TouchableOpacity
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.primary,
+              borderColor: colors.roleSecondary,
+            },
+          ]}
+          onPress={() => console.log('Selected:', item.name)}
+        >
+          <Text style={[styles.name, { color: colors.background }]} numberOfLines={1}>
+            {item.name}
+          </Text>
           {item.timestamp && (
-            <Text style={styles.timestamp}>
+            <Text style={[styles.timestamp, { color: colors.background }]} numberOfLines={1}>
               {new Date(item.timestamp.toDate()).toLocaleDateString()}
             </Text>
           )}
@@ -28,22 +49,28 @@ const RecentlyVisitedCarousel = ({ visits }: { visits: Visit[] }) => {
     />
   );
 };
+
 const styles = StyleSheet.create({
+  listContainer: {
+    paddingHorizontal: 10,
+  },
   card: {
-    marginHorizontal: 10,
-    padding: 15,
-    backgroundColor: '#fff',
+    marginRight: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
     borderRadius: 10,
-    elevation: 3,
-    minWidth: 180,
+    borderWidth: 0,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    height: 80,
   },
   name: {
-    fontWeight: 'bold',
-    marginBottom: 5,
+    fontWeight: '600',
+    fontSize: 13,
+    marginBottom: 2,
   },
   timestamp: {
-    color: '#666',
-    fontSize: 12,
+    fontSize: 11,
   },
 });
 
