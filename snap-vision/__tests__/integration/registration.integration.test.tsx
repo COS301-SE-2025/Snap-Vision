@@ -335,8 +335,6 @@ describe('Registration Integration Tests', () => {
     fireEvent.changeText(inputs[2], 'Password1!');
     fireEvent.changeText(inputs[3], 'Password1!');
     fireEvent.press(getByTestId('register-button'));
-    // Optionally check for loading indicator if your UI shows one
-    // expect(queryByText('Loading...')).toBeTruthy();
     jest.runAllTimers();
     await waitFor(() => {
       expect(mockCreateUserWithEmailAndPassword).toHaveBeenCalled();
