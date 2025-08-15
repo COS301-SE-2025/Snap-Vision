@@ -176,7 +176,6 @@ const MapScreen = () => {
   const [showDestinationReachedPopup, setShowDestinationReachedPopup] = useState(false);
   const [showLocationRefreshPopup, setShowLocationRefreshPopup] = useState(false);
   const [isRefreshingLocation, setIsRefreshingLocation] = useState(false);
-  
 
   //Fetch Locations
   useEffect(() => {
@@ -323,7 +322,12 @@ const MapScreen = () => {
     }
   }, [isMapReady, currentLocation, shouldCenterMap]);
 
-  const sendLocationToWebView = (lat: number, lon: number, centerMap = false, forceZoom = false) => {
+  const sendLocationToWebView = (
+    lat: number,
+    lon: number,
+    centerMap = false,
+    forceZoom = false,
+  ) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
     console.log('📍 Sending location to WebView:', { lat, lon, centerMap, isMapReady });
 
@@ -334,18 +338,18 @@ const MapScreen = () => {
     }
 
     let jsCode;
-  if (forceZoom || (centerMap && shouldCenterMap)) {
-    const zoomLevel = isNavigating ? 18 : 16;
-    jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap}, ${zoomLevel});`;
-    // After first center, don't auto-center anymore unless explicitly requested
-    if (centerMap) setShouldCenterMap(false);
-  } else {
-    // Don't pass zoom level - let the map maintain current zoom
-    jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap});`;
-  }
+    if (forceZoom || (centerMap && shouldCenterMap)) {
+      const zoomLevel = isNavigating ? 18 : 16;
+      jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap}, ${zoomLevel});`;
+      // After first center, don't auto-center anymore unless explicitly requested
+      if (centerMap) setShouldCenterMap(false);
+    } else {
+      // Don't pass zoom level - let the map maintain current zoom
+      jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap});`;
+    }
 
-  console.log('📤 Injecting location JavaScript:', jsCode);
-  webViewRef.current.injectJavaScript(jsCode);
+    console.log('📤 Injecting location JavaScript:', jsCode);
+    webViewRef.current.injectJavaScript(jsCode);
 
     if (isNavigating && lastRoute.current && lastRoute.current.length > 0) {
       setStatus(`Updating location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
@@ -1052,20 +1056,20 @@ const MapScreen = () => {
     }
 
     watchIdRef.current = Geolocation.watchPosition(
-    (position) => {
-      const { latitude, longitude } = position.coords;
-      // Don't center or force zoom on location updates during navigation
-      sendLocationToWebView(latitude, longitude, false, false);
-    },
-    (error) => {
-      setError('Failed to track location');
-    },
-    {
-      enableHighAccuracy: true,
-      distanceFilter: 5, // Update every 5 meters
-      interval: 1000, // Update every second
-    },
-  );
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        // Don't center or force zoom on location updates during navigation
+        sendLocationToWebView(latitude, longitude, false, false);
+      },
+      (error) => {
+        setError('Failed to track location');
+      },
+      {
+        enableHighAccuracy: true,
+        distanceFilter: 5, // Update every 5 meters
+        interval: 1000, // Update every second
+      },
+    );
   };
 
   // Stop navigation function with haptic feedback
@@ -1108,11 +1112,10 @@ const MapScreen = () => {
 
   // Update the updateNavigationProgress function to check for destination arrival
   const updateNavigationProgress = (latitude: number, longitude: number) => {
-  // Add safety checks at the beginning
-  if (!lastRoute.current || lastRoute.current.length === 0 || hasReachedDestination) {
-    return;
-  }
-
+    // Add safety checks at the beginning
+    if (!lastRoute.current || lastRoute.current.length === 0 || hasReachedDestination) {
+      return;
+    }
 
     // Calculate distance walked from start location (never decreases)
     if (startLocation && isNavigating) {
@@ -1284,63 +1287,63 @@ const MapScreen = () => {
 
   // Destination reached function with haptic feedback
   const destinationReached = async () => {
-  if (!isNavigating || hasReachedDestination) return;
-  
-  console.log('🎯 Destination reached - triggering once');
-  
-  // Set the flag immediately to prevent re-entry
-  setHasReachedDestination(true);
-  setIsNavigating(false);
-  
-  // Stop all location tracking immediately
-  if (watchIdRef.current) {
-    Geolocation.clearWatch(watchIdRef.current);
-    watchIdRef.current = null;
-  }
+    if (!isNavigating || hasReachedDestination) return;
 
-  try {
-    // Trigger success haptic feedback ONCE
-    if (isHapticFeedbackEnabled) {
-      ReactNativeHapticFeedback.trigger('notificationSuccess', hapticOptions);
+    console.log('🎯 Destination reached - triggering once');
+
+    // Set the flag immediately to prevent re-entry
+    setHasReachedDestination(true);
+    setIsNavigating(false);
+
+    // Stop all location tracking immediately
+    if (watchIdRef.current) {
+      Geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
     }
 
-    await unlock('destination-reached');
-    await incrementRoutes();
+    try {
+      // Trigger success haptic feedback ONCE
+      if (isHapticFeedbackEnabled) {
+        ReactNativeHapticFeedback.trigger('notificationSuccess', hapticOptions);
+      }
 
-    const userId = auth().currentUser?.uid;
-    if (userId && selectedPOI) {
-      const visit: Visit = {
-        userId,
-        poiId: selectedPOI.id,
-        name: selectedPOI.name,
-        timestamp: firestore.Timestamp.now(),
-        centroid: selectedPOI.centroid,
-      };
-      await addRecentlyVisitedPOI(visit);
+      await unlock('destination-reached');
+      await incrementRoutes();
+
+      const userId = auth().currentUser?.uid;
+      if (userId && selectedPOI) {
+        const visit: Visit = {
+          userId,
+          poiId: selectedPOI.id,
+          name: selectedPOI.name,
+          timestamp: firestore.Timestamp.now(),
+          centroid: selectedPOI.centroid,
+        };
+        await addRecentlyVisitedPOI(visit);
+      }
+    } catch (error) {
+      console.error('Failed to record visit:', error);
     }
-  } catch (error) {
-    console.error('Failed to record visit:', error);
-  }
 
-  setStatus('You have reached your destination!');
-  setRouteProgress(100);
+    setStatus('You have reached your destination!');
+    setRouteProgress(100);
 
-  if (isVoiceEnabled) {
-    Tts.stop();
-    setTimeout(() => {
-      Tts.speak('You have reached your destination');
-    }, 500);
-  }
-  // Clear progress line from map
-  if (isMapReady && webViewRef.current) {
-    webViewRef.current.injectJavaScript(
-      'if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }',
-    );
-  }
+    if (isVoiceEnabled) {
+      Tts.stop();
+      setTimeout(() => {
+        Tts.speak('You have reached your destination');
+      }, 500);
+    }
+    // Clear progress line from map
+    if (isMapReady && webViewRef.current) {
+      webViewRef.current.injectJavaScript(
+        'if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }',
+      );
+    }
 
-  // Show destination reached popup
-  setShowDestinationReachedPopup(true);
-};
+    // Show destination reached popup
+    setShowDestinationReachedPopup(true);
+  };
 
   //add this function to handle report submission
   const submitCrowdReport = async () => {
@@ -1585,81 +1588,82 @@ const MapScreen = () => {
   };
 
   // Dynamically request location updates
-useEffect(() => {
-  let watchId: number | null = null;
+  useEffect(() => {
+    let watchId: number | null = null;
 
-  const startWatchingLocation = async () => {
-    try {
-      const permissions = await PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
-      ]);
+    const startWatchingLocation = async () => {
+      try {
+        const permissions = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+        ]);
 
-      const fineGranted = permissions['android.permission.ACCESS_FINE_LOCATION'] === 'granted';
-      const coarseGranted = permissions['android.permission.ACCESS_COARSE_LOCATION'] === 'granted';
+        const fineGranted = permissions['android.permission.ACCESS_FINE_LOCATION'] === 'granted';
+        const coarseGranted =
+          permissions['android.permission.ACCESS_COARSE_LOCATION'] === 'granted';
 
-      if (fineGranted || coarseGranted) {
-        const watchOptions = isNavigating
-          ? {
-              enableHighAccuracy: true,
-              distanceFilter: 3, // Update every 3 meters
-              interval: 2000, // Update every 2 seconds
-              timeout: 25000,
-              maximumAge: 8000,
-            }
-          : Number(Platform.Version) >= 31
-          ? {
-              // General browsing - Android 12+
-              enableHighAccuracy: fineGranted,
-              distanceFilter: 5,
-              interval: 2000, 
-              timeout: 25000,
-              maximumAge: 15000,
-            }
-          : {
-              // General browsing - Pre-Android 12
-              enableHighAccuracy: true,
-              distanceFilter: 5,
-              interval: 2000,
-              timeout: 20000,
-              maximumAge: 15000,
-            };
+        if (fineGranted || coarseGranted) {
+          const watchOptions = isNavigating
+            ? {
+                enableHighAccuracy: true,
+                distanceFilter: 3, // Update every 3 meters
+                interval: 2000, // Update every 2 seconds
+                timeout: 25000,
+                maximumAge: 8000,
+              }
+            : Number(Platform.Version) >= 31
+              ? {
+                  // General browsing - Android 12+
+                  enableHighAccuracy: fineGranted,
+                  distanceFilter: 5,
+                  interval: 2000,
+                  timeout: 25000,
+                  maximumAge: 15000,
+                }
+              : {
+                  // General browsing - Pre-Android 12
+                  enableHighAccuracy: true,
+                  distanceFilter: 5,
+                  interval: 2000,
+                  timeout: 20000,
+                  maximumAge: 15000,
+                };
 
-        watchId = Geolocation.watchPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            
-            if (isNavigating) {
-              // Don't center during navigation, let navigation handle it
-              sendLocationToWebView(latitude, longitude, false, false);
-            } else {
-              // Center only on first location or when explicitly requested
-              sendLocationToWebView(latitude, longitude, false, false);
-            }
-          },
-          (error) => {
-            console.error('❌ Location watch error:', error);
-            setError(`Location tracking error: ${error.message}`);
-          },
-          watchOptions,
-        );
-      } else {
-        setError('Location permissions required for navigation');
+          watchId = Geolocation.watchPosition(
+            (position) => {
+              const { latitude, longitude } = position.coords;
+
+              if (isNavigating) {
+                // Don't center during navigation, let navigation handle it
+                sendLocationToWebView(latitude, longitude, false, false);
+              } else {
+                // Center only on first location or when explicitly requested
+                sendLocationToWebView(latitude, longitude, false, false);
+              }
+            },
+            (error) => {
+              console.error('❌ Location watch error:', error);
+              setError(`Location tracking error: ${error.message}`);
+            },
+            watchOptions,
+          );
+        } else {
+          setError('Location permissions required for navigation');
+        }
+      } catch (err) {
+        console.error('❌ Location watch setup failed:', err);
+        setError('Failed to setup location tracking');
       }
-    } catch (err) {
-      console.error('❌ Location watch setup failed:', err);
-      setError('Failed to setup location tracking');
-    }
-  };
+    };
 
-  startWatchingLocation();
+    startWatchingLocation();
 
-  return () => {
-    if (watchId !== null) {
-      Geolocation.clearWatch(watchId);
-    }
-  };
-}, [isNavigating]);
+    return () => {
+      if (watchId !== null) {
+        Geolocation.clearWatch(watchId);
+      }
+    };
+  }, [isNavigating]);
 
   // Helper to calculate distance between two lat/lon points (Haversine formula)
   function getDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -1862,20 +1866,25 @@ useEffect(() => {
 
   // Add this new useEffect after your other useEffects
   useEffect(() => {
-  // Only run when navigating AND haven't reached destination
-  if (!isNavigating || !currentLocation || hasReachedDestination) {
-    return; // Exit early if any condition is not met
-  }
-
-  // Force update progress every 0.5 seconds
-  const progressInterval = setInterval(() => {
-    if (currentLocation && lastRoute.current && lastRoute.current.length > 0 && !hasReachedDestination) {
-      updateNavigationProgress(currentLocation.latitude, currentLocation.longitude);
+    // Only run when navigating AND haven't reached destination
+    if (!isNavigating || !currentLocation || hasReachedDestination) {
+      return; // Exit early if any condition is not met
     }
-  }, 500);
 
-  return () => clearInterval(progressInterval);
-}, [isNavigating, currentLocation, hasReachedDestination]); // Add hasReachedDestination dependency
+    // Force update progress every 0.5 seconds
+    const progressInterval = setInterval(() => {
+      if (
+        currentLocation &&
+        lastRoute.current &&
+        lastRoute.current.length > 0 &&
+        !hasReachedDestination
+      ) {
+        updateNavigationProgress(currentLocation.latitude, currentLocation.longitude);
+      }
+    }, 500);
+
+    return () => clearInterval(progressInterval);
+  }, [isNavigating, currentLocation, hasReachedDestination]); // Add hasReachedDestination dependency
 
   // Check for location availability after map loads
   useEffect(() => {
@@ -2463,7 +2472,6 @@ useEffect(() => {
         </View>
       ) : null}
 
-
       {/* Error Popup */}
       <StandardPopup
         visible={showErrorPopup}
@@ -2503,25 +2511,25 @@ useEffect(() => {
           setShowDestinationReachedPopup(false);
           setHasReachedDestination(false);
           // Clear destination and navigation state to hide the progress bar
-    setDestination('');
-    setDestinationCoords(null);
-    setRouteProgress(0);
-    setDistanceToDestination(null);
-    setEstimatedTime(null);
-    setSelectedFeature(null);
-    setSelectedPOI(null);
-setSteps([]);
-    setCurrentStep(0);
-    // Reset enhanced progress tracking
-    setDistanceWalked(0);
-    setStartLocation(null);
-    setOriginalRouteDistance(null);
+          setDestination('');
+          setDestinationCoords(null);
+          setRouteProgress(0);
+          setDistanceToDestination(null);
+          setEstimatedTime(null);
+          setSelectedFeature(null);
+          setSelectedPOI(null);
+          setSteps([]);
+          setCurrentStep(0);
+          // Reset enhanced progress tracking
+          setDistanceWalked(0);
+          setStartLocation(null);
+          setOriginalRouteDistance(null);
 
-    // Clear the route from the map
-    if (isMapReady && webViewRef.current) {
-      webViewRef.current.injectJavaScript('window.clearRoute && window.clearRoute();');
-    }
-    lastRoute.current = [];
+          // Clear the route from the map
+          if (isMapReady && webViewRef.current) {
+            webViewRef.current.injectJavaScript('window.clearRoute && window.clearRoute();');
+          }
+          lastRoute.current = [];
           setStatus('Ready for navigation');
         }}
         showCancel={false}
