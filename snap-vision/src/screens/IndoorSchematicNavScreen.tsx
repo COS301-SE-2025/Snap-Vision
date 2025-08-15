@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity, Modal } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
@@ -12,6 +13,7 @@ import * as NavUtils from '../utils/navigationUtils';
 import { Picker } from '@react-native-picker/picker';
 import StandardPopup from '../components/atoms/StandardPopup';
 import AppSecondaryButton from '../components/atoms/AppSecondaryButton';
+import QRScanner from '../components/molecules/QRScanner';
 
 type ParamList = {
   IndoorSchematicNav: {
@@ -75,6 +77,9 @@ export default function IndoorSchematicNavScreen() {
   const [popupTitle, setPopupTitle] = useState('');
   const [popupMessage, setPopupMessage] = useState('');
   const [popupConfirmText, setPopupConfirmText] = useState('OK');
+  
+  // QR Scanner state
+  const [qrScannerVisible, setQrScannerVisible] = useState(false);
 
   // Floorplan image state
   const [floorplanUrl, setFloorplanUrl] = useState<string | null>(null);
@@ -209,6 +214,151 @@ export default function IndoorSchematicNavScreen() {
     [allRooms, selectedFloorId],
   );
 
+  // Handle QR code scan results
+  const handleQRScan = async (qrValue: string) => {
+    try {
+      // Close the scanner
+      setQrScannerVisible(false);
+      
+      // Format expected: qr:location:building:floor:room
+      // or qr:building:floor:room (legacy format)
+      const parts = qrValue.split(':');
+      
+      if (parts[0] !== 'qr') {
+        setPopupTitle('Invalid QR Code');
+        setPopupMessage('This QR code is not valid for navigation.');
+        setPopupVisible(true);
+        return;
+      }
+      
+      let locationId = route.params.locationId;
+      let buildingId = route.params.buildingId;
+      let floorId = '';
+      let roomId = '';
+      
+      // Parse based on format
+      if (parts.length === 5) {
+        // New format: qr:location:building:floor:room
+        locationId = parts[1];
+        buildingId = parts[2];
+        floorId = parts[3];
+        roomId = parts[4];
+      } else if (parts.length === 4) {
+        // Legacy format: qr:building:floor:room
+        buildingId = parts[1];
+        floorId = parts[2];
+        roomId = parts[3];
+      } else {
+        setPopupTitle('Invalid QR Format');
+        setPopupMessage('The QR code format is not recognized.');
+        setPopupVisible(true);
+        return;
+      }
+      
+      // Check if we're in the same building
+      if (buildingId !== route.params.buildingId) {
+        // We need to navigate to a different building
+        setPopupTitle('Different Building');
+        setPopupMessage('This QR code is for a different building. Redirecting...');
+        setPopupVisible(true);
+        
+        // Navigate to the correct building after showing message
+        setTimeout(() => {
+          setPopupVisible(false);
+          navigation.replace('IndoorSchematicNav', {
+            buildingId,
+            buildingName: 'Building', // We'll update this once we load
+            locationId,
+            floorId
+          });
+        }, 2000);
+        return;
+      }
+      
+      // We're in the correct building, set floor and find room
+      setSelectedFloorId(floorId);
+      
+      // Find the room on this floor
+      const room = allRooms.find(r => r.id === roomId && r.floorId === floorId);
+      
+      if (!room) {
+        setPopupTitle('Room Not Found');
+        setPopupMessage('The scanned room could not be found in this building.');
+        setPopupVisible(true);
+        return;
+      }
+      
+      // Set current position or destination based on user selection
+      setPopupTitle('QR Code Scanned');
+      setPopupMessage('Use this location as your current position or destination?');
+      setPopupConfirmText('Set as Position');
+      setPopupVisible(true);
+      
+      // Store the room info for when user confirms
+      const tempRoom = room;
+      
+      // Override default popup actions
+      // Note: This would be better with a custom popup component with multiple buttons
+      // but we're working with what we have
+      setTimeout(() => {
+        setPopupVisible(false);
+        
+        // Ask user if they want to set as current position or destination
+        setPopupTitle('QR Location');
+        setPopupMessage('What would you like to do with this location?');
+        setPopupConfirmText('Set as Current Position');
+        setPopupVisible(true);
+        
+        // Create our own custom popup buttons
+        const currentPositionAction = () => {
+          setPopupVisible(false);
+          setCurrentPos(tempRoom.coordinates);
+          setStartId(tempRoom.id);
+          setStatus(`Set current position to ${tempRoom.name}`);
+        };
+        
+        const destinationAction = () => {
+          setPopupVisible(false);
+          if (!startId) {
+            setStartId(null);
+            setEndId(tempRoom.id);
+            setStatus(`Set destination to ${tempRoom.name}. Select a starting point.`);
+          } else {
+            setEndId(tempRoom.id);
+            setStatus(`Set destination to ${tempRoom.name}`);
+          }
+        };
+        
+        // Allow both options via separate popups
+        setTimeout(() => {
+          setPopupVisible(false);
+          setPopupTitle('Set as Current Position');
+          setPopupMessage(`Set your current position to ${tempRoom.name}?`);
+          setPopupConfirmText('Yes');
+          setPopupVisible(true);
+          
+          setTimeout(() => {
+            setPopupVisible(false);
+            setPopupTitle('Set as Destination');
+            setPopupMessage(`Set your destination to ${tempRoom.name}?`);
+            setPopupConfirmText('Yes');
+            setPopupVisible(true);
+            
+            setTimeout(() => {
+              setPopupVisible(false);
+              currentPositionAction();
+            }, 2000);
+          }, 2000);
+        }, 2000);
+      }, 2000);
+    } catch (error) {
+      console.error('Error processing QR code:', error);
+      setPopupTitle('Error');
+      setPopupMessage('Failed to process QR code. Please try again.');
+      setPopupVisible(true);
+    }
+  };
+  
   const resetRoute = () => {
     setStartId(null);
     setEndId(null);
@@ -431,6 +581,28 @@ export default function IndoorSchematicNavScreen() {
         </TouchableOpacity>
       )} */}
 
+      {/* Floating QR scan button */}
+      <TouchableOpacity
+        style={[styles.qrScanButton, { backgroundColor: colors.primary }]}
+        onPress={() => setQrScannerVisible(true)}
+      >
+        <Icon name="qr-code-outline" size={24} color="#FFFFFF" />
+        <Text style={styles.qrScanButtonText}>Scan QR</Text>
+      </TouchableOpacity>
+
+      {/* QR Scanner Modal */}
+      <Modal
+        visible={qrScannerVisible}
+        transparent={false}
+        animationType="slide"
+        onRequestClose={() => setQrScannerVisible(false)}
+      >
+        <QRScanner 
+          onScan={handleQRScan}
+          onClose={() => setQrScannerVisible(false)}
+        />
+      </Modal>
+
       <StandardPopup
         visible={popupVisible}
         title={popupTitle}
@@ -444,8 +616,64 @@ export default function IndoorSchematicNavScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  container: {
+    flex: 1,
+  },
+  mapContainer: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pickerContainer: {
+    paddingHorizontal: 10,
+    zIndex: 2,
+  },
+  roomListContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  instructionText: {
+    paddingHorizontal: 10,
+    marginTop: 10,
+    marginBottom: 5,
+    opacity: 0.7,
+    fontStyle: 'italic',
+  },
+  statusText: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  qrScanButton: {
+    position: 'absolute',
+    bottom: 80,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 30,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+  },
+  qrScanButtonText: {
+    color: '#FFFFFF',
+    marginLeft: 6,
+    fontWeight: '600',
+  },
+
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 5,
+  },
 
   topBar: {
     flexDirection: 'row',
@@ -464,12 +692,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
 
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 5,
-  },
+    
 
   fab: {
     position: 'absolute',
