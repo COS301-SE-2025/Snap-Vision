@@ -73,7 +73,7 @@ export default function AdminLoadFloorplansContent() {
     { label: string; value: string }[]
   >([]);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
-
+  const [currentStep, setCurrentStep] = useState<number>(1); // Track current step (1-4)
   // Popup states
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showNavigationConfirm, setShowNavigationConfirm] = useState(false);
@@ -336,7 +336,9 @@ export default function AdminLoadFloorplansContent() {
                 ]}
                 onPress={() => {
                   setSelectedLocation(loc.id);
-                  setSelectedBuilding(null); // reset building
+                  setSelectedBuilding(null);
+                  setSelectedBuildingId(null);
+                  setCurrentStep(1);
                 }}
               >
                 <Text style={{ color: selectedLocation === loc.id ? '#FFF' : colors.text }}>
@@ -348,6 +350,7 @@ export default function AdminLoadFloorplansContent() {
         </View>
 
         {/* Step 1: Select Building */}
+        {selectedLocation && currentStep >= 1 && (
         <View style={styles.sectionContainer}>
           <Text style={[styles.sectionTitle, { color: colors.primary }]}>
             Step 1: Select Building
@@ -374,6 +377,7 @@ export default function AdminLoadFloorplansContent() {
                   if (selected) {
                     setSelectedBuilding(selected);
                     setBuildingName(selected.name);
+                    setCurrentStep(2); 
                   }
                 }}
                 searchable={true}
@@ -399,8 +403,12 @@ export default function AdminLoadFloorplansContent() {
             </View>
           )}
         </View>
+        )}
+
+        {/* OR Section */}
 
         {/* Step 2: Floor Label */}
+        {selectedBuilding && currentStep >= 2 && (
         <View style={styles.sectionContainer}>
           <Text style={[styles.sectionTitle, { color: colors.primary }]}>
             Step 2: Floor Information
@@ -416,7 +424,13 @@ export default function AdminLoadFloorplansContent() {
                 const cleaned = text.replace(/[^0-9]/g, '');
                 if (cleaned === '' || parseInt(cleaned) >= 1) {
                   setFloorLabel(cleaned);
+                  if (cleaned) {
+                    setCurrentStep(3); // Move to step 3 when floor label is entered
+                  }
                 }
+              }}
+              onBlur={() => {
+                if (floorLabel) setCurrentStep(3); // Also advance on blur if value exists
               }}
               keyboardType="number-pad"
               maxLength={2} // optional: block large numbers like 100+
@@ -432,8 +446,12 @@ export default function AdminLoadFloorplansContent() {
             </Text>
           </View>
         </View>
+        )}
+
+        {/* OR Section */}
 
         {/* Step 3: Upload Floorplan */}
+        {floorLabel && currentStep >= 3 && (
         <View style={styles.sectionContainer}>
           <Text style={[styles.sectionTitle, { color: colors.primary }]}>
             Step 3: Select Floorplan File
@@ -443,7 +461,13 @@ export default function AdminLoadFloorplansContent() {
           <View style={styles.fileUploadContainer}>
             <AppSecondaryButton
               title={fileUri ? 'Change Image' : 'Select Floorplan Image'}
-              onPress={handlePickDocument}
+              onPress={() => {
+                handlePickDocument().then(() => {
+                  if (fileUri) {
+                    setCurrentStep(4); // Move to step 4 when file is selected
+                  }
+                });
+              }}
             />
             <Text style={[styles.infoText, { color: colors.secondary }]}>
               Select a PNG or JPG floorplan image
@@ -459,8 +483,10 @@ export default function AdminLoadFloorplansContent() {
             )}
           </View>
         </View>
+        )}
 
         {/* Submit Button */}
+        {currentStep >= 4 && (
         <View style={styles.submitContainer}>
           <AppButton
             title="Upload Floorplan"
@@ -468,7 +494,9 @@ export default function AdminLoadFloorplansContent() {
             disabled={!fileUri || (!selectedBuilding && !buildingName) || !floorLabel}
           />
         </View>
+        )}
       </ScrollView>
+      
 
       {/* Success Popup */}
       <StandardPopup
