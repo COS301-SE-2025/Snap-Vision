@@ -42,18 +42,21 @@ export default function QRScanner({ onScan, onClose }: Props) {
           android: PERMISSIONS.ANDROID.CAMERA,
         })!;
         const res = await request(camPerm);
-        if (res === RESULTS.GRANTED) setHasPermission(true);
-        else {
-          setHasPermission(false);
-          Alert.alert(
-            'Camera permission required',
-            'Allow camera access to scan QR codes.',
-            [
-              { text: 'Open Settings', onPress: openSettings },
-              { text: 'Close', onPress: onClose, style: 'cancel' },
-            ]
-          );
-        }
+        if (res === RESULTS.GRANTED || res === RESULTS.LIMITED) {
+      setHasPermission(true);
+    } else {
+      setHasPermission(false);
+      if (res === RESULTS.BLOCKED) {
+        Alert.alert(
+          'Permission Required',
+          'Camera access is blocked. Please enable it in settings.',
+          [
+            { text: 'Open Settings', onPress: openSettings },
+            { text: 'Cancel', onPress: onClose }
+          ]
+        );
+      }
+    }
       } catch (e) {
         console.log('Permission error', e);
         setHasPermission(false);
@@ -65,29 +68,37 @@ export default function QRScanner({ onScan, onClose }: Props) {
     };
   }, [onClose]);
 
-  const extractValue = (event: any): string | undefined => {
-    // Different builds/devices may deliver different shapes
-    // Try all the usual suspects:
-    return (
-      event?.nativeEvent?.codeStringValue ||
-      event?.codeStringValue ||
-      event?.nativeEvent?.codeString ||
-      event?.codeString ||
-      event?.nativeEvent?.stringValue ||
-      event?.stringValue
-    );
-  };
+  // Enhance your extractValue function:
+const extractValue = (event: any): string | undefined => {
+  const value = 
+    event?.nativeEvent?.codeStringValue ||
+    event?.codeStringValue ||
+    event?.nativeEvent?.codeString ||
+    event?.codeString ||
+    event?.nativeEvent?.stringValue ||
+    event?.stringValue;
 
-  const handleRead = (event: any) => {
-    if (locked) return;
-    const value = extractValue(event);
-    if (!value) return;
+  // Add debug logging
+  console.log('Raw scan event:', event);
+  console.log('Extracted value:', value);
+  
+  return value;
+};
 
-    setLastValue(value); // show in debug chip
-    setLocked(true);
-    lockTimer.current = setTimeout(() => setLocked(false), SCAN_LOCK_MS);
-    onScan(value);
-  };
+  // Add performance optimizations:
+const handleRead = (event: any) => {
+  if (locked) return;
+  const value = extractValue(event);
+  if (!value) return;
+
+  // Debounce scans
+  setLocked(true);
+  if (lockTimer.current) clearTimeout(lockTimer.current);
+  lockTimer.current = setTimeout(() => setLocked(false), SCAN_LOCK_MS);
+
+  console.log('Valid QR detected:', value); // Debug log
+  onScan(value);
+};
 
   const handleManualSubmit = () => {
     const v = manualValue.trim();
@@ -128,13 +139,17 @@ export default function QRScanner({ onScan, onClose }: Props) {
       <Camera
         style={StyleSheet.absoluteFill}
         cameraType="back"
-        zoomMode="on"
+        zoomMode="off"
         focusMode="on"
         torchMode={torch}
         scanBarcode
         onReadCode={handleRead}
         showFrame
         frameColor={colors.primary}
+        laserColor={colors.primary} // Add laser color for visibility
+        surfaceColor="transparent"
+        frameWidth={250}  // Explicitly set frame dimensions
+        frameHeight={250}
       />
 
       {/* Top controls */}
