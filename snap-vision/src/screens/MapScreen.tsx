@@ -43,7 +43,7 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'http://172.20.10.9:3000'; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = 'http://192.168.0.197:3000'; // <-- Use your correct backend IP here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
@@ -75,6 +75,7 @@ const MapScreen = () => {
   const [showReportTooltip, setShowReportTooltip] = useState(false);
   const webViewRef = useRef<WebViewType>(null);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [shouldCenterMap, setShouldCenterMap] = useState(true);
 
   // Turn-by-turn state
   const [steps, setSteps] = useState<any[]>([]);
@@ -313,15 +314,16 @@ const MapScreen = () => {
 
   // Send current location to map when map becomes ready
   useEffect(() => {
-    if (isMapReady && currentLocation && webViewRef.current) {
+    if (isMapReady && currentLocation && webViewRef.current && shouldCenterMap) {
       console.log('🗺️ Map is now ready and we have location, sending to WebView:', currentLocation);
       const zoomLevel = isNavigating ? 18 : 16;
       const jsCode = `window.updateUserLocation && window.updateUserLocation(${currentLocation.latitude}, ${currentLocation.longitude}, true, ${zoomLevel});`;
       webViewRef.current.injectJavaScript(jsCode);
+      setShouldCenterMap(false); // Prevent auto-centering on subsequent updates
     }
-  }, [isMapReady, currentLocation, isNavigating]);
+  }, [isMapReady, currentLocation, shouldCenterMap]);
 
-  const sendLocationToWebView = (lat: number, lon: number, centerMap = false) => {
+  const sendLocationToWebView = (lat: number, lon: number, centerMap = false, forceZoom = false) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
     console.log('📍 Sending location to WebView:', { lat, lon, centerMap, isMapReady });
 
@@ -331,11 +333,19 @@ const MapScreen = () => {
       return;
     }
 
+    let jsCode;
+  if (forceZoom || (centerMap && shouldCenterMap)) {
     const zoomLevel = isNavigating ? 18 : 16;
+    jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap}, ${zoomLevel});`;
+    // After first center, don't auto-center anymore unless explicitly requested
+    if (centerMap) setShouldCenterMap(false);
+  } else {
+    // Don't pass zoom level - let the map maintain current zoom
+    jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap});`;
+  }
 
-    const jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap}, ${zoomLevel});`;
-    console.log('📤 Injecting location JavaScript:', jsCode);
-    webViewRef.current.injectJavaScript(jsCode);
+  console.log('📤 Injecting location JavaScript:', jsCode);
+  webViewRef.current.injectJavaScript(jsCode);
 
     if (isNavigating && lastRoute.current && lastRoute.current.length > 0) {
       setStatus(`Updating location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
@@ -457,6 +467,7 @@ const MapScreen = () => {
     setShowLocationRefreshPopup(false); // Close the popup
     setTempMessage('Refreshing location...');
     setError(null); // Clear any existing errors
+    setShouldCenterMap(true);
 
     try {
       // Stop any existing location watching
@@ -1033,6 +1044,7 @@ const MapScreen = () => {
     if (distanceToDestination !== null) {
       setOriginalRouteDistance(distanceToDestination);
     }
+    sendLocationToWebView(currentLocation.latitude, currentLocation.longitude, true, true);
 
     // Start watching position with higher frequency
     if (watchIdRef.current) {
@@ -1040,19 +1052,20 @@ const MapScreen = () => {
     }
 
     watchIdRef.current = Geolocation.watchPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        sendLocationToWebView(latitude, longitude, true);
-      },
-      (error) => {
-        setError('Failed to track location');
-      },
-      {
-        enableHighAccuracy: true,
-        distanceFilter: 5, // Update every 5 meters
-        interval: 1000, // Update every second
-      },
-    );
+    (position) => {
+      const { latitude, longitude } = position.coords;
+      // Don't center or force zoom on location updates during navigation
+      sendLocationToWebView(latitude, longitude, false, false);
+    },
+    (error) => {
+      setError('Failed to track location');
+    },
+    {
+      enableHighAccuracy: true,
+      distanceFilter: 5, // Update every 5 meters
+      interval: 1000, // Update every second
+    },
+  );
   };
 
   // Stop navigation function with haptic feedback
@@ -1583,32 +1596,46 @@ useEffect(() => {
       ]);
 
       const fineGranted = permissions['android.permission.ACCESS_FINE_LOCATION'] === 'granted';
-      const coarseGranted =
-        permissions['android.permission.ACCESS_COARSE_LOCATION'] === 'granted';
+      const coarseGranted = permissions['android.permission.ACCESS_COARSE_LOCATION'] === 'granted';
 
       if (fineGranted || coarseGranted) {
-        const watchOptions =
-          Number(Platform.Version) >= 31
-            ? {
-                enableHighAccuracy: fineGranted,
-                distanceFilter: 3,
-                interval: 2000,
-                fastestInterval: 1000,
-                timeout: 25000,
-                maximumAge: 8000,
-              }
-            : {
-                enableHighAccuracy: true,
-                distanceFilter: 5,
-                interval: 2000,
-                timeout: 20000,
-                maximumAge: 5000,
-              };
+        const watchOptions = isNavigating
+          ? {
+              enableHighAccuracy: true,
+              distanceFilter: 3, // Update every 3 meters
+              interval: 2000, // Update every 2 seconds
+              timeout: 25000,
+              maximumAge: 8000,
+            }
+          : Number(Platform.Version) >= 31
+          ? {
+              // General browsing - Android 12+
+              enableHighAccuracy: fineGranted,
+              distanceFilter: 5,
+              interval: 2000, 
+              timeout: 25000,
+              maximumAge: 15000,
+            }
+          : {
+              // General browsing - Pre-Android 12
+              enableHighAccuracy: true,
+              distanceFilter: 5,
+              interval: 2000,
+              timeout: 20000,
+              maximumAge: 15000,
+            };
 
         watchId = Geolocation.watchPosition(
           (position) => {
             const { latitude, longitude } = position.coords;
-            sendLocationToWebView(latitude, longitude);
+            
+            if (isNavigating) {
+              // Don't center during navigation, let navigation handle it
+              sendLocationToWebView(latitude, longitude, false, false);
+            } else {
+              // Center only on first location or when explicitly requested
+              sendLocationToWebView(latitude, longitude, false, false);
+            }
           },
           (error) => {
             console.error('❌ Location watch error:', error);
@@ -1632,7 +1659,7 @@ useEffect(() => {
       Geolocation.clearWatch(watchId);
     }
   };
-}, []);
+}, [isNavigating]);
 
   // Helper to calculate distance between two lat/lon points (Haversine formula)
   function getDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -1863,7 +1890,6 @@ useEffect(() => {
       return () => clearTimeout(locationTimeout);
     }
   }, [isMapReady, currentLocation, isRefreshingLocation, showLocationRefreshPopup]);
-
   function toggleMapRotation(): void {
     if (webViewRef.current && isMapReady) {
       webViewRef.current.injectJavaScript(`
