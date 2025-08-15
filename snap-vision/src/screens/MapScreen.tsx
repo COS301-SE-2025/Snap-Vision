@@ -90,6 +90,7 @@ const MapScreen = () => {
   const [routeProgress, setRouteProgress] = useState(0);
   const [distanceToDestination, setDistanceToDestination] = useState<number | null>(null);
   const [estimatedTime, setEstimatedTime] = useState<number | null>(null);
+  const [hasReachedDestination, setHasReachedDestination] = useState(false);
 
   // Enhanced progress tracking
   const [distanceWalked, setDistanceWalked] = useState(0); // Never decreases
@@ -174,6 +175,7 @@ const MapScreen = () => {
   const [showDestinationReachedPopup, setShowDestinationReachedPopup] = useState(false);
   const [showLocationRefreshPopup, setShowLocationRefreshPopup] = useState(false);
   const [isRefreshingLocation, setIsRefreshingLocation] = useState(false);
+  
 
   //Fetch Locations
   useEffect(() => {
@@ -895,6 +897,7 @@ const MapScreen = () => {
     setDistanceWalked(0);
     setStartLocation(null);
     setOriginalRouteDistance(null);
+    setHasReachedDestination(false);
 
     // Stop navigation if it's active
     if (isNavigating) {
@@ -1022,6 +1025,7 @@ const MapScreen = () => {
     setStatus('Navigation started');
     setRouteProgress(0);
     setNavigationStartTime(Date.now());
+    setHasReachedDestination(false);
 
     // Initialize enhanced progress tracking
     setDistanceWalked(0);
@@ -1064,6 +1068,7 @@ const MapScreen = () => {
     }
 
     setIsNavigating(false);
+    setHasReachedDestination(false);
     setStatus('Navigation stopped');
     if (isMapReady && webViewRef.current) {
       webViewRef.current.injectJavaScript(
@@ -1090,11 +1095,11 @@ const MapScreen = () => {
 
   // Update the updateNavigationProgress function to check for destination arrival
   const updateNavigationProgress = (latitude: number, longitude: number) => {
-    // Add safety check at the beginning
-    if (!lastRoute.current || lastRoute.current.length === 0) {
-      console.warn('No route data available for progress update');
-      return;
-    }
+  // Add safety checks at the beginning
+  if (!lastRoute.current || lastRoute.current.length === 0 || hasReachedDestination) {
+    return;
+  }
+
 
     // Calculate distance walked from start location (never decreases)
     if (startLocation && isNavigating) {
@@ -1259,33 +1264,38 @@ const MapScreen = () => {
     // Check destination arrival based on either:
     // 1. Progress is 100%
     // 2. Distance to destination is less than 3 meters
-    if ((newProgress >= 100 || distanceToEnd < 3) && isNavigating) {
+    if ((newProgress >= 100 || distanceToEnd < 3) && isNavigating && !hasReachedDestination) {
       destinationReached();
     }
   };
 
   // Destination reached function with haptic feedback
   const destinationReached = async () => {
-    if (!isNavigating) return; // Only handle if actually navigating
+  if (!isNavigating || hasReachedDestination) return;
+  
+  console.log('🎯 Destination reached - triggering once');
+  
+  // Set the flag immediately to prevent re-entry
+  setHasReachedDestination(true);
+  setIsNavigating(false);
+  
+  // Stop all location tracking immediately
+  if (watchIdRef.current) {
+    Geolocation.clearWatch(watchIdRef.current);
+    watchIdRef.current = null;
+  }
 
-    // Stop navigation FIRST to prevent repeated calls
-    stopNavigation();
+  try {
+    // Trigger success haptic feedback ONCE
+    if (isHapticFeedbackEnabled) {
+      ReactNativeHapticFeedback.trigger('notificationSuccess', hapticOptions);
+    }
 
-    try {
-      // Trigger success haptic feedback
-      if (isHapticFeedbackEnabled) {
-        ReactNativeHapticFeedback.trigger('notificationSuccess', hapticOptions);
-      }
+    await unlock('destination-reached');
+    await incrementRoutes();
 
-      await unlock('destination-reached');
-      await incrementRoutes();
-
-      const userId = auth().currentUser?.uid;
-      if (!userId) {
-        console.warn('User not authenticated.');
-        return;
-      }
-
+    const userId = auth().currentUser?.uid;
+    if (userId && selectedPOI) {
       const visit: Visit = {
         userId,
         poiId: selectedPOI.id,
@@ -1293,47 +1303,31 @@ const MapScreen = () => {
         timestamp: firestore.Timestamp.now(),
         centroid: selectedPOI.centroid,
       };
-
       await addRecentlyVisitedPOI(visit);
-      // console.log('Visit recorded:', selectedPOI.name);
-    } catch (error) {
-      // console.error('Failed to record visit:', error);
     }
+  } catch (error) {
+    console.error('Failed to record visit:', error);
+  }
 
-    // Clear destination and navigation state to hide the progress bar
-    setDestination('');
-    setDestinationCoords(null);
-    setRouteProgress(0);
-    setDistanceToDestination(null);
-    setEstimatedTime(null);
-    setSelectedFeature(null);
-    setSelectedPOI(null);
+  setStatus('You have reached your destination!');
+  setRouteProgress(100);
 
-    // Reset enhanced progress tracking
-    setDistanceWalked(0);
-    setStartLocation(null);
-    setOriginalRouteDistance(null);
+  if (isVoiceEnabled) {
+    Tts.stop();
+    setTimeout(() => {
+      Tts.speak('You have reached your destination');
+    }, 500);
+  }
+  // Clear progress line from map
+  if (isMapReady && webViewRef.current) {
+    webViewRef.current.injectJavaScript(
+      'if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }',
+    );
+  }
 
-    // Clear the route from the map
-    if (isMapReady && webViewRef.current) {
-      webViewRef.current.injectJavaScript('window.clearRoute && window.clearRoute();');
-    }
-    lastRoute.current = [];
-
-    // Show destination reached message
-    setStatus('You have reached your destination!');
-    setRouteProgress(100);
-
-    if (isVoiceEnabled) {
-      Tts.stop();
-      setTimeout(() => {
-        Tts.speak('You have reached your destination');
-      }, 500);
-    }
-
-    // Show destination reached popup
-    setShowDestinationReachedPopup(true);
-  };
+  // Show destination reached popup
+  setShowDestinationReachedPopup(true);
+};
 
   //add this function to handle report submission
   const submitCrowdReport = async () => {
@@ -1578,72 +1572,67 @@ const MapScreen = () => {
   };
 
   // Dynamically request location updates
-  useEffect(() => {
-    let watchId: number | null = null;
+useEffect(() => {
+  let watchId: number | null = null;
 
-    const startWatchingLocation = async () => {
-      try {
-        const permissions = await PermissionsAndroid.requestMultiple([
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-          PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
-        ]);
+  const startWatchingLocation = async () => {
+    try {
+      const permissions = await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+      ]);
 
-        const fineGranted = permissions['android.permission.ACCESS_FINE_LOCATION'] === 'granted';
-        const coarseGranted =
-          permissions['android.permission.ACCESS_COARSE_LOCATION'] === 'granted';
+      const fineGranted = permissions['android.permission.ACCESS_FINE_LOCATION'] === 'granted';
+      const coarseGranted =
+        permissions['android.permission.ACCESS_COARSE_LOCATION'] === 'granted';
 
-        if (fineGranted || coarseGranted) {
-          // console.log('✅ Starting location watch...');
+      if (fineGranted || coarseGranted) {
+        const watchOptions =
+          Number(Platform.Version) >= 31
+            ? {
+                enableHighAccuracy: fineGranted,
+                distanceFilter: 3,
+                interval: 2000,
+                fastestInterval: 1000,
+                timeout: 25000,
+                maximumAge: 8000,
+              }
+            : {
+                enableHighAccuracy: true,
+                distanceFilter: 5,
+                interval: 2000,
+                timeout: 20000,
+                maximumAge: 5000,
+              };
 
-          // Android 12+ requires different options
-          const watchOptions =
-            Number(Platform.Version) >= 31
-              ? {
-                  enableHighAccuracy: fineGranted, // Use high accuracy only if fine location granted
-                  distanceFilter: 3,
-                  interval: 2000,
-                  fastestInterval: 1000,
-                  timeout: 25000,
-                  maximumAge: 8000,
-                }
-              : {
-                  enableHighAccuracy: true,
-                  distanceFilter: 5,
-                  interval: 2000,
-                  timeout: 20000,
-                  maximumAge: 5000,
-                };
-
-          watchId = Geolocation.watchPosition(
-            (position) => {
-              // console.log('📍 Location update:', position.coords.accuracy + 'm accuracy');
-              const { latitude, longitude } = position.coords;
-              sendLocationToWebView(latitude, longitude);
-            },
-            (error) => {
-              console.error('❌ Location watch error:', error);
-              setError(`Location tracking error: ${error.message}`);
-            },
-            watchOptions,
-          );
-        } else {
-          setError('Location permissions required for navigation');
-        }
-      } catch (err) {
-        console.error('❌ Location watch setup failed:', err);
-        setError('Failed to setup location tracking');
+        watchId = Geolocation.watchPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            sendLocationToWebView(latitude, longitude);
+          },
+          (error) => {
+            console.error('❌ Location watch error:', error);
+            setError(`Location tracking error: ${error.message}`);
+          },
+          watchOptions,
+        );
+      } else {
+        setError('Location permissions required for navigation');
       }
-    };
+    } catch (err) {
+      console.error('❌ Location watch setup failed:', err);
+      setError('Failed to setup location tracking');
+    }
+  };
 
-    startWatchingLocation();
+  startWatchingLocation();
 
-    return () => {
-      if (watchId !== null) {
-        // console.log('🛑 Stopping location watch');
-        Geolocation.clearWatch(watchId);
-      }
-    };
-  }, []);
+  return () => {
+    if (watchId !== null) {
+      Geolocation.clearWatch(watchId);
+    }
+  };
+}, []);
 
   // Helper to calculate distance between two lat/lon points (Haversine formula)
   function getDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -1846,18 +1835,20 @@ const MapScreen = () => {
 
   // Add this new useEffect after your other useEffects
   useEffect(() => {
-    // Only run when navigating
-    if (!isNavigating || !currentLocation) return;
+  // Only run when navigating AND haven't reached destination
+  if (!isNavigating || !currentLocation || hasReachedDestination) {
+    return; // Exit early if any condition is not met
+  }
 
-    // Force update progress every 0.5 seconds
-    const progressInterval = setInterval(() => {
-      if (currentLocation && lastRoute.current && lastRoute.current.length > 0) {
-        updateNavigationProgress(currentLocation.latitude, currentLocation.longitude);
-      }
-    }, 500);
+  // Force update progress every 0.5 seconds
+  const progressInterval = setInterval(() => {
+    if (currentLocation && lastRoute.current && lastRoute.current.length > 0 && !hasReachedDestination) {
+      updateNavigationProgress(currentLocation.latitude, currentLocation.longitude);
+    }
+  }, 500);
 
-    return () => clearInterval(progressInterval);
-  }, [isNavigating, currentLocation]);
+  return () => clearInterval(progressInterval);
+}, [isNavigating, currentLocation, hasReachedDestination]); // Add hasReachedDestination dependency
 
   // Check for location availability after map loads
   useEffect(() => {
@@ -1872,39 +1863,6 @@ const MapScreen = () => {
       return () => clearTimeout(locationTimeout);
     }
   }, [isMapReady, currentLocation, isRefreshingLocation, showLocationRefreshPopup]);
-
-  // Dynamically request location updates every 3 seconds
-  useEffect(() => {
-    let watchId: number | null = null;
-
-    const startWatchingLocation = async () => {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      );
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        watchId = Geolocation.watchPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            sendLocationToWebView(latitude, longitude);
-          },
-          (error) => {
-            setError('Failed to get location');
-          },
-          { enableHighAccuracy: true, distanceFilter: 0, interval: 3000, fastestInterval: 3000 },
-        );
-      } else {
-        setError('Location permission denied');
-      }
-    };
-
-    startWatchingLocation();
-
-    return () => {
-      if (watchId !== null) {
-        Geolocation.clearWatch(watchId);
-      }
-    };
-  }, []);
 
   function toggleMapRotation(): void {
     if (webViewRef.current && isMapReady) {
@@ -2517,6 +2475,27 @@ const MapScreen = () => {
         message="You have arrived at your destination!"
         onConfirm={() => {
           setShowDestinationReachedPopup(false);
+          setHasReachedDestination(false);
+          // Clear destination and navigation state to hide the progress bar
+    setDestination('');
+    setDestinationCoords(null);
+    setRouteProgress(0);
+    setDistanceToDestination(null);
+    setEstimatedTime(null);
+    setSelectedFeature(null);
+    setSelectedPOI(null);
+setSteps([]);
+    setCurrentStep(0);
+    // Reset enhanced progress tracking
+    setDistanceWalked(0);
+    setStartLocation(null);
+    setOriginalRouteDistance(null);
+
+    // Clear the route from the map
+    if (isMapReady && webViewRef.current) {
+      webViewRef.current.injectJavaScript('window.clearRoute && window.clearRoute();');
+    }
+    lastRoute.current = [];
           setStatus('Ready for navigation');
         }}
         showCancel={false}
