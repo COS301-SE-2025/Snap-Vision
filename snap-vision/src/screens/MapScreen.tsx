@@ -44,7 +44,7 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = ROUTING_API;// <-- Use your correct backend IP here
+const ROUTING_API_BASE = 'https://7565763f4537.ngrok-free.app';// <-- Use your correct backend IP here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
