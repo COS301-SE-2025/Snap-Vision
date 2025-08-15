@@ -17,7 +17,6 @@ env:
   # - variable: MY_SECRET
   #   secret: mySecretRef
 
-  env:
   - variable: ORS_API_KEY
     secret: ORS_API_KEY
     availability:
