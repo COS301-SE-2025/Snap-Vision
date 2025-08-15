@@ -43,7 +43,7 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'http://192.168.43.155:3000'; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = 'http://172.20.10.9:3000'; // <-- Use your correct backend IP here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
@@ -1369,36 +1369,6 @@ const MapScreen = () => {
     }
   };
 
-  //IMP: temp test to take out later
-  const simulateDestinationReached = async () => {
-    if (!selectedPOI) {
-      console.warn('No POI selected to simulate destination reached.');
-      return;
-    }
-
-    try {
-      const userId = auth().currentUser?.uid;
-      if (!userId) return;
-
-      const visit: Visit = {
-        userId,
-        poiId: selectedPOI.id,
-        name: selectedPOI.name,
-        timestamp: firestore.Timestamp.now(),
-        centroid: selectedPOI.centroid,
-      };
-
-      await addRecentlyVisitedPOI(visit);
-      // console.log('Simulated visit recorded:', selectedPOI.name);
-      setSuccessPopupMessage(`Simulated visit to: ${selectedPOI.name}`);
-      setShowSuccessPopup(true);
-    } catch (error) {
-      // console.error('Failed to simulate visit:', error);
-      setErrorPopupMessage('Failed to simulate visit. Please try again.');
-      setShowErrorPopup(true);
-    }
-  };
-
   //  function to fetch recent crowd reports
   const fetchRecentCrowdReports = async () => {
     try {
@@ -2509,21 +2479,6 @@ const MapScreen = () => {
         </View>
       ) : null}
 
-      <TouchableOpacity //IMP: test to take out laters
-        style={{
-          position: 'absolute',
-          bottom: 50, // Adjust position to avoid overlap with the admin button
-          right: 20,
-          backgroundColor: 'blue',
-          paddingVertical: 10,
-          paddingHorizontal: 16,
-          borderRadius: 8,
-          elevation: 4,
-        }}
-        onPress={simulateDestinationReached}
-      >
-        <Text style={{ color: 'white', textAlign: 'center' }}>Simulate Destination Reached</Text>
-      </TouchableOpacity>
 
       {/* Error Popup */}
       <StandardPopup
