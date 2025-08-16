@@ -510,12 +510,12 @@ export default function QRCodeAdminContent() {
                           <Icon name="qrcode" size={20} color="#FFF" />
                         </TouchableOpacity>
 
-                        <TouchableOpacity
+                        {/* <TouchableOpacity
                           style={[styles.actionButton, { backgroundColor: colors.card }]}
                           onPress={() => openEditModal(item)}
                         >
                           <Icon name="pencil" size={20} color={colors.primary} />
-                        </TouchableOpacity>
+                        </TouchableOpacity> */}
 
                         <TouchableOpacity
                           style={[styles.actionButton, { backgroundColor: '#FF3B30' }]}
