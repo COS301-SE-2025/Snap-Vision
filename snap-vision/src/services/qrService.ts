@@ -8,7 +8,7 @@ export interface QRCodeMapping {
   roomId: string;
   buildingId: string;
   buildingName?: string;
-  floorId: string;              // <- matches floorplan doc ID (e.g., "1", "G")
+  floorId: string; // <- matches floorplan doc ID (e.g., "1", "G")
   locationId: string;
   locationName?: string;
   createdAt: FirebaseFirestoreTypes.Timestamp;
@@ -28,8 +28,8 @@ export interface BuildingLite {
 }
 
 export interface FloorLite {
-  id: string;    // floorplan doc ID
-  name: string;  // display label: floorLabel || id
+  id: string; // floorplan doc ID
+  name: string; // display label: floorLabel || id
 }
 
 export interface RoomLite {
@@ -50,21 +50,17 @@ export const createQRCodeMapping = async (
   locationName: string,
   buildingId: string,
   buildingName: string,
-  floorId: string,           // MUST be the floorplan doc ID
+  floorId: string, // MUST be the floorplan doc ID
   roomId: string,
   roomName: string,
   qrValue: string,
-  description?: string
+  description?: string,
 ): Promise<QRCodeMapping> => {
   try {
     const userId = auth().currentUser?.uid;
     if (!userId) throw new Error('User not authenticated');
 
-    const qrRef = firestore()
-      .collection('locations')
-      .doc(locationId)
-      .collection('qrCodes')
-      .doc();
+    const qrRef = firestore().collection('locations').doc(locationId).collection('qrCodes').doc();
 
     const qrData: QRCodeMapping = {
       id: qrRef.id,
@@ -160,7 +156,7 @@ export const getBuildingsForLocation = async (locationId: string): Promise<Build
  */
 export const getFloorsForBuilding = async (
   locationId: string,
-  buildingId: string
+  buildingId: string,
 ): Promise<FloorLite[]> => {
   try {
     const col = firestore()
@@ -202,7 +198,7 @@ export const getFloorsForBuilding = async (
 export const getRoomsForFloor = async (
   locationId: string,
   buildingId: string,
-  floorId: string
+  floorId: string,
 ): Promise<RoomLite[]> => {
   try {
     // First, fetch all rooms for the location & building (index-friendly)
@@ -245,7 +241,7 @@ export const getRoomsForFloor = async (
  */
 export const getQRCodesForBuilding = async (
   locationId: string,
-  buildingId: string
+  buildingId: string,
 ): Promise<QRCodeMapping[]> => {
   try {
     const snapshot = await firestore()
@@ -266,7 +262,7 @@ export const getQRCodesForBuilding = async (
 /** Delete a QR code mapping */
 export const deleteQRCodeMapping = async (
   locationId: string,
-  qrCodeId: string
+  qrCodeId: string,
 ): Promise<boolean> => {
   try {
     await firestore()
@@ -286,7 +282,7 @@ export const deleteQRCodeMapping = async (
 export const updateQRCodeMapping = async (
   locationId: string,
   qrCodeId: string,
-  updates: Partial<QRCodeMapping>
+  updates: Partial<QRCodeMapping>,
 ): Promise<boolean> => {
   try {
     await firestore()

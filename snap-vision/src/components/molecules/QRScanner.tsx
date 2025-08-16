@@ -1,4 +1,3 @@
-// src/components/molecules/QRScanner.tsx
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
@@ -22,8 +21,8 @@ interface Props {
   onClose: () => void;
 }
 
-const SCAN_LOCK_MS = 900;     // shorter lock so we don't miss follow-up scans
-const DEDUPE_TTL_MS = 4000;   // ignore the same value within this window
+const SCAN_LOCK_MS = 900; // shorter lock so we don't miss follow-up scans
+const DEDUPE_TTL_MS = 4000; // ignore the same value within this window
 
 const { width, height } = Dimensions.get('window');
 const FRAME_SIZE = Math.min(width, height) * 0.8;
@@ -40,7 +39,7 @@ export default function QRScanner({ onScan, onClose }: Props) {
   const [isScanning, setIsScanning] = useState(true);
   const [autoScanMode, setAutoScanMode] = useState(true);
   const [manualScanActive, setManualScanActive] = useState(false);
-  
+
   // Popup states
   const [showPermissionPopup, setShowPermissionPopup] = useState(false);
   const [permissionMessage, setPermissionMessage] = useState('');
@@ -88,7 +87,7 @@ export default function QRScanner({ onScan, onClose }: Props) {
     if (!device?.formats?.length) return undefined;
     const sorted = [...device.formats].sort((a, b) => (b.maxFps ?? 0) - (a.maxFps ?? 0));
     // Prefer 60fps+ if present, else highest fps
-    return sorted.find(f => (f.maxFps ?? 0) >= 60) ?? sorted[0];
+    return sorted.find((f) => (f.maxFps ?? 0) >= 60) ?? sorted[0];
   }, [device]);
 
   // Helpers
@@ -115,7 +114,7 @@ export default function QRScanner({ onScan, onClose }: Props) {
 
         // Log what the device is reporting (handy for OEM quirks)
         codes.forEach((c, i) =>
-          console.log(`Code[${i}] type=${c?.type} value=${c?.value || c?.rawValue}`)
+          console.log(`Code[${i}] type=${c?.type} value=${c?.value || c?.rawValue}`),
         );
 
         const hit = extractFirstValue(codes);
@@ -142,7 +141,7 @@ export default function QRScanner({ onScan, onClose }: Props) {
         console.error('handleBarcodeDetected error:', err);
       }
     },
-    [locked, onScan]
+    [locked, onScan],
   );
 
   const handleManualCodeScanned = useCallback(
@@ -151,18 +150,18 @@ export default function QRScanner({ onScan, onClose }: Props) {
       setManualScanActive(false);
       handleBarcodeDetected(codes);
     },
-    [manualScanActive, locked, handleBarcodeDetected]
+    [manualScanActive, locked, handleBarcodeDetected],
   );
 
   // Vision Camera code scanner configuration
   const codeScanner = useCodeScanner({
     // Include common alternates; some vendors label "qrcode" differently
-    codeTypes: ['qr',  'aztec', ],
+    codeTypes: ['qr', 'aztec'],
     onCodeScanned: autoScanMode
       ? handleBarcodeDetected
       : manualScanActive
-      ? handleManualCodeScanned
-      : undefined,
+        ? handleManualCodeScanned
+        : undefined,
     // Tighter ROI reduces false reads but stays easy to aim
     regionOfInterest: { x: 0.2, y: 0.2, width: 0.6, height: 0.6 },
   });
@@ -187,7 +186,7 @@ export default function QRScanner({ onScan, onClose }: Props) {
     }, 3000);
   };
 
-  const toggleScanMode = () => setAutoScanMode(prev => !prev);
+  const toggleScanMode = () => setAutoScanMode((prev) => !prev);
 
   const handleFocus = async (event: any) => {
     if (!cameraRef.current || locked) return;
@@ -221,7 +220,9 @@ export default function QRScanner({ onScan, onClose }: Props) {
   if (hasPermission === false) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <Text style={{ color: colors.text, fontSize: 16, textAlign: 'center', paddingHorizontal: 24 }}>
+        <Text
+          style={{ color: colors.text, fontSize: 16, textAlign: 'center', paddingHorizontal: 24 }}
+        >
           Camera permission is required to scan QR codes.
         </Text>
         <TouchableOpacity
@@ -295,7 +296,11 @@ export default function QRScanner({ onScan, onClose }: Props) {
         <View style={[styles.cornerBR, { borderColor: colors.success }]} />
 
         <Text style={[styles.scanningText, { color: colors.text }]}>
-          {autoScanMode ? 'Position QR code in frame' : manualScanActive ? 'Scanning...' : 'Tap scan button to capture'}
+          {autoScanMode
+            ? 'Position QR code in frame'
+            : manualScanActive
+              ? 'Scanning...'
+              : 'Tap scan button to capture'}
         </Text>
 
         {/* Manual scan button (only visible in manual mode) */}
@@ -330,7 +335,10 @@ export default function QRScanner({ onScan, onClose }: Props) {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.modeBtn, { backgroundColor: autoScanMode ? colors.success : colors.card }]}
+            style={[
+              styles.modeBtn,
+              { backgroundColor: autoScanMode ? colors.success : colors.card },
+            ]}
             onPress={toggleScanMode}
           >
             <Icon
@@ -339,17 +347,21 @@ export default function QRScanner({ onScan, onClose }: Props) {
               color={autoScanMode ? '#FFFFFF' : colors.primary}
             />
             <Text
-              style={[
-                styles.modeBtnText,
-                { color: autoScanMode ? '#FFFFFF' : colors.primary },
-              ]}
+              style={[styles.modeBtnText, { color: autoScanMode ? '#FFFFFF' : colors.primary }]}
             >
               {autoScanMode ? 'Auto' : 'Manual'}
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.iconBtn} onPress={() => setTorch(t => (t === 'on' ? 'off' : 'on'))}>
-            <Icon name={torch === 'on' ? 'flashlight' : 'flashlight-outline'} size={32} color="#FFFFFF" />
+          <TouchableOpacity
+            style={styles.iconBtn}
+            onPress={() => setTorch((t) => (t === 'on' ? 'off' : 'on'))}
+          >
+            <Icon
+              name={torch === 'on' ? 'flashlight' : 'flashlight-outline'}
+              size={32}
+              color="#FFFFFF"
+            />
           </TouchableOpacity>
         </View>
       </View>

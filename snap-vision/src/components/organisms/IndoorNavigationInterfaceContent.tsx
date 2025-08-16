@@ -103,15 +103,15 @@ export default function IndoorNavigationInterfaceContent({
       setSelectedEndRoom(room);
     }
   };
-  
+
   const handleQRScan = async (qrValue: string) => {
     try {
       setQRScanLoading(true);
       const mapping = await getQRCodeMappingByValue(qrValue);
-      
+
       if (mapping && mapping.roomId) {
         // Find the room that corresponds to the QR code
-        const room = rooms.find(r => r.id === mapping.roomId);
+        const room = rooms.find((r) => r.id === mapping.roomId);
         if (room) {
           handleRoomSelect(room, true); // Set as starting room
         } else {
@@ -176,8 +176,8 @@ export default function IndoorNavigationInterfaceContent({
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
-          <TouchableOpacity 
-            style={[styles.qrButton, { backgroundColor: colors.primary }]} 
+          <TouchableOpacity
+            style={[styles.qrButton, { backgroundColor: colors.primary }]}
             onPress={() => setQRScannerVisible(true)}
             disabled={qrScanLoading}
           >
@@ -332,7 +332,7 @@ export default function IndoorNavigationInterfaceContent({
       >
         <Text style={styles.navigationButtonText}>Start Indoor Navigation</Text>
       </TouchableOpacity>
-      
+
       {/* QR Scanner Modal */}
       <Modal
         visible={qrScannerVisible}
@@ -340,10 +340,7 @@ export default function IndoorNavigationInterfaceContent({
         animationType="slide"
         transparent={false}
       >
-        <QRScanner
-          onScan={handleQRScan}
-          onClose={() => setQRScannerVisible(false)}
-        />
+        <QRScanner onScan={handleQRScan} onClose={() => setQRScannerVisible(false)} />
       </Modal>
     </View>
   );

@@ -80,7 +80,7 @@ export default function IndoorSchematicNavScreen() {
   const [popupTitle, setPopupTitle] = useState('');
   const [popupMessage, setPopupMessage] = useState('');
   const [popupConfirmText, setPopupConfirmText] = useState('OK');
-  
+
   // QR Scanner state
   const [qrScannerVisible, setQrScannerVisible] = useState(false);
 
@@ -89,28 +89,28 @@ export default function IndoorSchematicNavScreen() {
   const [floorplanLoading, setFloorplanLoading] = useState<boolean>(false);
 
   // Helper function to find nearest room to a point
-  const findNearestRoom = (rooms: RoomPOI[], pos: { x: number, y: number }, floorId: string) => {
+  const findNearestRoom = (rooms: RoomPOI[], pos: { x: number; y: number }, floorId: string) => {
     if (!pos || !rooms || !rooms.length) return null;
-    
+
     console.log(`Finding nearest room on floor ${floorId}. Total rooms: ${rooms.length}`);
-    
+
     // Filter rooms by floor
     const roomsOnFloor = rooms.filter((r) => r.floorId === floorId);
     console.log(`Rooms on floor ${floorId}: ${roomsOnFloor.length}`);
-    
+
     if (!roomsOnFloor.length) return null;
-    
+
     // Calculate distances
-    const roomsWithDistance = roomsOnFloor.map(room => {
+    const roomsWithDistance = roomsOnFloor.map((room) => {
       const dx = room.coordinates.x - pos.x;
       const dy = room.coordinates.y - pos.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
       return { room, distance };
     });
-    
+
     // Sort by distance
     roomsWithDistance.sort((a, b) => a.distance - b.distance);
-    
+
     // Return closest room
     return roomsWithDistance[0]?.room || null;
   };
@@ -149,21 +149,21 @@ export default function IndoorSchematicNavScreen() {
         if (!floorSet.includes(selectedFloorId)) {
           setSelectedFloorId(floorSet[0] || initialFloorId);
         }
-        
+
         // Set initial position and start room
         if (userPos) {
           // We have coordinates from QR code, set current position
           console.log('Setting current position from QR scan:', userPos);
           setCurrentPos(userPos);
-          
+
           // Find the nearest room to use as starting point
           const nearestRoom = findNearestRoom(roomsData, userPos, selectedFloorId);
-          
+
           if (nearestRoom) {
             console.log('Setting start room from QR coordinates:', nearestRoom.name);
             setStartId(nearestRoom.id);
             // setStatusMessage(`Current position: ${nearestRoom.name}`);
-            
+
             // Show popup notification to user
             setPopupTitle('Location Set');
             setPopupMessage(`Your starting position has been set to ${nearestRoom.name}`);
@@ -282,7 +282,7 @@ export default function IndoorSchematicNavScreen() {
       }
 
       console.log('Processing QR code value:', qrValue);
-      
+
       // Use the qrService to get mapping data - same as QrCard
       const qrMapping = await getQRCodeMappingByValue(qrValue);
 
@@ -292,7 +292,7 @@ export default function IndoorSchematicNavScreen() {
         setPopupVisible(true);
         return;
       }
-      
+
       console.log('QR mapping found:', JSON.stringify(qrMapping));
 
       // Use the mapping as saved by createQRCodeMapping
@@ -302,7 +302,7 @@ export default function IndoorSchematicNavScreen() {
         buildingName: qrBuildingName,
         roomId: qrRoomId,
         floorId: qrFloorId,
-        roomName: qrRoomName
+        roomName: qrRoomName,
       } = qrMapping;
 
       // Make sure the QR data is valid
@@ -317,9 +317,11 @@ export default function IndoorSchematicNavScreen() {
       if (qrBuildingId !== route.params.buildingId || qrLocationId !== route.params.locationId) {
         // We need to navigate to a different building
         setPopupTitle('Different Building');
-        setPopupMessage(`This QR code is for ${qrBuildingName || 'a different building'}. Redirecting...`);
+        setPopupMessage(
+          `This QR code is for ${qrBuildingName || 'a different building'}. Redirecting...`,
+        );
         setPopupVisible(true);
-        
+
         // Navigate to the correct building after showing message
         setTimeout(() => {
           setPopupVisible(false);
@@ -328,31 +330,31 @@ export default function IndoorSchematicNavScreen() {
             buildingId: qrBuildingId,
             buildingName: qrBuildingName || 'Building',
             floorId: qrFloorId,
-            userPos: fallbackCoordinates // Add fallback coordinates
+            userPos: fallbackCoordinates, // Add fallback coordinates
           });
         }, 1500);
         return;
       }
-      
+
       // We're in the same building, try to get room details
       try {
         // Switch to the floor from the QR code
         console.log('Changing to floor:', qrFloorId, 'from floor:', selectedFloorId);
         setSelectedFloorId(qrFloorId);
-        
+
         // Reset navigation state when changing floors
         resetRoute();
-        
+
         // Get room reference
         const roomRef = firestore()
           .collection('locations')
           .doc(qrLocationId)
           .collection('roomPOIs')
           .doc(qrRoomId);
-          
+
         console.log('Fetching room data for:', qrRoomId, 'in location:', qrLocationId);
         const roomDoc = await roomRef.get();
-        
+
         // In newer Firebase versions, exists is a property or function
         let docExists = false;
         if (typeof roomDoc.exists === 'function') {
@@ -361,31 +363,32 @@ export default function IndoorSchematicNavScreen() {
           docExists = !!roomDoc.exists;
         }
         console.log('Room exists:', docExists, 'Room ID:', roomDoc.id);
-        
+
         if (!docExists) {
           // Room not found, try to find by name in existing rooms
-          const roomByName = allRooms.find(r => 
-            r.floorId === qrFloorId && 
-            r.name && 
-            r.name.toLowerCase() === (qrRoomName || '').toLowerCase()
+          const roomByName = allRooms.find(
+            (r) =>
+              r.floorId === qrFloorId &&
+              r.name &&
+              r.name.toLowerCase() === (qrRoomName || '').toLowerCase(),
           );
-          
+
           if (roomByName) {
             // Found room by name
             console.log('Found room by name:', roomByName.name);
             setCurrentPos(roomByName.coordinates);
             setStartId(roomByName.id);
-            
+
             setPopupTitle('Location Set');
             setPopupMessage(`Your starting position has been set to ${roomByName.name}`);
             setPopupVisible(true);
             return;
           }
-          
+
           // Not found by id or name, use fallback
           console.warn('Room document not found:', qrRoomId);
           setCurrentPos(fallbackCoordinates);
-          
+
           // Try to find the nearest room to use as starting point
           const nearestRoom = findNearestRoom(allRooms, fallbackCoordinates, qrFloorId);
           if (nearestRoom) {
@@ -399,14 +402,14 @@ export default function IndoorSchematicNavScreen() {
           setPopupVisible(true);
           return;
         }
-        
+
         // Room document exists, try to get coordinates
         const roomData = roomDoc.data() as any;
         console.log('Room data retrieved:', roomData ? JSON.stringify(roomData) : 'undefined');
-        
+
         // Pre-define coordinates as fallback to guarantee we always have something
         let coordinates = fallbackCoordinates;
-        
+
         if (roomData) {
           if (roomData.coordinates) {
             coordinates = roomData.coordinates;
@@ -416,17 +419,17 @@ export default function IndoorSchematicNavScreen() {
             console.log('Room position found:', coordinates);
           }
         }
-        
+
         // Set current position and starting room
         setCurrentPos(coordinates);
-        
+
         // Find the nearest room to use as starting point
         const nearestRoom = findNearestRoom(allRooms, coordinates, qrFloorId);
-        
+
         if (nearestRoom) {
           console.log('Setting start room from QR coordinates:', nearestRoom.name);
           setStartId(nearestRoom.id);
-          
+
           // Show popup notification to user
           setPopupTitle('Location Set');
           setPopupMessage(`Your starting position has been set to ${nearestRoom.name}`);
@@ -437,12 +440,11 @@ export default function IndoorSchematicNavScreen() {
           setPopupMessage('Your position has been set');
           setPopupVisible(true);
         }
-        
       } catch (roomError) {
         console.error('Error fetching room data:', roomError);
         // Use fallback coordinates
         setCurrentPos(fallbackCoordinates);
-        
+
         // Try to find the nearest room to use as starting point
         const nearestRoom = findNearestRoom(allRooms, fallbackCoordinates, qrFloorId);
         if (nearestRoom) {
@@ -459,7 +461,7 @@ export default function IndoorSchematicNavScreen() {
       setPopupVisible(true);
     }
   };
-  
+
   const resetRoute = () => {
     setStartId(null);
     setEndId(null);
@@ -566,15 +568,13 @@ export default function IndoorSchematicNavScreen() {
 
   // Determine what prompt to show based on state
   const prompt = !startId
-    ? 'Choose your start room' 
+    ? 'Choose your start room'
     : !endId
       ? 'Choose your destination'
       : `${Math.max(0, steps.length - currentStep)} steps left`;
-      
+
   // Override prompt if userPos was set from QR code
-  const effectivePrompt = userPos && startId 
-    ? 'Choose your destination' 
-    : prompt;
+  const effectivePrompt = userPos && startId ? 'Choose your destination' : prompt;
 
   if (loading) {
     return (
@@ -617,7 +617,10 @@ export default function IndoorSchematicNavScreen() {
       {/* Status message */}
       {statusMessage && (
         <View
-          style={[styles.statusBar, { backgroundColor: colors.primary + '20', borderColor: colors.primary }]}
+          style={[
+            styles.statusBar,
+            { backgroundColor: colors.primary + '20', borderColor: colors.primary },
+          ]}
         >
           <Text style={{ color: colors.text, fontWeight: '500' }}>{statusMessage}</Text>
         </View>
@@ -713,10 +716,7 @@ export default function IndoorSchematicNavScreen() {
         animationType="slide"
         onRequestClose={() => setQrScannerVisible(false)}
       >
-        <QRScanner 
-          onScan={handleQRScan}
-          onClose={() => setQrScannerVisible(false)}
-        />
+        <QRScanner onScan={handleQRScan} onClose={() => setQrScannerVisible(false)} />
       </Modal>
 
       <StandardPopup
@@ -807,8 +807,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 6,
   },
-
-    
 
   fab: {
     position: 'absolute',

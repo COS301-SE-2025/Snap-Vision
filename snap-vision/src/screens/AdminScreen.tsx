@@ -37,7 +37,7 @@ const AdminScreen = () => {
       floorId: 'default',
     });
   };
-  
+
   const handleManageQRCodes = () => {
     navigation.navigate('AdminQRCodes');
   };

@@ -1,4 +1,3 @@
-// src/components/organisms/QRCodeAdminContent.tsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
@@ -35,9 +34,18 @@ import {
 } from '../../services/qrService';
 
 // Types
-interface Location { id: string; name: string }
-interface Building { id: string; name: string }
-interface Floor { id: string; name: string } // usually your floorLabel
+interface Location {
+  id: string;
+  name: string;
+}
+interface Building {
+  id: string;
+  name: string;
+}
+interface Floor {
+  id: string;
+  name: string;
+} // usually your floorLabel
 interface Room {
   id: string;
   name: string;
@@ -82,11 +90,11 @@ export default function QRCodeAdminContent() {
   const [floorDropdownOpen, setFloorDropdownOpen] = useState(false);
   const buildingDropdownItems = useMemo(
     () => buildings.map((b) => ({ label: b.name, value: b.id })),
-    [buildings]
+    [buildings],
   );
   const floorDropdownItems = useMemo(
     () => floors.map((f) => ({ label: `Floor ${f.name}`, value: f.id })),
-    [floors]
+    [floors],
   );
 
   // Popups / modals
@@ -95,17 +103,17 @@ export default function QRCodeAdminContent() {
   const [isGenerateModalVisible, setIsGenerateModalVisible] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  
+
   // Error popup states
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [errorTitle, setErrorTitle] = useState('Error');
   const [errorMessage, setErrorMessage] = useState('');
-  
+
   // Confirmation popup state
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState('');
   const [confirmAction, setConfirmAction] = useState<() => void>(() => {});
-  
+
   // Info popup state
   const [showInfoPopup, setShowInfoPopup] = useState(false);
   const [infoTitle, setInfoTitle] = useState('');
@@ -140,7 +148,8 @@ export default function QRCodeAdminContent() {
       try {
         setIsLoading(true);
         const all = await getLocations();
-        const filtered = role === 'editor' ? all.filter((loc) => adminLocations.includes(loc.id)) : all;
+        const filtered =
+          role === 'editor' ? all.filter((loc) => adminLocations.includes(loc.id)) : all;
         setLocations(filtered);
         // Clear downstream selections
         setSelectedLocationId(null);
@@ -229,17 +238,14 @@ export default function QRCodeAdminContent() {
 
   // Only show QR codes for the selected floor
   const floorQRCodes = useMemo(
-    () =>
-      qrCodes.filter(
-        (c) => String(c.floorId) === String(selectedFloorId ?? '')
-      ),
-    [qrCodes, selectedFloorId]
+    () => qrCodes.filter((c) => String(c.floorId) === String(selectedFloorId ?? '')),
+    [qrCodes, selectedFloorId],
   );
 
   // --- Filtering for room search in Add modal ---
   const filteredRooms = useMemo(
     () => rooms.filter((r) => r.name.toLowerCase().includes(searchQuery.trim().toLowerCase())),
-    [rooms, searchQuery]
+    [rooms, searchQuery],
   );
 
   // --- Actions ---
@@ -275,7 +281,7 @@ export default function QRCodeAdminContent() {
         selectedRoom.id,
         selectedRoom.name,
         qrValue,
-        qrDescription
+        qrDescription,
       );
       // Refresh list
       const codes = await getQRCodesForBuilding(selectedLocationId, selectedBuildingId);
@@ -333,20 +339,20 @@ export default function QRCodeAdminContent() {
     }
     setConfirmMessage('Are you sure you want to delete this QR code mapping?');
     setConfirmAction(() => async () => {
-        style: 'destructive'
-          try {
-            await deleteQRCodeMapping(selectedLocationId, qr.id);
-            if (selectedBuildingId) {
-              const codes = await getQRCodesForBuilding(selectedLocationId, selectedBuildingId);
-              setQrCodes(codes);
-            }
-            setSuccessMessage('QR code removed successfully.');
-            setShowSuccessPopup(true);
-          } catch (e) {
-            console.error('Error deleting QR code:', e);
-            setErrorMessage('Failed to delete QR code. Please try again.');
-            setShowErrorPopup(true);
-          }
+      style: 'destructive';
+      try {
+        await deleteQRCodeMapping(selectedLocationId, qr.id);
+        if (selectedBuildingId) {
+          const codes = await getQRCodesForBuilding(selectedLocationId, selectedBuildingId);
+          setQrCodes(codes);
+        }
+        setSuccessMessage('QR code removed successfully.');
+        setShowSuccessPopup(true);
+      } catch (e) {
+        console.error('Error deleting QR code:', e);
+        setErrorMessage('Failed to delete QR code. Please try again.');
+        setShowErrorPopup(true);
+      }
     });
     setShowConfirmPopup(true);
   };
@@ -384,7 +390,7 @@ export default function QRCodeAdminContent() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title="QR Code Management" />
-      
+
       {/* Error Popup */}
       <StandardPopup
         visible={showErrorPopup}
@@ -392,7 +398,7 @@ export default function QRCodeAdminContent() {
         message={errorMessage}
         onConfirm={() => setShowErrorPopup(false)}
       />
-      
+
       {/* Success Popup */}
       <StandardPopup
         visible={showSuccessPopup}
@@ -400,7 +406,7 @@ export default function QRCodeAdminContent() {
         message={successMessage}
         onConfirm={() => setShowSuccessPopup(false)}
       />
-      
+
       {/* Confirmation Popup */}
       <StandardPopup
         visible={showConfirmPopup}
@@ -414,7 +420,7 @@ export default function QRCodeAdminContent() {
         showCancel={true}
         confirmText="Delete"
       />
-      
+
       {/* Info Popup */}
       <StandardPopup
         visible={showInfoPopup}
@@ -439,8 +445,14 @@ export default function QRCodeAdminContent() {
 
         {/* Step 1: Select Location (chips) */}
         <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionTitle, { color: colors.primary }]}>Step 1: Select Location</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+          <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+            Step 1: Select Location
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chipRow}
+          >
             {locations.map((loc) => (
               <TouchableOpacity
                 key={loc.id}
@@ -465,7 +477,9 @@ export default function QRCodeAdminContent() {
         {/* Step 2: Select Building (searchable dropdown) */}
         {selectedLocationId && (
           <View style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: colors.primary }]}>Step 2: Select Building</Text>
+            <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+              Step 2: Select Building
+            </Text>
             <DropDownPicker
               open={buildingDropdownOpen}
               setOpen={setBuildingDropdownOpen}
@@ -488,7 +502,9 @@ export default function QRCodeAdminContent() {
         {/* Step 3: Select Floor (searchable dropdown) */}
         {selectedBuildingId && (
           <View style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: colors.primary }]}>Step 3: Select Floor</Text>
+            <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+              Step 3: Select Floor
+            </Text>
             <DropDownPicker
               open={floorDropdownOpen}
               setOpen={setFloorDropdownOpen}
@@ -550,7 +566,9 @@ export default function QRCodeAdminContent() {
                           {item.qrValue}
                         </Text>
                         {!!item.description && (
-                          <Text style={[styles.qrCodeDesc, { color: colors.text }]}>{item.description}</Text>
+                          <Text style={[styles.qrCodeDesc, { color: colors.text }]}>
+                            {item.description}
+                          </Text>
                         )}
                         <Text style={[styles.qrCodeFloor, { color: colors.secondary }]}>
                           Floor: {item.floorId}
@@ -629,7 +647,10 @@ export default function QRCodeAdminContent() {
                     key={room.id}
                     style={[
                       styles.roomItem,
-                      { backgroundColor: selectedRoom?.id === room.id ? colors.primary : colors.card },
+                      {
+                        backgroundColor:
+                          selectedRoom?.id === room.id ? colors.primary : colors.card,
+                      },
                     ]}
                     onPress={() => setSelectedRoom(room)}
                   >
@@ -696,33 +717,33 @@ export default function QRCodeAdminContent() {
 
       {/* Generate QR (Preview) Modal — real QR + Save PNG */}
 
-<Modal
-  visible={isGenerateModalVisible}
-  animationType="slide"
-  transparent
-  onRequestClose={() => setIsGenerateModalVisible(false)}
->
-  <View style={styles.modalOverlay}>
-    <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-      <Text style={[styles.modalTitle, { color: colors.text }]}>QR Code</Text>
+      <Modal
+        visible={isGenerateModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setIsGenerateModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>QR Code</Text>
 
-      <View style={styles.qrCard}>
-        <QRCode
-          value={qrValue || ' '}
-          size={320}
-          color="#000000"
-          backgroundColor="#FFFFFF"
-          ecl="M"
-          getRef={(c) => (qrRef.current = c)}
-        />
-      </View>
+            <View style={styles.qrCard}>
+              <QRCode
+                value={qrValue || ' '}
+                size={320}
+                color="#000000"
+                backgroundColor="#FFFFFF"
+                ecl="M"
+                getRef={(c) => (qrRef.current = c)}
+              />
+            </View>
 
-      <Text style={[styles.qrValueText, { color: colors.text }]} numberOfLines={2}>
-        {qrValue}
-      </Text>
+            <Text style={[styles.qrValueText, { color: colors.text }]} numberOfLines={2}>
+              {qrValue}
+            </Text>
 
-      <View style={{ flexDirection: 'row', gap: 12 }}>
-        {/* <TouchableOpacity
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              {/* <TouchableOpacity
           style={[styles.fullWidthButton, { backgroundColor: colors.primary, flex: 1 }]}
           onPress={handleSavePng}
           disabled={!qrValue}
@@ -730,17 +751,16 @@ export default function QRCodeAdminContent() {
           <Text style={{ color: '#FFF' }}>Save PNG</Text>
         </TouchableOpacity> */}
 
-        <TouchableOpacity
-          style={[styles.fullWidthButton, { backgroundColor: colors.border, flex: 1 }]}
-          onPress={() => setIsGenerateModalVisible(false)}
-        >
-          <Text style={{ color: colors.text }}>Close</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  </View>
-</Modal>
-
+              <TouchableOpacity
+                style={[styles.fullWidthButton, { backgroundColor: colors.border, flex: 1 }]}
+                onPress={() => setIsGenerateModalVisible(false)}
+              >
+                <Text style={{ color: colors.text }}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -809,25 +829,43 @@ const styles = StyleSheet.create({
   qrCodeFloor: { fontSize: 12 },
   qrCodeActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   actionButton: {
-    width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   // Modals (shared)
   modalOverlay: {
-    flex: 1, justifyContent: 'center', alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)', padding: 20,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 20,
   },
   modalContent: {
-    width: '100%', padding: 20, borderRadius: 12, maxHeight: '80%',
+    width: '100%',
+    padding: 20,
+    borderRadius: 12,
+    maxHeight: '80%',
   },
   modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 16, textAlign: 'center' },
 
   inputLabel: { fontSize: 16, marginBottom: 8 },
   textInput: {
-    borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
   },
   searchInput: {
-    borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
   },
   roomList: { maxHeight: 150, marginBottom: 16 },
   roomItem: { padding: 12, marginBottom: 4, borderRadius: 8 },
@@ -850,11 +888,11 @@ const styles = StyleSheet.create({
   },
   qrCard: {
     alignSelf: 'center',
-    backgroundColor: '#FFFFFF', 
-    padding: 18,              
+    backgroundColor: '#FFFFFF',
+    padding: 18,
     borderRadius: 12,
   },
-  
+
   qrValueText: { fontSize: 14, textAlign: 'center', marginBottom: 20 },
   fullWidthButton: { paddingVertical: 12, alignItems: 'center', borderRadius: 8 },
 
