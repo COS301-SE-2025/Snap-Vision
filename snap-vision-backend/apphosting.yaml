@@ -5,7 +5,7 @@ runConfig:
   # maxInstances: 100
   # concurrency: 80
   # cpu: 1
-  memoryMiB: 512
+  # memoryMiB: 512
 
 # Environment variables and secrets.
 env:
@@ -19,5 +19,3 @@ env:
 
   - variable: ORS_API_KEY
     secret: ORS_API_KEY
-    availability:
-      - RUNTIME

@@ -73,3 +73,4 @@ snap-vision/android/app/src/main/assets/leaflet.html
 
 # Firebase configuration files
 snap-vision/android/app/google-services.json
+snap-vision/android/app/src/google-services.json

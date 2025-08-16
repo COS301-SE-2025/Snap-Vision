@@ -43,8 +43,7 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'http://192.168.43.155:3000'; // <-- Use your correct backend IP here
-
+const ROUTING_API_BASE = 'https://snap-vision-backend--snap-vision-f6954.europe-west4.hosted.app';
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
 // L wifi: 192.168.0.127
