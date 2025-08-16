@@ -10,7 +10,6 @@ import {
   Pressable,
   ScrollView,
 } from 'react-native';
-import Geolocation from '@react-native-community/geolocation';
 import { WebView as WebViewType } from 'react-native-webview';
 import firestore from '@react-native-firebase/firestore';
 import Tts from 'react-native-tts';
@@ -33,6 +32,9 @@ import { useAccessibility } from '../context/AccessibilityContext';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import ARNavigationOverlay from '../components/organisms/ARNavigationOverlay';
 import { useCompass } from '../hooks/useCompass'; // Needed for AR navigation functionality
+import { useMapLocation } from '../hooks/useMapLocation';
+import { useMapNavigation } from '../hooks/useMapNavigation';
+import { useMapPOI } from '../hooks/useMapPOI';
 import { requestCameraPermission } from '../utils/cameraPermissions';
 import { Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
@@ -56,70 +58,125 @@ const ROUTING_API_BASE = 'http://192.168.0.197:3000'; // <-- Use your correct ba
 // L harties: 192.168.101.238
 
 const MapScreen = () => {
-  const lastRoute = useRef<any[]>([]);
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  const watchIdRef = useRef<number | null>(null);
   const { isHapticFeedbackEnabled } = useAccessibility();
+  const { setNavigationStartTime } = useBadges();
+  const { unlock, incrementRoutes } = useBadges();
+  
 
-  const [status, setStatus] = useState('Loading map...');
-  const [error, setError] = useState<string | null>(null);
-  const [currentLocation, setCurrentLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
-  const [showCrowdPopup, setShowCrowdPopup] = useState(false);
-  const [selectedDensity, setSelectedDensity] = useState('moderate');
-  const [destination, setDestination] = useState('');
-  const [showShareTooltip, setShowShareTooltip] = useState(false);
-  const [showReportTooltip, setShowReportTooltip] = useState(false);
   const webViewRef = useRef<WebViewType>(null);
   const [isMapReady, setIsMapReady] = useState(false);
-  const [shouldCenterMap, setShouldCenterMap] = useState(true);
-
-  // Turn-by-turn state
-  const [steps, setSteps] = useState<any[]>([]);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isRouteLoading, setIsRouteLoading] = useState(false);
-  const [shouldStartTTS, setShouldStartTTS] = useState(false);
-  const [showDirectionsSheet, setShowDirectionsSheet] = useState(false);
-
-  // Navigation state
   const [isNavigating, setIsNavigating] = useState(false);
-  const [routeProgress, setRouteProgress] = useState(0);
-  const [distanceToDestination, setDistanceToDestination] = useState<number | null>(null);
-  const [estimatedTime, setEstimatedTime] = useState<number | null>(null);
-  const [hasReachedDestination, setHasReachedDestination] = useState(false);
-
-  // Enhanced progress tracking
-  const [distanceWalked, setDistanceWalked] = useState(0); // Never decreases
-  const [originalRouteDistance, setOriginalRouteDistance] = useState<number | null>(null); // Set when navigation starts
-  const [startLocation, setStartLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null); // Starting point
-
-  const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
-  const [pois, setPOIs] = useState<any[]>([]);
-  const [poiSuggestions, setPOISuggestions] = useState<any[]>([]);
-
-  //indoor
-  // const navigation = useNavigation<any>();
-
+  const [showDirectionsSheet, setShowDirectionsSheet] = useState(false);
+  const [showDestinationReachedPopup, setShowDestinationReachedPopup] = useState(false);
+  const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
+  
   // share location
   const route = useRoute();
   const params = route.params as MapScreenParams;
   const [hasHandledDeepLink, setHasHandledDeepLink] = useState(false);
 
-  const { unlock, incrementRoutes } = useBadges();
-  const { setNavigationStartTime } = useBadges();
+  // Use the location hook
+  const {
+    currentLocation,
+    status,
+    error,
+    isRefreshingLocation,
+    shouldCenterMap,
+    requestLocation,
+    refreshLocation,
+    sendLocationToWebView,
+    setShouldCenterMap,
+    setCurrentLocation,
+    setStatus,
+    setError,
+  } = useMapLocation(isMapReady, webViewRef, isNavigating);
+
+  // Use the POI hook first (needed by navigation hook)
+  const {
+    pois,
+    poiSuggestions,
+    selectedPOI: hookSelectedPOI,
+    selectedFeature,
+    destination,
+    fetchPOIs,
+    filterPOIs,
+    selectPOI,
+    setSelectedPOI: setHookSelectedPOI,
+    setSelectedFeature,
+    setDestination,
+    clearPOISuggestions,
+  } = useMapPOI(
+    isMapReady,
+    webViewRef,
+    setError,
+  );
+
+  // Use the navigation hook
+  const {
+    steps,
+    currentStep,
+    routeProgress,
+    distanceToDestination,
+    estimatedTime,
+    hasReachedDestination,
+    distanceWalked,
+    originalRouteDistance,
+    startLocation,
+    isRouteLoading,
+    destinationCoords,
+    routeCoordinates,
+    fetchRoute,
+    startNavigation,
+    stopNavigation,
+    destinationReached,
+    rerouteFromCurrentLocation,
+    updateNavigationProgress,
+    startNavigationTracking,
+    stopNavigationTracking,
+    setSteps,
+    setCurrentStep,
+    setRouteProgress,
+    setDistanceToDestination,
+    setEstimatedTime,
+    setHasReachedDestination,
+    setDistanceWalked,
+    setOriginalRouteDistance,
+    setStartLocation,
+    setDestinationCoords,
+  } = useMapNavigation(
+    currentLocation,
+    isMapReady,
+    webViewRef,
+    setStatus,
+    setError,
+    isHapticFeedbackEnabled,
+    isVoiceEnabled,
+    hookSelectedPOI,
+    (badgeId: string) => unlock(badgeId as any),
+    incrementRoutes,
+    setNavigationStartTime,
+    setShowDestinationReachedPopup,
+    setShowDirectionsSheet,
+    isNavigating,
+    setIsNavigating,
+  );
+
+  const [showCrowdPopup, setShowCrowdPopup] = useState(false);
+  const [selectedDensity, setSelectedDensity] = useState('moderate');
+  const [showShareTooltip, setShowShareTooltip] = useState(false);
+  const [showReportTooltip, setShowReportTooltip] = useState(false);
+
+  // Turn-by-turn state (non-navigation related)
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [shouldStartTTS, setShouldStartTTS] = useState(false);
+
+  //indoor
+  // const navigation = useNavigation<any>();
 
   // crowd reports
-  const [selectedPOI, setSelectedPOI] = useState<any>(null);
   const [crowdReports, setCrowdReports] = useState<Record<string, any>>({});
-  const [selectedFeature, setSelectedFeature] = useState<any>(null);
 
   //Admin
   const [isAdmin, setIsAdmin] = useState(false);
@@ -173,9 +230,8 @@ const MapScreen = () => {
     message: string;
     onConfirm: () => void;
   } | null>(null);
-  const [showDestinationReachedPopup, setShowDestinationReachedPopup] = useState(false);
+
   const [showLocationRefreshPopup, setShowLocationRefreshPopup] = useState(false);
-  const [isRefreshingLocation, setIsRefreshingLocation] = useState(false);
 
   //Fetch Locations
   useEffect(() => {
@@ -311,209 +367,6 @@ const MapScreen = () => {
     }
   }, [isAdmin, isMapReady, pois]);
 
-  // Send current location to map when map becomes ready
-  useEffect(() => {
-    if (isMapReady && currentLocation && webViewRef.current && shouldCenterMap) {
-      console.log('🗺️ Map is now ready and we have location, sending to WebView:', currentLocation);
-      const zoomLevel = isNavigating ? 18 : 16;
-      const jsCode = `window.updateUserLocation && window.updateUserLocation(${currentLocation.latitude}, ${currentLocation.longitude}, true, ${zoomLevel});`;
-      webViewRef.current.injectJavaScript(jsCode);
-      setShouldCenterMap(false); // Prevent auto-centering on subsequent updates
-    }
-  }, [isMapReady, currentLocation, shouldCenterMap]);
-
-  const sendLocationToWebView = (
-    lat: number,
-    lon: number,
-    centerMap = false,
-    forceZoom = false,
-  ) => {
-    setCurrentLocation({ latitude: lat, longitude: lon });
-    console.log('📍 Sending location to WebView:', { lat, lon, centerMap, isMapReady });
-
-    // Only inject JavaScript if the map is ready
-    if (!isMapReady || !webViewRef.current) {
-      console.log('⚠️ Map not ready or WebView not available, storing location for later');
-      return;
-    }
-
-    let jsCode;
-    if (forceZoom || (centerMap && shouldCenterMap)) {
-      const zoomLevel = isNavigating ? 18 : 16;
-      jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap}, ${zoomLevel});`;
-      // After first center, don't auto-center anymore unless explicitly requested
-      if (centerMap) setShouldCenterMap(false);
-    } else {
-      // Don't pass zoom level - let the map maintain current zoom
-      jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap});`;
-    }
-
-    console.log('📤 Injecting location JavaScript:', jsCode);
-    webViewRef.current.injectJavaScript(jsCode);
-
-    if (isNavigating && lastRoute.current && lastRoute.current.length > 0) {
-      setStatus(`Updating location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
-      updateNavigationProgress(lat, lon);
-    }
-  };
-
-  // Replace your requestLocation function with this enhanced version
-  const requestLocation = async () => {
-    try {
-      // console.log('🔍 Requesting location permissions...');
-
-      if (Platform.OS === 'android') {
-        // For Android 12+, we need to request both permissions
-        const permissions = [
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-          PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
-        ];
-
-        const results = await PermissionsAndroid.requestMultiple(permissions);
-
-        // console.log('Permission results:', results);
-
-        const fineLocationGranted =
-          results['android.permission.ACCESS_FINE_LOCATION'] === 'granted';
-        const coarseLocationGranted =
-          results['android.permission.ACCESS_COARSE_LOCATION'] === 'granted';
-
-        if (!fineLocationGranted && !coarseLocationGranted) {
-          setErrorPopupMessage(
-            'Location permissions denied. Please enable location access in your device settings and try again.',
-          );
-          setShowErrorPopup(true);
-          return;
-        }
-
-        // Android 12+ specific: Check if we need to request precise location
-        if (Number(Platform.Version) >= 31) {
-          // Android 12 = API 31
-          try {
-            // Try to get high accuracy first
-            setStatus('Getting precise location...');
-            Geolocation.getCurrentPosition(
-              (position) => {
-                // console.log('✅ High accuracy location:', position.coords);
-                const { latitude, longitude } = position.coords;
-                sendLocationToWebView(latitude, longitude, true);
-                setStatus('High accuracy location found');
-              },
-              (error) => {
-                // console.log('❌ High accuracy failed, trying approximate:', error);
-                // Fallback to approximate location
-                Geolocation.getCurrentPosition(
-                  (position) => {
-                    // console.log('✅ Approximate location:', position.coords);
-                    const { latitude, longitude } = position.coords;
-                    sendLocationToWebView(latitude, longitude, true);
-                    setStatus('Approximate location found');
-                  },
-                  (fallbackError) => {
-                    console.error('❌ All location attempts failed:', fallbackError);
-                    setShowLocationRefreshPopup(true);
-                  },
-                  { enableHighAccuracy: false, timeout: 20000, maximumAge: 30000 },
-                );
-              },
-              { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
-            );
-          } catch (err) {
-            console.error('❌ Location request failed:', err);
-            setError('Location service error');
-            setShowLocationRefreshPopup(true);
-          }
-        } else {
-          // Pre-Android 12 behavior
-          setStatus('Getting your location...');
-          Geolocation.getCurrentPosition(
-            (position) => {
-              const { latitude, longitude } = position.coords;
-              sendLocationToWebView(latitude, longitude, true);
-              setStatus('Location found');
-            },
-            (error) => {
-              console.error('❌ Location error:', error);
-              setShowLocationRefreshPopup(true);
-            },
-            { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
-          );
-        }
-      }
-    } catch (err) {
-      console.error('❌ Permission request failed:', err);
-      setShowLocationRefreshPopup(true);
-    }
-  };
-
-  // Initial location request on component mount
-  useEffect(() => {
-    console.log('🚀 MapScreen mounted, requesting initial location...');
-    // Small delay to ensure component is fully mounted
-    const timer = setTimeout(() => {
-      try {
-        if (requestLocation && typeof requestLocation === 'function') {
-          requestLocation();
-        } else {
-          console.error('❌ requestLocation is not available');
-        }
-      } catch (error) {
-        console.error('❌ Error calling requestLocation:', error);
-      }
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []); // Empty dependency array is fine, we want this to run only once
-
-  // Enhanced location refresh function
-  const refreshLocation = async () => {
-    setIsRefreshingLocation(true);
-    setShowLocationRefreshPopup(false); // Close the popup
-    setTempMessage('Refreshing location...');
-    setError(null); // Clear any existing errors
-    setShouldCenterMap(true);
-
-    try {
-      // Stop any existing location watching
-      if (watchIdRef.current) {
-        Geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
-
-      // Clear current location state
-      setCurrentLocation(null);
-
-      // Re-request location with fresh permissions
-      await requestLocation();
-
-      // If we still don't have location after a delay, show manual refresh option
-      setTimeout(() => {
-        if (!currentLocation && !isRefreshingLocation) {
-          setShowLocationRefreshPopup(true);
-        }
-      }, 3000);
-    } catch (error) {
-      console.error('❌ Location refresh failed:', error);
-      setShowLocationRefreshPopup(true);
-    } finally {
-      setIsRefreshingLocation(false);
-    }
-  };
-
-  // Manual map refresh (reload WebView)
-  const refreshMap = () => {
-    setShowLocationRefreshPopup(false); // Close the popup
-    setTempMessage('Refreshing map...');
-    setIsMapReady(false);
-    setCurrentLocation(null);
-    setError(null);
-
-    // Reload the WebView
-    if (webViewRef.current) {
-      webViewRef.current.reload();
-    }
-  };
-
   // AR Navigation functions
   const handleARToggle = async () => {
     if (!showAR) {
@@ -531,6 +384,20 @@ const MapScreen = () => {
 
   const handleNavigationMinimize = () => {
     setIsNavigationMinimized(!isNavigationMinimized);
+  };
+
+  // Manual map refresh (reload WebView)
+  const refreshMap = () => {
+    setShowLocationRefreshPopup(false); // Close the popup
+    setTempMessage('Refreshing map...');
+    setIsMapReady(false);
+    setCurrentLocation(null);
+    setError(null);
+
+    // Reload the WebView
+    if (webViewRef.current) {
+      webViewRef.current.reload();
+    }
   };
 
   // Helper: Open modal to add new POI
@@ -585,9 +452,6 @@ const MapScreen = () => {
               if (isNavigating) {
                 stopNavigation();
               }
-
-              // Clear any stored route
-              lastRoute.current = [];
             }
           }
         } catch (error) {
@@ -621,8 +485,8 @@ const MapScreen = () => {
         // Request fresh location
         requestLocation();
 
-        if (lastRoute.current.length > 0) {
-          const reinject = `window.drawRoute && window.drawRoute(${JSON.stringify(lastRoute.current)});`;
+        if (routeCoordinates.length > 0) {
+          const reinject = `window.drawRoute && window.drawRoute(${JSON.stringify(routeCoordinates)});`;
           webViewRef.current?.injectJavaScript(reinject);
         }
         return;
@@ -644,13 +508,9 @@ const MapScreen = () => {
           }
 
           webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
-          lastRoute.current = [];
 
-          setDestination(selectedPOI.name);
-          setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
-          setStatus(`Selected: ${selectedPOI.name}`);
-          setSelectedFeature(selectedPOI);
-          setSelectedPOI(selectedPOI);
+          // Use the hook's selectPOI function instead of manual state updates
+          selectPOI(selectedPOI);
 
           // 👉 Inject an "Indoor navigation" button into the current popup
           // webViewRef.current?.injectJavaScript(`
@@ -737,7 +597,7 @@ const MapScreen = () => {
         case 'INDOOR_NAV_FROM_MAP': {
           const p = parsed.payload || {};
           // Prefer payload; fall back to the current selectedPOI from state; last resort: find by id in pois
-          const fallbackPOI = selectedPOI || pois.find((x) => x.id === p.id);
+          const fallbackPOI = hookSelectedPOI || pois.find((x) => x.id === p.id);
 
           const buildingId = p.id || p.buildingId || fallbackPOI?.id || fallbackPOI?.buildingId;
           const buildingName =
@@ -894,21 +754,18 @@ const MapScreen = () => {
   const cancelRoute = () => {
     // console.log('cancelRoute called');
 
-    // Stop any ongoing route loading
-    setIsRouteLoading(false);
-
     // Clear all route-related state
     setDestination('');
     setDestinationCoords(null);
+    setSelectedFeature(null);
+    setHookSelectedPOI(null);
+
+    // Use hook setters to reset navigation state
     setRouteProgress(0);
     setDistanceToDestination(null);
     setEstimatedTime(null);
-    setSelectedFeature(null);
-    setSelectedPOI(null);
     setSteps([]);
     setCurrentStep(0);
-
-    // Reset enhanced progress tracking
     setDistanceWalked(0);
     setStartLocation(null);
     setOriginalRouteDistance(null);
@@ -923,7 +780,6 @@ const MapScreen = () => {
     if (isMapReady && webViewRef.current) {
       webViewRef.current.injectJavaScript('window.clearRoute && window.clearRoute();');
     }
-    lastRoute.current = [];
 
     // Reset status
     setStatus('Route cancelled');
@@ -964,390 +820,9 @@ const MapScreen = () => {
     fetchRoute(destinationCoords);
   };
 
-  const fetchRoute = async (destCoords: [number, number]) => {
-    if (!currentLocation) {
-      setError('Your location is not available yet');
-      return;
-    }
-
-    setIsRouteLoading(true);
-    setStatus('Calculating route...');
-
-    try {
-      const start = `${currentLocation.longitude},${currentLocation.latitude}`;
-      const end = `${destCoords[0]},${destCoords[1]}`;
-
-      // Clear any existing route first
-      webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
-
-      const url = `${ROUTING_API_BASE}/api/directions?start=${start}&end=${end}`;
-      const response = await fetch(url);
-      const data = await response.json();
-
-      const coordinates = data.features?.[0]?.geometry?.coordinates;
-      if (!coordinates || coordinates.length === 0) throw new Error('No route found');
-
-      lastRoute.current = coordinates;
-
-      // Calculate distance and time for the route
-      let totalDistance = 0;
-      for (let i = 0; i < coordinates.length - 1; i++) {
-        const point1 = coordinates[i];
-        const point2 = coordinates[i + 1];
-        totalDistance += getDistanceMeters(point1[1], point1[0], point2[1], point2[0]);
-      }
-
-      // Set the total distance
-      setDistanceToDestination(totalDistance);
-
-      // Estimate time (assuming average walking speed of 5 km/h = 1.4 m/s)
-      const timeMinutes = Math.round(totalDistance / (1.4 * 60));
-      setEstimatedTime(timeMinutes);
-
-      if (isMapReady && webViewRef.current) {
-        const jsRouteCode = `window.drawRoute && window.drawRoute(${JSON.stringify(coordinates)});`;
-        webViewRef.current.injectJavaScript(jsRouteCode);
-      }
-      setStatus('Route found!');
-      const stepsArr = data.features?.[0]?.properties?.segments?.[0]?.steps || [];
-      setSteps(stepsArr);
-      setCurrentStep(0);
-      setShowDirectionsSheet(true);
-
-      // Reset progress
-      setRouteProgress(0);
-    } catch (error) {
-      console.error('Route fetch error:', error);
-      setError('Failed to fetch or draw route');
-    } finally {
-      setIsRouteLoading(false);
-    }
-  };
-
-  // Start navigation function with haptic feedback
-  const startNavigation = () => {
-    if (!currentLocation || !destinationCoords || lastRoute.current.length === 0) {
-      setError('Cannot start navigation without a route');
-      return;
-    }
-
-    // Haptic feedback when starting navigation
-    if (isHapticFeedbackEnabled) {
-      ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
-    }
-
-    setIsNavigating(true);
-    setStatus('Navigation started');
-    setRouteProgress(0);
-    setNavigationStartTime(Date.now());
-    setHasReachedDestination(false);
-
-    // Initialize enhanced progress tracking
-    setDistanceWalked(0);
-    setStartLocation(currentLocation);
-    if (distanceToDestination !== null) {
-      setOriginalRouteDistance(distanceToDestination);
-    }
-    sendLocationToWebView(currentLocation.latitude, currentLocation.longitude, true, true);
-
-    // Start watching position with higher frequency
-    if (watchIdRef.current) {
-      Geolocation.clearWatch(watchIdRef.current);
-    }
-
-    watchIdRef.current = Geolocation.watchPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        // Don't center or force zoom on location updates during navigation
-        sendLocationToWebView(latitude, longitude, false, false);
-      },
-      (error) => {
-        setError('Failed to track location');
-      },
-      {
-        enableHighAccuracy: true,
-        distanceFilter: 5, // Update every 5 meters
-        interval: 1000, // Update every second
-      },
-    );
-  };
-
-  // Stop navigation function with haptic feedback
-  const stopNavigation = () => {
-    if (watchIdRef.current) {
-      Geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
-    }
-
-    // Haptic feedback when stopping navigation
-    if (isHapticFeedbackEnabled) {
-      ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
-    }
-
-    setIsNavigating(false);
-    setHasReachedDestination(false);
-    setStatus('Navigation stopped');
-    if (isMapReady && webViewRef.current) {
-      webViewRef.current.injectJavaScript(
-        'window.setNavigationState && window.setNavigationState(false);',
-      );
-    }
-
-    if (currentLocation) {
-      sendLocationToWebView(currentLocation.latitude, currentLocation.longitude, true);
-    }
-
-    // Clear progress line
-    if (isMapReady && webViewRef.current) {
-      webViewRef.current.injectJavaScript(
-        'if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }',
-      );
-    }
-
-    // Reset enhanced progress tracking when stopping
-    setDistanceWalked(0);
-    setStartLocation(null);
-    setOriginalRouteDistance(null);
-  };
-
-  // Update the updateNavigationProgress function to check for destination arrival
-  const updateNavigationProgress = (latitude: number, longitude: number) => {
-    // Add safety checks at the beginning
-    if (!lastRoute.current || lastRoute.current.length === 0 || hasReachedDestination) {
-      return;
-    }
-
-    // Calculate distance walked from start location (never decreases)
-    if (startLocation && isNavigating) {
-      const totalWalked = getDistanceMeters(
-        startLocation.latitude,
-        startLocation.longitude,
-        latitude,
-        longitude,
-      );
-
-      // Only update if we've walked further (prevents decrease on rerouting)
-      if (totalWalked > distanceWalked) {
-        setDistanceWalked(totalWalked);
-      }
-    }
-
-    // Find closest point on the route
-    let minDist = Infinity;
-    let closestPointIndex = 0;
-
-    for (let i = 0; i < lastRoute.current.length; i++) {
-      const routePoint = lastRoute.current[i];
-
-      // Add safety check for each route point
-      if (!Array.isArray(routePoint) || routePoint.length < 2) {
-        console.warn('Invalid route point at index', i, routePoint);
-        continue;
-      }
-
-      const distance = getDistanceMeters(
-        latitude,
-        longitude,
-        routePoint[1], // Latitude
-        routePoint[0], // Longitude
-      );
-
-      if (distance < minDist) {
-        minDist = distance;
-        closestPointIndex = i;
-      }
-    }
-
-    // Calculate a more precise progress
-    // Consider not just the closest point, but also the percentage between points
-    let progressValue;
-
-    if (closestPointIndex < lastRoute.current.length - 1) {
-      // Calculate distance between current point and next point
-      const currentPoint = lastRoute.current[closestPointIndex];
-      const nextPoint = lastRoute.current[closestPointIndex + 1];
-
-      // Distance from user to closest point
-      const distToClosest = getDistanceMeters(
-        latitude,
-        longitude,
-        currentPoint[1],
-        currentPoint[0],
-      );
-
-      // Distance from user to next point
-      const distToNext = getDistanceMeters(latitude, longitude, nextPoint[1], nextPoint[0]);
-
-      // Distance between closest and next point
-      const segmentLength = getDistanceMeters(
-        currentPoint[1],
-        currentPoint[0],
-        nextPoint[1],
-        nextPoint[0],
-      );
-
-      // If we're between two points, calculate the fractional position
-      if (distToClosest + distToNext <= segmentLength * 1.2) {
-        // Allow some margin
-        const segmentProgress = distToClosest / (distToClosest + distToNext);
-        const fractionalIndex = closestPointIndex + segmentProgress;
-        progressValue = (fractionalIndex / (lastRoute.current.length - 1)) * 100;
-      } else {
-        // Just use the closest point index
-        progressValue = (closestPointIndex / (lastRoute.current.length - 1)) * 100;
-      }
-    } else {
-      // At the last point
-      progressValue = 100;
-    }
-
-    if (steps.length > 0) {
-      let stepIndex = 0;
-      let minDist = Infinity;
-      for (let i = 0; i < steps.length; i++) {
-        const step = steps[i];
-
-        // Fix: Add safety checks before destructuring
-        let stepCoordinate;
-        if (
-          step.way_points &&
-          step.way_points[0] !== undefined &&
-          lastRoute.current[step.way_points[0]]
-        ) {
-          stepCoordinate = lastRoute.current[step.way_points[0]];
-        } else if (lastRoute.current[0]) {
-          stepCoordinate = lastRoute.current[0];
-        } else {
-          continue; // Skip this iteration if no valid coordinate
-        }
-
-        // Additional safety check - ensure stepCoordinate is an array with 2 elements
-        if (!Array.isArray(stepCoordinate) || stepCoordinate.length < 2) {
-          continue;
-        }
-
-        const [lon, lat] = stepCoordinate;
-        const dist = getDistanceMeters(latitude, longitude, lat, lon);
-        if (dist < minDist) {
-          minDist = dist;
-          stepIndex = i;
-        }
-      }
-      if (stepIndex !== currentStep) {
-        setCurrentStep(stepIndex);
-      }
-    }
-
-    // Update progress with a more precise value
-    const newProgress = Math.min(Math.round(progressValue), 100);
-    setRouteProgress(newProgress);
-
-    // Check if we've reached the destination point
-    const destinationPoint = lastRoute.current[lastRoute.current.length - 1];
-    const distanceToEnd = getDistanceMeters(
-      latitude,
-      longitude,
-      destinationPoint[1],
-      destinationPoint[0],
-    );
-
-    // Update distance to destination
-    setDistanceToDestination(distanceToEnd);
-
-    // Show enhanced status with distance walked and remaining
-    const walkedFormatted =
-      distanceWalked >= 1000
-        ? `${(distanceWalked / 1000).toFixed(1)}km walked`
-        : `${Math.round(distanceWalked)}m walked`;
-
-    const remainingFormatted =
-      distanceToEnd >= 1000
-        ? `${(distanceToEnd / 1000).toFixed(1)}km remaining`
-        : `${Math.round(distanceToEnd)}m remaining`;
-
-    setStatus(`${walkedFormatted} • ${remainingFormatted}`);
-
-    // Update route progress visually
-    if (webViewRef.current && isMapReady) {
-      const jsProgressCode = `
-        if (window.updateRouteProgress) {
-          window.updateRouteProgress(${closestPointIndex}, ${progressValue / 100});
-        }
-      `;
-      webViewRef.current.injectJavaScript(jsProgressCode);
-    }
-
-    // Check destination arrival based on either:
-    // 1. Progress is 100%
-    // 2. Distance to destination is less than 3 meters
-    if ((newProgress >= 100 || distanceToEnd < 3) && isNavigating && !hasReachedDestination) {
-      destinationReached();
-    }
-  };
-
-  // Destination reached function with haptic feedback
-  const destinationReached = async () => {
-    if (!isNavigating || hasReachedDestination) return;
-
-    console.log('🎯 Destination reached - triggering once');
-
-    // Set the flag immediately to prevent re-entry
-    setHasReachedDestination(true);
-    setIsNavigating(false);
-
-    // Stop all location tracking immediately
-    if (watchIdRef.current) {
-      Geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
-    }
-
-    try {
-      // Trigger success haptic feedback ONCE
-      if (isHapticFeedbackEnabled) {
-        ReactNativeHapticFeedback.trigger('notificationSuccess', hapticOptions);
-      }
-
-      await unlock('destination-reached');
-      await incrementRoutes();
-
-      const userId = auth().currentUser?.uid;
-      if (userId && selectedPOI) {
-        const visit: Visit = {
-          userId,
-          poiId: selectedPOI.id,
-          name: selectedPOI.name,
-          timestamp: firestore.Timestamp.now(),
-          centroid: selectedPOI.centroid,
-        };
-        await addRecentlyVisitedPOI(visit);
-      }
-    } catch (error) {
-      console.error('Failed to record visit:', error);
-    }
-
-    setStatus('You have reached your destination!');
-    setRouteProgress(100);
-
-    if (isVoiceEnabled) {
-      Tts.stop();
-      setTimeout(() => {
-        Tts.speak('You have reached your destination');
-      }, 500);
-    }
-    // Clear progress line from map
-    if (isMapReady && webViewRef.current) {
-      webViewRef.current.injectJavaScript(
-        'if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }',
-      );
-    }
-
-    // Show destination reached popup
-    setShowDestinationReachedPopup(true);
-  };
-
   //add this function to handle report submission
   const submitCrowdReport = async () => {
-    if (!selectedPOI || !selectedDensity) {
+    if (!hookSelectedPOI || !selectedDensity) {
       setError('Please select a building and density level');
       return;
     }
@@ -1357,22 +832,22 @@ const MapScreen = () => {
       await firestore()
         .collection('crowdReports')
         .add({
-          buildingId: selectedPOI.id,
-          buildingName: selectedPOI.name,
+          buildingId: hookSelectedPOI.id,
+          buildingName: hookSelectedPOI.name,
           density: selectedDensity,
           timestamp: firestore.FieldValue.serverTimestamp(),
           reportedBy: auth().currentUser?.uid || 'anonymous',
-          centroid: selectedPOI.centroid,
+          centroid: hookSelectedPOI.centroid,
           expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
         });
 
       // Update UI
       if (isMapReady && webViewRef.current) {
-        const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${selectedPOI.centroid.latitude}, ${selectedPOI.centroid.longitude}, '${selectedDensity}', '${selectedPOI.id}');`;
+        const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${hookSelectedPOI.centroid.latitude}, ${hookSelectedPOI.centroid.longitude}, '${selectedDensity}', '${hookSelectedPOI.id}');`;
         webViewRef.current.injectJavaScript(jsCrowdCode);
       }
       setShowCrowdPopup(false);
-      setStatus(`Crowd density reported for ${selectedPOI.name}`);
+      setStatus(`Crowd density reported for ${hookSelectedPOI.name}`);
     } catch (error) {
       console.error('Error saving crowd report:', error);
       setError('Failed to submit crowd report');
@@ -1440,7 +915,7 @@ const MapScreen = () => {
   const openCrowdReportModal = () => {
     // If user has selected a POI on map, use that as default
     if (selectedFeature) {
-      setSelectedPOI(selectedFeature);
+      setHookSelectedPOI(selectedFeature);
     } else if (destination && destinationCoords) {
       // If user has a destination set in the search bar but no selected feature,
       // find the corresponding POI
@@ -1453,7 +928,7 @@ const MapScreen = () => {
       );
 
       if (matchingPOI) {
-        setSelectedPOI(matchingPOI);
+        setHookSelectedPOI(matchingPOI);
       }
     }
 
@@ -1495,70 +970,10 @@ const MapScreen = () => {
     }
   }, [isNavigating, steps, currentStep]);
 
-  const fetchPOIs = async () => {
-    try {
-      const locationsSnapshot = await firestore().collection('locations').get();
-      const allPOIs: any[] = [];
-
-      for (const locationDoc of locationsSnapshot.docs) {
-        const locationId = locationDoc.id;
-        console.log(`📍 Fetching POIs from: locations/${locationId}/buildingPOIs`);
-
-        const buildingPOIsSnapshot = await firestore()
-          .collection(`locations/${locationId}/buildingPOIs`)
-          .get();
-
-        buildingPOIsSnapshot.forEach((doc) => {
-          const data = doc.data();
-          if (data?.centroid?.latitude && data?.centroid?.longitude) {
-            allPOIs.push({
-              ...data,
-              id: doc.id,
-              location: locationId,
-            });
-          }
-        });
-      }
-
-      console.log('✅ Total POIs fetched:', allPOIs.length);
-      setPOIs(allPOIs);
-    } catch (e) {
-      console.error('❌ Failed to fetch POIs:', e);
-      setError('Failed to load buildings');
-    }
-  };
-
-  useEffect(() => {
-    fetchPOIs();
-  }, []);
-
-  // Send POIs to WebView when they change and WebView is ready
-  useEffect(() => {
-    if (isMapReady && pois.length > 0 && webViewRef.current) {
-      // Modify the POI data to set labels to empty by default
-      const poisWithHiddenLabels = pois.map((poi) => ({
-        ...poi,
-        showLabel: false, // Add property to control label visibility
-      }));
-
-      const jsPOICode = `window.displayPOIs && window.displayPOIs(${JSON.stringify(poisWithHiddenLabels)});`;
-      webViewRef.current.injectJavaScript(jsPOICode);
-    }
-  }, [isMapReady, pois]);
-
-  const filterPOIs = (query: string) => {
-    if (!query.trim()) {
-      setPOISuggestions([]);
-      return;
-    }
-    const filtered = pois.filter(
-      (poi) => poi.name && poi.name.toLowerCase().includes(query.toLowerCase()),
-    );
-    setPOISuggestions(filtered);
-  };
-
+  // Handle POI selection with navigation integration
   const handleSelectPOI = (poi: any) => {
     setHasHandledDeepLink(true); // Prevent deep link from overriding
+    
     // Stop navigation if currently navigating
     if (isNavigating) {
       stopNavigation();
@@ -1566,20 +981,17 @@ const MapScreen = () => {
 
     // Clear any existing route
     webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
-    lastRoute.current = [];
 
     // Reset enhanced progress tracking for new destination
     setDistanceWalked(0);
     setStartLocation(null);
     setOriginalRouteDistance(null);
 
-    setDestination(poi.name);
+    // Use POI hook for basic selection
+    selectPOI(poi);
+    
+    // Set navigation destination
     setDestinationCoords([poi.centroid.longitude, poi.centroid.latitude]);
-    setPOISuggestions([]);
-
-    // Update selected POI and feature for crowd reporting
-    setSelectedFeature(poi);
-    setSelectedPOI(poi);
 
     // Automatically fetch route when POI is selected from search
     if (currentLocation) {
@@ -1587,187 +999,6 @@ const MapScreen = () => {
     }
   };
 
-  // Dynamically request location updates
-  useEffect(() => {
-    let watchId: number | null = null;
-
-    const startWatchingLocation = async () => {
-      try {
-        const permissions = await PermissionsAndroid.requestMultiple([
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-          PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
-        ]);
-
-        const fineGranted = permissions['android.permission.ACCESS_FINE_LOCATION'] === 'granted';
-        const coarseGranted =
-          permissions['android.permission.ACCESS_COARSE_LOCATION'] === 'granted';
-
-        if (fineGranted || coarseGranted) {
-          const watchOptions = isNavigating
-            ? {
-                enableHighAccuracy: true,
-                distanceFilter: 3, // Update every 3 meters
-                interval: 2000, // Update every 2 seconds
-                timeout: 25000,
-                maximumAge: 8000,
-              }
-            : Number(Platform.Version) >= 31
-              ? {
-                  // General browsing - Android 12+
-                  enableHighAccuracy: fineGranted,
-                  distanceFilter: 5,
-                  interval: 2000,
-                  timeout: 25000,
-                  maximumAge: 15000,
-                }
-              : {
-                  // General browsing - Pre-Android 12
-                  enableHighAccuracy: true,
-                  distanceFilter: 5,
-                  interval: 2000,
-                  timeout: 20000,
-                  maximumAge: 15000,
-                };
-
-          watchId = Geolocation.watchPosition(
-            (position) => {
-              const { latitude, longitude } = position.coords;
-
-              if (isNavigating) {
-                // Don't center during navigation, let navigation handle it
-                sendLocationToWebView(latitude, longitude, false, false);
-              } else {
-                // Center only on first location or when explicitly requested
-                sendLocationToWebView(latitude, longitude, false, false);
-              }
-            },
-            (error) => {
-              console.error('❌ Location watch error:', error);
-              setError(`Location tracking error: ${error.message}`);
-            },
-            watchOptions,
-          );
-        } else {
-          setError('Location permissions required for navigation');
-        }
-      } catch (err) {
-        console.error('❌ Location watch setup failed:', err);
-        setError('Failed to setup location tracking');
-      }
-    };
-
-    startWatchingLocation();
-
-    return () => {
-      if (watchId !== null) {
-        Geolocation.clearWatch(watchId);
-      }
-    };
-  }, [isNavigating]);
-
-  // Helper to calculate distance between two lat/lon points (Haversine formula)
-  function getDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
-    const toRad = (x: number) => (x * Math.PI) / 180;
-    const R = 6371000;
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
-
-  // Dynamic rerouting if user deviates from route
-  useEffect(() => {
-    if (
-      !isNavigating ||
-      !currentLocation ||
-      !destinationCoords ||
-      !lastRoute.current ||
-      lastRoute.current.length === 0 ||
-      isRouteLoading
-    )
-      return;
-
-    // Find nearest point on route
-    let minDist = Infinity;
-    for (const coord of lastRoute.current) {
-      // route is [lng, lat]
-      const dist = getDistanceMeters(
-        currentLocation.latitude,
-        currentLocation.longitude,
-        coord[1],
-        coord[0],
-      );
-      if (dist < minDist) minDist = dist;
-    }
-
-    // If user is more than 30 meters from the route, reroute
-    if (minDist > 30) {
-      setStatus('Re-routing...');
-      rerouteFromCurrentLocation();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentLocation, isNavigating]);
-
-  //Reroute function with haptic feedback
-  const rerouteFromCurrentLocation = async () => {
-    if (!currentLocation || !destinationCoords || isRouteLoading) return;
-
-    setIsRouteLoading(true);
-
-    try {
-      // Trigger haptic feedback when rerouting
-      if (isHapticFeedbackEnabled) {
-        ReactNativeHapticFeedback.trigger('impactHeavy', hapticOptions);
-      }
-
-      const start = `${currentLocation.longitude},${currentLocation.latitude}`;
-      const end = `${destinationCoords[0]},${destinationCoords[1]}`;
-
-      // Clear any existing route first
-      webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
-
-      const url = `${ROUTING_API_BASE}/api/directions?start=${start}&end=${end}`;
-      const response = await fetch(url);
-      const data = await response.json();
-
-      const coordinates = data.features?.[0]?.geometry?.coordinates;
-      if (!coordinates || coordinates.length === 0) throw new Error('No route found');
-
-      lastRoute.current = coordinates;
-
-      // Calculate distance and time for the new route
-      let totalDistance = 0;
-      for (let i = 0; i < coordinates.length - 1; i++) {
-        const point1 = coordinates[i];
-        const point2 = coordinates[i + 1];
-        totalDistance += getDistanceMeters(point1[1], point1[0], point2[1], point2[0]);
-      }
-
-      setDistanceToDestination(totalDistance);
-      // Estimate time (assuming average walking speed of 5 km/h = 1.4 m/s)
-      const timeMinutes = Math.round(totalDistance / (1.4 * 60));
-      setEstimatedTime(timeMinutes);
-
-      const jsRouteCode = `window.drawRoute && window.drawRoute(${JSON.stringify(coordinates)});`;
-      webViewRef.current?.injectJavaScript(jsRouteCode);
-
-      // Enhanced status message showing rerouting doesn't reset progress
-      const walkedFormatted =
-        distanceWalked >= 1000
-          ? `${(distanceWalked / 1000).toFixed(1)}km walked`
-          : `${Math.round(distanceWalked)}m walked`;
-
-      setStatus(`Route updated! ${walkedFormatted} progress preserved`);
-    } catch (error) {
-      console.error('Route fetch error:', error);
-      setError('Failed to fetch or draw route');
-    } finally {
-      setIsRouteLoading(false);
-    }
-  };
   // Count how many paths touch each room (higher = better default start)
   async function getRoomDegrees(locationId: string, buildingId: string, floorId?: string) {
     let q: any = firestore()
@@ -1776,7 +1007,7 @@ const MapScreen = () => {
     if (floorId) q = q.where('floorId', '==', floorId);
     const snap = await q.get();
     const deg: Record<string, number> = {};
-    snap.docs.forEach((d) => {
+    snap.docs.forEach((d: any) => {
       const p = d.data() as any;
       [p.startRoomId, p.endRoomId].forEach((id: string) => {
         deg[id] = (deg[id] ?? 0) + 1;
@@ -1800,7 +1031,7 @@ const MapScreen = () => {
     if (floorId) q = q.where('floorId', '==', floorId);
     const pathSnap = await q.get();
     const edges: Record<string, string[]> = {};
-    pathSnap.docs.forEach((d) => {
+    pathSnap.docs.forEach((d: any) => {
       const p = d.data() as any;
       edges[p.startRoomId] = [...(edges[p.startRoomId] || []), p.endRoomId];
       edges[p.endRoomId] = [...(edges[p.endRoomId] || []), p.startRoomId];
@@ -1855,37 +1086,6 @@ const MapScreen = () => {
     }
   }, [params, currentLocation, hasHandledDeepLink]);
 
-  // Clean up on unmount
-  useEffect(() => {
-    return () => {
-      if (watchIdRef.current) {
-        Geolocation.clearWatch(watchIdRef.current);
-      }
-    };
-  }, []);
-
-  // Add this new useEffect after your other useEffects
-  useEffect(() => {
-    // Only run when navigating AND haven't reached destination
-    if (!isNavigating || !currentLocation || hasReachedDestination) {
-      return; // Exit early if any condition is not met
-    }
-
-    // Force update progress every 0.5 seconds
-    const progressInterval = setInterval(() => {
-      if (
-        currentLocation &&
-        lastRoute.current &&
-        lastRoute.current.length > 0 &&
-        !hasReachedDestination
-      ) {
-        updateNavigationProgress(currentLocation.latitude, currentLocation.longitude);
-      }
-    }, 500);
-
-    return () => clearInterval(progressInterval);
-  }, [isNavigating, currentLocation, hasReachedDestination]); // Add hasReachedDestination dependency
-
   // Check for location availability after map loads
   useEffect(() => {
     if (isMapReady && !currentLocation && !isRefreshingLocation) {
@@ -1915,10 +1115,10 @@ const MapScreen = () => {
         <CrowdReportModal
           visible={showCrowdPopup}
           selectedDensity={selectedDensity}
-          selectedPOI={selectedPOI}
+          selectedPOI={hookSelectedPOI}
           availablePOIs={pois}
           onChangeDensity={setSelectedDensity}
-          onChangePOI={setSelectedPOI}
+          onChangePOI={setHookSelectedPOI}
           onSubmit={submitCrowdReport}
           onCancel={() => setShowCrowdPopup(false)}
         />
@@ -2051,7 +1251,6 @@ const MapScreen = () => {
                 stopNavigation();
               }
               webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
-              lastRoute.current = [];
               setDestinationCoords(null);
             }
           }}
@@ -2109,16 +1308,19 @@ const MapScreen = () => {
             const locationId = b.location;
             const buildingId = b.id;
 
-            const rooms = await fetchRoomsForBuilding(locationId, buildingId);
+            // TODO: Implement proper room fetching
+            const rooms: any[] = []; // Placeholder - no rooms available
             if (!rooms.length) {
-              /* show popup */ return;
+              setErrorPopupMessage('No rooms available for indoor navigation');
+              setShowErrorPopup(true);
+              return;
             }
 
             setIndoorRooms(rooms);
 
             // Default destination = previously chosen or first
-            const defaultDest = selectedIndoorRoom
-              ? rooms.find((r) => r.id === selectedIndoorRoom.id)
+            const defaultDest: any = selectedIndoorRoom
+              ? rooms.find((r: any) => r.id === selectedIndoorRoom.id)
               : rooms[0];
 
             // Smart default start: entrance on same floor → any entrance → most connected → first
@@ -2317,8 +1519,8 @@ const MapScreen = () => {
           }}
           deviceHeading={deviceHeading}
           navigationSteps={steps}
-          routeCoordinates={lastRoute.current} // Pass the actual route
-          currentRouteIndex={Math.floor((routeProgress / 100) * (lastRoute.current.length - 1))} // Current position on route
+          routeCoordinates={routeCoordinates} // Pass the actual route
+          currentRouteIndex={Math.floor((routeProgress / 100) * (routeCoordinates.length - 1))} // Current position on route
           showMiniMap={true} // Enable mini map overlay
         />
       )}
@@ -2517,7 +1719,7 @@ const MapScreen = () => {
           setDistanceToDestination(null);
           setEstimatedTime(null);
           setSelectedFeature(null);
-          setSelectedPOI(null);
+          setHookSelectedPOI(null);
           setSteps([]);
           setCurrentStep(0);
           // Reset enhanced progress tracking
@@ -2529,7 +1731,6 @@ const MapScreen = () => {
           if (isMapReady && webViewRef.current) {
             webViewRef.current.injectJavaScript('window.clearRoute && window.clearRoute();');
           }
-          lastRoute.current = [];
           setStatus('Ready for navigation');
         }}
         showCancel={false}
