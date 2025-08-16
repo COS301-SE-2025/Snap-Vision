@@ -71,6 +71,7 @@ export default function IndoorSchematicNavScreen() {
   const [currentStep, setCurrentStep] = useState(0);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [currentPos, setCurrentPos] = useState<{ x: number; y: number } | null>(userPos ?? null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   // Popup state
   const [popupVisible, setPopupVisible] = useState(false);
@@ -85,11 +86,34 @@ export default function IndoorSchematicNavScreen() {
   const [floorplanUrl, setFloorplanUrl] = useState<string | null>(null);
   const [floorplanLoading, setFloorplanLoading] = useState<boolean>(false);
 
+  // Helper function to find nearest room to a point
+  const findNearestRoom = (rooms: RoomPOI[], pos: { x: number, y: number }, floorId: string) => {
+    // Filter rooms on the same floor first
+    const roomsOnFloor = rooms.filter(r => r.floorId === floorId);
+    
+    if (!roomsOnFloor.length) return null;
+    
+    // Calculate distances
+    const roomsWithDistance = roomsOnFloor.map(room => {
+      const dx = room.coordinates.x - pos.x;
+      const dy = room.coordinates.y - pos.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      return { room, distance };
+    });
+    
+    // Sort by distance
+    roomsWithDistance.sort((a, b) => a.distance - b.distance);
+    
+    // Return closest room
+    return roomsWithDistance[0]?.room || null;
+  };
+
   // Fetch ALL floors for this building
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
+        console.log('Loading rooms data with userPos:', userPos);
 
         const roomSnap = await firestore()
           .collection('locations')
@@ -118,9 +142,28 @@ export default function IndoorSchematicNavScreen() {
         if (!floorSet.includes(selectedFloorId)) {
           setSelectedFloorId(floorSet[0] || initialFloorId);
         }
-
-        // Place user at entrance if nothing selected
-        if (!userPos) {
+        
+        // Set initial position and start room
+        if (userPos) {
+          // We have coordinates from QR code, set current position
+          console.log('Setting current position from QR scan:', userPos);
+          setCurrentPos(userPos);
+          
+          // Find the nearest room to use as starting point
+          const nearestRoom = findNearestRoom(roomsData, userPos, selectedFloorId);
+          
+          if (nearestRoom) {
+            console.log('Setting start room from QR coordinates:', nearestRoom.name);
+            setStartId(nearestRoom.id);
+            // setStatusMessage(`Current position: ${nearestRoom.name}`);
+            
+            // Show popup notification to user
+            setPopupTitle('Location Set');
+            setPopupMessage(`Your starting position has been set to ${nearestRoom.name}`);
+            setPopupVisible(true);
+          }
+        } else {
+          // No userPos provided, use entrance as default
           const initFloor = floorSet.includes(initialFloorId)
             ? initialFloorId
             : floorSet[0] || initialFloorId;
@@ -463,11 +506,17 @@ export default function IndoorSchematicNavScreen() {
       .map((s) => s.coordinates);
   }, [steps, currentStep, selectedFloorId]);
 
+  // Determine what prompt to show based on state
   const prompt = !startId
-    ? 'Choose your start room'
+    ? 'Choose your start room' 
     : !endId
       ? 'Choose your destination'
       : `${Math.max(0, steps.length - currentStep)} steps left`;
+      
+  // Override prompt if userPos was set from QR code
+  const effectivePrompt = userPos && startId 
+    ? 'Choose your destination' 
+    : prompt;
 
   if (loading) {
     return (
@@ -504,8 +553,17 @@ export default function IndoorSchematicNavScreen() {
       <View
         style={[styles.promptBar, { backgroundColor: colors.card, borderColor: colors.border }]}
       >
-        <Text style={{ color: colors.text, fontWeight: '600' }}>{prompt}</Text>
+        <Text style={{ color: colors.text, fontWeight: '600' }}>{effectivePrompt}</Text>
       </View>
+
+      {/* Status message */}
+      {statusMessage && (
+        <View
+          style={[styles.statusBar, { backgroundColor: colors.primary + '20', borderColor: colors.primary }]}
+        >
+          <Text style={{ color: colors.text, fontWeight: '500' }}>{statusMessage}</Text>
+        </View>
+      )}
 
       {/* Map area with floorplan */}
       <View style={{ flex: 1 }}>
@@ -720,5 +778,15 @@ const styles = StyleSheet.create({
     left: 16,
     right: 16,
     bottom: 50,
+  },
+
+  statusBar: {
+    alignSelf: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 8,
+    marginTop: -2,
   },
 });
