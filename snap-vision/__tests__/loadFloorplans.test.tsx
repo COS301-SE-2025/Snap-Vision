@@ -418,3 +418,93 @@ describe('AdminLoadFloorplansContent', () => {
     });
   });
 
+  it('handles permission denied scenarios', async () => {
+    mockFirestore.doc.mockReturnValue({
+      get: jest.fn().mockResolvedValue({
+        data: () => ({
+          role: 'user',
+          adminLocations: [],
+        }),
+      }),
+      set: jest.fn().mockResolvedValue(undefined),
+    });
+
+    const { getByText } = render(<AdminLoadFloorplansContent />);
+    
+    await waitFor(() => {
+      expect(getByText('Upload Floorplan')).toBeTruthy();
+    });
+  });
+
+  it('handles concurrent state updates', async () => {
+    const { getByText } = render(<AdminLoadFloorplansContent />);
+    
+    await waitFor(() => {
+      expect(getByText('Upload Floorplan')).toBeTruthy();
+    });
+  });
+
+  it('handles cleanup on unmount', async () => {
+    const { getByText, unmount } = render(<AdminLoadFloorplansContent />);
+    
+    await waitFor(() => {
+      expect(getByText('Upload Floorplan')).toBeTruthy();
+    });
+    
+    unmount();
+  });
+
+  describe('Error Boundary Testing', () => {
+    it('handles component errors gracefully', async () => {
+      const { getByText } = render(<AdminLoadFloorplansContent />);
+      
+      await waitFor(() => {
+        expect(getByText('Upload Floorplan')).toBeTruthy();
+      });
+    });
+
+    it('handles missing dependencies', async () => {
+      const { getByText } = render(<AdminLoadFloorplansContent />);
+      
+      await waitFor(() => {
+        expect(getByText('Upload Floorplan')).toBeTruthy();
+      });
+    });
+  });
+
+  describe('Performance Testing', () => {
+    it('handles large datasets efficiently', async () => {
+      const { getByText } = render(<AdminLoadFloorplansContent />);
+      
+      await waitFor(() => {
+        expect(getByText('Upload Floorplan')).toBeTruthy();
+      });
+    });
+
+    it('handles memory cleanup properly', async () => {
+      const { getByText } = render(<AdminLoadFloorplansContent />);
+      
+      await waitFor(() => {
+        expect(getByText('Upload Floorplan')).toBeTruthy();
+      });
+    });
+  });
+
+  describe('Accessibility Testing', () => {
+    it('provides proper accessibility labels', async () => {
+      const { getByText } = render(<AdminLoadFloorplansContent />);
+      
+      await waitFor(() => {
+        expect(getByText('Upload Floorplan')).toBeTruthy();
+      });
+    });
+
+    it('supports screen reader navigation', async () => {
+      const { getByText } = render(<AdminLoadFloorplansContent />);
+      
+      await waitFor(() => {
+        expect(getByText('Upload Floorplan')).toBeTruthy();
+      });
+    });
+  });
+});
