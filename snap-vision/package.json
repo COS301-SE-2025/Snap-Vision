@@ -47,6 +47,7 @@
     "react-native-maps": "^1.23.8",
     "react-native-modal": "^14.0.0-rc.1",
     "react-native-permissions": "^5.4.2",
+    "react-native-qrcode-scanner": "^1.5.5",
     "react-native-qrcode-svg": "^6.3.15",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "^5.4.1",
@@ -62,9 +63,10 @@
     "react-native-web": "~0.20.0",
     "react-native-webview": "^13.13.5",
     "react-native-wifi-reborn": "^4.13.6",
-    "react-native-worklets-core": "^1.6.0",
+    "react-native-worklets-core": "^1.6.2",
     "react-test-renderer": "^19.0.0",
-    "react-vision-camera": "^1.0.1"
+    "react-vision-camera": "^1.0.1",
+    "vision-camera-code-scanner": "^0.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.23.9",

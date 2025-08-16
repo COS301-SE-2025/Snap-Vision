@@ -15,16 +15,16 @@ interface Props {
 
 // Adjust these to match your real navigator params
 type RootStackParamList = {
-  IndoorNavigationInterface: {
+  IndoorSchematicNav: {
     locationId: string;        // real location (e.g., "up-campus")
     buildingId: string;        // building to open
-    buildingName?: string;     // for UI
-    startRoomId?: string;      // use QR room as start
-    qrScanResult?: string;     // raw QR value (for debug)
+    buildingName: string;      // for UI
+    floorId: string;           // floor to show
+    userPos?: { x: number; y: number } | null; // optional user position
   };
 };
 
-export default function QrCard({ backgroundColor, titleColor }: Props) {
+export default function QrCard({ backgroundColor, titleColor, subtitleColor }: Props) {
   const [scannerVisible, setScannerVisible] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,20 +50,21 @@ export default function QrCard({ backgroundColor, titleColor }: Props) {
         buildingId,
         buildingName,
         roomId,
+        floorId,
       } = qrMapping;
 
-      if (!locationId || !buildingId || !roomId) {
+      if (!locationId || !buildingId || !roomId || !floorId) {
         setError('QR code is incomplete. Please try another one.');
         return;
       }
 
-      // Navigate with correct params for your Indoor Navigation screen
-      navigation.navigate('IndoorNavigationInterface', {
+      // Navigate with correct params for IndoorSchematicNavScreen
+      navigation.navigate('IndoorSchematicNav', {
         locationId,
         buildingId,
-        buildingName,
-        startRoomId: roomId,        // set the start position!
-        qrScanResult: qrValue,
+        buildingName: buildingName || 'Building',
+        floorId,                    // pass the floor ID for correct floor selection
+        // Don't pass userPos here - the screen will handle positioning based on entrance or QR room
       });
     } catch (err) {
       console.error('Error processing QR code:', err);

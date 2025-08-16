@@ -43,7 +43,7 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'https://c2a333775d71.ngrok-free.app'; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = 'https://597d938efd32.ngrok-free.app'; // <-- Use your correct backend IP here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
@@ -312,7 +312,7 @@ const MapScreen = () => {
   // Send current location to map when map becomes ready
   useEffect(() => {
     if (isMapReady && currentLocation && webViewRef.current) {
-      console.log('🗺️ Map is now ready and we have location, sending to WebView:', currentLocation);
+      // console.log('🗺️ Map is now ready and we have location, sending to WebView:', currentLocation);
       const zoomLevel = isNavigating ? 18 : 16;
       const jsCode = `window.updateUserLocation && window.updateUserLocation(${currentLocation.latitude}, ${currentLocation.longitude}, true, ${zoomLevel});`;
       webViewRef.current.injectJavaScript(jsCode);
@@ -321,18 +321,18 @@ const MapScreen = () => {
 
   const sendLocationToWebView = (lat: number, lon: number, centerMap = false) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
-    console.log('📍 Sending location to WebView:', { lat, lon, centerMap, isMapReady });
+    // console.log('📍 Sending location to WebView:', { lat, lon, centerMap, isMapReady });
 
     // Only inject JavaScript if the map is ready
     if (!isMapReady || !webViewRef.current) {
-      console.log('⚠️ Map not ready or WebView not available, storing location for later');
+      // console.log('⚠️ Map not ready or WebView not available, storing location for later');
       return;
     }
 
     const zoomLevel = isNavigating ? 18 : 16;
 
     const jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap}, ${zoomLevel});`;
-    console.log('📤 Injecting location JavaScript:', jsCode);
+    // console.log('📤 Injecting location JavaScript:', jsCode);
     webViewRef.current.injectJavaScript(jsCode);
 
     if (isNavigating && lastRoute.current && lastRoute.current.length > 0) {
