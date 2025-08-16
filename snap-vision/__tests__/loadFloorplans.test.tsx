@@ -99,3 +99,107 @@ jest.mock('../src/theme', () => ({
 jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => 'Icon');
 jest.mock('react-native-dropdown-picker', () => 'DropDownPicker');
 
+describe('AdminLoadFloorplansContent', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('renders without crashing', async () => {
+    const { getByText } = render(<AdminLoadFloorplansContent />);
+    
+    await waitFor(() => {
+      expect(getByText('Upload Floorplan')).toBeTruthy();
+    });
+  });
+
+  it('displays the main title', async () => {
+    const { getByText } = render(<AdminLoadFloorplansContent />);
+    
+    await waitFor(() => {
+      expect(getByText('Upload Floorplan')).toBeTruthy();
+    });
+  });
+
+  it('shows location selection', async () => {
+    const { getByText } = render(<AdminLoadFloorplansContent />);
+    
+    await waitFor(() => {
+      expect(getByText('Select a Location')).toBeTruthy();
+    });
+  });
+
+  it('loads locations on mount', async () => {
+    render(<AdminLoadFloorplansContent />);
+    
+    await waitFor(() => {
+      expect(mockFirestore.collection).toHaveBeenCalledWith('locations');
+    });
+  });
+
+  it('loads user information', async () => {
+    render(<AdminLoadFloorplansContent />);
+    
+    await waitFor(() => {
+      expect(mockFirestore.doc).toHaveBeenCalledWith('userInformation/test-user-id');
+    });
+  });
+
+  it('handles admin user role', async () => {
+    const { getByText } = render(<AdminLoadFloorplansContent />);
+    
+    await waitFor(() => {
+      expect(getByText('Test Location 1')).toBeTruthy();
+      expect(getByText('Test Location 2')).toBeTruthy();
+    });
+  });
+
+  it('handles editor user role', async () => {
+    mockFirestore.doc.mockReturnValue({
+      get: jest.fn().mockResolvedValue({
+        data: () => ({
+          role: 'editor',
+          adminLocations: ['loc1'],
+        }),
+      }),
+      set: jest.fn().mockResolvedValue(undefined),
+    });
+
+    const { getByText } = render(<AdminLoadFloorplansContent />);
+    
+    await waitFor(() => {
+      expect(getByText('Test Location 1')).toBeTruthy();
+    });
+  });
+
+  it('handles no user role', async () => {
+    mockFirestore.doc.mockReturnValue({
+      get: jest.fn().mockResolvedValue({
+        data: () => ({
+          role: undefined,
+          adminLocations: [],
+        }),
+      }),
+      set: jest.fn().mockResolvedValue(undefined),
+    });
+
+    const { getByText } = render(<AdminLoadFloorplansContent />);
+    
+    await waitFor(() => {
+      expect(getByText('Upload Floorplan')).toBeTruthy();
+    });
+  });
+
+  it('handles empty buildings', async () => {
+    mockFirestore.collection.mockReturnValueOnce({
+      get: jest.fn().mockResolvedValue({
+        docs: [],
+      }),
+    });
+
+    const { getByText } = render(<AdminLoadFloorplansContent />);
+    
+    await waitFor(() => {
+      expect(getByText('Upload Floorplan')).toBeTruthy();
+    });
+  });
+
