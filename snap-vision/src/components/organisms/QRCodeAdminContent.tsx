@@ -636,46 +636,52 @@ export default function QRCodeAdminContent() {
       </Modal>
 
       {/* Generate QR (Preview) Modal — real QR + Save PNG */}
-      <Modal
-        visible={isGenerateModalVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setIsGenerateModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>QR Code</Text>
 
-            <View style={styles.qrCodeContainer}>
-              <QRCode
-                value={qrValue || ' '}
-                size={200}
-                color={colors.text}
-                backgroundColor={colors.background}
-                getRef={(c) => (qrRef.current = c)}
-              />
-            </View>
+<Modal
+  visible={isGenerateModalVisible}
+  animationType="slide"
+  transparent
+  onRequestClose={() => setIsGenerateModalVisible(false)}
+>
+  <View style={styles.modalOverlay}>
+    <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+      <Text style={[styles.modalTitle, { color: colors.text }]}>QR Code</Text>
 
-            <Text style={[styles.qrValueText, { color: colors.text }]}>{qrValue}</Text>
+      <View style={styles.qrCard}>
+        <QRCode
+          value={qrValue || ' '}
+          size={320}
+          color="#000000"
+          backgroundColor="#FFFFFF"
+          ecl="M"
+          getRef={(c) => (qrRef.current = c)}
+        />
+      </View>
 
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <TouchableOpacity
-                style={[styles.fullWidthButton, { backgroundColor: colors.primary, flex: 1 }]}
-                onPress={handleSavePng}
-              >
-                <Text style={{ color: '#FFF' }}>Save PNG</Text>
-              </TouchableOpacity>
+      <Text style={[styles.qrValueText, { color: colors.text }]} numberOfLines={2}>
+        {qrValue}
+      </Text>
 
-              <TouchableOpacity
-                style={[styles.fullWidthButton, { backgroundColor: colors.border, flex: 1 }]}
-                onPress={() => setIsGenerateModalVisible(false)}
-              >
-                <Text style={{ color: colors.text }}>Close</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        <TouchableOpacity
+          style={[styles.fullWidthButton, { backgroundColor: colors.primary, flex: 1 }]}
+          onPress={handleSavePng}
+          disabled={!qrValue}
+        >
+          <Text style={{ color: '#FFF' }}>Save PNG</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.fullWidthButton, { backgroundColor: colors.border, flex: 1 }]}
+          onPress={() => setIsGenerateModalVisible(false)}
+        >
+          <Text style={{ color: colors.text }}>Close</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </View>
+</Modal>
+
     </View>
   );
 }
@@ -783,6 +789,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderRadius: 8,
   },
+  qrCard: {
+    alignSelf: 'center',
+    backgroundColor: '#FFFFFF', 
+    padding: 18,              
+    borderRadius: 12,
+  },
+  
   qrValueText: { fontSize: 14, textAlign: 'center', marginBottom: 20 },
   fullWidthButton: { paddingVertical: 12, alignItems: 'center', borderRadius: 8 },
 
