@@ -1,6 +1,7 @@
 // src/components/molecules/QrCard.tsx
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import StandardPopup from '../atoms/StandardPopup';
 import Icon from 'react-native-vector-icons/Ionicons';
 import QRScanner from './QRScanner';
 import { getQRCodeMappingByValue } from '../../services/qrService';
@@ -42,6 +43,10 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  
+  // Popup states
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleQRScan = async (qrValue: string) => {
     setProcessing(true);
@@ -51,7 +56,8 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
     try {
       if (!qrValue || typeof qrValue !== 'string' || qrValue.trim() === '') {
         setError('Empty or invalid QR code data.');
-        Alert.alert('Invalid QR', 'The QR code data is empty or invalid.');
+        setErrorMessage('The QR code data is empty or invalid.');
+        setShowErrorPopup(true);
         return;
       }
 
@@ -61,7 +67,8 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
 
       if (!qrMapping) {
         setError('Invalid QR code. Please try again.');
-        Alert.alert('QR not found', 'No mapping exists for this QR code.');
+        setErrorMessage('No mapping exists for this QR code.');
+        setShowErrorPopup(true);
         return;
       }
       
@@ -239,7 +246,8 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
     } catch (err) {
       console.error('Error processing QR code:', err);
       setError('Error processing QR code. Please try again.');
-      Alert.alert('Scan error', 'Something went wrong while processing the code.');
+      setErrorMessage('Something went wrong while processing the code.');
+      setShowErrorPopup(true);
     } finally {
       setProcessing(false);
     }
@@ -247,6 +255,14 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
 
   return (
     <>
+      {/* Error Popup */}
+      <StandardPopup
+        visible={showErrorPopup}
+        title="QR Code Error"
+        message={errorMessage}
+        onConfirm={() => setShowErrorPopup(false)}
+      />
+      
       <TouchableOpacity
         style={[styles.qrContainer, { backgroundColor }]}
         onPress={() => setScannerVisible(true)}

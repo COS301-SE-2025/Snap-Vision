@@ -9,7 +9,6 @@ import {
   StyleSheet,
   Modal,
   ActivityIndicator,
-  Alert,
   ScrollView,
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -96,6 +95,21 @@ export default function QRCodeAdminContent() {
   const [isGenerateModalVisible, setIsGenerateModalVisible] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  
+  // Error popup states
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [errorTitle, setErrorTitle] = useState('Error');
+  const [errorMessage, setErrorMessage] = useState('');
+  
+  // Confirmation popup state
+  const [showConfirmPopup, setShowConfirmPopup] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState('');
+  const [confirmAction, setConfirmAction] = useState<() => void>(() => {});
+  
+  // Info popup state
+  const [showInfoPopup, setShowInfoPopup] = useState(false);
+  const [infoTitle, setInfoTitle] = useState('');
+  const [infoMessage, setInfoMessage] = useState('');
 
   // Ref to export QR
   const qrRef = useRef<QRCode | null>(null);
@@ -242,11 +256,13 @@ export default function QRCodeAdminContent() {
 
   const handleAddQRCode = async () => {
     if (!selectedLocationId || !selectedBuildingId || !selectedFloorId) {
-      Alert.alert('Error', 'Please select a location, building and floor.');
+      setErrorMessage('Please select a location, building and floor.');
+      setShowErrorPopup(true);
       return;
     }
     if (!selectedRoom || !qrValue) {
-      Alert.alert('Error', 'Please select a room and enter a QR code value.');
+      setErrorMessage('Please select a room and enter a QR code value.');
+      setShowErrorPopup(true);
       return;
     }
     try {
@@ -274,7 +290,8 @@ export default function QRCodeAdminContent() {
       setShowSuccessPopup(true);
     } catch (e) {
       console.error('Error adding QR code:', e);
-      Alert.alert('Error', 'Failed to add QR code. Please try again.');
+      setErrorMessage('Failed to add QR code. Please try again.');
+      setShowErrorPopup(true);
     }
   };
 
@@ -303,21 +320,20 @@ export default function QRCodeAdminContent() {
       setShowSuccessPopup(true);
     } catch (e) {
       console.error('Error updating QR code:', e);
-      Alert.alert('Error', 'Failed to update QR code. Please try again.');
+      setErrorMessage('Failed to update QR code. Please try again.');
+      setShowErrorPopup(true);
     }
   };
 
   const handleDeleteQRCode = (qr: QRCodeMapping) => {
     if (!selectedLocationId) {
-      Alert.alert('Error', 'Location information missing.');
+      setErrorMessage('Location information missing.');
+      setShowErrorPopup(true);
       return;
     }
-    Alert.alert('Confirm Delete', 'Are you sure you want to delete this QR code mapping?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
+    setConfirmMessage('Are you sure you want to delete this QR code mapping?');
+    setConfirmAction(() => async () => {
+        style: 'destructive'
           try {
             await deleteQRCodeMapping(selectedLocationId, qr.id);
             if (selectedBuildingId) {
@@ -328,18 +344,19 @@ export default function QRCodeAdminContent() {
             setShowSuccessPopup(true);
           } catch (e) {
             console.error('Error deleting QR code:', e);
-            Alert.alert('Error', 'Failed to delete QR code. Please try again.');
+            setErrorMessage('Failed to delete QR code. Please try again.');
+            setShowErrorPopup(true);
           }
-        },
-      },
-    ]);
+    });
+    setShowConfirmPopup(true);
   };
 
   // Export QR to PNG (saved in app cache directory)
   const handleSavePng = async () => {
     try {
       if (!qrRef.current) {
-        Alert.alert('Error', 'QR component not ready.');
+        setErrorMessage('QR component not ready.');
+        setShowErrorPopup(true);
         return;
       }
       // toDataURL returns base64 PNG
@@ -347,15 +364,19 @@ export default function QRCodeAdminContent() {
         try {
           const filePath = `${RNFS.CachesDirectoryPath}/qr-${Date.now()}.png`;
           await RNFS.writeFile(filePath, data, 'base64');
-          Alert.alert('Saved', `QR PNG saved to:\n${filePath}`);
+          setInfoTitle('Saved');
+          setInfoMessage(`QR PNG saved to:\n${filePath}`);
+          setShowInfoPopup(true);
         } catch (err) {
           console.error('Save PNG error:', err);
-          Alert.alert('Error', 'Failed to save PNG.');
+          setErrorMessage('Failed to save PNG.');
+          setShowErrorPopup(true);
         }
       });
     } catch (e) {
       console.error(e);
-      Alert.alert('Error', 'Could not export QR PNG.');
+      setErrorMessage('Could not export QR PNG.');
+      setShowErrorPopup(true);
     }
   };
 
@@ -363,6 +384,44 @@ export default function QRCodeAdminContent() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title="QR Code Management" />
+      
+      {/* Error Popup */}
+      <StandardPopup
+        visible={showErrorPopup}
+        title="Error"
+        message={errorMessage}
+        onConfirm={() => setShowErrorPopup(false)}
+      />
+      
+      {/* Success Popup */}
+      <StandardPopup
+        visible={showSuccessPopup}
+        title="Success"
+        message={successMessage}
+        onConfirm={() => setShowSuccessPopup(false)}
+      />
+      
+      {/* Confirmation Popup */}
+      <StandardPopup
+        visible={showConfirmPopup}
+        title="Confirm Delete"
+        message={confirmMessage}
+        onConfirm={(e) => {
+          setShowConfirmPopup(false);
+          confirmAction();
+        }}
+        onCancel={() => setShowConfirmPopup(false)}
+        showCancel={true}
+        confirmText="Delete"
+      />
+      
+      {/* Info Popup */}
+      <StandardPopup
+        visible={showInfoPopup}
+        title={infoTitle}
+        message={infoMessage}
+        onConfirm={() => setShowInfoPopup(false)}
+      />
 
       {isLoading && (
         <View style={styles.loadingOverlay}>
@@ -663,13 +722,13 @@ export default function QRCodeAdminContent() {
       </Text>
 
       <View style={{ flexDirection: 'row', gap: 12 }}>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={[styles.fullWidthButton, { backgroundColor: colors.primary, flex: 1 }]}
           onPress={handleSavePng}
           disabled={!qrValue}
         >
           <Text style={{ color: '#FFF' }}>Save PNG</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity
           style={[styles.fullWidthButton, { backgroundColor: colors.border, flex: 1 }]}

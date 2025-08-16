@@ -10,8 +10,8 @@ import {
   KeyboardAvoidingView,
   Vibration,
   TextInput,
-  Alert,
 } from 'react-native';
+import StandardPopup from '../atoms/StandardPopup';
 import { Camera, useCameraDevice, useCodeScanner } from 'react-native-vision-camera';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeContext';
@@ -40,6 +40,10 @@ export default function QRScanner({ onScan, onClose }: Props) {
   const [isScanning, setIsScanning] = useState(true);
   const [autoScanMode, setAutoScanMode] = useState(true);
   const [manualScanActive, setManualScanActive] = useState(false);
+  
+  // Popup states
+  const [showPermissionPopup, setShowPermissionPopup] = useState(false);
+  const [permissionMessage, setPermissionMessage] = useState('');
 
   const lockTimer = useRef<NodeJS.Timeout | null>(null);
   const cameraRef = useRef<Camera>(null);
@@ -54,14 +58,8 @@ export default function QRScanner({ onScan, onClose }: Props) {
         } else {
           setHasPermission(false);
           if (cameraPermission === 'denied') {
-            Alert.alert(
-              'Permission Required',
-              'Camera access is blocked. Please enable it in settings.',
-              [
-                { text: 'Open Settings', onPress: () => Camera.openSettings() },
-                { text: 'Cancel', onPress: onClose },
-              ]
-            );
+            setPermissionMessage('Camera access is blocked. Please enable it in settings.');
+            setShowPermissionPopup(true);
           }
         }
       } catch (e) {
@@ -241,6 +239,16 @@ export default function QRScanner({ onScan, onClose }: Props) {
       style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      {/* Permission Popup */}
+      <StandardPopup
+        visible={showPermissionPopup}
+        title="Permission Required"
+        message={permissionMessage}
+        onConfirm={() => Camera.openSettings()}
+        onCancel={onClose}
+        showCancel={true}
+        confirmText="Open Settings"
+      />
       {device ? (
         <Camera
           ref={cameraRef}
