@@ -90,8 +90,13 @@ export default function IndoorSchematicNavScreen() {
 
   // Helper function to find nearest room to a point
   const findNearestRoom = (rooms: RoomPOI[], pos: { x: number, y: number }, floorId: string) => {
-    // Filter rooms on the same floor first
-    const roomsOnFloor = rooms.filter(r => r.floorId === floorId);
+    if (!pos || !rooms || !rooms.length) return null;
+    
+    console.log(`Finding nearest room on floor ${floorId}. Total rooms: ${rooms.length}`);
+    
+    // Filter rooms by floor
+    const roomsOnFloor = rooms.filter((r) => r.floorId === floorId);
+    console.log(`Rooms on floor ${floorId}: ${roomsOnFloor.length}`);
     
     if (!roomsOnFloor.length) return null;
     
@@ -332,7 +337,11 @@ export default function IndoorSchematicNavScreen() {
       // We're in the same building, try to get room details
       try {
         // Switch to the floor from the QR code
+        console.log('Changing to floor:', qrFloorId, 'from floor:', selectedFloorId);
         setSelectedFloorId(qrFloorId);
+        
+        // Reset navigation state when changing floors
+        resetRoute();
         
         // Get room reference
         const roomRef = firestore()
@@ -378,7 +387,7 @@ export default function IndoorSchematicNavScreen() {
           setCurrentPos(fallbackCoordinates);
           
           // Try to find the nearest room to use as starting point
-          const nearestRoom = findNearestRoom(roomsData, fallbackCoordinates, qrFloorId);
+          const nearestRoom = findNearestRoom(allRooms, fallbackCoordinates, qrFloorId);
           if (nearestRoom) {
             setStartId(nearestRoom.id);
             setPopupTitle('Location Set');
@@ -412,7 +421,7 @@ export default function IndoorSchematicNavScreen() {
         setCurrentPos(coordinates);
         
         // Find the nearest room to use as starting point
-        const nearestRoom = findNearestRoom(roomsData, coordinates, qrFloorId);
+        const nearestRoom = findNearestRoom(allRooms, coordinates, qrFloorId);
         
         if (nearestRoom) {
           console.log('Setting start room from QR coordinates:', nearestRoom.name);
@@ -435,7 +444,7 @@ export default function IndoorSchematicNavScreen() {
         setCurrentPos(fallbackCoordinates);
         
         // Try to find the nearest room to use as starting point
-        const nearestRoom = findNearestRoom(roomsData, fallbackCoordinates, qrFloorId);
+        const nearestRoom = findNearestRoom(allRooms, fallbackCoordinates, qrFloorId);
         if (nearestRoom) {
           setStartId(nearestRoom.id);
           setPopupTitle('Location Set');
