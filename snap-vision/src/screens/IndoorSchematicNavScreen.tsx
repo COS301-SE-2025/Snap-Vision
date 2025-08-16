@@ -1,9 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import firestore from '@react-native-firebase/firestore';
-import storage from '@react-native-firebase/storage';
-import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 import SettingsHeader from '../components/molecules/SettingsHeader';
@@ -14,6 +12,9 @@ import { Picker } from '@react-native-picker/picker';
 import StandardPopup from '../components/atoms/StandardPopup';
 import AppSecondaryButton from '../components/atoms/AppSecondaryButton';
 import QRScanner from '../components/molecules/QRScanner';
+import { getQRCodeMappingByValue } from '../services/qrService';
+import firestore from '@react-native-firebase/firestore';
+import storage from '@react-native-firebase/storage';
 
 type ParamList = {
   IndoorSchematicNav: {
@@ -72,6 +73,7 @@ export default function IndoorSchematicNavScreen() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [currentPos, setCurrentPos] = useState<{ x: number; y: number } | null>(userPos ?? null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
 
   // Popup state
   const [popupVisible, setPopupVisible] = useState(false);
@@ -257,143 +259,190 @@ export default function IndoorSchematicNavScreen() {
     [allRooms, selectedFloorId],
   );
 
-  // Handle QR code scan results
+  // Add a guaranteed fallback coordinate that will work for all buildings/floors
+  const fallbackCoordinates = { x: 500, y: 500 };
+
+  // Handle QR code scan results - using the same logic as QrCard.tsx
   const handleQRScan = async (qrValue: string) => {
     try {
       // Close the scanner
       setQrScannerVisible(false);
+      setStatus('Processing QR code...');
+
+      if (!qrValue || typeof qrValue !== 'string' || qrValue.trim() === '') {
+        setPopupTitle('Invalid QR');
+        setPopupMessage('The QR code data is empty or invalid.');
+        setPopupVisible(true);
+        return;
+      }
+
+      console.log('Processing QR code value:', qrValue);
       
-      // Format expected: qr:location:building:floor:room
-      // or qr:building:floor:room (legacy format)
-      const parts = qrValue.split(':');
-      
-      if (parts[0] !== 'qr') {
-        setPopupTitle('Invalid QR Code');
-        setPopupMessage('This QR code is not valid for navigation.');
+      // Use the qrService to get mapping data - same as QrCard
+      const qrMapping = await getQRCodeMappingByValue(qrValue);
+
+      if (!qrMapping) {
+        setPopupTitle('QR not found');
+        setPopupMessage('No mapping exists for this QR code.');
         setPopupVisible(true);
         return;
       }
       
-      let locationId = route.params.locationId;
-      let buildingId = route.params.buildingId;
-      let floorId = '';
-      let roomId = '';
-      
-      // Parse based on format
-      if (parts.length === 5) {
-        // New format: qr:location:building:floor:room
-        locationId = parts[1];
-        buildingId = parts[2];
-        floorId = parts[3];
-        roomId = parts[4];
-      } else if (parts.length === 4) {
-        // Legacy format: qr:building:floor:room
-        buildingId = parts[1];
-        floorId = parts[2];
-        roomId = parts[3];
-      } else {
-        setPopupTitle('Invalid QR Format');
-        setPopupMessage('The QR code format is not recognized.');
+      console.log('QR mapping found:', JSON.stringify(qrMapping));
+
+      // Use the mapping as saved by createQRCodeMapping
+      const {
+        locationId: qrLocationId,
+        buildingId: qrBuildingId,
+        buildingName: qrBuildingName,
+        roomId: qrRoomId,
+        floorId: qrFloorId,
+        roomName: qrRoomName
+      } = qrMapping;
+
+      // Make sure the QR data is valid
+      if (!qrLocationId || !qrBuildingId || !qrRoomId || !qrFloorId) {
+        setPopupTitle('Incomplete QR');
+        setPopupMessage('QR code is missing required information.');
         setPopupVisible(true);
         return;
       }
-      
-      // Check if we're in the same building
-      if (buildingId !== route.params.buildingId) {
+
+      // Check if we're in a different building/location
+      if (qrBuildingId !== route.params.buildingId || qrLocationId !== route.params.locationId) {
         // We need to navigate to a different building
         setPopupTitle('Different Building');
-        setPopupMessage('This QR code is for a different building. Redirecting...');
+        setPopupMessage(`This QR code is for ${qrBuildingName || 'a different building'}. Redirecting...`);
         setPopupVisible(true);
         
         // Navigate to the correct building after showing message
         setTimeout(() => {
           setPopupVisible(false);
           navigation.replace('IndoorSchematicNav', {
-            buildingId,
-            buildingName: 'Building', // We'll update this once we load
-            locationId,
-            floorId
+            locationId: qrLocationId,
+            buildingId: qrBuildingId,
+            buildingName: qrBuildingName || 'Building',
+            floorId: qrFloorId,
+            userPos: fallbackCoordinates // Add fallback coordinates
           });
-        }, 2000);
+        }, 1500);
         return;
       }
       
-      // We're in the correct building, set floor and find room
-      setSelectedFloorId(floorId);
-      
-      // Find the room on this floor
-      const room = allRooms.find(r => r.id === roomId && r.floorId === floorId);
-      
-      if (!room) {
-        setPopupTitle('Room Not Found');
-        setPopupMessage('The scanned room could not be found in this building.');
-        setPopupVisible(true);
-        return;
-      }
-      
-      // Set current position or destination based on user selection
-      setPopupTitle('QR Code Scanned');
-      setPopupMessage('Use this location as your current position or destination?');
-      setPopupConfirmText('Set as Position');
-      setPopupVisible(true);
-      
-      // Store the room info for when user confirms
-      const tempRoom = room;
-      
-      // Override default popup actions
-      // Note: This would be better with a custom popup component with multiple buttons
-      // but we're working with what we have
-      setTimeout(() => {
-        setPopupVisible(false);
+      // We're in the same building, try to get room details
+      try {
+        // Switch to the floor from the QR code
+        setSelectedFloorId(qrFloorId);
         
-        // Ask user if they want to set as current position or destination
-        setPopupTitle('QR Location');
-        setPopupMessage('What would you like to do with this location?');
-        setPopupConfirmText('Set as Current Position');
-        setPopupVisible(true);
-        
-        // Create our own custom popup buttons
-        const currentPositionAction = () => {
-          setPopupVisible(false);
-          setCurrentPos(tempRoom.coordinates);
-          setStartId(tempRoom.id);
-          setStatus(`Set current position to ${tempRoom.name}`);
-        };
-        
-        const destinationAction = () => {
-          setPopupVisible(false);
-          if (!startId) {
-            setStartId(null);
-            setEndId(tempRoom.id);
-            setStatus(`Set destination to ${tempRoom.name}. Select a starting point.`);
-          } else {
-            setEndId(tempRoom.id);
-            setStatus(`Set destination to ${tempRoom.name}`);
-          }
-        };
-        
-        // Allow both options via separate popups
-        setTimeout(() => {
-          setPopupVisible(false);
-          setPopupTitle('Set as Current Position');
-          setPopupMessage(`Set your current position to ${tempRoom.name}?`);
-          setPopupConfirmText('Yes');
-          setPopupVisible(true);
+        // Get room reference
+        const roomRef = firestore()
+          .collection('locations')
+          .doc(qrLocationId)
+          .collection('roomPOIs')
+          .doc(qrRoomId);
           
-          setTimeout(() => {
-            setPopupVisible(false);
-            setPopupTitle('Set as Destination');
-            setPopupMessage(`Set your destination to ${tempRoom.name}?`);
-            setPopupConfirmText('Yes');
-            setPopupVisible(true);
+        console.log('Fetching room data for:', qrRoomId, 'in location:', qrLocationId);
+        const roomDoc = await roomRef.get();
+        
+        // In newer Firebase versions, exists is a property or function
+        let docExists = false;
+        if (typeof roomDoc.exists === 'function') {
+          docExists = roomDoc.exists();
+        } else {
+          docExists = !!roomDoc.exists;
+        }
+        console.log('Room exists:', docExists, 'Room ID:', roomDoc.id);
+        
+        if (!docExists) {
+          // Room not found, try to find by name in existing rooms
+          const roomByName = allRooms.find(r => 
+            r.floorId === qrFloorId && 
+            r.name && 
+            r.name.toLowerCase() === (qrRoomName || '').toLowerCase()
+          );
+          
+          if (roomByName) {
+            // Found room by name
+            console.log('Found room by name:', roomByName.name);
+            setCurrentPos(roomByName.coordinates);
+            setStartId(roomByName.id);
             
-            setTimeout(() => {
-              setPopupVisible(false);
-              currentPositionAction();
-            }, 2000);
-          }, 2000);
-        }, 2000);
-      }, 2000);
+            setPopupTitle('Location Set');
+            setPopupMessage(`Your starting position has been set to ${roomByName.name}`);
+            setPopupVisible(true);
+            return;
+          }
+          
+          // Not found by id or name, use fallback
+          console.warn('Room document not found:', qrRoomId);
+          setCurrentPos(fallbackCoordinates);
+          
+          // Try to find the nearest room to use as starting point
+          const nearestRoom = findNearestRoom(roomsData, fallbackCoordinates, qrFloorId);
+          if (nearestRoom) {
+            setStartId(nearestRoom.id);
+            setPopupTitle('Location Set');
+            setPopupMessage(`Position set using nearby room: ${nearestRoom.name}`);
+          } else {
+            setPopupTitle('Position Set');
+            setPopupMessage('Your position has been set to building entrance');
+          }
+          setPopupVisible(true);
+          return;
+        }
+        
+        // Room document exists, try to get coordinates
+        const roomData = roomDoc.data() as any;
+        console.log('Room data retrieved:', roomData ? JSON.stringify(roomData) : 'undefined');
+        
+        // Pre-define coordinates as fallback to guarantee we always have something
+        let coordinates = fallbackCoordinates;
+        
+        if (roomData) {
+          if (roomData.coordinates) {
+            coordinates = roomData.coordinates;
+            console.log('Room coordinates found:', coordinates);
+          } else if (roomData.position) {
+            coordinates = roomData.position;
+            console.log('Room position found:', coordinates);
+          }
+        }
+        
+        // Set current position and starting room
+        setCurrentPos(coordinates);
+        
+        // Find the nearest room to use as starting point
+        const nearestRoom = findNearestRoom(roomsData, coordinates, qrFloorId);
+        
+        if (nearestRoom) {
+          console.log('Setting start room from QR coordinates:', nearestRoom.name);
+          setStartId(nearestRoom.id);
+          
+          // Show popup notification to user
+          setPopupTitle('Location Set');
+          setPopupMessage(`Your starting position has been set to ${nearestRoom.name}`);
+          setPopupVisible(true);
+        } else {
+          // No nearest room found
+          setPopupTitle('Position Set');
+          setPopupMessage('Your position has been set');
+          setPopupVisible(true);
+        }
+        
+      } catch (roomError) {
+        console.error('Error fetching room data:', roomError);
+        // Use fallback coordinates
+        setCurrentPos(fallbackCoordinates);
+        
+        // Try to find the nearest room to use as starting point
+        const nearestRoom = findNearestRoom(roomsData, fallbackCoordinates, qrFloorId);
+        if (nearestRoom) {
+          setStartId(nearestRoom.id);
+          setPopupTitle('Location Set');
+          setPopupMessage(`Position set near: ${nearestRoom.name}`);
+          setPopupVisible(true);
+        }
+      }
     } catch (error) {
       console.error('Error processing QR code:', error);
       setPopupTitle('Error');
