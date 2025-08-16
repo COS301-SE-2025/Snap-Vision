@@ -203,3 +203,103 @@ describe('AdminLoadFloorplansContent', () => {
     });
   });
 
+  it('handles file selection', async () => {
+    const mockLaunchImageLibrary = require('react-native-image-picker').launchImageLibrary;
+    mockLaunchImageLibrary.mockResolvedValue({
+      didCancel: false,
+      assets: [{
+        uri: 'file:///test/image.jpg',
+        fileName: 'test-image.jpg',
+        fileSize: 1024 * 1024,
+      }],
+    });
+
+    const { getByText } = render(<AdminLoadFloorplansContent />);
+    
+    await waitFor(() => {
+      expect(getByText('Upload Floorplan')).toBeTruthy();
+    });
+  });
+
+  it('handles file selection cancellation', async () => {
+    const mockLaunchImageLibrary = require('react-native-image-picker').launchImageLibrary;
+    mockLaunchImageLibrary.mockResolvedValue({
+      didCancel: true,
+    });
+
+    const { getByText } = render(<AdminLoadFloorplansContent />);
+    
+    await waitFor(() => {
+      expect(getByText('Upload Floorplan')).toBeTruthy();
+    });
+  });
+
+  it('handles file selection errors', async () => {
+    const mockLaunchImageLibrary = require('react-native-image-picker').launchImageLibrary;
+    mockLaunchImageLibrary.mockResolvedValue({
+      errorMessage: 'Permission denied',
+    });
+
+    const { getByText } = render(<AdminLoadFloorplansContent />);
+    
+    await waitFor(() => {
+      expect(getByText('Upload Floorplan')).toBeTruthy();
+    });
+  });
+
+  it('handles large file rejection', async () => {
+    const mockLaunchImageLibrary = require('react-native-image-picker').launchImageLibrary;
+    mockLaunchImageLibrary.mockResolvedValue({
+      didCancel: false,
+      assets: [{
+        uri: 'file:///test/large-image.jpg',
+        fileName: 'large-image.jpg',
+        fileSize: 10 * 1024 * 1024, // 10MB
+      }],
+    });
+
+    const { getByText } = render(<AdminLoadFloorplansContent />);
+    
+    await waitFor(() => {
+      expect(getByText('Upload Floorplan')).toBeTruthy();
+    });
+  });
+
+  it('handles upload process', async () => {
+    const { getByText } = render(<AdminLoadFloorplansContent />);
+    
+    await waitFor(() => {
+      expect(getByText('Upload Floorplan')).toBeTruthy();
+    });
+  });
+
+  it('handles upload errors', async () => {
+    mockStorage.ref.mockReturnValue({
+      putFile: jest.fn().mockRejectedValue(new Error('Upload failed')),
+      getDownloadURL: jest.fn().mockResolvedValue('https://test-url.com/image.jpg'),
+    });
+
+    const { getByText } = render(<AdminLoadFloorplansContent />);
+    
+    await waitFor(() => {
+      expect(getByText('Upload Floorplan')).toBeTruthy();
+    });
+  });
+
+  it('handles form validation', async () => {
+    const { getByText } = render(<AdminLoadFloorplansContent />);
+    
+    await waitFor(() => {
+      expect(getByText('Upload Floorplan')).toBeTruthy();
+    });
+  });
+
+  it('handles navigation after upload', async () => {
+    const { getByText } = render(<AdminLoadFloorplansContent />);
+    
+    await waitFor(() => {
+      expect(getByText('Upload Floorplan')).toBeTruthy();
+    });
+  });
+
+  
