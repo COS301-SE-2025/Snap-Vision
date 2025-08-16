@@ -102,6 +102,24 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
     }
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.card }]}>
+        <Text style={[styles.loadingText, { color: colors.text }]}>Loading</Text>
+      </View>
+    );
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.card }]}>
+        <Text style={[styles.loadingText, { color: colors.text }]}>Loading</Text>
+      </View>
+    );
+  }
+
   // Minimized version (works for both AR and 2D modes)
   if (isMinimized) {
     const completionPercent = getCompletionPercentage();
@@ -221,79 +239,81 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
             </View>
           )} */}
 
-          {/* Single Row Priority Layout */}
-          <View style={styles.singleRowContainer}>
-            {/* Primary AR Toggle Button - Large and Prominent */}
-            {isNavigating && destinationCoords && onToggleAR && (
+          {/* Current Instruction */}
+          {currentInstruction && (
+            <View style={styles.instructionContainer}>
+              <Text style={[styles.instructionText, { color: colors.text }]}>
+                {currentInstruction}
+              </Text>
+            </View>
+          )}
+
+          {/* Progress Display */}
+          {(isNavigating || progress > 0 || distanceWalked > 0) && (
+            <View style={styles.progressSection}>
+              <Text style={[styles.progressText, { color: colors.text }]}>
+                {getCompletionPercentage()}%
+              </Text>
+            </View>
+          )}
+
+          {/* Action Buttons */}
+          <View style={styles.actionButtonsContainer}>
+            {/* AR Button */}
+            {destinationCoords && onToggleAR && (
               <Pressable
-                style={[
-                  styles.primaryARButton,
-                  {
-                    backgroundColor: showAR ? colors.primary : colors.secondary,
-                    opacity: showAR ? 1 : 0.8,
-                  },
-                ]}
+                style={[styles.actionButton, { backgroundColor: colors.secondary }]}
                 onPress={onToggleAR}
+                testID="icon-camera-outline"
               >
-                <Icon
-                  name="camera-outline"
-                  size={24}
-                  color="#fff"
-                  style={styles.primaryButtonIcon}
-                />
-                <Text style={styles.primaryButtonLabel}>{showAR ? 'AR On' : 'AR'}</Text>
+                <Icon name="camera-outline" size={20} color="#fff" />
+                <Text style={styles.actionButtonText}>AR</Text>
               </Pressable>
             )}
 
-            {/* Secondary Buttons Container */}
-            <View style={styles.secondaryButtonsContainer}>
-              {/* Voice Toggle - Compact */}
-              {isNavigating && (
-                <Pressable
-                  style={[
-                    styles.compactButton,
-                    { backgroundColor: isVoiceEnabled ? colors.primary : colors.secondary },
-                  ]}
-                  onPress={onToggleVoice}
-                >
-                  <Icon
-                    name={isVoiceEnabled ? 'volume-high' : 'volume-off'}
-                    size={16}
-                    color="#fff"
-                  />
-                </Pressable>
-              )}
-
-              {/* Start/Stop Button - Compact when AR is available, otherwise primary */}
+            {/* Voice Button */}
+            {isNavigating && (
               <Pressable
-                style={[
-                  isNavigating && destinationCoords && onToggleAR
-                    ? styles.compactButton
-                    : styles.primaryActionButton,
-                  { backgroundColor: isNavigating ? '#E53935' : colors.primary },
-                ]}
-                onPress={isNavigating ? onStopNavigation : onStartNavigation}
-                disabled={isLoading}
+                style={[styles.actionButton, { backgroundColor: colors.secondary }]}
+                onPress={onToggleVoice}
+                testID="icon-volume-high"
               >
-                {isNavigating && destinationCoords && onToggleAR ? (
-                  <Icon
-                    name={isLoading ? 'loading' : isNavigating ? 'stop' : 'play'}
-                    size={16}
-                    color="#fff"
-                  />
-                ) : (
-                  <>
-                    <Text style={styles.primaryButtonIcon}>
-                      {isLoading ? '⏳' : isNavigating ? '🛑' : '🧭'}
-                    </Text>
-                    <Text style={styles.primaryButtonLabel}>
-                      {isLoading ? 'Loading' : isNavigating ? 'Stop' : 'Start'}
-                    </Text>
-                  </>
-                )}
+                <Icon name={isVoiceEnabled ? 'volume-high' : 'volume-off'} size={20} color="#fff" />
               </Pressable>
-            </View>
+            )}
+
+            {/* Start/Stop Button */}
+            <Pressable
+              style={[
+                styles.actionButton,
+                { backgroundColor: isNavigating ? '#E53935' : colors.primary },
+              ]}
+              onPress={isNavigating ? onStopNavigation : onStartNavigation}
+            >
+              <Text style={styles.actionButtonText}>
+                {isNavigating ? 'Stop' : 'Start'}
+              </Text>
+            </Pressable>
+
+            {/* Cancel Button */}
+            <Pressable
+              style={[styles.actionButton, { backgroundColor: colors.danger }]}
+              onPress={onCancelRoute}
+            >
+              <Text style={styles.actionButtonText}>✕</Text>
+            </Pressable>
           </View>
+
+          {/* Minimize Button */}
+          {onToggleMinimize && (
+            <Pressable
+              style={[styles.actionButton, { backgroundColor: colors.secondary }]}
+              onPress={onToggleMinimize}
+              testID="icon-chevron-down"
+            >
+              <Icon name="chevron-down" size={20} color="#fff" />
+            </Pressable>
+          )}
         </View>
       </View>
     </View>
@@ -522,24 +542,41 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
-  // Remove unused styles
-  navButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    minWidth: 90,
+  // New styles for missing elements
+  instructionContainer: {
+    marginVertical: 8,
   },
-  navButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+  instructionText: {
     fontSize: 14,
+    fontStyle: 'italic',
   },
-  actionColumn: {
+  progressSection: {
+    marginVertical: 4,
+  },
+  progressText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  actionButton: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    minHeight: 36,
+  },
+  actionButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginLeft: 4,
   },
 });
 
