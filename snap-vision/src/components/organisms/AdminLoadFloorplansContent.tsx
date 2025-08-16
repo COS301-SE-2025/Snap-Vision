@@ -155,7 +155,7 @@ export default function AdminLoadFloorplansContent() {
         quality: 0.8,
       });
 
-      if (!result.didCancel && result.assets?.length > 0) {
+      if (!result.didCancel && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
         if (asset.uri && asset.fileName) {
           setFileUri(asset.uri);
@@ -340,6 +340,7 @@ export default function AdminLoadFloorplansContent() {
                   setSelectedBuildingId(null);
                   setCurrentStep(1);
                 }}
+                testID={`location-${loc.id}`}
               >
                 <Text style={{ color: selectedLocation === loc.id ? '#FFF' : colors.text }}>
                   {loc.name}
@@ -433,6 +434,7 @@ export default function AdminLoadFloorplansContent() {
                 if (floorLabel) setCurrentStep(3); // Also advance on blur if value exists
               }}
               keyboardType="number-pad"
+              testID="input-floor-label" 
               maxLength={2} // optional: block large numbers like 100+
               style={[
                 styles.textField,
