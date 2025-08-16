@@ -149,3 +149,116 @@ describe('NavigationPanel', () => {
     });
   });
 
+  describe('Minimized View Controls', () => {
+    it('calls onToggleMinimize when minimized content is pressed', () => {
+      const { getByText } = render(
+        <ThemeProviderWrapper>
+          <NavigationPanel {...defaultProps} isMinimized={true} />
+        </ThemeProviderWrapper>
+      );
+
+      fireEvent.press(getByText('Test Destination • 1.0km left • 15 min • 0%'));
+      expect(defaultProps.onToggleMinimize).toHaveBeenCalled();
+    });
+
+    it('calls onCancelRoute when minimized cancel button is pressed', () => {
+      const { getAllByTestId } = render(
+        <ThemeProviderWrapper>
+          <NavigationPanel {...defaultProps} isMinimized={true} />
+        </ThemeProviderWrapper>
+      );
+
+      // Find all mini buttons and press the first one (cancel)
+      const miniButtons = getAllByTestId('icon-close');
+      expect(miniButtons.length).toBeGreaterThan(0);
+      fireEvent.press(miniButtons[0]);
+      expect(defaultProps.onCancelRoute).toHaveBeenCalled();
+    });
+
+    it('calls onStopNavigation when minimized stop button is pressed', () => {
+      const { getAllByTestId } = render(
+        <ThemeProviderWrapper>
+          <NavigationPanel {...defaultProps} isMinimized={true} isNavigating={true} />
+        </ThemeProviderWrapper>
+      );
+
+      // Find all mini buttons and press the second one (stop)
+      const miniButtons = getAllByTestId('icon-stop');
+      expect(miniButtons.length).toBeGreaterThan(0);
+      fireEvent.press(miniButtons[0]);
+      expect(defaultProps.onStopNavigation).toHaveBeenCalled();
+    });
+
+    it('calls onToggleAR when minimized AR button is pressed', () => {
+      const mockOnToggleAR = jest.fn();
+      const { getAllByTestId } = render(
+        <ThemeProviderWrapper>
+          <NavigationPanel {...defaultProps} isMinimized={true} onToggleAR={mockOnToggleAR} />
+        </ThemeProviderWrapper>
+      );
+
+      // Find all mini buttons and press the AR button (camera-outline)
+      const miniButtons = getAllByTestId('icon-camera-outline');
+      expect(miniButtons.length).toBeGreaterThan(0);
+      fireEvent.press(miniButtons[0]);
+      expect(mockOnToggleAR).toHaveBeenCalled();
+    });
+  });
+
+  describe('Loading State', () => {
+    it('renders loading state correctly when isLoading is true (duplicate check coverage)', () => {
+      const { getByText } = render(
+        <ThemeProviderWrapper>
+          <NavigationPanel {...defaultProps} isLoading={true} />
+        </ThemeProviderWrapper>
+      );
+
+      expect(getByText('Loading')).toBeTruthy();
+    });
+
+    it('does not render main content when loading', () => {
+      const { queryByText } = render(
+        <ThemeProviderWrapper>
+          <NavigationPanel {...defaultProps} isLoading={true} />
+        </ThemeProviderWrapper>
+      );
+
+      expect(queryByText('Test Destination')).toBeNull();
+    });
+  });
+
+
+  describe('Progress Calculation', () => {
+    it('calculates completion percentage correctly', () => {
+      const { getByText } = render(
+        <ThemeProviderWrapper>
+          <NavigationPanel 
+            {...defaultProps} 
+            distance={500} 
+            originalRouteDistance={1000} 
+            progress={30}
+          />
+        </ThemeProviderWrapper>
+      );
+
+      // Should show 50% based on distance (500/1000 = 50%) which is higher than progress (30%)
+      expect(getByText('50%')).toBeTruthy();
+    });
+
+    it('uses progress when distance data is not available', () => {
+      const { getByText } = render(
+        <ThemeProviderWrapper>
+          <NavigationPanel 
+            {...defaultProps} 
+            distance={null} 
+            originalRouteDistance={null} 
+            progress={75}
+          />
+        </ThemeProviderWrapper>
+      );
+
+      expect(getByText('75%')).toBeTruthy();
+    });
+  });
+
+  
