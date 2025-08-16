@@ -468,6 +468,7 @@ export default function AdminLoadFloorplansContent() {
                   }
                 });
               }}
+              testID={fileUri ? "button-change-image" : "button-select-image"} // Add this
             />
             <Text style={[styles.infoText, { color: colors.secondary }]}>
               Select a PNG or JPG floorplan image
@@ -491,6 +492,7 @@ export default function AdminLoadFloorplansContent() {
           <AppButton
             title="Upload Floorplan"
             onPress={handleUpload}
+            testID="button-upload-floorplan"
             disabled={!fileUri || (!selectedBuilding && !buildingName) || !floorLabel}
           />
         </View>
