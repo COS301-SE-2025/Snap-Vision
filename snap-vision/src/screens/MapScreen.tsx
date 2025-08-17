@@ -14,7 +14,6 @@ import { WebView as WebViewType } from 'react-native-webview';
 import firestore from '@react-native-firebase/firestore';
 import Tts from 'react-native-tts';
 import MapWebView from '../components/organisms/MapWebView';
-import CrowdReportModal from '../components/molecules/CrowdReportModal';
 import AdminPOIModal from '../components/molecules/AdminPOIModal';
 import AdminActionsModal from '../components/molecules/AdminActionsModal';
 import StatusOverlay from '../components/atoms/StatusOverlay';
@@ -236,7 +235,10 @@ const MapScreen = () => {
     submitCrowdReport,
     fetchRecentCrowdReports,
     openCrowdReportModal,
-    setShowCrowdPopup,
+    closeCrowdReportModal,
+    handleReportTooltipShow,
+    handleReportTooltipHide,
+    renderCrowdReportModal,
     setSelectedDensity,
     setShowReportTooltip,
   } = useCrowdReports(
@@ -796,18 +798,7 @@ const MapScreen = () => {
   }
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {showCrowdPopup && (
-        <CrowdReportModal
-          visible={showCrowdPopup}
-          selectedDensity={selectedDensity}
-          selectedPOI={hookSelectedPOI}
-          availablePOIs={pois}
-          onChangeDensity={setSelectedDensity}
-          onChangePOI={setHookSelectedPOI}
-          onSubmit={() => submitCrowdReport(hookSelectedPOI)}
-          onCancel={() => setShowCrowdPopup(false)}
-        />
-      )}
+      {renderCrowdReportModal(hookSelectedPOI, setHookSelectedPOI, pois)}
 
       <AdminPOIModal
         visible={showAddPOIModal}
@@ -1101,8 +1092,8 @@ const MapScreen = () => {
         reportTooltip={showReportTooltip}
         onShareIn={() => setShowShareTooltip(true)}
         onShareOut={() => setShowShareTooltip(false)}
-        onReportIn={() => setShowReportTooltip(true)}
-        onReportOut={() => setShowReportTooltip(false)}
+        onReportIn={handleReportTooltipShow}
+        onReportOut={handleReportTooltipHide}
         color={colors.primary}
       />
 

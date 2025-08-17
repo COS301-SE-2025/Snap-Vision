@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { POI } from './useMapPOI';
+import CrowdReportModal from '../components/molecules/CrowdReportModal';
 
 export interface CrowdReport {
   buildingId: string;
@@ -33,6 +34,16 @@ interface UseCrowdReportsReturn {
     pois: POI[],
     setSelectedPOI: (poi: POI | null) => void
   ) => void;
+  closeCrowdReportModal: () => void;
+  handleReportTooltipShow: () => void;
+  handleReportTooltipHide: () => void;
+  
+  // Component renderer
+  renderCrowdReportModal: (
+    hookSelectedPOI: POI | null,
+    setHookSelectedPOI: (poi: POI | null) => void,
+    pois: POI[]
+  ) => React.ReactElement | null;
   
   // Setters
   setShowCrowdPopup: (show: boolean) => void;
@@ -168,6 +179,40 @@ export const useCrowdReports = (
     setShowCrowdPopup(true);
   }, []);
 
+  // Close crowd report modal
+  const closeCrowdReportModal = useCallback(() => {
+    setShowCrowdPopup(false);
+  }, []);
+
+  // Report tooltip handlers
+  const handleReportTooltipShow = useCallback(() => {
+    setShowReportTooltip(true);
+  }, []);
+
+  const handleReportTooltipHide = useCallback(() => {
+    setShowReportTooltip(false);
+  }, []);
+
+  // Render crowd report modal component
+  const renderCrowdReportModal = useCallback((
+    hookSelectedPOI: POI | null,
+    setHookSelectedPOI: (poi: POI | null) => void,
+    pois: POI[]
+  ) => {
+    if (!showCrowdPopup) return null;
+
+    return React.createElement(CrowdReportModal, {
+      visible: showCrowdPopup,
+      selectedDensity: selectedDensity,
+      selectedPOI: hookSelectedPOI,
+      availablePOIs: pois,
+      onChangeDensity: setSelectedDensity,
+      onChangePOI: setHookSelectedPOI,
+      onSubmit: () => submitCrowdReport(hookSelectedPOI),
+      onCancel: closeCrowdReportModal,
+    });
+  }, [showCrowdPopup, selectedDensity, submitCrowdReport, closeCrowdReportModal]);
+
   // Fetch crowd reports periodically when map is ready
   useEffect(() => {
     if (isMapReady) {
@@ -189,6 +234,10 @@ export const useCrowdReports = (
     submitCrowdReport,
     fetchRecentCrowdReports,
     openCrowdReportModal,
+    closeCrowdReportModal,
+    handleReportTooltipShow,
+    handleReportTooltipHide,
+    renderCrowdReportModal,
     
     // Setters
     setShowCrowdPopup,
