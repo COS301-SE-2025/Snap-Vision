@@ -24,7 +24,7 @@ const BuildingSelector: React.FC<BuildingSelectorProps> = ({
   setSelectedBuildingId,
   dropdownOpen,
   setDropdownOpen,
-  title = "Select Building",
+  title = 'Select Building',
 }) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
@@ -33,9 +33,7 @@ const BuildingSelector: React.FC<BuildingSelectorProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.title, { color: colors.primary }]}>
-        {title}
-      </Text>
+      <Text style={[styles.title, { color: colors.primary }]}>{title}</Text>
       <DropDownPicker
         open={dropdownOpen}
         setOpen={setDropdownOpen}

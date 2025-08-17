@@ -51,16 +51,14 @@ const QRCodeList: React.FC<QRCodeListProps> = ({
   const colors = getThemeColors(isDark);
 
   // Filter QR codes for the selected floor
-  const floorQRCodes = qrCodes.filter(
-    (c) => String(c.floorId) === String(selectedFloorId ?? '')
-  );
+  const floorQRCodes = qrCodes.filter((c) => String(c.floorId) === String(selectedFloorId ?? ''));
 
   return (
     <View style={styles.container}>
       <Text style={{ color: colors.text, marginBottom: 12, fontWeight: '500' }}>
         QR Codes for Building{' '}
-        {buildings.find((b) => b.id === selectedBuildingId)?.name || selectedBuildingId},{' '}
-        Floor {floors.find((f) => f.id === selectedFloorId)?.name || selectedFloorId}
+        {buildings.find((b) => b.id === selectedBuildingId)?.name || selectedBuildingId}, Floor{' '}
+        {floors.find((f) => f.id === selectedFloorId)?.name || selectedFloorId}
       </Text>
 
       <View style={styles.header}>
@@ -85,12 +83,7 @@ const QRCodeList: React.FC<QRCodeListProps> = ({
           data={floorQRCodes}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <QRCodeItem
-              item={item}
-              rooms={rooms}
-              onViewQR={onViewQR}
-              onDelete={onDeleteQR}
-            />
+            <QRCodeItem item={item} rooms={rooms} onViewQR={onViewQR} onDelete={onDeleteQR} />
           )}
         />
       )}

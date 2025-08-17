@@ -8,25 +8,23 @@ interface LoadingIndicatorProps {
   overlay?: boolean;
 }
 
-const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ 
-  message = 'Loading...', 
-  overlay = false 
+const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
+  message = 'Loading...',
+  overlay = false,
 }) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
   return (
-    <View style={[
-      styles.container, 
-      overlay && styles.overlay,
-      { backgroundColor: overlay ? 'rgba(0,0,0,0.3)' : 'transparent' }
-    ]}>
+    <View
+      style={[
+        styles.container,
+        overlay && styles.overlay,
+        { backgroundColor: overlay ? 'rgba(0,0,0,0.3)' : 'transparent' },
+      ]}
+    >
       <ActivityIndicator size="large" color={colors.primary} />
-      {message && (
-        <Text style={[styles.message, { color: colors.text }]}>
-          {message}
-        </Text>
-      )}
+      {message && <Text style={[styles.message, { color: colors.text }]}>{message}</Text>}
     </View>
   );
 };

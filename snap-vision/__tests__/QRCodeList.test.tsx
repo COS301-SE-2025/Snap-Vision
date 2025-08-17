@@ -12,16 +12,10 @@ jest.mock('../src/components/molecules/QRCodeItem', () => {
     default: ({ item, onViewQR, onDelete }) => (
       <View testID={`qr-code-item-${item.id}`}>
         <Text>{item.roomName}</Text>
-        <TouchableOpacity 
-          testID={`view-qr-${item.id}`} 
-          onPress={() => onViewQR(item)}
-        >
+        <TouchableOpacity testID={`view-qr-${item.id}`} onPress={() => onViewQR(item)}>
           <Text>View</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          testID={`delete-qr-${item.id}`} 
-          onPress={() => onDelete(item)}
-        >
+        <TouchableOpacity testID={`delete-qr-${item.id}`} onPress={() => onDelete(item)}>
           <Text>Delete</Text>
         </TouchableOpacity>
       </View>
@@ -67,14 +61,30 @@ describe('QRCodeList', () => {
   ];
 
   const mockRooms = [
-    { id: 'rm1', name: 'Room 101', floorId: 'flr1', buildingId: 'bld1', buildingName: 'Building 1' },
-    { id: 'rm2', name: 'Room 102', floorId: 'flr1', buildingId: 'bld1', buildingName: 'Building 1' },
-    { id: 'rm3', name: 'Room 201', floorId: 'flr2', buildingId: 'bld1', buildingName: 'Building 1' },
+    {
+      id: 'rm1',
+      name: 'Room 101',
+      floorId: 'flr1',
+      buildingId: 'bld1',
+      buildingName: 'Building 1',
+    },
+    {
+      id: 'rm2',
+      name: 'Room 102',
+      floorId: 'flr1',
+      buildingId: 'bld1',
+      buildingName: 'Building 1',
+    },
+    {
+      id: 'rm3',
+      name: 'Room 201',
+      floorId: 'flr2',
+      buildingId: 'bld1',
+      buildingName: 'Building 1',
+    },
   ];
 
-  const mockBuildings = [
-    { id: 'bld1', name: 'Building 1' },
-  ];
+  const mockBuildings = [{ id: 'bld1', name: 'Building 1' }];
 
   const mockFloors = [
     { id: 'flr1', name: '1' },
@@ -103,7 +113,7 @@ describe('QRCodeList', () => {
           onDeleteQR={mockOnDeleteQR}
           onAddQR={mockOnAddQR}
         />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     // Header should show building and floor info
@@ -133,7 +143,7 @@ describe('QRCodeList', () => {
           onDeleteQR={mockOnDeleteQR}
           onAddQR={mockOnAddQR}
         />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     expect(getByText('No QR codes found for this floor')).toBeTruthy();
@@ -154,7 +164,7 @@ describe('QRCodeList', () => {
           onDeleteQR={mockOnDeleteQR}
           onAddQR={mockOnAddQR}
         />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     const addButton = getByText('Add New');
@@ -175,7 +185,7 @@ describe('QRCodeList', () => {
           onDeleteQR={mockOnDeleteQR}
           onAddQR={mockOnAddQR}
         />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     const addButton = getByText('Add New');
@@ -197,7 +207,7 @@ describe('QRCodeList', () => {
           onDeleteQR={mockOnDeleteQR}
           onAddQR={mockOnAddQR}
         />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     const viewButton = getByTestId('view-qr-qr1');
@@ -220,7 +230,7 @@ describe('QRCodeList', () => {
           onDeleteQR={mockOnDeleteQR}
           onAddQR={mockOnAddQR}
         />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     const deleteButton = getByTestId('delete-qr-qr1');
@@ -267,7 +277,7 @@ describe('QRCodeList', () => {
           onDeleteQR={mockOnDeleteQR}
           onAddQR={mockOnAddQR}
         />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     // Should only show Room 101

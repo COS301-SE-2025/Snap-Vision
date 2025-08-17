@@ -22,18 +22,14 @@ const StyledTextInput: React.FC<StyledTextInputProps> = ({
 
   return (
     <View style={[styles.container, containerStyle]}>
-      {label && (
-        <Text style={[styles.label, { color: colors.text }, labelStyle]}>
-          {label}
-        </Text>
-      )}
+      {label && <Text style={[styles.label, { color: colors.text }, labelStyle]}>{label}</Text>}
       <TextInput
         style={[
           styles.input,
-          { 
-            backgroundColor: colors.card, 
+          {
+            backgroundColor: colors.card,
             color: colors.text,
-            borderColor: colors.border
+            borderColor: colors.border,
           },
           inputStyle,
         ]}

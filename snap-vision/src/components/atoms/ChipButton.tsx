@@ -23,21 +23,10 @@ const ChipButton: React.FC<ChipButtonProps> = ({
 
   return (
     <TouchableOpacity
-      style={[
-        styles.chip,
-        { backgroundColor: selected ? colors.primary : colors.card },
-        style,
-      ]}
+      style={[styles.chip, { backgroundColor: selected ? colors.primary : colors.card }, style]}
       onPress={onPress}
     >
-      <Text 
-        style={[
-          { color: selected ? '#FFF' : colors.text },
-          textStyle
-        ]}
-      >
-        {label}
-      </Text>
+      <Text style={[{ color: selected ? '#FFF' : colors.text }, textStyle]}>{label}</Text>
     </TouchableOpacity>
   );
 };

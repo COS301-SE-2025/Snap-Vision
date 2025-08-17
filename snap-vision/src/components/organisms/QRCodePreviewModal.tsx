@@ -10,22 +10,13 @@ interface QRCodePreviewModalProps {
   onClose: () => void;
 }
 
-const QRCodePreviewModal: React.FC<QRCodePreviewModalProps> = ({
-  visible,
-  qrValue,
-  onClose,
-}) => {
+const QRCodePreviewModal: React.FC<QRCodePreviewModalProps> = ({ visible, qrValue, onClose }) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const qrRef = useRef<QRCode | null>(null);
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
           <Text style={[styles.modalTitle, { color: colors.text }]}>QR Code</Text>

@@ -299,8 +299,6 @@ export default function QRCodeAdminContent() {
     setShowConfirmPopup(true);
   };
 
- 
-
   const handleQRRef = (ref: QRCode | null) => {
     qrRef.current = ref;
   };

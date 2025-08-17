@@ -32,7 +32,7 @@ describe('QRCodePreviewModal', () => {
     const { getByText, getByTestId } = render(
       <ThemeProviderWrapper>
         <QRCodePreviewModal {...defaultProps} />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     expect(getByText('QR Code')).toBeTruthy();
@@ -49,7 +49,7 @@ describe('QRCodePreviewModal', () => {
     const { queryByText } = render(
       <ThemeProviderWrapper>
         <QRCodePreviewModal {...defaultProps} visible={false} />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     expect(queryByText('QR Code')).toBeNull();
@@ -59,7 +59,7 @@ describe('QRCodePreviewModal', () => {
     const { getByTestId } = render(
       <ThemeProviderWrapper>
         <QRCodePreviewModal {...defaultProps} qrValue="" />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     const mockQRCode = getByTestId('mock-qrcode');
@@ -71,7 +71,7 @@ describe('QRCodePreviewModal', () => {
     const { getByText } = render(
       <ThemeProviderWrapper>
         <QRCodePreviewModal {...defaultProps} onClose={onClose} />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     fireEvent.press(getByText('Close'));
@@ -79,18 +79,19 @@ describe('QRCodePreviewModal', () => {
   });
 
   it('truncates long QR values in the display', () => {
-    const longQRValue = 'qr:loc:1:1:101:very-long-qr-value-that-might-get-truncated-in-the-ui-to-prevent-overflow-issues';
-    
+    const longQRValue =
+      'qr:loc:1:1:101:very-long-qr-value-that-might-get-truncated-in-the-ui-to-prevent-overflow-issues';
+
     const { getByText } = render(
       <ThemeProviderWrapper>
         <QRCodePreviewModal {...defaultProps} qrValue={longQRValue} />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     // The text should be present but might be truncated in the UI
     // We're just testing that the component doesn't crash with long values
     expect(getByText(longQRValue)).toBeTruthy();
-    
+
     // The numberOfLines prop in Text component would handle truncation in the actual UI
   });
 
@@ -99,15 +100,15 @@ describe('QRCodePreviewModal', () => {
     const { UNSAFE_getByType } = render(
       <ThemeProviderWrapper>
         <QRCodePreviewModal {...defaultProps} onClose={onClose} />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     // Get Modal component
     const modal = UNSAFE_getByType('Modal');
-    
+
     // Trigger onRequestClose (simulates back button on Android)
     modal.props.onRequestClose();
-    
+
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

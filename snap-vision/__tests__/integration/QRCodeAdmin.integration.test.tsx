@@ -97,7 +97,7 @@ jest.mock('react-native-dropdown-picker', () => {
           <Text>Toggle</Text>
         </TouchableOpacity>
         {open &&
-          items.map(item => (
+          items.map((item) => (
             <TouchableOpacity
               key={item.value}
               testID={`dropdown-item-${item.value}`}
@@ -119,7 +119,7 @@ jest.mock('react-native-qrcode-svg', () => {
   const { View } = require('react-native');
   return {
     __esModule: true,
-    default: props => {
+    default: (props) => {
       return <View testID="qrcode-mock" {...props} />;
     },
   };
@@ -191,9 +191,7 @@ describe('QRCodeAdminContent Integration', () => {
     jest.clearAllMocks();
 
     // Setup spies
-    getLocationsSpy = jest
-      .spyOn(qrService, 'getLocations')
-      .mockResolvedValue(mockLocations);
+    getLocationsSpy = jest.spyOn(qrService, 'getLocations').mockResolvedValue(mockLocations);
 
     getBuildingsForLocationSpy = jest
       .spyOn(qrService, 'getBuildingsForLocation')
@@ -203,9 +201,7 @@ describe('QRCodeAdminContent Integration', () => {
       .spyOn(qrService, 'getFloorsForBuilding')
       .mockResolvedValue(mockFloors);
 
-    getRoomsForFloorSpy = jest
-      .spyOn(qrService, 'getRoomsForFloor')
-      .mockResolvedValue(mockRooms);
+    getRoomsForFloorSpy = jest.spyOn(qrService, 'getRoomsForFloor').mockResolvedValue(mockRooms);
 
     getQRCodesForBuildingSpy = jest
       .spyOn(qrService, 'getQRCodesForBuilding')
@@ -224,13 +220,13 @@ describe('QRCodeAdminContent Integration', () => {
     const { findByText } = render(
       <ThemeProviderWrapper>
         <QRCodeAdminContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     // Wait for locations to load
     const campus1 = await findByText('Main Campus');
     const campus2 = await findByText('Secondary Campus');
-    
+
     expect(campus1).toBeTruthy();
     expect(campus2).toBeTruthy();
     expect(getLocationsSpy).toHaveBeenCalled();
@@ -240,7 +236,7 @@ describe('QRCodeAdminContent Integration', () => {
     const { findByText, queryByText } = render(
       <ThemeProviderWrapper>
         <QRCodeAdminContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     // Step 1: Select a location
@@ -250,7 +246,7 @@ describe('QRCodeAdminContent Integration', () => {
     // Check it called the right service
     expect(getBuildingsForLocationSpy).toHaveBeenCalledWith('loc1');
 
-    // Step 2: Select a building 
+    // Step 2: Select a building
     // Wait for buildings to load
     await waitFor(() => {
       expect(queryByText('Select a building')).toBeTruthy();
@@ -268,7 +264,7 @@ describe('QRCodeAdminContent Integration', () => {
     const { findByText } = render(
       <ThemeProviderWrapper>
         <QRCodeAdminContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     // Assert: Error is displayed
@@ -284,7 +280,7 @@ describe('QRCodeAdminContent Integration', () => {
     const { findByText } = render(
       <ThemeProviderWrapper>
         <QRCodeAdminContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     // Select location
@@ -297,7 +293,7 @@ describe('QRCodeAdminContent Integration', () => {
 
   // The following tests are more complex to implement without full component interaction
   // In a real implementation, we would:
-  
+
   it('shows QR code add modal when add button is pressed', async () => {
     // We would simulate the full flow to get to the add button
     // Then verify the modal appears with the right content

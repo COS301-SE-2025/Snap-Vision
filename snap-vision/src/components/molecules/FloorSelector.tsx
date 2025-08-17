@@ -24,7 +24,7 @@ const FloorSelector: React.FC<FloorSelectorProps> = ({
   setSelectedFloorId,
   dropdownOpen,
   setDropdownOpen,
-  title = "Select Floor",
+  title = 'Select Floor',
 }) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
@@ -33,9 +33,7 @@ const FloorSelector: React.FC<FloorSelectorProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.title, { color: colors.primary }]}>
-        {title}
-      </Text>
+      <Text style={[styles.title, { color: colors.primary }]}>{title}</Text>
       <DropDownPicker
         open={dropdownOpen}
         setOpen={setDropdownOpen}

@@ -23,7 +23,7 @@ interface QRCodeItemProps {
 const QRCodeItem: React.FC<QRCodeItemProps> = ({ item, rooms, onViewQR, onDelete }) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  
+
   const roomObj = rooms.find((r) => r.id === item.roomId);
 
   return (
@@ -32,17 +32,11 @@ const QRCodeItem: React.FC<QRCodeItemProps> = ({ item, rooms, onViewQR, onDelete
         <Text style={[styles.roomName, { color: colors.text }]}>
           Room: {roomObj?.name || item.roomName || 'Unknown Room'}
         </Text>
-        <Text style={[styles.qrValue, { color: colors.secondary }]}>
-          {item.qrValue}
-        </Text>
+        <Text style={[styles.qrValue, { color: colors.secondary }]}>{item.qrValue}</Text>
         {!!item.description && (
-          <Text style={[styles.qrDesc, { color: colors.text }]}>
-            {item.description}
-          </Text>
+          <Text style={[styles.qrDesc, { color: colors.text }]}>{item.description}</Text>
         )}
-        <Text style={[styles.qrFloor, { color: colors.secondary }]}>
-          Floor: {item.floorId}
-        </Text>
+        <Text style={[styles.qrFloor, { color: colors.secondary }]}>Floor: {item.floorId}</Text>
       </View>
 
       <View style={styles.actions}>

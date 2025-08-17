@@ -49,12 +49,7 @@ const QRCodeAddModal: React.FC<QRCodeAddModalProps> = ({
   const colors = getThemeColors(isDark);
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
           <Text style={[styles.modalTitle, { color: colors.text }]}>Add New QR Code</Text>

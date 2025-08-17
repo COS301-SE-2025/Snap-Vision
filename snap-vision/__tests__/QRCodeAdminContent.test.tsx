@@ -68,7 +68,7 @@ jest.mock('react-native-qrcode-svg', () => {
   const { View } = require('react-native');
   return {
     __esModule: true,
-    default: props => {
+    default: (props) => {
       return <View testID="qrcode-mock" {...props} />;
     },
   };
@@ -95,7 +95,7 @@ jest.mock('react-native-dropdown-picker', () => {
           <Text>Toggle</Text>
         </TouchableOpacity>
         {open &&
-          items.map(item => (
+          items.map((item) => (
             <TouchableOpacity
               key={item.value}
               testID={`dropdown-item-${item.value}`}
@@ -138,7 +138,7 @@ jest.mock('../src/components/atoms/StandardPopup', () => {
   const { View, Text, TouchableOpacity } = require('react-native');
   return {
     __esModule: true,
-    default: ({ visible, title, message, onConfirm, onCancel, confirmText = 'OK' }) => (
+    default: ({ visible, title, message, onConfirm, onCancel, confirmText = 'OK' }) =>
       visible ? (
         <View testID="standard-popup">
           <Text testID="popup-title">{title}</Text>
@@ -152,8 +152,7 @@ jest.mock('../src/components/atoms/StandardPopup', () => {
             </TouchableOpacity>
           )}
         </View>
-      ) : null
-    ),
+      ) : null,
   };
 });
 
@@ -172,8 +171,20 @@ jest.mock('../src/services/qrService', () => ({
     { id: 'flr2', name: '2' },
   ]),
   getRoomsForFloor: jest.fn().mockResolvedValue([
-    { id: 'rm1', name: 'Room 101', floorId: 'flr1', buildingId: 'bld1', buildingName: 'Building 1' },
-    { id: 'rm2', name: 'Room 102', floorId: 'flr1', buildingId: 'bld1', buildingName: 'Building 1' },
+    {
+      id: 'rm1',
+      name: 'Room 101',
+      floorId: 'flr1',
+      buildingId: 'bld1',
+      buildingName: 'Building 1',
+    },
+    {
+      id: 'rm2',
+      name: 'Room 102',
+      floorId: 'flr1',
+      buildingId: 'bld1',
+      buildingName: 'Building 1',
+    },
   ]),
   getQRCodesForBuilding: jest.fn().mockResolvedValue([
     {
@@ -200,30 +211,27 @@ describe('QRCodeAdminContent', () => {
     const { getByText, queryByText } = render(
       <ThemeProviderWrapper>
         <QRCodeAdminContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     // Check that loading is initially displayed
     expect(getByText('Loading...')).toBeTruthy();
-    
+
     // Wait for loading to disappear - with an increased timeout
-    await waitFor(
-      () => expect(queryByText('Loading...')).toBeNull(),
-      { timeout: 5000 }
-    );
+    await waitFor(() => expect(queryByText('Loading...')).toBeNull(), { timeout: 5000 });
   });
 
   it('renders location chips after loading', async () => {
     const { findByText } = render(
       <ThemeProviderWrapper>
         <QRCodeAdminContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     // Wait for the locations to load
     const location1 = await findByText('Location 1', {}, { timeout: 5000 });
     const location2 = await findByText('Location 2', {}, { timeout: 5000 });
-    
+
     expect(location1).toBeTruthy();
     expect(location2).toBeTruthy();
   });
@@ -232,7 +240,7 @@ describe('QRCodeAdminContent', () => {
     const { findByText } = render(
       <ThemeProviderWrapper>
         <QRCodeAdminContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     // Find and click on a location
@@ -240,7 +248,9 @@ describe('QRCodeAdminContent', () => {
     fireEvent.press(location1);
 
     await waitFor(() => {
-      expect(require('../src/services/qrService').getBuildingsForLocation).toHaveBeenCalledWith('loc1');
+      expect(require('../src/services/qrService').getBuildingsForLocation).toHaveBeenCalledWith(
+        'loc1',
+      );
     });
   });
 
@@ -248,7 +258,7 @@ describe('QRCodeAdminContent', () => {
     const { findByText, getByTestID } = render(
       <ThemeProviderWrapper>
         <QRCodeAdminContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     // Select a location
@@ -262,12 +272,14 @@ describe('QRCodeAdminContent', () => {
 
   it('shows error popup when error occurs', async () => {
     // Mock the getLocations function to reject
-    require('../src/services/qrService').getLocations.mockRejectedValueOnce(new Error('Network error'));
+    require('../src/services/qrService').getLocations.mockRejectedValueOnce(
+      new Error('Network error'),
+    );
 
     const { findByTestId, findByText } = render(
       <ThemeProviderWrapper>
         <QRCodeAdminContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     // Wait for error to be displayed
@@ -280,7 +292,7 @@ describe('QRCodeAdminContent', () => {
     const { findByText, getByText } = render(
       <ThemeProviderWrapper>
         <QRCodeAdminContent />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     // Select location

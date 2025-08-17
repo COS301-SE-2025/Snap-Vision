@@ -25,7 +25,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   return (
     <View>
       <Text style={[styles.label, { color: colors.text }]}>QR Code Value</Text>
-      
+
       <View style={styles.qrValueContainer}>
         <StyledTextInput
           value={qrValue}
@@ -55,7 +55,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           <Text style={[styles.qrValueText, { color: colors.text }]} numberOfLines={2}>
             {qrValue}
           </Text>
-          
+
           {onSavePNG && (
             <TouchableOpacity
               style={[styles.saveButton, { backgroundColor: colors.primary }]}

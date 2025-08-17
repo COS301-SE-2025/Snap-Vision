@@ -78,8 +78,20 @@ jest.mock('../src/components/atoms/StyledTextInput', () => {
 
 describe('QRCodeAddModal', () => {
   const mockRooms = [
-    { id: 'rm1', name: 'Room 101', floorId: 'flr1', buildingId: 'bld1', buildingName: 'Building 1' },
-    { id: 'rm2', name: 'Room 102', floorId: 'flr1', buildingId: 'bld1', buildingName: 'Building 1' },
+    {
+      id: 'rm1',
+      name: 'Room 101',
+      floorId: 'flr1',
+      buildingId: 'bld1',
+      buildingName: 'Building 1',
+    },
+    {
+      id: 'rm2',
+      name: 'Room 102',
+      floorId: 'flr1',
+      buildingId: 'bld1',
+      buildingName: 'Building 1',
+    },
   ];
 
   const defaultProps = {
@@ -106,7 +118,7 @@ describe('QRCodeAddModal', () => {
     const { getByText, getByTestId } = render(
       <ThemeProviderWrapper>
         <QRCodeAddModal {...defaultProps} />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     expect(getByText('Add New QR Code')).toBeTruthy();
@@ -121,7 +133,7 @@ describe('QRCodeAddModal', () => {
     const { queryByText } = render(
       <ThemeProviderWrapper>
         <QRCodeAddModal {...defaultProps} visible={false} />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     expect(queryByText('Add New QR Code')).toBeNull();
@@ -132,7 +144,7 @@ describe('QRCodeAddModal', () => {
     const { getByTestId } = render(
       <ThemeProviderWrapper>
         <QRCodeAddModal {...defaultProps} onRoomSelect={onRoomSelect} />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     fireEvent.press(getByTestId('room-item-rm1'));
@@ -144,7 +156,7 @@ describe('QRCodeAddModal', () => {
     const { getByTestId } = render(
       <ThemeProviderWrapper>
         <QRCodeAddModal {...defaultProps} onSearchQueryChange={onSearchQueryChange} />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     fireEvent.changeText(getByTestId('room-search-input'), 'room');
@@ -156,7 +168,7 @@ describe('QRCodeAddModal', () => {
     const { getByTestId } = render(
       <ThemeProviderWrapper>
         <QRCodeAddModal {...defaultProps} onQrValueChange={onQrValueChange} />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     fireEvent.changeText(getByTestId('qr-value-input'), 'qr:test:value');
@@ -168,7 +180,7 @@ describe('QRCodeAddModal', () => {
     const { getByTestId } = render(
       <ThemeProviderWrapper>
         <QRCodeAddModal {...defaultProps} onGenerateQR={onGenerateQR} />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     fireEvent.press(getByTestId('generate-qr-button'));
@@ -180,7 +192,7 @@ describe('QRCodeAddModal', () => {
     const { getByTestId } = render(
       <ThemeProviderWrapper>
         <QRCodeAddModal {...defaultProps} onQrDescriptionChange={onQrDescriptionChange} />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     fireEvent.changeText(getByTestId('description-input'), 'Test description');
@@ -192,7 +204,7 @@ describe('QRCodeAddModal', () => {
     const { getByText } = render(
       <ThemeProviderWrapper>
         <QRCodeAddModal {...defaultProps} onAdd={onAdd} />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     fireEvent.press(getByText('Add'));
@@ -204,7 +216,7 @@ describe('QRCodeAddModal', () => {
     const { getByText } = render(
       <ThemeProviderWrapper>
         <QRCodeAddModal {...defaultProps} onClose={onClose} />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     fireEvent.press(getByText('Cancel'));
@@ -216,7 +228,7 @@ describe('QRCodeAddModal', () => {
     const { getByTestId } = render(
       <ThemeProviderWrapper>
         <QRCodeAddModal {...defaultProps} selectedRoom={selectedRoom} />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     // The room-item-rm1 should have a different style indicating it's selected
@@ -236,7 +248,7 @@ describe('QRCodeAddModal', () => {
     const { getByTestId } = render(
       <ThemeProviderWrapper>
         <QRCodeAddModal {...props} />
-      </ThemeProviderWrapper>
+      </ThemeProviderWrapper>,
     );
 
     // Verify RoomSelector props

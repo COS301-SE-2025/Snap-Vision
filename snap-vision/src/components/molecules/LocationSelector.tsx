@@ -20,16 +20,14 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   locations,
   selectedLocationId,
   onLocationSelect,
-  title = "Select Location",
+  title = 'Select Location',
 }) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.title, { color: colors.primary }]}>
-        {title}
-      </Text>
+      <Text style={[styles.title, { color: colors.primary }]}>{title}</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}

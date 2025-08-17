@@ -26,19 +26,19 @@ const RoomSelector: React.FC<RoomSelectorProps> = ({
   searchQuery,
   onSearchQueryChange,
   onRoomSelect,
-  title = "Select Room",
+  title = 'Select Room',
 }) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
-  const filteredRooms = rooms.filter(
-    (r) => r.name.toLowerCase().includes(searchQuery.trim().toLowerCase())
+  const filteredRooms = rooms.filter((r) =>
+    r.name.toLowerCase().includes(searchQuery.trim().toLowerCase()),
   );
 
   return (
     <View style={styles.container}>
       <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
-      
+
       <TextInput
         style={[styles.searchInput, { backgroundColor: colors.card, color: colors.text }]}
         placeholder="Search rooms..."
@@ -67,7 +67,7 @@ const RoomSelector: React.FC<RoomSelectorProps> = ({
           ))
         ) : (
           <Text style={{ padding: 10, color: colors.text }}>
-            {rooms.length === 0 ? "Please select a floor first" : "No rooms match your search"}
+            {rooms.length === 0 ? 'Please select a floor first' : 'No rooms match your search'}
           </Text>
         )}
       </ScrollView>
