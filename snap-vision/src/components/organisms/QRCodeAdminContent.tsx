@@ -1,26 +1,21 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Modal,
-  ActivityIndicator,
-  ScrollView,
-} from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import QRCode from 'react-native-qrcode-svg';
 import RNFS from 'react-native-fs';
+import QRCode from 'react-native-qrcode-svg';
 
 import SettingsHeader from '../molecules/SettingsHeader';
 import StandardPopup from '../atoms/StandardPopup';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
+import LoadingIndicator from '../atoms/LoadingIndicator';
+import LocationSelector from '../molecules/LocationSelector';
+import BuildingSelector from '../molecules/BuildingSelector';
+import FloorSelector from '../molecules/FloorSelector';
+import QRCodeList from './QRCodeList';
+import QRCodeAddModal from './QRCodeAddModal';
+import QRCodePreviewModal from './QRCodePreviewModal';
 
 import {
   QRCodeMapping,
@@ -45,7 +40,7 @@ interface Building {
 interface Floor {
   id: string;
   name: string;
-} // usually your floorLabel
+}
 interface Room {
   id: string;
   name: string;
@@ -88,18 +83,9 @@ export default function QRCodeAdminContent() {
   // Dropdown UI
   const [buildingDropdownOpen, setBuildingDropdownOpen] = useState(false);
   const [floorDropdownOpen, setFloorDropdownOpen] = useState(false);
-  const buildingDropdownItems = useMemo(
-    () => buildings.map((b) => ({ label: b.name, value: b.id })),
-    [buildings],
-  );
-  const floorDropdownItems = useMemo(
-    () => floors.map((f) => ({ label: `Floor ${f.name}`, value: f.id })),
-    [floors],
-  );
 
   // Popups / modals
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isGenerateModalVisible, setIsGenerateModalVisible] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -236,18 +222,6 @@ export default function QRCodeAdminContent() {
     loadRoomsForFloor();
   }, [selectedFloorId, selectedBuildingId, selectedLocationId]);
 
-  // Only show QR codes for the selected floor
-  const floorQRCodes = useMemo(
-    () => qrCodes.filter((c) => String(c.floorId) === String(selectedFloorId ?? '')),
-    [qrCodes, selectedFloorId],
-  );
-
-  // --- Filtering for room search in Add modal ---
-  const filteredRooms = useMemo(
-    () => rooms.filter((r) => r.name.toLowerCase().includes(searchQuery.trim().toLowerCase())),
-    [rooms, searchQuery],
-  );
-
   // --- Actions ---
   const generateQRValue = () => {
     const rand = Math.random().toString(36).slice(2, 10);
@@ -257,7 +231,6 @@ export default function QRCodeAdminContent() {
   const handleGenerateQRCode = () => {
     const v = generateQRValue();
     setQrValue(v);
-    setIsGenerateModalVisible(true);
   };
 
   const handleAddQRCode = async () => {
@@ -301,36 +274,6 @@ export default function QRCodeAdminContent() {
     }
   };
 
-  const openEditModal = (qr: QRCodeMapping) => {
-    setSelectedQrCode(qr);
-    setQrDescription(qr.description || '');
-    setIsEditModalVisible(true);
-  };
-
-  const handleEditQRCode = async () => {
-    if (!selectedQrCode || !selectedLocationId) return;
-    try {
-      await firestore()
-        .doc(`locations/${selectedLocationId}/qrCodes/${selectedQrCode.id}`)
-        .update({ description: qrDescription });
-
-      if (selectedBuildingId) {
-        const codes = await getQRCodesForBuilding(selectedLocationId, selectedBuildingId);
-        setQrCodes(codes);
-      }
-
-      setIsEditModalVisible(false);
-      setSelectedQrCode(null);
-      setQrDescription('');
-      setSuccessMessage('QR code updated successfully.');
-      setShowSuccessPopup(true);
-    } catch (e) {
-      console.error('Error updating QR code:', e);
-      setErrorMessage('Failed to update QR code. Please try again.');
-      setShowErrorPopup(true);
-    }
-  };
-
   const handleDeleteQRCode = (qr: QRCodeMapping) => {
     if (!selectedLocationId) {
       setErrorMessage('Location information missing.');
@@ -339,7 +282,6 @@ export default function QRCodeAdminContent() {
     }
     setConfirmMessage('Are you sure you want to delete this QR code mapping?');
     setConfirmAction(() => async () => {
-      style: 'destructive';
       try {
         await deleteQRCodeMapping(selectedLocationId, qr.id);
         if (selectedBuildingId) {
@@ -357,33 +299,22 @@ export default function QRCodeAdminContent() {
     setShowConfirmPopup(true);
   };
 
-  // Export QR to PNG (saved in app cache directory)
-  const handleSavePng = async () => {
-    try {
-      if (!qrRef.current) {
-        setErrorMessage('QR component not ready.');
-        setShowErrorPopup(true);
-        return;
-      }
-      // toDataURL returns base64 PNG
-      qrRef.current.toDataURL(async (data: string) => {
-        try {
-          const filePath = `${RNFS.CachesDirectoryPath}/qr-${Date.now()}.png`;
-          await RNFS.writeFile(filePath, data, 'base64');
-          setInfoTitle('Saved');
-          setInfoMessage(`QR PNG saved to:\n${filePath}`);
-          setShowInfoPopup(true);
-        } catch (err) {
-          console.error('Save PNG error:', err);
-          setErrorMessage('Failed to save PNG.');
-          setShowErrorPopup(true);
-        }
-      });
-    } catch (e) {
-      console.error(e);
-      setErrorMessage('Could not export QR PNG.');
-      setShowErrorPopup(true);
-    }
+ 
+
+  const handleQRRef = (ref: QRCode | null) => {
+    qrRef.current = ref;
+  };
+
+  const handleViewQR = (qr: QRCodeMapping) => {
+    setSelectedQrCode(qr);
+    setQrValue(qr.qrValue);
+    setIsGenerateModalVisible(true);
+  };
+
+  const handleLocationSelect = (locationId: string) => {
+    setSelectedLocationId(locationId);
+    setSelectedBuildingId(null);
+    setSelectedFloorId(null);
   };
 
   // --- UI ---
@@ -412,7 +343,7 @@ export default function QRCodeAdminContent() {
         visible={showConfirmPopup}
         title="Confirm Delete"
         message={confirmMessage}
-        onConfirm={(e) => {
+        onConfirm={() => {
           setShowConfirmPopup(false);
           confirmAction();
         }}
@@ -429,12 +360,7 @@ export default function QRCodeAdminContent() {
         onConfirm={() => setShowInfoPopup(false)}
       />
 
-      {isLoading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={{ color: colors.text, marginTop: 16 }}>Loading...</Text>
-        </View>
-      )}
+      {isLoading && <LoadingIndicator overlay={true} />}
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {error && (
@@ -443,458 +369,95 @@ export default function QRCodeAdminContent() {
           </View>
         )}
 
-        {/* Step 1: Select Location (chips) */}
-        <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionTitle, { color: colors.primary }]}>
-            Step 1: Select Location
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chipRow}
-          >
-            {locations.map((loc) => (
-              <TouchableOpacity
-                key={loc.id}
-                style={[
-                  styles.chip,
-                  { backgroundColor: selectedLocationId === loc.id ? colors.primary : colors.card },
-                ]}
-                onPress={() => {
-                  setSelectedLocationId(loc.id);
-                  setSelectedBuildingId(null);
-                  setSelectedFloorId(null);
-                }}
-              >
-                <Text style={{ color: selectedLocationId === loc.id ? '#FFF' : colors.text }}>
-                  {loc.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+        {/* Step 1: Select Location */}
+        <LocationSelector
+          locations={locations}
+          selectedLocationId={selectedLocationId}
+          onLocationSelect={handleLocationSelect}
+          title="Step 1: Select Location"
+        />
 
-        {/* Step 2: Select Building (searchable dropdown) */}
+        {/* Step 2: Select Building */}
         {selectedLocationId && (
-          <View style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: colors.primary }]}>
-              Step 2: Select Building
-            </Text>
-            <DropDownPicker
-              open={buildingDropdownOpen}
-              setOpen={setBuildingDropdownOpen}
-              items={buildingDropdownItems}
-              value={selectedBuildingId}
-              setValue={(get) => setSelectedBuildingId(get())}
-              searchable
-              listMode="SCROLLVIEW"
-              placeholder="Select a building"
-              zIndex={3000}
-              zIndexInverse={1000}
-              style={{ backgroundColor: colors.card, borderColor: colors.primary }}
-              dropDownContainerStyle={{ backgroundColor: colors.card, borderColor: colors.primary }}
-              textStyle={{ color: colors.text }}
-              searchTextInputStyle={{ color: colors.text }}
-            />
-          </View>
+          <BuildingSelector
+            buildings={buildings}
+            selectedBuildingId={selectedBuildingId}
+            setSelectedBuildingId={setSelectedBuildingId}
+            dropdownOpen={buildingDropdownOpen}
+            setDropdownOpen={setBuildingDropdownOpen}
+            title="Step 2: Select Building"
+          />
         )}
 
-        {/* Step 3: Select Floor (searchable dropdown) */}
+        {/* Step 3: Select Floor */}
         {selectedBuildingId && (
-          <View style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: colors.primary }]}>
-              Step 3: Select Floor
-            </Text>
-            <DropDownPicker
-              open={floorDropdownOpen}
-              setOpen={setFloorDropdownOpen}
-              items={floorDropdownItems}
-              value={selectedFloorId}
-              setValue={(get) => setSelectedFloorId(get())}
-              searchable
-              listMode="SCROLLVIEW"
-              placeholder="Select a floor"
-              zIndex={2000}
-              zIndexInverse={900}
-              style={{ backgroundColor: colors.card, borderColor: colors.primary }}
-              dropDownContainerStyle={{ backgroundColor: colors.card, borderColor: colors.primary }}
-              textStyle={{ color: colors.text }}
-              searchTextInputStyle={{ color: colors.text }}
-            />
-          </View>
+          <FloorSelector
+            floors={floors}
+            selectedFloorId={selectedFloorId}
+            setSelectedFloorId={setSelectedFloorId}
+            dropdownOpen={floorDropdownOpen}
+            setDropdownOpen={setFloorDropdownOpen}
+            title="Step 3: Select Floor"
+          />
         )}
 
-        {/* Step 4: Manage QR Codes (now filtered by floor) */}
+        {/* Step 4: Manage QR Codes */}
         {selectedFloorId && selectedBuildingId && selectedLocationId && (
-          <View style={styles.sectionContainer}>
-            <Text style={{ color: colors.text, marginBottom: 12, fontWeight: '500' }}>
-              QR Codes for Building{' '}
-              {buildings.find((b) => b.id === selectedBuildingId)?.name || selectedBuildingId},{' '}
-              Floor {floors.find((f) => f.id === selectedFloorId)?.name || selectedFloorId}
-            </Text>
-
-            <View style={styles.sectionHeader}>
-              <TouchableOpacity
-                style={[styles.addButton, { backgroundColor: colors.primary }]}
-                onPress={() => setIsAddModalVisible(true)}
-              >
-                <Icon name="qrcode-plus" size={20} color="#FFF" />
-                <Text style={styles.addButtonText}>Add New</Text>
-              </TouchableOpacity>
-            </View>
-
-            {floorQRCodes.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Icon name="qrcode-remove" size={48} color={colors.secondary} />
-                <Text style={[styles.emptyText, { color: colors.text }]}>
-                  No QR codes found for this floor
-                </Text>
-              </View>
-            ) : (
-              <FlatList
-                data={floorQRCodes}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => {
-                  const roomObj = rooms.find((r) => r.id === item.roomId);
-                  return (
-                    <View style={[styles.qrCodeItem, { backgroundColor: colors.card }]}>
-                      <View style={styles.qrCodeDetails}>
-                        <Text style={[styles.roomName, { color: colors.text }]}>
-                          Room: {roomObj?.name || item.roomName || 'Unknown Room'}
-                        </Text>
-                        <Text style={[styles.qrCodeValue, { color: colors.secondary }]}>
-                          {item.qrValue}
-                        </Text>
-                        {!!item.description && (
-                          <Text style={[styles.qrCodeDesc, { color: colors.text }]}>
-                            {item.description}
-                          </Text>
-                        )}
-                        <Text style={[styles.qrCodeFloor, { color: colors.secondary }]}>
-                          Floor: {item.floorId}
-                        </Text>
-                      </View>
-
-                      <View style={styles.qrCodeActions}>
-                        <TouchableOpacity
-                          style={[styles.actionButton, { backgroundColor: colors.primary }]}
-                          onPress={() => {
-                            setSelectedQrCode(item);
-                            setQrValue(item.qrValue);
-                            setIsGenerateModalVisible(true);
-                          }}
-                        >
-                          <Icon name="qrcode" size={20} color="#FFF" />
-                        </TouchableOpacity>
-
-                        {/* <TouchableOpacity
-                          style={[styles.actionButton, { backgroundColor: colors.card }]}
-                          onPress={() => openEditModal(item)}
-                        >
-                          <Icon name="pencil" size={20} color={colors.primary} />
-                        </TouchableOpacity> */}
-
-                        <TouchableOpacity
-                          style={[styles.actionButton, { backgroundColor: '#FF3B30' }]}
-                          onPress={() => handleDeleteQRCode(item)}
-                        >
-                          <Icon name="trash-can-outline" size={20} color="#FFF" />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  );
-                }}
-              />
-            )}
-          </View>
+          <QRCodeList
+            qrCodes={qrCodes}
+            rooms={rooms}
+            buildings={buildings}
+            floors={floors}
+            selectedBuildingId={selectedBuildingId}
+            selectedFloorId={selectedFloorId}
+            onViewQR={handleViewQR}
+            onDeleteQR={handleDeleteQRCode}
+            onAddQR={() => setIsAddModalVisible(true)}
+          />
         )}
       </ScrollView>
 
-      {/* Success Popup */}
-      <StandardPopup
-        visible={showSuccessPopup}
-        title="Success"
-        message={successMessage}
-        onConfirm={() => setShowSuccessPopup(false)}
-        confirmText="OK"
-        showCancel={false}
+      {/* Add QR Code Modal */}
+      <QRCodeAddModal
+        visible={isAddModalVisible}
+        rooms={rooms}
+        selectedRoom={selectedRoom}
+        onRoomSelect={setSelectedRoom}
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        qrValue={qrValue}
+        onQrValueChange={setQrValue}
+        qrDescription={qrDescription}
+        onQrDescriptionChange={setQrDescription}
+        onGenerateQR={handleGenerateQRCode}
+        onAdd={handleAddQRCode}
+        onClose={() => {
+          setIsAddModalVisible(false);
+          setSelectedRoom(null);
+          setQrValue('');
+          setQrDescription('');
+          setSearchQuery('');
+        }}
       />
 
-      {/* Add QR Code Modal */}
-      <Modal
-        visible={isAddModalVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setIsAddModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Add New QR Code</Text>
-
-            <Text style={[styles.inputLabel, { color: colors.text }]}>Select Room</Text>
-            <TextInput
-              style={[styles.searchInput, { backgroundColor: colors.card, color: colors.text }]}
-              placeholder="Search rooms..."
-              placeholderTextColor={colors.secondary}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-
-            <ScrollView style={styles.roomList} nestedScrollEnabled>
-              {selectedFloorId ? (
-                filteredRooms.map((room) => (
-                  <TouchableOpacity
-                    key={room.id}
-                    style={[
-                      styles.roomItem,
-                      {
-                        backgroundColor:
-                          selectedRoom?.id === room.id ? colors.primary : colors.card,
-                      },
-                    ]}
-                    onPress={() => setSelectedRoom(room)}
-                  >
-                    <Text style={{ color: selectedRoom?.id === room.id ? '#FFF' : colors.text }}>
-                      {room.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))
-              ) : (
-                <Text style={{ padding: 10, color: colors.text }}>Please select a floor first</Text>
-              )}
-            </ScrollView>
-
-            <Text style={[styles.inputLabel, { color: colors.text }]}>QR Code Value</Text>
-            <View style={styles.qrValueContainer}>
-              <TextInput
-                style={[styles.textInput, { backgroundColor: colors.card, color: colors.text }]}
-                value={qrValue}
-                onChangeText={setQrValue}
-                placeholder="Enter QR code value"
-                placeholderTextColor={colors.secondary}
-              />
-              <TouchableOpacity
-                style={[styles.generateButton, { backgroundColor: colors.primary }]}
-                onPress={handleGenerateQRCode}
-              >
-                <Text style={styles.generateButtonText}>Generate</Text>
-              </TouchableOpacity>
-            </View>
-
-            <Text style={[styles.inputLabel, { color: colors.text }]}>Description (optional)</Text>
-            <TextInput
-              style={[styles.textInput, { backgroundColor: colors.card, color: colors.text }]}
-              value={qrDescription}
-              onChangeText={setQrDescription}
-              placeholder="Enter description"
-              placeholderTextColor={colors.secondary}
-            />
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: colors.border }]}
-                onPress={() => {
-                  setIsAddModalVisible(false);
-                  setSelectedRoom(null);
-                  setQrValue('');
-                  setQrDescription('');
-                  setSearchQuery('');
-                }}
-              >
-                <Text style={{ color: colors.text }}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: colors.primary }]}
-                onPress={handleAddQRCode}
-              >
-                <Text style={{ color: '#FFF' }}>Add</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Generate QR (Preview) Modal — real QR + Save PNG */}
-
-      <Modal
+      {/* QR Code Preview Modal */}
+      <QRCodePreviewModal
         visible={isGenerateModalVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setIsGenerateModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>QR Code</Text>
-
-            <View style={styles.qrCard}>
-              <QRCode
-                value={qrValue || ' '}
-                size={320}
-                color="#000000"
-                backgroundColor="#FFFFFF"
-                ecl="M"
-                getRef={(c) => (qrRef.current = c)}
-              />
-            </View>
-
-            <Text style={[styles.qrValueText, { color: colors.text }]} numberOfLines={2}>
-              {qrValue}
-            </Text>
-
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              {/* <TouchableOpacity
-          style={[styles.fullWidthButton, { backgroundColor: colors.primary, flex: 1 }]}
-          onPress={handleSavePng}
-          disabled={!qrValue}
-        >
-          <Text style={{ color: '#FFF' }}>Save PNG</Text>
-        </TouchableOpacity> */}
-
-              <TouchableOpacity
-                style={[styles.fullWidthButton, { backgroundColor: colors.border, flex: 1 }]}
-                onPress={() => setIsGenerateModalVisible(false)}
-              >
-                <Text style={{ color: colors.text }}>Close</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        qrValue={qrValue}
+        onClose={() => setIsGenerateModalVisible(false)}
+      />
     </View>
   );
 }
 
-// Styles mirror AdminEditFloorplansContent for consistency
+// Simplified styles
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { flex: 1, paddingHorizontal: 16 },
-
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-
   errorContainer: {
     padding: 12,
     borderRadius: 8,
     marginVertical: 16,
   },
   errorText: { color: 'white', fontWeight: '500' },
-
-  sectionContainer: {
-    marginBottom: 24,
-    padding: 16,
-    backgroundColor: 'rgba(0,0,0,0.03)',
-    borderRadius: 8,
-  },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 16 },
-
-  chipRow: { paddingVertical: 8 },
-  chip: {
-    padding: 12,
-    borderRadius: 8,
-    marginRight: 8,
-    minWidth: 100,
-    alignItems: 'center',
-  },
-
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  addButtonText: { color: '#FFF', marginLeft: 4, fontWeight: '500' },
-
-  emptyState: { justifyContent: 'center', alignItems: 'center', padding: 20 },
-  emptyText: { fontSize: 16, textAlign: 'center', marginTop: 16 },
-
-  // List item
-  qrCodeItem: { flexDirection: 'row', padding: 16, borderRadius: 8, marginBottom: 12 },
-  qrCodeDetails: { flex: 1 },
-  roomName: { fontSize: 16, fontWeight: '600', marginBottom: 4 },
-  qrCodeValue: { fontSize: 14, marginBottom: 4 },
-  qrCodeDesc: { fontSize: 14, marginBottom: 4 },
-  qrCodeFloor: { fontSize: 12 },
-  qrCodeActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  actionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  // Modals (shared)
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    padding: 20,
-  },
-  modalContent: {
-    width: '100%',
-    padding: 20,
-    borderRadius: 12,
-    maxHeight: '80%',
-  },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 16, textAlign: 'center' },
-
-  inputLabel: { fontSize: 16, marginBottom: 8 },
-  textInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-  },
-  searchInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-  },
-  roomList: { maxHeight: 150, marginBottom: 16 },
-  roomItem: { padding: 12, marginBottom: 4, borderRadius: 8 },
-
-  qrValueContainer: { flexDirection: 'row', gap: 8, marginBottom: 16 },
-  generateButton: { paddingHorizontal: 12, justifyContent: 'center', borderRadius: 8 },
-  generateButtonText: { color: '#FFF', fontWeight: '500' },
-
-  modalActions: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
-  modalButton: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: 8 },
-
-  // QR
-  qrCodeContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 20,
-    padding: 16,
-    backgroundColor: '#FFF',
-    borderRadius: 8,
-  },
-  qrCard: {
-    alignSelf: 'center',
-    backgroundColor: '#FFFFFF',
-    padding: 18,
-    borderRadius: 12,
-  },
-
-  qrValueText: { fontSize: 14, textAlign: 'center', marginBottom: 20 },
-  fullWidthButton: { paddingVertical: 12, alignItems: 'center', borderRadius: 8 },
-
-  valueDisplay: { padding: 12, marginBottom: 16, fontSize: 14 },
 });

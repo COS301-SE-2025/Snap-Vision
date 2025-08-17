@@ -65,8 +65,7 @@
     "react-native-wifi-reborn": "^4.13.6",
     "react-native-worklets-core": "^1.6.2",
     "react-test-renderer": "^19.0.0",
-    "react-vision-camera": "^1.0.1",
-    "vision-camera-code-scanner": "^0.2.0"
+    "react-vision-camera": "^1.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.23.9",
