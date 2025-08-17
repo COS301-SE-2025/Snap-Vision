@@ -26,7 +26,6 @@ import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 import DirectionsModal from '../components/organisms/DirectionsModal';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import auth from '@react-native-firebase/auth';
 import { addRecentlyVisitedPOI, Visit } from '../services/firebase/recentlyVService';
 
 import { useBadges } from '../context/BadgeContext';
@@ -38,6 +37,7 @@ import { useMapLocation } from '../hooks/useMapLocation';
 import { useMapNavigation } from '../hooks/useMapNavigation';
 import { useMapPOI } from '../hooks/useMapPOI';
 import { useMapAdmin } from '../hooks/useMapAdmin';
+import { useCrowdReports } from '../hooks/useCrowdReports';
 import { requestCameraPermission } from '../utils/cameraPermissions';
 import { Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
@@ -227,10 +227,26 @@ const MapScreen = () => {
     showConfirmationPopupHelper,
   );
 
-  const [showCrowdPopup, setShowCrowdPopup] = useState(false);
-  const [selectedDensity, setSelectedDensity] = useState('moderate');
+  // Use the crowd reports hook
+  const {
+    showCrowdPopup,
+    selectedDensity,
+    showReportTooltip,
+    crowdReports,
+    submitCrowdReport,
+    fetchRecentCrowdReports,
+    openCrowdReportModal,
+    setShowCrowdPopup,
+    setSelectedDensity,
+    setShowReportTooltip,
+  } = useCrowdReports(
+    isMapReady,
+    webViewRef,
+    setStatus,
+    setError,
+  );
+
   const [showShareTooltip, setShowShareTooltip] = useState(false);
-  const [showReportTooltip, setShowReportTooltip] = useState(false);
 
   // Turn-by-turn state (non-navigation related)
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -238,9 +254,6 @@ const MapScreen = () => {
 
   //indoor
   // const navigation = useNavigation<any>();
-
-  // crowd reports
-  const [crowdReports, setCrowdReports] = useState<Record<string, any>>({});
 
   const [tempMessage, setTempMessage] = useState<string>('');
 
@@ -607,121 +620,6 @@ const MapScreen = () => {
     fetchRoute(destinationCoords);
   };
 
-  //add this function to handle report submission
-  const submitCrowdReport = async () => {
-    if (!hookSelectedPOI || !selectedDensity) {
-      setError('Please select a building and density level');
-      return;
-    }
-
-    try {
-      // Save report to Firestore
-      await firestore()
-        .collection('crowdReports')
-        .add({
-          buildingId: hookSelectedPOI.id,
-          buildingName: hookSelectedPOI.name,
-          density: selectedDensity,
-          timestamp: firestore.FieldValue.serverTimestamp(),
-          reportedBy: auth().currentUser?.uid || 'anonymous',
-          centroid: hookSelectedPOI.centroid,
-          expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
-        });
-
-      // Update UI
-      if (isMapReady && webViewRef.current) {
-        const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${hookSelectedPOI.centroid.latitude}, ${hookSelectedPOI.centroid.longitude}, '${selectedDensity}', '${hookSelectedPOI.id}');`;
-        webViewRef.current.injectJavaScript(jsCrowdCode);
-      }
-      setShowCrowdPopup(false);
-      setStatus(`Crowd density reported for ${hookSelectedPOI.name}`);
-    } catch (error) {
-      console.error('Error saving crowd report:', error);
-      setError('Failed to submit crowd report');
-    }
-  };
-
-  //  function to fetch recent crowd reports
-  const fetchRecentCrowdReports = async () => {
-    try {
-      const oneHourAgo = new Date();
-      oneHourAgo.setHours(oneHourAgo.getHours() - 1);
-
-      const snapshot = await firestore()
-        .collection('crowdReports')
-        .where('timestamp', '>', oneHourAgo)
-        .get();
-
-      const reports: Record<string, any> = {};
-      snapshot.docs.forEach((doc) => {
-        const data = doc.data();
-        // If multiple reports exist for the same building, take the most recent
-        if (!reports[data.buildingId] || reports[data.buildingId].timestamp < data.timestamp) {
-          reports[data.buildingId] = data;
-        }
-      });
-
-      setCrowdReports(reports);
-
-      // Update crowd indicators on map
-      if (isMapReady && webViewRef.current) {
-        Object.values(reports).forEach((report) => {
-          if (report.centroid) {
-            const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${report.centroid.latitude}, ${report.centroid.longitude}, '${report.density}', '${report.buildingId}');`;
-            if (webViewRef.current) {
-              webViewRef.current.injectJavaScript(jsCrowdCode);
-            }
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching crowd reports:', error);
-      // More informative error handling
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'code' in error &&
-        (error as any).code === 'firestore/permission-denied'
-      ) {
-        setError('Crowd reports feature unavailable: Permission error');
-      }
-    }
-  };
-
-  // ] useEffect to fetch crowd reports periodically
-  useEffect(() => {
-    if (isMapReady) {
-      fetchRecentCrowdReports();
-      const interval = setInterval(fetchRecentCrowdReports, 5 * 60 * 1000); // Refresh every 5 minutes
-
-      return () => clearInterval(interval);
-    }
-  }, [isMapReady]);
-
-  //  a function to handle opening the crowd report modal
-  const openCrowdReportModal = () => {
-    // If user has selected a POI on map, use that as default
-    if (selectedFeature) {
-      setHookSelectedPOI(selectedFeature);
-    } else if (destination && destinationCoords) {
-      // If user has a destination set in the search bar but no selected feature,
-      // find the corresponding POI
-      const matchingPOI = pois.find(
-        (poi) =>
-          poi.name === destination ||
-          (poi.centroid &&
-            poi.centroid.longitude === destinationCoords[0] &&
-            poi.centroid.latitude === destinationCoords[1]),
-      );
-
-      if (matchingPOI) {
-        setHookSelectedPOI(matchingPOI);
-      }
-    }
-
-    setShowCrowdPopup(true);
-  };
-
   useEffect(() => {
     if (tempMessage) {
       const timer = setTimeout(() => {
@@ -906,7 +804,7 @@ const MapScreen = () => {
           availablePOIs={pois}
           onChangeDensity={setSelectedDensity}
           onChangePOI={setHookSelectedPOI}
-          onSubmit={submitCrowdReport}
+          onSubmit={() => submitCrowdReport(hookSelectedPOI)}
           onCancel={() => setShowCrowdPopup(false)}
         />
       )}
@@ -1196,7 +1094,7 @@ const MapScreen = () => {
       <MapActionsPanel
         currentLocation={!!currentLocation}
         onShare={shareLocation}
-        onReport={openCrowdReportModal}
+        onReport={() => openCrowdReportModal(selectedFeature, destination, destinationCoords, pois, setHookSelectedPOI)}
         isAdmin={isAdmin}
         onAddPOI={() => enableAdminPOICreation(webViewRef, setTempMessage)}
         shareTooltip={showShareTooltip}
