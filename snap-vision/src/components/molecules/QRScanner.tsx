@@ -290,10 +290,10 @@ export default function QRScanner({ onScan, onClose }: Props) {
           ]}
         />
         {/* Corner markers */}
-        <View style={[styles.cornerTL, { borderColor: colors.success }]} />
+        {/* <View style={[styles.cornerTL, { borderColor: colors.success }]} />
         <View style={[styles.cornerTR, { borderColor: colors.success }]} />
         <View style={[styles.cornerBL, { borderColor: colors.success }]} />
-        <View style={[styles.cornerBR, { borderColor: colors.success }]} />
+        <View style={[styles.cornerBR, { borderColor: colors.success }]} /> */}
 
         <Text style={[styles.scanningText, { color: colors.text }]}>
           {autoScanMode
@@ -326,13 +326,13 @@ export default function QRScanner({ onScan, onClose }: Props) {
         </TouchableOpacity>
 
         <View style={styles.topControls}>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={[styles.nativeScanBtn, { backgroundColor: colors.notification }]}
             onPress={activateEnhancedScanning}
           >
             <Icon name="flashlight" size={24} color="#FFFFFF" />
             <Text style={styles.nativeScanText}>Enhance</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           <TouchableOpacity
             style={[
@@ -341,16 +341,16 @@ export default function QRScanner({ onScan, onClose }: Props) {
             ]}
             onPress={toggleScanMode}
           >
-            <Icon
+            {/* <Icon
               name={autoScanMode ? 'scan' : 'scan-outline'}
               size={24}
               color={autoScanMode ? '#FFFFFF' : colors.primary}
-            />
-            <Text
+            /> */}
+            {/* <Text
               style={[styles.modeBtnText, { color: autoScanMode ? '#FFFFFF' : colors.primary }]}
             >
               {autoScanMode ? 'Auto' : 'Manual'}
-            </Text>
+            </Text> */}
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -368,9 +368,9 @@ export default function QRScanner({ onScan, onClose }: Props) {
 
       {/* Bottom hint + debug */}
       <View style={styles.bottomArea}>
-        <Text style={[styles.hint, { backgroundColor: 'rgba(0,0,0,0.65)' }]}>
+        {/* <Text style={[styles.hint, { backgroundColor: 'rgba(0,0,0,0.65)' }]}>
           Align the QR within the frame
-        </Text>
+        </Text> */}
 
         {lastValue ? (
           <View style={[styles.debugChip, { borderColor: colors.primary }]}>
