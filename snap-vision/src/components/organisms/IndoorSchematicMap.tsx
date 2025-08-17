@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo, useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
 import WebView from 'react-native-webview';
 import { useTheme } from '@react-navigation/native';
@@ -25,7 +25,6 @@ interface Props {
 }
 
 const CANVAS = 1000;
-// ...existing imports...
 const FLOORPLAN_CONTAINER_WIDTH = 360;
 const FLOORPLAN_CONTAINER_HEIGHT = 300;
 
@@ -43,8 +42,123 @@ export default function IndoorSchematicMap({
 }: Props) {
   const webViewRef = useRef<WebView>(null);
   const { dark: isDarkMode } = useTheme();
+  const prevCurrentPosRef = useRef<{ x: number; y: number } | undefined>(undefined);
 
-  const getHtmlContent = () => {
+  // Update position without full refresh
+  useEffect(() => {
+    if (webViewRef.current && currentPos && 
+        (!prevCurrentPosRef.current || 
+         prevCurrentPosRef.current.x !== currentPos.x || 
+         prevCurrentPosRef.current.y !== currentPos.y)) {
+      
+      prevCurrentPosRef.current = currentPos;
+      
+      const updatePositionJS = `
+        (function() {
+          try {
+            const pathSvg = document.getElementById('path-svg');
+            if (!pathSvg) return;
+            
+            // Remove previous position indicators
+            const prevOuter = document.getElementById('current-pos-outer-circle');
+            const prevInner = document.getElementById('current-pos-inner-circle');
+            if (prevOuter) prevOuter.remove();
+            if (prevInner) prevInner.remove();
+            
+            // Create SVG groups for position indicator with animation
+            const markerGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            markerGroup.setAttribute('id', 'current-position-group');
+            
+            // Create pulsing outer circle
+            const outerCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            outerCircle.setAttribute('id', 'current-pos-outer-circle');
+            outerCircle.setAttribute('cx', '${currentPos.x * 100}');
+            outerCircle.setAttribute('cy', '${currentPos.y * 100}');
+            outerCircle.setAttribute('r', '3');
+            outerCircle.setAttribute('fill', '#FF0000');
+            outerCircle.setAttribute('fill-opacity', '0.7');
+            outerCircle.setAttribute('stroke', '#000000');
+            outerCircle.setAttribute('stroke-width', '0.3');
+            
+            // Create inner circle
+            const innerCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            innerCircle.setAttribute('id', 'current-pos-inner-circle');
+            innerCircle.setAttribute('cx', '${currentPos.x * 100}');
+            innerCircle.setAttribute('cy', '${currentPos.y * 100}');
+            innerCircle.setAttribute('r', '1.5');
+            innerCircle.setAttribute('fill', '#00FF00');
+            innerCircle.setAttribute('stroke', '#000000');
+            innerCircle.setAttribute('stroke-width', '0.2');
+            
+            // Add animation to make it pulse
+            const pulseAnimation = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
+            pulseAnimation.setAttribute('attributeName', 'r');
+            pulseAnimation.setAttribute('from', '2');
+            pulseAnimation.setAttribute('to', '4');
+            pulseAnimation.setAttribute('dur', '1.5s');
+            pulseAnimation.setAttribute('begin', '0s');
+            pulseAnimation.setAttribute('repeatCount', 'indefinite');
+            outerCircle.appendChild(pulseAnimation);
+            
+            // Add animation to change opacity
+            const opacityAnimation = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
+            opacityAnimation.setAttribute('attributeName', 'fill-opacity');
+            opacityAnimation.setAttribute('from', '0.7');
+            opacityAnimation.setAttribute('to', '0.2');
+            opacityAnimation.setAttribute('dur', '1.5s');
+            opacityAnimation.setAttribute('begin', '0s');
+            opacityAnimation.setAttribute('repeatCount', 'indefinite');
+            outerCircle.appendChild(opacityAnimation);
+            
+            // Add circles to group and group to SVG
+            markerGroup.appendChild(outerCircle);
+            markerGroup.appendChild(innerCircle);
+            pathSvg.appendChild(markerGroup);
+            
+            // Update marker scales to maintain proper size
+            if (typeof updateMarkerScales === 'function') {
+              updateMarkerScales();
+            }
+          } catch (e) {
+            console.error('Error updating position:', e);
+          }
+        })();
+      `;
+      
+      webViewRef.current.injectJavaScript(updatePositionJS);
+    }
+  }, [currentPos]);
+
+  // Update route progress without full refresh
+  useEffect(() => {
+    if (webViewRef.current && completedPolyline.length > 1) {
+      const updateCompletedPathJS = `
+        (function() {
+          try {
+            const pathSvg = document.getElementById('path-svg');
+            if (!pathSvg) return;
+            
+            // Remove previous completed path
+            const prevCompletedPath = document.querySelector('.completed-line');
+            if (prevCompletedPath) prevCompletedPath.remove();
+            
+            // Create new completed path
+            const completedPath = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            completedPath.setAttribute('points', '${completedPolyline.map(pt => `${pt.x * 100},${pt.y * 100}`).join(' ')}');
+            completedPath.setAttribute('class', 'completed-line');
+            pathSvg.appendChild(completedPath);
+          } catch (e) {
+            console.error('Error updating completed path:', e);
+          }
+        })();
+      `;
+      
+      webViewRef.current.injectJavaScript(updateCompletedPathJS);
+    }
+  }, [completedPolyline]);
+
+  // Memoize HTML content to prevent unnecessary rebuilds
+  const htmlContent = useMemo(() => {
     if (!floorplanUrl) {
       return `<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;background:${themeColors.background}"><p style="color:${themeColors.text}">No floorplan available</p></body></html>`;
     }
@@ -100,7 +214,7 @@ export default function IndoorSchematicMap({
           background-color: ${themeColors.success || '#4CAF50'};
         }
         .marker.end {
-          background-color: ${themeColors.primary};
+          background-color: ${themeColors.secondary};
         }
         .marker-label {
           position: absolute;
@@ -135,24 +249,28 @@ export default function IndoorSchematicMap({
         }
         .completed-line {
           stroke: ${themeColors.text};
-          stroke-width: 4;
-          opacity: 0.85;
+          stroke-width: 3;
+          fill: none;
+          stroke-linejoin: round;
+          stroke-linecap: round;
+          opacity: 0.75;
+          vector-effect: non-scaling-stroke;
         }
         .current-pos {
-          width: 20px;
-          height: 20px;
+          width: 14px;
+          height: 14px;
           border-radius: 50%;
-          background-color: ${themeColors.primary};
+          background-color: ${themeColors.secondary};
           opacity: 0.25;
           position: absolute;
           transform: translate(-50%, -50%);
           z-index: 9;
         }
         .current-pos-center {
-          width: 10px;
-          height: 10px;
+          width: 8px;
+          height: 8px;
           border-radius: 50%;
-          background-color: ${themeColors.primary};
+          background-color: ${themeColors.secondary};
           position: absolute;
           transform: translate(-50%, -50%);
           z-index: 9;
@@ -164,6 +282,11 @@ export default function IndoorSchematicMap({
         <div id="zoomable-area">
           <img id="floorplan" src="${floorplanUrl}" />
           <svg id="path-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5;" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+          ${currentPos ? `
+          <!-- Initial position indicators (will be updated dynamically) -->
+          <div id="current-pos-outer" style="position: absolute; width: 14px; height: 14px; border-radius: 50%; background-color: ${themeColors.primary}; opacity: 0.25; left: ${currentPos.x * 100}%; top: ${currentPos.y * 100}%; transform: translate(-50%, -50%); z-index: 9;"></div>
+          <div id="current-pos-inner" style="position: absolute; width: 8px; height: 8px; border-radius: 50%; background-color: ${themeColors.secondary}; left: ${currentPos.x * 100}%; top: ${currentPos.y * 100}%; transform: translate(-50%, -50%); z-index: 10;"></div>
+          ` : ''}
         </div>
       </div>
       <script>
@@ -186,24 +309,32 @@ export default function IndoorSchematicMap({
           const markers = document.querySelectorAll('.marker');
           const labels = document.querySelectorAll('.marker-label');
           const entranceFlags = document.querySelectorAll('.entrance-flag');
-          const currentPos = document.querySelectorAll('.current-pos');
-          const currentPosCenter = document.querySelectorAll('.current-pos-center');
           const inverseScale = 1 / currentScale;
+          
+          // Scale markers and labels
           markers.forEach(marker => {
             marker.style.transform = 'translate(-50%, -50%) scale(' + inverseScale + ')';
           });
+          
           labels.forEach(label => {
             label.style.transform = 'translateX(-50%) scale(' + inverseScale + ')';
           });
+          
           entranceFlags.forEach(flag => {
             flag.style.transform = 'translate(-50%, -150%) scale(' + inverseScale + ')';
           });
-          currentPos.forEach(pos => {
-            pos.style.transform = 'translate(-50%, -50%) scale(' + inverseScale + ')';
-          });
-          currentPosCenter.forEach(pos => {
-            pos.style.transform = 'translate(-50%, -50%) scale(' + inverseScale + ')';
-          });
+          
+          // Scale position indicators using IDs
+          const outerPos = document.getElementById('current-pos-outer');
+          const innerPos = document.getElementById('current-pos-inner');
+          
+          if (outerPos) {
+            outerPos.style.transform = 'translate(-50%, -50%) scale(' + inverseScale + ')';
+          }
+          
+          if (innerPos) {
+            innerPos.style.transform = 'translate(-50%, -50%) scale(' + inverseScale + ')';
+          }
         }
 
         function applyTransform() {
@@ -329,40 +460,32 @@ export default function IndoorSchematicMap({
             routePath.setAttribute('class', 'path-line');
             pathSvg.appendChild(routePath);
           ` : ''}
-          ${currentPos ? `
-            const outerPos = document.createElement('div');
-            outerPos.className = 'current-pos';
-            outerPos.style.left = '${currentPos.x * 100}%';
-            outerPos.style.top = '${currentPos.y * 100}%';
-            const innerPos = document.createElement('div');
-            innerPos.className = 'current-pos-center';
-            innerPos.style.left = '${currentPos.x * 100}%';
-            innerPos.style.top = '${currentPos.y * 100}%';
-            zoomableArea.appendChild(outerPos);
-            zoomableArea.appendChild(innerPos);
-          ` : ''}
-          ${nextInstructionEnd ? `
-            const nextMarker = document.createElement('div');
-            nextMarker.className = 'marker';
-            nextMarker.style.backgroundColor = '${themeColors.roleSecondary}'; // gold highlight
-            nextMarker.style.border = '2px solid #333';
-            nextMarker.style.zIndex = 20;
-            placeMarker(nextMarker, ${nextInstructionEnd.x}, ${nextInstructionEnd.y});
-            zoomableArea.appendChild(nextMarker);
-          ` : ''}
-          setTimeout(() => {
-            currentScale = 1;
-            currentOffsetX = 0;
-            currentOffsetY = 0;
-            applyTransform();
-            updateMarkerScales();
-          }, 100);
+          // ${nextInstructionEnd ? `
+          //   const nextMarker = document.createElement('div');
+          //   nextMarker.className = 'marker';
+          //   nextMarker.style.backgroundColor = '${themeColors.notification || '#2196F3'}'; // blue highlight
+          //   nextMarker.style.border = '2px solid #ffffff';
+          //   nextMarker.style.zIndex = 20;
+          //   placeMarker(nextMarker, ${nextInstructionEnd.x}, ${nextInstructionEnd.y});
+          //   zoomableArea.appendChild(nextMarker);
+          // ` : ''}
+          // Only initialize position and zoom once when the map first loads
+          if (window.initialMapLoadComplete !== true) {
+            setTimeout(() => {
+              currentScale = 1;
+              currentOffsetX = 0;
+              currentOffsetY = 0;
+              applyTransform();
+              updateMarkerScales();
+              window.initialMapLoadComplete = true;
+            }, 100);
+          }
         });
       </script>
     </body>
     </html>
     `;
-  };
+  }, [floorplanUrl, rooms, startId, endId, routePolyline, isDarkMode, themeColors, nextInstructionEnd]);
 
   const handleMessage = (event: { nativeEvent: { data: string } }) => {
     try {
@@ -378,8 +501,9 @@ export default function IndoorSchematicMap({
   return (
     <View style={styles.fixedFloorplanContainer}>
       <WebView
+        key="indoor-schematic-map-webview" // Adding stable key to prevent WebView recreation
         ref={webViewRef}
-        source={{ html: getHtmlContent() }}
+        source={{ html: htmlContent }}
         style={styles.fixedWebView}
         onMessage={handleMessage}
         originWhitelist={['*']}

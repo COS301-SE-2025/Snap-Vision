@@ -297,7 +297,7 @@ export default function IndoorSchematicNavScreen() {
     }
     if (currentStep >= steps.length - 1) {
       setPopupTitle('Done');
-      setPopupMessage('You have reached your destination.');
+      setPopupMessage('You have reached your destination!');
       setPopupConfirmText('OK');
       setPopupVisible(true);
       resetRoute();
