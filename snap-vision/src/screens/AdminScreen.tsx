@@ -38,6 +38,10 @@ const AdminScreen = () => {
     });
   };
 
+  const handleManageQRCodes = () => {
+    navigation.navigate('AdminQRCodes');
+  };
+
   return (
     <AdminContent
       colors={colors}
@@ -46,6 +50,7 @@ const AdminScreen = () => {
       // onSettings={handleSettings}
       onManageUsers={handleManageUsers}
       onIndoorPositioning={handleIndoorPositioning}
+      onManageQRCodes={handleManageQRCodes}
     />
   );
 };

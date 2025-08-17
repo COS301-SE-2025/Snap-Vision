@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import firestore from '@react-native-firebase/firestore';
 import SettingsHeader from '../molecules/SettingsHeader';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import QRScanner from '../molecules/QRScanner';
+import { getQRCodeMappingByValue } from '../../services/qrService';
 
 interface Room {
   id: string;
@@ -37,6 +39,8 @@ export default function IndoorNavigationInterfaceContent({
   const [selectedStartRoom, setSelectedStartRoom] = useState<Room | null>(null);
   const [selectedEndRoom, setSelectedEndRoom] = useState<Room | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [qrScannerVisible, setQRScannerVisible] = useState(false);
+  const [qrScanLoading, setQRScanLoading] = useState(false);
 
   useEffect(() => {
     loadRooms();
@@ -100,6 +104,30 @@ export default function IndoorNavigationInterfaceContent({
     }
   };
 
+  const handleQRScan = async (qrValue: string) => {
+    try {
+      setQRScanLoading(true);
+      const mapping = await getQRCodeMappingByValue(qrValue);
+
+      if (mapping && mapping.roomId) {
+        // Find the room that corresponds to the QR code
+        const room = rooms.find((r) => r.id === mapping.roomId);
+        if (room) {
+          handleRoomSelect(room, true); // Set as starting room
+        } else {
+          console.error('Room not found for QR code mapping:', mapping.roomId);
+        }
+      } else {
+        console.error('Invalid QR code or no mapping found');
+      }
+    } catch (error) {
+      console.error('Error processing QR code:', error);
+    } finally {
+      setQRScanLoading(false);
+      setQRScannerVisible(false);
+    }
+  };
+
   const startNavigation = () => {
     if (selectedStartRoom && selectedEndRoom) {
       onNavigationStart(selectedStartRoom.id, selectedEndRoom.id, selectedStartRoom.floorId);
@@ -137,16 +165,25 @@ export default function IndoorNavigationInterfaceContent({
 
       {/* Search */}
       <View style={styles.searchContainer}>
-        <TextInput
-          style={[
-            styles.searchInput,
-            { backgroundColor: colors.card, borderColor: colors.border, color: colors.text },
-          ]}
-          placeholder="Search rooms..."
-          placeholderTextColor={colors.secondary}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
+        <View style={styles.searchInputContainer}>
+          <TextInput
+            style={[
+              styles.searchInput,
+              { backgroundColor: colors.card, borderColor: colors.border, color: colors.text },
+            ]}
+            placeholder="Search rooms..."
+            placeholderTextColor={colors.secondary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          <TouchableOpacity
+            style={[styles.qrButton, { backgroundColor: colors.primary }]}
+            onPress={() => setQRScannerVisible(true)}
+            disabled={qrScanLoading}
+          >
+            <Icon name="qrcode-scan" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Floor constraint notice */}
@@ -295,6 +332,16 @@ export default function IndoorNavigationInterfaceContent({
       >
         <Text style={styles.navigationButtonText}>Start Indoor Navigation</Text>
       </TouchableOpacity>
+
+      {/* QR Scanner Modal */}
+      <Modal
+        visible={qrScannerVisible}
+        onRequestClose={() => setQRScannerVisible(false)}
+        animationType="slide"
+        transparent={false}
+      >
+        <QRScanner onScan={handleQRScan} onClose={() => setQRScannerVisible(false)} />
+      </Modal>
     </View>
   );
 }
@@ -302,7 +349,19 @@ export default function IndoorNavigationInterfaceContent({
 const styles = StyleSheet.create({
   container: { flex: 1 },
   searchContainer: { paddingHorizontal: 16, paddingVertical: 8 },
-  searchInput: { padding: 12, borderWidth: 1, borderRadius: 8, fontSize: 16 },
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  searchInput: { padding: 12, borderWidth: 1, borderRadius: 8, fontSize: 16, flex: 1 },
+  qrButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   noticeContainer: {
     flexDirection: 'row',
     alignItems: 'center',

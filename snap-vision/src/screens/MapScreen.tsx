@@ -329,11 +329,11 @@ const MapScreen = () => {
     forceZoom = false,
   ) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
-    console.log('📍 Sending location to WebView:', { lat, lon, centerMap, isMapReady });
+    // console.log('📍 Sending location to WebView:', { lat, lon, centerMap, isMapReady });
 
     // Only inject JavaScript if the map is ready
     if (!isMapReady || !webViewRef.current) {
-      console.log('⚠️ Map not ready or WebView not available, storing location for later');
+      // console.log('⚠️ Map not ready or WebView not available, storing location for later');
       return;
     }
 

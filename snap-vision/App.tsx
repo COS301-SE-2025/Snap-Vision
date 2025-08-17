@@ -30,6 +30,7 @@ import IndoorNavigationInterfaceScreen from './src/screens/IndoorNavigationInter
 import IndoorNavigationInstructionsScreen from './src/screens/IndoorNavigationInstructionsScreen';
 import IndoorSchematicNavScreen from './src/screens/IndoorSchematicNavScreen';
 import ARIndoorNavScreen from './src/screens/ARIndoorNavScreen';
+import QRCodeAdminScreen from './src/screens/QRCodeAdminScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -86,6 +87,7 @@ function AppInner() {
             <Stack.Screen name="AdminFloorplanEditor" component={AdminFloorplanEditorScreen} />
             <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
             <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
+            <Stack.Screen name="AdminQRCodes" component={QRCodeAdminScreen} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
             <Stack.Screen name="ShopScreen" component={ShopScreen} />
             <Stack.Screen
