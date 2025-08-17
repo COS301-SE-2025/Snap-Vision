@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import QRCodeAdminContent from '../src/components/organisms/QRCodeAdminContent';
-import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
+import { ThemeProviderWrapper } from '../__tests__/test-utils/ThemeProviderWrapper';
 
 // Mock dependencies
 jest.mock('@react-native-firebase/firestore', () => {
