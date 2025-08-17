@@ -15,6 +15,8 @@ import firestore from '@react-native-firebase/firestore';
 import Tts from 'react-native-tts';
 import MapWebView from '../components/organisms/MapWebView';
 import CrowdReportModal from '../components/molecules/CrowdReportModal';
+import AdminPOIModal from '../components/molecules/AdminPOIModal';
+import AdminActionsModal from '../components/molecules/AdminActionsModal';
 import StatusOverlay from '../components/atoms/StatusOverlay';
 import StandardPopup from '../components/atoms/StandardPopup';
 import DestinationSearch from '../components/molecules/DestinationSearch';
@@ -35,6 +37,7 @@ import { useCompass } from '../hooks/useCompass'; // Needed for AR navigation fu
 import { useMapLocation } from '../hooks/useMapLocation';
 import { useMapNavigation } from '../hooks/useMapNavigation';
 import { useMapPOI } from '../hooks/useMapPOI';
+import { useMapAdmin } from '../hooks/useMapAdmin';
 import { requestCameraPermission } from '../utils/cameraPermissions';
 import { Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
@@ -163,6 +166,67 @@ const MapScreen = () => {
     setIsNavigating,
   );
 
+  // Helper functions for admin hook
+  const showErrorPopupHelper = (message: string) => {
+    setErrorPopupMessage(message);
+    setShowErrorPopup(true);
+  };
+  
+  const showSuccessPopupHelper = (message: string) => {
+    setSuccessPopupMessage(message);
+    setShowSuccessPopup(true);
+  };
+  
+  const showConfirmationPopupHelper = (data: { title: string; message: string; onConfirm: () => void }) => {
+    setConfirmationPopupData(data);
+    setShowConfirmationPopup(true);
+  };
+
+  // Use the admin hook
+  const {
+    isAdmin,
+    userRole,
+    adminLocations,
+    availableLocations,
+    selectedLocation,
+    showAddPOIModal,
+    showEditPOIModal,
+    showAdminActions,
+    addPOICoords,
+    buildingName,
+    numberOfFloors,
+    editingPOI,
+    newName,
+    newFloors,
+    adminActionPOI,
+    openAddBuildingModal,
+    openEditBuildingModal,
+    confirmDeleteBuilding,
+    submitNewBuilding,
+    submitEditBuilding,
+    deleteBuilding,
+    enableAdminPOICreation,
+    handleAdminWebViewMessage,
+    validateAdminPermission,
+    setShowAddPOIModal,
+    setShowEditPOIModal,
+    setShowAdminActions,
+    setBuildingName,
+    setNumberOfFloors,
+    setNewName,
+    setNewFloors,
+    setSelectedLocation,
+    setAdminActionPOI,
+    injectAdminHandlers,
+  } = useMapAdmin(
+    fetchPOIs,
+    setStatus,
+    setError,
+    showErrorPopupHelper,
+    showSuccessPopupHelper,
+    showConfirmationPopupHelper,
+  );
+
   const [showCrowdPopup, setShowCrowdPopup] = useState(false);
   const [selectedDensity, setSelectedDensity] = useState('moderate');
   const [showShareTooltip, setShowShareTooltip] = useState(false);
@@ -178,26 +242,7 @@ const MapScreen = () => {
   // crowd reports
   const [crowdReports, setCrowdReports] = useState<Record<string, any>>({});
 
-  //Admin
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [showAddPOIModal, setShowAddPOIModal] = useState(false);
-  const [addPOICoords, setAddPOICoords] = useState<{ lat: number; lon: number } | null>(null);
-  const [buildingName, setBuildingName] = useState('');
-  const [numberOfFloors, setNumberOfFloors] = useState('');
-  const [showEditPOIModal, setShowEditPOIModal] = useState(false);
-  const [editingPOI, setEditingPOI] = useState<any>(null);
-  const [newName, setNewName] = useState('');
-  const [newFloors, setNewFloors] = useState('');
-  const [showAdminActions, setShowAdminActions] = useState(false);
-  const [adminActionPOI, setAdminActionPOI] = useState<any>(null);
   const [tempMessage, setTempMessage] = useState<string>('');
-
-  //RBAC
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [adminLocations, setAdminLocations] = useState<string[]>([]);
-
-  const [availableLocations, setAvailableLocations] = useState<string[]>([]);
-  const [selectedLocation, setSelectedLocation] = useState<string>('');
 
   // AR Navigation state
   const [showAR, setShowAR] = useState(false);
@@ -233,58 +278,15 @@ const MapScreen = () => {
 
   const [showLocationRefreshPopup, setShowLocationRefreshPopup] = useState(false);
 
-  //Fetch Locations
-  useEffect(() => {
-    const fetchLocations = async () => {
-      const snapshot = await firestore().collection('locations').get();
-      setAvailableLocations(snapshot.docs.map((doc) => doc.id));
-    };
-    if (isAdmin) fetchLocations();
-  }, [isAdmin]);
-
-  //Check if user is admin
-  useEffect(() => {
-    const fetchRole = async () => {
-      const userId = auth().currentUser?.uid;
-      if (!userId) return;
-      const userDoc = await firestore().collection('userInformation').doc(userId).get();
-      const role = userDoc.data()?.role;
-      setUserRole(role);
-      setIsAdmin(role === 'admin');
-      if (role === 'editor') {
-        setAdminLocations(userDoc.data()?.adminLocations || []);
-      }
-    };
-    fetchRole();
-  }, []);
-
   // Inject admin handlers into the WebView
   useEffect(() => {
     if (isMapReady && webViewRef.current) {
-      // Set admin mode in the WebView
-      const setAdminJS = `window.setAdminMode && window.setAdminMode(${userRole === 'admin' || userRole === 'editor' ? 'true' : 'false'});`;
-      webViewRef.current.injectJavaScript(setAdminJS);
+      // Use the admin hook's handler injection
+      injectAdminHandlers(webViewRef, isMapReady);
 
       // Re-display POIs to update popups/buttons
       const jsPOICode = `window.displayPOIs && window.displayPOIs(${JSON.stringify(pois)});`;
       webViewRef.current.injectJavaScript(jsPOICode);
-
-      // (Optional) Re-inject admin handlers if needed
-      const injectedJS = `
-        window.editPOI = function(poiId) {
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'EDIT_POI',
-            poiId: poiId
-          }));
-        };
-        window.deletePOI = function(poiId) {
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'DELETE_POI',
-            poiId: poiId
-          }));
-        };
-      `;
-      webViewRef.current.injectJavaScript(injectedJS);
 
       // Ensures we only hook once
       // Ensures we only hook once
@@ -400,70 +402,6 @@ const MapScreen = () => {
     }
   };
 
-  // Helper: Open modal to add new POI
-  const openAddBuildingModal = (lat: number, lon: number) => {
-    setAddPOICoords({ lat, lon });
-    setShowAddPOIModal(true);
-  };
-
-  // Helper: Open modal to edit existing POI
-  const openEditBuildingModal = (poi: any) => {
-    setEditingPOI(poi);
-    setNewName(poi.name || '');
-    setNewFloors(poi.floors?.toString() || '');
-    setShowEditPOIModal(true);
-  };
-
-  const confirmDeleteBuilding = (poi: any) => {
-    setConfirmationPopupData({
-      title: 'Delete Building',
-      message: `Are you sure you want to delete "${poi.name}"?`,
-      onConfirm: async () => {
-        setShowConfirmationPopup(false);
-        try {
-          // Store POI ID before deletion for cleanup
-          const deletedPoiId = poi.id;
-
-          // First handle document IDs that might contain slashes
-          await firestore().doc(`locations/${poi.location}/buildingPOIs/${poi.id}`).delete();
-
-          // Direct removal of the specific marker
-          if (webViewRef.current && isMapReady) {
-            // First try direct removal
-            webViewRef.current.injectJavaScript(`
-                  window.removePOIById("${deletedPoiId}");
-                  map.closePopup();
-                `);
-
-            // Clear route if it exists
-            webViewRef.current.injectJavaScript('window.clearRoute && window.clearRoute();');
-
-            // Update state
-            await fetchPOIs();
-            setStatus(`Building "${poi.name}" deleted`);
-
-            // Clear UI elements related to the deleted POI
-            if (destination === poi.name) {
-              setDestination('');
-              setDestinationCoords(null);
-              setRouteProgress(0);
-
-              // Stop navigation if currently navigating
-              if (isNavigating) {
-                stopNavigation();
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Error deleting building:', error);
-          setErrorPopupMessage('Failed to delete building');
-          setShowErrorPopup(true);
-        }
-      },
-    });
-    setShowConfirmationPopup(true);
-  };
-
   const handleWebViewMessage = async (event: any) => {
     console.log('[WebView message]', event.nativeEvent.data);
 
@@ -494,6 +432,11 @@ const MapScreen = () => {
 
       // === Handle JSON message ===
       const parsed = JSON.parse(data);
+
+      // Try to handle admin messages first
+      if (handleAdminWebViewMessage(parsed, pois, webViewRef)) {
+        return; // Admin message was handled
+      }
 
       switch (parsed.type) {
         case 'ERROR':
@@ -552,48 +495,6 @@ const MapScreen = () => {
           }
           break;
 
-        case 'ADMIN_ADD_POI':
-          openAddBuildingModal(parsed.lat, parsed.lon);
-          break;
-
-        case 'EDIT_POI':
-          const poiToEdit = pois.find((p) => p.id === parsed.poiId);
-          if (poiToEdit) {
-            openEditBuildingModal(poiToEdit);
-          }
-          break;
-
-        case 'DELETE_POI':
-          const poiToDelete = pois.find((p) => p.id === parsed.poiId);
-          if (poiToDelete) {
-            confirmDeleteBuilding(poiToDelete);
-            webViewRef.current?.injectJavaScript('map.closePopup();');
-          }
-          break;
-
-        case 'ADMIN_POI_SELECTED': {
-          const adminPOI = pois.find((p) => p.id === parsed.poi.id);
-          if (!adminPOI) break;
-          console.log('userRole:', userRole);
-          console.log('adminLocations:', adminLocations);
-          console.log('adminPOI.location:', adminPOI.location);
-
-          const canEdit =
-            userRole === 'admin' ||
-            (userRole === 'editor' && adminLocations.includes(adminPOI.location));
-
-          if (canEdit) {
-            setAdminActionPOI(adminPOI);
-            setShowAdminActions(true);
-          } else {
-            setErrorPopupMessage('You do not have permission to modify this POI.');
-            setShowErrorPopup(true);
-          }
-
-          webViewRef.current?.injectJavaScript('map.closePopup();');
-          break;
-        }
-
         case 'INDOOR_NAV_FROM_MAP': {
           const p = parsed.payload || {};
           // Prefer payload; fall back to the current selectedPOI from state; last resort: find by id in pois
@@ -635,121 +536,7 @@ const MapScreen = () => {
     }
   };
 
-  //Add building (admin only)
-  const submitNewBuilding = async () => {
-    if (!addPOICoords) return;
-    if (!buildingName.trim()) {
-      setErrorPopupMessage('Building name required');
-      setShowErrorPopup(true);
-      return;
-    }
-    if (!numberOfFloors.trim() || isNaN(Number(numberOfFloors))) {
-      setErrorPopupMessage('Please enter a valid number of floors');
-      setShowErrorPopup(true);
-      return;
-    }
-    if (!selectedLocation) {
-      setErrorPopupMessage('Please select a location');
-      setShowErrorPopup(true);
-      return;
-    }
-    try {
-      const newDoc = {
-        name: buildingName,
-        centroid: {
-          latitude: addPOICoords.lat,
-          longitude: addPOICoords.lon,
-        },
-        floors: Number(numberOfFloors),
-        tags: {
-          building: 'yes',
-        },
-      };
-      await firestore().collection(`locations/${selectedLocation}/buildingPOIs`).add(newDoc);
-      setShowAddPOIModal(false);
-      setStatus('Building added!');
-      fetchPOIs(); // Refresh markers
-    } catch (e) {
-      setError('Failed to add building');
-    }
-  };
 
-  const submitEditBuilding = async () => {
-    if (!newName.trim()) {
-      setErrorPopupMessage('Building name required');
-      setShowErrorPopup(true);
-      return;
-    }
-    if (!newFloors.trim() || isNaN(Number(newFloors))) {
-      setErrorPopupMessage('Please enter a valid number of floors');
-      setShowErrorPopup(true);
-      return;
-    }
-
-    if (!editingPOI || !editingPOI.id || !editingPOI.location) {
-      console.error('No valid POI ID or location found:', editingPOI);
-      setError('Invalid building data');
-      return;
-    }
-
-    try {
-      // Update the document in Firestore using the new structure
-      await firestore()
-        .doc(`locations/${editingPOI.location}/buildingPOIs/${editingPOI.id}`)
-        .update({
-          name: newName,
-          floors: Number(newFloors),
-        });
-
-      setShowEditPOIModal(false);
-      setStatus('Building updated!');
-
-      // Refresh POIs immediately after Firestore update
-      await fetchPOIs();
-
-      // Nuclear option: Force complete WebView reload
-      setIsMapReady(false);
-      setStatus('Refreshing map...');
-
-      // Small delay to ensure the modal closes and POIs are updated
-      setTimeout(() => {
-        // Force WebView to reload completely
-        if (webViewRef.current) {
-          webViewRef.current.reload();
-        }
-      }, 100);
-
-      setSuccessPopupMessage('Building information updated successfully.');
-      setShowSuccessPopup(true);
-    } catch (error) {
-      console.error('Error updating building:', error);
-      setError('Failed to update');
-    }
-  };
-
-  // Helper function to get document ID from centroid ID
-  const getPOIDocIdByCentroidId = async (buildingId: string, locationId: string) => {
-    try {
-      // In your new Firestore structure, the document ID is buildingId and locationId is known
-      const docRef = firestore().doc(`locations/${locationId}/buildingPOIs/${buildingId}`);
-      const docSnap = await docRef.get();
-
-      if (!docSnap.exists) {
-        console.warn(
-          'No building found for this centroid id:',
-          buildingId,
-          'in location:',
-          locationId,
-        );
-        return null;
-      }
-
-      return docSnap.id;
-    } catch (error) {
-      console.error('Error querying POI by centroid id:', error);
-      return null;
-    }
-  };
 
   const cancelRoute = () => {
     // console.log('cancelRoute called');
@@ -1124,99 +911,41 @@ const MapScreen = () => {
         />
       )}
 
-      {showAddPOIModal && (
-        <Modal transparent visible animationType="slide">
-          <View
-            style={{
-              flex: 1,
-              justifyContent: 'center',
-              backgroundColor: 'rgba(0,0,0,0.5)',
-              padding: 20,
-            }}
-          >
-            <View style={{ backgroundColor: 'white', borderRadius: 10, padding: 20 }}>
-              <Text style={{ fontWeight: 'bold' }}>Add Building</Text>
-              {/* Location Dropdown */}
-              <Text>Location:</Text>
-              <View style={{ borderWidth: 1, borderRadius: 5, marginBottom: 10 }}>
-                <Picker
-                  selectedValue={selectedLocation}
-                  onValueChange={setSelectedLocation}
-                  style={{ height: 40 }}
-                >
-                  <Picker.Item label="Select a location" value="" />
-                  {availableLocations.map((loc) => (
-                    <Picker.Item key={loc} label={loc} value={loc} />
-                  ))}
-                </Picker>
-              </View>
-              <Text>Name:</Text>
-              <TextInput
-                value={buildingName}
-                onChangeText={setBuildingName}
-                placeholder="Building Name"
-                style={{ borderBottomWidth: 1, marginBottom: 10 }}
-              />
-              <Text>Floors:</Text>
-              <TextInput
-                value={numberOfFloors}
-                onChangeText={setNumberOfFloors}
-                placeholder="e.g. 3"
-                keyboardType="numeric"
-                style={{ borderBottomWidth: 1, marginBottom: 10 }}
-              />
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Pressable onPress={() => setShowAddPOIModal(false)}>
-                  <Text>Cancel</Text>
-                </Pressable>
-                <Pressable onPress={submitNewBuilding}>
-                  <Text style={{ fontWeight: 'bold' }}>Add</Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </Modal>
-      )}
+      <AdminPOIModal
+        visible={showAddPOIModal}
+        mode="add"
+        onClose={() => setShowAddPOIModal(false)}
+        onSubmit={submitNewBuilding}
+        buildingName={buildingName}
+        setBuildingName={setBuildingName}
+        numberOfFloors={numberOfFloors}
+        setNumberOfFloors={setNumberOfFloors}
+        selectedLocation={selectedLocation}
+        setSelectedLocation={setSelectedLocation}
+        availableLocations={availableLocations}
+      />
 
-      {showEditPOIModal && (
-        <Modal transparent visible animationType="slide">
-          <View
-            style={{
-              flex: 1,
-              justifyContent: 'center',
-              backgroundColor: 'rgba(0,0,0,0.5)',
-              padding: 20,
-            }}
-          >
-            <View style={{ backgroundColor: 'white', borderRadius: 10, padding: 20 }}>
-              <Text style={{ fontWeight: 'bold' }}>Edit Building</Text>
-              <Text>Name:</Text>
-              <TextInput
-                value={newName}
-                onChangeText={setNewName}
-                placeholder="New Name"
-                style={{ borderBottomWidth: 1, marginBottom: 10 }}
-              />
-              <Text>Floors:</Text>
-              <TextInput
-                value={newFloors}
-                onChangeText={setNewFloors}
-                placeholder="e.g. 4"
-                keyboardType="numeric"
-                style={{ borderBottomWidth: 1, marginBottom: 10 }}
-              />
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Pressable onPress={() => setShowEditPOIModal(false)}>
-                  <Text>Cancel</Text>
-                </Pressable>
-                <Pressable onPress={submitEditBuilding}>
-                  <Text style={{ fontWeight: 'bold' }}>Save</Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </Modal>
-      )}
+      <AdminPOIModal
+        visible={showEditPOIModal}
+        mode="edit"
+        onClose={() => setShowEditPOIModal(false)}
+        onSubmit={submitEditBuilding}
+        newName={newName}
+        setNewName={setNewName}
+        newFloors={newFloors}
+        setNewFloors={setNewFloors}
+        editingPOI={editingPOI}
+      />
+
+      <AdminActionsModal
+        visible={showAdminActions}
+        adminActionPOI={adminActionPOI}
+        onEdit={openEditBuildingModal}
+        onDelete={(poi) => confirmDeleteBuilding(poi, () => setShowAdminActions(false))}
+        onClose={() => setShowAdminActions(false)}
+      />
+
+
 
       <DirectionsModal
         visible={showDirectionsSheet}
@@ -1469,10 +1198,7 @@ const MapScreen = () => {
         onShare={shareLocation}
         onReport={openCrowdReportModal}
         isAdmin={isAdmin}
-        onAddPOI={() => {
-          webViewRef.current?.injectJavaScript(`window.enableAdminPOICreation();`);
-          setTempMessage('Click on the map to add a new POI');
-        }}
+        onAddPOI={() => enableAdminPOICreation(webViewRef, setTempMessage)}
         shareTooltip={showShareTooltip}
         reportTooltip={showReportTooltip}
         onShareIn={() => setShowShareTooltip(true)}
@@ -1568,94 +1294,7 @@ const MapScreen = () => {
           <Text style={{ color: 'white', fontWeight: 'bold' }}>+ Add POI</Text>
         </TouchableOpacity>
       )} */}
-      {/* Admin Actions Modal */}
-      {showAdminActions && adminActionPOI && (
-        <Modal
-          transparent
-          visible={true}
-          animationType="fade"
-          statusBarTranslucent={true}
-          onRequestClose={() => setShowAdminActions(false)}
-        >
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: 'rgba(0,0,0,0.5)',
-              justifyContent: 'center',
-              alignItems: 'center',
-              padding: 24,
-              zIndex: 9999,
-            }}
-          >
-            <View
-              style={{
-                backgroundColor: '#fff',
-                borderRadius: 12,
-                padding: 24,
-                alignItems: 'center',
-                minWidth: 250,
-              }}
-            >
-              <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 16 }}>
-                Building: {adminActionPOI.name}
-              </Text>
 
-              {/* Edit Building Button */}
-              <TouchableOpacity
-                style={{
-                  backgroundColor: '#FF9800',
-                  paddingVertical: 10,
-                  paddingHorizontal: 20,
-                  borderRadius: 8,
-                  marginBottom: 12,
-                  width: 200,
-                  alignItems: 'center',
-                }}
-                onPress={() => {
-                  openEditBuildingModal(adminActionPOI);
-                  setShowAdminActions(false);
-                }}
-              >
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>Edit</Text>
-              </TouchableOpacity>
-
-              {/* Delete Building Button */}
-              <TouchableOpacity
-                style={{
-                  backgroundColor: '#D32F2F',
-                  paddingVertical: 10,
-                  paddingHorizontal: 20,
-                  borderRadius: 8,
-                  marginBottom: 12,
-                  width: 200,
-                  alignItems: 'center',
-                }}
-                onPress={() => {
-                  confirmDeleteBuilding(adminActionPOI);
-                  setShowAdminActions(false);
-                }}
-              >
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>Delete</Text>
-              </TouchableOpacity>
-
-              {/* Cancel Button */}
-              <TouchableOpacity
-                style={{
-                  backgroundColor: '#B0B0B0',
-                  paddingVertical: 10,
-                  paddingHorizontal: 20,
-                  borderRadius: 8,
-                  width: 200,
-                  alignItems: 'center',
-                }}
-                onPress={() => setShowAdminActions(false)}
-              >
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-      )}
       {tempMessage ? (
         <View
           style={{
