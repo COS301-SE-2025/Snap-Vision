@@ -404,14 +404,14 @@ export default function IndoorSchematicNavScreen() {
         onAdvance={handleAdvance}
       /> 
 
-      {steps.length > 0 && !sheetOpen &&(
+      {/* {steps.length > 0 && !sheetOpen &&(
         <AppSecondaryButton
           title="Proceed"
           onPress={handleAdvance}
           style={styles.proceedBtn}
           testID="proceed-btn"
         />
-      )}
+      )} */}
 
       {/* Floating Directions button */}
       {!sheetOpen && steps.length > 0 && (
@@ -427,7 +427,7 @@ export default function IndoorSchematicNavScreen() {
       )}
 
       {/* Floating AR button Uncomment to see AR */}
-      {/* {steps.length > 0 && startId && endId && (
+      {steps.length > 0 && startId && endId && (
         <TouchableOpacity
           onPress={() =>
             navigation.navigate('ARIndoorNav', {
@@ -444,7 +444,7 @@ export default function IndoorSchematicNavScreen() {
         >
           <Text style={{ color: colors.text, fontWeight: '700' }}>AR</Text>
         </TouchableOpacity>
-      )} */}
+      )}
 
       <StandardPopup
         visible={popupVisible}
@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: 16,
-    bottom: 16,
+    top: 94,
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderRadius: 24,
@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
   fabAR: {
     position: 'absolute',
     right: 16,
-    bottom: 74,
+    top: 144,
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 24,
