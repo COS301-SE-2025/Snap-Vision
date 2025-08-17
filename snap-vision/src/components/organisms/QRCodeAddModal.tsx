@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import RoomSelector from '../molecules/RoomSelector';
@@ -54,26 +54,28 @@ const QRCodeAddModal: React.FC<QRCodeAddModalProps> = ({
         <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
           <Text style={[styles.modalTitle, { color: colors.text }]}>Add New QR Code</Text>
 
-          <RoomSelector
-            rooms={rooms}
-            selectedRoom={selectedRoom}
-            searchQuery={searchQuery}
-            onSearchQueryChange={onSearchQueryChange}
-            onRoomSelect={onRoomSelect}
-          />
+          <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+            <RoomSelector
+              rooms={rooms}
+              selectedRoom={selectedRoom}
+              searchQuery={searchQuery}
+              onSearchQueryChange={onSearchQueryChange}
+              onRoomSelect={onRoomSelect}
+            />
 
-          <QRCodeGenerator
-            qrValue={qrValue}
-            setQrValue={onQrValueChange}
-            onGenerate={onGenerateQR}
-          />
+            <QRCodeGenerator
+              qrValue={qrValue}
+              setQrValue={onQrValueChange}
+              onGenerate={onGenerateQR}
+            />
 
-          <StyledTextInput
-            label="Description (optional)"
-            value={qrDescription}
-            onChangeText={onQrDescriptionChange}
-            placeholder="Enter description"
-          />
+            <StyledTextInput
+              label="Description (optional)"
+              value={qrDescription}
+              onChangeText={onQrDescriptionChange}
+              placeholder="Enter description"
+            />
+          </ScrollView>
 
           <View style={styles.modalActions}>
             <TouchableOpacity
@@ -109,6 +111,10 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 12,
     maxHeight: '80%',
+  },
+  scrollContainer: {
+    flexGrow: 0,
+    width: '100%',
   },
   modalTitle: {
     fontSize: 20,
