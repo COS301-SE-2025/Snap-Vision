@@ -21,6 +21,7 @@ interface Props {
   onSelectRoom: (roomId: string) => void;
   themeColors: any;
   floorplanUrl?: string;
+  nextInstructionEnd?: { x: number; y: number };
 }
 
 const CANVAS = 1000;
@@ -38,6 +39,7 @@ export default function IndoorSchematicMap({
   onSelectRoom,
   themeColors,
   floorplanUrl,
+  nextInstructionEnd,
 }: Props) {
   const webViewRef = useRef<WebView>(null);
   const { dark: isDarkMode } = useTheme();
@@ -338,6 +340,15 @@ export default function IndoorSchematicMap({
             innerPos.style.top = '${currentPos.y * 100}%';
             zoomableArea.appendChild(outerPos);
             zoomableArea.appendChild(innerPos);
+          ` : ''}
+          ${nextInstructionEnd ? `
+            const nextMarker = document.createElement('div');
+            nextMarker.className = 'marker';
+            nextMarker.style.backgroundColor = '${themeColors.roleSecondary}'; // gold highlight
+            nextMarker.style.border = '2px solid #333';
+            nextMarker.style.zIndex = 20;
+            placeMarker(nextMarker, ${nextInstructionEnd.x}, ${nextInstructionEnd.y});
+            zoomableArea.appendChild(nextMarker);
           ` : ''}
           setTimeout(() => {
             currentScale = 1;

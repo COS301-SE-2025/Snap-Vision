@@ -240,6 +240,8 @@ export default function IndoorSchematicNavScreen() {
     setSheetOpen(false);
   };
 
+  const nextInstructionEnd = steps[currentStep]?.coordinates;
+
   // Compute route (multi-floor if available)
   useEffect(() => {
     if (!startId || !endId) return;
@@ -270,17 +272,29 @@ export default function IndoorSchematicNavScreen() {
     }
 
     const detailed = NavUtils.generateDetailedDirections(routeSteps);
-    setSteps(detailed);
+    const filtered = detailed.slice(1);
+    setSteps(filtered);
     setCurrentStep(0);
     setSheetOpen(true);
 
-    const firstStep = detailed[0];
+    const firstStep = filtered[0];
     if (firstStep?.coordinates) setCurrentPos(firstStep.coordinates);
     if ((firstStep as any)?.floorId) setSelectedFloorId(String((firstStep as any).floorId));
   }, [startId, endId, allRooms, allPaths]);
 
   const handleAdvance = () => {
     if (!steps.length) return;
+    const endpoint = steps[currentStep]?.coordinates;
+    if (currentPos && endpoint) {
+      const dist = NavUtils.calculateDistance(currentPos, endpoint);
+      if (dist > 0.1) {
+        setPopupTitle('Not there yet');
+        setPopupMessage('Move closer to the highlighted point to complete this step.');
+        setPopupConfirmText('OK');
+        setPopupVisible(true);
+        return;
+      }
+    }
     if (currentStep >= steps.length - 1) {
       setPopupTitle('Done');
       setPopupMessage('You have reached your destination.');
@@ -374,6 +388,7 @@ export default function IndoorSchematicNavScreen() {
           themeColors={colors}
           currentPos={currentPos || undefined}
           floorplanUrl={floorplanUrl || undefined}
+          nextInstructionEnd={nextInstructionEnd} 
         />
       </View>
 

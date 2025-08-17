@@ -98,7 +98,7 @@ function calculateTurnDirection(
     if (relativeTurn > 180) relativeTurn -= 360;
     if (relativeTurn < -180) relativeTurn += 360;
     
-    if (Math.abs(relativeTurn) < 15) return 'straight';
+    if (Math.abs(relativeTurn) < 45) return 'straight';
     return relativeTurn > 0 ? 'right' : 'left';
   }
   
@@ -128,7 +128,20 @@ function findNearestRoom(
   return nearest;
 }
 
-// ...existing code...
+export function filterDuplicateSteps(steps: NavigationStep[]): NavigationStep[] {
+  if (!steps.length) return [];
+  const seen = new Set<string>();
+  const filtered: NavigationStep[] = [];
+  for (const step of steps) {
+    const key = `${step.instruction}|${step.coordinates.x.toFixed(1)}|${step.coordinates.y.toFixed(3)}`;
+    if (!seen.has(key)) {
+      filtered.push(step);
+      seen.add(key);
+    }
+  }
+  return filtered;
+}
+
 export const calculateMultiFloorRoute = (
   startRoomId: string,
   endRoomId: string,
@@ -531,84 +544,174 @@ export const calculateRoute = (
   const endRoom = roomPOIs.find((r) => r.id === endRoomId);
   if (!startRoom || !endRoom) return [];
 
-  // Calculate initial facing direction
-  let initialFacingDirection: number | undefined;
-  if (waypoints.length > 0) {
-    initialFacingDirection = calculateInitialFacingDirection(
-      startRoom.coordinates,
-      waypoints[0]
-    );
-  } else {
-    initialFacingDirection = calculateInitialFacingDirection(
-      startRoom.coordinates,
-      endRoom.coordinates
-    );
-  }
-
-  // Start
   steps.push({
     instruction: `Begin navigation from ${startRoom.name}. Face towards your first waypoint.`,
     coordinates: startRoom.coordinates,
     type: 'start',
   });
 
-  // Waypoints with turn detection & landmarks
-  if (waypoints.length > 0) {
-    for (let i = 0; i < waypoints.length; i++) {
-      const curr = waypoints[i];
-      const prev = i > 0 ? waypoints[i - 1] : startRoom.coordinates;
-      const next = i < waypoints.length - 1 ? waypoints[i + 1] : endRoom.coordinates;
+  let previousWaypoint: { x: number; y: number } = startRoom.coordinates;
+  let previousDirection: number | undefined = undefined;
+  let justExitedConnector = false;
+  let skipUntilNonStair = false;
 
-      const nearest = findNearestRoom(curr, roomPOIs, [startRoomId, endRoomId]);
-      
-      // Pass initial facing direction for the first turn, then calculate relative turns
-      const turn = calculateTurnDirection(prev, curr, next, i === 0 ? initialFacingDirection : undefined);
+  for (let i = 0; i < roomPath.length - 1; i++) {
+    const currentRoomId = roomPath[i];
+    const nextRoomId = roomPath[i + 1];
+    const currentRoom = roomPOIs.find((r) => r.id === currentRoomId)!;
+    const nextRoom = roomPOIs.find((r) => r.id === nextRoomId)!;
+    const node = (graph as any).nodes.get(currentRoomId) as GraphNode | undefined;
+    const edge = node?.connections.find((c) => c.targetRoomId === nextRoomId);
+    if (!edge) continue;
 
-      let instruction = '';
-      let type: 'waypoint' | 'turn' = 'waypoint';
+    // If both current and next POI are stairs, only add connector instruction and skip everything else
+    if (
+      currentRoom.type === 'stairs' &&
+      nextRoom.type === 'stairs' &&
+      edge.connector &&
+      edge.connector.kind === 'stairs'
+    ) {
+      steps.push({
+        instruction: `Take stairs to Floor ${edge.connector.toFloorId}`,
+        coordinates: edge.waypoints[0] || previousWaypoint,
+        type: 'connector',
+        floorId: edge.floorId,
+        distance: edge.distance,
+      });
+      previousWaypoint = edge.waypoints[0] || previousWaypoint;
+      previousDirection = undefined;
+      justExitedConnector = true;
+      skipUntilNonStair = true; // Start skipping instructions
+      continue;
+    }
 
-      if (i === 0) {
-        instruction = nearest
-          ? `Start walking towards ${nearest.name}`
-          : `Walk straight towards your destination`;
+    // If we are skipping, only stop when nextRoom is not a stair
+    if (skipUntilNonStair) {
+      if (nextRoom.type === 'stairs') {
+        continue; // keep skipping
       } else {
-        if (turn === 'left') {
-          instruction = nearest ? `Turn left towards ${nearest.name}` : `Turn left and continue`;
-          type = 'turn';
-        } else if (turn === 'right') {
-          instruction = nearest ? `Turn right towards ${nearest.name}` : `Turn right and continue`;
-          type = 'turn';
-        } else {
-          instruction = nearest ? `Continue straight past ${nearest.name}` : `Continue straight`;
+        skipUntilNonStair = false; // stop skipping
+      }
+    }
+
+    // ...existing connector/waypoint logic...
+    const waypoints = edge.waypoints.length ? edge.waypoints : [nextRoom.coordinates];
+
+    if (edge.connector) {
+      if (waypoints.length > 0) {
+        for (let idx = 0; idx < waypoints.length; idx++) {
+          const pt = waypoints[idx];
+          const nextPt = idx < waypoints.length - 1 ? waypoints[idx + 1] : edge.waypoints[0] || pt;
+
+          if (previousDirection === undefined) {
+            previousDirection = calculateInitialFacingDirection(previousWaypoint, pt);
+          }
+
+          const turnType = calculateTurnDirection(previousWaypoint, pt, nextPt, previousDirection);
+
+          let instruction = '';
+          let type: 'waypoint' | 'turn' = 'waypoint';
+
+          if (turnType === 'left') {
+            instruction = `Turn left towards ${nextRoom.name}`;
+            type = 'turn';
+          } else if (turnType === 'right') {
+            instruction = `Turn right towards ${nextRoom.name}`;
+            type = 'turn';
+          } else {
+            instruction = `Continue straight towards ${nextRoom.name}`;
+          }
+
+          steps.push({
+            instruction,
+            coordinates: pt,
+            type,
+            floorId: currentRoom.floorId,
+            distance: calculateDistance(previousWaypoint, pt),
+          });
+
+          previousDirection = calculateInitialFacingDirection(previousWaypoint, pt);
+          previousWaypoint = pt;
         }
       }
 
       steps.push({
-        instruction,
-        coordinates: curr,
-        type,
-        distance: calculateDistance(prev, curr),
+        instruction: `Take ${edge.connector.kind === 'elevator' ? 'Elevator' : 'Stairs'} to Floor ${edge.connector.toFloorId}`,
+        coordinates: edge.waypoints[0] || previousWaypoint,
+        type: 'connector',
+        floorId: edge.floorId,
+        distance: edge.distance,
       });
+
+      previousWaypoint = edge.waypoints[0] || previousWaypoint;
+      previousDirection = undefined;
+      justExitedConnector = true;
+    } else {
+      for (let idx = 0; idx < waypoints.length; idx++) {
+        const pt = waypoints[idx];
+        const nextPt = idx < waypoints.length - 1 ? waypoints[idx + 1] : nextRoom.coordinates;
+
+        if (previousDirection === undefined) {
+          previousDirection = calculateInitialFacingDirection(previousWaypoint, pt);
+        }
+
+        let turnType = calculateTurnDirection(previousWaypoint, pt, nextPt, previousDirection);
+
+        let instruction = '';
+        let type: 'waypoint' | 'turn' | 'destination' = 'waypoint';
+
+        if (justExitedConnector) {
+          instruction = `Continue straight towards ${nextRoom.name}`;
+          type = 'waypoint';
+          justExitedConnector = false;
+        } else if (turnType === 'left') {
+          instruction = `Turn left towards ${nextRoom.name}`;
+          type = 'turn';
+        } else if (turnType === 'right') {
+          instruction = `Turn right towards ${nextRoom.name}`;
+          type = 'turn';
+        } else {
+          instruction = `Continue straight towards ${nextRoom.name}`;
+        }
+
+        if (
+          i === roomPath.length - 2 &&
+          idx === waypoints.length - 1
+        ) {
+          instruction = `Arrive at ${endRoom.name}`;
+          type = 'destination';
+        }
+
+        steps.push({
+          instruction,
+          coordinates: pt,
+          type,
+          floorId: currentRoom.floorId,
+          distance: calculateDistance(previousWaypoint, pt),
+        });
+
+        previousDirection = calculateInitialFacingDirection(previousWaypoint, pt);
+        previousWaypoint = pt;
+      }
     }
-  } else {
-    const d = calculateDistance(startRoom.coordinates, endRoom.coordinates);
+  }
+
+  // Only add a final destination step if not already added
+  if (
+    steps.length === 0 ||
+    steps[steps.length - 1].type !== 'destination'
+  ) {
     steps.push({
-      instruction: `Walk directly to ${endRoom.name}`,
+      instruction: `You have arrived at ${endRoom.name}`,
       coordinates: endRoom.coordinates,
-      type: 'waypoint',
-      distance: d,
+      type: 'destination',
+      floorId: endRoom.floorId,
     });
   }
 
-  steps.push({
-    instruction: `You have arrived at ${endRoom.name}`,
-    coordinates: endRoom.coordinates,
-    type: 'destination',
-    distance: totalDistance,
-  });
-
   return steps;
 };
+
 //UI Stuff
 
 export const generateDetailedDirections = (steps: NavigationStep[]): NavigationStep[] => {
@@ -623,24 +726,7 @@ export const generateDetailedDirections = (steps: NavigationStep[]): NavigationS
     );
   }
   
-  return steps.map((s, index) => {
-    let prefix = '➡️ ';
-    if (s.type === 'start') prefix = '🚶 ';
-    else if (s.type === 'turn') {
-      // Use more specific turn instructions based on facing direction
-      if (s.instruction.includes('left')) {
-        prefix = '↰ ';
-      } else if (s.instruction.includes('right')) {
-        prefix = '↱ ';
-      } else {
-        prefix = '🔄 ';
-      }
-    }
-    else if (s.type === 'destination') prefix = '🎯 ';
-    else if (s.type === 'connector') prefix = '🛗 ';
-    
-    return { ...s, instruction: `${prefix}${s.instruction}` };
-  });
+  return steps;
 };
 
 export function stepsToPolyline(steps: NavigationStep[]): { x: number; y: number }[] {
