@@ -8,14 +8,12 @@ interface QRCodePreviewModalProps {
   visible: boolean;
   qrValue: string;
   onClose: () => void;
-  onSavePng?: () => void;
 }
 
 const QRCodePreviewModal: React.FC<QRCodePreviewModalProps> = ({
   visible,
   qrValue,
   onClose,
-  onSavePng,
 }) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
@@ -48,16 +46,6 @@ const QRCodePreviewModal: React.FC<QRCodePreviewModalProps> = ({
           </Text>
 
           <View style={{ flexDirection: 'row', gap: 12 }}>
-            {onSavePng && (
-              <TouchableOpacity
-                style={[styles.fullWidthButton, { backgroundColor: colors.primary, flex: 1 }]}
-                onPress={onSavePng}
-                disabled={!qrValue}
-              >
-                <Text style={{ color: '#FFF' }}>Save PNG</Text>
-              </TouchableOpacity>
-            )}
-
             <TouchableOpacity
               style={[styles.fullWidthButton, { backgroundColor: colors.border, flex: 1 }]}
               onPress={onClose}
