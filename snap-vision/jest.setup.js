@@ -90,7 +90,7 @@ jest.mock('@react-native-firebase/auth', () => {
 
   const mockAuth = jest.fn(() => mockAuthInstance);
   mockAuth.mockReturnValue(mockAuthInstance);
-  
+
   return {
     __esModule: true,
     default: mockAuth,

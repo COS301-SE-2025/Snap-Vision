@@ -20,25 +20,29 @@ jest.mock('../../src/components/organisms/FloorplanSelectionFlow', () => {
     FloorplanSelectionFlow: ({ onEditFloorplan, onDeleteFloorplan }: any) => (
       <View>
         <Text testID="floorplan-selection-flow">Floorplan Selection Flow</Text>
-        <TouchableOpacity 
-          testID="edit-floorplan-button" 
-          onPress={() => onEditFloorplan({
-            locationId: 'test-location',
-            buildingId: 'test-building',
-            floorLabel: 'Floor 1',
-            downloadURL: 'https://test.com/floorplan.jpg'
-          })}
+        <TouchableOpacity
+          testID="edit-floorplan-button"
+          onPress={() =>
+            onEditFloorplan({
+              locationId: 'test-location',
+              buildingId: 'test-building',
+              floorLabel: 'Floor 1',
+              downloadURL: 'https://test.com/floorplan.jpg',
+            })
+          }
         >
           <Text>Edit Floorplan</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          testID="delete-floorplan-button" 
-          onPress={() => onDeleteFloorplan({
-            locationId: 'test-location',
-            buildingId: 'test-building',
-            floorLabel: 'Floor 1',
-            downloadURL: 'https://test.com/floorplan.jpg'
-          })}
+        <TouchableOpacity
+          testID="delete-floorplan-button"
+          onPress={() =>
+            onDeleteFloorplan({
+              locationId: 'test-location',
+              buildingId: 'test-building',
+              floorLabel: 'Floor 1',
+              downloadURL: 'https://test.com/floorplan.jpg',
+            })
+          }
         >
           <Text>Delete Floorplan</Text>
         </TouchableOpacity>
@@ -70,9 +74,7 @@ const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
   return (
     <ThemeProvider>
       <UserProvider>
-        <NavigationContainer>
-          {children}
-        </NavigationContainer>
+        <NavigationContainer>{children}</NavigationContainer>
       </UserProvider>
     </ThemeProvider>
   );
@@ -84,7 +86,7 @@ describe('AdminEditFloorplansContent Integration Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     mockUseUserRole.mockReturnValue({
       role: 'admin',
       adminLocations: ['location1', 'location2'],
@@ -102,7 +104,7 @@ describe('AdminEditFloorplansContent Integration Tests', () => {
     const { getByText, getByTestId } = render(
       <AllTheProviders>
         <AdminEditFloorplansContent />
-      </AllTheProviders>
+      </AllTheProviders>,
     );
 
     await waitFor(() => {
@@ -121,7 +123,7 @@ describe('AdminEditFloorplansContent Integration Tests', () => {
     const { getByTestId } = render(
       <AllTheProviders>
         <AdminEditFloorplansContent />
-      </AllTheProviders>
+      </AllTheProviders>,
     );
 
     await waitFor(() => {
@@ -139,7 +141,7 @@ describe('AdminEditFloorplansContent Integration Tests', () => {
     const { getByTestId } = render(
       <AllTheProviders>
         <AdminEditFloorplansContent />
-      </AllTheProviders>
+      </AllTheProviders>,
     );
 
     await waitFor(() => {
@@ -151,7 +153,7 @@ describe('AdminEditFloorplansContent Integration Tests', () => {
     const { getByTestId } = render(
       <AllTheProviders>
         <AdminEditFloorplansContent />
-      </AllTheProviders>
+      </AllTheProviders>,
     );
 
     const editButton = getByTestId('edit-floorplan-button');
@@ -162,7 +164,7 @@ describe('AdminEditFloorplansContent Integration Tests', () => {
         locationId: 'test-location',
         buildingId: 'test-building',
         floorLabel: 'Floor 1',
-        imageUri: 'https://test.com/floorplan.jpg'
+        imageUri: 'https://test.com/floorplan.jpg',
       });
     });
   });
@@ -178,7 +180,7 @@ describe('AdminEditFloorplansContent Integration Tests', () => {
     const { getByTestId, getByText } = render(
       <AllTheProviders>
         <AdminEditFloorplansContent />
-      </AllTheProviders>
+      </AllTheProviders>,
     );
 
     // Trigger delete
@@ -196,9 +198,9 @@ describe('AdminEditFloorplansContent Integration Tests', () => {
   });
 
   it('handles failed floorplan deletion', async () => {
-    const mockDeleteFloorplan = jest.fn().mockResolvedValue({ 
-      success: false, 
-      error: 'Deletion failed' 
+    const mockDeleteFloorplan = jest.fn().mockResolvedValue({
+      success: false,
+      error: 'Deletion failed',
     });
     mockUseAdminFloorplans.mockReturnValue({
       isLoading: false,
@@ -209,7 +211,7 @@ describe('AdminEditFloorplansContent Integration Tests', () => {
     const { getByTestId, getByText } = render(
       <AllTheProviders>
         <AdminEditFloorplansContent />
-      </AllTheProviders>
+      </AllTheProviders>,
     );
 
     // Trigger delete
@@ -242,7 +244,7 @@ describe('AdminEditFloorplansContent Integration Tests', () => {
     const { getByText } = render(
       <AllTheProviders>
         <AdminEditFloorplansContent />
-      </AllTheProviders>
+      </AllTheProviders>,
     );
 
     await waitFor(() => {
@@ -250,7 +252,6 @@ describe('AdminEditFloorplansContent Integration Tests', () => {
     });
   });
 
-  
   it('handles error state from floorplans hook', async () => {
     mockUseAdminFloorplans.mockReturnValue({
       isLoading: false,
@@ -261,7 +262,7 @@ describe('AdminEditFloorplansContent Integration Tests', () => {
     const { getByText } = render(
       <AllTheProviders>
         <AdminEditFloorplansContent />
-      </AllTheProviders>
+      </AllTheProviders>,
     );
 
     await waitFor(() => {
@@ -273,7 +274,7 @@ describe('AdminEditFloorplansContent Integration Tests', () => {
     const { getByTestId, getByText } = render(
       <AllTheProviders>
         <AdminEditFloorplansContent />
-      </AllTheProviders>
+      </AllTheProviders>,
     );
 
     // Trigger delete
