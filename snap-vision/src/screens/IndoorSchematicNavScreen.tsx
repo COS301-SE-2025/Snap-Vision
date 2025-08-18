@@ -11,6 +11,7 @@ import StepsBottomSheet from '../components/molecules/StepsBottomSheet';
 import * as NavUtils from '../utils/navigationUtils';
 import { Picker } from '@react-native-picker/picker';
 import StandardPopup from '../components/atoms/StandardPopup';
+import DestinationReachedPopup from '../components/molecules/DestinationReachedPopup';
 import AppSecondaryButton from '../components/atoms/AppSecondaryButton';
 
 type ParamList = {
@@ -75,6 +76,10 @@ export default function IndoorSchematicNavScreen() {
   const [popupTitle, setPopupTitle] = useState('');
   const [popupMessage, setPopupMessage] = useState('');
   const [popupConfirmText, setPopupConfirmText] = useState('OK');
+  
+  // Destination Reached Popup state
+  const [showDestinationReachedPopup, setShowDestinationReachedPopup] = useState(false);
+  const [reachedDestination, setReachedDestination] = useState('');
 
   // Floorplan image state
   const [floorplanUrl, setFloorplanUrl] = useState<string | null>(null);
@@ -296,10 +301,10 @@ export default function IndoorSchematicNavScreen() {
       }
     }
     if (currentStep >= steps.length - 1) {
-      setPopupTitle('Done');
-      setPopupMessage('You have reached your destination!');
-      setPopupConfirmText('OK');
-      setPopupVisible(true);
+      // Use custom destination reached popup with confetti instead of standard popup
+      const destinationRoom = allRooms.find(room => room.id === endId);
+      setReachedDestination(destinationRoom?.name || 'Your Destination');
+      setShowDestinationReachedPopup(true);
       resetRoute();
       return;
     }
@@ -425,7 +430,7 @@ export default function IndoorSchematicNavScreen() {
           <Text style={{ color: '#fff', fontWeight: '700' }}>Directions</Text>
         </TouchableOpacity>
       )}
-
+      
       {/* Floating AR button Uncomment to see AR */}
       {steps.length > 0 && startId && endId && (
         <TouchableOpacity
@@ -453,6 +458,19 @@ export default function IndoorSchematicNavScreen() {
         confirmText={popupConfirmText}
         onConfirm={() => setPopupVisible(false)}
         showCancel={false}
+      />
+      
+      {/* Custom Destination Reached Popup with Confetti */}
+      <DestinationReachedPopup
+        visible={showDestinationReachedPopup}
+        destination={reachedDestination}
+        onClose={() => setShowDestinationReachedPopup(false)}
+        themeColors={{
+          primary: colors.primary,
+          background: colors.backgroundLighter || colors.background,
+          text: colors.text,
+          success: colors.success || '#4CAF50'
+        }}
       />
     </View>
   );
@@ -505,6 +523,17 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     elevation: 4,
+  },
+  
+  fabTest: {
+    position: 'absolute',
+    right: 16,
+    top: 194,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 24,
+    elevation: 5,
+    zIndex: 10,
   },
 
   proceedBtn: {
