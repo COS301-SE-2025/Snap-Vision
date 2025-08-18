@@ -186,4 +186,38 @@ describe('AdminEditFloorplansContent', () => {
     fireEvent.press(getByText('Cancel'));
     expect(queryByText('Delete Floorplan')).toBeNull();
   });
+
+it('renders with no admin locations', () => {
+  jest.spyOn(require('../src/hooks/useUserRole'), 'useUserRole').mockReturnValue({
+    ...mockUseUserRole,
+    adminLocations: [],
+  });
+  const { getByText } = render(<AdminEditFloorplansContent />);
+  expect(getByText('Edit Floorplans')).toBeTruthy();
+  // Add more assertions if your UI changes for no locations
+});
+
+it('closes success popup when OK is pressed', async () => {
+  const { getByTestId, getByText, getAllByText } = render(<AdminEditFloorplansContent />);
+  fireEvent.press(getByTestId('delete-btn'));
+  fireEvent.press(getAllByText('Delete')[1]);
+  await waitFor(() => {
+    expect(getByText('Success')).toBeTruthy();
+    fireEvent.press(getByText('OK'));
+    expect(getByText('Edit Floorplans')).toBeTruthy();
+  });
+});
+
+
+
+it('does not show success popup when delete fails', async () => {
+  mockDeleteFloorplan.mockResolvedValue({ success: false });
+  const { getByTestId, getAllByText, queryByText } = render(<AdminEditFloorplansContent />);
+  fireEvent.press(getByTestId('delete-btn'));
+  fireEvent.press(getAllByText('Delete')[1]);
+  await waitFor(() => {
+    expect(queryByText('Success')).toBeNull();
+    // Optionally check for error handling if your UI shows an error
+  });
+});
 });
