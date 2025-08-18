@@ -2,9 +2,15 @@
  * @jest-environment jsdom
  */
 import { renderHook, act } from '@testing-library/react';
-import { useFloorplanPreloader, preloadFloorplans, isFloorplanPreloaded 
+import {
+  useFloorplanPreloader,
+  preloadFloorplans,
+  isFloorplanPreloaded,
 } from '../src/utils/FloorplanManager';
-import { initializePreBundledFloorplans, getAllFloorplans, clearDuplicateFloorplans 
+import {
+  initializePreBundledFloorplans,
+  getAllFloorplans,
+  clearDuplicateFloorplans,
 } from '../src/utils/floorplanUtils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image } from 'react-native';
@@ -41,7 +47,9 @@ describe('FloorplanManager', () => {
   it('useFloorplanPreloader hook marks images as preloaded', async () => {
     const urls = ['url3', 'url4'];
     let loaded = 0;
-    const onProgress = jest.fn((l, t) => { loaded = l; });
+    const onProgress = jest.fn((l, t) => {
+      loaded = l;
+    });
 
     await act(async () => {
       renderHook(() => useFloorplanPreloader(urls, onProgress));
@@ -75,7 +83,9 @@ describe('floorplanUtils', () => {
       'floorplan_Tishana Home_Floor_1', // duplicate
     ]);
     (AsyncStorage.getItem as jest.Mock)
-      .mockResolvedValueOnce(JSON.stringify({ buildingId: 'way/1301530915', floorLabel: 'Floor_2' }))
+      .mockResolvedValueOnce(
+        JSON.stringify({ buildingId: 'way/1301530915', floorLabel: 'Floor_2' }),
+      )
       .mockResolvedValueOnce(JSON.stringify({ buildingId: 'Tishana Home', floorLabel: 'Floor_1' }))
       .mockResolvedValueOnce(JSON.stringify({ buildingId: 'Tishana Home', floorLabel: 'Floor_1' }));
 
@@ -98,7 +108,7 @@ describe('floorplanUtils', () => {
     expect(AsyncStorage.removeItem).toHaveBeenCalledWith('floorplan_Tishana Home_Floor_1_dup');
   });
 
-    it('updates existing floorplan with isPrebundled flag if missing', async () => {
+  it('updates existing floorplan with isPrebundled flag if missing', async () => {
     // Mock existing floorplan without isPrebundled
     (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
       JSON.stringify({
@@ -110,7 +120,7 @@ describe('floorplanUtils', () => {
         timestamp: new Date().toISOString(),
         status: 'active',
         // isPrebundled missing!
-      })
+      }),
     );
     // Second floorplan does not exist
     (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(null);
@@ -120,12 +130,12 @@ describe('floorplanUtils', () => {
     // Should update the first floorplan with isPrebundled: true
     expect(AsyncStorage.setItem).toHaveBeenCalledWith(
       'floorplan_way/1301530915_Floor 2',
-      expect.stringContaining('"isPrebundled":true')
+      expect.stringContaining('"isPrebundled":true'),
     );
     // Should set the second floorplan as new
     expect(AsyncStorage.setItem).toHaveBeenCalledWith(
       'floorplan_Tishana Home_Floor 1',
-      expect.stringContaining('"isPrebundled":true')
+      expect.stringContaining('"isPrebundled":true'),
     );
   });
 
@@ -152,15 +162,12 @@ describe('floorplanUtils', () => {
 
     await initializePreBundledFloorplans();
 
-    expect(errorSpy).toHaveBeenCalledWith(
-      'Failed to initialize pre-bundled floorplans:',
-      error
-    );
+    expect(errorSpy).toHaveBeenCalledWith('Failed to initialize pre-bundled floorplans:', error);
 
     errorSpy.mockRestore();
   });
 
-    it('logs error if AsyncStorage throws', async () => {
+  it('logs error if AsyncStorage throws', async () => {
     const error = new Error('AsyncStorage failure');
     (AsyncStorage.getAllKeys as jest.Mock).mockRejectedValue(error);
 
@@ -168,17 +175,14 @@ describe('floorplanUtils', () => {
 
     await clearDuplicateFloorplans();
 
-    expect(errorSpy).toHaveBeenCalledWith(
-      'Failed to clear duplicate floorplans:',
-      error
-    );
+    expect(errorSpy).toHaveBeenCalledWith('Failed to clear duplicate floorplans:', error);
 
     errorSpy.mockRestore();
   });
 
   it('does not update floorplan if already prebundled', async () => {
     (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
-        JSON.stringify({
+      JSON.stringify({
         id: 'way/1301530915_Floor_2',
         buildingId: 'way/1301530915',
         buildingName: 'IT Building',
@@ -187,7 +191,7 @@ describe('floorplanUtils', () => {
         timestamp: new Date().toISOString(),
         status: 'active',
         isPrebundled: true, // Already prebundled!
-        })
+      }),
     );
     (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(null);
 
@@ -195,39 +199,39 @@ describe('floorplanUtils', () => {
 
     // Should NOT update the first floorplan
     expect(AsyncStorage.setItem).not.toHaveBeenCalledWith(
-        'floorplan_way/1301530915_Floor 2',
-        expect.stringContaining('"isPrebundled":true')
+      'floorplan_way/1301530915_Floor 2',
+      expect.stringContaining('"isPrebundled":true'),
     );
   });
 
   it('filters out null floorplans and ensures uniqueness', async () => {
     (AsyncStorage.getAllKeys as jest.Mock).mockResolvedValue([
-        'floorplan_A_Floor_1',
-        'floorplan_B_Floor_2',
-        'floorplan_B_Floor_2', // duplicate
-        'floorplan_C_Floor_3',
+      'floorplan_A_Floor_1',
+      'floorplan_B_Floor_2',
+      'floorplan_B_Floor_2', // duplicate
+      'floorplan_C_Floor_3',
     ]);
     (AsyncStorage.getItem as jest.Mock)
-        .mockResolvedValueOnce(JSON.stringify({ buildingId: 'A', floorLabel: 'Floor_1' }))
-        .mockResolvedValueOnce(null) // Simulate missing/invalid floorplan
-        .mockResolvedValueOnce(JSON.stringify({ buildingId: 'B', floorLabel: 'Floor_2' }))
-        .mockResolvedValueOnce(JSON.stringify({ buildingId: 'C', floorLabel: 'Floor_3' }));
+      .mockResolvedValueOnce(JSON.stringify({ buildingId: 'A', floorLabel: 'Floor_1' }))
+      .mockResolvedValueOnce(null) // Simulate missing/invalid floorplan
+      .mockResolvedValueOnce(JSON.stringify({ buildingId: 'B', floorLabel: 'Floor_2' }))
+      .mockResolvedValueOnce(JSON.stringify({ buildingId: 'C', floorLabel: 'Floor_3' }));
 
     const floorplans = await getAllFloorplans();
     expect(floorplans.length).toBe(3); // Only unique and non-null
-    expect(floorplans.some(fp => fp.buildingId === 'A')).toBe(true);
-    expect(floorplans.some(fp => fp.buildingId === 'B')).toBe(true);
-    expect(floorplans.some(fp => fp.buildingId === 'C')).toBe(true);
+    expect(floorplans.some((fp) => fp.buildingId === 'A')).toBe(true);
+    expect(floorplans.some((fp) => fp.buildingId === 'B')).toBe(true);
+    expect(floorplans.some((fp) => fp.buildingId === 'C')).toBe(true);
   });
 
   it('does not remove anything if no duplicates found', async () => {
     (AsyncStorage.getAllKeys as jest.Mock).mockResolvedValue([
-        'floorplan_A_Floor_1',
-        'floorplan_B_Floor_2',
+      'floorplan_A_Floor_1',
+      'floorplan_B_Floor_2',
     ]);
     (AsyncStorage.getItem as jest.Mock)
-        .mockResolvedValueOnce(JSON.stringify({ buildingId: 'A', floorLabel: 'Floor_1' }))
-        .mockResolvedValueOnce(JSON.stringify({ buildingId: 'B', floorLabel: 'Floor_2' }));
+      .mockResolvedValueOnce(JSON.stringify({ buildingId: 'A', floorLabel: 'Floor_1' }))
+      .mockResolvedValueOnce(JSON.stringify({ buildingId: 'B', floorLabel: 'Floor_2' }));
 
     await clearDuplicateFloorplans();
 
@@ -237,14 +241,14 @@ describe('floorplanUtils', () => {
 
   it('removes all but the first duplicate for each group', async () => {
     (AsyncStorage.getAllKeys as jest.Mock).mockResolvedValue([
-        'floorplan_A_Floor_1',
-        'floorplan_A_Floor_1_dup1',
-        'floorplan_A_Floor_1_dup2',
+      'floorplan_A_Floor_1',
+      'floorplan_A_Floor_1_dup1',
+      'floorplan_A_Floor_1_dup2',
     ]);
     (AsyncStorage.getItem as jest.Mock)
-        .mockResolvedValueOnce(JSON.stringify({ buildingId: 'A', floorLabel: 'Floor_1' }))
-        .mockResolvedValueOnce(JSON.stringify({ buildingId: 'A', floorLabel: 'Floor_1' }))
-        .mockResolvedValueOnce(JSON.stringify({ buildingId: 'A', floorLabel: 'Floor_1' }));
+      .mockResolvedValueOnce(JSON.stringify({ buildingId: 'A', floorLabel: 'Floor_1' }))
+      .mockResolvedValueOnce(JSON.stringify({ buildingId: 'A', floorLabel: 'Floor_1' }))
+      .mockResolvedValueOnce(JSON.stringify({ buildingId: 'A', floorLabel: 'Floor_1' }));
 
     await clearDuplicateFloorplans();
 
@@ -259,7 +263,7 @@ describe('FloorplanManager branch coverage', () => {
     jest.clearAllMocks();
     // Reset global cache
     Object.keys(require('../src/utils/FloorplanManager').globalFloorplanCache || {}).forEach(
-      (key) => delete require('../src/utils/FloorplanManager').globalFloorplanCache[key]
+      (key) => delete require('../src/utils/FloorplanManager').globalFloorplanCache[key],
     );
   });
 
@@ -295,12 +299,12 @@ describe('FloorplanManager branch coverage', () => {
     expect(isFloorplanPreloaded('badurl')).toBe(false);
   });
 
-it('useFloorplanPreloader calls onProgress immediately if all URLs are cached', async () => {
-  // Mark url1 as cached using the API
-  await preloadFloorplans(['url1']);
-  const onProgress = jest.fn();
-  renderHook(() => useFloorplanPreloader(['url1'], onProgress));
-  expect(onProgress).toHaveBeenCalledWith(1, 1);
-  expect(Image.prefetch).not.toHaveBeenCalled();
-});
+  it('useFloorplanPreloader calls onProgress immediately if all URLs are cached', async () => {
+    // Mark url1 as cached using the API
+    await preloadFloorplans(['url1']);
+    const onProgress = jest.fn();
+    renderHook(() => useFloorplanPreloader(['url1'], onProgress));
+    expect(onProgress).toHaveBeenCalledWith(1, 1);
+    expect(Image.prefetch).not.toHaveBeenCalled();
+  });
 });
