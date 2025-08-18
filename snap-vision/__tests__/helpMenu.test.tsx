@@ -1,6 +1,11 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 
+// --- Real Component Imports ---
+import ContactSupportContent from '../src/components/organisms/ContactSupportContent';
+import FAQContent from '../src/components/organisms/FAQContent';
+import TutorialContent from '../src/components/organisms/TutorialContent';
+
 // Mocks for theme and navigation
 jest.mock('../src/theme/ThemeContext', () => ({
   useTheme: () => ({ isDark: false }),
@@ -79,11 +84,6 @@ jest.mock('../src/components/molecules/TutorialSlider', () => {
     );
   };
 });
-
-// --- Real Component Imports ---
-import ContactSupportContent from '../src/components/organisms/ContactSupportContent';
-import FAQContent from '../src/components/organisms/FAQContent';
-import TutorialContent from '../src/components/organisms/TutorialContent';
 
 describe('ContactSupportContent', () => {
   it('renders header and contact methods', () => {

@@ -24,6 +24,7 @@ module.exports = {
     '!**/*.d.ts',
     '!src/components/organisms/AdminFloorplanEditorContent.tsx',
     '!src/components/organisms/ManageUsersForm.tsx',
+    'src/utils/*.{ts,tsx}',
   ],
   coverageDirectory: 'coverage',
 };

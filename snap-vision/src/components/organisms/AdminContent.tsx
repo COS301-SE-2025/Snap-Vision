@@ -11,6 +11,7 @@ interface Props {
   onManageUsers: () => void;
   onIndoorPositioning: () => void;
   onFloorplanEditor?: () => void;
+  onManageQRCodes?: () => void;
 }
 
 export default function AdminScreenContent({
@@ -21,6 +22,7 @@ export default function AdminScreenContent({
   onManageUsers,
   onIndoorPositioning,
   onFloorplanEditor,
+  onManageQRCodes,
 }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -52,7 +54,7 @@ export default function AdminScreenContent({
         <AppButton title="Load Floorplans" onPress={onLoadFloorplans} />
         <AppButton title="Edit Floorplans" onPress={onEditFloorplans} />
         <AppButton title="Indoor Positioning" onPress={onIndoorPositioning} />
-        {/* //<AppButton title="Settings" onPress={onSettings} /> */}
+        <AppButton title="Manage QR Codes" onPress={onManageQRCodes} />
         <AppButton title="Manage Users" onPress={onManageUsers} />
       </View>
     </View>

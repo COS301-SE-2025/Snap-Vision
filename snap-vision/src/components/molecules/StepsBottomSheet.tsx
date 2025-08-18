@@ -130,7 +130,7 @@ export default function StepsBottomSheet({
               ]}
             >
               <Text style={[styles.instruction, { color: colors.text }]}>
-                {isDone ? '✅ ' : isCurrent ? '👉 ' : '• '} {s.instruction}
+                {isDone ? '✓ ' : isCurrent ? '→ ' : '• '} {s.instruction}
               </Text>
               {distanceText && (
                 <Text style={[styles.meta, { color: colors.secondary }]}>{distanceText}</Text>
