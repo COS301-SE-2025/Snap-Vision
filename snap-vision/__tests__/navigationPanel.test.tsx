@@ -1,23 +1,29 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import NavigationPanel from '../src/components/organisms/NavigationPanel';
 import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
 
 // Mock dependencies
 jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => {
+  const React = require('react');
   const { Text } = require('react-native');
-  return ({ name, size, color }: any) => (
-    <Text testID={`icon-${name}`} style={{ fontSize: size, color }}>
-      {name}
-    </Text>
+  const MockMaterialCommunityIcons = ({ name, size, color }: any) => (
+    React.createElement(Text, {
+      testID: `icon-${name}`,
+      style: { fontSize: size, color }
+    }, name)
   );
+  MockMaterialCommunityIcons.displayName = 'MockMaterialCommunityIcons';
+  return MockMaterialCommunityIcons;
 });
 
 jest.mock('../src/components/molecules/TextToSpeech', () => {
+  const React = require('react');
   const { Text } = require('react-native');
-  return ({ text, onSpeakingChange }: any) => (
-    <Text testID="text-to-speech">{text}</Text>
-  );
+  const MockTextToSpeech = ({ text }: any) => 
+    React.createElement(Text, { testID: 'text-to-speech' }, text);
+  MockTextToSpeech.displayName = 'MockTextToSpeech';
+  return MockTextToSpeech;
 });
 
 const originalError = console.error;
@@ -25,8 +31,7 @@ beforeAll(() => {
   console.error = (...args) => {
     if (
       typeof args[0] === 'string' &&
-      (args[0].includes('was not wrapped in act') ||
-        args[0].includes('Warning: React'))
+      (args[0].includes('was not wrapped in act') || args[0].includes('Warning: React'))
     ) {
       return;
     }
@@ -68,10 +73,10 @@ describe('NavigationPanel', () => {
 
   describe('Basic Rendering', () => {
     it('renders correctly with default props', () => {
-      const { getByText, getByTestId } = render(
+      const { getByText } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...defaultProps} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       expect(getByText('Test Destination')).toBeTruthy();
@@ -84,7 +89,7 @@ describe('NavigationPanel', () => {
       const { getByText, queryByText } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...defaultProps} isMinimized={true} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       expect(getByText('Test Destination • 1.0km left • 15 min • 0%')).toBeTruthy();
@@ -95,7 +100,7 @@ describe('NavigationPanel', () => {
       const { getByText } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...defaultProps} isLoading={true} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       expect(getByText('Loading')).toBeTruthy();
@@ -107,7 +112,7 @@ describe('NavigationPanel', () => {
       const { getByText } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...defaultProps} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       fireEvent.press(getByText('Start'));
@@ -118,7 +123,7 @@ describe('NavigationPanel', () => {
       const { getByText } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...defaultProps} isNavigating={true} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       fireEvent.press(getByText('Stop'));
@@ -129,7 +134,7 @@ describe('NavigationPanel', () => {
       const { getByText } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...defaultProps} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       fireEvent.press(getByText('✕'));
@@ -142,7 +147,7 @@ describe('NavigationPanel', () => {
       const { queryByTestId } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...defaultProps} destinationCoords={null} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       expect(queryByTestId('icon-camera-outline')).toBeNull();
@@ -154,7 +159,7 @@ describe('NavigationPanel', () => {
       const { getByText } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...defaultProps} isMinimized={true} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       fireEvent.press(getByText('Test Destination • 1.0km left • 15 min • 0%'));
@@ -165,7 +170,7 @@ describe('NavigationPanel', () => {
       const { getAllByTestId } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...defaultProps} isMinimized={true} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       // Find all mini buttons and press the first one (cancel)
@@ -179,7 +184,7 @@ describe('NavigationPanel', () => {
       const { getAllByTestId } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...defaultProps} isMinimized={true} isNavigating={true} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       // Find all mini buttons and press the second one (stop)
@@ -194,7 +199,7 @@ describe('NavigationPanel', () => {
       const { getAllByTestId } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...defaultProps} isMinimized={true} onToggleAR={mockOnToggleAR} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       // Find all mini buttons and press the AR button (camera-outline)
@@ -210,7 +215,7 @@ describe('NavigationPanel', () => {
       const { getByText } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...defaultProps} isLoading={true} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       expect(getByText('Loading')).toBeTruthy();
@@ -220,25 +225,24 @@ describe('NavigationPanel', () => {
       const { queryByText } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...defaultProps} isLoading={true} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       expect(queryByText('Test Destination')).toBeNull();
     });
   });
 
-
   describe('Progress Calculation', () => {
     it('calculates completion percentage correctly', () => {
       const { getByText } = render(
         <ThemeProviderWrapper>
-          <NavigationPanel 
-            {...defaultProps} 
-            distance={500} 
-            originalRouteDistance={1000} 
+          <NavigationPanel
+            {...defaultProps}
+            distance={500}
+            originalRouteDistance={1000}
             progress={30}
           />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       // Should show 50% based on distance (500/1000 = 50%) which is higher than progress (30%)
@@ -248,13 +252,13 @@ describe('NavigationPanel', () => {
     it('uses progress when distance data is not available', () => {
       const { getByText } = render(
         <ThemeProviderWrapper>
-          <NavigationPanel 
-            {...defaultProps} 
-            distance={null} 
-            originalRouteDistance={null} 
+          <NavigationPanel
+            {...defaultProps}
+            distance={null}
+            originalRouteDistance={null}
             progress={75}
           />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       expect(getByText('75%')).toBeTruthy();
@@ -266,7 +270,7 @@ describe('NavigationPanel', () => {
       const { getByText } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...defaultProps} distance={0} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       expect(getByText('0m left')).toBeTruthy();
@@ -276,7 +280,7 @@ describe('NavigationPanel', () => {
       const { queryByText } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...defaultProps} time={null} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       expect(queryByText('min')).toBeNull();
@@ -286,7 +290,7 @@ describe('NavigationPanel', () => {
       const { getByText } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...defaultProps} distance={15000} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       expect(getByText('15.0km left')).toBeTruthy();
@@ -298,7 +302,7 @@ describe('NavigationPanel', () => {
       const { getAllByText } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...defaultProps} isLoading={true} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       // Should only render one "Loading" text despite duplicate check
@@ -310,12 +314,12 @@ describe('NavigationPanel', () => {
       const mockOnToggleMinimize = jest.fn();
       const { getByText } = render(
         <ThemeProviderWrapper>
-          <NavigationPanel 
-            {...defaultProps} 
-            isMinimized={true} 
-            onToggleMinimize={mockOnToggleMinimize} 
+          <NavigationPanel
+            {...defaultProps}
+            isMinimized={true}
+            onToggleMinimize={mockOnToggleMinimize}
           />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       // Find and press the minimized content
@@ -328,18 +332,14 @@ describe('NavigationPanel', () => {
       const mockOnToggleAR = jest.fn();
       const { getAllByTestId } = render(
         <ThemeProviderWrapper>
-          <NavigationPanel 
-            {...defaultProps} 
-            isMinimized={true} 
-            onToggleAR={mockOnToggleAR} 
-          />
-        </ThemeProviderWrapper>
+          <NavigationPanel {...defaultProps} isMinimized={true} onToggleAR={mockOnToggleAR} />
+        </ThemeProviderWrapper>,
       );
 
       // Find all camera-outline icons and press the one in minimized controls
       const cameraIcons = getAllByTestId('icon-camera-outline');
       expect(cameraIcons.length).toBeGreaterThan(0);
-      
+
       // Press the last camera icon (which should be in minimized controls)
       fireEvent.press(cameraIcons[cameraIcons.length - 1]);
       expect(mockOnToggleAR).toHaveBeenCalledTimes(1);
@@ -348,12 +348,8 @@ describe('NavigationPanel', () => {
     it(' edge case when onToggleAR is undefined in minimized view', () => {
       const { queryAllByTestId } = render(
         <ThemeProviderWrapper>
-          <NavigationPanel 
-            {...defaultProps} 
-            isMinimized={true} 
-            onToggleAR={undefined} 
-          />
-        </ThemeProviderWrapper>
+          <NavigationPanel {...defaultProps} isMinimized={true} onToggleAR={undefined} />
+        </ThemeProviderWrapper>,
       );
 
       // Should not render AR button when onToggleAR is undefined
@@ -364,11 +360,8 @@ describe('NavigationPanel', () => {
     it(' edge case when onToggleMinimize is undefined', () => {
       const { queryByTestId } = render(
         <ThemeProviderWrapper>
-          <NavigationPanel 
-            {...defaultProps} 
-            onToggleMinimize={undefined} 
-          />
-        </ThemeProviderWrapper>
+          <NavigationPanel {...defaultProps} onToggleMinimize={undefined} />
+        </ThemeProviderWrapper>,
       );
 
       // Should not render minimize button when onToggleMinimize is undefined
@@ -378,11 +371,8 @@ describe('NavigationPanel', () => {
     it(' edge case when destinationCoords is null', () => {
       const { queryByText } = render(
         <ThemeProviderWrapper>
-          <NavigationPanel 
-            {...defaultProps} 
-            destinationCoords={null} 
-          />
-        </ThemeProviderWrapper>
+          <NavigationPanel {...defaultProps} destinationCoords={null} />
+        </ThemeProviderWrapper>,
       );
 
       // Should not render AR button text
@@ -392,11 +382,8 @@ describe('NavigationPanel', () => {
     it(' edge case when isNavigating is false', () => {
       const { queryByTestId } = render(
         <ThemeProviderWrapper>
-          <NavigationPanel 
-            {...defaultProps} 
-            isNavigating={false} 
-          />
-        </ThemeProviderWrapper>
+          <NavigationPanel {...defaultProps} isNavigating={false} />
+        </ThemeProviderWrapper>,
       );
 
       // Should not render voice button when not navigating
@@ -406,11 +393,8 @@ describe('NavigationPanel', () => {
     it(' formatDistance with null input', () => {
       const { queryByText } = render(
         <ThemeProviderWrapper>
-          <NavigationPanel 
-            {...defaultProps} 
-            distance={null} 
-          />
-        </ThemeProviderWrapper>
+          <NavigationPanel {...defaultProps} distance={null} />
+        </ThemeProviderWrapper>,
       );
 
       // Should not render distance text when distance is null
@@ -421,11 +405,8 @@ describe('NavigationPanel', () => {
     it(' formatTime with null input', () => {
       const { queryByText } = render(
         <ThemeProviderWrapper>
-          <NavigationPanel 
-            {...defaultProps} 
-            time={null} 
-          />
-        </ThemeProviderWrapper>
+          <NavigationPanel {...defaultProps} time={null} />
+        </ThemeProviderWrapper>,
       );
 
       // Should not render time text when time is null
@@ -435,13 +416,13 @@ describe('NavigationPanel', () => {
     it(' getCompletionPercentage edge cases', () => {
       const { getByText } = render(
         <ThemeProviderWrapper>
-          <NavigationPanel 
-            {...defaultProps} 
-            distance={null} 
-            originalRouteDistance={null} 
+          <NavigationPanel
+            {...defaultProps}
+            distance={null}
+            originalRouteDistance={null}
             progress={50}
           />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
 
       // Should use progress when distance data is not available
@@ -451,12 +432,8 @@ describe('NavigationPanel', () => {
     it(' getCompletionPercentage with zero original distance', () => {
       const { getByText } = render(
         <ThemeProviderWrapper>
-          <NavigationPanel 
-            {...defaultProps} 
-            originalRouteDistance={0} 
-            progress={75}
-          />
-        </ThemeProviderWrapper>
+          <NavigationPanel {...defaultProps} originalRouteDistance={0} progress={75} />
+        </ThemeProviderWrapper>,
       );
 
       // Should use progress when originalRouteDistance is 0

@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import TextToSpeech from '../molecules/TextToSpeech';
 
 interface NavigationPanelProps {
   isNavigating: boolean;
@@ -290,9 +289,7 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
               ]}
               onPress={isNavigating ? onStopNavigation : onStartNavigation}
             >
-              <Text style={styles.actionButtonText}>
-                {isNavigating ? 'Stop' : 'Start'}
-              </Text>
+              <Text style={styles.actionButtonText}>{isNavigating ? 'Stop' : 'Start'}</Text>
             </Pressable>
 
             {/* Cancel Button */}
@@ -553,10 +550,7 @@ const styles = StyleSheet.create({
   progressSection: {
     marginVertical: 4,
   },
-  progressText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
+
   actionButtonsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
