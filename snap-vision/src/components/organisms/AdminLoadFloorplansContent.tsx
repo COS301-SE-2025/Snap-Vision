@@ -13,11 +13,21 @@ import { getThemeColors } from '../../theme';
 import { LocationSelector } from '../molecules/LocationSelector';
 import { useBuildings } from '../../hooks/useBuildings';
 import { useFloorplanUpload } from '../../hooks/useFloorplanUpload';
-import { BuildingSelector } from '../molecules/BuildingSelector';
+import  BuildingSelector  from '../molecules/BuildingSelector';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+
+type RootStackParamList = {
+  AdminFloorplanEditor: any;
+
+};
+
+type AdminLoadFloorplansNavigationProp = StackNavigationProp<RootStackParamList, 'AdminFloorplanEditor'>;
 
 export default function AdminLoadFloorplansContent() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
+  const navigation = useNavigation<AdminLoadFloorplansNavigationProp>();
   const {
     buildings,
     locations,
@@ -45,6 +55,7 @@ export default function AdminLoadFloorplansContent() {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showNavigationConfirm, setShowNavigationConfirm] = useState(false);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [buildingDropdownOpen, setBuildingDropdownOpen] = useState(false);
 
   // Load buildings when location changes
   useEffect(() => {
@@ -81,7 +92,6 @@ export default function AdminLoadFloorplansContent() {
 
   const handleNavigateToPOIEditor = () => {
     if (uploadedData) {
-      // @ts-ignore
       navigation.navigate('AdminFloorplanEditor', uploadedData);
     }
     resetForm();
@@ -129,25 +139,27 @@ export default function AdminLoadFloorplansContent() {
 
         {/* Step 1: Select Building */}
         {selectedLocation && currentStep >= 1 && (
-          <View style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: colors.primary }]}>
-              Step 1: Select Building
-            </Text>
+          <>
             {buildings.length === 0 ? (
-              <Text style={[styles.infoText, { color: colors.secondary }]}>
-                No buildings available. Please check your connection.
-              </Text>
+              <View style={styles.sectionContainer}>
+                <Text style={[styles.infoText, { color: colors.secondary }]}>
+                  No buildings available. Please check your connection.
+                </Text>
+              </View>
             ) : (
               <BuildingSelector
                 buildings={buildings}
                 selectedBuildingId={selectedBuildingId}
-                onSelectBuilding={(id) => {
+                setSelectedBuildingId={(id) => {
                   setSelectedBuildingId(id);
                   if (id) setCurrentStep(2);
                 }}
+                dropdownOpen={buildingDropdownOpen}
+                setDropdownOpen={setBuildingDropdownOpen}
+                title="Step 1: Select Building"
               />
             )}
-          </View>
+          </>
         )}
 
         {/* Step 2: Floor Label */}
