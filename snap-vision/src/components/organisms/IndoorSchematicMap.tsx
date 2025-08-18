@@ -428,11 +428,36 @@ export default function IndoorSchematicMap({
       },
     };
     console.log('Initializing map with payload:', JSON.stringify({ ...payload, floorplanUrl: payload.floorplanUrl }));
-    webViewRef.current?.injectJavaScript(`
-      console.log('WebView received initMap call');
-      try {
-        if (typeof window.initMap === 'function') {
-          // Ensure the document is fully loaded before initializing
+    
+    // Delay initialization slightly to ensure HTML is loaded and window.initMap is available
+    setTimeout(() => {
+      webViewRef.current?.injectJavaScript(`
+        console.log('WebView received initMap call');
+        try {
+          // First check if initMap exists, if not define a safety implementation
+          if (typeof window.initMap !== 'function') {
+            console.log('window.initMap not found, re-defining it');
+            // Define initMap function dynamically if it's missing
+            window.initMap = function(payload) {
+              try {
+                console.log('Dynamically defined initMap called with payload');
+                // Apply all the settings
+                if (window.setThemeColors) window.setThemeColors(payload.themeColors || null);
+                if (window.mountFloorplan) window.mountFloorplan(payload.floorplanUrl || '');
+                if (window.setRooms) window.setRooms(payload.rooms || []);
+                if (window.setStartEnd) window.setStartEnd(payload.startId || null, payload.endId || null);
+                if (window.setRoute) window.setRoute(payload.routePolyline || []);
+                if (window.setCompleted) window.setCompleted(payload.completedPolyline || []);
+                if (window.updateCurrentPos) window.updateCurrentPos(payload.currentPos || null);
+                window.initialMapLoadComplete = true;
+                console.log('Dynamic map initialization complete');
+              } catch (err) {
+                console.error('Error in dynamically defined initMap:', err);
+              }
+            };
+          }
+          
+          // Now call initMap after ensuring it exists
           if (document.readyState === 'complete') {
             window.initMap(${JSON.stringify(payload)});
             console.log('Floorplan URL set to:', '${payload.floorplanUrl}');
@@ -456,19 +481,13 @@ export default function IndoorSchematicMap({
               window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'floorplan_loaded', success: false }));
             };
           }
-        } else {
-          console.error('window.initMap is not defined or not a function');
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'map_init_error',
-            error: 'window.initMap is not defined or not a function'
-          }));
+        } catch(error) {
+          console.error('Error initializing map:', error);
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'map_init_error', error: error.toString() }));
         }
-      } catch(error) {
-        console.error('Error initializing map:', error);
-        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'map_init_error', error: error.toString() }));
-      }
-      true;
-    `);
+        true;
+      `);
+    }, 300); // Add a small delay to ensure the WebView has properly loaded
   }, [floorplanUrl, rooms, startId, endId, routePolyline, completedPolyline, currentPos, themeColors, isDarkMode]);
 
   // Incremental updates (no reloads)
@@ -611,12 +630,12 @@ export default function IndoorSchematicMap({
         onError={(e) => console.error('WebView error:', e.nativeEvent)}
       />
       
-      {isLoading && (
+      {/* {isLoading && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#007AFF" />
           <Text style={styles.loadingText}>Loading floorplan...</Text>
         </View>
-      )}
+      )} */}
     </View>
   );
 }
