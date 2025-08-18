@@ -425,5 +425,27 @@ describe('MapContent', () => {
     jest.clearAllMocks();
   });
 
+  // Basic rendering tests
+  it('renders MapWebView and MapActionsPanel', () => {
+    const { getByText } = render(<MapContent {...baseProps} />);
+    expect(getByText('UserPanel')).toBeTruthy();
+  });
+
+  it('shows AdminActionsPanel if isAdmin is true', () => {
+    const { getByText } = render(<MapContent {...baseProps} isAdmin />);
+    expect(getByText('AdminPanel')).toBeTruthy();
+  });
+
+  // Modal rendering tests
+  it('shows AdminPOIModal when showAddPOIModal is true', () => {
+    const { getByText } = render(<MapContent {...baseProps} showAddPOIModal />);
+    expect(getByText('add AdminPOIModal')).toBeTruthy();
+  });
+
+  it('shows AdminPOIModal (edit) when showEditPOIModal is true', () => {
+    const { getByText } = render(<MapContent {...baseProps} showEditPOIModal />);
+    expect(getByText('edit AdminPOIModal')).toBeTruthy();
+  });
+
   
 });
