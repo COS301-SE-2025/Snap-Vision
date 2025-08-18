@@ -492,5 +492,34 @@ describe('MapContent', () => {
     expect(getByText('NavOn')).toBeTruthy();
   });
 
+  // Error and status tests
+  it('shows error overlay if error is set', () => {
+    const { getByText } = render(<MapContent {...baseProps} error="Oops" />);
+    expect(getByText('StatusOverlay: Oops')).toBeTruthy();
+  });
+
+  it('shows tempMessage banner if tempMessage is set', () => {
+    const { getByText } = render(<MapContent {...baseProps} tempMessage="Hello" />);
+    expect(getByText('Hello')).toBeTruthy();
+  });
+
+  // Location refresh tests
+  it('renders Find My Location button when currentLocation is falsy and triggers onRefreshLocation', () => {
+    const onRefreshLocation = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} currentLocation={null} onRefreshLocation={onRefreshLocation} />
+    );
+    expect(getByText('📍 Find My Location')).toBeTruthy();
+    fireEvent.press(getByText('📍 Find My Location'));
+    expect(onRefreshLocation).toHaveBeenCalled();
+  });
+
+  it('renders Find My Location button as disabled when isRefreshingLocation is true', () => {
+    const { getByText } = render(
+      <MapContent {...baseProps} currentLocation={null} isRefreshingLocation={true} />
+    );
+    expect(getByText('Finding Location...')).toBeTruthy();
+  });
+
   
 });
