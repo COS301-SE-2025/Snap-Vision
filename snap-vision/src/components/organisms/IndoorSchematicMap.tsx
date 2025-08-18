@@ -2,7 +2,11 @@ import React, { useRef, useEffect, useMemo, useCallback, useState } from 'react'
 import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
 import WebView from 'react-native-webview';
 import { useTheme } from '@react-navigation/native';
-import { useFloorplanPreloader, preloadFloorplans, isFloorplanPreloaded } from '../../../src/utils/FloorplanManager';
+import {
+  useFloorplanPreloader,
+  preloadFloorplans,
+  isFloorplanPreloaded,
+} from '../../../src/utils/FloorplanManager';
 
 type RoomPOI = {
   id: string;
@@ -410,7 +414,7 @@ export default function IndoorSchematicMap({
     // This prevents re-rendering the WebView when switching floors
     return STATIC_HTML;
   }, []);
-  
+
   // Track loading states
   const [webViewReady, setWebViewReady] = useState(false);
   const [floorplanLoaded, setFloorplanLoaded] = useState(false);
@@ -430,7 +434,7 @@ export default function IndoorSchematicMap({
       completedPolyline,
       currentPos,
       themeColors: {
-        background: isDarkMode ? '#121212' : (themeColors?.background || '#ffffff'),
+        background: isDarkMode ? '#121212' : themeColors?.background || '#ffffff',
         text: themeColors?.text || (isDarkMode ? '#ffffff' : '#000000'),
         primary: themeColors?.primary || '#007AFF',
         secondary: themeColors?.secondary || '#FF4081',
@@ -440,8 +444,11 @@ export default function IndoorSchematicMap({
         isDarkMode: isDarkMode,
       },
     };
-    console.log('Initializing map with payload:', JSON.stringify({ ...payload, floorplanUrl: payload.floorplanUrl }));
-    
+    console.log(
+      'Initializing map with payload:',
+      JSON.stringify({ ...payload, floorplanUrl: payload.floorplanUrl }),
+    );
+
     // Delay initialization slightly to ensure HTML is loaded and window.initMap is available
     setTimeout(() => {
       webViewRef.current?.injectJavaScript(`
@@ -501,7 +508,17 @@ export default function IndoorSchematicMap({
         true;
       `);
     }, 300); // Add a small delay to ensure the WebView has properly loaded
-  }, [floorplanUrl, rooms, startId, endId, routePolyline, completedPolyline, currentPos, themeColors, isDarkMode]);
+  }, [
+    floorplanUrl,
+    rooms,
+    startId,
+    endId,
+    routePolyline,
+    completedPolyline,
+    currentPos,
+    themeColors,
+    isDarkMode,
+  ]);
 
   // Incremental updates (no reloads)
   useEffect(() => {
@@ -511,15 +528,21 @@ export default function IndoorSchematicMap({
   }, [rooms, webViewReady]);
 
   useEffect(() => {
-    webViewRef.current?.injectJavaScript(`window.setStartEnd(${JSON.stringify(startId)}, ${JSON.stringify(endId)}); true;`);
+    webViewRef.current?.injectJavaScript(
+      `window.setStartEnd(${JSON.stringify(startId)}, ${JSON.stringify(endId)}); true;`,
+    );
   }, [startId, endId]);
 
   useEffect(() => {
-    webViewRef.current?.injectJavaScript(`window.setRoute(${JSON.stringify(routePolyline || [])}); true;`);
+    webViewRef.current?.injectJavaScript(
+      `window.setRoute(${JSON.stringify(routePolyline || [])}); true;`,
+    );
   }, [routePolyline]);
 
   useEffect(() => {
-    webViewRef.current?.injectJavaScript(`window.setCompleted(${JSON.stringify(completedPolyline || [])}); true;`);
+    webViewRef.current?.injectJavaScript(
+      `window.setCompleted(${JSON.stringify(completedPolyline || [])}); true;`,
+    );
   }, [completedPolyline]);
 
   useEffect(() => {
@@ -532,7 +555,7 @@ export default function IndoorSchematicMap({
   // Update theme colors without reload
   useEffect(() => {
     const colors = {
-      background: isDarkMode ? '#121212' : (themeColors?.background || '#ffffff'),
+      background: isDarkMode ? '#121212' : themeColors?.background || '#ffffff',
       text: themeColors?.text || (isDarkMode ? '#ffffff' : '#000000'),
       primary: themeColors?.primary || '#007AFF',
       secondary: themeColors?.secondary || '#FF4081',
@@ -560,17 +583,17 @@ export default function IndoorSchematicMap({
 
   // Loading and error states for floorplan
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Preload all floorplans
   const allFloorplans = useMemo(() => {
     const urls: string[] = [];
     if (floorplanUrl) urls.push(floorplanUrl);
     if (additionalFloorplans && additionalFloorplans.length > 0) {
-      urls.push(...additionalFloorplans.filter(url => !!url));
+      urls.push(...additionalFloorplans.filter((url) => !!url));
     }
     return urls;
   }, [floorplanUrl, additionalFloorplans]);
-  
+
   // Use the floorplan preloader
   const [preloadProgress, setPreloadProgress] = useState(0);
   const { isPreloaded } = useFloorplanPreloader(allFloorplans, (loaded, total) => {
@@ -583,13 +606,13 @@ export default function IndoorSchematicMap({
 
   // Track previous floorplan URL to handle switching
   const prevFloorplanUrlRef = useRef<string | undefined>(floorplanUrl);
-  
+
   // Handle floorplan switching
   useEffect(() => {
     if (prevFloorplanUrlRef.current !== floorplanUrl && webViewRef.current && floorplanUrl) {
       // We're switching floors - directly update the floorplan in WebView without reloading
       console.log('Switching floorplan to:', floorplanUrl);
-      
+
       // If the new floorplan is already preloaded, don't show loading screen
       const alreadyPreloaded = isPreloaded(floorplanUrl);
       if (alreadyPreloaded) {
@@ -601,7 +624,7 @@ export default function IndoorSchematicMap({
         // Only show loading if not preloaded
         setFloorplanLoaded(false);
       }
-      
+
       // Update the floorplan directly via JavaScript injection
       webViewRef.current.injectJavaScript(`
         if (window.mountFloorplan) {
@@ -609,28 +632,28 @@ export default function IndoorSchematicMap({
         }
         true;
       `);
-      
+
       prevFloorplanUrlRef.current = floorplanUrl;
     }
   }, [floorplanUrl, webViewRef, isPreloaded]);
-  
+
   // Update loading state when WebView and floorplan states change
   useEffect(() => {
     // Only show loading on first load or when not preloaded
     const isCurrentFloorplanPreloaded = floorplanUrl ? isPreloaded(floorplanUrl) : true;
     const initialLoad = !webViewReady;
     const floorplanNeedsLoading = !floorplanLoaded && floorplanUrl && !isCurrentFloorplanPreloaded;
-    
+
     setIsLoading(initialLoad || floorplanNeedsLoading);
   }, [webViewReady, floorplanLoaded, floorplanUrl, isPreloaded]);
-  
+
   // Recovery mechanism - retry initialization if the map fails to load
   useEffect(() => {
     if (webViewReady && !floorplanLoaded && floorplanUrl && initAttempts < maxInitAttempts) {
       const timer = setTimeout(() => {
         console.log(`Map initialization retry attempt ${initAttempts + 1}/${maxInitAttempts}`);
-        setInitAttempts(prev => prev + 1);
-        
+        setInitAttempts((prev) => prev + 1);
+
         // Attempt reinitialization
         const payload = {
           floorplanUrl,
@@ -641,7 +664,7 @@ export default function IndoorSchematicMap({
           completedPolyline,
           currentPos,
           themeColors: {
-            background: isDarkMode ? '#121212' : (themeColors?.background || '#ffffff'),
+            background: isDarkMode ? '#121212' : themeColors?.background || '#ffffff',
             text: themeColors?.text || (isDarkMode ? '#ffffff' : '#000000'),
             primary: themeColors?.primary || '#007AFF',
             secondary: themeColors?.secondary || '#FF4081',
@@ -651,7 +674,7 @@ export default function IndoorSchematicMap({
             isDarkMode: isDarkMode,
           },
         };
-        
+
         webViewRef.current?.injectJavaScript(`
           console.log('Retrying map initialization');
           if (typeof window.initMap === 'function') {
@@ -664,10 +687,23 @@ export default function IndoorSchematicMap({
           true;
         `);
       }, 2000); // Wait 2 seconds between attempts
-      
+
       return () => clearTimeout(timer);
     }
-  }, [webViewReady, floorplanLoaded, floorplanUrl, initAttempts, isDarkMode, rooms, startId, endId, routePolyline, completedPolyline, currentPos, themeColors]);
+  }, [
+    webViewReady,
+    floorplanLoaded,
+    floorplanUrl,
+    initAttempts,
+    isDarkMode,
+    rooms,
+    startId,
+    endId,
+    routePolyline,
+    completedPolyline,
+    currentPos,
+    themeColors,
+  ]);
 
   // Clean up resources when component unmounts
   useEffect(() => {
@@ -701,13 +737,13 @@ export default function IndoorSchematicMap({
         cacheEnabled={true}
         onError={(e) => console.error('WebView error:', e.nativeEvent)}
       />
-      
+
       {isLoading && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#007AFF" />
           <Text style={styles.loadingText}>
-            {preloadProgress < 100 
-              ? `Preloading floorplans (${preloadProgress}%)...` 
+            {preloadProgress < 100
+              ? `Preloading floorplans (${preloadProgress}%)...`
               : 'Loading floorplan...'}
           </Text>
         </View>

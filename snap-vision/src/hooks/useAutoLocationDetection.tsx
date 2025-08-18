@@ -24,19 +24,22 @@ export function useAutoLocationDetection() {
         setDetectionError(null);
 
         console.log('Starting WiFi scan for location detection...');
-        
+
         // Scan current WiFi
         const currentSignals = await scanForWiFiNetworks();
         console.log('Current WiFi signals:', currentSignals.length);
-        
+
         if (currentSignals.length === 0) {
           throw new Error('No WiFi networks detected. Please enable WiFi.');
         }
 
         // Get all locations
         const locationsSnapshot = await firestore().collection('locations').get();
-        console.log('Found locations:', locationsSnapshot.docs.map(doc => doc.id));
-        
+        console.log(
+          'Found locations:',
+          locationsSnapshot.docs.map((doc) => doc.id),
+        );
+
         let bestMatch: DetectedLocation | null = null;
         let highestConfidence = 0;
 
@@ -44,7 +47,7 @@ export function useAutoLocationDetection() {
         for (const locationDoc of locationsSnapshot.docs) {
           const locationId = locationDoc.id;
           console.log(`Checking location: ${locationId}`);
-          
+
           try {
             // Get all WiFi fingerprints for this location
             const fingerprintsSnapshot = await firestore()
@@ -56,7 +59,7 @@ export function useAutoLocationDetection() {
             // Compare with each fingerprint
             for (const fpDoc of fingerprintsSnapshot.docs) {
               const fpData = fpDoc.data();
-              
+
               if (!fpData.wifiSignals || !Array.isArray(fpData.wifiSignals)) {
                 console.warn(`Invalid fingerprint data in ${fpDoc.id}`);
                 continue;
@@ -64,8 +67,9 @@ export function useAutoLocationDetection() {
 
               const confidence = calculateSignalSimilarity(currentSignals, fpData.wifiSignals);
               console.log(`Fingerprint ${fpDoc.id} confidence: ${(confidence * 100).toFixed(1)}%`);
-              
-              if (confidence > highestConfidence && confidence > 0.3) { // 30% threshold
+
+              if (confidence > highestConfidence && confidence > 0.3) {
+                // 30% threshold
                 highestConfidence = confidence;
                 bestMatch = {
                   locationId,
@@ -74,7 +78,9 @@ export function useAutoLocationDetection() {
                   buildingName: fpData.buildingName || fpData.buildingId || 'Unknown Building',
                   confidence,
                 };
-                console.log(`New best match: ${bestMatch.buildingName} (${(confidence * 100).toFixed(1)}%)`);
+                console.log(
+                  `New best match: ${bestMatch.buildingName} (${(confidence * 100).toFixed(1)}%)`,
+                );
               }
             }
           } catch (locationError) {
@@ -85,7 +91,9 @@ export function useAutoLocationDetection() {
         if (isMounted) {
           if (bestMatch) {
             setDetectedLocation(bestMatch);
-            console.log(`✅ Location detected: ${bestMatch.buildingName} (${(bestMatch.confidence * 100).toFixed(1)}% confidence)`);
+            console.log(
+              `✅ Location detected: ${bestMatch.buildingName} (${(bestMatch.confidence * 100).toFixed(1)}% confidence)`,
+            );
           } else {
             setDetectionError('No matching location found. You may be in an unmapped area.');
             console.log('❌ No location match found');
@@ -117,7 +125,7 @@ function calculateSignalSimilarity(currentSignals: any[], fingerprintSignals: an
 
   // Create a map of fingerprint signals for faster lookup
   const fpMap = new Map();
-  fingerprintSignals.forEach(signal => {
+  fingerprintSignals.forEach((signal) => {
     if (signal.BSSID) {
       fpMap.set(signal.BSSID, signal.level);
     }
@@ -129,7 +137,7 @@ function calculateSignalSimilarity(currentSignals: any[], fingerprintSignals: an
   // Compare current signals with fingerprint
   for (const signal of currentSignals) {
     if (!signal.BSSID) continue;
-    
+
     if (fpMap.has(signal.BSSID)) {
       // Calculate signal strength similarity (closer levels = higher score)
       const fpLevel = fpMap.get(signal.BSSID);

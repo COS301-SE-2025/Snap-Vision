@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { 
-  StyleSheet, 
-  View, 
-  Text, 
-  Modal, 
-  TouchableOpacity, 
-  Animated, 
+import {
+  StyleSheet,
+  View,
+  Text,
+  Modal,
+  TouchableOpacity,
+  Animated,
   Easing,
-  Dimensions 
+  Dimensions,
 } from 'react-native';
 import Confetti from './Confetti';
 
@@ -29,17 +29,17 @@ const DestinationReachedPopup: React.FC<DestinationReachedPopupProps> = ({
     background: '#FFFFFF',
     text: '#000000',
     success: '#4CAF50',
-  }
+  },
 }) => {
   const [showConfetti, setShowConfetti] = useState(false);
   const popupScale = useRef(new Animated.Value(0)).current;
   const pulseValue = useRef(new Animated.Value(1)).current;
-  
+
   useEffect(() => {
     if (visible) {
       // Reset and start animations when popup becomes visible
       popupScale.setValue(0);
-      
+
       // Show the popup with spring animation
       Animated.spring(popupScale, {
         toValue: 1,
@@ -49,7 +49,7 @@ const DestinationReachedPopup: React.FC<DestinationReachedPopupProps> = ({
       }).start(() => {
         // Start confetti after popup animation completes
         setShowConfetti(true);
-        
+
         // Start the pulsing animation
         // startPulseAnimation();
       });
@@ -57,7 +57,7 @@ const DestinationReachedPopup: React.FC<DestinationReachedPopupProps> = ({
       setShowConfetti(false);
     }
   }, [visible]);
-  
+
   const startPulseAnimation = () => {
     Animated.loop(
       Animated.sequence([
@@ -65,15 +65,15 @@ const DestinationReachedPopup: React.FC<DestinationReachedPopupProps> = ({
           toValue: 1.05,
           duration: 1000,
           easing: Easing.out(Easing.ease),
-          useNativeDriver: true
+          useNativeDriver: true,
         }),
         Animated.timing(pulseValue, {
           toValue: 1,
           duration: 1000,
           easing: Easing.in(Easing.ease),
-          useNativeDriver: true
-        })
-      ])
+          useNativeDriver: true,
+        }),
+      ]),
     ).start();
   };
 
@@ -98,41 +98,41 @@ const DestinationReachedPopup: React.FC<DestinationReachedPopupProps> = ({
       statusBarTranslucent={true} // Cover the status bar too
     >
       <View style={styles.modalContainer}>
-        <Confetti 
-          active={showConfetti} 
+        <Confetti
+          active={showConfetti}
           count={100}
           onComplete={handleConfettiComplete}
-          colors={['#FF577F', '#FF884B', '#FFCF0D', '#4361EE', themeColors.success, themeColors.primary]}
+          colors={[
+            '#FF577F',
+            '#FF884B',
+            '#FFCF0D',
+            '#4361EE',
+            themeColors.success,
+            themeColors.primary,
+          ]}
         />
-        
+
         <Animated.View
           style={[
             styles.popupContainer,
-            { 
+            {
               backgroundColor: themeColors.background,
-              transform: [
-                { scale: popupScale },
-                { scale: pulseValue }
-              ] 
-            }
+              transform: [{ scale: popupScale }, { scale: pulseValue }],
+            },
           ]}
         >
           <View style={[styles.checkmarkCircle, { backgroundColor: themeColors.success }]}>
             <Text style={styles.checkmark}>✓</Text>
           </View>
-          
-          <Text style={[styles.title, { color: themeColors.text }]}>
-            You've Arrived!
-          </Text>
-          
-          <Text style={[styles.destination, { color: themeColors.text }]}>
-            {destination}
-          </Text>
-          
+
+          <Text style={[styles.title, { color: themeColors.text }]}>You've Arrived!</Text>
+
+          <Text style={[styles.destination, { color: themeColors.text }]}>{destination}</Text>
+
           <Text style={[styles.message, { color: themeColors.text }]}>
             You have successfully reached your destination.
           </Text>
-          
+
           <TouchableOpacity
             style={[styles.button, { backgroundColor: themeColors.primary }]}
             onPress={onClose}

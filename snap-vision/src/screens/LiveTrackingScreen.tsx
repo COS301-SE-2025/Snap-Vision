@@ -1,5 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, Dimensions, StyleSheet, ActivityIndicator, SafeAreaView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  Dimensions,
+  StyleSheet,
+  ActivityIndicator,
+  SafeAreaView,
+  TouchableOpacity,
+} from 'react-native';
 import { WebView } from 'react-native-webview';
 import IndoorPositionDot from '../components/atoms/IndoorPositionDot';
 import { useIndoorPosition } from '../hooks/useIndoorPosition';
@@ -16,12 +24,12 @@ export default function LiveTrackingScreen() {
 
   // Auto-detect location instead of hardcoding
   const { detectedLocation, isDetecting, detectionError } = useAutoLocationDetection();
-  
+
   const { position, loading, error } = useIndoorPosition(
     detectedLocation?.locationId,
     detectedLocation?.buildingId,
     detectedLocation?.floorId,
-    10000
+    10000,
   );
 
   // Add state for floorplan image and fingerprints
@@ -31,7 +39,7 @@ export default function LiveTrackingScreen() {
 
   useEffect(() => {
     if (position) {
-      console.log("Current indoor position:", position);
+      console.log('Current indoor position:', position);
       updatePositionInWebView(position.x, position.y);
     }
   }, [position]);
@@ -57,14 +65,14 @@ export default function LiveTrackingScreen() {
         .where('floorId', '==', detectedLocation.floorId)
         .get();
 
-      const fingerprintData = snapshot.docs.map(doc => {
+      const fingerprintData = snapshot.docs.map((doc) => {
         const data = doc.data();
         return {
           id: doc.id,
           x: data.coordinates?.x || 0,
           y: data.coordinates?.y || 0,
           description: data.description || 'WiFi Point',
-          timestamp: data.timestamp
+          timestamp: data.timestamp,
         };
       });
 
@@ -86,10 +94,12 @@ export default function LiveTrackingScreen() {
 
       try {
         const snap = await firestore()
-          .collection(`locations/${detectedLocation.locationId}/buildingPOIs/${detectedLocation.buildingId}/floorplans`)
+          .collection(
+            `locations/${detectedLocation.locationId}/buildingPOIs/${detectedLocation.buildingId}/floorplans`,
+          )
           .get();
 
-        const floorplanDoc = snap.docs.find(doc => {
+        const floorplanDoc = snap.docs.find((doc) => {
           const data = doc.data();
           return data.floorLabel === detectedLocation.floorId;
         });
@@ -98,7 +108,7 @@ export default function LiveTrackingScreen() {
           const data = floorplanDoc.data();
           setFloorplanImage(data.downloadURL || null);
           console.log('✅ Floorplan loaded:', data.downloadURL);
-          
+
           // Load fingerprints after floorplan loads
           await loadFingerprints();
         } else {
@@ -119,9 +129,11 @@ export default function LiveTrackingScreen() {
     // Fingerprint markers (using same structure as admin page)
     const markers = fingerprints
       .map(
-        (fp) => `<div onclick="onMarkerClick('${fp.id}')" data-id="${fp.id}" class="marker" style="position:absolute;left:${fp.x * 100}%;top:${fp.y * 100}%;
+        (
+          fp,
+        ) => `<div onclick="onMarkerClick('${fp.id}')" data-id="${fp.id}" class="marker" style="position:absolute;left:${fp.x * 100}%;top:${fp.y * 100}%;
           transform:translate(-50%,-50%);width:12px;height:12px;border-radius:6px;
-          background:blue;border:2px solid white;cursor:pointer;z-index:5;"></div>`
+          background:blue;border:2px solid white;cursor:pointer;z-index:5;"></div>`,
       )
       .join('');
 
@@ -469,17 +481,21 @@ export default function LiveTrackingScreen() {
       <Text style={styles.subtitle}>
         {detectedLocation.buildingName} - Floor {detectedLocation.floorId}
       </Text>
-      
+
       {/* Fingerprint toggle button */}
-      <TouchableOpacity 
-        style={[styles.toggleButton, { backgroundColor: showFingerprints ? colors.primary : colors.card }]}
+      <TouchableOpacity
+        style={[
+          styles.toggleButton,
+          { backgroundColor: showFingerprints ? colors.primary : colors.card },
+        ]}
         onPress={() => setShowFingerprints(!showFingerprints)}
       >
         <Text style={[styles.toggleText, { color: showFingerprints ? '#FFF' : colors.text }]}>
-          {showFingerprints ? '👁️ Hide Fingerprints' : '👁️ Show Fingerprints'} ({fingerprints.length})
+          {showFingerprints ? '👁️ Hide Fingerprints' : '👁️ Show Fingerprints'} (
+          {fingerprints.length})
         </Text>
       </TouchableOpacity>
-      
+
       {/* Use same 300px height as admin page */}
       <View style={[styles.mapArea, { width: screenWidth, height: 300 }]}>
         {loading && <ActivityIndicator size="large" color="gray" />}
@@ -509,23 +525,22 @@ export default function LiveTrackingScreen() {
           </View>
         )}
       </View>
-      
+
       <Text style={styles.label}>
-        Position: {position ? `x: ${position.x.toFixed(3)}, y: ${position.y.toFixed(3)}` : 'No position yet'}
+        Position:{' '}
+        {position ? `x: ${position.x.toFixed(3)}, y: ${position.y.toFixed(3)}` : 'No position yet'}
       </Text>
-      
+
       <Text style={styles.confidence}>
         Confidence: {(detectedLocation.confidence * 100).toFixed(1)}%
       </Text>
-      
+
       {showFingerprints && fingerprints.length > 0 && (
         <View style={styles.debugContainer}>
           <Text style={styles.debugText}>
             🔍 Blue dots = WiFi fingerprints | Green dot = Your position
           </Text>
-          <Text style={styles.debugText}>
-            Using EXACT same scaling as admin positioning page
-          </Text>
+          <Text style={styles.debugText}>Using EXACT same scaling as admin positioning page</Text>
         </View>
       )}
     </SafeAreaView>

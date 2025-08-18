@@ -76,7 +76,7 @@ export default function IndoorSchematicNavScreen() {
   const [popupTitle, setPopupTitle] = useState('');
   const [popupMessage, setPopupMessage] = useState('');
   const [popupConfirmText, setPopupConfirmText] = useState('OK');
-  
+
   // Destination Reached Popup state
   const [showDestinationReachedPopup, setShowDestinationReachedPopup] = useState(false);
   const [reachedDestination, setReachedDestination] = useState('');
@@ -302,7 +302,7 @@ export default function IndoorSchematicNavScreen() {
     }
     if (currentStep >= steps.length - 1) {
       // Use custom destination reached popup with confetti instead of standard popup
-      const destinationRoom = allRooms.find(room => room.id === endId);
+      const destinationRoom = allRooms.find((room) => room.id === endId);
       setReachedDestination(destinationRoom?.name || 'Your Destination');
       setShowDestinationReachedPopup(true);
       resetRoute();
@@ -393,7 +393,7 @@ export default function IndoorSchematicNavScreen() {
           themeColors={colors}
           currentPos={currentPos || undefined}
           floorplanUrl={floorplanUrl || undefined}
-          nextInstructionEnd={nextInstructionEnd} 
+          nextInstructionEnd={nextInstructionEnd}
         />
       </View>
 
@@ -407,7 +407,7 @@ export default function IndoorSchematicNavScreen() {
         colors={colors}
         currentStep={currentStep}
         onAdvance={handleAdvance}
-      /> 
+      />
 
       {/* {steps.length > 0 && !sheetOpen &&(
         <AppSecondaryButton
@@ -430,7 +430,7 @@ export default function IndoorSchematicNavScreen() {
           <Text style={{ color: '#fff', fontWeight: '700' }}>Directions</Text>
         </TouchableOpacity>
       )}
-      
+
       {/* Floating AR button Uncomment to see AR */}
       {steps.length > 0 && startId && endId && (
         <TouchableOpacity
@@ -459,7 +459,7 @@ export default function IndoorSchematicNavScreen() {
         onConfirm={() => setPopupVisible(false)}
         showCancel={false}
       />
-      
+
       {/* Custom Destination Reached Popup with Confetti */}
       <DestinationReachedPopup
         visible={showDestinationReachedPopup}
@@ -469,7 +469,7 @@ export default function IndoorSchematicNavScreen() {
           primary: colors.primary,
           background: colors.backgroundLighter || colors.background,
           text: colors.text,
-          success: colors.success || '#4CAF50'
+          success: colors.success || '#4CAF50',
         }}
       />
     </View>
@@ -524,7 +524,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     elevation: 4,
   },
-  
+
   fabTest: {
     position: 'absolute',
     right: 16,

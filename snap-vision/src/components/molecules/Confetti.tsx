@@ -24,10 +24,21 @@ interface ConfettiProps {
 }
 
 const Confetti: React.FC<ConfettiProps> = ({
-  count = 80,  // Increased from 50 to 80
+  count = 80, // Increased from 50 to 80
   duration = 5000,
-  colors = ['#FF577F', '#FF884B', '#FFCF0D', '#90E0EF', '#4361EE', '#6A0572', '#FFD700', '#00FF00', '#FF00FF', '#FF5733'],  // More colors
-  size = 15,  // Increased from 12 to 15
+  colors = [
+    '#FF577F',
+    '#FF884B',
+    '#FFCF0D',
+    '#90E0EF',
+    '#4361EE',
+    '#6A0572',
+    '#FFD700',
+    '#00FF00',
+    '#FF00FF',
+    '#FF5733',
+  ], // More colors
+  size = 15, // Increased from 12 to 15
   style,
   active = false,
   onComplete,
@@ -44,7 +55,10 @@ const Confetti: React.FC<ConfettiProps> = ({
       const newPieces: ConfettiPiece[] = Array(count)
         .fill(0)
         .map((_, i) => {
-          const shape = ['circle', 'square', 'triangle'][Math.floor(Math.random() * 3)] as 'circle' | 'square' | 'triangle';
+          const shape = ['circle', 'square', 'triangle'][Math.floor(Math.random() * 3)] as
+            | 'circle'
+            | 'square'
+            | 'triangle';
           return {
             id: i,
             x: new Animated.Value(Math.random() * SCREEN_WIDTH * 0.8 + SCREEN_WIDTH * 0.1),
@@ -71,7 +85,7 @@ const Confetti: React.FC<ConfettiProps> = ({
       const delay = Math.random() * 1000;
       const fallDuration = duration * (0.7 + Math.random() * 0.3);
       const endX = piece.x._value + (Math.random() * 200 - 100);
-      
+
       // Create animation sequences
       const fallAnimation = Animated.timing(piece.y, {
         toValue: SCREEN_HEIGHT + size * 2,
@@ -80,7 +94,7 @@ const Confetti: React.FC<ConfettiProps> = ({
         easing: Easing.bezier(0.1, 1, 0.3, 1),
         useNativeDriver: true,
       });
-      
+
       // Make the drift more pronounced
       const driftAnimation = Animated.timing(piece.x, {
         toValue: endX,
@@ -89,7 +103,7 @@ const Confetti: React.FC<ConfettiProps> = ({
         easing: Easing.bezier(0.1, 0.5, 0.3, 1),
         useNativeDriver: true,
       });
-      
+
       // More dramatic rotation
       const rotateAnimation = Animated.timing(piece.rotate, {
         toValue: Math.random() * 20 - 10, // Random rotation -10 to 10 (more dramatic)
@@ -98,10 +112,10 @@ const Confetti: React.FC<ConfettiProps> = ({
         easing: Easing.linear,
         useNativeDriver: true,
       });
-      
+
       return Animated.parallel([fallAnimation, driftAnimation, rotateAnimation]);
     });
-    
+
     // Start all animations
     animations.forEach((animation, index) => {
       animation.start(({ finished }) => {
@@ -114,10 +128,10 @@ const Confetti: React.FC<ConfettiProps> = ({
         }
       });
     });
-    
+
     // Cleanup
     return () => {
-      animations.forEach(animation => animation.stop());
+      animations.forEach((animation) => animation.stop());
     };
   }, [pieces, duration, size, onComplete]);
 
@@ -126,14 +140,15 @@ const Confetti: React.FC<ConfettiProps> = ({
     const transform = [
       { translateX: piece.x },
       { translateY: piece.y },
-      { rotate: piece.rotate.interpolate({
+      {
+        rotate: piece.rotate.interpolate({
           inputRange: [0, 1],
           outputRange: ['0deg', '360deg'],
-        }) 
+        }),
       },
       { scale: piece.scale },
     ];
-    
+
     let shapeStyle = {};
     if (piece.shape === 'circle') {
       shapeStyle = { borderRadius: size };
@@ -143,7 +158,7 @@ const Confetti: React.FC<ConfettiProps> = ({
           key={piece.id}
           style={[
             styles.piece,
-            { 
+            {
               width: 0,
               height: 0,
               backgroundColor: 'transparent',
@@ -160,7 +175,7 @@ const Confetti: React.FC<ConfettiProps> = ({
         />
       );
     }
-    
+
     return (
       <Animated.View
         key={piece.id}
@@ -179,7 +194,7 @@ const Confetti: React.FC<ConfettiProps> = ({
   };
 
   if (!active && pieces.length === 0) return null;
-  
+
   return (
     <View style={[styles.container, style]} pointerEvents="none">
       {pieces.map(renderConfettiPiece)}
@@ -194,7 +209,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    zIndex: 9999,  // Increased z-index to make sure it appears above everything
+    zIndex: 9999, // Increased z-index to make sure it appears above everything
   },
   piece: {
     position: 'absolute',

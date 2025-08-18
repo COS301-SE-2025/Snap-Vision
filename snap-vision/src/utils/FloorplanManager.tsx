@@ -14,26 +14,26 @@ const globalFloorplanCache: FloorplanCache = {};
  * @param onProgress Optional callback for loading progress updates
  */
 export function useFloorplanPreloader(
-  floorplanUrls: string[], 
-  onProgress?: (loaded: number, total: number) => void
+  floorplanUrls: string[],
+  onProgress?: (loaded: number, total: number) => void,
 ) {
   const cacheRef = useRef<FloorplanCache>(globalFloorplanCache);
-  
+
   useEffect(() => {
     // Filter out URLs that are already cached
-    const urlsToLoad = floorplanUrls.filter(url => !cacheRef.current[url]);
-    
+    const urlsToLoad = floorplanUrls.filter((url) => !cacheRef.current[url]);
+
     if (urlsToLoad.length === 0) {
       // All already loaded
       onProgress?.(floorplanUrls.length, floorplanUrls.length);
       return;
     }
-    
+
     let loadedCount = floorplanUrls.length - urlsToLoad.length;
     onProgress?.(loadedCount, floorplanUrls.length);
-    
+
     // Load each image using React Native's Image.prefetch
-    const prefetchPromises = urlsToLoad.map(url => {
+    const prefetchPromises = urlsToLoad.map((url) => {
       return Image.prefetch(url)
         .then(() => {
           // Mark as cached on success
@@ -42,23 +42,22 @@ export function useFloorplanPreloader(
           onProgress?.(loadedCount, floorplanUrls.length);
           return true;
         })
-        .catch(error => {
+        .catch((error) => {
           console.error(`Failed to preload floorplan: ${url}`, error);
           loadedCount++;
           onProgress?.(loadedCount, floorplanUrls.length);
           return false;
         });
     });
-    
+
     // Wait for all prefetch operations to complete
     Promise.all(prefetchPromises).then(() => {
       console.log('All available floorplans preloaded');
     });
-    
   }, [floorplanUrls, onProgress]);
-  
+
   return {
-    isPreloaded: (url: string) => !!cacheRef.current[url]
+    isPreloaded: (url: string) => !!cacheRef.current[url],
   };
 }
 
@@ -74,27 +73,27 @@ export function preloadFloorplans(urls: string[]): Promise<void> {
       resolve();
       return;
     }
-    
-    const urlsToLoad = urls.filter(url => !globalFloorplanCache[url]);
+
+    const urlsToLoad = urls.filter((url) => !globalFloorplanCache[url]);
     if (urlsToLoad.length === 0) {
       // All images already cached
       resolve();
       return;
     }
-    
+
     // Use Promise.all with Image.prefetch
     Promise.all(
-      urlsToLoad.map(url => 
+      urlsToLoad.map((url) =>
         Image.prefetch(url)
           .then(() => {
             globalFloorplanCache[url] = true;
             return true;
           })
-          .catch(error => {
+          .catch((error) => {
             console.error(`Failed to preload floorplan: ${url}`, error);
             return false;
-          })
-      )
+          }),
+      ),
     ).then(() => resolve());
   });
 }

@@ -1084,13 +1084,13 @@ export default function AdminFloorplanEditorContent() {
       </View>
 
       <View style={styles.fixedFloorplanContainer}>
-      <WebView
-        ref={webViewRef}
-        originWhitelist={['*']}
-        source={{ html: getHTML() }}
-        onMessage={handleMessage}
-        style={styles.fixedWebView}
-        injectedJavaScriptBeforeContentLoaded={`
+        <WebView
+          ref={webViewRef}
+          originWhitelist={['*']}
+          source={{ html: getHTML() }}
+          onMessage={handleMessage}
+          style={styles.fixedWebView}
+          injectedJavaScriptBeforeContentLoaded={`
           window.isDarkMode = ${isDarkMode};
           window.themeColors = {
             background: "${colors.background}",
@@ -1100,7 +1100,7 @@ export default function AdminFloorplanEditorContent() {
           };
           true;
         `}
-      />
+        />
       </View>
 
       <View style={[styles.footer, { borderTopColor: colors.border }]}>
@@ -1321,7 +1321,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-    fixedFloorplanContainer: {
+  fixedFloorplanContainer: {
     width: FLOORPLAN_CONTAINER_WIDTH,
     height: FLOORPLAN_CONTAINER_HEIGHT,
     alignSelf: 'center',

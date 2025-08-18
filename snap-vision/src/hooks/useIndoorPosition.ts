@@ -12,7 +12,7 @@ export function useIndoorPosition(
   locationId: string | null,
   buildingId: string | null,
   floorId: string | null,
-  pollInterval = 5000
+  pollInterval = 5000,
 ) {
   const [position, setPosition] = useState<Position | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -36,28 +36,32 @@ export function useIndoorPosition(
     // Calculate distance from last position
     const distance = Math.sqrt(
       Math.pow(newPosition.x - lastPositionRef.current.x, 2) +
-      Math.pow(newPosition.y - lastPositionRef.current.y, 2)
+        Math.pow(newPosition.y - lastPositionRef.current.y, 2),
     );
 
     // If the jump is too large (>0.3 of the floorplan), smooth it
     if (distance > 0.3) {
       console.log(`Large position jump detected: ${distance.toFixed(3)}, smoothing...`);
-      
+
       // Use weighted average with previous position
       const smoothedPosition = {
         x: lastPositionRef.current.x * 0.7 + newPosition.x * 0.3,
         y: lastPositionRef.current.y * 0.7 + newPosition.y * 0.3,
       };
-      
+
       lastPositionRef.current = smoothedPosition;
       return smoothedPosition;
     }
 
     // If position history shows consistency, use the new position
     if (positionHistoryRef.current.length >= 2) {
-      const avgX = positionHistoryRef.current.reduce((sum, p) => sum + p.x, 0) / positionHistoryRef.current.length;
-      const avgY = positionHistoryRef.current.reduce((sum, p) => sum + p.y, 0) / positionHistoryRef.current.length;
-      
+      const avgX =
+        positionHistoryRef.current.reduce((sum, p) => sum + p.x, 0) /
+        positionHistoryRef.current.length;
+      const avgY =
+        positionHistoryRef.current.reduce((sum, p) => sum + p.y, 0) /
+        positionHistoryRef.current.length;
+
       lastPositionRef.current = { x: avgX, y: avgY };
       return lastPositionRef.current;
     }

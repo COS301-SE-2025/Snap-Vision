@@ -51,7 +51,7 @@ const NEAREST_ROOM_THRESHOLD = 0.3;
 
 export const calculateInitialFacingDirection = (
   startPos: { x: number; y: number },
-  firstWaypoint: { x: number; y: number }
+  firstWaypoint: { x: number; y: number },
 ): number => {
   const dx = firstWaypoint.x - startPos.x;
   const dy = firstWaypoint.y - startPos.y;
@@ -81,27 +81,27 @@ function calculateTurnDirection(
   p1: { x: number; y: number },
   p2: { x: number; y: number },
   p3: { x: number; y: number },
-  userFacingDirection?: number
+  userFacingDirection?: number,
 ): 'left' | 'right' | 'straight' {
   // Vector from p1 to p2 (current direction)
   const v1 = { x: p2.x - p1.x, y: p2.y - p1.y };
   // Vector from p2 to p3 (new direction)
   const v2 = { x: p3.x - p2.x, y: p3.y - p2.y };
-  
+
   if (userFacingDirection !== undefined) {
     // If we have user's facing direction, calculate relative to that
     const currentAngle = Math.atan2(v1.x, -v1.y) * (180 / Math.PI);
     const newAngle = Math.atan2(v2.x, -v2.y) * (180 / Math.PI);
-    
+
     // Normalize angles relative to user's facing direction
     let relativeTurn = newAngle - currentAngle;
     if (relativeTurn > 180) relativeTurn -= 360;
     if (relativeTurn < -180) relativeTurn += 360;
-    
+
     if (Math.abs(relativeTurn) < 45) return 'straight';
     return relativeTurn > 0 ? 'right' : 'left';
   }
-  
+
   // Fallback to original cross product method
   const cross = v1.x * v2.y - v1.y * v2.x;
   if (Math.abs(cross) < 0.01) return 'straight';
@@ -179,7 +179,7 @@ export const calculateMultiFloorRoute = (
     const prevRoom = roomPOIs.find((r) => r.id === current)!;
     const nextRoom = roomPOIs.find((r) => r.id === next)!;
     const waypoints = edge.waypoints.length ? edge.waypoints : [nextRoom.coordinates];
-    
+
     // If both current and next POI are stairs, only add connector instruction and skip everything else
     if (
       prevRoom.type === 'stairs' &&
@@ -225,7 +225,7 @@ export const calculateMultiFloorRoute = (
 
           let instruction = '';
           let type: 'waypoint' | 'turn' = 'waypoint';
-          
+
           // Skip generating instructions when the next room is stairs
           if (nextRoom.type === 'stairs' && edge.connector?.kind === 'stairs') {
             previousDirection = calculateInitialFacingDirection(previousWaypoint, pt);
@@ -240,7 +240,7 @@ export const calculateMultiFloorRoute = (
           } else {
             instruction = `Continue straight towards ${nextRoom.name}`;
           }
-          
+
           steps.push({
             instruction,
             coordinates: pt,
@@ -281,13 +281,14 @@ export const calculateMultiFloorRoute = (
 
         let instruction = '';
         let type: 'waypoint' | 'turn' | 'destination' = 'waypoint';
-        
+
         // Check if the next room in the path is stairs and this is the last waypoint before it
         const nextPathIndex = i + 1;
-        const isNextRoomStairs = nextPathIndex < roomPath.length && 
-          roomPOIs.find(r => r.id === roomPath[nextPathIndex])?.type === 'stairs';
+        const isNextRoomStairs =
+          nextPathIndex < roomPath.length &&
+          roomPOIs.find((r) => r.id === roomPath[nextPathIndex])?.type === 'stairs';
         const isLastWaypointBeforeStairs = isNextRoomStairs && idx === waypoints.length - 1;
-        
+
         // If this is the last waypoint before stairs, skip this instruction completely
         if (isLastWaypointBeforeStairs) {
           // Skip this waypoint - the stairs instruction will come next
@@ -311,10 +312,7 @@ export const calculateMultiFloorRoute = (
         }
 
         // If this is the last waypoint before the destination, make it explicit
-        if (
-          i === roomPath.length - 2 &&
-          idx === waypoints.length - 1
-        ) {
+        if (i === roomPath.length - 2 && idx === waypoints.length - 1) {
           instruction = `Arrive at ${endRoom.name}`;
           type = 'destination';
         }
@@ -334,10 +332,7 @@ export const calculateMultiFloorRoute = (
   }
 
   // Only add a final destination step if not already added
-  if (
-    steps.length === 0 ||
-    steps[steps.length - 1].type !== 'destination'
-  ) {
+  if (steps.length === 0 || steps[steps.length - 1].type !== 'destination') {
     steps.push({
       instruction: `You have arrived at ${endRoom.name}`,
       coordinates: endRoom.coordinates,
@@ -723,10 +718,7 @@ export const calculateRoute = (
           instruction = `Continue straight towards ${nextRoom.name}`;
         }
 
-        if (
-          i === roomPath.length - 2 &&
-          idx === waypoints.length - 1
-        ) {
+        if (i === roomPath.length - 2 && idx === waypoints.length - 1) {
           instruction = `Arrive at ${endRoom.name}`;
           type = 'destination';
         }
@@ -746,10 +738,7 @@ export const calculateRoute = (
   }
 
   // Only add a final destination step if not already added
-  if (
-    steps.length === 0 ||
-    steps[steps.length - 1].type !== 'destination'
-  ) {
+  if (steps.length === 0 || steps[steps.length - 1].type !== 'destination') {
     steps.push({
       instruction: `You have arrived at ${endRoom.name}`,
       coordinates: endRoom.coordinates,
@@ -765,16 +754,16 @@ export const calculateRoute = (
 
 export const generateDetailedDirections = (steps: NavigationStep[]): NavigationStep[] => {
   if (!steps.length) return [];
-  
+
   // Calculate initial facing direction from start to first waypoint
   let initialFacingDirection: number | undefined;
   if (steps.length > 1) {
     initialFacingDirection = calculateInitialFacingDirection(
       steps[0].coordinates,
-      steps[1].coordinates
+      steps[1].coordinates,
     );
   }
-  
+
   return steps;
 };
 

@@ -12,14 +12,12 @@ interface FingerprintData {
   buildingName?: string;
 }
 
-export async function collectWiFiFingerprint(
-  fingerprint: FingerprintData
-): Promise<void> {
+export async function collectWiFiFingerprint(fingerprint: FingerprintData): Promise<void> {
   try {
     // Scan Wi-Fi networks
     const results = await WifiManager.reScanAndLoadWifiList();
 
-     console.log('WiFi scan results:', results);
+    console.log('WiFi scan results:', results);
 
     // Structure data
     const wifiSignals = results.map((wifi) => ({

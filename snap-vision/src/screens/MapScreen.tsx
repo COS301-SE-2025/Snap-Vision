@@ -19,6 +19,7 @@ import MapWebView from '../components/organisms/MapWebView';
 import CrowdReportModal from '../components/molecules/CrowdReportModal';
 import StatusOverlay from '../components/atoms/StatusOverlay';
 import StandardPopup from '../components/atoms/StandardPopup';
+import DestinationReachedPopup from '../components/molecules/DestinationReachedPopup';
 import DestinationSearch from '../components/molecules/DestinationSearch';
 import MapActionsPanel from '../components/organisms/MapActionsPanel';
 import NavigationPanel from '../components/organisms/NavigationPanel';
@@ -44,7 +45,7 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'https://7565763f4537.ngrok-free.app';// <-- Use your correct backend IP here
+const ROUTING_API_BASE = 'https://31a1b002507c.ngrok-free.app'; // <-- Use your correct backend IP here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
@@ -2554,16 +2555,20 @@ const MapScreen = () => {
         showCancel={true}
       />
 
-      {/* Destination Reached Popup */}
-      <StandardPopup
+      {/* Destination Reached Popup with Confetti */}
+      <DestinationReachedPopup
         visible={showDestinationReachedPopup}
-        title="Destination Reached"
-        message="You have arrived at your destination!"
-        onConfirm={() => {
+        destination={selectedPOI?.name || destination || 'Your Destination'}
+        onClose={() => {
           setShowDestinationReachedPopup(false);
           setStatus('Ready for navigation');
         }}
-        showCancel={false}
+        themeColors={{
+          primary: colors.primary,
+          background: colors.backgroundLighter || colors.background,
+          text: colors.text,
+          success: colors.success || '#4CAF50',
+        }}
       />
 
       {/* Location Error Banner - Non-modal but centered like a popup */}
