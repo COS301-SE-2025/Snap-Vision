@@ -10,7 +10,7 @@ import StandardPopup from '../atoms/StandardPopup';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import LoadingIndicator from '../atoms/LoadingIndicator';
-import LocationSelector from '../molecules/LocationSelector';
+import { LocationSelector } from '../molecules/LocationSelector';
 import BuildingSelector from '../molecules/BuildingSelector';
 import FloorSelector from '../molecules/FloorSelector';
 import QRCodeList from './QRCodeList';
