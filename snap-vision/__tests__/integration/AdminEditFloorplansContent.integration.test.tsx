@@ -269,5 +269,23 @@ describe('AdminEditFloorplansContent Integration Tests', () => {
     });
   });
 
+  it('cancels delete operation', async () => {
+    const { getByTestId, getByText } = render(
+      <AllTheProviders>
+        <AdminEditFloorplansContent />
+      </AllTheProviders>
+    );
 
+    // Trigger delete
+    const deleteButton = getByTestId('delete-floorplan-button');
+    fireEvent.press(deleteButton);
+
+    // Cancel delete
+    const cancelButton = getByText('Cancel');
+    fireEvent.press(cancelButton);
+
+    await waitFor(() => {
+      expect(getByText('Edit Floorplans')).toBeTruthy();
+    });
+  });
 });
