@@ -77,7 +77,7 @@ function polylineDistance(points: { x: number; y: number }[]): number {
   return d;
 }
 
-function calculateTurnDirection(
+export function calculateTurnDirection(
   p1: { x: number; y: number },
   p2: { x: number; y: number },
   p3: { x: number; y: number },
@@ -110,7 +110,7 @@ function calculateTurnDirection(
 
 //Landmark Helper
 
-function findNearestRoom(
+export function findNearestRoom(
   point: { x: number; y: number },
   roomPOIs: RoomPOI[],
   excludeRoomIds: string[],
@@ -208,6 +208,10 @@ export const calculateMultiFloorRoute = (
       } else {
         skipUntilNonStair = false; // stop skipping
       }
+    }
+
+    if (edge.connector && skipUntilNonStair) {
+      continue;
     }
 
     if (edge.connector) {
