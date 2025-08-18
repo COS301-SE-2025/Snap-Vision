@@ -1,45 +1,47 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { Location } from '../../types/floorplan';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
-import ChipButton from '../atoms/ChipButton';
-
-interface Location {
-  id: string;
-  name: string;
-}
 
 interface LocationSelectorProps {
   locations: Location[];
-  selectedLocationId: string | null;
+  selectedLocation: string;
   onLocationSelect: (locationId: string) => void;
-  title?: string;
 }
 
-const LocationSelector: React.FC<LocationSelectorProps> = ({
+export const LocationSelector: React.FC<LocationSelectorProps> = ({
   locations,
-  selectedLocationId,
+  selectedLocation,
   onLocationSelect,
-  title = 'Select Location',
 }) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
   return (
-    <View style={styles.container}>
-      <Text style={[styles.title, { color: colors.primary }]}>{title}</Text>
+    <View style={styles.inputSection}>
+      <Text style={[styles.inputTitle, { color: colors.primary }]}>Select a Location</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chipContainer}
+        contentContainerStyle={styles.buildingList}
       >
         {locations.map((loc) => (
-          <ChipButton
+          <TouchableOpacity
             key={loc.id}
-            label={loc.name}
-            selected={selectedLocationId === loc.id}
+            style={[
+              styles.buildingItem,
+              {
+                backgroundColor: selectedLocation === loc.id ? colors.primary : colors.card,
+              },
+            ]}
             onPress={() => onLocationSelect(loc.id)}
-          />
+            testID={`location-${loc.id}`}
+          >
+            <Text style={{ color: selectedLocation === loc.id ? '#FFF' : colors.text }}>
+              {loc.name}
+            </Text>
+          </TouchableOpacity>
         ))}
       </ScrollView>
     </View>
@@ -47,20 +49,22 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: 24,
-    padding: 16,
-    backgroundColor: 'rgba(0,0,0,0.03)',
-    borderRadius: 8,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  inputSection: {
     marginBottom: 16,
   },
-  chipContainer: {
+  inputTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  buildingList: {
     paddingVertical: 8,
   },
+  buildingItem: {
+    padding: 12,
+    borderRadius: 8,
+    marginRight: 8,
+    minWidth: 100,
+    alignItems: 'center',
+  },
 });
-
-export default LocationSelector;

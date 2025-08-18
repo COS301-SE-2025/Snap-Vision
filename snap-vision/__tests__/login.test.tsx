@@ -1,10 +1,3 @@
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  setItem: jest.fn(() => Promise.resolve(null)),
-  getItem: jest.fn(() => Promise.resolve(null)),
-  removeItem: jest.fn(() => Promise.resolve(null)),
-  clear: jest.fn(() => Promise.resolve(null)),
-}));
-
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import LoginForm from '../src/components/organisms/LoginForm';
@@ -12,6 +5,13 @@ import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
 import { DeepLinkProvider } from '../src/DeepLinkContext';
 import { BadgeProvider } from '../src/context/BadgeContext';
 import Toast from 'react-native-toast-message';
+
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  setItem: jest.fn(() => Promise.resolve(null)),
+  getItem: jest.fn(() => Promise.resolve(null)),
+  removeItem: jest.fn(() => Promise.resolve(null)),
+  clear: jest.fn(() => Promise.resolve(null)),
+}));
 
 const mockSignIn = jest.fn();
 const mockReplace = jest.fn();

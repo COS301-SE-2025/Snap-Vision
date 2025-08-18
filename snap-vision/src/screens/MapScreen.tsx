@@ -9,6 +9,7 @@ import {
   PermissionsAndroid,
   Pressable,
   ScrollView,
+  Platform,
 } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import { WebView as WebViewType } from 'react-native-webview';
@@ -34,7 +35,6 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import ARNavigationOverlay from '../components/organisms/ARNavigationOverlay';
 import { useCompass } from '../hooks/useCompass'; // Needed for AR navigation functionality
 import { requestCameraPermission } from '../utils/cameraPermissions';
-import { Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 // import { ROUTING_API } from '@env';
 
@@ -43,7 +43,7 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'http://192.168.0.197:3000'; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = 'http://10.0.2.2:3000'; // <-- Use your correct backend IP here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
