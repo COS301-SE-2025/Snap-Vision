@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useMemo, useCallback, useState } from 'react'
 import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
 import WebView from 'react-native-webview';
 import { useTheme } from '@react-navigation/native';
+import { useFloorplanPreloader, preloadFloorplans, isFloorplanPreloaded } from '../../../src/utils/FloorplanManager';
 
 type RoomPOI = {
   id: string;
@@ -22,6 +23,8 @@ interface Props {
   themeColors: any;
   floorplanUrl?: string;
   nextInstructionEnd?: { x: number; y: number };
+  /** Optional array of additional floorplan URLs to preload */
+  additionalFloorplans?: string[];
 }
 
 const FLOORPLAN_CONTAINER_WIDTH = 360;
@@ -160,7 +163,17 @@ const STATIC_HTML = `
         return;
       }
       console.log('Setting floorplan src to:', src);
-      floorplan.src = src; // Always set src to ensure it loads
+      
+      // Add cache busting to avoid browser caching issues (if needed)
+      const cacheBustingSrc = src.includes('?') ? src + '&t=' + Date.now() : src + '?t=' + Date.now();
+      floorplan.src = cacheBustingSrc;
+      
+      // Let React Native know immediately if image is already complete (from cache)
+      if (floorplan.complete) {
+        console.log('Floorplan already loaded from cache');
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'floorplan_loaded', success: true }));
+        return;
+      }
 
       // Set a timeout to detect if the image doesn't load within a reasonable time
       setTimeout(() => {
@@ -386,17 +399,17 @@ export default function IndoorSchematicMap({
   onSelectRoom,
   themeColors,
   floorplanUrl,
+  additionalFloorplans = [],
 }: Props) {
   const webViewRef = useRef<WebView>(null);
   const { dark: isDarkMode } = useTheme();
 
-  // Keep HTML constant to avoid reloads
+  // Always use the static HTML to avoid reloads when switching floors
   const htmlContent = useMemo(() => {
-    if (!floorplanUrl) {
-      return `<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;background:${themeColors?.background || '#ffffff'}"><p style="color:${themeColors?.text || '#000000'}">No floorplan available</p></body></html>`;
-    }
+    // Always return the full HTML with map capability regardless of whether floorplanUrl exists
+    // This prevents re-rendering the WebView when switching floors
     return STATIC_HTML;
-  }, [floorplanUrl, themeColors]);
+  }, []);
   
   // Track loading states
   const [webViewReady, setWebViewReady] = useState(false);
@@ -492,8 +505,10 @@ export default function IndoorSchematicMap({
 
   // Incremental updates (no reloads)
   useEffect(() => {
-    webViewRef.current?.injectJavaScript(`window.setRooms(${JSON.stringify(rooms || [])}); true;`);
-  }, [rooms]);
+    if (webViewRef.current && webViewReady) {
+      webViewRef.current.injectJavaScript(`window.setRooms(${JSON.stringify(rooms || [])}); true;`);
+    }
+  }, [rooms, webViewReady]);
 
   useEffect(() => {
     webViewRef.current?.injectJavaScript(`window.setStartEnd(${JSON.stringify(startId)}, ${JSON.stringify(endId)}); true;`);
@@ -546,10 +561,68 @@ export default function IndoorSchematicMap({
   // Loading and error states for floorplan
   const [isLoading, setIsLoading] = useState(true);
   
+  // Preload all floorplans
+  const allFloorplans = useMemo(() => {
+    const urls: string[] = [];
+    if (floorplanUrl) urls.push(floorplanUrl);
+    if (additionalFloorplans && additionalFloorplans.length > 0) {
+      urls.push(...additionalFloorplans.filter(url => !!url));
+    }
+    return urls;
+  }, [floorplanUrl, additionalFloorplans]);
+  
+  // Use the floorplan preloader
+  const [preloadProgress, setPreloadProgress] = useState(0);
+  const { isPreloaded } = useFloorplanPreloader(allFloorplans, (loaded, total) => {
+    setPreloadProgress(Math.floor((loaded / Math.max(total, 1)) * 100));
+    // If the current floorplan is preloaded, we can consider it loaded
+    if (floorplanUrl && isFloorplanPreloaded(floorplanUrl)) {
+      setFloorplanLoaded(true);
+    }
+  });
+
+  // Track previous floorplan URL to handle switching
+  const prevFloorplanUrlRef = useRef<string | undefined>(floorplanUrl);
+  
+  // Handle floorplan switching
+  useEffect(() => {
+    if (prevFloorplanUrlRef.current !== floorplanUrl && webViewRef.current && floorplanUrl) {
+      // We're switching floors - directly update the floorplan in WebView without reloading
+      console.log('Switching floorplan to:', floorplanUrl);
+      
+      // If the new floorplan is already preloaded, don't show loading screen
+      const alreadyPreloaded = isPreloaded(floorplanUrl);
+      if (alreadyPreloaded) {
+        console.log('Using preloaded floorplan:', floorplanUrl);
+        setFloorplanLoaded(true);
+        // Set loading to false immediately if preloaded
+        setIsLoading(false);
+      } else {
+        // Only show loading if not preloaded
+        setFloorplanLoaded(false);
+      }
+      
+      // Update the floorplan directly via JavaScript injection
+      webViewRef.current.injectJavaScript(`
+        if (window.mountFloorplan) {
+          window.mountFloorplan('${floorplanUrl}');
+        }
+        true;
+      `);
+      
+      prevFloorplanUrlRef.current = floorplanUrl;
+    }
+  }, [floorplanUrl, webViewRef, isPreloaded]);
+  
   // Update loading state when WebView and floorplan states change
   useEffect(() => {
-    setIsLoading(!webViewReady || (!floorplanLoaded && floorplanUrl));
-  }, [webViewReady, floorplanLoaded, floorplanUrl]);
+    // Only show loading on first load or when not preloaded
+    const isCurrentFloorplanPreloaded = floorplanUrl ? isPreloaded(floorplanUrl) : true;
+    const initialLoad = !webViewReady;
+    const floorplanNeedsLoading = !floorplanLoaded && floorplanUrl && !isCurrentFloorplanPreloaded;
+    
+    setIsLoading(initialLoad || floorplanNeedsLoading);
+  }, [webViewReady, floorplanLoaded, floorplanUrl, isPreloaded]);
   
   // Recovery mechanism - retry initialization if the map fails to load
   useEffect(() => {
@@ -614,7 +687,6 @@ export default function IndoorSchematicMap({
   return (
     <View style={styles.fixedFloorplanContainer}>
       <WebView
-        key={`floorplan-webview-${floorplanUrl}`}
         ref={webViewRef}
         source={{ html: htmlContent }}
         style={styles.fixedWebView}
@@ -626,16 +698,20 @@ export default function IndoorSchematicMap({
         bounces={false}
         javaScriptEnabled
         domStorageEnabled
-        cacheEnabled={false}
+        cacheEnabled={true}
         onError={(e) => console.error('WebView error:', e.nativeEvent)}
       />
       
-      {/* {isLoading && (
+      {isLoading && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>Loading floorplan...</Text>
+          <Text style={styles.loadingText}>
+            {preloadProgress < 100 
+              ? `Preloading floorplans (${preloadProgress}%)...` 
+              : 'Loading floorplan...'}
+          </Text>
         </View>
-      )} */}
+      )}
     </View>
   );
 }
