@@ -27,14 +27,8 @@ export const FloorplanSelectionFlow: React.FC<FloorplanSelectionFlowProps> = ({
   const [buildingDropdownOpen, setBuildingDropdownOpen] = useState(false);
   const [floorDropdownOpen, setFloorDropdownOpen] = useState(false);
 
-  const {
-    locations,
-    buildings,
-    floorplans,
-    fetchLocations,
-    fetchBuildings,
-    fetchFloorplans,
-  } = useAdminFloorplans(role, adminLocations);
+  const { locations, buildings, floorplans, fetchLocations, fetchBuildings, fetchFloorplans } =
+    useAdminFloorplans(role, adminLocations);
 
   useEffect(() => {
     fetchLocations();

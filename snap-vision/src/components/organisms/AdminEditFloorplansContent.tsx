@@ -1,9 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import SettingsHeader from '../molecules/SettingsHeader';
 import StandardPopup from '../atoms/StandardPopup';
@@ -31,7 +27,11 @@ export default function AdminEditFloorplansContent() {
   const colors = getThemeColors(isDark);
 
   const { role, adminLocations, isLoading: isLoadingUser } = useUserRole();
-  const { isLoading: isLoadingData, error, deleteFloorplan } = useAdminFloorplans(role, adminLocations);
+  const {
+    isLoading: isLoadingData,
+    error,
+    deleteFloorplan,
+  } = useAdminFloorplans(role, adminLocations);
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
@@ -56,7 +56,7 @@ export default function AdminEditFloorplansContent() {
     if (!floorplanToDelete) return;
 
     const result = await deleteFloorplan(floorplanToDelete);
-    
+
     if (result.success) {
       setSuccessMessage('Floorplan and POIs removed successfully.');
       setShowSuccessPopup(true);

@@ -34,7 +34,7 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
 
   const fetchBuildings = async (locationId: string) => {
     if (!locationId) return;
-    
+
     setIsLoading(true);
     try {
       const buildingSnap = await firestore()
@@ -114,7 +114,7 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
       await batch.commit();
 
       setFloorplans((prev) => prev.filter((fp) => fp.id !== floorplan.id));
-      
+
       return { success: true };
     } catch (err) {
       console.error(err);

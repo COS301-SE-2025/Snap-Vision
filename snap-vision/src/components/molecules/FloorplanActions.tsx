@@ -29,16 +29,8 @@ export const FloorplanActions: React.FC<FloorplanActionsProps> = ({
         <Text style={{ fontWeight: 'bold' }}>Last Modified: </Text>
         {new Date(selectedFloorplan.timestamp).toLocaleString()}
       </Text>
-      <AppSecondaryButton
-        title="Edit Room POIs"
-        onPress={onEdit}
-        style={{ marginTop: 16 }}
-      />
-      <AppSecondaryButton
-        title="Delete Floorplan"
-        onPress={onDelete}
-        style={{ marginTop: 12 }}
-      />
+      <AppSecondaryButton title="Edit Room POIs" onPress={onEdit} style={{ marginTop: 16 }} />
+      <AppSecondaryButton title="Delete Floorplan" onPress={onDelete} style={{ marginTop: 12 }} />
     </View>
   );
 };

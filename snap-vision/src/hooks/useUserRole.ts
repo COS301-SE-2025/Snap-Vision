@@ -15,10 +15,10 @@ export const useUserRole = () => {
           setIsLoading(false);
           return;
         }
-        
+
         const doc = await firestore().doc(`userInformation/${uid}`).get();
         const data = doc.data();
-        
+
         setRole(data?.role || 'user');
         setAdminLocations(data?.adminLocations || []);
       } catch (error) {
@@ -29,7 +29,7 @@ export const useUserRole = () => {
         setIsLoading(false);
       }
     };
-    
+
     fetchUserInfo();
   }, []);
 
