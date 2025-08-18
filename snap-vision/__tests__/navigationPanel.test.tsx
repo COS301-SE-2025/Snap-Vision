@@ -7,12 +7,15 @@ import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
 jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => {
   const React = require('react');
   const { Text } = require('react-native');
-  const MockMaterialCommunityIcons = ({ name, size, color }: any) => (
-    React.createElement(Text, {
-      testID: `icon-${name}`,
-      style: { fontSize: size, color }
-    }, name)
-  );
+  const MockMaterialCommunityIcons = ({ name, size, color }: any) =>
+    React.createElement(
+      Text,
+      {
+        testID: `icon-${name}`,
+        style: { fontSize: size, color },
+      },
+      name,
+    );
   MockMaterialCommunityIcons.displayName = 'MockMaterialCommunityIcons';
   return MockMaterialCommunityIcons;
 });
@@ -20,7 +23,7 @@ jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => {
 jest.mock('../src/components/molecules/TextToSpeech', () => {
   const React = require('react');
   const { Text } = require('react-native');
-  const MockTextToSpeech = ({ text }: any) => 
+  const MockTextToSpeech = ({ text }: any) =>
     React.createElement(Text, { testID: 'text-to-speech' }, text);
   MockTextToSpeech.displayName = 'MockTextToSpeech';
   return MockTextToSpeech;
