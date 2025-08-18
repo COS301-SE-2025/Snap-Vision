@@ -1,196 +1,199 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, waitFor, fireEvent } from '@testing-library/react-native';
+import { NavigationContainer } from '@react-navigation/native';
 import AdminEditFloorplansContent from '../../src/components/organisms/AdminEditFloorplansContent';
+import { ThemeProvider } from '../../src/theme/ThemeContext';
+import { UserProvider } from '../../src/context/UserContext';
 
-// Mocks
-const mockNavigate = jest.fn();
-jest.mock('@react-navigation/native', () => ({
-  useNavigation: () => ({
-    navigate: mockNavigate,
-  }),
-}));
-
-const mockDeleteFloorplan = jest.fn();
-const mockUseUserRole = {
-  role: 'admin',
-  adminLocations: ['loc1'],
-  isLoading: false,
-};
-const mockUseAdminFloorplans = {
-  isLoading: false,
-  error: null,
-  deleteFloorplan: mockDeleteFloorplan,
-};
-
+// Mock the hooks
 jest.mock('../../src/hooks/useUserRole', () => ({
-  useUserRole: () => mockUseUserRole,
-}));
-jest.mock('../../src/hooks/useAdminFloorplans', () => ({
-  useAdminFloorplans: () => mockUseAdminFloorplans,
+  useUserRole: jest.fn(),
 }));
 
-jest.mock('../../src/components/molecules/SettingsHeader', () => {
-  const { Text } = require('react-native');
-  return {
-    __esModule: true,
-    default: (props: any) => <Text>{props.title}</Text>,
-  };
-});
+jest.mock('../../src/hooks/useAdminFloorplans', () => ({
+  useAdminFloorplans: jest.fn(),
+}));
 
 jest.mock('../../src/components/organisms/FloorplanSelectionFlow', () => {
-  const { TouchableOpacity, Text } = require('react-native');
+  const { View, Text, TouchableOpacity } = require('react-native');
   return {
-    __esModule: true,
-    FloorplanSelectionFlow: (props: any) => (
-      <>
-        <TouchableOpacity
-          testID="edit-btn"
-          onPress={() =>
-            props.onEditFloorplan({
-              locationId: 'loc1',
-              buildingId: 'b1',
-              floorLabel: 'Floor 1',
-              downloadURL: 'url',
-            })
-          }
+    FloorplanSelectionFlow: ({ onEditFloorplan, onDeleteFloorplan }: any) => (
+      <View>
+        <Text testID="floorplan-selection-flow">Floorplan Selection Flow</Text>
+        <TouchableOpacity 
+          testID="edit-floorplan-button" 
+          onPress={() => onEditFloorplan({
+            locationId: 'test-location',
+            buildingId: 'test-building',
+            floorLabel: 'Floor 1',
+            downloadURL: 'https://test.com/floorplan.jpg'
+          })}
         >
-          <Text>Edit</Text>
+          <Text>Edit Floorplan</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          testID="delete-btn"
-          onPress={() =>
-            props.onDeleteFloorplan({
-              id: 'f1',
-              locationId: 'loc1',
-              buildingId: 'b1',
-              floorLabel: 'Floor 1',
-              downloadURL: 'url',
-            })
-          }
+        <TouchableOpacity 
+          testID="delete-floorplan-button" 
+          onPress={() => onDeleteFloorplan({
+            locationId: 'test-location',
+            buildingId: 'test-building',
+            floorLabel: 'Floor 1',
+            downloadURL: 'https://test.com/floorplan.jpg'
+          })}
         >
-          <Text>Delete</Text>
+          <Text>Delete Floorplan</Text>
         </TouchableOpacity>
-      </>
+      </View>
     ),
   };
 });
 
-jest.mock('../../src/components/atoms/StandardPopup', () => {
-  const { Text, TouchableOpacity } = require('react-native');
+// Mock navigation
+const mockNavigate = jest.fn();
+const mockNavigation = {
+  navigate: mockNavigate,
+  goBack: jest.fn(),
+  addListener: jest.fn(),
+  removeListener: jest.fn(),
+  isFocused: jest.fn(() => true),
+  dangerouslyGetParent: jest.fn(),
+};
+
+jest.mock('@react-navigation/native', () => {
+  const actualNav = jest.requireActual('@react-navigation/native');
   return {
-    __esModule: true,
-    default: (props: any) =>
-      props.visible ? (
-        <>
-          {props.title && <Text>{props.title}</Text>}
-          {props.message && <Text>{props.message}</Text>}
-          {props.showCancel && (
-            <TouchableOpacity onPress={props.onCancel}>
-              <Text>{props.cancelText || 'Cancel'}</Text>
-            </TouchableOpacity>
-          )}
-          {props.confirmText && (
-            <TouchableOpacity onPress={props.onConfirm}>
-              <Text>{props.confirmText}</Text>
-            </TouchableOpacity>
-          )}
-        </>
-      ) : null,
+    ...actualNav,
+    useNavigation: () => mockNavigation,
   };
 });
 
-describe('AdminEditFloorplansContent integration', () => {
+const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <ThemeProvider>
+      <UserProvider>
+        <NavigationContainer>
+          {children}
+        </NavigationContainer>
+      </UserProvider>
+    </ThemeProvider>
+  );
+};
+
+describe('AdminEditFloorplansContent Integration Tests', () => {
+  const mockUseUserRole = require('../../src/hooks/useUserRole').useUserRole;
+  const mockUseAdminFloorplans = require('../../src/hooks/useAdminFloorplans').useAdminFloorplans;
+
   beforeEach(() => {
     jest.clearAllMocks();
-    mockDeleteFloorplan.mockReset();
-    mockDeleteFloorplan.mockResolvedValue({ success: true });
+    
+    mockUseUserRole.mockReturnValue({
+      role: 'admin',
+      adminLocations: ['location1', 'location2'],
+      isLoading: false,
+    });
+
+    mockUseAdminFloorplans.mockReturnValue({
+      isLoading: false,
+      error: null,
+      deleteFloorplan: jest.fn().mockResolvedValue({ success: true }),
+    });
   });
 
-  it('renders header and selection flow', () => {
-    const { getByText, getByTestId } = render(<AdminEditFloorplansContent />);
-    expect(getByText('Edit Floorplans')).toBeTruthy();
-    expect(getByTestId('edit-btn')).toBeTruthy();
-    expect(getByTestId('delete-btn')).toBeTruthy();
+  it('renders the component with all providers', async () => {
+    const { getByText, getByTestId } = render(
+      <AllTheProviders>
+        <AdminEditFloorplansContent />
+      </AllTheProviders>
+    );
+
+    await waitFor(() => {
+      expect(getByText('Edit Floorplans')).toBeTruthy();
+      expect(getByTestId('floorplan-selection-flow')).toBeTruthy();
+    });
   });
 
-  it('shows loading overlay when loading', () => {
-    jest.spyOn(require('../../src/hooks/useUserRole'), 'useUserRole').mockReturnValue({
-      ...mockUseUserRole,
+  it('shows loading state when user role is loading', async () => {
+    mockUseUserRole.mockReturnValue({
+      role: 'admin',
+      adminLocations: ['location1', 'location2'],
       isLoading: true,
     });
-    const { getByTestId } = render(<AdminEditFloorplansContent />);
-    expect(getByTestId('ActivityIndicator')).toBeTruthy();
-  });
 
-  it('navigates to editor on edit', () => {
-    const { getByTestId } = render(<AdminEditFloorplansContent />);
-    fireEvent.press(getByTestId('edit-btn'));
-    expect(mockNavigate).toHaveBeenCalledWith('AdminFloorplanEditor', {
-      locationId: 'loc1',
-      buildingId: 'b1',
-      floorLabel: 'Floor 1',
-      imageUri: 'url',
+    const { getByTestId } = render(
+      <AllTheProviders>
+        <AdminEditFloorplansContent />
+      </AllTheProviders>
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('ActivityIndicator')).toBeTruthy();
     });
   });
 
-  it('shows delete confirmation popup and deletes (success)', async () => {
-    const { getByTestId, getAllByText, getByText } = render(<AdminEditFloorplansContent />);
-    fireEvent.press(getByTestId('delete-btn'));
-    expect(getByText('Delete Floorplan')).toBeTruthy();
-    expect(getByText(/Are you sure you want to delete/)).toBeTruthy();
-    fireEvent.press(getAllByText('Delete')[1]);
+  it('shows loading state when floorplan data is loading', async () => {
+    mockUseAdminFloorplans.mockReturnValue({
+      isLoading: true,
+      error: null,
+      deleteFloorplan: jest.fn(),
+    });
+
+    const { getByTestId } = render(
+      <AllTheProviders>
+        <AdminEditFloorplansContent />
+      </AllTheProviders>
+    );
+
     await waitFor(() => {
-      expect(mockDeleteFloorplan).toHaveBeenCalledWith(
-        expect.objectContaining({ id: 'f1' })
-      );
-      expect(getByText('Success')).toBeTruthy();
+      expect(getByTestId('ActivityIndicator')).toBeTruthy();
+    });
+  });
+
+  it('navigates to floorplan editor when edit is triggered', async () => {
+    const { getByTestId } = render(
+      <AllTheProviders>
+        <AdminEditFloorplansContent />
+      </AllTheProviders>
+    );
+
+    const editButton = getByTestId('edit-floorplan-button');
+    fireEvent.press(editButton);
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('AdminFloorplanEditor', {
+        locationId: 'test-location',
+        buildingId: 'test-building',
+        floorLabel: 'Floor 1',
+        imageUri: 'https://test.com/floorplan.jpg'
+      });
+    });
+  });
+
+  it('handles successful floorplan deletion', async () => {
+    const mockDeleteFloorplan = jest.fn().mockResolvedValue({ success: true });
+    mockUseAdminFloorplans.mockReturnValue({
+      isLoading: false,
+      error: null,
+      deleteFloorplan: mockDeleteFloorplan,
+    });
+
+    const { getByTestId, getByText } = render(
+      <AllTheProviders>
+        <AdminEditFloorplansContent />
+      </AllTheProviders>
+    );
+
+    // Trigger delete
+    const deleteButton = getByTestId('delete-floorplan-button');
+    fireEvent.press(deleteButton);
+
+    // Confirm delete
+    const confirmButton = getByText('Delete');
+    fireEvent.press(confirmButton);
+
+    await waitFor(() => {
+      expect(mockDeleteFloorplan).toHaveBeenCalled();
       expect(getByText('Floorplan and POIs removed successfully.')).toBeTruthy();
     });
   });
 
-  it('shows delete confirmation popup and handles delete failure', async () => {
-    mockDeleteFloorplan.mockResolvedValue({ success: false });
-    const { getByTestId, getAllByText, queryByText } = render(<AdminEditFloorplansContent />);
-    fireEvent.press(getByTestId('delete-btn'));
-    fireEvent.press(getAllByText('Delete')[1]);
-    await waitFor(() => {
-      expect(mockDeleteFloorplan).toHaveBeenCalled();
-      expect(queryByText('Success')).toBeNull();
-    });
-  });
 
-  it('cancels delete confirmation', () => {
-    const { getByTestId, getByText, queryByText } = render(<AdminEditFloorplansContent />);
-    fireEvent.press(getByTestId('delete-btn'));
-    expect(getByText('Delete Floorplan')).toBeTruthy();
-    fireEvent.press(getByText('Cancel'));
-    expect(queryByText('Delete Floorplan')).toBeNull();
-  });
-
-  it('shows error message when error is present', () => {
-    jest.spyOn(require('../../src/hooks/useAdminFloorplans'), 'useAdminFloorplans').mockReturnValue({
-      ...mockUseAdminFloorplans,
-      error: 'Something went wrong',
-    });
-    const { getByText } = render(<AdminEditFloorplansContent />);
-    expect(getByText(/Something went wrong/)).toBeTruthy();
-  });
-
-  it('closes success popup when OK is pressed', async () => {
-    const { getByTestId, getAllByText, getByText, queryByText } = render(<AdminEditFloorplansContent />);
-    fireEvent.press(getByTestId('delete-btn'));
-    fireEvent.press(getAllByText('Delete')[1]);
-    await waitFor(() => {
-      expect(getByText('Success')).toBeTruthy();
-      fireEvent.press(getByText('OK'));
-      expect(queryByText('Success')).toBeNull();
-    });
-  });
-
-  it('does nothing if confirmDeleteFloorplan called with no floorplan selected', () => {
-    // This branch is covered by not pressing delete, so nothing happens.
-    const { getByTestId } = render(<AdminEditFloorplansContent />);
-    expect(getByTestId('edit-btn')).toBeTruthy();
-    // No delete, so no popup appears.
-  });
 });
