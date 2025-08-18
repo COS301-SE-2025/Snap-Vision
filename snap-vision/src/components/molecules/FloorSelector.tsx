@@ -4,32 +4,32 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
-interface Building {
+interface Floor {
   id: string;
   name: string;
 }
 
-interface BuildingSelectorProps {
-  buildings: Building[];
-  selectedBuildingId: string | null;
-  setSelectedBuildingId: (id: string | null) => void;
+interface FloorSelectorProps {
+  floors: Floor[];
+  selectedFloorId: string | null;
+  setSelectedFloorId: (id: string | null) => void;
   dropdownOpen: boolean;
   setDropdownOpen: (open: boolean) => void;
   title?: string;
 }
 
-const BuildingSelector: React.FC<BuildingSelectorProps> = ({
-  buildings,
-  selectedBuildingId,
-  setSelectedBuildingId,
+const FloorSelector: React.FC<FloorSelectorProps> = ({
+  floors,
+  selectedFloorId,
+  setSelectedFloorId,
   dropdownOpen,
   setDropdownOpen,
-  title = 'Select Building',
+  title = 'Select Floor',
 }) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
-  const dropdownItems = buildings.map((b) => ({ label: b.name, value: b.id }));
+  const dropdownItems = floors.map((f) => ({ label: `Floor ${f.name}`, value: f.id }));
 
   return (
     <View style={styles.container}>
@@ -38,13 +38,13 @@ const BuildingSelector: React.FC<BuildingSelectorProps> = ({
         open={dropdownOpen}
         setOpen={setDropdownOpen}
         items={dropdownItems}
-        value={selectedBuildingId}
-        setValue={(get) => setSelectedBuildingId(get())}
+        value={selectedFloorId}
+        setValue={(get) => setSelectedFloorId(get())}
         searchable
         listMode="SCROLLVIEW"
-        placeholder="Select a building"
-        zIndex={3000}
-        zIndexInverse={1000}
+        placeholder="Select a floor"
+        zIndex={2000}
+        zIndexInverse={900}
         style={{ backgroundColor: colors.card, borderColor: colors.primary }}
         dropDownContainerStyle={{ backgroundColor: colors.card, borderColor: colors.primary }}
         textStyle={{ color: colors.text }}
@@ -68,4 +68,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BuildingSelector;
+export default FloorSelector;
