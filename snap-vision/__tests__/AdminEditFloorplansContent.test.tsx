@@ -81,28 +81,28 @@ jest.mock('../src/components/organisms/FloorplanSelectionFlow', () => {
       <>
         <TouchableOpacity
           testID="edit-btn"
-        onPress={() =>
+          onPress={() =>
             props.onEditFloorplan({
-                locationId: 'loc1',
-                buildingId: 'b1',
-                floorLabel: 'Floor 1',
-                downloadURL: 'url', // <-- match your component!
+              locationId: 'loc1',
+              buildingId: 'b1',
+              floorLabel: 'Floor 1',
+              downloadURL: 'url', // <-- match your component!
             })
-        }
+          }
         >
           <Text>Edit</Text>
         </TouchableOpacity>
         <TouchableOpacity
           testID="delete-btn"
-        onPress={() =>
+          onPress={() =>
             props.onDeleteFloorplan({
-                id: 'f1',
-                locationId: 'loc1',
-                buildingId: 'b1',
-                floorLabel: 'Floor 1',
-                downloadURL: 'url',
+              id: 'f1',
+              locationId: 'loc1',
+              buildingId: 'b1',
+              floorLabel: 'Floor 1',
+              downloadURL: 'url',
             })
-        }
+          }
         >
           <Text>Delete</Text>
         </TouchableOpacity>
@@ -115,7 +115,7 @@ jest.mock('react-native', () => {
   const RN = jest.requireActual('react-native');
   return {
     ...RN,
-    ActivityIndicator: (props: any) => <RN.View testID={props.testID || "ActivityIndicator"} />,
+    ActivityIndicator: (props: any) => <RN.View testID={props.testID || 'ActivityIndicator'} />,
   };
 });
 
@@ -187,46 +187,46 @@ describe('AdminEditFloorplansContent', () => {
     expect(queryByText('Delete Floorplan')).toBeNull();
   });
 
-it('renders with no admin locations', () => {
-  jest.spyOn(require('../src/hooks/useUserRole'), 'useUserRole').mockReturnValue({
-    ...mockUseUserRole,
-    adminLocations: [],
-  });
-  const { getByText } = render(<AdminEditFloorplansContent />);
-  expect(getByText('Edit Floorplans')).toBeTruthy();
-  // Add more assertions if your UI changes for no locations
-});
-
-it('closes success popup when OK is pressed', async () => {
-  const { getByTestId, getByText, getAllByText } = render(<AdminEditFloorplansContent />);
-  fireEvent.press(getByTestId('delete-btn'));
-  fireEvent.press(getAllByText('Delete')[1]);
-  await waitFor(() => {
-    expect(getByText('Success')).toBeTruthy();
-    fireEvent.press(getByText('OK'));
+  it('renders with no admin locations', () => {
+    jest.spyOn(require('../src/hooks/useUserRole'), 'useUserRole').mockReturnValue({
+      ...mockUseUserRole,
+      adminLocations: [],
+    });
+    const { getByText } = render(<AdminEditFloorplansContent />);
     expect(getByText('Edit Floorplans')).toBeTruthy();
+    // Add more assertions if your UI changes for no locations
   });
-});
 
-it('does nothing if confirmDeleteFloorplan called with no floorplan selected', async () => {
-  const { getByTestId } = render(<AdminEditFloorplansContent />);
-  // Directly call confirmDeleteFloorplan if possible, or simulate by not pressing delete
-  // For indirect coverage, you can check that no popup appears if you never press delete
-  // Or, if you can access the instance, call the method directly (not typical in RTL)
-  // This branch is usually covered by not triggering delete at all
-  // So just ensure no success popup is shown
-  expect(getByTestId('edit-btn')).toBeTruthy();
-  // No delete, so nothing happens
-});
-
-it('does not show success popup when delete fails', async () => {
-  mockDeleteFloorplan.mockResolvedValue({ success: false });
-  const { getByTestId, getAllByText, queryByText } = render(<AdminEditFloorplansContent />);
-  fireEvent.press(getByTestId('delete-btn'));
-  fireEvent.press(getAllByText('Delete')[1]);
-  await waitFor(() => {
-    expect(queryByText('Success')).toBeNull();
-    // Optionally check for error handling if your UI shows an error
+  it('closes success popup when OK is pressed', async () => {
+    const { getByTestId, getByText, getAllByText } = render(<AdminEditFloorplansContent />);
+    fireEvent.press(getByTestId('delete-btn'));
+    fireEvent.press(getAllByText('Delete')[1]);
+    await waitFor(() => {
+      expect(getByText('Success')).toBeTruthy();
+      fireEvent.press(getByText('OK'));
+      expect(getByText('Edit Floorplans')).toBeTruthy();
+    });
   });
-});
+
+  it('does nothing if confirmDeleteFloorplan called with no floorplan selected', async () => {
+    const { getByTestId } = render(<AdminEditFloorplansContent />);
+    // Directly call confirmDeleteFloorplan if possible, or simulate by not pressing delete
+    // For indirect coverage, you can check that no popup appears if you never press delete
+    // Or, if you can access the instance, call the method directly (not typical in RTL)
+    // This branch is usually covered by not triggering delete at all
+    // So just ensure no success popup is shown
+    expect(getByTestId('edit-btn')).toBeTruthy();
+    // No delete, so nothing happens
+  });
+
+  it('does not show success popup when delete fails', async () => {
+    mockDeleteFloorplan.mockResolvedValue({ success: false });
+    const { getByTestId, getAllByText, queryByText } = render(<AdminEditFloorplansContent />);
+    fireEvent.press(getByTestId('delete-btn'));
+    fireEvent.press(getAllByText('Delete')[1]);
+    await waitFor(() => {
+      expect(queryByText('Success')).toBeNull();
+      // Optionally check for error handling if your UI shows an error
+    });
+  });
 });
