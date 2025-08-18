@@ -125,7 +125,7 @@ const DestinationReachedPopup: React.FC<DestinationReachedPopupProps> = ({
             <Text style={styles.checkmark}>✓</Text>
           </View>
 
-          <Text style={[styles.title, { color: themeColors.text }]}>You've Arrived!</Text>
+          <Text style={[styles.title, { color: themeColors.text }]}>You&apos;ve Arrived!</Text>
 
           <Text style={[styles.destination, { color: themeColors.text }]}>{destination}</Text>
 
