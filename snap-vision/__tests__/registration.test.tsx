@@ -1,16 +1,16 @@
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  setItem: jest.fn(() => Promise.resolve(null)),
-  getItem: jest.fn(() => Promise.resolve(null)),
-  removeItem: jest.fn(() => Promise.resolve(null)),
-  clear: jest.fn(() => Promise.resolve(null)),
-}));
-
 import React from 'react';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react-native';
 import RegisterForm from '../src/components/organisms/RegisterForm';
 import { NavigationContainer } from '@react-navigation/native';
 import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
 import { BadgeProvider } from '../src/context/BadgeContext';
+
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  setItem: jest.fn(() => Promise.resolve(null)),
+  getItem: jest.fn(() => Promise.resolve(null)),
+  removeItem: jest.fn(() => Promise.resolve(null)),
+  clear: jest.fn(() => Promise.resolve(null)),
+}));
 
 // Mock StandardPopup component
 jest.mock('../src/components/atoms/StandardPopup', () => {

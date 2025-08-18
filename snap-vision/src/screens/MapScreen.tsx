@@ -1,4 +1,3 @@
-// src/screens/MapScreen.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -10,6 +9,7 @@ import {
   PermissionsAndroid,
   Pressable,
   ScrollView,
+  Platform,
 } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import { WebView as WebViewType } from 'react-native-webview';
@@ -36,7 +36,6 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import ARNavigationOverlay from '../components/organisms/ARNavigationOverlay';
 import { useCompass } from '../hooks/useCompass'; // Needed for AR navigation functionality
 import { requestCameraPermission } from '../utils/cameraPermissions';
-import { Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 // import { ROUTING_API } from '@env';
 
@@ -45,7 +44,7 @@ type MapScreenParams = {
   lng?: string;
 };
 
-const ROUTING_API_BASE = 'https://31a1b002507c.ngrok-free.app'; // <-- Use your correct backend IP here
+const ROUTING_API_BASE = 'http://10.0.2.2:3000'; // <-- Use your correct backend IP here
 
 // emulator: 10.0.2.2
 // B home:  192.168.56.1
@@ -54,6 +53,8 @@ const ROUTING_API_BASE = 'https://31a1b002507c.ngrok-free.app'; // <-- Use your 
 // T data: 192.168.43.155
 // Th home: 10.0.0.9
 // T Durban: 192.168.1.93
+// S home:  192.168.0.197
+// L harties: 192.168.101.238
 
 const MapScreen = () => {
   const lastRoute = useRef<any[]>([]);
@@ -75,6 +76,7 @@ const MapScreen = () => {
   const [showReportTooltip, setShowReportTooltip] = useState(false);
   const webViewRef = useRef<WebViewType>(null);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [shouldCenterMap, setShouldCenterMap] = useState(true);
 
   // Turn-by-turn state
   const [steps, setSteps] = useState<any[]>([]);
@@ -90,6 +92,7 @@ const MapScreen = () => {
   const [routeProgress, setRouteProgress] = useState(0);
   const [distanceToDestination, setDistanceToDestination] = useState<number | null>(null);
   const [estimatedTime, setEstimatedTime] = useState<number | null>(null);
+  const [hasReachedDestination, setHasReachedDestination] = useState(false);
 
   // Enhanced progress tracking
   const [distanceWalked, setDistanceWalked] = useState(0); // Never decreases
@@ -311,27 +314,41 @@ const MapScreen = () => {
 
   // Send current location to map when map becomes ready
   useEffect(() => {
-    if (isMapReady && currentLocation && webViewRef.current) {
+    if (isMapReady && currentLocation && webViewRef.current && shouldCenterMap) {
       console.log('🗺️ Map is now ready and we have location, sending to WebView:', currentLocation);
       const zoomLevel = isNavigating ? 18 : 16;
       const jsCode = `window.updateUserLocation && window.updateUserLocation(${currentLocation.latitude}, ${currentLocation.longitude}, true, ${zoomLevel});`;
       webViewRef.current.injectJavaScript(jsCode);
+      setShouldCenterMap(false); // Prevent auto-centering on subsequent updates
     }
-  }, [isMapReady, currentLocation, isNavigating]);
+  }, [isMapReady, currentLocation, shouldCenterMap]);
 
-  const sendLocationToWebView = (lat: number, lon: number, centerMap = false) => {
+  const sendLocationToWebView = (
+    lat: number,
+    lon: number,
+    centerMap = false,
+    forceZoom = false,
+  ) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
-    console.log('📍 Sending location to WebView:', { lat, lon, centerMap, isMapReady });
+    // console.log('📍 Sending location to WebView:', { lat, lon, centerMap, isMapReady });
 
     // Only inject JavaScript if the map is ready
     if (!isMapReady || !webViewRef.current) {
-      console.log('⚠️ Map not ready or WebView not available, storing location for later');
+      // console.log('⚠️ Map not ready or WebView not available, storing location for later');
       return;
     }
 
-    const zoomLevel = isNavigating ? 18 : 16;
+    let jsCode;
+    if (forceZoom || (centerMap && shouldCenterMap)) {
+      const zoomLevel = isNavigating ? 18 : 16;
+      jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap}, ${zoomLevel});`;
+      // After first center, don't auto-center anymore unless explicitly requested
+      if (centerMap) setShouldCenterMap(false);
+    } else {
+      // Don't pass zoom level - let the map maintain current zoom
+      jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap});`;
+    }
 
-    const jsCode = `window.updateUserLocation && window.updateUserLocation(${lat}, ${lon}, ${centerMap}, ${zoomLevel});`;
     console.log('📤 Injecting location JavaScript:', jsCode);
     webViewRef.current.injectJavaScript(jsCode);
 
@@ -455,6 +472,7 @@ const MapScreen = () => {
     setShowLocationRefreshPopup(false); // Close the popup
     setTempMessage('Refreshing location...');
     setError(null); // Clear any existing errors
+    setShouldCenterMap(true);
 
     try {
       // Stop any existing location watching
@@ -895,6 +913,7 @@ const MapScreen = () => {
     setDistanceWalked(0);
     setStartLocation(null);
     setOriginalRouteDistance(null);
+    setHasReachedDestination(false);
 
     // Stop navigation if it's active
     if (isNavigating) {
@@ -1022,6 +1041,7 @@ const MapScreen = () => {
     setStatus('Navigation started');
     setRouteProgress(0);
     setNavigationStartTime(Date.now());
+    setHasReachedDestination(false);
 
     // Initialize enhanced progress tracking
     setDistanceWalked(0);
@@ -1029,6 +1049,7 @@ const MapScreen = () => {
     if (distanceToDestination !== null) {
       setOriginalRouteDistance(distanceToDestination);
     }
+    sendLocationToWebView(currentLocation.latitude, currentLocation.longitude, true, true);
 
     // Start watching position with higher frequency
     if (watchIdRef.current) {
@@ -1038,7 +1059,8 @@ const MapScreen = () => {
     watchIdRef.current = Geolocation.watchPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        sendLocationToWebView(latitude, longitude, true);
+        // Don't center or force zoom on location updates during navigation
+        sendLocationToWebView(latitude, longitude, false, false);
       },
       (error) => {
         setError('Failed to track location');
@@ -1064,6 +1086,7 @@ const MapScreen = () => {
     }
 
     setIsNavigating(false);
+    setHasReachedDestination(false);
     setStatus('Navigation stopped');
     if (isMapReady && webViewRef.current) {
       webViewRef.current.injectJavaScript(
@@ -1090,9 +1113,8 @@ const MapScreen = () => {
 
   // Update the updateNavigationProgress function to check for destination arrival
   const updateNavigationProgress = (latitude: number, longitude: number) => {
-    // Add safety check at the beginning
-    if (!lastRoute.current || lastRoute.current.length === 0) {
-      console.warn('No route data available for progress update');
+    // Add safety checks at the beginning
+    if (!lastRoute.current || lastRoute.current.length === 0 || hasReachedDestination) {
       return;
     }
 
@@ -1259,20 +1281,29 @@ const MapScreen = () => {
     // Check destination arrival based on either:
     // 1. Progress is 100%
     // 2. Distance to destination is less than 3 meters
-    if ((newProgress >= 100 || distanceToEnd < 3) && isNavigating) {
+    if ((newProgress >= 100 || distanceToEnd < 3) && isNavigating && !hasReachedDestination) {
       destinationReached();
     }
   };
 
   // Destination reached function with haptic feedback
   const destinationReached = async () => {
-    if (!isNavigating) return; // Only handle if actually navigating
+    if (!isNavigating || hasReachedDestination) return;
 
-    // Stop navigation FIRST to prevent repeated calls
-    stopNavigation();
+    console.log('🎯 Destination reached - triggering once');
+
+    // Set the flag immediately to prevent re-entry
+    setHasReachedDestination(true);
+    setIsNavigating(false);
+
+    // Stop all location tracking immediately
+    if (watchIdRef.current) {
+      Geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
 
     try {
-      // Trigger success haptic feedback
+      // Trigger success haptic feedback ONCE
       if (isHapticFeedbackEnabled) {
         ReactNativeHapticFeedback.trigger('notificationSuccess', hapticOptions);
       }
@@ -1281,46 +1312,20 @@ const MapScreen = () => {
       await incrementRoutes();
 
       const userId = auth().currentUser?.uid;
-      if (!userId) {
-        console.warn('User not authenticated.');
-        return;
+      if (userId && selectedPOI) {
+        const visit: Visit = {
+          userId,
+          poiId: selectedPOI.id,
+          name: selectedPOI.name,
+          timestamp: firestore.Timestamp.now(),
+          centroid: selectedPOI.centroid,
+        };
+        await addRecentlyVisitedPOI(visit);
       }
-
-      const visit: Visit = {
-        userId,
-        poiId: selectedPOI.id,
-        name: selectedPOI.name,
-        timestamp: firestore.Timestamp.now(),
-        centroid: selectedPOI.centroid,
-      };
-
-      await addRecentlyVisitedPOI(visit);
-      // console.log('Visit recorded:', selectedPOI.name);
     } catch (error) {
-      // console.error('Failed to record visit:', error);
+      console.error('Failed to record visit:', error);
     }
 
-    // Clear destination and navigation state to hide the progress bar
-    setDestination('');
-    setDestinationCoords(null);
-    setRouteProgress(0);
-    setDistanceToDestination(null);
-    setEstimatedTime(null);
-    setSelectedFeature(null);
-    setSelectedPOI(null);
-
-    // Reset enhanced progress tracking
-    setDistanceWalked(0);
-    setStartLocation(null);
-    setOriginalRouteDistance(null);
-
-    // Clear the route from the map
-    if (isMapReady && webViewRef.current) {
-      webViewRef.current.injectJavaScript('window.clearRoute && window.clearRoute();');
-    }
-    lastRoute.current = [];
-
-    // Show destination reached message
     setStatus('You have reached your destination!');
     setRouteProgress(100);
 
@@ -1329,6 +1334,12 @@ const MapScreen = () => {
       setTimeout(() => {
         Tts.speak('You have reached your destination');
       }, 500);
+    }
+    // Clear progress line from map
+    if (isMapReady && webViewRef.current) {
+      webViewRef.current.injectJavaScript(
+        'if (window.progressLine) { map.removeLayer(window.progressLine); window.progressLine = null; }',
+      );
     }
 
     // Show destination reached popup
@@ -1366,36 +1377,6 @@ const MapScreen = () => {
     } catch (error) {
       console.error('Error saving crowd report:', error);
       setError('Failed to submit crowd report');
-    }
-  };
-
-  //IMP: temp test to take out later
-  const simulateDestinationReached = async () => {
-    if (!selectedPOI) {
-      console.warn('No POI selected to simulate destination reached.');
-      return;
-    }
-
-    try {
-      const userId = auth().currentUser?.uid;
-      if (!userId) return;
-
-      const visit: Visit = {
-        userId,
-        poiId: selectedPOI.id,
-        name: selectedPOI.name,
-        timestamp: firestore.Timestamp.now(),
-        centroid: selectedPOI.centroid,
-      };
-
-      await addRecentlyVisitedPOI(visit);
-      // console.log('Simulated visit recorded:', selectedPOI.name);
-      setSuccessPopupMessage(`Simulated visit to: ${selectedPOI.name}`);
-      setShowSuccessPopup(true);
-    } catch (error) {
-      // console.error('Failed to simulate visit:', error);
-      setErrorPopupMessage('Failed to simulate visit. Please try again.');
-      setShowErrorPopup(true);
     }
   };
 
@@ -1623,32 +1604,43 @@ const MapScreen = () => {
           permissions['android.permission.ACCESS_COARSE_LOCATION'] === 'granted';
 
         if (fineGranted || coarseGranted) {
-          // console.log('✅ Starting location watch...');
-
-          // Android 12+ requires different options
-          const watchOptions =
-            Number(Platform.Version) >= 31
+          const watchOptions = isNavigating
+            ? {
+                enableHighAccuracy: true,
+                distanceFilter: 3, // Update every 3 meters
+                interval: 2000, // Update every 2 seconds
+                timeout: 25000,
+                maximumAge: 8000,
+              }
+            : Number(Platform.Version) >= 31
               ? {
-                  enableHighAccuracy: fineGranted, // Use high accuracy only if fine location granted
-                  distanceFilter: 3,
+                  // General browsing - Android 12+
+                  enableHighAccuracy: fineGranted,
+                  distanceFilter: 5,
                   interval: 2000,
-                  fastestInterval: 1000,
                   timeout: 25000,
-                  maximumAge: 8000,
+                  maximumAge: 15000,
                 }
               : {
+                  // General browsing - Pre-Android 12
                   enableHighAccuracy: true,
                   distanceFilter: 5,
                   interval: 2000,
                   timeout: 20000,
-                  maximumAge: 5000,
+                  maximumAge: 15000,
                 };
 
           watchId = Geolocation.watchPosition(
             (position) => {
-              // console.log('📍 Location update:', position.coords.accuracy + 'm accuracy');
               const { latitude, longitude } = position.coords;
-              sendLocationToWebView(latitude, longitude);
+
+              if (isNavigating) {
+                // Don't center during navigation, let navigation handle it
+                sendLocationToWebView(latitude, longitude, false, false);
+              } else {
+                // Center only on first location or when explicitly requested
+                sendLocationToWebView(latitude, longitude, false, false);
+              }
             },
             (error) => {
               console.error('❌ Location watch error:', error);
@@ -1669,11 +1661,10 @@ const MapScreen = () => {
 
     return () => {
       if (watchId !== null) {
-        // console.log('🛑 Stopping location watch');
         Geolocation.clearWatch(watchId);
       }
     };
-  }, []);
+  }, [isNavigating]);
 
   // Helper to calculate distance between two lat/lon points (Haversine formula)
   function getDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -1876,18 +1867,25 @@ const MapScreen = () => {
 
   // Add this new useEffect after your other useEffects
   useEffect(() => {
-    // Only run when navigating
-    if (!isNavigating || !currentLocation) return;
+    // Only run when navigating AND haven't reached destination
+    if (!isNavigating || !currentLocation || hasReachedDestination) {
+      return; // Exit early if any condition is not met
+    }
 
     // Force update progress every 0.5 seconds
     const progressInterval = setInterval(() => {
-      if (currentLocation && lastRoute.current && lastRoute.current.length > 0) {
+      if (
+        currentLocation &&
+        lastRoute.current &&
+        lastRoute.current.length > 0 &&
+        !hasReachedDestination
+      ) {
         updateNavigationProgress(currentLocation.latitude, currentLocation.longitude);
       }
     }, 500);
 
     return () => clearInterval(progressInterval);
-  }, [isNavigating, currentLocation]);
+  }, [isNavigating, currentLocation, hasReachedDestination]); // Add hasReachedDestination dependency
 
   // Check for location availability after map loads
   useEffect(() => {
@@ -1902,40 +1900,6 @@ const MapScreen = () => {
       return () => clearTimeout(locationTimeout);
     }
   }, [isMapReady, currentLocation, isRefreshingLocation, showLocationRefreshPopup]);
-
-  // Dynamically request location updates every 3 seconds
-  useEffect(() => {
-    let watchId: number | null = null;
-
-    const startWatchingLocation = async () => {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      );
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        watchId = Geolocation.watchPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            sendLocationToWebView(latitude, longitude);
-          },
-          (error) => {
-            setError('Failed to get location');
-          },
-          { enableHighAccuracy: true, distanceFilter: 0, interval: 3000, fastestInterval: 3000 },
-        );
-      } else {
-        setError('Location permission denied');
-      }
-    };
-
-    startWatchingLocation();
-
-    return () => {
-      if (watchId !== null) {
-        Geolocation.clearWatch(watchId);
-      }
-    };
-  }, []);
-
   function toggleMapRotation(): void {
     if (webViewRef.current && isMapReady) {
       webViewRef.current.injectJavaScript(`
@@ -2509,22 +2473,6 @@ const MapScreen = () => {
         </View>
       ) : null}
 
-      <TouchableOpacity //IMP: test to take out laters
-        style={{
-          position: 'absolute',
-          bottom: 50, // Adjust position to avoid overlap with the admin button
-          right: 20,
-          backgroundColor: 'blue',
-          paddingVertical: 10,
-          paddingHorizontal: 16,
-          borderRadius: 8,
-          elevation: 4,
-        }}
-        onPress={simulateDestinationReached}
-      >
-        <Text style={{ color: 'white', textAlign: 'center' }}>Simulate Destination Reached</Text>
-      </TouchableOpacity>
-
       {/* Error Popup */}
       <StandardPopup
         visible={showErrorPopup}
@@ -2561,6 +2509,27 @@ const MapScreen = () => {
         destination={selectedPOI?.name || destination || 'Your Destination'}
         onClose={() => {
           setShowDestinationReachedPopup(false);
+          setHasReachedDestination(false);
+          // Clear destination and navigation state to hide the progress bar
+          setDestination('');
+          setDestinationCoords(null);
+          setRouteProgress(0);
+          setDistanceToDestination(null);
+          setEstimatedTime(null);
+          setSelectedFeature(null);
+          setSelectedPOI(null);
+          setSteps([]);
+          setCurrentStep(0);
+          // Reset enhanced progress tracking
+          setDistanceWalked(0);
+          setStartLocation(null);
+          setOriginalRouteDistance(null);
+
+          // Clear the route from the map
+          if (isMapReady && webViewRef.current) {
+            webViewRef.current.injectJavaScript('window.clearRoute && window.clearRoute();');
+          }
+          lastRoute.current = [];
           setStatus('Ready for navigation');
         }}
         themeColors={{
