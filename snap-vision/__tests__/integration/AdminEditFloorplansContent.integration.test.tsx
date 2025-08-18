@@ -195,5 +195,36 @@ describe('AdminEditFloorplansContent Integration Tests', () => {
     });
   });
 
+  it('handles failed floorplan deletion', async () => {
+    const mockDeleteFloorplan = jest.fn().mockResolvedValue({ 
+      success: false, 
+      error: 'Deletion failed' 
+    });
+    mockUseAdminFloorplans.mockReturnValue({
+      isLoading: false,
+      error: null,
+      deleteFloorplan: mockDeleteFloorplan,
+    });
+
+    const { getByTestId, getByText } = render(
+      <AllTheProviders>
+        <AdminEditFloorplansContent />
+      </AllTheProviders>
+    );
+
+    // Trigger delete
+    const deleteButton = getByTestId('delete-floorplan-button');
+    fireEvent.press(deleteButton);
+
+    // Confirm delete
+    const confirmButton = getByText('Delete');
+    fireEvent.press(confirmButton);
+
+    await waitFor(() => {
+      expect(mockDeleteFloorplan).toHaveBeenCalled();
+      // Error should be handled by the hook, no UI change expected
+    });
+  });
+
 
 });
