@@ -7,7 +7,6 @@ import firestore from '@react-native-firebase/firestore';
 import SettingsHeader from '../molecules/SettingsHeader';
 import {
   calculateRoute,
-  filterDuplicateSteps,
   generateDetailedDirections,
   NavigationStep,
 } from '../../utils/navigationUtils';

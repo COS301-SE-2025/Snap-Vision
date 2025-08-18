@@ -128,20 +128,6 @@ export function findNearestRoom(
   return nearest;
 }
 
-export function filterDuplicateSteps(steps: NavigationStep[]): NavigationStep[] {
-  if (!steps.length) return [];
-  const seen = new Set<string>();
-  const filtered: NavigationStep[] = [];
-  for (const step of steps) {
-    const key = `${step.instruction}|${step.coordinates.x.toFixed(1)}|${step.coordinates.y.toFixed(3)}`;
-    if (!seen.has(key)) {
-      filtered.push(step);
-      seen.add(key);
-    }
-  }
-  return filtered;
-}
-
 export const calculateMultiFloorRoute = (
   startRoomId: string,
   endRoomId: string,
@@ -238,6 +224,7 @@ export const calculateMultiFloorRoute = (
           } else if (turnType === 'left') {
             instruction = `Turn left towards ${nextRoom.name}`;
             type = 'turn';
+            console.log('hi tony');
           } else if (turnType === 'right') {
             instruction = `Turn right towards ${nextRoom.name}`;
             type = 'turn';
@@ -347,7 +334,6 @@ export const calculateMultiFloorRoute = (
 
   return steps;
 };
-// ...existing code...
 
 //Graph
 
