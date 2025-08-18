@@ -13,16 +13,18 @@ import { getThemeColors } from '../../theme';
 import { LocationSelector } from '../molecules/LocationSelector';
 import { useBuildings } from '../../hooks/useBuildings';
 import { useFloorplanUpload } from '../../hooks/useFloorplanUpload';
-import  BuildingSelector  from '../molecules/BuildingSelector';
+import BuildingSelector from '../molecules/BuildingSelector';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 type RootStackParamList = {
   AdminFloorplanEditor: any;
-
 };
 
-type AdminLoadFloorplansNavigationProp = StackNavigationProp<RootStackParamList, 'AdminFloorplanEditor'>;
+type AdminLoadFloorplansNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'AdminFloorplanEditor'
+>;
 
 export default function AdminLoadFloorplansContent() {
   const { isDark } = useTheme();
