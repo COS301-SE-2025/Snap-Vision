@@ -33,6 +33,9 @@ jest.spyOn(Image, 'prefetch').mockImplementation((url: string) => Promise.resolv
 describe('FloorplanManager', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    Object.keys(require('../src/utils/FloorplanManager').globalFloorplanCache || {}).forEach(
+      (key) => delete require('../src/utils/FloorplanManager').globalFloorplanCache[key],
+    );
   });
 
   it('preloads floorplans and updates cache', async () => {
@@ -58,6 +61,47 @@ describe('FloorplanManager', () => {
     expect(onProgress).toHaveBeenCalledWith(0, 2);
     expect(isFloorplanPreloaded('url3')).toBe(true);
     expect(isFloorplanPreloaded('url4')).toBe(true);
+  });
+
+  it('preloadFloorplans resolves immediately if urls is empty', async () => {
+    await expect(preloadFloorplans([])).resolves.toBeUndefined();
+    expect(Image.prefetch).not.toHaveBeenCalled();
+  });
+
+  it('preloadFloorplans handles prefetch error branch', async () => {
+    (Image.prefetch as jest.Mock).mockRejectedValueOnce(new Error('fail'));
+    await preloadFloorplans(['badurl']);
+    expect(Image.prefetch).toHaveBeenCalledWith('badurl');
+    expect(isFloorplanPreloaded('badurl')).toBe(false);
+  });
+
+  it('useFloorplanPreloader handles prefetch error branch', async () => {
+    (Image.prefetch as jest.Mock).mockRejectedValueOnce(new Error('fail'));
+    const onProgress = jest.fn();
+    await act(async () => {
+      renderHook(() => useFloorplanPreloader(['badurl'], onProgress));
+    });
+    expect(onProgress).toHaveBeenCalled();
+  });
+
+  it('isFloorplanPreloaded returns false for uncached url', () => {
+    expect(isFloorplanPreloaded('notcached')).toBe(false);
+  });
+
+  it('preloadFloorplans handles prefetch error branch', async () => {
+    (Image.prefetch as jest.Mock).mockRejectedValueOnce(new Error('fail'));
+    await preloadFloorplans(['badurl']);
+    expect(Image.prefetch).toHaveBeenCalledWith('badurl');
+    expect(isFloorplanPreloaded('badurl')).toBe(false);
+  });
+
+  it('useFloorplanPreloader calls onProgress immediately if all URLs are cached', async () => {
+    // Mark url1 as cached using the API
+    await preloadFloorplans(['url1']);
+    const onProgress = jest.fn();
+    renderHook(() => useFloorplanPreloader(['url1'], onProgress));
+    expect(onProgress).toHaveBeenCalledWith(1, 1);
+    expect(Image.prefetch).not.toHaveBeenCalled();
   });
 });
 
@@ -255,56 +299,5 @@ describe('floorplanUtils', () => {
     // Should remove both duplicates
     expect(AsyncStorage.removeItem).toHaveBeenCalledWith('floorplan_A_Floor_1_dup1');
     expect(AsyncStorage.removeItem).toHaveBeenCalledWith('floorplan_A_Floor_1_dup2');
-  });
-});
-
-describe('FloorplanManager branch coverage', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    // Reset global cache
-    Object.keys(require('../src/utils/FloorplanManager').globalFloorplanCache || {}).forEach(
-      (key) => delete require('../src/utils/FloorplanManager').globalFloorplanCache[key],
-    );
-  });
-
-  it('preloadFloorplans resolves immediately if urls is empty', async () => {
-    await expect(preloadFloorplans([])).resolves.toBeUndefined();
-    expect(Image.prefetch).not.toHaveBeenCalled();
-  });
-
-  it('preloadFloorplans handles prefetch error branch', async () => {
-    (Image.prefetch as jest.Mock).mockRejectedValueOnce(new Error('fail'));
-    await preloadFloorplans(['badurl']);
-    expect(Image.prefetch).toHaveBeenCalledWith('badurl');
-    expect(isFloorplanPreloaded('badurl')).toBe(false);
-  });
-
-  it('useFloorplanPreloader handles prefetch error branch', async () => {
-    (Image.prefetch as jest.Mock).mockRejectedValueOnce(new Error('fail'));
-    const onProgress = jest.fn();
-    await act(async () => {
-      renderHook(() => useFloorplanPreloader(['badurl'], onProgress));
-    });
-    expect(onProgress).toHaveBeenCalled();
-  });
-
-  it('isFloorplanPreloaded returns false for uncached url', () => {
-    expect(isFloorplanPreloaded('notcached')).toBe(false);
-  });
-
-  it('preloadFloorplans handles prefetch error branch', async () => {
-    (Image.prefetch as jest.Mock).mockRejectedValueOnce(new Error('fail'));
-    await preloadFloorplans(['badurl']);
-    expect(Image.prefetch).toHaveBeenCalledWith('badurl');
-    expect(isFloorplanPreloaded('badurl')).toBe(false);
-  });
-
-  it('useFloorplanPreloader calls onProgress immediately if all URLs are cached', async () => {
-    // Mark url1 as cached using the API
-    await preloadFloorplans(['url1']);
-    const onProgress = jest.fn();
-    renderHook(() => useFloorplanPreloader(['url1'], onProgress));
-    expect(onProgress).toHaveBeenCalledWith(1, 1);
-    expect(Image.prefetch).not.toHaveBeenCalled();
   });
 });
