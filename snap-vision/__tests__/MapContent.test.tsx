@@ -467,5 +467,30 @@ describe('MapContent', () => {
     expect(getByText('IndoorPickerModal')).toBeTruthy();
   });
 
+  it('shows IndoorNavigationButton if selectedBuildingForIndoor is set', () => {
+    const { getByText } = render(<MapContent {...baseProps} selectedBuildingForIndoor={{}} />);
+    expect(getByText('IndoorNavBtn')).toBeTruthy();
+  });
+
+  // Navigation tests
+  it('shows NavigationPanel if destination and destinationCoords are set', () => {
+    const { getByText } = render(
+      <MapContent {...baseProps} destination="Test" destinationCoords={[1, 2]} />,
+    );
+    expect(getByText('NavOff')).toBeTruthy();
+  });
+
+  it('shows NavigationPanel with NavOn if isNavigating is true', () => {
+    const { getByText } = render(
+      <MapContent
+        {...baseProps}
+        destination="Test"
+        destinationCoords={[1, 2]}
+        isNavigating
+      />,
+    );
+    expect(getByText('NavOn')).toBeTruthy();
+  });
+
   
 });
