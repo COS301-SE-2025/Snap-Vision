@@ -618,5 +618,46 @@ describe('MapContent', () => {
     expect(queryByText('test DestinationSearch')).toBeNull();
   });
 
+  // Popup tests
+  it('shows custom location error popup when showLocationRefreshPopup is true', () => {
+    const { getByText } = render(
+      <MapContent {...baseProps} showLocationRefreshPopup isDark={false} />
+    );
+    expect(getByText('Location Not Found')).toBeTruthy();
+    expect(getByText('Unable to find your location. This can happen indoors or in areas with poor GPS signal.')).toBeTruthy();
+    expect(getByText('Retry Location')).toBeTruthy();
+    expect(getByText('Refresh Map')).toBeTruthy();
+  });
+
+  it('renders custom location error popup in dark mode', () => {
+    const { getByText } = render(
+      <MapContent {...baseProps} showLocationRefreshPopup isDark={true} />
+    );
+    expect(getByText('Location Not Found')).toBeTruthy();
+    expect(getByText('Retry Location')).toBeTruthy();
+    expect(getByText('Refresh Map')).toBeTruthy();
+  });
+
+  it('closes custom location error popup when close button is pressed', () => {
+    const onSetShowLocationRefreshPopup = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} showLocationRefreshPopup isDark={false} onSetShowLocationRefreshPopup={onSetShowLocationRefreshPopup} />
+    );
+    fireEvent.press(getByText('×'));
+    expect(onSetShowLocationRefreshPopup).toHaveBeenCalledWith(false);
+  });
+
+  it('calls onRefreshLocation and onRefreshMap from custom location error popup', () => {
+    const onRefreshLocation = jest.fn();
+    const onRefreshMap = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} showLocationRefreshPopup isDark={false} onRefreshLocation={onRefreshLocation} onRefreshMap={onRefreshMap} />
+    );
+    fireEvent.press(getByText('Retry Location'));
+    expect(onRefreshLocation).toHaveBeenCalled();
+    fireEvent.press(getByText('Refresh Map'));
+    expect(onRefreshMap).toHaveBeenCalled();
+  });
+
   
 });
