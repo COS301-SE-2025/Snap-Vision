@@ -659,5 +659,42 @@ describe('MapContent', () => {
     expect(onRefreshMap).toHaveBeenCalled();
   });
 
+  it('does not render custom location error popup when showLocationRefreshPopup is false', () => {
+    const { queryByText } = render(
+      <MapContent {...baseProps} showLocationRefreshPopup={false} />
+    );
+    expect(queryByText('Location Not Found')).toBeNull();
+  });
+
+  // Standard popup tests
+  it('calls onSetShowErrorPopup(false) when error popup confirm is pressed', () => {
+    const onSetShowErrorPopup = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} showErrorPopup errorPopupMessage="err" onSetShowErrorPopup={onSetShowErrorPopup} />
+    );
+    fireEvent.press(getByText('Confirm'));
+    expect(onSetShowErrorPopup).toHaveBeenCalledWith(false);
+  });
+
+  it('calls onSetShowSuccessPopup(false) when success popup confirm is pressed', () => {
+    const onSetShowSuccessPopup = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} showSuccessPopup successPopupMessage="succ" onSetShowSuccessPopup={onSetShowSuccessPopup} />
+    );
+    fireEvent.press(getByText('Confirm'));
+    expect(onSetShowSuccessPopup).toHaveBeenCalledWith(false);
+  });
+
+  it('calls confirmationPopupData.onConfirm when confirmation popup confirm is pressed', () => {
+    const onConfirm = jest.fn();
+    const confirmationPopupData = { title: 'Confirm', message: 'Proceed?', onConfirm };
+    const { getAllByText } = render(
+      <MapContent {...baseProps} showConfirmationPopup confirmationPopupData={confirmationPopupData} />
+    );
+    const confirmButtons = getAllByText('Confirm');
+    fireEvent.press(confirmButtons[confirmButtons.length - 1]);
+    expect(onConfirm).toHaveBeenCalled();
+  });
+
   
 });
