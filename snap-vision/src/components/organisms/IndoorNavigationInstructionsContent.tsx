@@ -7,6 +7,7 @@ import firestore from '@react-native-firebase/firestore';
 import SettingsHeader from '../molecules/SettingsHeader';
 import {
   calculateRoute,
+  filterDuplicateSteps,
   generateDetailedDirections,
   NavigationStep,
 } from '../../utils/navigationUtils';
@@ -92,14 +93,17 @@ export default function IndoorNavigationInstructionsContent({
         setStartRoomName(startRoom.name || startRoomId);
         setEndRoomName(endRoom.name || endRoomId);
 
-        const routeSteps = calculateRoute(startRoomId, endRoomId, rooms, paths);
-        if (!routeSteps.length) {
+        const steps = calculateRoute(startRoomId, endRoomId, rooms, paths);
+
+        if (!steps.length) {
           setError('No route found between selected rooms');
           return;
         }
 
-        const detailed = generateDetailedDirections(routeSteps);
-        setSteps(detailed);
+        const detailed = generateDetailedDirections(steps);
+
+        const routeSteps = detailed.slice(1);
+        setSteps(routeSteps);
       } catch (e) {
         console.error(e);
         setError('Failed to generate navigation route');

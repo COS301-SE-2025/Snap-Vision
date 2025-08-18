@@ -10,6 +10,7 @@ import StepsBottomSheet from '../components/molecules/StepsBottomSheet';
 import * as NavUtils from '../utils/navigationUtils';
 import { Picker } from '@react-native-picker/picker';
 import StandardPopup from '../components/atoms/StandardPopup';
+import DestinationReachedPopup from '../components/molecules/DestinationReachedPopup';
 import AppSecondaryButton from '../components/atoms/AppSecondaryButton';
 import QRScanner from '../components/molecules/QRScanner';
 import { getQRCodeMappingByValue } from '../services/qrService';
@@ -80,6 +81,10 @@ export default function IndoorSchematicNavScreen() {
   const [popupTitle, setPopupTitle] = useState('');
   const [popupMessage, setPopupMessage] = useState('');
   const [popupConfirmText, setPopupConfirmText] = useState('OK');
+
+  // Destination Reached Popup state
+  const [showDestinationReachedPopup, setShowDestinationReachedPopup] = useState(false);
+  const [reachedDestination, setReachedDestination] = useState('');
 
   // QR Scanner state
   const [qrScannerVisible, setQrScannerVisible] = useState(false);
@@ -493,6 +498,8 @@ export default function IndoorSchematicNavScreen() {
     setSheetOpen(false);
   };
 
+  const nextInstructionEnd = steps[currentStep]?.coordinates;
+
   // Compute route (multi-floor if available)
   useEffect(() => {
     if (!startId || !endId) return;
@@ -523,22 +530,34 @@ export default function IndoorSchematicNavScreen() {
     }
 
     const detailed = NavUtils.generateDetailedDirections(routeSteps);
-    setSteps(detailed);
+    const filtered = detailed.slice(1);
+    setSteps(filtered);
     setCurrentStep(0);
     setSheetOpen(true);
 
-    const firstStep = detailed[0];
+    const firstStep = filtered[0];
     if (firstStep?.coordinates) setCurrentPos(firstStep.coordinates);
     if ((firstStep as any)?.floorId) setSelectedFloorId(String((firstStep as any).floorId));
   }, [startId, endId, allRooms, allPaths]);
 
   const handleAdvance = () => {
     if (!steps.length) return;
+    const endpoint = steps[currentStep]?.coordinates;
+    if (currentPos && endpoint) {
+      const dist = NavUtils.calculateDistance(currentPos, endpoint);
+      if (dist > 0.1) {
+        setPopupTitle('Not there yet');
+        setPopupMessage('Move closer to the highlighted point to complete this step.');
+        setPopupConfirmText('OK');
+        setPopupVisible(true);
+        return;
+      }
+    }
     if (currentStep >= steps.length - 1) {
-      setPopupTitle('Done');
-      setPopupMessage('You have reached your destination.');
-      setPopupConfirmText('OK');
-      setPopupVisible(true);
+      // Use custom destination reached popup with confetti instead of standard popup
+      const destinationRoom = allRooms.find((room) => room.id === endId);
+      setReachedDestination(destinationRoom?.name || 'Your Destination');
+      setShowDestinationReachedPopup(true);
       resetRoute();
       return;
     }
@@ -643,11 +662,12 @@ export default function IndoorSchematicNavScreen() {
           themeColors={colors}
           currentPos={currentPos || undefined}
           floorplanUrl={floorplanUrl || undefined}
+          nextInstructionEnd={nextInstructionEnd}
         />
       </View>
 
       {/* { !!Uncomment to show Bottom sheet with step-by-step directions!!} */}
-      {/* Directions sheet
+      {/*Directions sheet*/}
       <StepsBottomSheet
         visible={sheetOpen}
         onClose={() => setSheetOpen(false)}
@@ -656,16 +676,16 @@ export default function IndoorSchematicNavScreen() {
         colors={colors}
         currentStep={currentStep}
         onAdvance={handleAdvance}
-      /> */}
+      />
 
-      {steps.length > 0 && (
+      {/* {steps.length > 0 && !sheetOpen &&(
         <AppSecondaryButton
           title="Proceed"
           onPress={handleAdvance}
           style={styles.proceedBtn}
           testID="proceed-btn"
         />
-      )}
+      )} */}
 
       {/* Floating Directions button */}
       {!sheetOpen && steps.length > 0 && (
@@ -681,7 +701,7 @@ export default function IndoorSchematicNavScreen() {
       )}
 
       {/* Floating AR button Uncomment to see AR */}
-      {/* {steps.length > 0 && startId && endId && (
+      {steps.length > 0 && startId && endId && (
         <TouchableOpacity
           onPress={() =>
             navigation.navigate('ARIndoorNav', {
@@ -726,6 +746,19 @@ export default function IndoorSchematicNavScreen() {
         confirmText={popupConfirmText}
         onConfirm={() => setPopupVisible(false)}
         showCancel={false}
+      />
+
+      {/* Custom Destination Reached Popup with Confetti */}
+      <DestinationReachedPopup
+        visible={showDestinationReachedPopup}
+        destination={reachedDestination}
+        onClose={() => setShowDestinationReachedPopup(false)}
+        themeColors={{
+          primary: colors.primary,
+          background: colors.backgroundLighter || colors.background,
+          text: colors.text,
+          success: colors.success || '#4CAF50',
+        }}
       />
     </View>
   );
@@ -811,7 +844,7 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: 16,
-    bottom: 16,
+    top: 94,
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderRadius: 24,
@@ -821,12 +854,23 @@ const styles = StyleSheet.create({
   fabAR: {
     position: 'absolute',
     right: 16,
-    bottom: 74,
+    top: 144,
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 24,
     borderWidth: 1,
     elevation: 4,
+  },
+
+  fabTest: {
+    position: 'absolute',
+    right: 16,
+    top: 194,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 24,
+    elevation: 5,
+    zIndex: 10,
   },
 
   proceedBtn: {

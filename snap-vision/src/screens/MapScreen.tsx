@@ -19,6 +19,7 @@ import MapWebView from '../components/organisms/MapWebView';
 import CrowdReportModal from '../components/molecules/CrowdReportModal';
 import StatusOverlay from '../components/atoms/StatusOverlay';
 import StandardPopup from '../components/atoms/StandardPopup';
+import DestinationReachedPopup from '../components/molecules/DestinationReachedPopup';
 import DestinationSearch from '../components/molecules/DestinationSearch';
 import MapActionsPanel from '../components/organisms/MapActionsPanel';
 import NavigationPanel from '../components/organisms/NavigationPanel';
@@ -2502,12 +2503,11 @@ const MapScreen = () => {
         showCancel={true}
       />
 
-      {/* Destination Reached Popup */}
-      <StandardPopup
+      {/* Destination Reached Popup with Confetti */}
+      <DestinationReachedPopup
         visible={showDestinationReachedPopup}
-        title="Destination Reached"
-        message="You have arrived at your destination!"
-        onConfirm={() => {
+        destination={selectedPOI?.name || destination || 'Your Destination'}
+        onClose={() => {
           setShowDestinationReachedPopup(false);
           setHasReachedDestination(false);
           // Clear destination and navigation state to hide the progress bar
@@ -2532,7 +2532,12 @@ const MapScreen = () => {
           lastRoute.current = [];
           setStatus('Ready for navigation');
         }}
-        showCancel={false}
+        themeColors={{
+          primary: colors.primary,
+          background: colors.backgroundLighter || colors.background,
+          text: colors.text,
+          success: colors.success || '#4CAF50',
+        }}
       />
 
       {/* Location Error Banner - Non-modal but centered like a popup */}
