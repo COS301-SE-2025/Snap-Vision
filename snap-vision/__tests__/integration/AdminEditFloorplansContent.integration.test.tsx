@@ -226,5 +226,28 @@ describe('AdminEditFloorplansContent Integration Tests', () => {
     });
   });
 
+  it('handles non-admin user role', async () => {
+    mockUseUserRole.mockReturnValue({
+      role: 'user',
+      adminLocations: [],
+      isLoading: false,
+    });
+
+    mockUseAdminFloorplans.mockReturnValue({
+      isLoading: false,
+      error: null,
+      deleteFloorplan: jest.fn(),
+    });
+
+    const { getByText } = render(
+      <AllTheProviders>
+        <AdminEditFloorplansContent />
+      </AllTheProviders>
+    );
+
+    await waitFor(() => {
+      expect(getByText('Edit Floorplans')).toBeTruthy();
+    });
+  });
 
 });
