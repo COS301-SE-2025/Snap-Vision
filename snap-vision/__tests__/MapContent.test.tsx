@@ -564,5 +564,59 @@ describe('MapContent', () => {
     expect(getByText('Turn left')).toBeTruthy();
   });
 
+  it('calls onSetShowDirectionsSheet(true) when navigation instruction overlay is pressed', () => {
+    const onSetShowDirectionsSheet = jest.fn();
+    const { getByText } = render(
+      <MapContent
+        {...baseProps}
+        isNavigating
+        steps={[{ instruction: 'Go straight' }]}
+        currentStep={0}
+        onSetShowDirectionsSheet={onSetShowDirectionsSheet}
+      />
+    );
+    fireEvent.press(getByText('Go straight'));
+    expect(onSetShowDirectionsSheet).toHaveBeenCalledWith(true);
+  });
+
+  it('does not render navigation instruction overlay when not navigating', () => {
+    const { queryByText } = render(
+      <MapContent
+        {...baseProps}
+        isNavigating={false}
+        steps={[{ instruction: 'Turn left' }]}
+        currentStep={0}
+      />
+    );
+    expect(queryByText('Turn left')).toBeNull();
+  });
+
+  it('does not render navigation instruction overlay when no steps available', () => {
+    const { queryByText } = render(
+      <MapContent
+        {...baseProps}
+        isNavigating={true}
+        steps={[]}
+        currentStep={0}
+      />
+    );
+    expect(queryByText('Turn left')).toBeNull();
+  });
+
+  // Search visibility tests
+  it('shows DestinationSearch when not navigating', () => {
+    const { getByText } = render(
+      <MapContent {...baseProps} isNavigating={false} destination="test" />
+    );
+    expect(getByText('test DestinationSearch')).toBeTruthy();
+  });
+
+  it('hides DestinationSearch when navigating', () => {
+    const { queryByText } = render(
+      <MapContent {...baseProps} isNavigating={true} destination="test" />
+    );
+    expect(queryByText('test DestinationSearch')).toBeNull();
+  });
+
   
 });
