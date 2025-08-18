@@ -718,7 +718,7 @@ export default function IndoorSchematicNavScreen() {
         >
           <Text style={{ color: colors.text, fontWeight: '700' }}>AR</Text>
         </TouchableOpacity>
-      )} */}
+      )}
 
       {/* Floating QR scan button */}
       <TouchableOpacity
