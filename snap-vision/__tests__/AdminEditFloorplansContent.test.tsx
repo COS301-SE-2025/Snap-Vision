@@ -31,16 +31,24 @@ jest.mock('../src/components/molecules/SettingsHeader', () => {
 
 jest.mock('../src/components/atoms/StandardPopup', () => {
   const React = require('react');
-  const { Text } = require('react-native');
+  const { Text, TouchableOpacity } = require('react-native');
   return {
     __esModule: true,
     default: (props: any) =>
       props.visible ? (
         <>
-          <Text>{props.title}</Text>
-          <Text>{props.message}</Text>
-          {props.showCancel && <Text>{props.cancelText || 'Cancel'}</Text>}
-          {props.confirmText && <Text>{props.confirmText}</Text>}
+          {props.title && <Text>{props.title}</Text>}
+          {props.message && <Text>{props.message}</Text>}
+          {props.showCancel && (
+            <TouchableOpacity onPress={props.onCancel}>
+              <Text>{props.cancelText || 'Cancel'}</Text>
+            </TouchableOpacity>
+          )}
+          {props.confirmText && (
+            <TouchableOpacity onPress={props.onConfirm}>
+              <Text>{props.confirmText}</Text>
+            </TouchableOpacity>
+          )}
         </>
       ) : null,
   };
@@ -157,7 +165,7 @@ describe('AdminEditFloorplansContent', () => {
   });
 
   it('shows delete confirmation popup and deletes', async () => {
-    const { getByTestId, getByText } = render(<AdminEditFloorplansContent />);
+    const { getByTestId, getByText, getAllByText } = render(<AdminEditFloorplansContent />);
     fireEvent.press(getByTestId('delete-btn'));
     expect(getByText('Delete Floorplan')).toBeTruthy();
     expect(getByText(/Are you sure you want to delete/)).toBeTruthy();
