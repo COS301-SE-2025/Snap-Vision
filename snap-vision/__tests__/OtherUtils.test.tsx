@@ -43,7 +43,7 @@ describe('cameraPermissions', () => {
     expect(Alert.alert).toHaveBeenCalledWith(
       'Camera Permission Required',
       expect.stringContaining('AR navigation requires camera access'),
-      [{ text: 'OK' }]
+      [{ text: 'OK' }],
     );
   });
 
