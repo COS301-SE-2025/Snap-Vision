@@ -250,4 +250,24 @@ describe('AdminEditFloorplansContent Integration Tests', () => {
     });
   });
 
+  
+  it('handles error state from floorplans hook', async () => {
+    mockUseAdminFloorplans.mockReturnValue({
+      isLoading: false,
+      error: new Error('Failed to load floorplans'),
+      deleteFloorplan: jest.fn(),
+    });
+
+    const { getByText } = render(
+      <AllTheProviders>
+        <AdminEditFloorplansContent />
+      </AllTheProviders>
+    );
+
+    await waitFor(() => {
+      expect(getByText('Edit Floorplans')).toBeTruthy();
+    });
+  });
+
+
 });
