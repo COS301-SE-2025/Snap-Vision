@@ -10,7 +10,11 @@ jest.mock('../src/components/molecules/LocationSelector', () => {
     LocationSelector: ({ locations, selectedLocation, onLocationSelect }: any) => (
       <>
         {locations.map((loc: string) => (
-          <TouchableOpacity key={loc} testID={`location-${loc}`} onPress={() => onLocationSelect(loc)}>
+          <TouchableOpacity
+            key={loc}
+            testID={`location-${loc}`}
+            onPress={() => onLocationSelect(loc)}
+          >
             <Text>{loc}</Text>
           </TouchableOpacity>
         ))}
@@ -26,7 +30,11 @@ jest.mock('../src/components/molecules/BuildingSelector', () => {
     default: ({ buildings, selectedBuildingId, setSelectedBuildingId }: any) => (
       <>
         {buildings.map((b: any) => (
-          <TouchableOpacity key={b.id} testID={`building-${b.id}`} onPress={() => setSelectedBuildingId(b.id)}>
+          <TouchableOpacity
+            key={b.id}
+            testID={`building-${b.id}`}
+            onPress={() => setSelectedBuildingId(b.id)}
+          >
             <Text>{b.name}</Text>
           </TouchableOpacity>
         ))}
@@ -42,7 +50,11 @@ jest.mock('../src/components/molecules/FloorSelector', () => {
     default: ({ floors, selectedFloorId, setSelectedFloorId }: any) => (
       <>
         {floors.map((f: any) => (
-          <TouchableOpacity key={f.id} testID={`floor-${f.id}`} onPress={() => setSelectedFloorId(f.id)}>
+          <TouchableOpacity
+            key={f.id}
+            testID={`floor-${f.id}`}
+            onPress={() => setSelectedFloorId(f.id)}
+          >
             <Text>{f.name}</Text>
           </TouchableOpacity>
         ))}
@@ -70,7 +82,10 @@ jest.mock('../src/components/molecules/FloorplanActions', () => {
 // Mock hook
 const mockUseAdminFloorplans = {
   locations: ['loc1', 'loc2'],
-  buildings: [{ id: 'b1', name: 'Building 1' }, { id: 'b2', name: 'Building 2' }],
+  buildings: [
+    { id: 'b1', name: 'Building 1' },
+    { id: 'b2', name: 'Building 2' },
+  ],
   floorplans: [
     { id: 'f1', floorLabel: 'Floor 1' },
     { id: 'f2', floorLabel: 'Floor 2' },
@@ -98,7 +113,7 @@ describe('FloorplanSelectionFlow', () => {
         adminLocations={['loc1', 'loc2']}
         onEditFloorplan={onEditFloorplan}
         onDeleteFloorplan={onDeleteFloorplan}
-      />
+      />,
     );
     expect(mockUseAdminFloorplans.fetchLocations).toHaveBeenCalled();
   });
@@ -110,7 +125,7 @@ describe('FloorplanSelectionFlow', () => {
         adminLocations={['loc1', 'loc2']}
         onEditFloorplan={onEditFloorplan}
         onDeleteFloorplan={onDeleteFloorplan}
-      />
+      />,
     );
     expect(queryByTestId('building-b1')).toBeNull();
     fireEvent.press(getByTestId('location-loc1'));
@@ -124,7 +139,7 @@ describe('FloorplanSelectionFlow', () => {
         adminLocations={['loc1', 'loc2']}
         onEditFloorplan={onEditFloorplan}
         onDeleteFloorplan={onDeleteFloorplan}
-      />
+      />,
     );
     fireEvent.press(getByTestId('location-loc1'));
     fireEvent.press(getByTestId('building-b1'));
@@ -138,7 +153,7 @@ describe('FloorplanSelectionFlow', () => {
         adminLocations={['loc1', 'loc2']}
         onEditFloorplan={onEditFloorplan}
         onDeleteFloorplan={onDeleteFloorplan}
-      />
+      />,
     );
     fireEvent.press(getByTestId('location-loc1'));
     fireEvent.press(getByTestId('building-b1'));
