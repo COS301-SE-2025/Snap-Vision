@@ -18,7 +18,7 @@ function normalizeAngle(angle: number) {
 }
 
 describe('navigationUtils basic tests', () => {
-    it('calculates initial facing direction correctly', () => {
+  it('calculates initial facing direction correctly', () => {
     // Up (positive Y) should be 180°
     expect(calculateInitialFacingDirection({ x: 0, y: 0 }, { x: 0, y: 1 })).toBeCloseTo(180);
     // Right (positive X) should be 90°
@@ -26,8 +26,10 @@ describe('navigationUtils basic tests', () => {
     // Down (negative Y) should be 0°
     expect(calculateInitialFacingDirection({ x: 0, y: 0 }, { x: 0, y: -1 })).toBeCloseTo(0);
     // Left (negative X) should be 270°
-    expect(normalizeAngle(calculateInitialFacingDirection({ x: 0, y: 0 }, { x: -1, y: 0 }))).toBeCloseTo(270);
-    });
+    expect(
+      normalizeAngle(calculateInitialFacingDirection({ x: 0, y: 0 }, { x: -1, y: 0 })),
+    ).toBeCloseTo(270);
+  });
 
   it('calculates distance correctly', () => {
     expect(calculateDistance({ x: 0, y: 0 }, { x: 3, y: 4 })).toBeCloseTo(5);
@@ -49,11 +51,34 @@ describe('navigationUtils basic tests', () => {
 
   it('generates a simple route', () => {
     const rooms = [
-      { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'room', description: null },
-      { id: 'B', name: 'B', buildingId: 'B', floorId: '1', coordinates: { x: 1, y: 0 }, type: 'room', description: null },
+      {
+        id: 'A',
+        name: 'A',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 0 },
+        type: 'room',
+        description: null,
+      },
+      {
+        id: 'B',
+        name: 'B',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 1, y: 0 },
+        type: 'room',
+        description: null,
+      },
     ];
     const paths = [
-      { id: 'P1', buildingId: 'B', floorId: '1', startRoomId: 'A', endRoomId: 'B', waypoints: [{ x: 0.5, y: 0 }] },
+      {
+        id: 'P1',
+        buildingId: 'B',
+        floorId: '1',
+        startRoomId: 'A',
+        endRoomId: 'B',
+        waypoints: [{ x: 0.5, y: 0 }],
+      },
     ];
     const steps = calculateRoute('A', 'B', rooms, paths);
     expect(steps.length).toBeGreaterThan(0);
@@ -63,18 +88,66 @@ describe('navigationUtils basic tests', () => {
 
   it('generates a multi-floor route with connector', () => {
     const rooms = [
-      { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'room', description: null },
-      { id: 'S1', name: 'Stairs 1', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 1 }, type: 'stairs', description: null, connectorGroupId: 'G1' },
-      { id: 'S2', name: 'Stairs 2', buildingId: 'B', floorId: '2', coordinates: { x: 0, y: 1 }, type: 'stairs', description: null, connectorGroupId: 'G1' },
-      { id: 'B', name: 'B', buildingId: 'B', floorId: '2', coordinates: { x: 1, y: 1 }, type: 'room', description: null },
+      {
+        id: 'A',
+        name: 'A',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 0 },
+        type: 'room',
+        description: null,
+      },
+      {
+        id: 'S1',
+        name: 'Stairs 1',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 1 },
+        type: 'stairs',
+        description: null,
+        connectorGroupId: 'G1',
+      },
+      {
+        id: 'S2',
+        name: 'Stairs 2',
+        buildingId: 'B',
+        floorId: '2',
+        coordinates: { x: 0, y: 1 },
+        type: 'stairs',
+        description: null,
+        connectorGroupId: 'G1',
+      },
+      {
+        id: 'B',
+        name: 'B',
+        buildingId: 'B',
+        floorId: '2',
+        coordinates: { x: 1, y: 1 },
+        type: 'room',
+        description: null,
+      },
     ];
     const paths = [
-      { id: 'P1', buildingId: 'B', floorId: '1', startRoomId: 'A', endRoomId: 'S1', waypoints: [{ x: 0, y: 0.5 }] },
-      { id: 'P2', buildingId: 'B', floorId: '2', startRoomId: 'S2', endRoomId: 'B', waypoints: [{ x: 0.5, y: 1 }] },
+      {
+        id: 'P1',
+        buildingId: 'B',
+        floorId: '1',
+        startRoomId: 'A',
+        endRoomId: 'S1',
+        waypoints: [{ x: 0, y: 0.5 }],
+      },
+      {
+        id: 'P2',
+        buildingId: 'B',
+        floorId: '2',
+        startRoomId: 'S2',
+        endRoomId: 'B',
+        waypoints: [{ x: 0.5, y: 1 }],
+      },
     ];
     const steps = calculateMultiFloorRoute('A', 'B', rooms, paths);
-    expect(steps.some(s => s.type === 'connector')).toBe(true);
-    expect(steps.some(s => s.instruction.includes('Floor'))).toBe(true);
+    expect(steps.some((s) => s.type === 'connector')).toBe(true);
+    expect(steps.some((s) => s.instruction.includes('Floor'))).toBe(true);
     expect(steps[steps.length - 1].type).toBe('destination');
   });
 
@@ -93,7 +166,10 @@ describe('navigationUtils basic tests', () => {
       { instruction: 'Go', coordinates: { x: 1, y: 0 }, type: 'waypoint' },
     ];
     const polyline = stepsToPolyline(steps);
-    expect(polyline).toEqual([{ x: 0, y: 0 }, { x: 1, y: 0 }]);
+    expect(polyline).toEqual([
+      { x: 0, y: 0 },
+      { x: 1, y: 0 },
+    ]);
   });
 
   it('gets next AR waypoint', () => {
@@ -127,8 +203,24 @@ describe('NavigationGraph edge cases', () => {
   it('returns null for path longer than nodes.size + 2 (cycle safety)', () => {
     // Create a graph with a cycle
     const rooms = [
-      { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'room', description: null },
-      { id: 'B', name: 'B', buildingId: 'B', floorId: '1', coordinates: { x: 1, y: 0 }, type: 'room', description: null },
+      {
+        id: 'A',
+        name: 'A',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 0 },
+        type: 'room',
+        description: null,
+      },
+      {
+        id: 'B',
+        name: 'B',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 1, y: 0 },
+        type: 'room',
+        description: null,
+      },
     ];
     const paths = [
       { id: 'P1', buildingId: 'B', floorId: '1', startRoomId: 'A', endRoomId: 'B', waypoints: [] },
@@ -143,7 +235,15 @@ describe('NavigationGraph edge cases', () => {
 
   it('getPathDetails skips missing nodes', () => {
     const rooms = [
-      { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'room', description: null },
+      {
+        id: 'A',
+        name: 'A',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 0 },
+        type: 'room',
+        description: null,
+      },
     ];
     const paths = [];
     const graph = new NavigationGraph(rooms, paths);
@@ -155,8 +255,24 @@ describe('NavigationGraph edge cases', () => {
 
   it('getPathDetails skips missing connections', () => {
     const rooms = [
-      { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'room', description: null },
-      { id: 'B', name: 'B', buildingId: 'B', floorId: '1', coordinates: { x: 1, y: 0 }, type: 'room', description: null },
+      {
+        id: 'A',
+        name: 'A',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 0 },
+        type: 'room',
+        description: null,
+      },
+      {
+        id: 'B',
+        name: 'B',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 1, y: 0 },
+        type: 'room',
+        description: null,
+      },
     ];
     const paths = []; // No connection between A and B
     const graph = new NavigationGraph(rooms, paths);
@@ -168,20 +284,115 @@ describe('NavigationGraph edge cases', () => {
 
 describe('navigationUtils Testing Branches', () => {
   const rooms = [
-    { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'room', description: null },
-    { id: 'B', name: 'B', buildingId: 'B', floorId: '1', coordinates: { x: 1, y: 0 }, type: 'room', description: null },
-    { id: 'S1', name: 'Stairs 1', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 1 }, type: 'stairs', description: null, connectorGroupId: 'G1' },
-    { id: 'S2', name: 'Stairs 2', buildingId: 'B', floorId: '2', coordinates: { x: 0, y: 1 }, type: 'stairs', description: null, connectorGroupId: 'G1' },
-    { id: 'C', name: 'C', buildingId: 'B', floorId: '2', coordinates: { x: 1, y: 1 }, type: 'room', description: null },
-    { id: 'E1', name: 'Elevator 1', buildingId: 'B', floorId: '1', coordinates: { x: 2, y: 2 }, type: 'elevator', description: null, connectorGroupId: 'G2' },
-    { id: 'E2', name: 'Elevator 2', buildingId: 'B', floorId: '2', coordinates: { x: 2, y: 2 }, type: 'elevator', description: null, connectorGroupId: 'G2' },
+    {
+      id: 'A',
+      name: 'A',
+      buildingId: 'B',
+      floorId: '1',
+      coordinates: { x: 0, y: 0 },
+      type: 'room',
+      description: null,
+    },
+    {
+      id: 'B',
+      name: 'B',
+      buildingId: 'B',
+      floorId: '1',
+      coordinates: { x: 1, y: 0 },
+      type: 'room',
+      description: null,
+    },
+    {
+      id: 'S1',
+      name: 'Stairs 1',
+      buildingId: 'B',
+      floorId: '1',
+      coordinates: { x: 0, y: 1 },
+      type: 'stairs',
+      description: null,
+      connectorGroupId: 'G1',
+    },
+    {
+      id: 'S2',
+      name: 'Stairs 2',
+      buildingId: 'B',
+      floorId: '2',
+      coordinates: { x: 0, y: 1 },
+      type: 'stairs',
+      description: null,
+      connectorGroupId: 'G1',
+    },
+    {
+      id: 'C',
+      name: 'C',
+      buildingId: 'B',
+      floorId: '2',
+      coordinates: { x: 1, y: 1 },
+      type: 'room',
+      description: null,
+    },
+    {
+      id: 'E1',
+      name: 'Elevator 1',
+      buildingId: 'B',
+      floorId: '1',
+      coordinates: { x: 2, y: 2 },
+      type: 'elevator',
+      description: null,
+      connectorGroupId: 'G2',
+    },
+    {
+      id: 'E2',
+      name: 'Elevator 2',
+      buildingId: 'B',
+      floorId: '2',
+      coordinates: { x: 2, y: 2 },
+      type: 'elevator',
+      description: null,
+      connectorGroupId: 'G2',
+    },
   ];
   const paths = [
-    { id: 'P1', buildingId: 'B', floorId: '1', startRoomId: 'A', endRoomId: 'B', waypoints: [{ x: 0.5, y: 0 }] },
-    { id: 'P2', buildingId: 'B', floorId: '1', startRoomId: 'B', endRoomId: 'S1', waypoints: [{ x: 0.5, y: 0.5 }] },
-    { id: 'P3', buildingId: 'B', floorId: '2', startRoomId: 'S2', endRoomId: 'C', waypoints: [{ x: 0.5, y: 1 }] },
-    { id: 'P4', buildingId: 'B', floorId: '1', startRoomId: 'A', endRoomId: 'E1', waypoints: [{ x: 1, y: 1 }] },
-    { id: 'P5', buildingId: 'B', floorId: '2', startRoomId: 'E2', endRoomId: 'C', waypoints: [{ x: 2, y: 1 }] },
+    {
+      id: 'P1',
+      buildingId: 'B',
+      floorId: '1',
+      startRoomId: 'A',
+      endRoomId: 'B',
+      waypoints: [{ x: 0.5, y: 0 }],
+    },
+    {
+      id: 'P2',
+      buildingId: 'B',
+      floorId: '1',
+      startRoomId: 'B',
+      endRoomId: 'S1',
+      waypoints: [{ x: 0.5, y: 0.5 }],
+    },
+    {
+      id: 'P3',
+      buildingId: 'B',
+      floorId: '2',
+      startRoomId: 'S2',
+      endRoomId: 'C',
+      waypoints: [{ x: 0.5, y: 1 }],
+    },
+    {
+      id: 'P4',
+      buildingId: 'B',
+      floorId: '1',
+      startRoomId: 'A',
+      endRoomId: 'E1',
+      waypoints: [{ x: 1, y: 1 }],
+    },
+    {
+      id: 'P5',
+      buildingId: 'B',
+      floorId: '2',
+      startRoomId: 'E2',
+      endRoomId: 'C',
+      waypoints: [{ x: 2, y: 1 }],
+    },
   ];
 
   it('handles missing nodes in NavigationGraph', () => {
@@ -211,27 +422,39 @@ describe('navigationUtils Testing Branches', () => {
   it('skips stairs in accessible mode', () => {
     const steps = calculateMultiFloorRoute('A', 'C', rooms, paths, { accessible: true });
     // Should not include stairs connector
-    expect(steps.some(s => s.instruction.includes('stairs'))).toBe(false);
+    expect(steps.some((s) => s.instruction.includes('stairs'))).toBe(false);
   });
 
   it('handles connector logic for stairs and elevator', () => {
     // Stairs
     const stepsStairs = calculateMultiFloorRoute('A', 'C', rooms, paths);
-    expect(stepsStairs.some(s => s.type === 'connector')).toBe(true);
-    expect(stepsStairs.some(s => s.instruction.includes('Floor'))).toBe(true);
+    expect(stepsStairs.some((s) => s.type === 'connector')).toBe(true);
+    expect(stepsStairs.some((s) => s.instruction.includes('Floor'))).toBe(true);
 
     // Elevator
-    const stepsElev = calculateMultiFloorRoute('A', 'C', rooms, paths.concat([
-      { id: 'P6', buildingId: 'B', floorId: '1', startRoomId: 'E1', endRoomId: 'E2', waypoints: [{ x: 2, y: 2 }] }
-    ]));
-    expect(stepsElev.some(s => s.instruction.includes('Elevator'))).toBe(true);
+    const stepsElev = calculateMultiFloorRoute(
+      'A',
+      'C',
+      rooms,
+      paths.concat([
+        {
+          id: 'P6',
+          buildingId: 'B',
+          floorId: '1',
+          startRoomId: 'E1',
+          endRoomId: 'E2',
+          waypoints: [{ x: 2, y: 2 }],
+        },
+      ]),
+    );
+    expect(stepsElev.some((s) => s.instruction.includes('Elevator'))).toBe(true);
   });
 
   it('handles skipping logic for consecutive stairs', () => {
     // Path with consecutive stairs
     const steps = calculateMultiFloorRoute('S1', 'S2', rooms, paths);
     // All steps should be connectors
-    expect(steps.every(s => s.type === 'connector')).toBe(false);
+    expect(steps.every((s) => s.type === 'connector')).toBe(false);
   });
 
   it('handles empty and duplicate steps in filterDuplicateSteps', () => {
@@ -248,11 +471,13 @@ describe('navigationUtils Testing Branches', () => {
     expect(getNextARWaypoint({ x: 0, y: 0 }, [])).toBeNull();
   });
 
-    it('calculateInitialFacingDirection returns correct angles', () => {
+  it('calculateInitialFacingDirection returns correct angles', () => {
     expect(calculateInitialFacingDirection({ x: 0, y: 0 }, { x: 0, y: 1 })).toBeCloseTo(180);
     expect(calculateInitialFacingDirection({ x: 0, y: 0 }, { x: 1, y: 0 })).toBeCloseTo(90);
     expect(calculateInitialFacingDirection({ x: 0, y: 0 }, { x: 0, y: -1 })).toBeCloseTo(0);
-    expect(normalizeAngle(calculateInitialFacingDirection({ x: 0, y: 0 }, { x: -1, y: 0 }))).toBeCloseTo(270);
+    expect(
+      normalizeAngle(calculateInitialFacingDirection({ x: 0, y: 0 }, { x: -1, y: 0 })),
+    ).toBeCloseTo(270);
   });
 
   it('calculateDistance returns correct values', () => {
@@ -262,8 +487,24 @@ describe('navigationUtils Testing Branches', () => {
 
   it('findShortestPath returns null for path longer than nodes.size + 2', () => {
     const rooms = [
-      { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'room', description: null },
-      { id: 'B', name: 'B', buildingId: 'B', floorId: '1', coordinates: { x: 1, y: 0 }, type: 'room', description: null },
+      {
+        id: 'A',
+        name: 'A',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 0 },
+        type: 'room',
+        description: null,
+      },
+      {
+        id: 'B',
+        name: 'B',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 1, y: 0 },
+        type: 'room',
+        description: null,
+      },
     ];
     const paths = [
       { id: 'P1', buildingId: 'B', floorId: '1', startRoomId: 'A', endRoomId: 'B', waypoints: [] },
@@ -283,7 +524,15 @@ describe('navigationUtils Testing Branches', () => {
 
   it('getPathDetails skips missing nodes', () => {
     const rooms = [
-      { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'room', description: null },
+      {
+        id: 'A',
+        name: 'A',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 0 },
+        type: 'room',
+        description: null,
+      },
     ];
     const paths = [];
     const graph = new NavigationGraph(rooms, paths);
@@ -295,8 +544,24 @@ describe('navigationUtils Testing Branches', () => {
 
   it('getPathDetails skips missing connections', () => {
     const rooms = [
-      { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'room', description: null },
-      { id: 'B', name: 'B', buildingId: 'B', floorId: '1', coordinates: { x: 1, y: 0 }, type: 'room', description: null },
+      {
+        id: 'A',
+        name: 'A',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 0 },
+        type: 'room',
+        description: null,
+      },
+      {
+        id: 'B',
+        name: 'B',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 1, y: 0 },
+        type: 'room',
+        description: null,
+      },
     ];
     const paths = []; // No connection between A and B
     const graph = new NavigationGraph(rooms, paths);
@@ -305,83 +570,193 @@ describe('navigationUtils Testing Branches', () => {
     expect(details.totalDistance).toBe(0);
   });
 
-    it('generates right turn instructions', () => {
-      const rooms = [
-        { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'room', description: null },
-        { id: 'B', name: 'B', buildingId: 'B', floorId: '1', coordinates: { x: 1, y: 0 }, type: 'room', description: null },
-        { id: 'C', name: 'C', buildingId: 'B', floorId: '1', coordinates: { x: 1, y: -1 }, type: 'room', description: null },
-      ];
-      const paths = [
-        { id: 'P1', buildingId: 'B', floorId: '1', startRoomId: 'A', endRoomId: 'B', waypoints: [] },
-        { id: 'P2', buildingId: 'B', floorId: '1', startRoomId: 'B', endRoomId: 'C', waypoints: [] },
-      ];
-      const steps = calculateRoute('A', 'C', rooms, paths);
-      expect(steps.some(s => s.instruction.startsWith('Turn right'))).toBe(true);
-    });
+  it('generates right turn instructions', () => {
+    const rooms = [
+      {
+        id: 'A',
+        name: 'A',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 0 },
+        type: 'room',
+        description: null,
+      },
+      {
+        id: 'B',
+        name: 'B',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 1, y: 0 },
+        type: 'room',
+        description: null,
+      },
+      {
+        id: 'C',
+        name: 'C',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 1, y: -1 },
+        type: 'room',
+        description: null,
+      },
+    ];
+    const paths = [
+      { id: 'P1', buildingId: 'B', floorId: '1', startRoomId: 'A', endRoomId: 'B', waypoints: [] },
+      { id: 'P2', buildingId: 'B', floorId: '1', startRoomId: 'B', endRoomId: 'C', waypoints: [] },
+    ];
+    const steps = calculateRoute('A', 'C', rooms, paths);
+    expect(steps.some((s) => s.instruction.startsWith('Turn right'))).toBe(true);
+  });
 
-    it('generates left turn instructions', () => {
-      const rooms = [
-        { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'room', description: null },
-        { id: 'B', name: 'B', buildingId: 'B', floorId: '1', coordinates: { x: -1, y: 0 }, type: 'room', description: null },
-        { id: 'C', name: 'C', buildingId: 'B', floorId: '1', coordinates: { x: -1, y: -1 }, type: 'room', description: null },
-      ];
-      const paths = [
-        { id: 'P1', buildingId: 'B', floorId: '1', startRoomId: 'A', endRoomId: 'B', waypoints: [] },
-        { id: 'P2', buildingId: 'B', floorId: '1', startRoomId: 'B', endRoomId: 'C', waypoints: [] },
-      ];
-      const steps = calculateRoute('A', 'C', rooms, paths);
-      console.log(steps.map(s => s.instruction));
-      expect(steps.some(s => s.instruction.startsWith('Turn left'))).toBe(true);
-    });
+  it('generates left turn instructions', () => {
+    const rooms = [
+      {
+        id: 'A',
+        name: 'A',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 0 },
+        type: 'room',
+        description: null,
+      },
+      {
+        id: 'B',
+        name: 'B',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: -1, y: 0 },
+        type: 'room',
+        description: null,
+      },
+      {
+        id: 'C',
+        name: 'C',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: -1, y: -1 },
+        type: 'room',
+        description: null,
+      },
+    ];
+    const paths = [
+      { id: 'P1', buildingId: 'B', floorId: '1', startRoomId: 'A', endRoomId: 'B', waypoints: [] },
+      { id: 'P2', buildingId: 'B', floorId: '1', startRoomId: 'B', endRoomId: 'C', waypoints: [] },
+    ];
+    const steps = calculateRoute('A', 'C', rooms, paths);
+    console.log(steps.map((s) => s.instruction));
+    expect(steps.some((s) => s.instruction.startsWith('Turn left'))).toBe(true);
+  });
 
-    it('triggers the straight branch with multiple colinear waypoints', () => {
-      const rooms = [
-        { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'room', description: null },
-        { id: 'C', name: 'C', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 3 }, type: 'room', description: null },
-      ];
-      const paths = [
-        {
-          id: 'P1',
-          buildingId: 'B',
-          floorId: '1',
-          startRoomId: 'A',
-          endRoomId: 'C',
-          waypoints: [
-            { x: 0, y: 1 },
-            { x: 0, y: 2 },
-            { x: 0, y: 3 },
-          ],
-        },
-      ];
-      const steps = calculateRoute('A', 'C', rooms, paths);
-      console.log(steps.map(s => s.instruction));
-      expect(steps.some(s => s.instruction.startsWith('Continue straight'))).toBe(true);
-    });
-
-    it('forces justExitedConnector and triggers straight branch', () => {
-      const rooms = [
-        { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'room', description: null },
-        { id: 'S', name: 'Stairs', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 1 }, type: 'stairs', description: null, connectorGroupId: 'G1' },
-        { id: 'B', name: 'B', buildingId: 'B', floorId: '2', coordinates: { x: 0, y: 3 }, type: 'room', description: null }
-      ];
-      const paths = [
-        { id: 'P1', buildingId: 'B', floorId: '1', startRoomId: 'A', endRoomId: 'S', waypoints: [{ x: 0, y: 0.5 }] },
-        { id: 'P2', buildingId: 'B', floorId: '2', startRoomId: 'S', endRoomId: 'B', waypoints: [
+  it('triggers the straight branch with multiple colinear waypoints', () => {
+    const rooms = [
+      {
+        id: 'A',
+        name: 'A',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 0 },
+        type: 'room',
+        description: null,
+      },
+      {
+        id: 'C',
+        name: 'C',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 3 },
+        type: 'room',
+        description: null,
+      },
+    ];
+    const paths = [
+      {
+        id: 'P1',
+        buildingId: 'B',
+        floorId: '1',
+        startRoomId: 'A',
+        endRoomId: 'C',
+        waypoints: [
+          { x: 0, y: 1 },
           { x: 0, y: 2 },
-          { x: 0, y: 3 }
-        ] }
-      ];
-      const steps = calculateRoute('A', 'B', rooms, paths);
-      console.log(steps.map(s => s.instruction));
-      expect(steps.some(s => s.instruction.startsWith('Continue straight'))).toBe(true);
-    });
+          { x: 0, y: 3 },
+        ],
+      },
+    ];
+    const steps = calculateRoute('A', 'C', rooms, paths);
+    console.log(steps.map((s) => s.instruction));
+    expect(steps.some((s) => s.instruction.startsWith('Continue straight'))).toBe(true);
+  });
 
+  it('forces justExitedConnector and triggers straight branch', () => {
+    const rooms = [
+      {
+        id: 'A',
+        name: 'A',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 0 },
+        type: 'room',
+        description: null,
+      },
+      {
+        id: 'S',
+        name: 'Stairs',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 1 },
+        type: 'stairs',
+        description: null,
+        connectorGroupId: 'G1',
+      },
+      {
+        id: 'B',
+        name: 'B',
+        buildingId: 'B',
+        floorId: '2',
+        coordinates: { x: 0, y: 3 },
+        type: 'room',
+        description: null,
+      },
+    ];
+    const paths = [
+      {
+        id: 'P1',
+        buildingId: 'B',
+        floorId: '1',
+        startRoomId: 'A',
+        endRoomId: 'S',
+        waypoints: [{ x: 0, y: 0.5 }],
+      },
+      {
+        id: 'P2',
+        buildingId: 'B',
+        floorId: '2',
+        startRoomId: 'S',
+        endRoomId: 'B',
+        waypoints: [
+          { x: 0, y: 2 },
+          { x: 0, y: 3 },
+        ],
+      },
+    ];
+    const steps = calculateRoute('A', 'B', rooms, paths);
+    console.log(steps.map((s) => s.instruction));
+    expect(steps.some((s) => s.instruction.startsWith('Continue straight'))).toBe(true);
+  });
 });
 
 describe('Calculation Tests', () => {
   it('calculateRoute returns empty array if start or end room missing', () => {
     const rooms = [
-      { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'room', description: null }
+      {
+        id: 'A',
+        name: 'A',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 0 },
+        type: 'room',
+        description: null,
+      },
     ];
     const paths = [];
     expect(calculateRoute('A', 'B', rooms, paths)).toEqual([]);
@@ -390,7 +765,15 @@ describe('Calculation Tests', () => {
 
   it('calculateMultiFloorRoute returns empty array if no path found', () => {
     const rooms = [
-      { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'room', description: null }
+      {
+        id: 'A',
+        name: 'A',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 0 },
+        type: 'room',
+        description: null,
+      },
     ];
     const paths = [];
     expect(calculateMultiFloorRoute('A', 'B', rooms, paths)).toEqual([]);
@@ -398,11 +781,27 @@ describe('Calculation Tests', () => {
 
   it('calculateRoute adds final destination step if not already present', () => {
     const rooms = [
-      { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'room', description: null },
-      { id: 'B', name: 'B', buildingId: 'B', floorId: '1', coordinates: { x: 1, y: 0 }, type: 'room', description: null }
+      {
+        id: 'A',
+        name: 'A',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 0 },
+        type: 'room',
+        description: null,
+      },
+      {
+        id: 'B',
+        name: 'B',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 1, y: 0 },
+        type: 'room',
+        description: null,
+      },
     ];
     const paths = [
-      { id: 'P1', buildingId: 'B', floorId: '1', startRoomId: 'A', endRoomId: 'B', waypoints: [] }
+      { id: 'P1', buildingId: 'B', floorId: '1', startRoomId: 'A', endRoomId: 'B', waypoints: [] },
     ];
     const steps = calculateRoute('A', 'B', rooms, paths);
     expect(steps[steps.length - 1].type).toBe('destination');
@@ -411,11 +810,27 @@ describe('Calculation Tests', () => {
 
   it('calculateMultiFloorRoute adds final destination step if not already present', () => {
     const rooms = [
-      { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'room', description: null },
-      { id: 'B', name: 'B', buildingId: 'B', floorId: '1', coordinates: { x: 1, y: 0 }, type: 'room', description: null }
+      {
+        id: 'A',
+        name: 'A',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 0 },
+        type: 'room',
+        description: null,
+      },
+      {
+        id: 'B',
+        name: 'B',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 1, y: 0 },
+        type: 'room',
+        description: null,
+      },
     ];
     const paths = [
-      { id: 'P1', buildingId: 'B', floorId: '1', startRoomId: 'A', endRoomId: 'B', waypoints: [] }
+      { id: 'P1', buildingId: 'B', floorId: '1', startRoomId: 'A', endRoomId: 'B', waypoints: [] },
     ];
     const steps = calculateMultiFloorRoute('A', 'B', rooms, paths);
     expect(steps[steps.length - 1].type).toBe('destination');
@@ -457,11 +872,19 @@ describe('Calculation Tests', () => {
 
   it('findNearestRoom returns null if no room is close enough', () => {
     const rooms = [
-      { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 10, y: 10 }, type: 'room', description: null }
+      {
+        id: 'A',
+        name: 'A',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 10, y: 10 },
+        type: 'room',
+        description: null,
+      },
     ];
     expect(
       // @ts-ignore
-      require('../src/utils/navigationUtils').findNearestRoom({ x: 0, y: 0 }, rooms, [])
+      require('../src/utils/navigationUtils').findNearestRoom({ x: 0, y: 0 }, rooms, []),
     ).toBeNull();
   });
 
@@ -472,20 +895,25 @@ describe('Calculation Tests', () => {
   it('stepsToPolyline returns correct coordinates', () => {
     const steps = [
       { instruction: 'Go', coordinates: { x: 1, y: 2 }, type: 'waypoint' },
-      { instruction: 'Go', coordinates: { x: 3, y: 4 }, type: 'waypoint' }
+      { instruction: 'Go', coordinates: { x: 3, y: 4 }, type: 'waypoint' },
     ];
-    expect(stepsToPolyline(steps)).toEqual([{ x: 1, y: 2 }, { x: 3, y: 4 }]);
+    expect(stepsToPolyline(steps)).toEqual([
+      { x: 1, y: 2 },
+      { x: 3, y: 4 },
+    ]);
   });
 
   it('calculateARBearing returns correct bearing', () => {
-    expect(require('../src/utils/navigationUtils').calculateARBearing({ x: 0, y: 0 }, { x: 0, y: 1 })).toBeCloseTo(180);
-    expect(require('../src/utils/navigationUtils').calculateARBearing({ x: 0, y: 0 }, { x: 1, y: 0 })).toBeCloseTo(90);
+    expect(
+      require('../src/utils/navigationUtils').calculateARBearing({ x: 0, y: 0 }, { x: 0, y: 1 }),
+    ).toBeCloseTo(180);
+    expect(
+      require('../src/utils/navigationUtils').calculateARBearing({ x: 0, y: 0 }, { x: 1, y: 0 }),
+    ).toBeCloseTo(90);
   });
 
   it('calculateARNavigationData returns correct structure', () => {
-    const steps = [
-      { instruction: 'Go', coordinates: { x: 1, y: 0 }, type: 'waypoint' }
-    ];
+    const steps = [{ instruction: 'Go', coordinates: { x: 1, y: 0 }, type: 'waypoint' }];
     const data = calculateARNavigationData({ x: 0, y: 0 }, steps, { x: 1, y: 0 });
     expect(typeof data.bearing).toBe('number');
     expect(typeof data.distance).toBe('number');
@@ -500,75 +928,187 @@ describe('Calculation Tests', () => {
 
   it('calculateRoute handles segments with no waypoints', () => {
     const rooms = [
-        { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'room', description: null },
-        { id: 'B', name: 'B', buildingId: 'B', floorId: '1', coordinates: { x: 1, y: 0 }, type: 'room', description: null },
-        { id: 'C', name: 'C', buildingId: 'B', floorId: '1', coordinates: { x: 2, y: 0 }, type: 'room', description: null },
+      {
+        id: 'A',
+        name: 'A',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 0 },
+        type: 'room',
+        description: null,
+      },
+      {
+        id: 'B',
+        name: 'B',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 1, y: 0 },
+        type: 'room',
+        description: null,
+      },
+      {
+        id: 'C',
+        name: 'C',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 2, y: 0 },
+        type: 'room',
+        description: null,
+      },
     ];
     const paths = [
-        { id: 'P1', buildingId: 'B', floorId: '1', startRoomId: 'A', endRoomId: 'B', waypoints: [] },
-        { id: 'P2', buildingId: 'B', floorId: '1', startRoomId: 'B', endRoomId: 'C', waypoints: [] },
+      { id: 'P1', buildingId: 'B', floorId: '1', startRoomId: 'A', endRoomId: 'B', waypoints: [] },
+      { id: 'P2', buildingId: 'B', floorId: '1', startRoomId: 'B', endRoomId: 'C', waypoints: [] },
     ];
     const steps = calculateRoute('A', 'C', rooms, paths);
     expect(steps.length).toBeGreaterThan(0);
-    expect(steps.some(s => s.type === 'waypoint')).toBe(false); // No waypoint steps
+    expect(steps.some((s) => s.type === 'waypoint')).toBe(false); // No waypoint steps
   });
 
   it('calculateRoute handles only connector segments', () => {
     const rooms = [
-        { id: 'S1', name: 'Stairs 1', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'stairs', description: null, connectorGroupId: 'G1' },
-        { id: 'S2', name: 'Stairs 2', buildingId: 'B', floorId: '2', coordinates: { x: 0, y: 1 }, type: 'stairs', description: null, connectorGroupId: 'G1' },
+      {
+        id: 'S1',
+        name: 'Stairs 1',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 0 },
+        type: 'stairs',
+        description: null,
+        connectorGroupId: 'G1',
+      },
+      {
+        id: 'S2',
+        name: 'Stairs 2',
+        buildingId: 'B',
+        floorId: '2',
+        coordinates: { x: 0, y: 1 },
+        type: 'stairs',
+        description: null,
+        connectorGroupId: 'G1',
+      },
     ];
     const paths = [
-        { id: 'P1', buildingId: 'B', floorId: '1', startRoomId: 'S1', endRoomId: 'S2', waypoints: [] },
+      {
+        id: 'P1',
+        buildingId: 'B',
+        floorId: '1',
+        startRoomId: 'S1',
+        endRoomId: 'S2',
+        waypoints: [],
+      },
     ];
     const steps = calculateRoute('S1', 'S2', rooms, paths);
-    expect(steps.every(s => s.type === 'connector')).toBe(false);
+    expect(steps.every((s) => s.type === 'connector')).toBe(false);
   });
 
   it('calculateRoute detects turn when waypoints double back', () => {
     const rooms = [
-        { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'room', description: null },
-        { id: 'C', name: 'C', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 2 }, type: 'room', description: null },
+      {
+        id: 'A',
+        name: 'A',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 0 },
+        type: 'room',
+        description: null,
+      },
+      {
+        id: 'C',
+        name: 'C',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 2 },
+        type: 'room',
+        description: null,
+      },
     ];
     const paths = [
-        {
+      {
         id: 'P1',
         buildingId: 'B',
         floorId: '1',
         startRoomId: 'A',
         endRoomId: 'C',
         waypoints: [
-            { x: 0, y: 1 },
-            { x: 1, y: 1 }, // right turn
-            { x: 0, y: 2 }, // left turn
+          { x: 0, y: 1 },
+          { x: 1, y: 1 }, // right turn
+          { x: 0, y: 2 }, // left turn
         ],
-        },
+      },
     ];
     const steps = calculateRoute('A', 'C', rooms, paths);
-    expect(steps.some(s => s.instruction.startsWith('Turn right'))).toBe(true);
-    expect(steps.some(s => s.instruction.startsWith('Turn left'))).toBe(true);
+    expect(steps.some((s) => s.instruction.startsWith('Turn right'))).toBe(true);
+    expect(steps.some((s) => s.instruction.startsWith('Turn left'))).toBe(true);
   });
 
   it('calculateRoute triggers justExitedConnector branch', () => {
     const rooms = [
-        { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'room', description: null },
-        { id: 'S', name: 'Stairs', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 1 }, type: 'stairs', description: null, connectorGroupId: 'G1' },
-        { id: 'B', name: 'B', buildingId: 'B', floorId: '2', coordinates: { x: 1, y: 1 }, type: 'room', description: null }
+      {
+        id: 'A',
+        name: 'A',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 0 },
+        type: 'room',
+        description: null,
+      },
+      {
+        id: 'S',
+        name: 'Stairs',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 1 },
+        type: 'stairs',
+        description: null,
+        connectorGroupId: 'G1',
+      },
+      {
+        id: 'B',
+        name: 'B',
+        buildingId: 'B',
+        floorId: '2',
+        coordinates: { x: 1, y: 1 },
+        type: 'room',
+        description: null,
+      },
     ];
     const paths = [
-        { id: 'P1', buildingId: 'B', floorId: '1', startRoomId: 'A', endRoomId: 'S', waypoints: [{ x: 0, y: 0.5 }] },
-        { id: 'P2', buildingId: 'B', floorId: '2', startRoomId: 'S', endRoomId: 'B', waypoints: [{ x: 0.5, y: 1 }] }
+      {
+        id: 'P1',
+        buildingId: 'B',
+        floorId: '1',
+        startRoomId: 'A',
+        endRoomId: 'S',
+        waypoints: [{ x: 0, y: 0.5 }],
+      },
+      {
+        id: 'P2',
+        buildingId: 'B',
+        floorId: '2',
+        startRoomId: 'S',
+        endRoomId: 'B',
+        waypoints: [{ x: 0.5, y: 1 }],
+      },
     ];
     const steps = calculateRoute('A', 'B', rooms, paths);
-    expect(steps.some(s => s.instruction.startsWith('Continue straight'))).toBe(true);
+    expect(steps.some((s) => s.instruction.startsWith('Continue straight'))).toBe(true);
   });
 
   it('calculateRoute skips step if nextRoom is missing', () => {
     const rooms = [
-        { id: 'A', name: 'A', buildingId: 'B', floorId: '1', coordinates: { x: 0, y: 0 }, type: 'room', description: null },
+      {
+        id: 'A',
+        name: 'A',
+        buildingId: 'B',
+        floorId: '1',
+        coordinates: { x: 0, y: 0 },
+        type: 'room',
+        description: null,
+      },
     ];
     const paths = [
-        { id: 'P1', buildingId: 'B', floorId: '1', startRoomId: 'A', endRoomId: 'B', waypoints: [] },
+      { id: 'P1', buildingId: 'B', floorId: '1', startRoomId: 'A', endRoomId: 'B', waypoints: [] },
     ];
     const steps = calculateRoute('A', 'B', rooms, paths);
     expect(steps.length).toBe(0);
