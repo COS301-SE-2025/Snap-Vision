@@ -19,20 +19,22 @@ jest.mock('../../src/utils/FloorplanManager', () => {
   const api = {
     preloadFloorplans: jest.fn(),
     isFloorplanPreloaded: jest.fn((url?: string) => Boolean(url && url.includes('preloaded'))),
-    useFloorplanPreloader: jest.fn((urls: string[], onProgress?: (l: number, t: number) => void) => {
-      if (!progressFired && onProgress) {
-        progressFired = true;
-        const total = urls.length || 1;
-        setTimeout(() => {
-          onProgress(0, total || 1);
-          onProgress(Math.ceil(total / 2), total || 1);
-          onProgress(total || 1, total || 1);
-        }, 0);
-      }
-      return {
-        isPreloaded: (url?: string) => Boolean(url && url.includes('preloaded')),
-      };
-    }),
+    useFloorplanPreloader: jest.fn(
+      (urls: string[], onProgress?: (l: number, t: number) => void) => {
+        if (!progressFired && onProgress) {
+          progressFired = true;
+          const total = urls.length || 1;
+          setTimeout(() => {
+            onProgress(0, total || 1);
+            onProgress(Math.ceil(total / 2), total || 1);
+            onProgress(total || 1, total || 1);
+          }, 0);
+        }
+        return {
+          isPreloaded: (url?: string) => Boolean(url && url.includes('preloaded')),
+        };
+      },
+    ),
   };
   return api;
 });
@@ -65,6 +67,8 @@ jest.mock('react-native-webview', () => {
 
     return <View testID="mock-webview" />;
   });
+
+  MockWebView.displayName = 'MockWebView';
 
   const __getInjected = () => injectedScripts;
   const __clearInjected = () => injectedScripts.splice(0, injectedScripts.length);
@@ -124,7 +128,7 @@ describe('IndoorSchematicMap (Integration)', () => {
         themeColors={themeColors}
         floorplanUrl="https://example.com/floor-a.png"
         additionalFloorplans={['https://example.com/floor-b.png']}
-      />
+      />,
     );
 
     expect(screen.getByText(/Preloading floorplans/i)).toBeTruthy();
@@ -150,7 +154,7 @@ describe('IndoorSchematicMap (Integration)', () => {
         themeColors={themeColors}
         floorplanUrl="https://example.com/floor-a.png"
         additionalFloorplans={[]}
-      />
+      />,
     );
 
     await act(async () => {
@@ -168,10 +172,12 @@ describe('IndoorSchematicMap (Integration)', () => {
         themeColors={themeColors}
         floorplanUrl="https://example.com/floor-b.png"
         additionalFloorplans={[]}
-      />
+      />,
     );
 
-    expect(__getInjected().join('\n')).toMatch(/window\.mountFloorplan\('https:\/\/example\.com\/floor-b\.png'\)/);
+    expect(__getInjected().join('\n')).toMatch(
+      /window\.mountFloorplan\('https:\/\/example\.com\/floor-b\.png'\)/,
+    );
   });
 
   // NOTE: this test was the one you fixed; keeping the precise timer driving
@@ -185,7 +191,7 @@ describe('IndoorSchematicMap (Integration)', () => {
         themeColors={themeColors}
         floorplanUrl="https://example.com/floor-fails.png"
         additionalFloorplans={[]}
-      />
+      />,
     );
 
     // Flush preloader 0ms and the component’s 300ms init delay only
@@ -235,7 +241,7 @@ describe('IndoorSchematicMap (Integration)', () => {
         onSelectRoom={onSelectRoom}
         themeColors={themeColors}
         floorplanUrl="https://example.com/floor-a.png"
-      />
+      />,
     );
 
     await act(async () => {
@@ -260,14 +266,16 @@ describe('IndoorSchematicMap (Integration)', () => {
         onSelectRoom={jest.fn()}
         themeColors={themeColors}
         floorplanUrl="https://example.com/floor-a.png"
-      />
+      />,
     );
 
     await act(async () => {
       jest.runAllTimers();
     });
 
-    expect(__getInjected().join('\n')).toMatch(/window\.setThemeColors\(\{[^}]*"background":"#121212"/);
+    expect(__getInjected().join('\n')).toMatch(
+      /window\.setThemeColors\(\{[^}]*"background":"#121212"/,
+    );
   });
 
   it('does not show loading overlay when switching to an already preloaded floor', async () => {
@@ -280,7 +288,7 @@ describe('IndoorSchematicMap (Integration)', () => {
         themeColors={themeColors}
         floorplanUrl="https://example.com/floor-a.png"
         additionalFloorplans={['https://example.com/floor-preloaded.png']}
-      />
+      />,
     );
 
     await act(async () => {
@@ -302,11 +310,13 @@ describe('IndoorSchematicMap (Integration)', () => {
         themeColors={themeColors}
         floorplanUrl="https://example.com/floor-preloaded.png"
         additionalFloorplans={[]}
-      />
+      />,
     );
 
     expect(screen.queryByText(/Preloading floorplans/i)).toBeNull();
-    expect(__getInjected().join('\n')).toMatch(/window\.mountFloorplan\('https:\/\/example\.com\/floor-preloaded\.png'\)/);
+    expect(__getInjected().join('\n')).toMatch(
+      /window\.mountFloorplan\('https:\/\/example\.com\/floor-preloaded\.png'\)/,
+    );
   });
 
   // ---- NEW: unmount cleanup cancels pending retries (covers unmount effect)
@@ -320,7 +330,7 @@ describe('IndoorSchematicMap (Integration)', () => {
         themeColors={themeColors}
         floorplanUrl="https://example.com/floor-fails.png"
         additionalFloorplans={[]}
-      />
+      />,
     );
 
     // Let initial 300ms init schedule; then clear injections and unmount

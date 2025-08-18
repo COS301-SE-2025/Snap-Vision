@@ -18,19 +18,21 @@ jest.mock('../src/utils/FloorplanManager', () => {
   const api = {
     preloadFloorplans: jest.fn(),
     isFloorplanPreloaded: jest.fn(() => false),
-    useFloorplanPreloader: jest.fn((urls: string[], onProgress?: (l: number, t: number) => void) => {
-      if (!progressFired && onProgress) {
-        progressFired = true;
-        const total = Math.max(urls?.length || 1, 2);
-        setTimeout(() => {
-          onProgress(1, total);
-          onProgress(total, total); // 100%
-        }, 0);
-      }
-      return {
-        isPreloaded: (url?: string) => Boolean(url) && url.includes('preloaded'),
-      };
-    }),
+    useFloorplanPreloader: jest.fn(
+      (urls: string[], onProgress?: (l: number, t: number) => void) => {
+        if (!progressFired && onProgress) {
+          progressFired = true;
+          const total = Math.max(urls?.length || 1, 2);
+          setTimeout(() => {
+            onProgress(1, total);
+            onProgress(total, total); // 100%
+          }, 0);
+        }
+        return {
+          isPreloaded: (url?: string) => Boolean(url) && url.includes('preloaded'),
+        };
+      },
+    ),
   };
   return api;
 });
@@ -64,6 +66,8 @@ jest.mock('react-native-webview', () => {
     return <View testID="mock-webview" />;
   });
 
+  MockWebView.displayName = 'MockWebView';
+
   const __getInjected = () => injectedScripts;
   const __clearInjected = () => injectedScripts.splice(0, injectedScripts.length);
   const __fireMessage = (data: any) => {
@@ -87,8 +91,13 @@ jest.mock('react-native-webview', () => {
   };
 });
 
-const { __getInjected, __clearInjected, __fireMessage, __fireRawMessage, __fireError } =
-  require('react-native-webview');
+const {
+  __getInjected,
+  __clearInjected,
+  __fireMessage,
+  __fireRawMessage,
+  __fireError,
+} = require('react-native-webview');
 
 describe('IndoorSchematicMap (Unit)', () => {
   const baseProps = {
@@ -98,7 +107,10 @@ describe('IndoorSchematicMap (Unit)', () => {
     ],
     startId: 'r1',
     endId: 'r2',
-    routePolyline: [{ x: 0.1, y: 0.2 }, { x: 0.4, y: 0.5 }],
+    routePolyline: [
+      { x: 0.1, y: 0.2 },
+      { x: 0.4, y: 0.5 },
+    ],
     completedPolyline: [{ x: 0.1, y: 0.2 }],
     currentPos: { x: 0.2, y: 0.25 },
     onSelectRoom: jest.fn(),
@@ -175,7 +187,9 @@ describe('IndoorSchematicMap (Unit)', () => {
 
     __clearInjected();
     rerender(<IndoorSchematicMap {...baseProps} currentPos={{ x: 0.77, y: 0.33 }} />);
-    expect(__getInjected().join('\n')).toMatch(/window\.updateCurrentPos\(\{"x":0\.77,"y":0\.33\}\)/);
+    expect(__getInjected().join('\n')).toMatch(
+      /window\.updateCurrentPos\(\{"x":0\.77,"y":0\.33\}\)/,
+    );
   });
 
   it('theme updates call setThemeColors without reload', async () => {
@@ -190,10 +204,12 @@ describe('IndoorSchematicMap (Unit)', () => {
       <IndoorSchematicMap
         {...baseProps}
         themeColors={{ ...baseProps.themeColors, primary: '#00FF00' }}
-      />
+      />,
     );
 
-    expect(__getInjected().join('\n')).toMatch(/window\.setThemeColors\(\{.*"primary":"#00FF00".*\}\)/);
+    expect(__getInjected().join('\n')).toMatch(
+      /window\.setThemeColors\(\{.*"primary":"#00FF00".*\}\)/,
+    );
   });
 
   it('handles room_selected messages by calling onSelectRoom', async () => {
@@ -252,4 +268,5 @@ describe('IndoorSchematicMap (Unit)', () => {
     });
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
-  });})
+  });
+});
