@@ -19,6 +19,7 @@ module.exports = {
   collectCoverage: true,
   collectCoverageFrom: [
     'src/components/organisms/*.{ts,tsx}',
+    'src/services/*.{ts,tsx}',
     '!**/__tests__/**',
     '!**/index.{ts,tsx}',
     '!**/*.d.ts',
