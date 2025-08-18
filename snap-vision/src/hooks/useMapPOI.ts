@@ -21,7 +21,7 @@ interface UseMapPOIReturn {
   selectedPOI: POI | null;
   selectedFeature: POI | null;
   destination: string;
-  
+
   // Functions
   fetchPOIs: () => Promise<void>;
   filterPOIs: (query: string) => void;
@@ -30,7 +30,7 @@ interface UseMapPOIReturn {
   setSelectedFeature: (feature: POI | null) => void;
   setDestination: (destination: string) => void;
   clearPOISuggestions: () => void;
-  
+
   // Internal for MapScreen
   sendPOIsToWebView: () => void;
 }
@@ -40,7 +40,6 @@ export const useMapPOI = (
   webViewRef: React.RefObject<any>,
   setError: (error: string | null) => void,
 ): UseMapPOIReturn => {
-  
   // POI State
   const [pois, setPOIs] = useState<POI[]>([]);
   const [poiSuggestions, setPOISuggestions] = useState<POI[]>([]);
@@ -83,16 +82,19 @@ export const useMapPOI = (
   }, [setError]);
 
   // Filter POIs based on search query
-  const filterPOIs = useCallback((query: string) => {
-    if (!query.trim()) {
-      setPOISuggestions([]);
-      return;
-    }
-    const filtered = pois.filter(
-      (poi) => poi.name && poi.name.toLowerCase().includes(query.toLowerCase()),
-    );
-    setPOISuggestions(filtered);
-  }, [pois]);
+  const filterPOIs = useCallback(
+    (query: string) => {
+      if (!query.trim()) {
+        setPOISuggestions([]);
+        return;
+      }
+      const filtered = pois.filter(
+        (poi) => poi.name && poi.name.toLowerCase().includes(query.toLowerCase()),
+      );
+      setPOISuggestions(filtered);
+    },
+    [pois],
+  );
 
   // Handle POI selection (simplified - just update state)
   const selectPOI = useCallback((poi: POI) => {
@@ -138,7 +140,7 @@ export const useMapPOI = (
     selectedPOI,
     selectedFeature,
     destination,
-    
+
     // Functions
     fetchPOIs,
     filterPOIs,
@@ -147,7 +149,7 @@ export const useMapPOI = (
     setSelectedFeature,
     setDestination,
     clearPOISuggestions,
-    
+
     // Internal
     sendPOIsToWebView,
   };

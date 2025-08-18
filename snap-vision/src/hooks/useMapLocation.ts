@@ -271,12 +271,7 @@ export const useMapLocation = (
   useEffect(() => {
     if (isMapReady && currentLocation && webViewRef.current && shouldCenterMap) {
       console.log('🗺️ Map is ready, sending current location:', currentLocation);
-      sendLocationToWebView(
-        currentLocation.latitude,
-        currentLocation.longitude,
-        true,
-        true,
-      );
+      sendLocationToWebView(currentLocation.latitude, currentLocation.longitude, true, true);
       setShouldCenterMap(false); // Prevent repeated centering
     }
   }, [isMapReady, currentLocation, shouldCenterMap]);

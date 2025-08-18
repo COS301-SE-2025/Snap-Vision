@@ -22,12 +22,12 @@ interface UseMapAdminReturn {
   adminLocations: string[];
   availableLocations: string[];
   selectedLocation: string;
-  
+
   // Modal States
   showAddPOIModal: boolean;
   showEditPOIModal: boolean;
   showAdminActions: boolean;
-  
+
   // Form States
   addPOICoords: { lat: number; lon: number } | null;
   buildingName: string;
@@ -36,7 +36,7 @@ interface UseMapAdminReturn {
   newName: string;
   newFloors: string;
   adminActionPOI: AdminPOI | null;
-  
+
   // Functions
   openAddBuildingModal: (lat: number, lon: number) => void;
   openEditBuildingModal: (poi: AdminPOI) => void;
@@ -44,10 +44,17 @@ interface UseMapAdminReturn {
   submitNewBuilding: () => Promise<void>;
   submitEditBuilding: () => Promise<void>;
   deleteBuilding: (poi: AdminPOI) => Promise<void>;
-  enableAdminPOICreation: (webViewRef: React.RefObject<any>, setTempMessage: (msg: string) => void) => void;
-  handleAdminWebViewMessage: (parsed: any, pois: any[], webViewRef: React.RefObject<any>) => boolean;
+  enableAdminPOICreation: (
+    webViewRef: React.RefObject<any>,
+    setTempMessage: (msg: string) => void,
+  ) => void;
+  handleAdminWebViewMessage: (
+    parsed: any,
+    pois: any[],
+    webViewRef: React.RefObject<any>,
+  ) => boolean;
   validateAdminPermission: (poi: AdminPOI) => boolean;
-  
+
   // Setters
   setShowAddPOIModal: (show: boolean) => void;
   setShowEditPOIModal: (show: boolean) => void;
@@ -58,7 +65,7 @@ interface UseMapAdminReturn {
   setNewFloors: (floors: string) => void;
   setSelectedLocation: (location: string) => void;
   setAdminActionPOI: (poi: AdminPOI | null) => void;
-  
+
   // WebView Integration
   injectAdminHandlers: (webViewRef: React.RefObject<any>, isMapReady: boolean) => void;
 }
@@ -71,19 +78,18 @@ export const useMapAdmin = (
   showSuccessPopup: (message: string) => void,
   showConfirmationPopup: (data: { title: string; message: string; onConfirm: () => void }) => void,
 ): UseMapAdminReturn => {
-  
   // Admin State
   const [isAdmin, setIsAdmin] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [adminLocations, setAdminLocations] = useState<string[]>([]);
   const [availableLocations, setAvailableLocations] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
-  
+
   // Modal States
   const [showAddPOIModal, setShowAddPOIModal] = useState(false);
   const [showEditPOIModal, setShowEditPOIModal] = useState(false);
   const [showAdminActions, setShowAdminActions] = useState(false);
-  
+
   // Form States
   const [addPOICoords, setAddPOICoords] = useState<{ lat: number; lon: number } | null>(null);
   const [buildingName, setBuildingName] = useState('');
@@ -98,13 +104,13 @@ export const useMapAdmin = (
     const fetchRole = async () => {
       const userId = auth().currentUser?.uid;
       if (!userId) return;
-      
+
       try {
         const userDoc = await firestore().collection('userInformation').doc(userId).get();
         const role = userDoc.data()?.role;
         setUserRole(role);
         setIsAdmin(role === 'admin');
-        
+
         if (role === 'editor') {
           // Fetch editor-specific locations
           const editorLocations = userDoc.data()?.adminLocations || [];
@@ -122,7 +128,7 @@ export const useMapAdmin = (
   useEffect(() => {
     const fetchLocations = async () => {
       if (!isAdmin) return;
-      
+
       try {
         const snapshot = await firestore().collection('locations').get();
         setAvailableLocations(snapshot.docs.map((doc) => doc.id));
@@ -149,40 +155,43 @@ export const useMapAdmin = (
   }, []);
 
   // Confirm delete building with popup
-  const confirmDeleteBuilding = useCallback((poi: AdminPOI, onConfirmCallback: () => void) => {
-    showConfirmationPopup({
-      title: 'Delete Building',
-      message: `Are you sure you want to delete "${poi.name}"?`,
-      onConfirm: async () => {
-        try {
-          await deleteBuilding(poi);
-          onConfirmCallback();
-        } catch (error) {
-          console.error('Error in delete confirmation:', error);
-        }
-      },
-    });
-  }, [showConfirmationPopup]);
+  const confirmDeleteBuilding = useCallback(
+    (poi: AdminPOI, onConfirmCallback: () => void) => {
+      showConfirmationPopup({
+        title: 'Delete Building',
+        message: `Are you sure you want to delete "${poi.name}"?`,
+        onConfirm: async () => {
+          try {
+            await deleteBuilding(poi);
+            onConfirmCallback();
+          } catch (error) {
+            console.error('Error in delete confirmation:', error);
+          }
+        },
+      });
+    },
+    [showConfirmationPopup],
+  );
 
   // Submit new building
   const submitNewBuilding = useCallback(async () => {
     if (!addPOICoords) return;
-    
+
     if (!buildingName.trim()) {
       showErrorPopup('Building name required');
       return;
     }
-    
+
     if (!numberOfFloors.trim() || isNaN(Number(numberOfFloors))) {
       showErrorPopup('Please enter a valid number of floors');
       return;
     }
-    
+
     if (!selectedLocation) {
       showErrorPopup('Please select a location');
       return;
     }
-    
+
     try {
       const newDoc = {
         name: buildingName,
@@ -195,21 +204,30 @@ export const useMapAdmin = (
           building: 'yes',
         },
       };
-      
+
       await firestore().collection(`locations/${selectedLocation}/buildingPOIs`).add(newDoc);
-      
+
       setShowAddPOIModal(false);
       setBuildingName('');
       setNumberOfFloors('');
       setAddPOICoords(null);
       setStatus('Building added!');
-      
+
       await refreshPOIs();
     } catch (error) {
       console.error('Error adding building:', error);
       setError('Failed to add building');
     }
-  }, [addPOICoords, buildingName, numberOfFloors, selectedLocation, showErrorPopup, setStatus, setError, refreshPOIs]);
+  }, [
+    addPOICoords,
+    buildingName,
+    numberOfFloors,
+    selectedLocation,
+    showErrorPopup,
+    setStatus,
+    setError,
+    refreshPOIs,
+  ]);
 
   // Submit edit building
   const submitEditBuilding = useCallback(async () => {
@@ -217,7 +235,7 @@ export const useMapAdmin = (
       showErrorPopup('Building name required');
       return;
     }
-    
+
     if (!newFloors.trim() || isNaN(Number(newFloors))) {
       showErrorPopup('Please enter a valid number of floors');
       return;
@@ -249,31 +267,44 @@ export const useMapAdmin = (
       console.error('Error updating building:', error);
       setError('Failed to update building');
     }
-  }, [newName, newFloors, editingPOI, showErrorPopup, setError, setStatus, refreshPOIs, showSuccessPopup]);
+  }, [
+    newName,
+    newFloors,
+    editingPOI,
+    showErrorPopup,
+    setError,
+    setStatus,
+    refreshPOIs,
+    showSuccessPopup,
+  ]);
 
   // Delete building
-  const deleteBuilding = useCallback(async (poi: AdminPOI) => {
-    try {
-      await firestore().doc(`locations/${poi.location}/buildingPOIs/${poi.id}`).delete();
-      
-      setStatus(`Building "${poi.name}" deleted`);
-      await refreshPOIs();
-    } catch (error) {
-      console.error('Error deleting building:', error);
-      showErrorPopup('Failed to delete building');
-    }
-  }, [setStatus, refreshPOIs, showErrorPopup]);
+  const deleteBuilding = useCallback(
+    async (poi: AdminPOI) => {
+      try {
+        await firestore().doc(`locations/${poi.location}/buildingPOIs/${poi.id}`).delete();
+
+        setStatus(`Building "${poi.name}" deleted`);
+        await refreshPOIs();
+      } catch (error) {
+        console.error('Error deleting building:', error);
+        showErrorPopup('Failed to delete building');
+      }
+    },
+    [setStatus, refreshPOIs, showErrorPopup],
+  );
 
   // Inject admin handlers into WebView
-  const injectAdminHandlers = useCallback((webViewRef: React.RefObject<any>, isMapReady: boolean) => {
-    if (!isMapReady || !webViewRef.current) return;
+  const injectAdminHandlers = useCallback(
+    (webViewRef: React.RefObject<any>, isMapReady: boolean) => {
+      if (!isMapReady || !webViewRef.current) return;
 
-    // Set admin mode in the WebView
-    const setAdminJS = `window.setAdminMode && window.setAdminMode(${userRole === 'admin' || userRole === 'editor' ? 'true' : 'false'});`;
-    webViewRef.current.injectJavaScript(setAdminJS);
+      // Set admin mode in the WebView
+      const setAdminJS = `window.setAdminMode && window.setAdminMode(${userRole === 'admin' || userRole === 'editor' ? 'true' : 'false'});`;
+      webViewRef.current.injectJavaScript(setAdminJS);
 
-    // Inject admin handlers
-    const injectedJS = `
+      // Inject admin handlers
+      const injectedJS = `
       window.editPOI = function(poiId) {
         window.ReactNativeWebView.postMessage(JSON.stringify({
           type: 'EDIT_POI',
@@ -287,71 +318,93 @@ export const useMapAdmin = (
         }));
       };
     `;
-    webViewRef.current.injectJavaScript(injectedJS);
-  }, [userRole]);
+      webViewRef.current.injectJavaScript(injectedJS);
+    },
+    [userRole],
+  );
 
   // Enable admin POI creation mode
-  const enableAdminPOICreation = useCallback((webViewRef: React.RefObject<any>, setTempMessage: (msg: string) => void) => {
-    if (!webViewRef.current) return;
-    
-    webViewRef.current.injectJavaScript(`window.enableAdminPOICreation();`);
-    setTempMessage('Click on the map to add a new POI');
-  }, []);
+  const enableAdminPOICreation = useCallback(
+    (webViewRef: React.RefObject<any>, setTempMessage: (msg: string) => void) => {
+      if (!webViewRef.current) return;
+
+      webViewRef.current.injectJavaScript(`window.enableAdminPOICreation();`);
+      setTempMessage('Click on the map to add a new POI');
+    },
+    [],
+  );
 
   // Validate admin permissions for a POI
-  const validateAdminPermission = useCallback((poi: AdminPOI): boolean => {
-    return userRole === 'admin' || 
-           (userRole === 'editor' && adminLocations.includes(poi.location));
-  }, [userRole, adminLocations]);
+  const validateAdminPermission = useCallback(
+    (poi: AdminPOI): boolean => {
+      return (
+        userRole === 'admin' || (userRole === 'editor' && adminLocations.includes(poi.location))
+      );
+    },
+    [userRole, adminLocations],
+  );
 
   // Handle admin-related WebView messages
-  const handleAdminWebViewMessage = useCallback((parsed: any, pois: any[], webViewRef: React.RefObject<any>): boolean => {
-    switch (parsed.type) {
-      case 'ADMIN_ADD_POI':
-        openAddBuildingModal(parsed.lat, parsed.lon);
-        return true;
+  const handleAdminWebViewMessage = useCallback(
+    (parsed: any, pois: any[], webViewRef: React.RefObject<any>): boolean => {
+      switch (parsed.type) {
+        case 'ADMIN_ADD_POI':
+          openAddBuildingModal(parsed.lat, parsed.lon);
+          return true;
 
-      case 'EDIT_POI':
-        const poiToEdit = pois.find((p) => p.id === parsed.poiId);
-        if (poiToEdit) {
-          openEditBuildingModal(poiToEdit);
+        case 'EDIT_POI':
+          const poiToEdit = pois.find((p) => p.id === parsed.poiId);
+          if (poiToEdit) {
+            openEditBuildingModal(poiToEdit);
+          }
+          return true;
+
+        case 'DELETE_POI':
+          const poiToDelete = pois.find((p) => p.id === parsed.poiId);
+          if (poiToDelete) {
+            confirmDeleteBuilding(poiToDelete, () => {
+              webViewRef.current?.injectJavaScript('map.closePopup();');
+            });
+          }
+          return true;
+
+        case 'ADMIN_POI_SELECTED': {
+          const adminPOI = pois.find((p) => p.id === parsed.poi.id);
+          if (!adminPOI) return true;
+
+          console.log('userRole:', userRole);
+          console.log('adminLocations:', adminLocations);
+          console.log('adminPOI.location:', adminPOI.location);
+
+          const canEdit = validateAdminPermission(adminPOI);
+
+          if (canEdit) {
+            setAdminActionPOI(adminPOI);
+            setShowAdminActions(true);
+          } else {
+            showErrorPopup('You do not have permission to modify this POI.');
+          }
+
+          webViewRef.current?.injectJavaScript('map.closePopup();');
+          return true;
         }
-        return true;
 
-      case 'DELETE_POI':
-        const poiToDelete = pois.find((p) => p.id === parsed.poiId);
-        if (poiToDelete) {
-          confirmDeleteBuilding(poiToDelete, () => {
-            webViewRef.current?.injectJavaScript('map.closePopup();');
-          });
-        }
-        return true;
-
-      case 'ADMIN_POI_SELECTED': {
-        const adminPOI = pois.find((p) => p.id === parsed.poi.id);
-        if (!adminPOI) return true;
-        
-        console.log('userRole:', userRole);
-        console.log('adminLocations:', adminLocations);
-        console.log('adminPOI.location:', adminPOI.location);
-
-        const canEdit = validateAdminPermission(adminPOI);
-
-        if (canEdit) {
-          setAdminActionPOI(adminPOI);
-          setShowAdminActions(true);
-        } else {
-          showErrorPopup('You do not have permission to modify this POI.');
-        }
-
-        webViewRef.current?.injectJavaScript('map.closePopup();');
-        return true;
+        default:
+          return false; // Message not handled by admin
       }
-
-      default:
-        return false; // Message not handled by admin
-    }
-  }, [openAddBuildingModal, openEditBuildingModal, confirmDeleteBuilding, userRole, adminLocations, validateAdminPermission, setAdminActionPOI, setShowAdminActions, showErrorPopup]);
+    },
+    [
+      openAddBuildingModal,
+      openEditBuildingModal,
+      confirmDeleteBuilding,
+      userRole,
+      adminLocations,
+      validateAdminPermission,
+      setAdminActionPOI,
+      setShowAdminActions,
+      showErrorPopup,
+    ],
+  );
 
   return {
     // Admin State
@@ -360,12 +413,12 @@ export const useMapAdmin = (
     adminLocations,
     availableLocations,
     selectedLocation,
-    
+
     // Modal States
     showAddPOIModal,
     showEditPOIModal,
     showAdminActions,
-    
+
     // Form States
     addPOICoords,
     buildingName,
@@ -374,7 +427,7 @@ export const useMapAdmin = (
     newName,
     newFloors,
     adminActionPOI,
-    
+
     // Functions
     openAddBuildingModal,
     openEditBuildingModal,
@@ -385,7 +438,7 @@ export const useMapAdmin = (
     enableAdminPOICreation,
     handleAdminWebViewMessage,
     validateAdminPermission,
-    
+
     // Setters
     setShowAddPOIModal,
     setShowEditPOIModal,
@@ -396,7 +449,7 @@ export const useMapAdmin = (
     setNewFloors,
     setSelectedLocation,
     setAdminActionPOI,
-    
+
     // WebView Integration
     injectAdminHandlers,
   };

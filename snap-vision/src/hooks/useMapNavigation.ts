@@ -26,7 +26,7 @@ interface UseMapNavigationReturn {
   isRouteLoading: boolean;
   destinationCoords: [number, number] | null;
   routeCoordinates: any[];
-  
+
   // Functions
   fetchRoute: (destCoords: [number, number]) => Promise<void>;
   startNavigation: () => void;
@@ -36,7 +36,7 @@ interface UseMapNavigationReturn {
   updateNavigationProgress: (latitude: number, longitude: number) => void;
   startNavigationTracking: () => void;
   stopNavigationTracking: () => void;
-  
+
   // Setters
   setSteps: (steps: any[]) => void;
   setCurrentStep: (step: number) => void;
@@ -341,196 +341,199 @@ export const useMapNavigation = (
   };
 
   // Update the updateNavigationProgress function to check for destination arrival
-  const updateNavigationProgress = useCallback((latitude: number, longitude: number) => {
-    // Add safety checks at the beginning
-    if (!lastRoute.current || lastRoute.current.length === 0 || hasReachedDestination) {
-      return;
-    }
-
-    // Calculate distance walked from start location (never decreases)
-    if (startLocation && isNavigating) {
-      const totalWalked = getDistanceMeters(
-        startLocation.latitude,
-        startLocation.longitude,
-        latitude,
-        longitude,
-      );
-
-      // Only update if we've walked further (prevents decrease on rerouting)
-      if (totalWalked > distanceWalked) {
-        setDistanceWalked(totalWalked);
-      }
-    }
-
-    // Find closest point on the route
-    let minDist = Infinity;
-    let closestPointIndex = 0;
-
-    for (let i = 0; i < lastRoute.current.length; i++) {
-      const routePoint = lastRoute.current[i];
-
-      // Add safety check for each route point
-      if (!Array.isArray(routePoint) || routePoint.length < 2) {
-        console.warn('Invalid route point at index', i, routePoint);
-        continue;
+  const updateNavigationProgress = useCallback(
+    (latitude: number, longitude: number) => {
+      // Add safety checks at the beginning
+      if (!lastRoute.current || lastRoute.current.length === 0 || hasReachedDestination) {
+        return;
       }
 
-      const distance = getDistanceMeters(
-        latitude,
-        longitude,
-        routePoint[1], // Latitude
-        routePoint[0], // Longitude
-      );
+      // Calculate distance walked from start location (never decreases)
+      if (startLocation && isNavigating) {
+        const totalWalked = getDistanceMeters(
+          startLocation.latitude,
+          startLocation.longitude,
+          latitude,
+          longitude,
+        );
 
-      if (distance < minDist) {
-        minDist = distance;
-        closestPointIndex = i;
-      }
-    }
-
-    // Check for route deviation and automatic rerouting
-    if (minDist > 30 && !isRouteLoading) {
-      setStatus('Re-routing...');
-      rerouteFromCurrentLocation();
-      return; // Exit early to prevent further processing during reroute
-    }
-
-    // Calculate a more precise progress
-    // Consider not just the closest point, but also the percentage between points
-    let progressValue;
-
-    if (closestPointIndex < lastRoute.current.length - 1) {
-      // Calculate distance between current point and next point
-      const currentPoint = lastRoute.current[closestPointIndex];
-      const nextPoint = lastRoute.current[closestPointIndex + 1];
-
-      // Distance from user to closest point
-      const distToClosest = getDistanceMeters(
-        latitude,
-        longitude,
-        currentPoint[1],
-        currentPoint[0],
-      );
-
-      // Distance from user to next point
-      const distToNext = getDistanceMeters(latitude, longitude, nextPoint[1], nextPoint[0]);
-
-      // Distance between closest and next point
-      const segmentLength = getDistanceMeters(
-        currentPoint[1],
-        currentPoint[0],
-        nextPoint[1],
-        nextPoint[0],
-      );
-
-      // If we're between two points, calculate the fractional position
-      if (distToClosest + distToNext <= segmentLength * 1.2) {
-        // Allow some margin
-        const segmentProgress = distToClosest / (distToClosest + distToNext);
-        const fractionalIndex = closestPointIndex + segmentProgress;
-        progressValue = (fractionalIndex / (lastRoute.current.length - 1)) * 100;
-      } else {
-        // Just use the closest point index
-        progressValue = (closestPointIndex / (lastRoute.current.length - 1)) * 100;
-      }
-    } else {
-      // At the last point
-      progressValue = 100;
-    }
-
-    if (steps.length > 0) {
-      let stepIndex = 0;
-      let minDist = Infinity;
-      for (let i = 0; i < steps.length; i++) {
-        const step = steps[i];
-
-        // Fix: Add safety checks before destructuring
-        let stepCoordinate;
-        if (
-          step.way_points &&
-          step.way_points[0] !== undefined &&
-          lastRoute.current[step.way_points[0]]
-        ) {
-          stepCoordinate = lastRoute.current[step.way_points[0]];
-        } else if (lastRoute.current[0]) {
-          stepCoordinate = lastRoute.current[0];
-        } else {
-          continue; // Skip this iteration if no valid coordinate
+        // Only update if we've walked further (prevents decrease on rerouting)
+        if (totalWalked > distanceWalked) {
+          setDistanceWalked(totalWalked);
         }
+      }
 
-        // Additional safety check - ensure stepCoordinate is an array with 2 elements
-        if (!Array.isArray(stepCoordinate) || stepCoordinate.length < 2) {
+      // Find closest point on the route
+      let minDist = Infinity;
+      let closestPointIndex = 0;
+
+      for (let i = 0; i < lastRoute.current.length; i++) {
+        const routePoint = lastRoute.current[i];
+
+        // Add safety check for each route point
+        if (!Array.isArray(routePoint) || routePoint.length < 2) {
+          console.warn('Invalid route point at index', i, routePoint);
           continue;
         }
 
-        const [lon, lat] = stepCoordinate;
-        const dist = getDistanceMeters(latitude, longitude, lat, lon);
-        if (dist < minDist) {
-          minDist = dist;
-          stepIndex = i;
+        const distance = getDistanceMeters(
+          latitude,
+          longitude,
+          routePoint[1], // Latitude
+          routePoint[0], // Longitude
+        );
+
+        if (distance < minDist) {
+          minDist = distance;
+          closestPointIndex = i;
         }
       }
-      if (stepIndex !== currentStep) {
-        setCurrentStep(stepIndex);
+
+      // Check for route deviation and automatic rerouting
+      if (minDist > 30 && !isRouteLoading) {
+        setStatus('Re-routing...');
+        rerouteFromCurrentLocation();
+        return; // Exit early to prevent further processing during reroute
       }
-    }
 
-    // Update progress with a more precise value
-    const newProgress = Math.min(Math.round(progressValue), 100);
-    setRouteProgress(newProgress);
+      // Calculate a more precise progress
+      // Consider not just the closest point, but also the percentage between points
+      let progressValue;
 
-    // Check if we've reached the destination point
-    const destinationPoint = lastRoute.current[lastRoute.current.length - 1];
-    const distanceToEnd = getDistanceMeters(
-      latitude,
-      longitude,
-      destinationPoint[1],
-      destinationPoint[0],
-    );
+      if (closestPointIndex < lastRoute.current.length - 1) {
+        // Calculate distance between current point and next point
+        const currentPoint = lastRoute.current[closestPointIndex];
+        const nextPoint = lastRoute.current[closestPointIndex + 1];
 
-    // Update distance to destination
-    setDistanceToDestination(distanceToEnd);
+        // Distance from user to closest point
+        const distToClosest = getDistanceMeters(
+          latitude,
+          longitude,
+          currentPoint[1],
+          currentPoint[0],
+        );
 
-    // Show enhanced status with distance walked and remaining
-    const walkedFormatted =
-      distanceWalked >= 1000
-        ? `${(distanceWalked / 1000).toFixed(1)}km walked`
-        : `${Math.round(distanceWalked)}m walked`;
+        // Distance from user to next point
+        const distToNext = getDistanceMeters(latitude, longitude, nextPoint[1], nextPoint[0]);
 
-    const remainingFormatted =
-      distanceToEnd >= 1000
-        ? `${(distanceToEnd / 1000).toFixed(1)}km remaining`
-        : `${Math.round(distanceToEnd)}m remaining`;
+        // Distance between closest and next point
+        const segmentLength = getDistanceMeters(
+          currentPoint[1],
+          currentPoint[0],
+          nextPoint[1],
+          nextPoint[0],
+        );
 
-    setStatus(`${walkedFormatted} • ${remainingFormatted}`);
+        // If we're between two points, calculate the fractional position
+        if (distToClosest + distToNext <= segmentLength * 1.2) {
+          // Allow some margin
+          const segmentProgress = distToClosest / (distToClosest + distToNext);
+          const fractionalIndex = closestPointIndex + segmentProgress;
+          progressValue = (fractionalIndex / (lastRoute.current.length - 1)) * 100;
+        } else {
+          // Just use the closest point index
+          progressValue = (closestPointIndex / (lastRoute.current.length - 1)) * 100;
+        }
+      } else {
+        // At the last point
+        progressValue = 100;
+      }
 
-    // Update route progress visually
-    if (webViewRef.current && isMapReady) {
-      const jsProgressCode = `
+      if (steps.length > 0) {
+        let stepIndex = 0;
+        let minDist = Infinity;
+        for (let i = 0; i < steps.length; i++) {
+          const step = steps[i];
+
+          // Fix: Add safety checks before destructuring
+          let stepCoordinate;
+          if (
+            step.way_points &&
+            step.way_points[0] !== undefined &&
+            lastRoute.current[step.way_points[0]]
+          ) {
+            stepCoordinate = lastRoute.current[step.way_points[0]];
+          } else if (lastRoute.current[0]) {
+            stepCoordinate = lastRoute.current[0];
+          } else {
+            continue; // Skip this iteration if no valid coordinate
+          }
+
+          // Additional safety check - ensure stepCoordinate is an array with 2 elements
+          if (!Array.isArray(stepCoordinate) || stepCoordinate.length < 2) {
+            continue;
+          }
+
+          const [lon, lat] = stepCoordinate;
+          const dist = getDistanceMeters(latitude, longitude, lat, lon);
+          if (dist < minDist) {
+            minDist = dist;
+            stepIndex = i;
+          }
+        }
+        if (stepIndex !== currentStep) {
+          setCurrentStep(stepIndex);
+        }
+      }
+
+      // Update progress with a more precise value
+      const newProgress = Math.min(Math.round(progressValue), 100);
+      setRouteProgress(newProgress);
+
+      // Check if we've reached the destination point
+      const destinationPoint = lastRoute.current[lastRoute.current.length - 1];
+      const distanceToEnd = getDistanceMeters(
+        latitude,
+        longitude,
+        destinationPoint[1],
+        destinationPoint[0],
+      );
+
+      // Update distance to destination
+      setDistanceToDestination(distanceToEnd);
+
+      // Show enhanced status with distance walked and remaining
+      const walkedFormatted =
+        distanceWalked >= 1000
+          ? `${(distanceWalked / 1000).toFixed(1)}km walked`
+          : `${Math.round(distanceWalked)}m walked`;
+
+      const remainingFormatted =
+        distanceToEnd >= 1000
+          ? `${(distanceToEnd / 1000).toFixed(1)}km remaining`
+          : `${Math.round(distanceToEnd)}m remaining`;
+
+      setStatus(`${walkedFormatted} • ${remainingFormatted}`);
+
+      // Update route progress visually
+      if (webViewRef.current && isMapReady) {
+        const jsProgressCode = `
         if (window.updateRouteProgress) {
           window.updateRouteProgress(${closestPointIndex}, ${progressValue / 100});
         }
       `;
-      webViewRef.current.injectJavaScript(jsProgressCode);
-    }
+        webViewRef.current.injectJavaScript(jsProgressCode);
+      }
 
-    // Check destination arrival based on either:
-    // 1. Progress is 100%
-    // 2. Distance to destination is less than 3 meters
-    if ((newProgress >= 100 || distanceToEnd < 3) && isNavigating && !hasReachedDestination) {
-      destinationReached();
-    }
-  }, [
-    hasReachedDestination,
-    startLocation,
-    isNavigating,
-    distanceWalked,
-    steps,
-    currentStep,
-    webViewRef,
-    isMapReady,
-    destinationReached,
-  ]);
+      // Check destination arrival based on either:
+      // 1. Progress is 100%
+      // 2. Distance to destination is less than 3 meters
+      if ((newProgress >= 100 || distanceToEnd < 3) && isNavigating && !hasReachedDestination) {
+        destinationReached();
+      }
+    },
+    [
+      hasReachedDestination,
+      startLocation,
+      isNavigating,
+      distanceWalked,
+      steps,
+      currentStep,
+      webViewRef,
+      isMapReady,
+      destinationReached,
+    ],
+  );
 
   // Navigation-specific tracking functions (self-contained)
   const startNavigationTracking = useCallback(async () => {
@@ -594,7 +597,7 @@ export const useMapNavigation = (
     isRouteLoading,
     destinationCoords,
     routeCoordinates: lastRoute.current,
-    
+
     // Functions
     fetchRoute,
     startNavigation,
@@ -604,7 +607,7 @@ export const useMapNavigation = (
     updateNavigationProgress,
     startNavigationTracking,
     stopNavigationTracking,
-    
+
     // Setters
     setSteps,
     setCurrentStep,

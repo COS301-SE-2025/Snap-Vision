@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Pressable,
-} from 'react-native';
+import { View, Text, TouchableOpacity, Pressable } from 'react-native';
 import { WebView as WebViewType } from 'react-native-webview';
 import MapWebView from './MapWebView';
 import AdminPOIModal from '../molecules/AdminPOIModal';
@@ -152,16 +147,16 @@ const MapContent: React.FC<MapContentProps> = ({
   // Theme
   colors,
   isDark,
-  
+
   // WebView
   webViewRef,
   onWebViewMessage,
-  
+
   // Location
   currentLocation,
   isRefreshingLocation,
   onRefreshLocation,
-  
+
   // Navigation
   isNavigating,
   destination,
@@ -180,7 +175,7 @@ const MapContent: React.FC<MapContentProps> = ({
   onStartNavigation,
   onStopNavigation,
   onCancelRoute,
-  
+
   // Voice and AR
   isVoiceEnabled,
   onToggleVoice,
@@ -190,7 +185,7 @@ const MapContent: React.FC<MapContentProps> = ({
   isNavigationMinimized,
   onToggleMinimize,
   onSpeakingChange,
-  
+
   // POI and search
   poiSuggestions,
   pois,
@@ -199,7 +194,7 @@ const MapContent: React.FC<MapContentProps> = ({
   onDestinationChange,
   onDestinationSearch,
   onSelectPOI,
-  
+
   // Admin
   isAdmin,
   showAddPOIModal,
@@ -226,7 +221,7 @@ const MapContent: React.FC<MapContentProps> = ({
   onOpenEditBuildingModal,
   onConfirmDeleteBuilding,
   onEnableAdminPOICreation,
-  
+
   // Crowd reports
   showCrowdPopup,
   selectedDensity,
@@ -237,7 +232,7 @@ const MapContent: React.FC<MapContentProps> = ({
   onSetSelectedDensity,
   onHandleReportTooltipShow,
   onHandleReportTooltipHide,
-  
+
   // Indoor navigation
   showIndoorPicker,
   indoorRooms,
@@ -249,12 +244,12 @@ const MapContent: React.FC<MapContentProps> = ({
   onSetSelectedStartRoom,
   onSetSelectedIndoorRoom,
   onOpenIndoorNavigation,
-  
+
   // Share
   showShareTooltip,
   onShareLocation,
   onSetShowShareTooltip,
-  
+
   // Status and popups
   error,
   showErrorPopup,
@@ -375,7 +370,9 @@ const MapContent: React.FC<MapContentProps> = ({
           distance={distanceToDestination}
           distanceWalked={distanceWalked}
           originalRouteDistance={originalRouteDistance}
-          time={estimatedTime !== null && !isNaN(Number(estimatedTime)) ? Number(estimatedTime) : null}
+          time={
+            estimatedTime !== null && !isNaN(Number(estimatedTime)) ? Number(estimatedTime) : null
+          }
           destination={destination}
           isVoiceEnabled={isVoiceEnabled}
           onToggleVoice={onToggleVoice}

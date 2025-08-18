@@ -22,7 +22,7 @@ interface UseCrowdReportsReturn {
   selectedDensity: string;
   showReportTooltip: boolean;
   crowdReports: Record<string, CrowdReport>;
-  
+
   // Functions
   submitCrowdReport: (selectedPOI: POI | null) => Promise<void>;
   fetchRecentCrowdReports: () => Promise<void>;
@@ -31,12 +31,12 @@ interface UseCrowdReportsReturn {
     destination: string,
     destinationCoords: number[] | null,
     pois: POI[],
-    setSelectedPOI: (poi: POI | null) => void
+    setSelectedPOI: (poi: POI | null) => void,
   ) => void;
   closeCrowdReportModal: () => void;
   handleReportTooltipShow: () => void;
   handleReportTooltipHide: () => void;
-  
+
   // Setters
   setShowCrowdPopup: (show: boolean) => void;
   setSelectedDensity: (density: string) => void;
@@ -49,7 +49,6 @@ export const useCrowdReports = (
   setStatus: (status: string) => void,
   setError: (error: string | null) => void,
 ): UseCrowdReportsReturn => {
-  
   // State
   const [showCrowdPopup, setShowCrowdPopup] = useState(false);
   const [selectedDensity, setSelectedDensity] = useState('moderate');
@@ -57,42 +56,45 @@ export const useCrowdReports = (
   const [crowdReports, setCrowdReports] = useState<Record<string, CrowdReport>>({});
 
   // Submit crowd report to Firestore
-  const submitCrowdReport = useCallback(async (selectedPOI: POI | null) => {
-    if (!selectedPOI || !selectedDensity) {
-      setError('Please select a building and density level');
-      return;
-    }
-
-    try {
-      // Save report to Firestore
-      await firestore()
-        .collection('crowdReports')
-        .add({
-          buildingId: selectedPOI.id,
-          buildingName: selectedPOI.name,
-          density: selectedDensity,
-          timestamp: firestore.FieldValue.serverTimestamp(),
-          reportedBy: auth().currentUser?.uid || 'anonymous',
-          centroid: selectedPOI.centroid,
-          expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
-        });
-
-      // Update UI
-      if (isMapReady && webViewRef.current) {
-        const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${selectedPOI.centroid.latitude}, ${selectedPOI.centroid.longitude}, '${selectedDensity}', '${selectedPOI.id}');`;
-        webViewRef.current.injectJavaScript(jsCrowdCode);
+  const submitCrowdReport = useCallback(
+    async (selectedPOI: POI | null) => {
+      if (!selectedPOI || !selectedDensity) {
+        setError('Please select a building and density level');
+        return;
       }
-      
-      setShowCrowdPopup(false);
-      setStatus(`Crowd density reported for ${selectedPOI.name}`);
-      
-      // Refresh crowd reports to get the latest data
-      await fetchRecentCrowdReports();
-    } catch (error) {
-      console.error('Error saving crowd report:', error);
-      setError('Failed to submit crowd report');
-    }
-  }, [selectedDensity, isMapReady, webViewRef, setStatus, setError]);
+
+      try {
+        // Save report to Firestore
+        await firestore()
+          .collection('crowdReports')
+          .add({
+            buildingId: selectedPOI.id,
+            buildingName: selectedPOI.name,
+            density: selectedDensity,
+            timestamp: firestore.FieldValue.serverTimestamp(),
+            reportedBy: auth().currentUser?.uid || 'anonymous',
+            centroid: selectedPOI.centroid,
+            expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
+          });
+
+        // Update UI
+        if (isMapReady && webViewRef.current) {
+          const jsCrowdCode = `window.updateCrowdDensity && window.updateCrowdDensity(${selectedPOI.centroid.latitude}, ${selectedPOI.centroid.longitude}, '${selectedDensity}', '${selectedPOI.id}');`;
+          webViewRef.current.injectJavaScript(jsCrowdCode);
+        }
+
+        setShowCrowdPopup(false);
+        setStatus(`Crowd density reported for ${selectedPOI.name}`);
+
+        // Refresh crowd reports to get the latest data
+        await fetchRecentCrowdReports();
+      } catch (error) {
+        console.error('Error saving crowd report:', error);
+        setError('Failed to submit crowd report');
+      }
+    },
+    [selectedDensity, isMapReady, webViewRef, setStatus, setError],
+  );
 
   // Fetch recent crowd reports from Firestore
   const fetchRecentCrowdReports = useCallback(async () => {
@@ -142,34 +144,37 @@ export const useCrowdReports = (
   }, [isMapReady, webViewRef, setError]);
 
   // Open crowd report modal with smart POI selection
-  const openCrowdReportModal = useCallback((
-    selectedFeature: POI | null,
-    destination: string,
-    destinationCoords: number[] | null,
-    pois: POI[],
-    setSelectedPOI: (poi: POI | null) => void
-  ) => {
-    // If user has selected a POI on map, use that as default
-    if (selectedFeature) {
-      setSelectedPOI(selectedFeature);
-    } else if (destination && destinationCoords) {
-      // If user has a destination set in the search bar but no selected feature,
-      // find the corresponding POI
-      const matchingPOI = pois.find(
-        (poi) =>
-          poi.name === destination ||
-          (poi.centroid &&
-            poi.centroid.longitude === destinationCoords[0] &&
-            poi.centroid.latitude === destinationCoords[1]),
-      );
+  const openCrowdReportModal = useCallback(
+    (
+      selectedFeature: POI | null,
+      destination: string,
+      destinationCoords: number[] | null,
+      pois: POI[],
+      setSelectedPOI: (poi: POI | null) => void,
+    ) => {
+      // If user has selected a POI on map, use that as default
+      if (selectedFeature) {
+        setSelectedPOI(selectedFeature);
+      } else if (destination && destinationCoords) {
+        // If user has a destination set in the search bar but no selected feature,
+        // find the corresponding POI
+        const matchingPOI = pois.find(
+          (poi) =>
+            poi.name === destination ||
+            (poi.centroid &&
+              poi.centroid.longitude === destinationCoords[0] &&
+              poi.centroid.latitude === destinationCoords[1]),
+        );
 
-      if (matchingPOI) {
-        setSelectedPOI(matchingPOI);
+        if (matchingPOI) {
+          setSelectedPOI(matchingPOI);
+        }
       }
-    }
 
-    setShowCrowdPopup(true);
-  }, []);
+      setShowCrowdPopup(true);
+    },
+    [],
+  );
 
   // Close crowd report modal
   const closeCrowdReportModal = useCallback(() => {
@@ -201,7 +206,7 @@ export const useCrowdReports = (
     selectedDensity,
     showReportTooltip,
     crowdReports,
-    
+
     // Functions
     submitCrowdReport,
     fetchRecentCrowdReports,
@@ -209,7 +214,7 @@ export const useCrowdReports = (
     closeCrowdReportModal,
     handleReportTooltipShow,
     handleReportTooltipHide,
-    
+
     // Setters
     setShowCrowdPopup,
     setSelectedDensity,

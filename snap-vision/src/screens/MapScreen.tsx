@@ -37,7 +37,7 @@ const MapScreen = () => {
   const colors = getThemeColors(isDark);
   const { isHapticFeedbackEnabled } = useAccessibility();
   const { setNavigationStartTime, unlock, incrementRoutes } = useBadges();
-  
+
   // navigation
   const route = useRoute();
   const navigation = useNavigation<any>();
@@ -167,13 +167,17 @@ const MapScreen = () => {
     setErrorPopupMessage(message);
     setShowErrorPopup(true);
   };
-  
+
   const showSuccessPopupHelper = (message: string) => {
     setSuccessPopupMessage(message);
     setShowSuccessPopup(true);
   };
-  
-  const showConfirmationPopupHelper = (data: { title: string; message: string; onConfirm: () => void }) => {
+
+  const showConfirmationPopupHelper = (data: {
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }) => {
     setConfirmationPopupData(data);
     setShowConfirmationPopup(true);
   };
@@ -235,12 +239,7 @@ const MapScreen = () => {
     handleReportTooltipHide,
     setSelectedDensity,
     setShowReportTooltip,
-  } = useCrowdReports(
-    isMapReady,
-    webViewRef,
-    setStatus,
-    setError,
-  );
+  } = useCrowdReports(isMapReady, webViewRef, setStatus, setError);
 
   const {
     showIndoorPicker,
@@ -355,7 +354,7 @@ const MapScreen = () => {
 
   const handleSelectPOI = (poi: any) => {
     setHasHandledDeepLink(true);
-    
+
     if (isNavigating) {
       stopNavigation();
     }
@@ -489,7 +488,14 @@ const MapScreen = () => {
       fetchRoute([lng, lat]);
       setHasHandledDeepLink(true);
     }
-  }, [params, currentLocation, hasHandledDeepLink, fetchRoute, setDestination, setDestinationCoords]);
+  }, [
+    params,
+    currentLocation,
+    hasHandledDeepLink,
+    fetchRoute,
+    setDestination,
+    setDestinationCoords,
+  ]);
 
   // location availability check
   useEffect(() => {
@@ -509,16 +515,13 @@ const MapScreen = () => {
       //theme
       colors={colors}
       isDark={isDark}
-      
       //webView
       webViewRef={webViewRef}
       onWebViewMessage={handleWebViewMessage}
-      
       //location
       currentLocation={currentLocation}
       isRefreshingLocation={isRefreshingLocation}
       onRefreshLocation={refreshLocation}
-      
       //navigation
       isNavigating={isNavigating}
       destination={destination}
@@ -537,7 +540,6 @@ const MapScreen = () => {
       onStartNavigation={handleStartNavigation}
       onStopNavigation={stopNavigation}
       onCancelRoute={cancelRoute}
-      
       //voice and AR
       isVoiceEnabled={isVoiceEnabled}
       onToggleVoice={() => setIsVoiceEnabled(!isVoiceEnabled)}
@@ -547,7 +549,6 @@ const MapScreen = () => {
       isNavigationMinimized={isNavigationMinimized}
       onToggleMinimize={handleNavigationMinimize}
       onSpeakingChange={setIsSpeaking}
-      
       //poi and search
       poiSuggestions={poiSuggestions}
       pois={pois}
@@ -556,7 +557,6 @@ const MapScreen = () => {
       onDestinationChange={handleDestinationChange}
       onDestinationSearch={handleDestinationSearch}
       onSelectPOI={handleSelectPOI}
-      
       //admin
       isAdmin={isAdmin}
       showAddPOIModal={showAddPOIModal}
@@ -583,7 +583,6 @@ const MapScreen = () => {
       onOpenEditBuildingModal={openEditBuildingModal}
       onConfirmDeleteBuilding={confirmDeleteBuilding}
       onEnableAdminPOICreation={handleEnableAdminPOICreation}
-      
       //crowd reports
       showCrowdPopup={showCrowdPopup}
       selectedDensity={selectedDensity}
@@ -594,7 +593,6 @@ const MapScreen = () => {
       onSetSelectedDensity={setSelectedDensity}
       onHandleReportTooltipShow={handleReportTooltipShow}
       onHandleReportTooltipHide={handleReportTooltipHide}
-      
       //indoor navigation
       showIndoorPicker={showIndoorPicker}
       indoorRooms={indoorRooms}
@@ -606,12 +604,10 @@ const MapScreen = () => {
       onSetSelectedStartRoom={setSelectedStartRoom}
       onSetSelectedIndoorRoom={setSelectedIndoorRoom}
       onOpenIndoorNavigation={handleOpenIndoorNavigation}
-      
       // share
       showShareTooltip={showShareTooltip}
       onShareLocation={shareLocation}
       onSetShowShareTooltip={setShowShareTooltip}
-      
       // status and popups
       error={error}
       showErrorPopup={showErrorPopup}

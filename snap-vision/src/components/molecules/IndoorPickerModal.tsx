@@ -55,9 +55,7 @@ const IndoorPickerModal: React.FC<IndoorPickerModalProps> = ({
                     borderColor: colors.border,
                   }}
                 >
-                  <Text
-                    style={{ color: selectedStartRoom?.id === r.id ? '#fff' : colors.text }}
-                  >
+                  <Text style={{ color: selectedStartRoom?.id === r.id ? '#fff' : colors.text }}>
                     {r.name}
                     {r.isEntrance ? ' · Entrance' : ''}
                     {r.type ? ` · ${r.type}` : ''}
@@ -86,9 +84,7 @@ const IndoorPickerModal: React.FC<IndoorPickerModalProps> = ({
                     borderColor: colors.border,
                   }}
                 >
-                  <Text
-                    style={{ color: selectedIndoorRoom?.id === r.id ? '#fff' : colors.text }}
-                  >
+                  <Text style={{ color: selectedIndoorRoom?.id === r.id ? '#fff' : colors.text }}>
                     {r.name}
                     {r.type ? ` · ${r.type}` : ''}
                   </Text>
@@ -97,9 +93,7 @@ const IndoorPickerModal: React.FC<IndoorPickerModalProps> = ({
             </ScrollView>
           </View>
 
-          <View
-            style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 }}
-          >
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 }}>
             <Pressable onPress={onCancel}>
               <Text style={{ color: colors.text }}>Cancel</Text>
             </Pressable>

@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  TouchableOpacity,
-} from 'react-native';
+import { Modal, View, Text, TextInput, Pressable, TouchableOpacity } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { AdminPOI } from '../../hooks/useMapAdmin';
 
@@ -15,7 +8,7 @@ interface AdminPOIModalProps {
   mode: 'add' | 'edit';
   onClose: () => void;
   onSubmit: () => void;
-  
+
   // Add POI props
   buildingName?: string;
   setBuildingName?: (name: string) => void;
@@ -24,7 +17,7 @@ interface AdminPOIModalProps {
   selectedLocation?: string;
   setSelectedLocation?: (location: string) => void;
   availableLocations?: string[];
-  
+
   // Edit POI props
   newName?: string;
   setNewName?: (name: string) => void;
@@ -67,7 +60,7 @@ export const AdminPOIModal: React.FC<AdminPOIModalProps> = ({
           <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 16 }}>
             {mode === 'add' ? 'Add Building' : 'Edit Building'}
           </Text>
-          
+
           {mode === 'add' && (
             <>
               <Text style={{ marginBottom: 5 }}>Location:</Text>
@@ -83,7 +76,7 @@ export const AdminPOIModal: React.FC<AdminPOIModalProps> = ({
                   ))}
                 </Picker>
               </View>
-              
+
               <Text style={{ marginBottom: 5 }}>Name:</Text>
               <TextInput
                 value={buildingName}
@@ -91,7 +84,7 @@ export const AdminPOIModal: React.FC<AdminPOIModalProps> = ({
                 placeholder="Building Name"
                 style={{ borderBottomWidth: 1, marginBottom: 10, paddingVertical: 8 }}
               />
-              
+
               <Text style={{ marginBottom: 5 }}>Floors:</Text>
               <TextInput
                 value={numberOfFloors}
@@ -102,7 +95,7 @@ export const AdminPOIModal: React.FC<AdminPOIModalProps> = ({
               />
             </>
           )}
-          
+
           {mode === 'edit' && (
             <>
               <Text style={{ marginBottom: 5 }}>Name:</Text>
@@ -112,7 +105,7 @@ export const AdminPOIModal: React.FC<AdminPOIModalProps> = ({
                 placeholder="New Name"
                 style={{ borderBottomWidth: 1, marginBottom: 10, paddingVertical: 8 }}
               />
-              
+
               <Text style={{ marginBottom: 5 }}>Floors:</Text>
               <TextInput
                 value={newFloors}
@@ -123,18 +116,22 @@ export const AdminPOIModal: React.FC<AdminPOIModalProps> = ({
               />
             </>
           )}
-          
+
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             <Pressable onPress={onClose}>
-              <Text style={{ color: '#666', paddingVertical: 10, paddingHorizontal: 20 }}>Cancel</Text>
+              <Text style={{ color: '#666', paddingVertical: 10, paddingHorizontal: 20 }}>
+                Cancel
+              </Text>
             </Pressable>
             <Pressable onPress={onSubmit}>
-              <Text style={{ 
-                fontWeight: 'bold', 
-                color: '#007AFF',
-                paddingVertical: 10, 
-                paddingHorizontal: 20 
-              }}>
+              <Text
+                style={{
+                  fontWeight: 'bold',
+                  color: '#007AFF',
+                  paddingVertical: 10,
+                  paddingHorizontal: 20,
+                }}
+              >
                 {mode === 'add' ? 'Add' : 'Save'}
               </Text>
             </Pressable>
