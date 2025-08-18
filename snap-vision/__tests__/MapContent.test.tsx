@@ -521,5 +521,48 @@ describe('MapContent', () => {
     expect(getByText('Finding Location...')).toBeTruthy();
   });
 
+  it('does not render Find My Location button when currentLocation is available', () => {
+    const { queryByText } = render(
+      <MapContent {...baseProps} currentLocation={{ latitude: 1, longitude: 2 }} />
+    );
+    expect(queryByText('📍 Find My Location')).toBeNull();
+  });
+
+  // AR Navigation tests
+  describe('AR Navigation', () => {
+    it('renders ARNavigationOverlay when showAR, isNavigating, destinationCoords, and currentLocation are set', () => {
+      const { getByText } = render(
+        <MapContent
+          {...baseProps}
+          showAR
+          isNavigating
+          destinationCoords={[1, 2]}
+          currentLocation={{ latitude: 1, longitude: 2 }}
+        />
+      );
+      expect(getByText('AROverlay')).toBeTruthy();
+    });
+
+    it('does not render ARNavigationOverlay if any required prop is missing', () => {
+      const { queryByText } = render(
+        <MapContent {...baseProps} showAR isNavigating destinationCoords={null} currentLocation={null} />
+      );
+      expect(queryByText('AROverlay')).toBeNull();
+    });
+  });
+
+  // Navigation instruction overlay tests
+  it('shows current navigation instruction overlay when navigating', () => {
+    const { getByText } = render(
+      <MapContent
+        {...baseProps}
+        isNavigating
+        steps={[{ instruction: 'Turn left' }]}
+        currentStep={0}
+      />,
+    );
+    expect(getByText('Turn left')).toBeTruthy();
+  });
+
   
 });
