@@ -2,8 +2,6 @@ import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import AdminEditFloorplansContent from '../src/components/organisms/AdminEditFloorplansContent';
 
-const { getAllByText } = render(<AdminEditFloorplansContent />);
-
 // Mocks
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
