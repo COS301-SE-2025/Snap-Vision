@@ -95,7 +95,7 @@ describe('RecentlyVisitedCarousel', () => {
     ...overrides,
   });
 
-  const createVisits = (count: number, overrides: Array<Partial<Visit>> = []): Visit[] => {
+  const createVisits = (count: number, overrides: Partial<Visit>[] = []): Visit[] => {
     return Array.from({ length: count }, (_, index) =>
       createVisit({
         poiId: `poi-${index + 1}`,

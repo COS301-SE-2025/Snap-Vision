@@ -3,9 +3,7 @@ import auth from '@react-native-firebase/auth';
 import { Building, Location } from '../../types/floorplan';
 
 export const fetchBuildings = async (locationId: string): Promise<Building[]> => {
-  const snapshot = await firestore()
-    .collection(`locations/${locationId}/buildingPOIs`)
-    .get();
+  const snapshot = await firestore().collection(`locations/${locationId}/buildingPOIs`).get();
 
   return snapshot.docs.map((doc) => {
     const data = doc.data();

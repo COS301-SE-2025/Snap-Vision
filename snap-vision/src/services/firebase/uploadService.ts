@@ -9,7 +9,7 @@ export const uploadFloorplanImage = async (
 ): Promise<string> => {
   const floorNumber = floorLabel;
   const storagePath = `floorplans/${locationId}/${buildingId}/${floorNumber}.jpg`;
-  
+
   console.log('Uploading to:', storagePath);
   console.log('Current user UID:', auth().currentUser?.uid);
 

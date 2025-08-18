@@ -1,5 +1,4 @@
-import { LogBox } from 'react-native';
-LogBox.ignoreLogs(['Text strings must be rendered within a <Text> component']);
+import { LogBox, Linking } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -11,7 +10,6 @@ import AdminEditFloorplansScreen from './src/screens/AdminEditFloorplansScreen';
 import AdminFloorplanEditorScreen from './src/screens/AdminFloorplanEditorScreen';
 import { ThemeProvider } from './src/theme/ThemeContext';
 import ManageUsersScreen from './src/screens/ManageUsersScreen';
-import { Linking } from 'react-native';
 import queryString from 'query-string';
 import { DeepLinkProvider, useDeepLink } from './src/DeepLinkContext';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
@@ -31,9 +29,10 @@ import IndoorNavigationInstructionsScreen from './src/screens/IndoorNavigationIn
 import IndoorSchematicNavScreen from './src/screens/IndoorSchematicNavScreen';
 import ARIndoorNavScreen from './src/screens/ARIndoorNavScreen';
 
-const Stack = createNativeStackNavigator();
-
 import { navigationRef } from './src/navigation/RootNavigation';
+LogBox.ignoreLogs(['Text strings must be rendered within a <Text> component']);
+
+const Stack = createNativeStackNavigator();
 
 function AppInner() {
   const { setCoords } = useDeepLink();

@@ -63,7 +63,13 @@ export default function AdminLoadFloorplansContent() {
   // Handle upload
   const onUpload = async () => {
     const selectedBuilding = buildings.find((b) => b.id === selectedBuildingId) || null;
-    const result = await handleUpload(selectedBuilding, selectedLocation, floorLabel, userRole, adminLocations);
+    const result = await handleUpload(
+      selectedBuilding,
+      selectedLocation,
+      floorLabel,
+      userRole,
+      adminLocations,
+    );
     if (result.success) setShowSuccessPopup(true);
     else setShowErrorPopup(true);
   };
@@ -122,38 +128,44 @@ export default function AdminLoadFloorplansContent() {
         />
 
         {/* Step 1: Select Building */}
-{selectedLocation && currentStep >= 1 && (
-  <View style={styles.sectionContainer}>
-    <Text style={[styles.sectionTitle, { color: colors.primary }]}>Step 1: Select Building</Text>
-    {buildings.length === 0 ? (
-      <Text style={[styles.infoText, { color: colors.secondary }]}>
-        No buildings available. Please check your connection.
-      </Text>
-    ) : (
-      <BuildingSelector
-        buildings={buildings}
-        selectedBuildingId={selectedBuildingId}
-        onSelectBuilding={(id) => {
-          setSelectedBuildingId(id);
-          if (id) setCurrentStep(2);
-        }}
-      />
-    )}
-  </View>
-)}
-
+        {selectedLocation && currentStep >= 1 && (
+          <View style={styles.sectionContainer}>
+            <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+              Step 1: Select Building
+            </Text>
+            {buildings.length === 0 ? (
+              <Text style={[styles.infoText, { color: colors.secondary }]}>
+                No buildings available. Please check your connection.
+              </Text>
+            ) : (
+              <BuildingSelector
+                buildings={buildings}
+                selectedBuildingId={selectedBuildingId}
+                onSelectBuilding={(id) => {
+                  setSelectedBuildingId(id);
+                  if (id) setCurrentStep(2);
+                }}
+              />
+            )}
+          </View>
+        )}
 
         {/* Step 2: Floor Label */}
         {selectedBuildingId && currentStep >= 2 && (
           <View style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: colors.primary }]}>Step 2: Floor Information</Text>
+            <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+              Step 2: Floor Information
+            </Text>
             <AppInput
               placeholder="Enter floor number (e.g., 1, 2, 3...)"
               value={floorLabel}
               onChangeText={(text) => setFloorLabel(text.replace(/[^0-9]/g, ''))}
               keyboardType="number-pad"
               testID="input-floor-label"
-              style={[styles.textField, { borderColor: colors.primary, color: colors.text, backgroundColor: colors.card }]}
+              style={[
+                styles.textField,
+                { borderColor: colors.primary, color: colors.text, backgroundColor: colors.card },
+              ]}
             />
           </View>
         )}
@@ -161,11 +173,13 @@ export default function AdminLoadFloorplansContent() {
         {/* Step 3: Upload Floorplan */}
         {floorLabel && currentStep >= 3 && (
           <View style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: colors.primary }]}>Step 3: Select Floorplan File</Text>
+            <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+              Step 3: Select Floorplan File
+            </Text>
             <AppSecondaryButton
               title={fileUri ? 'Change Image' : 'Select Floorplan Image'}
               onPress={handlePickDocument}
-              testID={fileUri ? "button-change-image" : "button-select-image"}
+              testID={fileUri ? 'button-change-image' : 'button-select-image'}
             />
             {fileUri && (
               <View style={[styles.fileInfoContainer, { backgroundColor: colors.card }]}>
@@ -235,7 +249,13 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 16 },
   textField: { marginBottom: 4 },
   infoText: { fontSize: 12 },
-  fileInfoContainer: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 8, marginTop: 12 },
+  fileInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
+  },
   fileName: { marginLeft: 8, flex: 1 },
   submitContainer: { marginTop: 8, marginBottom: 32 },
 });

@@ -9,6 +9,7 @@ import {
   PermissionsAndroid,
   Pressable,
   ScrollView,
+  Platform,
 } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import { WebView as WebViewType } from 'react-native-webview';
@@ -34,7 +35,6 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import ARNavigationOverlay from '../components/organisms/ARNavigationOverlay';
 import { useCompass } from '../hooks/useCompass'; // Needed for AR navigation functionality
 import { requestCameraPermission } from '../utils/cameraPermissions';
-import { Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 // import { ROUTING_API } from '@env';
 

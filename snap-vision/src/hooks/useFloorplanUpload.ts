@@ -87,12 +87,7 @@ export const useFloorplanUpload = () => {
         fileUri,
       );
 
-      await saveFloorplanMetadata(
-        selectedLocation,
-        selectedBuilding.id,
-        floorLabel,
-        downloadURL,
-      );
+      await saveFloorplanMetadata(selectedLocation, selectedBuilding.id, floorLabel, downloadURL);
 
       const uploadData: UploadedData = {
         buildingId: selectedBuilding.id,
@@ -103,7 +98,7 @@ export const useFloorplanUpload = () => {
 
       setUploadedData(uploadData);
       setIsLoading(false);
-      
+
       return { success: true, data: uploadData };
     } catch (err) {
       console.error('Error uploading floorplan:', err);

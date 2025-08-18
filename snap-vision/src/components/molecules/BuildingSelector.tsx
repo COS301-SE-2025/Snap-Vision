@@ -15,7 +15,11 @@ interface Props {
   onSelectBuilding: (id: string) => void;
 }
 
-export const BuildingSelector: React.FC<Props> = ({ buildings, selectedBuildingId, onSelectBuilding }) => {
+export const BuildingSelector: React.FC<Props> = ({
+  buildings,
+  selectedBuildingId,
+  onSelectBuilding,
+}) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 

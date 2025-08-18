@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Building, Location } from '../types/floorplan';
-import { fetchBuildings, fetchUserInfo, fetchLocations } from '../services/firebase/floorplanService';
+import {
+  fetchBuildings,
+  fetchUserInfo,
+  fetchLocations,
+} from '../services/firebase/floorplanService';
 
 export const useBuildings = () => {
   const [buildings, setBuildings] = useState<Building[]>([]);
@@ -11,7 +15,7 @@ export const useBuildings = () => {
 
   const loadBuildings = async (locationId: string) => {
     if (!locationId) return;
-    
+
     setIsLoading(true);
     try {
       const buildingsData = await fetchBuildings(locationId);
@@ -38,7 +42,7 @@ export const useBuildings = () => {
   const loadLocations = async () => {
     try {
       const allLocations = await fetchLocations();
-      
+
       if (userRole === 'admin') {
         setLocations(allLocations);
       } else if (userRole === 'editor') {

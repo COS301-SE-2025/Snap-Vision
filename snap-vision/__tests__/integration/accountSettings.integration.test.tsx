@@ -1,12 +1,21 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 
+import Toast from 'react-native-toast-message';
+
+import { resetToAuthResolver } from '../../src/navigation/RootNavigation';
+
+import auth from '@react-native-firebase/auth';
+
+// --- Real Component Setup ---
+import AccountSettingsContent from '../../src/components/organisms/AccountSettingsContent';
+
+import AccountSettingsScreen from '../../src/screens/AccountSettings';
+
 // Setup mock functions
 const mockNavigate = jest.fn();
 const mockResetToLogin = jest.fn();
 const mockSignOut = jest.fn(() => Promise.resolve());
-
-import Toast from 'react-native-toast-message';
 
 // --- Toast Mock ---
 const mockToastShow = jest.fn();
@@ -59,8 +68,6 @@ jest.mock('../../src/navigation/RootNavigation', () => ({
   resetToLogin: mockResetToLogin,
 }));
 
-import { resetToAuthResolver } from '../../src/navigation/RootNavigation';
-
 // --- Firebase Auth Mock ---
 jest.mock('@react-native-firebase/auth', () => {
   return jest.fn().mockImplementation(() => ({
@@ -73,8 +80,6 @@ jest.mock('@react-native-firebase/auth', () => {
     }),
   }));
 });
-
-import auth from '@react-native-firebase/auth';
 
 // --- Firebase Firestore Mock ---
 jest.mock('@react-native-firebase/firestore', () => {
@@ -199,9 +204,6 @@ jest.mock('../../src/components/molecules/LogoutButton', () => {
   };
 });
 
-// --- Real Component Setup ---
-import AccountSettingsContent from '../../src/components/organisms/AccountSettingsContent';
-
 jest.mock('../../src/screens/AccountSettings', () => {
   const React = require('react');
   const { View } = require('react-native');
@@ -214,8 +216,6 @@ jest.mock('../../src/screens/AccountSettings', () => {
     );
   };
 });
-
-import AccountSettingsScreen from '../../src/screens/AccountSettings';
 const TestWrapper = ({ children }) => <>{children}</>;
 
 describe('Account Settings Integration Tests', () => {
