@@ -447,5 +447,25 @@ describe('MapContent', () => {
     expect(getByText('edit AdminPOIModal')).toBeTruthy();
   });
 
+  it('shows AdminActionsModal when showAdminActions is true', () => {
+    const { getByText } = render(<MapContent {...baseProps} showAdminActions />);
+    expect(getByText('AdminActionsModal')).toBeTruthy();
+  });
+
+  it('shows DirectionsModal when showDirectionsSheet is true', () => {
+    const { getByText } = render(<MapContent {...baseProps} showDirectionsSheet />);
+    expect(getByText('DirectionsModal')).toBeTruthy();
+  });
+
+  it('shows CrowdReportModal when showCrowdPopup is true', () => {
+    const { getByText } = render(<MapContent {...baseProps} showCrowdPopup />);
+    expect(getByText('CrowdReportModal')).toBeTruthy();
+  });
+
+  it('shows IndoorPickerModal when showIndoorPicker is true', () => {
+    const { getByText } = render(<MapContent {...baseProps} showIndoorPicker />);
+    expect(getByText('IndoorPickerModal')).toBeTruthy();
+  });
+
   
 });
