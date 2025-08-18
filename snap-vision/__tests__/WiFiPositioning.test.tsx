@@ -1,20 +1,19 @@
 import {
   collectWiFiFingerprint,
   deleteWiFiFingerprint,
-} from '../src/services/WiFiPositioningService'; // <- update path
+} from '../src/services/WiFiPositioningService';
 import WifiManager from 'react-native-wifi-reborn';
 import firestore from '@react-native-firebase/firestore';
 
-// ---- Stable timestamp for assertions
+//Stable timestamp for assertions
 const NOW = 1_725_000_000_000; // any fixed value
 const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(NOW);
 
-// ---- Jest mocks
+//Jest mocks
 jest.mock('react-native-wifi-reborn', () => ({
   reScanAndLoadWifiList: jest.fn(),
 }));
 
-// Keep a simple shape for firestore mocks; we’ll override per-test as needed.
 type DocStub = { data: () => any; ref: any };
 const makeSnapshot = (docs: DocStub[]) => ({ docs });
 

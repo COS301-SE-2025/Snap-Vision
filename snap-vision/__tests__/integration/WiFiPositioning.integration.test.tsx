@@ -1,20 +1,16 @@
-// __tests__/integration/WiFiPositioning.integration.test.tsx
-
 import {
   collectWiFiFingerprint,
   deleteWiFiFingerprint,
-} from '../../src/services/WiFiPositioningService'; // <- update path
+} from '../../src/services/WiFiPositioningService';
 import WifiManager from 'react-native-wifi-reborn';
 import firestore from '@react-native-firebase/firestore';
 
 const NOW = 1_725_000_111_111;
 jest.spyOn(Date, 'now').mockReturnValue(NOW);
 
-// ---------- Helpers (these are NOT used inside the mock factory)
 type DocStub = { data: () => any; ref: any };
 const makeSnapshot = (docs: DocStub[]) => ({ docs });
 
-// ---------- All out-of-scope refs prefixed with "mock" so Jest allows usage inside factory
 const mockBatches: any[] = [];
 const mockMkBatch = () => {
   const ops: any[] = [];
@@ -37,12 +33,11 @@ const mockCollection = jest.fn((path: string) => ({
   }),
 }));
 
-// ---------- Mocks
+//Mocks
 jest.mock('react-native-wifi-reborn', () => ({
   reScanAndLoadWifiList: jest.fn(),
 }));
 
-// IMPORTANT: Factory only references variables that start with "mock"
 jest.mock('@react-native-firebase/firestore', () => {
   const api = jest.fn(() => ({
     collection: mockCollection,
