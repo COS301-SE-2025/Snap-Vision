@@ -20,6 +20,7 @@ module.exports = {
   collectCoverageFrom: [
     'src/components/organisms/*.{ts,tsx}',
     'src/services/*.{ts,tsx}',
+    'src/services/firebase/*.{ts,tsx}',
     '!**/__tests__/**',
     '!**/index.{ts,tsx}',
     '!**/*.d.ts',
