@@ -77,10 +77,22 @@ jest.mock('@react-native-firebase/firestore', () => {
   return mockFirestore;
 });
 
-jest.mock('@react-native-firebase/auth', () => ({
-  __esModule: true,
-  default: jest.fn(() => ({
+jest.mock('@react-native-firebase/auth', () => {
+  const mockAuthInstance = {
     currentUser: null,
     useEmulator: jest.fn(),
-  })),
-}));
+    onAuthStateChanged: jest.fn((callback) => {
+      // Simulate initial auth state change
+      setTimeout(() => callback(null), 0);
+      return jest.fn(); // Return unsubscribe function
+    }),
+  };
+
+  const mockAuth = jest.fn(() => mockAuthInstance);
+  mockAuth.mockReturnValue(mockAuthInstance);
+
+  return {
+    __esModule: true,
+    default: mockAuth,
+  };
+});
