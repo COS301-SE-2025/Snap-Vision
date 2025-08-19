@@ -5,7 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AdminLoadFloorplansContent from '../../src/components/organisms/AdminLoadFloorplansContent';
 import { ThemeProvider } from '../../src/theme/ThemeContext';
 import { debug } from '@testing-library/react-native/build/helpers/debug';
-import BuildingSelector from '../../src/components/molecules/BuildingSelector'; 
+import BuildingSelector from '../../src/components/molecules/BuildingSelector';
 
 // Mock navigation
 const Stack = createNativeStackNavigator();
@@ -23,7 +23,7 @@ const renderWithProviders = (component: React.ReactElement) => {
       <NavigationContainer>
         <MockNavigator />
       </NavigationContainer>
-    </ThemeProvider>
+    </ThemeProvider>,
   );
 };
 
@@ -95,7 +95,6 @@ jest.mock('react-native-dropdown-picker', () => {
     );
   };
 });
-
 
 // Mock Alert
 jest.mock('react-native', () => {
@@ -172,26 +171,26 @@ describe('AdminLoadFloorplans Integration Tests', () => {
   describe('Building Selection', () => {
     it('allows selecting a building after choosing a location', async () => {
       const { getByText, getByTestId } = renderWithProviders(<AdminLoadFloorplansContent />);
-    
+
       // Wait for locations to render
       await waitFor(() => {
         expect(getByText('Test Campus')).toBeTruthy();
       });
-    
+
       // Select a location
       fireEvent.press(getByText('Test Campus'));
-    
+
       // Wait for building selector to appear
       await waitFor(() => {
         expect(getByText('Select a building')).toBeTruthy();
       });
-    
+
       // Open the building dropdown (using your mock's toggle)
       fireEvent.press(getByTestId('toggle-dropdown'));
-    
+
       // Select "Main Building" from the dropdown
       fireEvent.press(getByTestId('dropdown-item-building-1'));
-    
+
       // Assert that the selected value is now "building-1"
       expect(getByTestId('selected-value').props.children).toBe('building-1');
     });
