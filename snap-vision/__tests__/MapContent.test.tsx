@@ -862,5 +862,42 @@ describe('MapContent', () => {
     expect(onSetSelectedStartRoom).toHaveBeenCalledWith({ name: 'start room' });
   });
 
-  
+  it('handles IndoorPickerModal indoor room selection', () => {
+    const onSetSelectedIndoorRoom = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} showIndoorPicker onSetSelectedIndoorRoom={onSetSelectedIndoorRoom} />
+    );
+    fireEvent.press(getByText('SelectIndoorRoom'));
+    expect(onSetSelectedIndoorRoom).toHaveBeenCalledWith({ name: 'indoor room' });
+  });
+
+  it('handles IndoorPickerModal cancel', () => {
+    const onCloseIndoorPicker = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} showIndoorPicker onCloseIndoorPicker={onCloseIndoorPicker} />
+    );
+    fireEvent.press(getByText('CancelIndoor'));
+    expect(onCloseIndoorPicker).toHaveBeenCalled();
+  });
+
+  it('handles IndoorPickerModal start', () => {
+    const onStartIndoorNavigation = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} showIndoorPicker onStartIndoorNavigation={onStartIndoorNavigation} />
+    );
+    fireEvent.press(getByText('StartIndoor'));
+    expect(onStartIndoorNavigation).toHaveBeenCalled();
+  });
+
+  // IndoorNavigationButton interaction tests
+  it('handles IndoorNavigationButton press', () => {
+    const onOpenIndoorNavigation = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} selectedBuildingForIndoor={{}} onOpenIndoorNavigation={onOpenIndoorNavigation} />
+    );
+    fireEvent.press(getByText('IndoorNavBtn'));
+    expect(onOpenIndoorNavigation).toHaveBeenCalled();
+  });
+
+ 
 });
