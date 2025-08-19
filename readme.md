@@ -56,13 +56,13 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 
 | Links |
 |----------|
-| [Software Requirements Specification](https://drive.google.com/drive/u/1/folders/1MNeGPrEBpp5LMoOav7cew51myI6ndEDu) | 
+| [Software Requirements Specification](https://drive.google.com/file/d/10e8IgY9iwg686H7SVhVbZazR4wlA8sTt/view?usp=drive_link) | 
 | [Architectural Requirements Document](https://drive.google.com/file/d/10mU5Kv3GtF_bd3yYqwW8hiVyof16uDm0/view?usp=sharing) | 
 | [Architectural Diagram](https://drive.google.com/file/d/11ixKR4wulQl7omdKBBOfcJoy1uzE7qCJ/view?usp=sharing) |
-| [Coding Standards Document](https://drive.google.com/drive/u/1/folders/1MNeGPrEBpp5LMoOav7cew51myI6ndEDu) | 
+| [Coding Standards Document](https://drive.google.com/file/d/1aSgT-wrqmAOK-CeXChkGBrNOdwMBVqLD/view?usp=drive_link) | 
 | [User Manual Document](https://drive.google.com/file/d/1ihAcTBi3OJW2Nfc64QRTLByx0WuS_oLS/view?usp=sharing) |
 | [Technical Installation Manual](https://drive.google.com/file/d/1MA92v3quEqsQEBygiR96L8RzZ_uxIscm/view?usp=sharing) |
-| [Deployment Model](https://drive.google.com/file/d/1QirzDYNJLGzQgelowzQTWxuzJWUjysLP/view?usp=sharing) |
+| [Deployment Model](https://drive.google.com/file/d/1MDQDhpUTNp6GCvZiLt6aiDLuHODiKSaI/view?usp=drive_link) |
 | [Wireframes](https://drive.google.com/file/d/1a_7AzWcia41O58lXFiizQpyJt3ljBOdw/view?usp=drive_link)|
 
 ---
