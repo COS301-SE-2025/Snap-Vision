@@ -85,6 +85,7 @@ export const useWebViewCommunication = (
   setShowLocationRefreshPopup: (show: boolean) => void,
   setErrorPopupMessage: (message: string) => void,
   setShowErrorPopup: (show: boolean) => void,
+  setShowDirectionsSheet: (show: boolean) => void,
 ): UseWebViewCommunicationReturn => {
   // JavaScript injection utility
   const injectJavaScript = useCallback(
@@ -267,9 +268,11 @@ export const useWebViewCommunication = (
 
             // Use the hook's selectPOI function instead of manual state updates
             selectPOI(selectedPOI);
+            setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
 
             if (currentLocation) {
               fetchRoute([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
+              // setShowDirectionsSheet(true);
             }
             break;
 

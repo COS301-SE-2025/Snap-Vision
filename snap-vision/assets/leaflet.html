@@ -348,7 +348,7 @@
         );
         if (selectedMarker) {
           hideOtherPOIMarkers(selectedMarker);
-
+          map.closePopup();
           if (window.ReactNativeWebView) {
             window.ReactNativeWebView.postMessage(
               JSON.stringify({
