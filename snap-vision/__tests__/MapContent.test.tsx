@@ -1187,5 +1187,68 @@ describe('MapContent', () => {
     expect(getByText('AdminPanel')).toBeTruthy();
   });
 
+  it('renders with indoor navigation data', () => {
+    const { getByText } = render(
+      <MapContent 
+        {...baseProps} 
+        selectedBuildingForIndoor={{ name: 'Building A' }}
+        indoorRooms={[
+          { name: 'Room 101' },
+          { name: 'Room 102' }
+        ]}
+        selectedIndoorRoom={{ name: 'Room 101' }}
+        selectedStartRoom={{ name: 'Lobby' }}
+      />
+    );
+    expect(getByText('IndoorNavBtn')).toBeTruthy();
+  });
 
+  it('renders with crowd reporting features', () => {
+    const { getByText } = render(
+      <MapContent 
+        {...baseProps} 
+        showCrowdPopup
+        selectedDensity="medium"
+        showReportTooltip
+      />
+    );
+    expect(getByText('CrowdReportModal')).toBeTruthy();
+    expect(getByText('UserPanel')).toBeTruthy();
+  });
+
+  it('renders with share features enabled', () => {
+    const { getByText } = render(
+      <MapContent 
+        {...baseProps} 
+        showShareTooltip
+        currentLocation={{ latitude: 1, longitude: 2 }}
+      />
+    );
+    expect(getByText('UserPanel')).toBeTruthy();
+  });
+
+  it('handles missing confirmationPopupData properties', () => {
+    const { queryByText } = render(
+      <MapContent 
+        {...baseProps} 
+        showConfirmationPopup
+        confirmationPopupData={{}}
+      />
+    );
+    expect(queryByText('')).toBeNull();
+  });
+
+  it('handles Find My Location button with disabled state', () => {
+    const { getByText } = render(
+      <MapContent 
+        {...baseProps} 
+        currentLocation={null}
+        isRefreshingLocation={true}
+      />
+    );
+    const button = getByText('Finding Location...');
+    expect(button).toBeTruthy();
+    fireEvent.press(button);
+    expect(baseProps.onRefreshLocation).not.toHaveBeenCalled();
+  });
 });
