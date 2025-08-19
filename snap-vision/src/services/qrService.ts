@@ -1,4 +1,3 @@
-// src/services/qrService.ts
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 
@@ -8,7 +7,7 @@ export interface QRCodeMapping {
   roomId: string;
   buildingId: string;
   buildingName?: string;
-  floorId: string; // <- matches floorplan doc ID (e.g., "1", "G")
+  floorId: string;
   locationId: string;
   locationName?: string;
   createdAt: FirebaseFirestoreTypes.Timestamp;
@@ -187,14 +186,6 @@ export const getFloorsForBuilding = async (
   }
 };
 
-/**
- * Get rooms on a given floor for a building.
- * Rooms are in: locations/{locationId}/roomPOIs
- * We try to match floor by:
- *   - room.floorId === floorId (preferred, store floorplan doc ID)
- *   - OR room.floorLevel === floorId
- *   - OR room.floorLabel === floorId
- */
 export const getRoomsForFloor = async (
   locationId: string,
   buildingId: string,

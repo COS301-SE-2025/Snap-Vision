@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, Modal } from 'react-native';
-import { useTheme } from '../../theme/ThemeContext';
-import { getThemeColors } from '../../theme';
+import { useTheme } from '../src/theme/ThemeContext';
+import { getThemeColors } from '../src/theme';
 import firestore from '@react-native-firebase/firestore';
-import SettingsHeader from '../molecules/SettingsHeader';
+import SettingsHeader from '../src/components/molecules/SettingsHeader';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import QRScanner from '../molecules/QRScanner';
-import { getQRCodeMappingByValue } from '../../services/qrService';
+import QRScanner from '../src/components/molecules/QRScanner';
+import { getQRCodeMappingByValue } from '../src/services/qrService';
 
 interface Room {
   id: string;
