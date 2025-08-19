@@ -57,7 +57,7 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 | Links |
 |----------|
 | [Software Requirements Specification](https://drive.google.com/file/d/10e8IgY9iwg686H7SVhVbZazR4wlA8sTt/view?usp=drive_link) | 
-| [Architectural Requirements Document](https://drive.google.com/file/d/10mU5Kv3GtF_bd3yYqwW8hiVyof16uDm0/view?usp=sharing) | 
+| [Architectural Requirements Document](https://drive.google.com/file/d/1RyBbxY6jlmmzAKqBadArbz94CJaxCXC8/view?usp=drive_link) | 
 | [Architectural Diagram](https://drive.google.com/file/d/11ixKR4wulQl7omdKBBOfcJoy1uzE7qCJ/view?usp=sharing) |
 | [Coding Standards Document](https://drive.google.com/file/d/1aSgT-wrqmAOK-CeXChkGBrNOdwMBVqLD/view?usp=drive_link) | 
 | [User Manual Document](https://drive.google.com/file/d/1ihAcTBi3OJW2Nfc64QRTLByx0WuS_oLS/view?usp=sharing) |
@@ -73,7 +73,7 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 |---------|-------------|---------------|------------|
 | Demo 1  | [Slides 1](https://drive.google.com/file/d/1e_UbI8kLICTHZ9I2SDv51N_GJ24E8VHI/view?usp=drive_link) | [Docs 1](https://drive.google.com/file/d/1PjbgsJOFsjdsjYa_vm__W2UnuMKIfOYw/view?usp=drive_link) | [Video 1](https://drive.google.com/file/d/1rTIKg24IbTOZThUpLjTd6B59khP-cZaL/view?usp=drive_link)
 | Demo 2  | [Slides 2](https://drive.google.com/file/d/1YEE-ge010J0ZCaks0T8ggVH2uF7fEHC8/view?usp=drive_link) | [Docs 2](https://drive.google.com/drive/folders/1paIiMCL94TNsxWsi4ypYfgUZSIqwxIns?usp=drive_link)    | [Video 2](https://drive.google.com/file/d/1p8kSaRAugtSsM8uUkssOBTTXFzVAtIey/view?usp=drive_link) |
-| Demo 3  | [Slides 3] | [Docs 3](https://drive.google.com/drive/folders/1MNeGPrEBpp5LMoOav7cew51myI6ndEDu?usp=sharing) | [Video 3] |
+| Demo 3  | [Slides 3] | [Docs 3](https://drive.google.com/drive/folders/1MNeGPrEBpp5LMoOav7cew51myI6ndEDu?usp=sharing) | [Video 3](https://drive.google.com/file/d/1ckHsvY1-KsHNIP-jYk25CsysI22DOYQr/view?usp=drive_link) |
 | Demo 4  | [Slides 4] | [Docs 4]    | [Video 4] |
 
 ---
