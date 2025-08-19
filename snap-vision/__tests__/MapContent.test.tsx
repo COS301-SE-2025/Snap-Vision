@@ -736,5 +736,43 @@ describe('MapContent', () => {
     expect(queryByText('')).toBeNull();
   });
 
+  // Modal interaction tests
+  it('handles AdminPOIModal close action', () => {
+    const onSetShowAddPOIModal = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} showAddPOIModal onSetShowAddPOIModal={onSetShowAddPOIModal} />
+    );
+    fireEvent.press(getByText('CloseAdminPOI'));
+    expect(onSetShowAddPOIModal).toHaveBeenCalledWith(false);
+  });
+
+  it('handles AdminPOIModal submit action', () => {
+    const onSubmitNewBuilding = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} showAddPOIModal onSubmitNewBuilding={onSubmitNewBuilding} />
+    );
+    fireEvent.press(getByText('SubmitAdminPOI'));
+    expect(onSubmitNewBuilding).toHaveBeenCalled();
+  });
+
+  it('handles AdminPOIModal edit submit action', () => {
+    const onSubmitEditBuilding = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} showEditPOIModal onSubmitEditBuilding={onSubmitEditBuilding} />
+    );
+    fireEvent.press(getByText('SubmitAdminPOI'));
+    expect(onSubmitEditBuilding).toHaveBeenCalled();
+  });
+
+  it('handles AdminActionsModal edit action', () => {
+    const onOpenEditBuildingModal = jest.fn();
+    const adminActionPOI = { name: 'Test POI' };
+    const { getByText } = render(
+      <MapContent {...baseProps} showAdminActions adminActionPOI={adminActionPOI} onOpenEditBuildingModal={onOpenEditBuildingModal} />
+    );
+    fireEvent.press(getByText('EditPOI'));
+    expect(onOpenEditBuildingModal).toHaveBeenCalledWith(adminActionPOI);
+  });
+
 
 });
