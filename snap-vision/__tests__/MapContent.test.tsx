@@ -1080,5 +1080,112 @@ describe('MapContent', () => {
     expect(getByText('NavOff')).toBeTruthy();
   });
 
-  
+  it('handles NavigationPanel with null estimatedTime', () => {
+    const { getByText } = render(
+      <MapContent 
+        {...baseProps} 
+        destination="Test" 
+        destinationCoords={[1, 2]} 
+        estimatedTime={null}
+      />
+    );
+    expect(getByText('NavOff')).toBeTruthy();
+  });
+
+  // Edge cases and prop combinations
+  it('renders with all modal states true simultaneously', () => {
+    const { getByText, getAllByText } = render(
+      <MapContent 
+        {...baseProps} 
+        showAddPOIModal
+        showEditPOIModal
+        showAdminActions
+        showDirectionsSheet
+        showCrowdPopup
+        showIndoorPicker
+        showErrorPopup
+        errorPopupMessage="error"
+        showSuccessPopup
+        successPopupMessage="success"
+        showConfirmationPopup
+        confirmationPopupData={{ title: 'Confirm', message: 'Proceed?' }}
+        showDestinationReachedPopup
+        showLocationRefreshPopup
+      />
+    );
+    expect(getByText('add AdminPOIModal')).toBeTruthy();
+    expect(getByText('edit AdminPOIModal')).toBeTruthy();
+    expect(getByText('AdminActionsModal')).toBeTruthy();
+    expect(getByText('DirectionsModal')).toBeTruthy();
+    expect(getByText('CrowdReportModal')).toBeTruthy();
+    expect(getByText('IndoorPickerModal')).toBeTruthy();
+    expect(getByText('Error')).toBeTruthy();
+    expect(getByText('Success')).toBeTruthy();
+    // There may be multiple Confirm buttons, just check at least one exists
+    expect(getAllByText('Confirm').length).toBeGreaterThan(0);
+    expect(getByText('Destination Reached')).toBeTruthy();
+    expect(getByText('Location Not Found')).toBeTruthy();
+  });
+
+  it('renders with complex navigation state', () => {
+    const { getByText } = render(
+      <MapContent 
+        {...baseProps} 
+        isNavigating
+        destination="Complex Destination"
+        destinationCoords={[10.5, 20.3]}
+        steps={[
+          { instruction: 'Turn right at the corner' },
+          { instruction: 'Continue straight for 100m' }
+        ]}
+        currentStep={0}
+        routeProgress={25}
+        distanceToDestination={500}
+        distanceWalked={250}
+        originalRouteDistance={1000}
+        estimatedTime="600"
+        isRouteLoading={false}
+        routeCoordinates={[[0, 0], [1, 1], [2, 2]]}
+        isVoiceEnabled
+        showAR
+        deviceHeading={45}
+        isNavigationMinimized={false}
+      />
+    );
+    expect(getByText('NavOn')).toBeTruthy();
+    expect(getByText('Turn right at the corner')).toBeTruthy();
+    expect(getByText('AROverlay')).toBeTruthy();
+  });
+
+  it('renders with admin features and POI data', () => {
+    const { getByText } = render(
+      <MapContent 
+        {...baseProps} 
+        isAdmin
+        pois={[
+          { name: 'POI 1', id: '1' },
+          { name: 'POI 2', id: '2' }
+        ]}
+        selectedPOI={{ name: 'Selected POI' }}
+        poiSuggestions={[
+          { name: 'Suggestion 1' },
+          { name: 'Suggestion 2' }
+        ]}
+        buildingName="Test Building"
+        numberOfFloors="5"
+        newName="New Building Name"
+        newFloors="10"
+        selectedLocation="Test Location"
+        availableLocations={[
+          { name: 'Location 1' },
+          { name: 'Location 2' }
+        ]}
+        editingPOI={{ name: 'Editing POI' }}
+        adminActionPOI={{ name: 'Admin Action POI' }}
+      />
+    );
+    expect(getByText('AdminPanel')).toBeTruthy();
+  });
+
+
 });
