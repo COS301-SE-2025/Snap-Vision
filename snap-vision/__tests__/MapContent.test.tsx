@@ -774,5 +774,56 @@ describe('MapContent', () => {
     expect(onOpenEditBuildingModal).toHaveBeenCalledWith(adminActionPOI);
   });
 
+  it('handles AdminActionsModal delete action', () => {
+    const onConfirmDeleteBuilding = jest.fn();
+    const onSetShowAdminActions = jest.fn();
+    const adminActionPOI = { name: 'Test POI' };
+    const { getByText } = render(
+      <MapContent {...baseProps} showAdminActions adminActionPOI={adminActionPOI} onConfirmDeleteBuilding={onConfirmDeleteBuilding} onSetShowAdminActions={onSetShowAdminActions} />
+    );
+    fireEvent.press(getByText('DeletePOI'));
+    expect(onConfirmDeleteBuilding).toHaveBeenCalledWith(adminActionPOI, expect.any(Function));
+  });
 
+  it('handles AdminActionsModal close action', () => {
+    const onSetShowAdminActions = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} showAdminActions onSetShowAdminActions={onSetShowAdminActions} />
+    );
+    fireEvent.press(getByText('CloseAdminActions'));
+    expect(onSetShowAdminActions).toHaveBeenCalledWith(false);
+  });
+
+  // DirectionsModal interaction tests
+  it('handles DirectionsModal close action', () => {
+    const onSetShowDirectionsSheet = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} showDirectionsSheet onSetShowDirectionsSheet={onSetShowDirectionsSheet} />
+    );
+    fireEvent.press(getByText('CloseDirections'));
+    expect(onSetShowDirectionsSheet).toHaveBeenCalledWith(false);
+  });
+
+  it('handles DirectionsModal start action', () => {
+    const onStartNavigation = jest.fn();
+    const onSetShowDirectionsSheet = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} showDirectionsSheet onStartNavigation={onStartNavigation} onSetShowDirectionsSheet={onSetShowDirectionsSheet} />
+    );
+    fireEvent.press(getByText('StartDirections'));
+    expect(onStartNavigation).toHaveBeenCalled();
+    expect(onSetShowDirectionsSheet).toHaveBeenCalledWith(false);
+  });
+
+  // CrowdReportModal interaction tests
+  it('handles CrowdReportModal density change', () => {
+    const onSetSelectedDensity = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} showCrowdPopup onSetSelectedDensity={onSetSelectedDensity} />
+    );
+    fireEvent.press(getByText('ChangeDensity'));
+    expect(onSetSelectedDensity).toHaveBeenCalledWith('high');
+  });
+
+  
 });
