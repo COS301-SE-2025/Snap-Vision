@@ -25,7 +25,7 @@ interface Props {
   currentUserId: string | undefined;
 }
 
-const ROLE_OPTIONS: Array<'Admin' | 'Editor' | 'Viewer'> = ['Admin', 'Editor', 'Viewer'];
+const ROLE_OPTIONS: ('Admin' | 'Editor' | 'Viewer')[] = ['Admin', 'Editor', 'Viewer'];
 
 export default function ManageUsersForm({ navigation, currentUserId }: Props) {
   const { isDark } = useTheme();

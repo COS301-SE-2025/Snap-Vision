@@ -3,6 +3,9 @@ import { render, fireEvent } from '@testing-library/react-native';
 import DirectionsModal from '../src/components/organisms/DirectionsModal';
 import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
 
+import { useTheme } from '../src/theme/ThemeContext';
+import { getThemeColors } from '../src/theme';
+
 //mock theme dependencies
 jest.mock('../src/theme/ThemeContext', () => ({
   useTheme: jest.fn(),
@@ -11,9 +14,6 @@ jest.mock('../src/theme/ThemeContext', () => ({
 jest.mock('../src/theme', () => ({
   getThemeColors: jest.fn(),
 }));
-
-import { useTheme } from '../src/theme/ThemeContext';
-import { getThemeColors } from '../src/theme';
 
 const mockUseTheme = useTheme as jest.MockedFunction<typeof useTheme>;
 const mockGetThemeColors = getThemeColors as jest.MockedFunction<typeof getThemeColors>;

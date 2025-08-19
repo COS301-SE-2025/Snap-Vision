@@ -55,17 +55,6 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
-  // Format the distance (e.g., "2.1 km" or "350 m")
-  const formatDistance = (meters: number | null) => {
-    if (meters === null) return '';
-
-    if (meters >= 1000) {
-      return `${(meters / 1000).toFixed(1)} km`;
-    } else {
-      return `${Math.round(meters)} m`;
-    }
-  };
-
   // Calculate completion percentage based on distance remaining
   const getCompletionPercentage = () => {
     if (!originalRouteDistance || originalRouteDistance === 0 || distance === null) {

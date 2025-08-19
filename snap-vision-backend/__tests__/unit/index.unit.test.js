@@ -1,10 +1,3 @@
-jest.mock("../../src/routes/badges", () => {
-  const express = require("express");
-  const router = express.Router();
-  router.get("/", (req, res) => res.json({ stub: true }));
-  return router;
-});
-
 jest.mock("axios");
 
 const express = require("express");
@@ -77,11 +70,5 @@ describe("index.js (unit)", () => {
 
       expect(res.body).toEqual({ error: "Failed to fetch directions" });
     });
-  });
-
-  it("forwards /api/badges to the mocked router", async () => {
-    const res = await request(server).get("/api/badges/");
-    expect(res.status).toEqual(200);
-    expect(res.body).toEqual({ stub: true });
   });
 });

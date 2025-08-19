@@ -1,6 +1,19 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 
+// --- Import Real Components ---
+import NotificationSettingsContent from '../../src/components/organisms/NotificationSettingsContent';
+import AppPreferencesContent from '../../src/components/organisms/AppPreferencesContent';
+import PrivacySecurityContent from '../../src/components/organisms/PrivacySecurityContent';
+import SupportContent from '../../src/components/organisms/SupportContent';
+import SupportScreen from '../../src/screens/SupportScreen';
+import SettingsContent from '../../src/components/organisms/SettingsContent';
+import { NavigationContainer } from '@react-navigation/native';
+
+// Import the entire screen component for more complete integration testing
+import AppPreferencesScreen from '../../src/screens/AppPreferences';
+import PrivacySecurityScreen from '../../src/screens/PrivacySecurityScreen';
+
 // Mock the Switch component for testing
 jest.mock('react-native/Libraries/Components/Switch/Switch', () => {
   const React = require('react');
@@ -237,19 +250,6 @@ jest.mock('../../src/screens/SupportScreen', () => {
     );
   };
 });
-
-// --- Import Real Components ---
-import NotificationSettingsContent from '../../src/components/organisms/NotificationSettingsContent';
-import AppPreferencesContent from '../../src/components/organisms/AppPreferencesContent';
-import PrivacySecurityContent from '../../src/components/organisms/PrivacySecurityContent';
-import SupportContent from '../../src/components/organisms/SupportContent';
-import SupportScreen from '../../src/screens/SupportScreen';
-import SettingsContent from '../../src/components/organisms/SettingsContent';
-import { NavigationContainer } from '@react-navigation/native';
-
-// Import the entire screen component for more complete integration testing
-import AppPreferencesScreen from '../../src/screens/AppPreferences';
-import PrivacySecurityScreen from '../../src/screens/PrivacySecurityScreen';
 
 describe('Notification Settings Integration Tests', () => {
   it('renders notification settings content with header', () => {
