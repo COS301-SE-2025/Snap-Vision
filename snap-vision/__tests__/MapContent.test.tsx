@@ -973,5 +973,59 @@ describe('MapContent', () => {
     expect(onStartNavigation).toHaveBeenCalled();
   });
 
+  it('handles NavigationPanel stop navigation', () => {
+    const onStopNavigation = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} destination="Test" destinationCoords={[1, 2]} onStopNavigation={onStopNavigation} />
+    );
+    fireEvent.press(getByText('StopNav'));
+    expect(onStopNavigation).toHaveBeenCalled();
+  });
+
+  it('handles NavigationPanel cancel route', () => {
+    const onCancelRoute = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} destination="Test" destinationCoords={[1, 2]} onCancelRoute={onCancelRoute} />
+    );
+    fireEvent.press(getByText('CancelRoute'));
+    expect(onCancelRoute).toHaveBeenCalled();
+  });
+
+  it('handles NavigationPanel toggle voice', () => {
+    const onToggleVoice = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} destination="Test" destinationCoords={[1, 2]} onToggleVoice={onToggleVoice} />
+    );
+    fireEvent.press(getByText('ToggleVoice'));
+    expect(onToggleVoice).toHaveBeenCalled();
+  });
+
+  it('handles NavigationPanel toggle AR', () => {
+    const onToggleAR = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} destination="Test" destinationCoords={[1, 2]} onToggleAR={onToggleAR} />
+    );
+    fireEvent.press(getByText('ToggleAR'));
+    expect(onToggleAR).toHaveBeenCalled();
+  });
+
+  it('handles NavigationPanel toggle minimize', () => {
+    const onToggleMinimize = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} destination="Test" destinationCoords={[1, 2]} onToggleMinimize={onToggleMinimize} />
+    );
+    fireEvent.press(getByText('ToggleMinimize'));
+    expect(onToggleMinimize).toHaveBeenCalled();
+  });
+
+  it('handles NavigationPanel speaking change', () => {
+    const onSpeakingChange = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} destination="Test" destinationCoords={[1, 2]} onSpeakingChange={onSpeakingChange} />
+    );
+    fireEvent.press(getByText('SpeakingChange'));
+    expect(onSpeakingChange).toHaveBeenCalledWith(true);
+  });
+
   
 });
