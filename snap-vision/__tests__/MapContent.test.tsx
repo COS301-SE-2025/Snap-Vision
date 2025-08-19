@@ -936,5 +936,42 @@ describe('MapContent', () => {
     expect(onSetShowShareTooltip).toHaveBeenCalledWith(true);
   });
 
+  it('handles MapActionsPanel share tooltip hide', () => {
+    const onSetShowShareTooltip = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} onSetShowShareTooltip={onSetShowShareTooltip} />
+    );
+    fireEvent.press(getByText('ShareOut'));
+    expect(onSetShowShareTooltip).toHaveBeenCalledWith(false);
+  });
+
+  it('handles MapActionsPanel report tooltip show', () => {
+    const onHandleReportTooltipShow = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} onHandleReportTooltipShow={onHandleReportTooltipShow} />
+    );
+    fireEvent.press(getByText('ReportIn'));
+    expect(onHandleReportTooltipShow).toHaveBeenCalled();
+  });
+
+  it('handles MapActionsPanel report tooltip hide', () => {
+    const onHandleReportTooltipHide = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} onHandleReportTooltipHide={onHandleReportTooltipHide} />
+    );
+    fireEvent.press(getByText('ReportOut'));
+    expect(onHandleReportTooltipHide).toHaveBeenCalled();
+  });
+
+  // NavigationPanel interaction tests
+  it('handles NavigationPanel start navigation', () => {
+    const onStartNavigation = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} destination="Test" destinationCoords={[1, 2]} onStartNavigation={onStartNavigation} />
+    );
+    fireEvent.press(getByText('StartNav'));
+    expect(onStartNavigation).toHaveBeenCalled();
+  });
+
   
 });
