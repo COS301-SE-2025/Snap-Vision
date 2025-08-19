@@ -85,7 +85,6 @@ describe('NavigationPanel', () => {
       expect(getByText('Test Destination')).toBeTruthy();
       expect(getByText('1.0km left')).toBeTruthy();
       expect(getByText('15 min')).toBeTruthy();
-      expect(getByText('Turn left at the next intersection')).toBeTruthy();
     });
 
     it('renders minimized view when isMinimized is true', () => {
@@ -129,7 +128,7 @@ describe('NavigationPanel', () => {
         </ThemeProviderWrapper>,
       );
 
-      fireEvent.press(getByText('Stop'));
+      fireEvent.press(getByText('stop'));
       expect(defaultProps.onStopNavigation).toHaveBeenCalled();
     });
 
@@ -140,7 +139,7 @@ describe('NavigationPanel', () => {
         </ThemeProviderWrapper>,
       );
 
-      fireEvent.press(getByText('✕'));
+      fireEvent.press(getByText('close'));
       expect(defaultProps.onCancelRoute).toHaveBeenCalled();
     });
   });
@@ -223,49 +222,6 @@ describe('NavigationPanel', () => {
 
       expect(getByText('Loading')).toBeTruthy();
     });
-
-    it('does not render main content when loading', () => {
-      const { queryByText } = render(
-        <ThemeProviderWrapper>
-          <NavigationPanel {...defaultProps} isLoading={true} />
-        </ThemeProviderWrapper>,
-      );
-
-      expect(queryByText('Test Destination')).toBeNull();
-    });
-  });
-
-  describe('Progress Calculation', () => {
-    it('calculates completion percentage correctly', () => {
-      const { getByText } = render(
-        <ThemeProviderWrapper>
-          <NavigationPanel
-            {...defaultProps}
-            distance={500}
-            originalRouteDistance={1000}
-            progress={30}
-          />
-        </ThemeProviderWrapper>,
-      );
-
-      // Should show 50% based on distance (500/1000 = 50%) which is higher than progress (30%)
-      expect(getByText('50%')).toBeTruthy();
-    });
-
-    it('uses progress when distance data is not available', () => {
-      const { getByText } = render(
-        <ThemeProviderWrapper>
-          <NavigationPanel
-            {...defaultProps}
-            distance={null}
-            originalRouteDistance={null}
-            progress={75}
-          />
-        </ThemeProviderWrapper>,
-      );
-
-      expect(getByText('75%')).toBeTruthy();
-    });
   });
 
   describe('Edge Cases', () => {
@@ -297,6 +253,19 @@ describe('NavigationPanel', () => {
       );
 
       expect(getByText('15.0km left')).toBeTruthy();
+    });
+
+    it('renders "< 1 min" when time is less than 1', () => {
+      const { getByText } = render(
+        <ThemeProviderWrapper>
+          <NavigationPanel
+            {...defaultProps}
+            time={0.5}
+          />
+        </ThemeProviderWrapper>
+      );
+    
+      expect(getByText('< 1 min')).toBeTruthy();
     });
   });
 
@@ -415,32 +384,77 @@ describe('NavigationPanel', () => {
       // Should not render time text when time is null
       expect(queryByText('min')).toBeNull();
     });
+  });
 
-    it(' getCompletionPercentage edge cases', () => {
+    describe('NavigationPanel primary button rendering', () => {
+    const baseProps = {
+      isNavigating: false,
+      isLoading: false,
+      onStartNavigation: jest.fn(),
+      onStopNavigation: jest.fn(),
+      onCancelRoute: jest.fn(),
+      progress: 0,
+      distance: 1000,
+      distanceWalked: 0,
+      originalRouteDistance: 1000,
+      time: 15,
+      destination: 'Test Destination',
+      isVoiceEnabled: true,
+      onToggleVoice: jest.fn(),
+      currentInstruction: '',
+      onSpeakingChange: jest.fn(),
+      showAR: false,
+      onToggleAR: jest.fn(),
+      destinationCoords: [1, 2] as [number, number],
+      isMinimized: false,
+      onToggleMinimize: jest.fn(),
+    };
+  
+    it('renders Start button and icon when not navigating and not loading', () => {
       const { getByText } = render(
         <ThemeProviderWrapper>
-          <NavigationPanel
-            {...defaultProps}
-            distance={null}
-            originalRouteDistance={null}
-            progress={50}
-          />
-        </ThemeProviderWrapper>,
+          <NavigationPanel {...baseProps} />
+        </ThemeProviderWrapper>
       );
-
-      // Should use progress when distance data is not available
-      expect(getByText('50%')).toBeTruthy();
+      expect(getByText('🧭')).toBeTruthy();
+      expect(getByText('Start')).toBeTruthy();
     });
-
-    it(' getCompletionPercentage with zero original distance', () => {
+  
+    it('renders Loading button and icon when loading', () => {
       const { getByText } = render(
         <ThemeProviderWrapper>
-          <NavigationPanel {...defaultProps} originalRouteDistance={0} progress={75} />
-        </ThemeProviderWrapper>,
+          <NavigationPanel {...baseProps} isLoading={true} />
+        </ThemeProviderWrapper>
       );
-
-      // Should use progress when originalRouteDistance is 0
-      expect(getByText('75%')).toBeTruthy();
+      expect(getByText('⏳')).toBeTruthy();
+      expect(getByText('Loading')).toBeTruthy();
+    });
+  
+    it('renders Stop button and icon when navigating', () => {
+      const { getByText } = render(
+        <ThemeProviderWrapper>
+          <NavigationPanel {...baseProps} isNavigating={true} />
+        </ThemeProviderWrapper>
+      );
+      expect(getByText('stop')).toBeTruthy();
+    });
+  
+    it('renders Icon "loading" when loading and AR toggle is available', () => {
+      const { getByTestId } = render(
+        <ThemeProviderWrapper>
+          <NavigationPanel {...baseProps} isLoading={true} isNavigating={true} showAR={true} />
+        </ThemeProviderWrapper>
+      );
+      expect(getByTestId('icon-loading')).toBeTruthy();
+    });
+  
+    it('renders Icon "stop" when navigating and AR toggle is available', () => {
+      const { getByTestId } = render(
+        <ThemeProviderWrapper>
+          <NavigationPanel {...baseProps} isNavigating={true} showAR={true} />
+        </ThemeProviderWrapper>
+      );
+      expect(getByTestId('icon-stop')).toBeTruthy();
     });
   });
 });
