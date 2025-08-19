@@ -258,13 +258,10 @@ describe('NavigationPanel', () => {
     it('renders "< 1 min" when time is less than 1', () => {
       const { getByText } = render(
         <ThemeProviderWrapper>
-          <NavigationPanel
-            {...defaultProps}
-            time={0.5}
-          />
-        </ThemeProviderWrapper>
+          <NavigationPanel {...defaultProps} time={0.5} />
+        </ThemeProviderWrapper>,
       );
-    
+
       expect(getByText('< 1 min')).toBeTruthy();
     });
   });
@@ -386,7 +383,7 @@ describe('NavigationPanel', () => {
     });
   });
 
-    describe('NavigationPanel primary button rendering', () => {
+  describe('NavigationPanel primary button rendering', () => {
     const baseProps = {
       isNavigating: false,
       isLoading: false,
@@ -409,50 +406,50 @@ describe('NavigationPanel', () => {
       isMinimized: false,
       onToggleMinimize: jest.fn(),
     };
-  
+
     it('renders Start button and icon when not navigating and not loading', () => {
       const { getByText } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...baseProps} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
       expect(getByText('🧭')).toBeTruthy();
       expect(getByText('Start')).toBeTruthy();
     });
-  
+
     it('renders Loading button and icon when loading', () => {
       const { getByText } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...baseProps} isLoading={true} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
       expect(getByText('⏳')).toBeTruthy();
       expect(getByText('Loading')).toBeTruthy();
     });
-  
+
     it('renders Stop button and icon when navigating', () => {
       const { getByText } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...baseProps} isNavigating={true} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
       expect(getByText('stop')).toBeTruthy();
     });
-  
+
     it('renders Icon "loading" when loading and AR toggle is available', () => {
       const { getByTestId } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...baseProps} isLoading={true} isNavigating={true} showAR={true} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
       expect(getByTestId('icon-loading')).toBeTruthy();
     });
-  
+
     it('renders Icon "stop" when navigating and AR toggle is available', () => {
       const { getByTestId } = render(
         <ThemeProviderWrapper>
           <NavigationPanel {...baseProps} isNavigating={true} showAR={true} />
-        </ThemeProviderWrapper>
+        </ThemeProviderWrapper>,
       );
       expect(getByTestId('icon-stop')).toBeTruthy();
     });
