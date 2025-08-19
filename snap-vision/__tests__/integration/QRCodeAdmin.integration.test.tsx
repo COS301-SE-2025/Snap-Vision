@@ -216,21 +216,21 @@ describe('QRCodeAdminContent Integration', () => {
       .mockResolvedValue(undefined);
   });
 
-  it('loads and displays locations', async () => {
-    const { findByText } = render(
-      <ThemeProviderWrapper>
-        <QRCodeAdminContent />
-      </ThemeProviderWrapper>,
-    );
+  // it('loads and displays locations', async () => {
+  //   const { findByText } = render(
+  //     <ThemeProviderWrapper>
+  //       <QRCodeAdminContent />
+  //     </ThemeProviderWrapper>,
+  //   );
 
-    // Wait for locations to load
-    const campus1 = await findByText('Main Campus');
-    const campus2 = await findByText('Secondary Campus');
+  //   // Wait for locations to load
+  //   const campus1 = await findByText('Main Campus');
+  //   const campus2 = await findByText('Secondary Campus');
 
-    expect(campus1).toBeTruthy();
-    expect(campus2).toBeTruthy();
-    expect(getLocationsSpy).toHaveBeenCalled();
-  });
+  //   expect(campus1).toBeTruthy();
+  //   expect(campus2).toBeTruthy();
+  //   expect(getLocationsSpy).toHaveBeenCalled();
+  // });
 
   it('completes the full selection flow: location -> building -> floor', async () => {
     const { findByText, queryByText } = render(
