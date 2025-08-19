@@ -899,5 +899,42 @@ describe('MapContent', () => {
     expect(onOpenIndoorNavigation).toHaveBeenCalled();
   });
 
- 
+  // MapActionsPanel interaction tests
+  it('handles MapActionsPanel share location', () => {
+    const onShareLocation = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} onShareLocation={onShareLocation} />
+    );
+    fireEvent.press(getByText('ShareLocation'));
+    expect(onShareLocation).toHaveBeenCalled();
+  });
+
+  it('handles MapActionsPanel report crowd', () => {
+    const onOpenCrowdReportModal = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} onOpenCrowdReportModal={onOpenCrowdReportModal} />
+    );
+    fireEvent.press(getByText('ReportCrowd'));
+    expect(onOpenCrowdReportModal).toHaveBeenCalled();
+  });
+
+  it('handles MapActionsPanel add POI for admin', () => {
+    const onEnableAdminPOICreation = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} isAdmin onEnableAdminPOICreation={onEnableAdminPOICreation} />
+    );
+    fireEvent.press(getByText('AddPOI'));
+    expect(onEnableAdminPOICreation).toHaveBeenCalled();
+  });
+
+  it('handles MapActionsPanel share tooltip show', () => {
+    const onSetShowShareTooltip = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} onSetShowShareTooltip={onSetShowShareTooltip} />
+    );
+    fireEvent.press(getByText('ShareIn'));
+    expect(onSetShowShareTooltip).toHaveBeenCalledWith(true);
+  });
+
+  
 });
