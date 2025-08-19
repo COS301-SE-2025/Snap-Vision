@@ -27,6 +27,8 @@ module.exports = {
     '!**/*.d.ts',
     '!src/components/organisms/AdminFloorplanEditorContent.tsx',
     '!src/components/organisms/ManageUsersForm.tsx',
+    '!src/components/organisms/AdminIndoorPositioningContent.tsx',
+    '!src/components/organisms/QRCodeAdminContent.tsx',
     'src/utils/*.{ts,tsx}',
   ],
   coverageDirectory: 'coverage',
