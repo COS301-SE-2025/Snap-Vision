@@ -8,298 +8,310 @@ jest.mock('../src/components/organisms/MapWebView', () => {
   return React.forwardRef(() => null);
 });
 interface AdminPOIModalProps {
-    visible: boolean;
-    mode: string;
-    onClose: () => void;
-    onSubmit: () => void;
+  visible: boolean;
+  mode: string;
+  onClose: () => void;
+  onSubmit: () => void;
 }
 
 jest.mock('../src/components/molecules/AdminPOIModal', () => (props: AdminPOIModalProps) => {
-    const React = require('react');
-    const { Text, TouchableOpacity } = require('react-native');
-    if (!props.visible) return null;
-    return (
-        <>
-            <Text>{props.mode} AdminPOIModal</Text>
-            <TouchableOpacity onPress={() => props.onClose()}>
-                <Text>CloseAdminPOI</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onSubmit()}>
-                <Text>SubmitAdminPOI</Text>
-            </TouchableOpacity>
-        </>
-    );
+  const React = require('react');
+  const { Text, TouchableOpacity } = require('react-native');
+  if (!props.visible) return null;
+  return (
+    <>
+      <Text>{props.mode} AdminPOIModal</Text>
+      <TouchableOpacity onPress={() => props.onClose()}>
+        <Text>CloseAdminPOI</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => props.onSubmit()}>
+        <Text>SubmitAdminPOI</Text>
+      </TouchableOpacity>
+    </>
+  );
 });
 interface AdminActionsModalProps {
-    visible: boolean;
-    adminActionPOI: any;
-    onEdit: (poi: any) => void;
-    onDelete: (poi: any, callback?: () => void) => void;
-    onClose: () => void;
+  visible: boolean;
+  adminActionPOI: any;
+  onEdit: (poi: any) => void;
+  onDelete: (poi: any, callback?: () => void) => void;
+  onClose: () => void;
 }
 
-jest.mock('../src/components/molecules/AdminActionsModal', () => (props: AdminActionsModalProps) => {
+jest.mock(
+  '../src/components/molecules/AdminActionsModal',
+  () => (props: AdminActionsModalProps) => {
     const React = require('react');
     const { Text, TouchableOpacity } = require('react-native');
     if (!props.visible) return null;
     return (
-        <>
-            <Text>AdminActionsModal</Text>
-            <TouchableOpacity onPress={() => props.onEdit(props.adminActionPOI)}>
-                <Text>EditPOI</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onDelete(props.adminActionPOI)}>
-                <Text>DeletePOI</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onClose()}>
-                <Text>CloseAdminActions</Text>
-            </TouchableOpacity>
-        </>
+      <>
+        <Text>AdminActionsModal</Text>
+        <TouchableOpacity onPress={() => props.onEdit(props.adminActionPOI)}>
+          <Text>EditPOI</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => props.onDelete(props.adminActionPOI)}>
+          <Text>DeletePOI</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => props.onClose()}>
+          <Text>CloseAdminActions</Text>
+        </TouchableOpacity>
+      </>
     );
-});
+  },
+);
 interface StatusOverlayProps {
-    status?: string;
+  status?: string;
 }
 
 jest.mock('../src/components/atoms/StatusOverlay', () => (props: StatusOverlayProps) => {
-    const React = require('react');
-    const { Text } = require('react-native');
-    return props.status ? <Text>{`StatusOverlay: ${props.status}`}</Text> : null;
+  const React = require('react');
+  const { Text } = require('react-native');
+  return props.status ? <Text>{`StatusOverlay: ${props.status}`}</Text> : null;
 });
 interface StandardPopupProps {
-    visible: boolean;
-    title?: string;
-    message?: string;
-    onConfirm: () => void;
-    onCancel?: () => void;
-    showCancel?: boolean;
+  visible: boolean;
+  title?: string;
+  message?: string;
+  onConfirm: () => void;
+  onCancel?: () => void;
+  showCancel?: boolean;
 }
 
 jest.mock('../src/components/atoms/StandardPopup', () => (props: StandardPopupProps) => {
-    const React = require('react');
-    const { Text, TouchableOpacity } = require('react-native');
-    if (!props.visible) return null;
-    return (
-        <>
-            {props.title && <Text>{props.title}</Text>}
-            {props.message && <Text>{props.message}</Text>}
-            <TouchableOpacity onPress={props.onConfirm}>
-                <Text>Confirm</Text>
-            </TouchableOpacity>
-            {props.showCancel && (
-                <TouchableOpacity onPress={props.onCancel}>
-                    <Text>Cancel</Text>
-                </TouchableOpacity>
-            )}
-        </>
-    );
+  const React = require('react');
+  const { Text, TouchableOpacity } = require('react-native');
+  if (!props.visible) return null;
+  return (
+    <>
+      {props.title && <Text>{props.title}</Text>}
+      {props.message && <Text>{props.message}</Text>}
+      <TouchableOpacity onPress={props.onConfirm}>
+        <Text>Confirm</Text>
+      </TouchableOpacity>
+      {props.showCancel && (
+        <TouchableOpacity onPress={props.onCancel}>
+          <Text>Cancel</Text>
+        </TouchableOpacity>
+      )}
+    </>
+  );
 });
 interface DestinationSearchProps {
-    value: string;
-    onChange: (value: string) => void;
-    onSearch: () => void;
-    onSelectSuggestion: (suggestion: { name: string }) => void;
+  value: string;
+  onChange: (value: string) => void;
+  onSearch: () => void;
+  onSelectSuggestion: (suggestion: { name: string }) => void;
 }
 
-jest.mock('../src/components/molecules/DestinationSearch', () => (props: DestinationSearchProps) => {
+jest.mock(
+  '../src/components/molecules/DestinationSearch',
+  () => (props: DestinationSearchProps) => {
     const React = require('react');
     const { Text, TouchableOpacity } = require('react-native');
     return (
-        <>
-            <Text>{props.value} DestinationSearch</Text>
-            <TouchableOpacity onPress={() => props.onChange('test destination')}>
-                <Text>ChangeDestination</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onSearch()}>
-                <Text>SearchDestination</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onSelectSuggestion({ name: 'test poi' })}>
-                <Text>SelectSuggestion</Text>
-            </TouchableOpacity>
-        </>
+      <>
+        <Text>{props.value} DestinationSearch</Text>
+        <TouchableOpacity onPress={() => props.onChange('test destination')}>
+          <Text>ChangeDestination</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => props.onSearch()}>
+          <Text>SearchDestination</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => props.onSelectSuggestion({ name: 'test poi' })}>
+          <Text>SelectSuggestion</Text>
+        </TouchableOpacity>
+      </>
     );
-});
+  },
+);
 interface MapActionsPanelProps {
-    isAdmin?: boolean;
-    onShare: () => void;
-    onReport: () => void;
-    onAddPOI?: () => void;
-    onShareIn: () => void;
-    onShareOut: () => void;
-    onReportIn: () => void;
-    onReportOut: () => void;
+  isAdmin?: boolean;
+  onShare: () => void;
+  onReport: () => void;
+  onAddPOI?: () => void;
+  onShareIn: () => void;
+  onShareOut: () => void;
+  onReportIn: () => void;
+  onReportOut: () => void;
 }
 
 jest.mock('../src/components/organisms/MapActionsPanel', () => (props: MapActionsPanelProps) => {
-    const React = require('react');
-    const { Text, TouchableOpacity } = require('react-native');
-    return (
-        <>
-            <Text>{props.isAdmin ? 'AdminPanel' : 'UserPanel'}</Text>
-            <TouchableOpacity onPress={() => props.onShare()}>
-                <Text>ShareLocation</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onReport()}>
-                <Text>ReportCrowd</Text>
-            </TouchableOpacity>
-            {props.isAdmin && (
-                <TouchableOpacity onPress={() => props.onAddPOI && props.onAddPOI()}>
-                    <Text>AddPOI</Text>
-                </TouchableOpacity>
-            )}
-            <TouchableOpacity onPress={() => props.onShareIn()}>
-                <Text>ShareIn</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onShareOut()}>
-                <Text>ShareOut</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onReportIn()}>
-                <Text>ReportIn</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onReportOut()}>
-                <Text>ReportOut</Text>
-            </TouchableOpacity>
-        </>
-    );
+  const React = require('react');
+  const { Text, TouchableOpacity } = require('react-native');
+  return (
+    <>
+      <Text>{props.isAdmin ? 'AdminPanel' : 'UserPanel'}</Text>
+      <TouchableOpacity onPress={() => props.onShare()}>
+        <Text>ShareLocation</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => props.onReport()}>
+        <Text>ReportCrowd</Text>
+      </TouchableOpacity>
+      {props.isAdmin && (
+        <TouchableOpacity onPress={() => props.onAddPOI && props.onAddPOI()}>
+          <Text>AddPOI</Text>
+        </TouchableOpacity>
+      )}
+      <TouchableOpacity onPress={() => props.onShareIn()}>
+        <Text>ShareIn</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => props.onShareOut()}>
+        <Text>ShareOut</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => props.onReportIn()}>
+        <Text>ReportIn</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => props.onReportOut()}>
+        <Text>ReportOut</Text>
+      </TouchableOpacity>
+    </>
+  );
 });
 interface NavigationPanelProps {
-    isNavigating?: boolean;
-    onStartNavigation: () => void;
-    onStopNavigation: () => void;
-    onCancelRoute: () => void;
-    onToggleVoice: () => void;
-    onToggleAR: () => void;
-    onToggleMinimize: () => void;
-    onSpeakingChange: (speaking: boolean) => void;
+  isNavigating?: boolean;
+  onStartNavigation: () => void;
+  onStopNavigation: () => void;
+  onCancelRoute: () => void;
+  onToggleVoice: () => void;
+  onToggleAR: () => void;
+  onToggleMinimize: () => void;
+  onSpeakingChange: (speaking: boolean) => void;
 }
 
 jest.mock('../src/components/organisms/NavigationPanel', () => (props: NavigationPanelProps) => {
-    const React = require('react');
-    const { Text, TouchableOpacity } = require('react-native');
-    return (
-        <>
-            <Text>{props.isNavigating ? 'NavOn' : 'NavOff'}</Text>
-            <TouchableOpacity onPress={() => props.onStartNavigation()}>
-                <Text>StartNav</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onStopNavigation()}>
-                <Text>StopNav</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onCancelRoute()}>
-                <Text>CancelRoute</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onToggleVoice()}>
-                <Text>ToggleVoice</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onToggleAR()}>
-                <Text>ToggleAR</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onToggleMinimize()}>
-                <Text>ToggleMinimize</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onSpeakingChange(true)}>
-                <Text>SpeakingChange</Text>
-            </TouchableOpacity>
-        </>
-    );
+  const React = require('react');
+  const { Text, TouchableOpacity } = require('react-native');
+  return (
+    <>
+      <Text>{props.isNavigating ? 'NavOn' : 'NavOff'}</Text>
+      <TouchableOpacity onPress={() => props.onStartNavigation()}>
+        <Text>StartNav</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => props.onStopNavigation()}>
+        <Text>StopNav</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => props.onCancelRoute()}>
+        <Text>CancelRoute</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => props.onToggleVoice()}>
+        <Text>ToggleVoice</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => props.onToggleAR()}>
+        <Text>ToggleAR</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => props.onToggleMinimize()}>
+        <Text>ToggleMinimize</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => props.onSpeakingChange(true)}>
+        <Text>SpeakingChange</Text>
+      </TouchableOpacity>
+    </>
+  );
 });
 interface DirectionsModalProps {
-    visible: boolean;
-    onClose: () => void;
-    onStart: () => void;
+  visible: boolean;
+  onClose: () => void;
+  onStart: () => void;
 }
 
 jest.mock('../src/components/organisms/DirectionsModal', () => (props: DirectionsModalProps) => {
-    const React = require('react');
-    const { Text, TouchableOpacity } = require('react-native');
-    if (!props.visible) return null;
-    return (
-        <>
-            <Text>DirectionsModal</Text>
-            <TouchableOpacity onPress={() => props.onClose()}>
-                <Text>CloseDirections</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onStart()}>
-                <Text>StartDirections</Text>
-            </TouchableOpacity>
-        </>
-    );
+  const React = require('react');
+  const { Text, TouchableOpacity } = require('react-native');
+  if (!props.visible) return null;
+  return (
+    <>
+      <Text>DirectionsModal</Text>
+      <TouchableOpacity onPress={() => props.onClose()}>
+        <Text>CloseDirections</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => props.onStart()}>
+        <Text>StartDirections</Text>
+      </TouchableOpacity>
+    </>
+  );
 });
 interface CrowdReportModalProps {
-    visible: boolean;
-    onChangeDensity: (density: string) => void;
-    onChangePOI: (poi: { name: string }) => void;
-    onSubmit: () => void;
-    onCancel: () => void;
+  visible: boolean;
+  onChangeDensity: (density: string) => void;
+  onChangePOI: (poi: { name: string }) => void;
+  onSubmit: () => void;
+  onCancel: () => void;
 }
 
 jest.mock('../src/components/molecules/CrowdReportModal', () => (props: CrowdReportModalProps) => {
-    const React = require('react');
-    const { Text, TouchableOpacity } = require('react-native');
-    if (!props.visible) return null;
-    return (
-        <>
-            <Text>CrowdReportModal</Text>
-            <TouchableOpacity onPress={() => props.onChangeDensity('high')}>
-                <Text>ChangeDensity</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onChangePOI({ name: 'test poi' })}>
-                <Text>ChangePOI</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onSubmit()}>
-                <Text>SubmitCrowd</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onCancel()}>
-                <Text>CancelCrowd</Text>
-            </TouchableOpacity>
-        </>
-    );
+  const React = require('react');
+  const { Text, TouchableOpacity } = require('react-native');
+  if (!props.visible) return null;
+  return (
+    <>
+      <Text>CrowdReportModal</Text>
+      <TouchableOpacity onPress={() => props.onChangeDensity('high')}>
+        <Text>ChangeDensity</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => props.onChangePOI({ name: 'test poi' })}>
+        <Text>ChangePOI</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => props.onSubmit()}>
+        <Text>SubmitCrowd</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => props.onCancel()}>
+        <Text>CancelCrowd</Text>
+      </TouchableOpacity>
+    </>
+  );
 });
 interface IndoorPickerModalProps {
-    visible: boolean;
-    onSelectStartRoom: (room: { name: string }) => void;
-    onSelectIndoorRoom: (room: { name: string }) => void;
-    onCancel: () => void;
-    onStart: () => void;
+  visible: boolean;
+  onSelectStartRoom: (room: { name: string }) => void;
+  onSelectIndoorRoom: (room: { name: string }) => void;
+  onCancel: () => void;
+  onStart: () => void;
 }
 
-jest.mock('../src/components/molecules/IndoorPickerModal', () => (props: IndoorPickerModalProps) => {
+jest.mock(
+  '../src/components/molecules/IndoorPickerModal',
+  () => (props: IndoorPickerModalProps) => {
     const React = require('react');
     const { Text, TouchableOpacity } = require('react-native');
     if (!props.visible) return null;
     return (
-        <>
-            <Text>IndoorPickerModal</Text>
-            <TouchableOpacity onPress={() => props.onSelectStartRoom({ name: 'start room' })}>
-                <Text>SelectStartRoom</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onSelectIndoorRoom({ name: 'indoor room' })}>
-                <Text>SelectIndoorRoom</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onCancel()}>
-                <Text>CancelIndoor</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.onStart()}>
-                <Text>StartIndoor</Text>
-            </TouchableOpacity>
-        </>
-    );
-});
-interface IndoorNavigationButtonProps {
-    visible: boolean;
-    onPress: () => void;
-}
-
-jest.mock('../src/components/atoms/IndoorNavigationButton', () => (props: IndoorNavigationButtonProps) => {
-    const React = require('react');
-    const { Text, TouchableOpacity } = require('react-native');
-    if (!props.visible) return null;
-    return (
-        <TouchableOpacity onPress={() => props.onPress()}>
-            <Text>IndoorNavBtn</Text>
+      <>
+        <Text>IndoorPickerModal</Text>
+        <TouchableOpacity onPress={() => props.onSelectStartRoom({ name: 'start room' })}>
+          <Text>SelectStartRoom</Text>
         </TouchableOpacity>
+        <TouchableOpacity onPress={() => props.onSelectIndoorRoom({ name: 'indoor room' })}>
+          <Text>SelectIndoorRoom</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => props.onCancel()}>
+          <Text>CancelIndoor</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => props.onStart()}>
+          <Text>StartIndoor</Text>
+        </TouchableOpacity>
+      </>
     );
-});
+  },
+);
+interface IndoorNavigationButtonProps {
+  visible: boolean;
+  onPress: () => void;
+}
+
+jest.mock(
+  '../src/components/atoms/IndoorNavigationButton',
+  () => (props: IndoorNavigationButtonProps) => {
+    const React = require('react');
+    const { Text, TouchableOpacity } = require('react-native');
+    if (!props.visible) return null;
+    return (
+      <TouchableOpacity onPress={() => props.onPress()}>
+        <Text>IndoorNavBtn</Text>
+      </TouchableOpacity>
+    );
+  },
+);
 jest.mock('../src/components/organisms/ARNavigationOverlay', () => () => {
   const React = require('react');
   const { Text } = require('react-native');
@@ -416,7 +428,7 @@ describe('MapContent', () => {
   it('handles AdminPOIModal (edit) close action', () => {
     const onSetShowEditPOIModal = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showEditPOIModal onSetShowEditPOIModal={onSetShowEditPOIModal} />
+      <MapContent {...baseProps} showEditPOIModal onSetShowEditPOIModal={onSetShowEditPOIModal} />,
     );
     fireEvent.press(getByText('CloseAdminPOI'));
     expect(onSetShowEditPOIModal).toHaveBeenCalledWith(false);
@@ -482,12 +494,7 @@ describe('MapContent', () => {
 
   it('shows NavigationPanel with NavOn if isNavigating is true', () => {
     const { getByText } = render(
-      <MapContent
-        {...baseProps}
-        destination="Test"
-        destinationCoords={[1, 2]}
-        isNavigating
-      />,
+      <MapContent {...baseProps} destination="Test" destinationCoords={[1, 2]} isNavigating />,
     );
     expect(getByText('NavOn')).toBeTruthy();
   });
@@ -507,7 +514,7 @@ describe('MapContent', () => {
   it('renders Find My Location button when currentLocation is falsy and triggers onRefreshLocation', () => {
     const onRefreshLocation = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} currentLocation={null} onRefreshLocation={onRefreshLocation} />
+      <MapContent {...baseProps} currentLocation={null} onRefreshLocation={onRefreshLocation} />,
     );
     expect(getByText('📍 Find My Location')).toBeTruthy();
     fireEvent.press(getByText('📍 Find My Location'));
@@ -516,14 +523,14 @@ describe('MapContent', () => {
 
   it('renders Find My Location button as disabled when isRefreshingLocation is true', () => {
     const { getByText } = render(
-      <MapContent {...baseProps} currentLocation={null} isRefreshingLocation={true} />
+      <MapContent {...baseProps} currentLocation={null} isRefreshingLocation={true} />,
     );
     expect(getByText('Finding Location...')).toBeTruthy();
   });
 
   it('does not render Find My Location button when currentLocation is available', () => {
     const { queryByText } = render(
-      <MapContent {...baseProps} currentLocation={{ latitude: 1, longitude: 2 }} />
+      <MapContent {...baseProps} currentLocation={{ latitude: 1, longitude: 2 }} />,
     );
     expect(queryByText('📍 Find My Location')).toBeNull();
   });
@@ -538,14 +545,20 @@ describe('MapContent', () => {
           isNavigating
           destinationCoords={[1, 2]}
           currentLocation={{ latitude: 1, longitude: 2 }}
-        />
+        />,
       );
       expect(getByText('AROverlay')).toBeTruthy();
     });
 
     it('does not render ARNavigationOverlay if any required prop is missing', () => {
       const { queryByText } = render(
-        <MapContent {...baseProps} showAR isNavigating destinationCoords={null} currentLocation={null} />
+        <MapContent
+          {...baseProps}
+          showAR
+          isNavigating
+          destinationCoords={null}
+          currentLocation={null}
+        />,
       );
       expect(queryByText('AROverlay')).toBeNull();
     });
@@ -573,7 +586,7 @@ describe('MapContent', () => {
         steps={[{ instruction: 'Go straight' }]}
         currentStep={0}
         onSetShowDirectionsSheet={onSetShowDirectionsSheet}
-      />
+      />,
     );
     fireEvent.press(getByText('Go straight'));
     expect(onSetShowDirectionsSheet).toHaveBeenCalledWith(true);
@@ -586,19 +599,14 @@ describe('MapContent', () => {
         isNavigating={false}
         steps={[{ instruction: 'Turn left' }]}
         currentStep={0}
-      />
+      />,
     );
     expect(queryByText('Turn left')).toBeNull();
   });
 
   it('does not render navigation instruction overlay when no steps available', () => {
     const { queryByText } = render(
-      <MapContent
-        {...baseProps}
-        isNavigating={true}
-        steps={[]}
-        currentStep={0}
-      />
+      <MapContent {...baseProps} isNavigating={true} steps={[]} currentStep={0} />,
     );
     expect(queryByText('Turn left')).toBeNull();
   });
@@ -606,14 +614,14 @@ describe('MapContent', () => {
   // Search visibility tests
   it('shows DestinationSearch when not navigating', () => {
     const { getByText } = render(
-      <MapContent {...baseProps} isNavigating={false} destination="test" />
+      <MapContent {...baseProps} isNavigating={false} destination="test" />,
     );
     expect(getByText('test DestinationSearch')).toBeTruthy();
   });
 
   it('hides DestinationSearch when navigating', () => {
     const { queryByText } = render(
-      <MapContent {...baseProps} isNavigating={true} destination="test" />
+      <MapContent {...baseProps} isNavigating={true} destination="test" />,
     );
     expect(queryByText('test DestinationSearch')).toBeNull();
   });
@@ -621,17 +629,21 @@ describe('MapContent', () => {
   // Popup tests
   it('shows custom location error popup when showLocationRefreshPopup is true', () => {
     const { getByText } = render(
-      <MapContent {...baseProps} showLocationRefreshPopup isDark={false} />
+      <MapContent {...baseProps} showLocationRefreshPopup isDark={false} />,
     );
     expect(getByText('Location Not Found')).toBeTruthy();
-    expect(getByText('Unable to find your location. This can happen indoors or in areas with poor GPS signal.')).toBeTruthy();
+    expect(
+      getByText(
+        'Unable to find your location. This can happen indoors or in areas with poor GPS signal.',
+      ),
+    ).toBeTruthy();
     expect(getByText('Retry Location')).toBeTruthy();
     expect(getByText('Refresh Map')).toBeTruthy();
   });
 
   it('renders custom location error popup in dark mode', () => {
     const { getByText } = render(
-      <MapContent {...baseProps} showLocationRefreshPopup isDark={true} />
+      <MapContent {...baseProps} showLocationRefreshPopup isDark={true} />,
     );
     expect(getByText('Location Not Found')).toBeTruthy();
     expect(getByText('Retry Location')).toBeTruthy();
@@ -641,7 +653,12 @@ describe('MapContent', () => {
   it('closes custom location error popup when close button is pressed', () => {
     const onSetShowLocationRefreshPopup = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showLocationRefreshPopup isDark={false} onSetShowLocationRefreshPopup={onSetShowLocationRefreshPopup} />
+      <MapContent
+        {...baseProps}
+        showLocationRefreshPopup
+        isDark={false}
+        onSetShowLocationRefreshPopup={onSetShowLocationRefreshPopup}
+      />,
     );
     fireEvent.press(getByText('×'));
     expect(onSetShowLocationRefreshPopup).toHaveBeenCalledWith(false);
@@ -651,7 +668,13 @@ describe('MapContent', () => {
     const onRefreshLocation = jest.fn();
     const onRefreshMap = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showLocationRefreshPopup isDark={false} onRefreshLocation={onRefreshLocation} onRefreshMap={onRefreshMap} />
+      <MapContent
+        {...baseProps}
+        showLocationRefreshPopup
+        isDark={false}
+        onRefreshLocation={onRefreshLocation}
+        onRefreshMap={onRefreshMap}
+      />,
     );
     fireEvent.press(getByText('Retry Location'));
     expect(onRefreshLocation).toHaveBeenCalled();
@@ -660,9 +683,7 @@ describe('MapContent', () => {
   });
 
   it('does not render custom location error popup when showLocationRefreshPopup is false', () => {
-    const { queryByText } = render(
-      <MapContent {...baseProps} showLocationRefreshPopup={false} />
-    );
+    const { queryByText } = render(<MapContent {...baseProps} showLocationRefreshPopup={false} />);
     expect(queryByText('Location Not Found')).toBeNull();
   });
 
@@ -670,7 +691,12 @@ describe('MapContent', () => {
   it('calls onSetShowErrorPopup(false) when error popup confirm is pressed', () => {
     const onSetShowErrorPopup = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showErrorPopup errorPopupMessage="err" onSetShowErrorPopup={onSetShowErrorPopup} />
+      <MapContent
+        {...baseProps}
+        showErrorPopup
+        errorPopupMessage="err"
+        onSetShowErrorPopup={onSetShowErrorPopup}
+      />,
     );
     fireEvent.press(getByText('Confirm'));
     expect(onSetShowErrorPopup).toHaveBeenCalledWith(false);
@@ -679,7 +705,12 @@ describe('MapContent', () => {
   it('calls onSetShowSuccessPopup(false) when success popup confirm is pressed', () => {
     const onSetShowSuccessPopup = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showSuccessPopup successPopupMessage="succ" onSetShowSuccessPopup={onSetShowSuccessPopup} />
+      <MapContent
+        {...baseProps}
+        showSuccessPopup
+        successPopupMessage="succ"
+        onSetShowSuccessPopup={onSetShowSuccessPopup}
+      />,
     );
     fireEvent.press(getByText('Confirm'));
     expect(onSetShowSuccessPopup).toHaveBeenCalledWith(false);
@@ -689,7 +720,11 @@ describe('MapContent', () => {
     const onConfirm = jest.fn();
     const confirmationPopupData = { title: 'Confirm', message: 'Proceed?', onConfirm };
     const { getAllByText } = render(
-      <MapContent {...baseProps} showConfirmationPopup confirmationPopupData={confirmationPopupData} />
+      <MapContent
+        {...baseProps}
+        showConfirmationPopup
+        confirmationPopupData={confirmationPopupData}
+      />,
     );
     const confirmButtons = getAllByText('Confirm');
     fireEvent.press(confirmButtons[confirmButtons.length - 1]);
@@ -699,7 +734,12 @@ describe('MapContent', () => {
   it('calls onSetShowConfirmationPopup(false) when confirmation popup cancel is pressed', () => {
     const onSetShowConfirmationPopup = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showConfirmationPopup confirmationPopupData={{ title: 'Confirm', message: 'Proceed?' }} onSetShowConfirmationPopup={onSetShowConfirmationPopup} />
+      <MapContent
+        {...baseProps}
+        showConfirmationPopup
+        confirmationPopupData={{ title: 'Confirm', message: 'Proceed?' }}
+        onSetShowConfirmationPopup={onSetShowConfirmationPopup}
+      />,
     );
     fireEvent.press(getByText('Cancel'));
     expect(onSetShowConfirmationPopup).toHaveBeenCalledWith(false);
@@ -708,7 +748,11 @@ describe('MapContent', () => {
   it('calls onHandleDestinationReachedConfirm when destination reached popup confirm is pressed', () => {
     const onHandleDestinationReachedConfirm = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showDestinationReachedPopup onHandleDestinationReachedConfirm={onHandleDestinationReachedConfirm} />
+      <MapContent
+        {...baseProps}
+        showDestinationReachedPopup
+        onHandleDestinationReachedConfirm={onHandleDestinationReachedConfirm}
+      />,
     );
     fireEvent.press(getByText('Confirm'));
     expect(onHandleDestinationReachedConfirm).toHaveBeenCalled();
@@ -716,23 +760,17 @@ describe('MapContent', () => {
 
   // TempMessage tests
   it('renders tempMessage banner when tempMessage is set', () => {
-    const { getByText } = render(
-      <MapContent {...baseProps} tempMessage="Test message" />
-    );
+    const { getByText } = render(<MapContent {...baseProps} tempMessage="Test message" />);
     expect(getByText('Test message')).toBeTruthy();
   });
 
   it('does not render tempMessage banner when tempMessage is falsy', () => {
-    const { queryByText } = render(
-      <MapContent {...baseProps} tempMessage={''} />
-    );
+    const { queryByText } = render(<MapContent {...baseProps} tempMessage={''} />);
     expect(queryByText('')).toBeNull();
   });
 
   it('does not render tempMessage banner when tempMessage is empty', () => {
-    const { queryByText } = render(
-      <MapContent {...baseProps} tempMessage="" />
-    );
+    const { queryByText } = render(<MapContent {...baseProps} tempMessage="" />);
     expect(queryByText('')).toBeNull();
   });
 
@@ -740,7 +778,7 @@ describe('MapContent', () => {
   it('handles AdminPOIModal close action', () => {
     const onSetShowAddPOIModal = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showAddPOIModal onSetShowAddPOIModal={onSetShowAddPOIModal} />
+      <MapContent {...baseProps} showAddPOIModal onSetShowAddPOIModal={onSetShowAddPOIModal} />,
     );
     fireEvent.press(getByText('CloseAdminPOI'));
     expect(onSetShowAddPOIModal).toHaveBeenCalledWith(false);
@@ -749,7 +787,7 @@ describe('MapContent', () => {
   it('handles AdminPOIModal submit action', () => {
     const onSubmitNewBuilding = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showAddPOIModal onSubmitNewBuilding={onSubmitNewBuilding} />
+      <MapContent {...baseProps} showAddPOIModal onSubmitNewBuilding={onSubmitNewBuilding} />,
     );
     fireEvent.press(getByText('SubmitAdminPOI'));
     expect(onSubmitNewBuilding).toHaveBeenCalled();
@@ -758,7 +796,7 @@ describe('MapContent', () => {
   it('handles AdminPOIModal edit submit action', () => {
     const onSubmitEditBuilding = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showEditPOIModal onSubmitEditBuilding={onSubmitEditBuilding} />
+      <MapContent {...baseProps} showEditPOIModal onSubmitEditBuilding={onSubmitEditBuilding} />,
     );
     fireEvent.press(getByText('SubmitAdminPOI'));
     expect(onSubmitEditBuilding).toHaveBeenCalled();
@@ -768,7 +806,12 @@ describe('MapContent', () => {
     const onOpenEditBuildingModal = jest.fn();
     const adminActionPOI = { name: 'Test POI' };
     const { getByText } = render(
-      <MapContent {...baseProps} showAdminActions adminActionPOI={adminActionPOI} onOpenEditBuildingModal={onOpenEditBuildingModal} />
+      <MapContent
+        {...baseProps}
+        showAdminActions
+        adminActionPOI={adminActionPOI}
+        onOpenEditBuildingModal={onOpenEditBuildingModal}
+      />,
     );
     fireEvent.press(getByText('EditPOI'));
     expect(onOpenEditBuildingModal).toHaveBeenCalledWith(adminActionPOI);
@@ -779,7 +822,13 @@ describe('MapContent', () => {
     const onSetShowAdminActions = jest.fn();
     const adminActionPOI = { name: 'Test POI' };
     const { getByText } = render(
-      <MapContent {...baseProps} showAdminActions adminActionPOI={adminActionPOI} onConfirmDeleteBuilding={onConfirmDeleteBuilding} onSetShowAdminActions={onSetShowAdminActions} />
+      <MapContent
+        {...baseProps}
+        showAdminActions
+        adminActionPOI={adminActionPOI}
+        onConfirmDeleteBuilding={onConfirmDeleteBuilding}
+        onSetShowAdminActions={onSetShowAdminActions}
+      />,
     );
     fireEvent.press(getByText('DeletePOI'));
     expect(onConfirmDeleteBuilding).toHaveBeenCalledWith(adminActionPOI, expect.any(Function));
@@ -788,7 +837,7 @@ describe('MapContent', () => {
   it('handles AdminActionsModal close action', () => {
     const onSetShowAdminActions = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showAdminActions onSetShowAdminActions={onSetShowAdminActions} />
+      <MapContent {...baseProps} showAdminActions onSetShowAdminActions={onSetShowAdminActions} />,
     );
     fireEvent.press(getByText('CloseAdminActions'));
     expect(onSetShowAdminActions).toHaveBeenCalledWith(false);
@@ -798,7 +847,11 @@ describe('MapContent', () => {
   it('handles DirectionsModal close action', () => {
     const onSetShowDirectionsSheet = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showDirectionsSheet onSetShowDirectionsSheet={onSetShowDirectionsSheet} />
+      <MapContent
+        {...baseProps}
+        showDirectionsSheet
+        onSetShowDirectionsSheet={onSetShowDirectionsSheet}
+      />,
     );
     fireEvent.press(getByText('CloseDirections'));
     expect(onSetShowDirectionsSheet).toHaveBeenCalledWith(false);
@@ -808,7 +861,12 @@ describe('MapContent', () => {
     const onStartNavigation = jest.fn();
     const onSetShowDirectionsSheet = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showDirectionsSheet onStartNavigation={onStartNavigation} onSetShowDirectionsSheet={onSetShowDirectionsSheet} />
+      <MapContent
+        {...baseProps}
+        showDirectionsSheet
+        onStartNavigation={onStartNavigation}
+        onSetShowDirectionsSheet={onSetShowDirectionsSheet}
+      />,
     );
     fireEvent.press(getByText('StartDirections'));
     expect(onStartNavigation).toHaveBeenCalled();
@@ -819,7 +877,7 @@ describe('MapContent', () => {
   it('handles CrowdReportModal density change', () => {
     const onSetSelectedDensity = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showCrowdPopup onSetSelectedDensity={onSetSelectedDensity} />
+      <MapContent {...baseProps} showCrowdPopup onSetSelectedDensity={onSetSelectedDensity} />,
     );
     fireEvent.press(getByText('ChangeDensity'));
     expect(onSetSelectedDensity).toHaveBeenCalledWith('high');
@@ -828,7 +886,7 @@ describe('MapContent', () => {
   it('handles CrowdReportModal POI change', () => {
     const onSelectPOI = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showCrowdPopup onSelectPOI={onSelectPOI} />
+      <MapContent {...baseProps} showCrowdPopup onSelectPOI={onSelectPOI} />,
     );
     fireEvent.press(getByText('ChangePOI'));
     expect(onSelectPOI).toHaveBeenCalledWith({ name: 'test poi' });
@@ -837,7 +895,7 @@ describe('MapContent', () => {
   it('handles CrowdReportModal submit', () => {
     const onSubmitCrowdReport = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showCrowdPopup onSubmitCrowdReport={onSubmitCrowdReport} />
+      <MapContent {...baseProps} showCrowdPopup onSubmitCrowdReport={onSubmitCrowdReport} />,
     );
     fireEvent.press(getByText('SubmitCrowd'));
     expect(onSubmitCrowdReport).toHaveBeenCalled();
@@ -846,7 +904,11 @@ describe('MapContent', () => {
   it('handles CrowdReportModal cancel', () => {
     const onCloseCrowdReportModal = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showCrowdPopup onCloseCrowdReportModal={onCloseCrowdReportModal} />
+      <MapContent
+        {...baseProps}
+        showCrowdPopup
+        onCloseCrowdReportModal={onCloseCrowdReportModal}
+      />,
     );
     fireEvent.press(getByText('CancelCrowd'));
     expect(onCloseCrowdReportModal).toHaveBeenCalled();
@@ -856,7 +918,11 @@ describe('MapContent', () => {
   it('handles IndoorPickerModal start room selection', () => {
     const onSetSelectedStartRoom = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showIndoorPicker onSetSelectedStartRoom={onSetSelectedStartRoom} />
+      <MapContent
+        {...baseProps}
+        showIndoorPicker
+        onSetSelectedStartRoom={onSetSelectedStartRoom}
+      />,
     );
     fireEvent.press(getByText('SelectStartRoom'));
     expect(onSetSelectedStartRoom).toHaveBeenCalledWith({ name: 'start room' });
@@ -865,7 +931,11 @@ describe('MapContent', () => {
   it('handles IndoorPickerModal indoor room selection', () => {
     const onSetSelectedIndoorRoom = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showIndoorPicker onSetSelectedIndoorRoom={onSetSelectedIndoorRoom} />
+      <MapContent
+        {...baseProps}
+        showIndoorPicker
+        onSetSelectedIndoorRoom={onSetSelectedIndoorRoom}
+      />,
     );
     fireEvent.press(getByText('SelectIndoorRoom'));
     expect(onSetSelectedIndoorRoom).toHaveBeenCalledWith({ name: 'indoor room' });
@@ -874,7 +944,7 @@ describe('MapContent', () => {
   it('handles IndoorPickerModal cancel', () => {
     const onCloseIndoorPicker = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showIndoorPicker onCloseIndoorPicker={onCloseIndoorPicker} />
+      <MapContent {...baseProps} showIndoorPicker onCloseIndoorPicker={onCloseIndoorPicker} />,
     );
     fireEvent.press(getByText('CancelIndoor'));
     expect(onCloseIndoorPicker).toHaveBeenCalled();
@@ -883,7 +953,11 @@ describe('MapContent', () => {
   it('handles IndoorPickerModal start', () => {
     const onStartIndoorNavigation = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showIndoorPicker onStartIndoorNavigation={onStartIndoorNavigation} />
+      <MapContent
+        {...baseProps}
+        showIndoorPicker
+        onStartIndoorNavigation={onStartIndoorNavigation}
+      />,
     );
     fireEvent.press(getByText('StartIndoor'));
     expect(onStartIndoorNavigation).toHaveBeenCalled();
@@ -893,7 +967,11 @@ describe('MapContent', () => {
   it('handles IndoorNavigationButton press', () => {
     const onOpenIndoorNavigation = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} selectedBuildingForIndoor={{}} onOpenIndoorNavigation={onOpenIndoorNavigation} />
+      <MapContent
+        {...baseProps}
+        selectedBuildingForIndoor={{}}
+        onOpenIndoorNavigation={onOpenIndoorNavigation}
+      />,
     );
     fireEvent.press(getByText('IndoorNavBtn'));
     expect(onOpenIndoorNavigation).toHaveBeenCalled();
@@ -902,9 +980,7 @@ describe('MapContent', () => {
   // MapActionsPanel interaction tests
   it('handles MapActionsPanel share location', () => {
     const onShareLocation = jest.fn();
-    const { getByText } = render(
-      <MapContent {...baseProps} onShareLocation={onShareLocation} />
-    );
+    const { getByText } = render(<MapContent {...baseProps} onShareLocation={onShareLocation} />);
     fireEvent.press(getByText('ShareLocation'));
     expect(onShareLocation).toHaveBeenCalled();
   });
@@ -912,7 +988,7 @@ describe('MapContent', () => {
   it('handles MapActionsPanel report crowd', () => {
     const onOpenCrowdReportModal = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} onOpenCrowdReportModal={onOpenCrowdReportModal} />
+      <MapContent {...baseProps} onOpenCrowdReportModal={onOpenCrowdReportModal} />,
     );
     fireEvent.press(getByText('ReportCrowd'));
     expect(onOpenCrowdReportModal).toHaveBeenCalled();
@@ -921,7 +997,7 @@ describe('MapContent', () => {
   it('handles MapActionsPanel add POI for admin', () => {
     const onEnableAdminPOICreation = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} isAdmin onEnableAdminPOICreation={onEnableAdminPOICreation} />
+      <MapContent {...baseProps} isAdmin onEnableAdminPOICreation={onEnableAdminPOICreation} />,
     );
     fireEvent.press(getByText('AddPOI'));
     expect(onEnableAdminPOICreation).toHaveBeenCalled();
@@ -930,7 +1006,7 @@ describe('MapContent', () => {
   it('handles MapActionsPanel share tooltip show', () => {
     const onSetShowShareTooltip = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} onSetShowShareTooltip={onSetShowShareTooltip} />
+      <MapContent {...baseProps} onSetShowShareTooltip={onSetShowShareTooltip} />,
     );
     fireEvent.press(getByText('ShareIn'));
     expect(onSetShowShareTooltip).toHaveBeenCalledWith(true);
@@ -939,7 +1015,7 @@ describe('MapContent', () => {
   it('handles MapActionsPanel share tooltip hide', () => {
     const onSetShowShareTooltip = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} onSetShowShareTooltip={onSetShowShareTooltip} />
+      <MapContent {...baseProps} onSetShowShareTooltip={onSetShowShareTooltip} />,
     );
     fireEvent.press(getByText('ShareOut'));
     expect(onSetShowShareTooltip).toHaveBeenCalledWith(false);
@@ -948,7 +1024,7 @@ describe('MapContent', () => {
   it('handles MapActionsPanel report tooltip show', () => {
     const onHandleReportTooltipShow = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} onHandleReportTooltipShow={onHandleReportTooltipShow} />
+      <MapContent {...baseProps} onHandleReportTooltipShow={onHandleReportTooltipShow} />,
     );
     fireEvent.press(getByText('ReportIn'));
     expect(onHandleReportTooltipShow).toHaveBeenCalled();
@@ -957,7 +1033,7 @@ describe('MapContent', () => {
   it('handles MapActionsPanel report tooltip hide', () => {
     const onHandleReportTooltipHide = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} onHandleReportTooltipHide={onHandleReportTooltipHide} />
+      <MapContent {...baseProps} onHandleReportTooltipHide={onHandleReportTooltipHide} />,
     );
     fireEvent.press(getByText('ReportOut'));
     expect(onHandleReportTooltipHide).toHaveBeenCalled();
@@ -967,7 +1043,12 @@ describe('MapContent', () => {
   it('handles NavigationPanel start navigation', () => {
     const onStartNavigation = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} destination="Test" destinationCoords={[1, 2]} onStartNavigation={onStartNavigation} />
+      <MapContent
+        {...baseProps}
+        destination="Test"
+        destinationCoords={[1, 2]}
+        onStartNavigation={onStartNavigation}
+      />,
     );
     fireEvent.press(getByText('StartNav'));
     expect(onStartNavigation).toHaveBeenCalled();
@@ -976,7 +1057,12 @@ describe('MapContent', () => {
   it('handles NavigationPanel stop navigation', () => {
     const onStopNavigation = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} destination="Test" destinationCoords={[1, 2]} onStopNavigation={onStopNavigation} />
+      <MapContent
+        {...baseProps}
+        destination="Test"
+        destinationCoords={[1, 2]}
+        onStopNavigation={onStopNavigation}
+      />,
     );
     fireEvent.press(getByText('StopNav'));
     expect(onStopNavigation).toHaveBeenCalled();
@@ -985,7 +1071,12 @@ describe('MapContent', () => {
   it('handles NavigationPanel cancel route', () => {
     const onCancelRoute = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} destination="Test" destinationCoords={[1, 2]} onCancelRoute={onCancelRoute} />
+      <MapContent
+        {...baseProps}
+        destination="Test"
+        destinationCoords={[1, 2]}
+        onCancelRoute={onCancelRoute}
+      />,
     );
     fireEvent.press(getByText('CancelRoute'));
     expect(onCancelRoute).toHaveBeenCalled();
@@ -994,7 +1085,12 @@ describe('MapContent', () => {
   it('handles NavigationPanel toggle voice', () => {
     const onToggleVoice = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} destination="Test" destinationCoords={[1, 2]} onToggleVoice={onToggleVoice} />
+      <MapContent
+        {...baseProps}
+        destination="Test"
+        destinationCoords={[1, 2]}
+        onToggleVoice={onToggleVoice}
+      />,
     );
     fireEvent.press(getByText('ToggleVoice'));
     expect(onToggleVoice).toHaveBeenCalled();
@@ -1003,7 +1099,12 @@ describe('MapContent', () => {
   it('handles NavigationPanel toggle AR', () => {
     const onToggleAR = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} destination="Test" destinationCoords={[1, 2]} onToggleAR={onToggleAR} />
+      <MapContent
+        {...baseProps}
+        destination="Test"
+        destinationCoords={[1, 2]}
+        onToggleAR={onToggleAR}
+      />,
     );
     fireEvent.press(getByText('ToggleAR'));
     expect(onToggleAR).toHaveBeenCalled();
@@ -1012,7 +1113,12 @@ describe('MapContent', () => {
   it('handles NavigationPanel toggle minimize', () => {
     const onToggleMinimize = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} destination="Test" destinationCoords={[1, 2]} onToggleMinimize={onToggleMinimize} />
+      <MapContent
+        {...baseProps}
+        destination="Test"
+        destinationCoords={[1, 2]}
+        onToggleMinimize={onToggleMinimize}
+      />,
     );
     fireEvent.press(getByText('ToggleMinimize'));
     expect(onToggleMinimize).toHaveBeenCalled();
@@ -1021,7 +1127,12 @@ describe('MapContent', () => {
   it('handles NavigationPanel speaking change', () => {
     const onSpeakingChange = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} destination="Test" destinationCoords={[1, 2]} onSpeakingChange={onSpeakingChange} />
+      <MapContent
+        {...baseProps}
+        destination="Test"
+        destinationCoords={[1, 2]}
+        onSpeakingChange={onSpeakingChange}
+      />,
     );
     fireEvent.press(getByText('SpeakingChange'));
     expect(onSpeakingChange).toHaveBeenCalledWith(true);
@@ -1031,7 +1142,7 @@ describe('MapContent', () => {
   it('handles DestinationSearch destination change', () => {
     const onDestinationChange = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} destination="test" onDestinationChange={onDestinationChange} />
+      <MapContent {...baseProps} destination="test" onDestinationChange={onDestinationChange} />,
     );
     fireEvent.press(getByText('ChangeDestination'));
     expect(onDestinationChange).toHaveBeenCalledWith('test destination');
@@ -1040,7 +1151,7 @@ describe('MapContent', () => {
   it('handles DestinationSearch search', () => {
     const onDestinationSearch = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} destination="test" onDestinationSearch={onDestinationSearch} />
+      <MapContent {...baseProps} destination="test" onDestinationSearch={onDestinationSearch} />,
     );
     fireEvent.press(getByText('SearchDestination'));
     expect(onDestinationSearch).toHaveBeenCalled();
@@ -1049,7 +1160,7 @@ describe('MapContent', () => {
   it('handles DestinationSearch suggestion selection', () => {
     const onSelectPOI = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} destination="test" onSelectPOI={onSelectPOI} />
+      <MapContent {...baseProps} destination="test" onSelectPOI={onSelectPOI} />,
     );
     fireEvent.press(getByText('SelectSuggestion'));
     expect(onSelectPOI).toHaveBeenCalledWith({ name: 'test poi' });
@@ -1058,36 +1169,36 @@ describe('MapContent', () => {
   // EstimatedTime handling tests
   it('handles NavigationPanel with valid numeric estimatedTime', () => {
     const { getByText } = render(
-      <MapContent 
-        {...baseProps} 
-        destination="Test" 
-        destinationCoords={[1, 2]} 
+      <MapContent
+        {...baseProps}
+        destination="Test"
+        destinationCoords={[1, 2]}
         estimatedTime="300"
-      />
+      />,
     );
     expect(getByText('NavOff')).toBeTruthy();
   });
 
   it('handles NavigationPanel with invalid estimatedTime', () => {
     const { getByText } = render(
-      <MapContent 
-        {...baseProps} 
-        destination="Test" 
-        destinationCoords={[1, 2]} 
+      <MapContent
+        {...baseProps}
+        destination="Test"
+        destinationCoords={[1, 2]}
         estimatedTime="invalid"
-      />
+      />,
     );
     expect(getByText('NavOff')).toBeTruthy();
   });
 
   it('handles NavigationPanel with null estimatedTime', () => {
     const { getByText } = render(
-      <MapContent 
-        {...baseProps} 
-        destination="Test" 
-        destinationCoords={[1, 2]} 
+      <MapContent
+        {...baseProps}
+        destination="Test"
+        destinationCoords={[1, 2]}
         estimatedTime={null}
-      />
+      />,
     );
     expect(getByText('NavOff')).toBeTruthy();
   });
@@ -1095,8 +1206,8 @@ describe('MapContent', () => {
   // Edge cases and prop combinations
   it('renders with all modal states true simultaneously', () => {
     const { getByText, getAllByText } = render(
-      <MapContent 
-        {...baseProps} 
+      <MapContent
+        {...baseProps}
         showAddPOIModal
         showEditPOIModal
         showAdminActions
@@ -1111,7 +1222,7 @@ describe('MapContent', () => {
         confirmationPopupData={{ title: 'Confirm', message: 'Proceed?' }}
         showDestinationReachedPopup
         showLocationRefreshPopup
-      />
+      />,
     );
     expect(getByText('add AdminPOIModal')).toBeTruthy();
     expect(getByText('edit AdminPOIModal')).toBeTruthy();
@@ -1129,14 +1240,14 @@ describe('MapContent', () => {
 
   it('renders with complex navigation state', () => {
     const { getByText } = render(
-      <MapContent 
-        {...baseProps} 
+      <MapContent
+        {...baseProps}
         isNavigating
         destination="Complex Destination"
         destinationCoords={[10.5, 20.3]}
         steps={[
           { instruction: 'Turn right at the corner' },
-          { instruction: 'Continue straight for 100m' }
+          { instruction: 'Continue straight for 100m' },
         ]}
         currentStep={0}
         routeProgress={25}
@@ -1145,12 +1256,16 @@ describe('MapContent', () => {
         originalRouteDistance={1000}
         estimatedTime="600"
         isRouteLoading={false}
-        routeCoordinates={[[0, 0], [1, 1], [2, 2]]}
+        routeCoordinates={[
+          [0, 0],
+          [1, 1],
+          [2, 2],
+        ]}
         isVoiceEnabled
         showAR
         deviceHeading={45}
         isNavigationMinimized={false}
-      />
+      />,
     );
     expect(getByText('NavOn')).toBeTruthy();
     expect(getByText('Turn right at the corner')).toBeTruthy();
@@ -1159,58 +1274,44 @@ describe('MapContent', () => {
 
   it('renders with admin features and POI data', () => {
     const { getByText } = render(
-      <MapContent 
-        {...baseProps} 
+      <MapContent
+        {...baseProps}
         isAdmin
         pois={[
           { name: 'POI 1', id: '1' },
-          { name: 'POI 2', id: '2' }
+          { name: 'POI 2', id: '2' },
         ]}
         selectedPOI={{ name: 'Selected POI' }}
-        poiSuggestions={[
-          { name: 'Suggestion 1' },
-          { name: 'Suggestion 2' }
-        ]}
+        poiSuggestions={[{ name: 'Suggestion 1' }, { name: 'Suggestion 2' }]}
         buildingName="Test Building"
         numberOfFloors="5"
         newName="New Building Name"
         newFloors="10"
         selectedLocation="Test Location"
-        availableLocations={[
-          { name: 'Location 1' },
-          { name: 'Location 2' }
-        ]}
+        availableLocations={[{ name: 'Location 1' }, { name: 'Location 2' }]}
         editingPOI={{ name: 'Editing POI' }}
         adminActionPOI={{ name: 'Admin Action POI' }}
-      />
+      />,
     );
     expect(getByText('AdminPanel')).toBeTruthy();
   });
 
   it('renders with indoor navigation data', () => {
     const { getByText } = render(
-      <MapContent 
-        {...baseProps} 
+      <MapContent
+        {...baseProps}
         selectedBuildingForIndoor={{ name: 'Building A' }}
-        indoorRooms={[
-          { name: 'Room 101' },
-          { name: 'Room 102' }
-        ]}
+        indoorRooms={[{ name: 'Room 101' }, { name: 'Room 102' }]}
         selectedIndoorRoom={{ name: 'Room 101' }}
         selectedStartRoom={{ name: 'Lobby' }}
-      />
+      />,
     );
     expect(getByText('IndoorNavBtn')).toBeTruthy();
   });
 
   it('renders with crowd reporting features', () => {
     const { getByText } = render(
-      <MapContent 
-        {...baseProps} 
-        showCrowdPopup
-        selectedDensity="medium"
-        showReportTooltip
-      />
+      <MapContent {...baseProps} showCrowdPopup selectedDensity="medium" showReportTooltip />,
     );
     expect(getByText('CrowdReportModal')).toBeTruthy();
     expect(getByText('UserPanel')).toBeTruthy();
@@ -1218,33 +1319,25 @@ describe('MapContent', () => {
 
   it('renders with share features enabled', () => {
     const { getByText } = render(
-      <MapContent 
-        {...baseProps} 
+      <MapContent
+        {...baseProps}
         showShareTooltip
         currentLocation={{ latitude: 1, longitude: 2 }}
-      />
+      />,
     );
     expect(getByText('UserPanel')).toBeTruthy();
   });
 
   it('handles missing confirmationPopupData properties', () => {
     const { queryByText } = render(
-      <MapContent 
-        {...baseProps} 
-        showConfirmationPopup
-        confirmationPopupData={{}}
-      />
+      <MapContent {...baseProps} showConfirmationPopup confirmationPopupData={{}} />,
     );
     expect(queryByText('')).toBeNull();
   });
 
   it('handles Find My Location button with disabled state', () => {
     const { getByText } = render(
-      <MapContent 
-        {...baseProps} 
-        currentLocation={null}
-        isRefreshingLocation={true}
-      />
+      <MapContent {...baseProps} currentLocation={null} isRefreshingLocation={true} />,
     );
     const button = getByText('Finding Location...');
     expect(button).toBeTruthy();
