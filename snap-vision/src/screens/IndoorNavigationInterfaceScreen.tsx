@@ -4,7 +4,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
-import IndoorNavigationInterfaceContent from '../components/organisms/IndoorNavigationInterfaceContent';
+import IndoorNavigationInterfaceContent from '../../editTests/IndoorNavigationInterfaceContent';
 
 type RootStackParamList = {
   IndoorNavigationInterface: {

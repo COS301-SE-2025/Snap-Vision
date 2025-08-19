@@ -2,6 +2,12 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { View, Text } from 'react-native';
 
+// --- Imports ---
+import PrivacySecurityContent from '../src/components/organisms/PrivacySecurityContent';
+import SupportContent from '../src/components/organisms/SupportContent';
+import SettingsContent from '../src/components/organisms/SettingsContent';
+import SettingsScreen from '../src/screens/SettingsScreen';
+
 // Mock the Switch component
 jest.mock('react-native/Libraries/Components/Switch/Switch', () => {
   const React = require('react');
@@ -163,12 +169,6 @@ jest.mock('../src/components/atoms/SettingsSearch', () => {
     return <TextInput testID="settings-search-input" {...props} />;
   };
 });
-
-// --- Imports ---
-import PrivacySecurityContent from '../src/components/organisms/PrivacySecurityContent';
-import SupportContent from '../src/components/organisms/SupportContent';
-import SettingsContent from '../src/components/organisms/SettingsContent';
-import SettingsScreen from '../src/screens/SettingsScreen';
 
 describe('NotificationSettings Unit Tests', () => {
   it('renders correctly with light theme', () => {

@@ -1,5 +1,4 @@
-import { LogBox } from 'react-native';
-LogBox.ignoreLogs(['Text strings must be rendered within a <Text> component']);
+import { LogBox, Linking } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -11,7 +10,6 @@ import AdminEditFloorplansScreen from './src/screens/AdminEditFloorplansScreen';
 import AdminFloorplanEditorScreen from './src/screens/AdminFloorplanEditorScreen';
 import { ThemeProvider } from './src/theme/ThemeContext';
 import ManageUsersScreen from './src/screens/ManageUsersScreen';
-import { Linking } from 'react-native';
 import queryString from 'query-string';
 import { DeepLinkProvider, useDeepLink } from './src/DeepLinkContext';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
@@ -30,10 +28,15 @@ import IndoorNavigationInterfaceScreen from './src/screens/IndoorNavigationInter
 import IndoorNavigationInstructionsScreen from './src/screens/IndoorNavigationInstructionsScreen';
 import IndoorSchematicNavScreen from './src/screens/IndoorSchematicNavScreen';
 import ARIndoorNavScreen from './src/screens/ARIndoorNavScreen';
-
-const Stack = createNativeStackNavigator();
+import QRCodeAdminScreen from './src/screens/QRCodeAdminScreen';
 
 import { navigationRef } from './src/navigation/RootNavigation';
+LogBox.ignoreLogs([
+  'Text strings must be rendered within a <Text> component',
+  'VirtualizedLists should never be nested inside plain ScrollViews with the same orientation',
+]);
+
+const Stack = createNativeStackNavigator();
 
 function AppInner() {
   const { setCoords } = useDeepLink();
@@ -86,6 +89,7 @@ function AppInner() {
             <Stack.Screen name="AdminFloorplanEditor" component={AdminFloorplanEditorScreen} />
             <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
             <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
+            <Stack.Screen name="AdminQRCodes" component={QRCodeAdminScreen} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
             <Stack.Screen name="ShopScreen" component={ShopScreen} />
             <Stack.Screen

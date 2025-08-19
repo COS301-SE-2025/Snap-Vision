@@ -7,6 +7,7 @@ import AdminFloorplanEditorScreen from '../screens/AdminFloorplanEditorScreen';
 import AdminIndoorPositioningScreen from '../screens/AdminIndoorPositioningScreen';
 // import AdminSettingsScreen from '../screens/AdminSettingsScreen';
 import AdminManageUsersScreen from '../screens/ManageUsersScreen';
+import QRCodeAdminScreen from '../screens/QRCodeAdminScreen';
 
 export type AdminStackParamList = {
   AdminMain: undefined;
@@ -24,6 +25,7 @@ export type AdminStackParamList = {
   };
   AdminSettings: undefined;
   AdminManageUsers: undefined;
+  AdminQRCodes: undefined;
 };
 
 const Stack = createNativeStackNavigator<AdminStackParamList>();
@@ -43,6 +45,7 @@ export default function AdminNavigator() {
       <Stack.Screen name="AdminIndoorPositioning" component={AdminIndoorPositioningScreen} />
       {/* <Stack.Screen name="AdminSettings" component={AdminSettingsScreen} /> */}
       <Stack.Screen name="AdminManageUsers" component={AdminManageUsersScreen} />
+      <Stack.Screen name="AdminQRCodes" component={QRCodeAdminScreen} />
     </Stack.Navigator>
   );
 }

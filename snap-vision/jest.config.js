@@ -19,11 +19,18 @@ module.exports = {
   collectCoverage: true,
   collectCoverageFrom: [
     'src/components/organisms/*.{ts,tsx}',
+    'src/services/*.{ts,tsx}',
+    'src/services/firebase/*.{ts,tsx}',
+    '!src/services/PermissionService.ts',
     '!**/__tests__/**',
     '!**/index.{ts,tsx}',
     '!**/*.d.ts',
     '!src/components/organisms/AdminFloorplanEditorContent.tsx',
     '!src/components/organisms/ManageUsersForm.tsx',
+    '!src/components/organisms/AdminIndoorPositioningContent.tsx',
+    '!src/components/organisms/QRCodeAdminContent.tsx',
+    '!src/components/organisms/MapActionsPanel.tsx',
+    'src/utils/*.{ts,tsx}',
   ],
   coverageDirectory: 'coverage',
 };
