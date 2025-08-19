@@ -1027,5 +1027,58 @@ describe('MapContent', () => {
     expect(onSpeakingChange).toHaveBeenCalledWith(true);
   });
 
+  // DestinationSearch interaction tests
+  it('handles DestinationSearch destination change', () => {
+    const onDestinationChange = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} destination="test" onDestinationChange={onDestinationChange} />
+    );
+    fireEvent.press(getByText('ChangeDestination'));
+    expect(onDestinationChange).toHaveBeenCalledWith('test destination');
+  });
+
+  it('handles DestinationSearch search', () => {
+    const onDestinationSearch = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} destination="test" onDestinationSearch={onDestinationSearch} />
+    );
+    fireEvent.press(getByText('SearchDestination'));
+    expect(onDestinationSearch).toHaveBeenCalled();
+  });
+
+  it('handles DestinationSearch suggestion selection', () => {
+    const onSelectPOI = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} destination="test" onSelectPOI={onSelectPOI} />
+    );
+    fireEvent.press(getByText('SelectSuggestion'));
+    expect(onSelectPOI).toHaveBeenCalledWith({ name: 'test poi' });
+  });
+
+  // EstimatedTime handling tests
+  it('handles NavigationPanel with valid numeric estimatedTime', () => {
+    const { getByText } = render(
+      <MapContent 
+        {...baseProps} 
+        destination="Test" 
+        destinationCoords={[1, 2]} 
+        estimatedTime="300"
+      />
+    );
+    expect(getByText('NavOff')).toBeTruthy();
+  });
+
+  it('handles NavigationPanel with invalid estimatedTime', () => {
+    const { getByText } = render(
+      <MapContent 
+        {...baseProps} 
+        destination="Test" 
+        destinationCoords={[1, 2]} 
+        estimatedTime="invalid"
+      />
+    );
+    expect(getByText('NavOff')).toBeTruthy();
+  });
+
   
 });
