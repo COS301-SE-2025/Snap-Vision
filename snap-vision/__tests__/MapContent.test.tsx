@@ -825,5 +825,42 @@ describe('MapContent', () => {
     expect(onSetSelectedDensity).toHaveBeenCalledWith('high');
   });
 
+  it('handles CrowdReportModal POI change', () => {
+    const onSelectPOI = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} showCrowdPopup onSelectPOI={onSelectPOI} />
+    );
+    fireEvent.press(getByText('ChangePOI'));
+    expect(onSelectPOI).toHaveBeenCalledWith({ name: 'test poi' });
+  });
+
+  it('handles CrowdReportModal submit', () => {
+    const onSubmitCrowdReport = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} showCrowdPopup onSubmitCrowdReport={onSubmitCrowdReport} />
+    );
+    fireEvent.press(getByText('SubmitCrowd'));
+    expect(onSubmitCrowdReport).toHaveBeenCalled();
+  });
+
+  it('handles CrowdReportModal cancel', () => {
+    const onCloseCrowdReportModal = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} showCrowdPopup onCloseCrowdReportModal={onCloseCrowdReportModal} />
+    );
+    fireEvent.press(getByText('CancelCrowd'));
+    expect(onCloseCrowdReportModal).toHaveBeenCalled();
+  });
+
+  // IndoorPickerModal interaction tests
+  it('handles IndoorPickerModal start room selection', () => {
+    const onSetSelectedStartRoom = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} showIndoorPicker onSetSelectedStartRoom={onSetSelectedStartRoom} />
+    );
+    fireEvent.press(getByText('SelectStartRoom'));
+    expect(onSetSelectedStartRoom).toHaveBeenCalledWith({ name: 'start room' });
+  });
+
   
 });
