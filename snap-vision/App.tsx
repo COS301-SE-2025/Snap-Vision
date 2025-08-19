@@ -31,7 +31,10 @@ import ARIndoorNavScreen from './src/screens/ARIndoorNavScreen';
 import QRCodeAdminScreen from './src/screens/QRCodeAdminScreen';
 
 import { navigationRef } from './src/navigation/RootNavigation';
-LogBox.ignoreLogs(['Text strings must be rendered within a <Text> component']);
+LogBox.ignoreLogs([
+  'Text strings must be rendered within a <Text> component',
+  'VirtualizedLists should never be nested inside plain ScrollViews with the same orientation',
+]);
 
 const Stack = createNativeStackNavigator();
 
