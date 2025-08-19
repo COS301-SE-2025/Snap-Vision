@@ -73,7 +73,7 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 |---------|-------------|---------------|------------|
 | Demo 1  | [Slides 1](https://drive.google.com/file/d/1e_UbI8kLICTHZ9I2SDv51N_GJ24E8VHI/view?usp=drive_link) | [Docs 1](https://drive.google.com/file/d/1PjbgsJOFsjdsjYa_vm__W2UnuMKIfOYw/view?usp=drive_link) | [Video 1](https://drive.google.com/file/d/1rTIKg24IbTOZThUpLjTd6B59khP-cZaL/view?usp=drive_link)
 | Demo 2  | [Slides 2](https://drive.google.com/file/d/1YEE-ge010J0ZCaks0T8ggVH2uF7fEHC8/view?usp=drive_link) | [Docs 2](https://drive.google.com/drive/folders/1paIiMCL94TNsxWsi4ypYfgUZSIqwxIns?usp=drive_link)    | [Video 2](https://drive.google.com/file/d/1p8kSaRAugtSsM8uUkssOBTTXFzVAtIey/view?usp=drive_link) |
-| Demo 3  | [Slides 3] | [Docs 3](https://drive.google.com/drive/folders/1MNeGPrEBpp5LMoOav7cew51myI6ndEDu?usp=sharing) | [Video 3](https://drive.google.com/file/d/1ckHsvY1-KsHNIP-jYk25CsysI22DOYQr/view?usp=drive_link) |
+| Demo 3  | [Slides 3](https://drive.google.com/file/d/1Wye-mflSMjL4sFv2WY0GXM5HZVb3kPbo/view?usp=sharing) | [Docs 3](https://drive.google.com/drive/folders/1MNeGPrEBpp5LMoOav7cew51myI6ndEDu?usp=sharing) | [Video 3](https://drive.google.com/file/d/1ckHsvY1-KsHNIP-jYk25CsysI22DOYQr/view?usp=drive_link) |
 | Demo 4  | [Slides 4] | [Docs 4]    | [Video 4] |
 
 ---
