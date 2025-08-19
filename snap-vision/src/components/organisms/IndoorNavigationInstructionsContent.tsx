@@ -92,17 +92,14 @@ export default function IndoorNavigationInstructionsContent({
         setStartRoomName(startRoom.name || startRoomId);
         setEndRoomName(endRoom.name || endRoomId);
 
-        const steps = calculateRoute(startRoomId, endRoomId, rooms, paths);
-
-        if (!steps.length) {
+        const routeSteps = calculateRoute(startRoomId, endRoomId, rooms, paths);
+        if (!routeSteps.length) {
           setError('No route found between selected rooms');
           return;
         }
 
-        const detailed = generateDetailedDirections(steps);
-
-        const routeSteps = detailed.slice(1);
-        setSteps(routeSteps);
+        const detailed = generateDetailedDirections(routeSteps);
+        setSteps(detailed);
       } catch (e) {
         console.error(e);
         setError('Failed to generate navigation route');

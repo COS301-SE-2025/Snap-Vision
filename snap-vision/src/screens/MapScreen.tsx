@@ -307,6 +307,7 @@ const MapScreen = () => {
     setShowLocationRefreshPopup,
     setErrorPopupMessage,
     setShowErrorPopup,
+    setShowDirectionsSheet,
   );
 
   //event handlers
