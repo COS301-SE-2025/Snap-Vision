@@ -696,5 +696,45 @@ describe('MapContent', () => {
     expect(onConfirm).toHaveBeenCalled();
   });
 
-  
+  it('calls onSetShowConfirmationPopup(false) when confirmation popup cancel is pressed', () => {
+    const onSetShowConfirmationPopup = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} showConfirmationPopup confirmationPopupData={{ title: 'Confirm', message: 'Proceed?' }} onSetShowConfirmationPopup={onSetShowConfirmationPopup} />
+    );
+    fireEvent.press(getByText('Cancel'));
+    expect(onSetShowConfirmationPopup).toHaveBeenCalledWith(false);
+  });
+
+  it('calls onHandleDestinationReachedConfirm when destination reached popup confirm is pressed', () => {
+    const onHandleDestinationReachedConfirm = jest.fn();
+    const { getByText } = render(
+      <MapContent {...baseProps} showDestinationReachedPopup onHandleDestinationReachedConfirm={onHandleDestinationReachedConfirm} />
+    );
+    fireEvent.press(getByText('Confirm'));
+    expect(onHandleDestinationReachedConfirm).toHaveBeenCalled();
+  });
+
+  // TempMessage tests
+  it('renders tempMessage banner when tempMessage is set', () => {
+    const { getByText } = render(
+      <MapContent {...baseProps} tempMessage="Test message" />
+    );
+    expect(getByText('Test message')).toBeTruthy();
+  });
+
+  it('does not render tempMessage banner when tempMessage is falsy', () => {
+    const { queryByText } = render(
+      <MapContent {...baseProps} tempMessage={''} />
+    );
+    expect(queryByText('')).toBeNull();
+  });
+
+  it('does not render tempMessage banner when tempMessage is empty', () => {
+    const { queryByText } = render(
+      <MapContent {...baseProps} tempMessage="" />
+    );
+    expect(queryByText('')).toBeNull();
+  });
+
+
 });
