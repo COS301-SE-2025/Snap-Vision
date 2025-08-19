@@ -228,7 +228,11 @@ describe('AdminLoadFloorplansContent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseFloorplanUpload.handleUpload.mockResolvedValue({ success: true });
-    mockUseFloorplanUpload.handlePickDocument.mockResolvedValue({ success: true, uri: 'test-uri', name: 'test.jpg' });
+    mockUseFloorplanUpload.handlePickDocument.mockResolvedValue({
+      success: true,
+      uri: 'test-uri',
+      name: 'test.jpg',
+    });
   });
 
   it('renders header and initial state', () => {
@@ -253,21 +257,21 @@ describe('AdminLoadFloorplansContent', () => {
     const { getByTestId, getByText, getByPlaceholderText } = render(<AdminLoadFloorplansContent />);
     fireEvent.press(getByTestId('location-loc1'));
     fireEvent.press(getByTestId('building-b1'));
-    
+
     const input = getByPlaceholderText('Enter floor number (e.g., 1, 2, 3...)');
     fireEvent.changeText(input, '2');
-    
+
     expect(getByText('Step 3: Select Floorplan File')).toBeTruthy();
   });
 
-    it('calls handleUpload with correct arguments and shows success popup on upload', async () => {
+  it('calls handleUpload with correct arguments and shows success popup on upload', async () => {
     // Set up the mock to simulate a file being selected
     mockUseFloorplanUpload.fileUri = 'test-uri';
     mockUseFloorplanUpload.fileName = 'test.jpg';
     mockUseFloorplanUpload.handleUpload.mockResolvedValue({ success: true });
-  
+
     const { getByTestId, getByText } = render(<AdminLoadFloorplansContent />);
-    
+
     // Select location
     fireEvent.press(getByTestId('location-loc1'));
     // Select building
@@ -277,7 +281,7 @@ describe('AdminLoadFloorplansContent', () => {
     // Simulate file already picked (mock above)
     // Press upload button
     fireEvent.press(getByTestId('button-upload-floorplan'));
-  
+
     await waitFor(() => {
       // handleUpload should be called with correct arguments
       expect(mockUseFloorplanUpload.handleUpload).toHaveBeenCalledWith(
@@ -285,125 +289,128 @@ describe('AdminLoadFloorplansContent', () => {
         'loc1',
         '2',
         'admin',
-        ['loc1', 'loc2']
+        ['loc1', 'loc2'],
       );
       // Success popup should be shown
       expect(getByText('Upload Successful')).toBeTruthy();
     });
   });
 
-    it('shows error popup when upload fails', async () => {
-      // Set up the mock to simulate a file being selected and upload failure
-      mockUseFloorplanUpload.fileUri = 'test-uri';
-      mockUseFloorplanUpload.fileName = 'test.jpg';
-      mockUseFloorplanUpload.handleUpload.mockResolvedValue({ success: false });
-      mockUseFloorplanUpload.error = "Upload failed";
-    
-      const { getByTestId, getByText } = render(<AdminLoadFloorplansContent />);
-      
-      // Select location
-      fireEvent.press(getByTestId('location-loc1'));
-      // Select building
-      fireEvent.press(getByTestId('building-b1'));
-      // Enter floor label
-      fireEvent.changeText(getByTestId('input-floor-label'), '2');
-      // Press upload button
-      fireEvent.press(getByTestId('button-upload-floorplan'));
-    
-      await waitFor(() => {
-        // handleUpload should be called with correct arguments
-        expect(mockUseFloorplanUpload.handleUpload).toHaveBeenCalledWith(
-          { id: 'b1', name: 'Building 1' },
-          'loc1',
-          '2',
-          'admin',
-          ['loc1', 'loc2']
-        );
-        // Error popup should be shown
-        expect(getByText('Error')).toBeTruthy();
-      });
+  it('shows error popup when upload fails', async () => {
+    // Set up the mock to simulate a file being selected and upload failure
+    mockUseFloorplanUpload.fileUri = 'test-uri';
+    mockUseFloorplanUpload.fileName = 'test.jpg';
+    mockUseFloorplanUpload.handleUpload.mockResolvedValue({ success: false });
+    mockUseFloorplanUpload.error = 'Upload failed';
+
+    const { getByTestId, getByText } = render(<AdminLoadFloorplansContent />);
+
+    // Select location
+    fireEvent.press(getByTestId('location-loc1'));
+    // Select building
+    fireEvent.press(getByTestId('building-b1'));
+    // Enter floor label
+    fireEvent.changeText(getByTestId('input-floor-label'), '2');
+    // Press upload button
+    fireEvent.press(getByTestId('button-upload-floorplan'));
+
+    await waitFor(() => {
+      // handleUpload should be called with correct arguments
+      expect(mockUseFloorplanUpload.handleUpload).toHaveBeenCalledWith(
+        { id: 'b1', name: 'Building 1' },
+        'loc1',
+        '2',
+        'admin',
+        ['loc1', 'loc2'],
+      );
+      // Error popup should be shown
+      expect(getByText('Error')).toBeTruthy();
+    });
+  });
+
+  it('shows navigation confirmation popup after successful upload and navigates to POI editor', async () => {
+    // Simulate a successful upload and uploadedData
+    mockUseFloorplanUpload.fileUri = 'test-uri';
+    mockUseFloorplanUpload.fileName = 'test.jpg';
+    mockUseFloorplanUpload.handleUpload.mockResolvedValue({ success: true });
+    mockUseFloorplanUpload.uploadedData = {
+      buildingId: 'b1',
+      floorLabel: '2',
+      imageUri: 'test-uri',
+      locationId: 'loc1',
+    };
+
+    const { getByTestId, getByText } = render(<AdminLoadFloorplansContent />);
+
+    // Select location
+    fireEvent.press(getByTestId('location-loc1'));
+    // Select building
+    fireEvent.press(getByTestId('building-b1'));
+    // Enter floor label
+    fireEvent.changeText(getByTestId('input-floor-label'), '2');
+    // Press upload button
+    fireEvent.press(getByTestId('button-upload-floorplan'));
+
+    // Wait for success popup
+    await waitFor(() => {
+      expect(getByText('Upload Successful')).toBeTruthy();
     });
 
-    it('shows navigation confirmation popup after successful upload and navigates to POI editor', async () => {
-      // Simulate a successful upload and uploadedData
-      mockUseFloorplanUpload.fileUri = 'test-uri';
-      mockUseFloorplanUpload.fileName = 'test.jpg';
-      mockUseFloorplanUpload.handleUpload.mockResolvedValue({ success: true });
-      mockUseFloorplanUpload.uploadedData = {
-        buildingId: 'b1',
-        floorLabel: '2',
-        imageUri: 'test-uri',
-        locationId: 'loc1',
-      };
-    
-      const { getByTestId, getByText } = render(<AdminLoadFloorplansContent />);
-      
-      // Select location
-      fireEvent.press(getByTestId('location-loc1'));
-      // Select building
-      fireEvent.press(getByTestId('building-b1'));
-      // Enter floor label
-      fireEvent.changeText(getByTestId('input-floor-label'), '2');
-      // Press upload button
-      fireEvent.press(getByTestId('button-upload-floorplan'));
-    
-      // Wait for success popup
-      await waitFor(() => {
-        expect(getByText('Upload Successful')).toBeTruthy();
-      });
-    
-      // Confirm success popup to show navigation confirmation
-      fireEvent.press(getByText('Continue'));
-    
-      await waitFor(() => {
-        expect(getByText('Add Room POIs')).toBeTruthy();
-      });
-    
-      // Confirm navigation to POI editor
-      fireEvent.press(getByText('Add POIs'));
-    
-      expect(mockNavigate).toHaveBeenCalledWith('AdminFloorplanEditor', mockUseFloorplanUpload.uploadedData);
+    // Confirm success popup to show navigation confirmation
+    fireEvent.press(getByText('Continue'));
+
+    await waitFor(() => {
+      expect(getByText('Add Room POIs')).toBeTruthy();
     });
-    
-    it('resets form when choosing Later on navigation confirmation popup', async () => {
-      // Simulate a successful upload and uploadedData
-      mockUseFloorplanUpload.fileUri = 'test-uri';
-      mockUseFloorplanUpload.fileName = 'test.jpg';
-      mockUseFloorplanUpload.handleUpload.mockResolvedValue({ success: true });
-      mockUseFloorplanUpload.uploadedData = {
-        buildingId: 'b1',
-        floorLabel: '2',
-        imageUri: 'test-uri',
-        locationId: 'loc1',
-      };
-    
-      const { getByTestId, getByText, queryByText } = render(<AdminLoadFloorplansContent />);
-      
-      // Select location
-      fireEvent.press(getByTestId('location-loc1'));
-      // Select building
-      fireEvent.press(getByTestId('building-b1'));
-      // Enter floor label
-      fireEvent.changeText(getByTestId('input-floor-label'), '2');
-      // Press upload button
-      fireEvent.press(getByTestId('button-upload-floorplan'));
-    
-      // Wait for success popup
-      await waitFor(() => {
-        expect(getByText('Upload Successful')).toBeTruthy();
-      });
-    
-      // Confirm success popup to show navigation confirmation
-      fireEvent.press(getByText('Continue'));
-    
-      await waitFor(() => {
-        expect(getByText('Add Room POIs')).toBeTruthy();
-      });
-    
-      // Press Later to reset form
-      fireEvent.press(getByText('Later'));
-    
-      // The navigation confirmation popup should be gone
-      expect(queryByText('Add Room POIs')).toBeNull();
+
+    // Confirm navigation to POI editor
+    fireEvent.press(getByText('Add POIs'));
+
+    expect(mockNavigate).toHaveBeenCalledWith(
+      'AdminFloorplanEditor',
+      mockUseFloorplanUpload.uploadedData,
+    );
+  });
+
+  it('resets form when choosing Later on navigation confirmation popup', async () => {
+    // Simulate a successful upload and uploadedData
+    mockUseFloorplanUpload.fileUri = 'test-uri';
+    mockUseFloorplanUpload.fileName = 'test.jpg';
+    mockUseFloorplanUpload.handleUpload.mockResolvedValue({ success: true });
+    mockUseFloorplanUpload.uploadedData = {
+      buildingId: 'b1',
+      floorLabel: '2',
+      imageUri: 'test-uri',
+      locationId: 'loc1',
+    };
+
+    const { getByTestId, getByText, queryByText } = render(<AdminLoadFloorplansContent />);
+
+    // Select location
+    fireEvent.press(getByTestId('location-loc1'));
+    // Select building
+    fireEvent.press(getByTestId('building-b1'));
+    // Enter floor label
+    fireEvent.changeText(getByTestId('input-floor-label'), '2');
+    // Press upload button
+    fireEvent.press(getByTestId('button-upload-floorplan'));
+
+    // Wait for success popup
+    await waitFor(() => {
+      expect(getByText('Upload Successful')).toBeTruthy();
     });
+
+    // Confirm success popup to show navigation confirmation
+    fireEvent.press(getByText('Continue'));
+
+    await waitFor(() => {
+      expect(getByText('Add Room POIs')).toBeTruthy();
+    });
+
+    // Press Later to reset form
+    fireEvent.press(getByText('Later'));
+
+    // The navigation confirmation popup should be gone
+    expect(queryByText('Add Room POIs')).toBeNull();
+  });
 });
