@@ -1,6 +1,3 @@
-// __tests__/integration/index.integration.test.js
-
-// 1) Top‑level mock of axios so it works before index.js loads
 jest.mock("axios");
 const axios = require("axios");
 
