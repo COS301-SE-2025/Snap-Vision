@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useTheme } from '../src/theme/ThemeContext';
-import { getThemeColors } from '../src/theme';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
 import firestore from '@react-native-firebase/firestore';
-import SettingsHeader from '../src/components/molecules/SettingsHeader';
+import SettingsHeader from '../molecules/SettingsHeader';
 import {
   calculateRoute,
   generateDetailedDirections,
   NavigationStep,
-} from '../src/utils/navigationUtils';
-import StandardPopup from '../src/components/atoms/StandardPopup';
+} from '../../utils/navigationUtils';
+import StandardPopup from '../atoms/StandardPopup';
 
 interface Props {
   buildingId: string;

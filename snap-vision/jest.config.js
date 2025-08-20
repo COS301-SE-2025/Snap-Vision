@@ -30,6 +30,7 @@ module.exports = {
     '!src/components/organisms/AdminIndoorPositioningContent.tsx',
     '!src/components/organisms/QRCodeAdminContent.tsx',
     '!src/components/organisms/MapActionsPanel.tsx',
+    '!src/components/organisms/IndoorNavigationInstructionsContent.tsx',
     'src/utils/*.{ts,tsx}',
   ],
   coverageDirectory: 'coverage',
