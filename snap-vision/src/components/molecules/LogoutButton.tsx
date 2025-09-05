@@ -5,7 +5,6 @@ import { getThemeColors } from '../../theme';
 import Toast from 'react-native-toast-message';
 import { makeToastPayload } from '../../toastConfig';
 
-
 interface LogoutButtonProps {
   onLogout: () => void;
   isLoading?: boolean;
@@ -19,9 +18,9 @@ export default function LogoutButton({ onLogout, isLoading = false }: LogoutButt
     try {
       await onLogout();
 
-  Toast.show(makeToastPayload('Logged Out', 'See you soon!', {}, isDark));
+      Toast.show(makeToastPayload('Logged Out', 'See you soon!', {}, isDark));
     } catch (error) {
-  Toast.show(makeToastPayload('Logout Failed', 'Please try again.', {}, isDark));
+      Toast.show(makeToastPayload('Logout Failed', 'Please try again.', {}, isDark));
     }
   };
 

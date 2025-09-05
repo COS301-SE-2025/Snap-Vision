@@ -76,8 +76,18 @@ jest.mock('react-native-toast-message', () => ({
 jest.mock('../src/toastConfig', () => ({
   getToastDefaultProps: (isDark: boolean) =>
     isDark
-      ? { backgroundColor: '#0B1220', borderColor: '#1E88E5', textColor: '#E0E7FF', iconColor: '#90CAF9' }
-      : { backgroundColor: '#F2F7FF', borderColor: '#007AFF', textColor: '#007AFF', iconColor: '#007AFF' },
+      ? {
+          backgroundColor: '#0B1220',
+          borderColor: '#1E88E5',
+          textColor: '#E0E7FF',
+          iconColor: '#90CAF9',
+        }
+      : {
+          backgroundColor: '#F2F7FF',
+          borderColor: '#007AFF',
+          textColor: '#007AFF',
+          iconColor: '#007AFF',
+        },
   toastConfig: {
     default: (props: any) => null,
   },
@@ -85,7 +95,13 @@ jest.mock('../src/toastConfig', () => ({
     type: 'default',
     text1,
     text2,
-    props: { backgroundColor: '#F2F7FF', borderColor: '#007AFF', textColor: '#007AFF', iconColor: '#007AFF', ...overrideProps },
+    props: {
+      backgroundColor: '#F2F7FF',
+      borderColor: '#007AFF',
+      textColor: '#007AFF',
+      iconColor: '#007AFF',
+      ...overrideProps,
+    },
   }),
 }));
 

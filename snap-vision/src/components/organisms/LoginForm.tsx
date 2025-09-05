@@ -55,7 +55,7 @@ export default function LoginForm() {
         await unlock('first-login');
       }
 
-  Toast.show(makeToastPayload('Login Successful!', 'Welcome back!', {}, isDark));
+      Toast.show(makeToastPayload('Login Successful!', 'Welcome back!', {}, isDark));
 
       setTimeout(() => {
         if (coords?.lat && coords?.lng) {

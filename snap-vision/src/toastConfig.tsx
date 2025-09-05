@@ -50,7 +50,7 @@ const StyledToast = ({ text1, text2, props: toastProps }: any) => {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.toastBox, { backgroundColor, borderColor }]}> 
+      <View style={[styles.toastBox, { backgroundColor, borderColor }]}>
         <View style={styles.iconContainer}>
           <Icon name="information-circle-outline" size={24} color={iconColor} />
         </View>
