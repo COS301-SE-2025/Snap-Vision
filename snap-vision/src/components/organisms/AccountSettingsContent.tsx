@@ -8,6 +8,7 @@ import LogoutButton from '../molecules/LogoutButton';
 import auth from '@react-native-firebase/auth';
 // import { resetToLogin } from '../../navigation/RootNavigation';
 import Toast from 'react-native-toast-message';
+import { makeToastPayload } from '../../toastConfig';
 import { resetToAuthResolver } from '../../navigation/RootNavigation';
 
 interface Props {
@@ -24,29 +25,15 @@ export default function AccountSettingsContent({ navigation }: Props) {
       setIsLoggingOut(true);
       await auth().signOut();
 
-      Toast.show({
-        type: 'default',
-        text1: 'Logged Out',
-        text2: 'You have been logged out successfully.',
-        props: {
-          backgroundColor: colors.background,
-          borderColor: colors.secondary,
-          textColor: colors.primary,
-        },
-      });
+      Toast.show(
+        makeToastPayload('Logged Out', 'You have been logged out successfully.', {}, isDark),
+      );
 
       resetToAuthResolver();
     } catch (error) {
-      Toast.show({
-        type: 'default',
-        text1: 'Logout Failed',
-        text2: 'An error occurred while logging out.',
-        props: {
-          backgroundColor: colors.background,
-          borderColor: colors.secondary,
-          textColor: colors.primary,
-        },
-      });
+      Toast.show(
+        makeToastPayload('Logout Failed', 'An error occurred while logging out.', {}, isDark),
+      );
     } finally {
       setIsLoggingOut(false);
     }

@@ -3,7 +3,7 @@ import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-nat
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import Toast from 'react-native-toast-message';
-import { Colors } from 'react-native/Libraries/NewAppScreen';
+import { makeToastPayload } from '../../toastConfig';
 
 interface LogoutButtonProps {
   onLogout: () => void;
@@ -18,29 +18,9 @@ export default function LogoutButton({ onLogout, isLoading = false }: LogoutButt
     try {
       await onLogout();
 
-      Toast.show({
-        type: 'default',
-        text1: 'Logged Out',
-        text2: 'See you soon!',
-        props: {
-          backgroundColor: colors.card,
-          borderColor: colors.primary,
-          textColor: colors.primary,
-          iconColor: colors.secondary,
-        },
-      });
+      Toast.show(makeToastPayload('Logged Out', 'See you soon!', {}, isDark));
     } catch (error) {
-      Toast.show({
-        type: 'default',
-        text1: 'Logout Failed',
-        text2: 'Please try again.',
-        props: {
-          backgroundColor: colors.card,
-          borderColor: colors.primary,
-          textColor: colors.primary,
-          iconColor: colors.secondary,
-        },
-      });
+      Toast.show(makeToastPayload('Logout Failed', 'Please try again.', {}, isDark));
     }
   };
 
