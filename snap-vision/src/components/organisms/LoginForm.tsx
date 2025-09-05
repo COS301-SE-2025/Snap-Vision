@@ -11,6 +11,7 @@ import { useDeepLink } from '../../DeepLinkContext';
 import { useBadges } from '../../context/BadgeContext';
 import { useLanding } from '../../context/LandingContext';
 import Toast from 'react-native-toast-message';
+import { makeToastPayload } from '../../toastConfig';
 
 export default function LoginForm() {
   const navigation = useNavigation<any>();
@@ -54,17 +55,7 @@ export default function LoginForm() {
         await unlock('first-login');
       }
 
-      Toast.show({
-        type: 'default',
-        text1: 'Login Successful!',
-        text2: 'Welcome back!',
-        props: {
-          backgroundColor: colors.card,
-          borderColor: colors.primary,
-          textColor: colors.primary,
-          iconColor: colors.secondary,
-        },
-      });
+  Toast.show(makeToastPayload('Login Successful!', 'Welcome back!', {}, isDark));
 
       setTimeout(() => {
         if (coords?.lat && coords?.lng) {
