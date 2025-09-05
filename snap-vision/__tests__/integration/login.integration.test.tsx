@@ -16,6 +16,23 @@ jest.mock('react-native-toast-message', () => ({
   show: jest.fn(),
 }));
 
+// Mock toast config defaults for integration tests
+jest.mock('../../src/toastConfig', () => ({
+  getToastDefaultProps: (isDark: boolean) =>
+    isDark
+      ? { backgroundColor: '#0B1220', borderColor: '#1E88E5', textColor: '#E0E7FF', iconColor: '#90CAF9' }
+      : { backgroundColor: '#F2F7FF', borderColor: '#007AFF', textColor: '#007AFF', iconColor: '#007AFF' },
+  toastConfig: {
+    default: (props: any) => null,
+  },
+  makeToastPayload: (text1: string, text2?: string, overrideProps: any = {}) => ({
+    type: 'default',
+    text1,
+    text2,
+    props: { backgroundColor: '#F2F7FF', borderColor: '#007AFF', textColor: '#007AFF', iconColor: '#007AFF', ...overrideProps },
+  }),
+}));
+
 // Mock Firebase auth
 const mockSignIn = jest.fn();
 jest.mock('@react-native-firebase/auth', () => {
@@ -81,16 +98,8 @@ jest.mock('../../src/context/BadgeContext', () => {
 jest.mock('../../src/components/atoms/AppInput', () => {
   const React = require('react');
   const { View, TextInput, TouchableOpacity, Text } = require('react-native');
-  return function MockAppInput({
-    placeholder,
-    value,
-    onChangeText,
-    secureTextEntry,
-    rightIcon,
-    onRightIconPress,
-    testID,
-    ...props
-  }) {
+  return function MockAppInput(props: any) {
+    const { placeholder, value, onChangeText, secureTextEntry, rightIcon, onRightIconPress, testID, ...rest } = props;
     return (
       <View>
         <TextInput
@@ -99,7 +108,7 @@ jest.mock('../../src/components/atoms/AppInput', () => {
           value={value}
           onChangeText={onChangeText}
           secureTextEntry={secureTextEntry}
-          {...props}
+          {...rest}
         />
         {rightIcon && (
           <TouchableOpacity testID="toggle-password" onPress={onRightIconPress}>
@@ -115,9 +124,10 @@ jest.mock('../../src/components/atoms/AppInput', () => {
 jest.mock('../../src/components/atoms/AppButton', () => {
   const React = require('react');
   const { TouchableOpacity, Text } = require('react-native');
-  return function MockAppButton({ title, onPress, testID, ...props }) {
+  return function MockAppButton(props: any) {
+    const { title, onPress, testID, ...rest } = props;
     return (
-      <TouchableOpacity testID={testID} onPress={onPress} {...props}>
+      <TouchableOpacity testID={testID} onPress={onPress} {...rest}>
         <Text>{title}</Text>
       </TouchableOpacity>
     );
@@ -128,7 +138,8 @@ jest.mock('../../src/components/atoms/AppButton', () => {
 jest.mock('../../src/components/molecules/RememberMe', () => {
   const React = require('react');
   const { View, Text, TouchableOpacity } = require('react-native');
-  return function MockRememberMe({ rememberMe, onToggle, onForgotPassword }) {
+  return function MockRememberMe(props: any) {
+    const { rememberMe, onToggle, onForgotPassword } = props;
     return (
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <TouchableOpacity testID="remember-me-toggle" onPress={onToggle}>
@@ -215,11 +226,17 @@ describe('Login Integration Tests', () => {
     fireEvent.press(getByTestId('login-button'));
 
     await waitFor(() => {
-      expect(Toast.show).toHaveBeenCalledWith(
-        expect.objectContaining({
-          text1: 'Login Successful!',
-        }),
-      );
+      expect(Toast.show).toHaveBeenCalledWith({
+        type: 'default',
+        text1: 'Login Successful!',
+        text2: 'Welcome back!',
+        props: {
+          backgroundColor: '#F2F7FF',
+          borderColor: '#007AFF',
+          textColor: '#007AFF',
+          iconColor: '#007AFF',
+        },
+      });
     });
   });
 
