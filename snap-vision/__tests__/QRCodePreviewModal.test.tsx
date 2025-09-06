@@ -8,34 +8,25 @@ import { Text } from 'react-native';
 jest.mock('react-native-qrcode-svg', () => {
   const React = require('react');
   const { View } = require('react-native');
-  return {
-    __esModule: true,
-    default: (props) => (
+
+  const MockQRCode = (props) => {
+    // Simulate getRef being called with a mock instance
+    React.useEffect(() => {
+      if (props.getRef) {
+        props.getRef({ mock: 'QRCodeInstance' });
+      }
+    }, [props.getRef]);
+
+    return (
       <View testID="qrcode-svg" {...props}>
         <View testID="mock-qrcode" qrValue={props.value} />
       </View>
-    ),
+    );
   };
-});
 
-jest.mock('react-native-qrcode-svg', () => {
-  const React = require('react');
-  const { View } = require('react-native');
   return {
     __esModule: true,
-    default: (props) => {
-      // Simulate getRef being called with a mock instance
-      React.useEffect(() => {
-        if (props.getRef) {
-          props.getRef({ mock: 'QRCodeInstance' });
-        }
-      }, []);
-      return (
-        <View testID="qrcode-svg" {...props}>
-          <View testID="mock-qrcode" qrValue={props.value} />
-        </View>
-      );
-    },
+    default: MockQRCode,
   };
 });
 
@@ -132,20 +123,6 @@ describe('QRCodePreviewModal', () => {
     modal.props.onRequestClose();
 
     expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('sets numberOfLines prop on QR value Text', () => {
-    const { UNSAFE_getAllByType } = render(
-      <ThemeProviderWrapper>
-        <QRCodePreviewModal {...defaultProps} />
-      </ThemeProviderWrapper>,
-    );
-    // Find all Text components
-    const textNodes = UNSAFE_getAllByType(Text);
-    // Find the one with the QR value
-    const qrValueText = textNodes.find((t) => t.props.children === defaultProps.qrValue);
-    expect(qrValueText).toBeTruthy();
-    expect(qrValueText.props.numberOfLines).toBe(2);
   });
 
   it('sets numberOfLines prop on QR value Text', () => {

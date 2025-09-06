@@ -2,6 +2,7 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import MapActionsPanel from '../src/components/organisms/MapActionsPanel';
 import { ThemeProvider } from '../src/theme/ThemeContext';
+import { Platform } from 'react-native';
 import MapWebView from '../src/components/organisms/MapWebView';
 import NavigationPanel from '../src/components/organisms/NavigationPanel';
 
@@ -414,4 +415,101 @@ describe('NavigationPanel', () => {
   //   expect(queryByText('km')).toBeNull();
   //   expect(queryByText('min')).toBeNull();
   // });
+});
+
+describe('MapWebView', () => {
+  const mockOnMessage = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('renders correctly', () => {
+    const { getByTestId } = render(<MapWebView onMessage={mockOnMessage} />);
+    expect(getByTestId('mock-webview')).toBeTruthy();
+  });
+
+  it('uses android asset path when Platform.OS is android', () => {
+    // Mock Platform.OS to be 'android'
+    const originalOS = Platform.OS;
+    Object.defineProperty(Platform, 'OS', {
+      get: jest.fn(() => 'android'),
+    });
+
+    const { getByTestId } = render(<MapWebView onMessage={mockOnMessage} />);
+    const webView = getByTestId('mock-webview');
+
+    expect(webView.props.source.uri).toBe('file:///android_asset/leaflet.html');
+
+    // Restore original Platform.OS
+    Object.defineProperty(Platform, 'OS', {
+      get: jest.fn(() => originalOS),
+    });
+  });
+
+  it('uses relative path when Platform.OS is not android', () => {
+    // Mock Platform.OS to be 'ios' (or any non-android value)
+    const originalOS = Platform.OS;
+    Object.defineProperty(Platform, 'OS', {
+      get: jest.fn(() => 'ios'),
+    });
+
+    const { getByTestId } = render(<MapWebView onMessage={mockOnMessage} />);
+    const webView = getByTestId('mock-webview');
+
+    expect(webView.props.source.uri).toBe('./leaflet.html');
+
+    // Restore original Platform.OS
+    Object.defineProperty(Platform, 'OS', {
+      get: jest.fn(() => originalOS),
+    });
+  });
+
+  it('handles messages correctly', () => {
+    const { getByTestId } = render(<MapWebView onMessage={mockOnMessage} />);
+    const webView = getByTestId('mock-webview');
+
+    const testMessage = { nativeEvent: { data: 'test message' } };
+    webView.props.onMessage(testMessage);
+
+    expect(mockOnMessage).toHaveBeenCalledWith(testMessage);
+  });
+
+  it('handles onLoadEnd correctly', () => {
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    const { getByTestId } = render(<MapWebView onMessage={mockOnMessage} />);
+    const webView = getByTestId('mock-webview');
+
+    webView.props.onLoadEnd();
+
+    expect(consoleSpy).toHaveBeenCalledWith('WebView fully loaded');
+    consoleSpy.mockRestore();
+  });
+
+  it('handles onError correctly', () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { getByTestId } = render(<MapWebView onMessage={mockOnMessage} />);
+    const webView = getByTestId('mock-webview');
+
+    const errorEvent = { nativeEvent: { description: 'Test error' } };
+    webView.props.onError(errorEvent);
+
+    expect(consoleSpy).toHaveBeenCalledWith('WebView error:', 'Test error');
+    consoleSpy.mockRestore();
+  });
+
+  it('passes correct props to WebView', () => {
+    const { getByTestId } = render(<MapWebView onMessage={mockOnMessage} />);
+    const webView = getByTestId('mock-webview');
+
+    expect(webView.props.javaScriptEnabled).toBe(true);
+    expect(webView.props.domStorageEnabled).toBe(true);
+    expect(webView.props.allowFileAccess).toBe(true);
+    expect(webView.props.allowUniversalAccessFromFileURLs).toBe(true);
+    expect(webView.props.mixedContentMode).toBe('always');
+    expect(webView.props.originWhitelist).toEqual(['*']);
+    expect(webView.props.onMessage).toBe(mockOnMessage);
+  });
 });
