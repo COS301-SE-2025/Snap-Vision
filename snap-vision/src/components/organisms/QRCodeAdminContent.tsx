@@ -25,28 +25,28 @@ export default function QRCodeAdminContent() {
     floors,
     rooms,
     qrCodes,
-    
+
     // Selection state
     selectedLocationId,
     selectedBuildingId,
     selectedFloorId,
     selectedRoom,
-    
+
     // Input state
     qrDescription,
     qrValue,
     searchQuery,
-    
+
     // UI state
     buildingDropdownOpen,
     floorDropdownOpen,
     isAddModalVisible,
     isGenerateModalVisible,
-    
+
     // Loading and error state
     isLoading,
     error,
-    
+
     // Popup states
     showSuccessPopup,
     successMessage,
@@ -57,7 +57,7 @@ export default function QRCodeAdminContent() {
     showInfoPopup,
     infoTitle,
     infoMessage,
-    
+
     // Actions
     handleLocationSelect,
     setSelectedBuildingId,
@@ -74,7 +74,7 @@ export default function QRCodeAdminContent() {
     setShowErrorPopup,
     setShowConfirmPopup,
     setShowInfoPopup,
-    
+
     // Business logic actions
     handleGenerateQRCode,
     handleAddQRCode,

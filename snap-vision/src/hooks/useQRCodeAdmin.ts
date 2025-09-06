@@ -45,29 +45,29 @@ interface UseQRCodeAdminReturn {
   floors: Floor[];
   rooms: Room[];
   qrCodes: QRCodeMapping[];
-  
+
   // Selection state
   selectedLocationId: string | null;
   selectedBuildingId: string | null;
   selectedFloorId: string | null;
   selectedRoom: Room | null;
   selectedQrCode: QRCodeMapping | null;
-  
+
   // Input state
   qrDescription: string;
   qrValue: string;
   searchQuery: string;
-  
+
   // UI state
   buildingDropdownOpen: boolean;
   floorDropdownOpen: boolean;
   isAddModalVisible: boolean;
   isGenerateModalVisible: boolean;
-  
+
   // Loading and error state
   isLoading: boolean;
   error: string | null;
-  
+
   // Popup states
   showSuccessPopup: boolean;
   successMessage: string;
@@ -78,14 +78,14 @@ interface UseQRCodeAdminReturn {
   showInfoPopup: boolean;
   infoTitle: string;
   infoMessage: string;
-  
+
   // RBAC state
   role: string | null;
   adminLocations: string[];
-  
+
   // Ref
   qrRef: React.RefObject<QRCode | null>;
-  
+
   // Actions
   handleLocationSelect: (locationId: string) => void;
   setSelectedBuildingId: (id: string | null) => void;
@@ -102,7 +102,7 @@ interface UseQRCodeAdminReturn {
   setShowErrorPopup: (show: boolean) => void;
   setShowConfirmPopup: (show: boolean) => void;
   setShowInfoPopup: (show: boolean) => void;
-  
+
   // Business logic actions
   generateQRValue: () => string;
   handleGenerateQRCode: () => void;
@@ -344,30 +344,33 @@ export const useQRCodeAdmin = (): UseQRCodeAdminReturn => {
     buildings,
   ]);
 
-  const handleDeleteQRCode = useCallback((qr: QRCodeMapping) => {
-    if (!selectedLocationId) {
-      setErrorMessage('Location information missing.');
-      setShowErrorPopup(true);
-      return;
-    }
-    setConfirmMessage('Are you sure you want to delete this QR code mapping?');
-    setConfirmActionCallback(() => async () => {
-      try {
-        await deleteQRCodeMapping(selectedLocationId, qr.id);
-        if (selectedBuildingId) {
-          const codes = await getQRCodesForBuilding(selectedLocationId, selectedBuildingId);
-          setQrCodes(codes);
-        }
-        setSuccessMessage('QR code removed successfully.');
-        setShowSuccessPopup(true);
-      } catch (e) {
-        console.error('Error deleting QR code:', e);
-        setErrorMessage('Failed to delete QR code. Please try again.');
+  const handleDeleteQRCode = useCallback(
+    (qr: QRCodeMapping) => {
+      if (!selectedLocationId) {
+        setErrorMessage('Location information missing.');
         setShowErrorPopup(true);
+        return;
       }
-    });
-    setShowConfirmPopup(true);
-  }, [selectedLocationId, selectedBuildingId]);
+      setConfirmMessage('Are you sure you want to delete this QR code mapping?');
+      setConfirmActionCallback(() => async () => {
+        try {
+          await deleteQRCodeMapping(selectedLocationId, qr.id);
+          if (selectedBuildingId) {
+            const codes = await getQRCodesForBuilding(selectedLocationId, selectedBuildingId);
+            setQrCodes(codes);
+          }
+          setSuccessMessage('QR code removed successfully.');
+          setShowSuccessPopup(true);
+        } catch (e) {
+          console.error('Error deleting QR code:', e);
+          setErrorMessage('Failed to delete QR code. Please try again.');
+          setShowErrorPopup(true);
+        }
+      });
+      setShowConfirmPopup(true);
+    },
+    [selectedLocationId, selectedBuildingId],
+  );
 
   const handleViewQR = useCallback((qr: QRCodeMapping) => {
     setSelectedQrCode(qr);
@@ -405,29 +408,29 @@ export const useQRCodeAdmin = (): UseQRCodeAdminReturn => {
     floors,
     rooms,
     qrCodes,
-    
+
     // Selection state
     selectedLocationId,
     selectedBuildingId,
     selectedFloorId,
     selectedRoom,
     selectedQrCode,
-    
+
     // Input state
     qrDescription,
     qrValue,
     searchQuery,
-    
+
     // UI state
     buildingDropdownOpen,
     floorDropdownOpen,
     isAddModalVisible,
     isGenerateModalVisible,
-    
+
     // Loading and error state
     isLoading,
     error,
-    
+
     // Popup states
     showSuccessPopup,
     successMessage,
@@ -438,14 +441,14 @@ export const useQRCodeAdmin = (): UseQRCodeAdminReturn => {
     showInfoPopup,
     infoTitle,
     infoMessage,
-    
+
     // RBAC state
     role,
     adminLocations,
-    
+
     // Ref
     qrRef,
-    
+
     // Actions
     handleLocationSelect,
     setSelectedBuildingId,
@@ -462,7 +465,7 @@ export const useQRCodeAdmin = (): UseQRCodeAdminReturn => {
     setShowErrorPopup,
     setShowConfirmPopup,
     setShowInfoPopup,
-    
+
     // Business logic actions
     generateQRValue,
     handleGenerateQRCode,

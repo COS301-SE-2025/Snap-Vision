@@ -18,7 +18,9 @@ jest.mock('@react-native-firebase/auth', () => {
     get currentUser() {
       return uid ? { uid } : null;
     },
-    __setUid: (newUid: string | null) => { uid = newUid; },
+    __setUid: (newUid: string | null) => {
+      uid = newUid;
+    },
   }));
 });
 
@@ -225,7 +227,9 @@ describe('useQRCodeAdmin', () => {
     });
 
     it('should handle buildings loading error', async () => {
-      (qrService.getBuildingsForLocation as jest.Mock).mockRejectedValue(new Error('Network error'));
+      (qrService.getBuildingsForLocation as jest.Mock).mockRejectedValue(
+        new Error('Network error'),
+      );
 
       const { result } = renderHook(() => useQRCodeAdmin());
 
@@ -452,7 +456,7 @@ describe('useQRCodeAdmin', () => {
         'rm1',
         'Room 101',
         'test-qr-value',
-        'Test description'
+        'Test description',
       );
 
       expect(result.current.showSuccessPopup).toBe(true);
@@ -503,26 +507,25 @@ describe('useQRCodeAdmin', () => {
       expect(result.current.errorMessage).toBe('Please select a room and enter a QR code value.');
     });
 
-
     // ...existing code...
-    
+
     it('should handle QR code creation error', async () => {
       // Set the mock before hook initialization!
       (qrService.createQRCodeMapping as jest.Mock).mockRejectedValue(new Error('Network error'));
-    
+
       const { result } = renderHook(() => useQRCodeAdmin());
-    
+
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
-    
+
       await act(async () => {
         result.current.handleLocationSelect('loc1');
       });
       await waitFor(() => {
         expect(result.current.buildings).toEqual(mockBuildings);
       });
-    
+
       await act(async () => {
         result.current.setSelectedBuildingId('bld1');
       });
@@ -532,7 +535,7 @@ describe('useQRCodeAdmin', () => {
       await waitFor(() => {
         expect(result.current.rooms).toEqual(mockRooms);
       });
-    
+
       await act(async () => {
         result.current.setSelectedRoom(mockRooms[0]);
       });
@@ -542,39 +545,39 @@ describe('useQRCodeAdmin', () => {
       await act(async () => {
         result.current.setQrDescription('Test description');
       });
-    
+
       await waitFor(() => {
         expect(result.current.selectedRoom).toEqual(mockRooms[0]);
         expect(result.current.qrValue).toBe('test-qr-value');
         expect(result.current.qrDescription).toBe('Test description');
       });
-    
+
       await act(async () => {
         await result.current.handleAddQRCode();
       });
-    
+
       expect(result.current.showErrorPopup).toBe(true);
       expect(result.current.errorMessage).toBe('Failed to add QR code. Please try again.');
     });
-    
+
     it('should call console.error when QR code creation fails', async () => {
       // Set the mock before hook initialization!
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       (qrService.createQRCodeMapping as jest.Mock).mockRejectedValue(new Error('Network error'));
-    
+
       const { result } = renderHook(() => useQRCodeAdmin());
-    
+
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
-    
+
       await act(async () => {
         result.current.handleLocationSelect('loc1');
       });
       await waitFor(() => {
         expect(result.current.buildings).toEqual(mockBuildings);
       });
-    
+
       await act(async () => {
         result.current.setSelectedBuildingId('bld1');
       });
@@ -584,7 +587,7 @@ describe('useQRCodeAdmin', () => {
       await waitFor(() => {
         expect(result.current.rooms).toEqual(mockRooms);
       });
-    
+
       await act(async () => {
         result.current.setSelectedRoom(mockRooms[0]);
       });
@@ -594,25 +597,24 @@ describe('useQRCodeAdmin', () => {
       await act(async () => {
         result.current.setQrDescription('Test description');
       });
-    
+
       await waitFor(() => {
         expect(result.current.selectedRoom).toEqual(mockRooms[0]);
         expect(result.current.qrValue).toBe('test-qr-value');
         expect(result.current.qrDescription).toBe('Test description');
       });
-    
+
       await act(async () => {
         await result.current.handleAddQRCode();
       });
-    
+
       expect(consoleErrorSpy).toHaveBeenCalledWith('Error adding QR code:', expect.any(Error));
       expect(result.current.showErrorPopup).toBe(true);
       expect(result.current.errorMessage).toBe('Failed to add QR code. Please try again.');
-    
+
       consoleErrorSpy.mockRestore();
     });
     // ...existing code...
-
   });
 
   describe('QR Code Deletion', () => {
@@ -640,7 +642,9 @@ describe('useQRCodeAdmin', () => {
       });
 
       expect(result.current.showConfirmPopup).toBe(true);
-      expect(result.current.confirmMessage).toBe('Are you sure you want to delete this QR code mapping?');
+      expect(result.current.confirmMessage).toBe(
+        'Are you sure you want to delete this QR code mapping?',
+      );
 
       await act(async () => {
         result.current.confirmAction();
@@ -784,113 +788,112 @@ describe('useQRCodeAdmin', () => {
     it('should handle error when loading rooms for floor', async () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       (qrService.getRoomsForFloor as jest.Mock).mockRejectedValue(new Error('Network error'));
-    
+
       const { result } = renderHook(() => useQRCodeAdmin());
-    
+
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
-    
+
       act(() => {
         result.current.handleLocationSelect('loc1');
       });
-    
+
       await waitFor(() => {
         expect(result.current.buildings).toEqual([
           { id: 'bld1', name: 'Building 1' },
           { id: 'bld2', name: 'Building 2' },
         ]);
       });
-    
+
       act(() => {
         result.current.setSelectedBuildingId('bld1');
       });
-    
+
       await waitFor(() => {
         expect(result.current.floors).toEqual([
           { id: 'flr1', name: 'Floor 1' },
           { id: 'flr2', name: 'Floor 2' },
         ]);
       });
-    
+
       act(() => {
         result.current.setSelectedFloorId('flr1');
       });
-    
+
       await waitFor(() => {
         expect(result.current.error).toBe('Failed to load rooms');
       });
-    
+
       expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading rooms:', expect.any(Error));
       consoleErrorSpy.mockRestore();
-    
-  });
-});
-describe('useQRCodeAdmin RBAC', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('should not set role/adminLocations if uid is missing', async () => {
-    // Set uid to null
-    const authModule = auth() as any;
-    authModule.__setUid(null);
-
-    const { result } = renderHook(() => useQRCodeAdmin());
-
-    // Wait for useEffect to run
-    await waitFor(() => {
-      // role and adminLocations should remain initial values
-      expect(result.current.role).toBeNull();
-      expect(result.current.adminLocations).toEqual([]);
     });
   });
+  describe('useQRCodeAdmin RBAC', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
 
-  it('should set role and adminLocations from Firestore user data', async () => {
-    // Set uid to a value
-    const authModule = auth() as any;
-    authModule.__setUid('test-uid');
+    it('should not set role/adminLocations if uid is missing', async () => {
+      // Set uid to null
+      const authModule = auth() as any;
+      authModule.__setUid(null);
 
-    // Mock Firestore user data
-    const mockUserData = {
-      role: 'editor',
-      adminLocations: ['loc1', 'loc2'],
-    };
-    const mockDocSnapshot = {
-      data: () => mockUserData,
-    };
-    const firestoreModule = firestore() as any;
-    firestoreModule.doc = jest.fn(() => ({
-      get: jest.fn().mockResolvedValue(mockDocSnapshot),
-    }));
+      const { result } = renderHook(() => useQRCodeAdmin());
 
-    const { result } = renderHook(() => useQRCodeAdmin());
+      // Wait for useEffect to run
+      await waitFor(() => {
+        // role and adminLocations should remain initial values
+        expect(result.current.role).toBeNull();
+        expect(result.current.adminLocations).toEqual([]);
+      });
+    });
 
-    await waitFor(() => {
-      expect(result.current.role).toBe('editor');
-      expect(result.current.adminLocations).toEqual(['loc1', 'loc2']);
+    it('should set role and adminLocations from Firestore user data', async () => {
+      // Set uid to a value
+      const authModule = auth() as any;
+      authModule.__setUid('test-uid');
+
+      // Mock Firestore user data
+      const mockUserData = {
+        role: 'editor',
+        adminLocations: ['loc1', 'loc2'],
+      };
+      const mockDocSnapshot = {
+        data: () => mockUserData,
+      };
+      const firestoreModule = firestore() as any;
+      firestoreModule.doc = jest.fn(() => ({
+        get: jest.fn().mockResolvedValue(mockDocSnapshot),
+      }));
+
+      const { result } = renderHook(() => useQRCodeAdmin());
+
+      await waitFor(() => {
+        expect(result.current.role).toBe('editor');
+        expect(result.current.adminLocations).toEqual(['loc1', 'loc2']);
+      });
+    });
+
+    it('should fallback to defaults if Firestore returns no data', async () => {
+      const authModule = auth() as any;
+      authModule.__setUid('test-uid');
+
+      // Mock Firestore returns undefined data
+      const mockDocSnapshot = {
+        data: () => undefined,
+      };
+      const firestoreModule = firestore() as any;
+      firestoreModule.doc = jest.fn(() => ({
+        get: jest.fn().mockResolvedValue(mockDocSnapshot),
+      }));
+
+      const { result } = renderHook(() => useQRCodeAdmin());
+
+      await waitFor(() => {
+        expect(result.current.role).toBe('user');
+        expect(result.current.adminLocations).toEqual([]);
+      });
     });
   });
-
-  it('should fallback to defaults if Firestore returns no data', async () => {
-    const authModule = auth() as any;
-    authModule.__setUid('test-uid');
-
-    // Mock Firestore returns undefined data
-    const mockDocSnapshot = {
-      data: () => undefined,
-    };
-    const firestoreModule = firestore() as any;
-    firestoreModule.doc = jest.fn(() => ({
-      get: jest.fn().mockResolvedValue(mockDocSnapshot),
-    }));
-
-    const { result } = renderHook(() => useQRCodeAdmin());
-
-    await waitFor(() => {
-      expect(result.current.role).toBe('user');
-      expect(result.current.adminLocations).toEqual([]);
-    });
-  });
-});
 });
