@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   TextInput,
-  Alert,
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import firestore from '@react-native-firebase/firestore';
@@ -59,6 +58,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(props.buildingId || null);
   const [selectedFloorplan, setSelectedFloorplan] = useState<Floorplan | null>(null);
+  const [selectedFloorplanId, setSelectedFloorplanId] = useState<string | null>(null);
   const [selectedBuildingName, setSelectedBuildingName] = useState<string | null>(null);
   const [buildingDropdownItems, setBuildingDropdownItems] = useState<{ label: string; value: string }[]>([]);
   const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
@@ -81,6 +81,13 @@ export default function AdminIndoorPositioningContent(props: Props) {
   const [beaconToDelete, setBeaconToDelete] = useState<BeaconDoc | null>(null);
   const [showCoordinatesPopup, setShowCoordinatesPopup] = useState(false);
   const [selectedCoordinates, setSelectedCoordinates] = useState<{ x: number; y: number } | null>(null);
+  
+  // Error and success popups
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [errorTitle, setErrorTitle] = useState('');
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // 1) Auth & RBAC
   useEffect(() => {
@@ -146,7 +153,10 @@ export default function AdminIndoorPositioningContent(props: Props) {
       // Auto-select by prop if provided
       if (props.floorId) {
         const match = list.find((fp) => (fp.floorLabel === props.floorId || fp.id.endsWith(`_${props.floorId}`)));
-        if (match) setSelectedFloorplan(match);
+        if (match) {
+          setSelectedFloorplan(match);
+          setSelectedFloorplanId(match.id);
+        }
       }
     };
     if (selectedBuildingId) fetchFloorplans();
@@ -221,7 +231,9 @@ export default function AdminIndoorPositioningContent(props: Props) {
       setBeaconToDelete(null);
     } catch (error) {
       console.error('Error deleting beacon:', error);
-      Alert.alert('Error', 'Failed to delete beacon. Please try again.');
+      setErrorTitle('Error');
+      setErrorMessage('Failed to delete beacon. Please try again.');
+      setShowErrorPopup(true);
     }
   };
 
@@ -419,11 +431,15 @@ export default function AdminIndoorPositioningContent(props: Props) {
   // 9) Save new beacon at selected coords
   const saveBeacon = async () => {
     if (!selectedLocation || !selectedBuildingId || !selectedFloorplan || !coords) {
-      Alert.alert('Missing selection', 'Please select Location, Building, Floor, and tap a spot on the floorplan.');
+      setErrorTitle('Missing selection');
+      setErrorMessage('Please select Location, Building, Floor, and tap a spot on the floorplan.');
+      setShowErrorPopup(true);
       return;
     }
     if (!beaconUUID || !beaconMajor || !beaconMinor) {
-      Alert.alert('Missing beacon details', 'Please fill UUID, Major, and Minor.');
+      setErrorTitle('Missing beacon details');
+      setErrorMessage('Please fill UUID, Major, and Minor.');
+      setShowErrorPopup(true);
       return;
     }
     const numMajor = Number(beaconMajor);
@@ -457,10 +473,13 @@ export default function AdminIndoorPositioningContent(props: Props) {
       setCoords(null);
 
       await fetchBeacons();
-      Alert.alert('Saved', 'Beacon placed on this floor.');
+      setSuccessMessage('Beacon placed on this floor.');
+      setShowSuccessPopup(true);
     } catch (e) {
       console.error(e);
-      Alert.alert('Error', 'Failed to save beacon.');
+      setErrorTitle('Error');
+      setErrorMessage('Failed to save beacon.');
+      setShowErrorPopup(true);
     } finally {
       setIsLoading(false);
     }
@@ -508,10 +527,10 @@ export default function AdminIndoorPositioningContent(props: Props) {
               items={buildingDropdownItems}
               setItems={setBuildingDropdownItems}
               value={selectedBuildingId}
-              setValue={(val) => {
-                const id = val();
-                setSelectedBuildingId(id);
-                setSelectedBuildingName(buildings.find((b) => b.id === id)?.name || '');
+              setValue={setSelectedBuildingId}
+              onChangeValue={(value) => {
+                setSelectedBuildingId(value);
+                setSelectedBuildingName(buildings.find((b) => b.id === value)?.name || '');
               }}
               searchable
               placeholder="Select a building"
@@ -533,9 +552,10 @@ export default function AdminIndoorPositioningContent(props: Props) {
               open={floorDropdownOpen}
               setOpen={setFloorDropdownOpen}
               items={floorplans.map((fp) => ({ label: `Floor ${fp.floorLabel}`, value: fp.id }))}
-              value={selectedFloorplan?.id || null}
-              setValue={(val) => {
-                const match = floorplans.find((fp) => fp.id === val());
+              value={selectedFloorplanId}
+              setValue={setSelectedFloorplanId}
+              onChangeValue={(value) => {
+                const match = floorplans.find((fp) => fp.id === value);
                 setSelectedFloorplan(match || null);
                 setCoords(null);
               }}
@@ -710,6 +730,26 @@ export default function AdminIndoorPositioningContent(props: Props) {
         confirmText="Delete"
         cancelText="Cancel"
         showCancel={true}
+      />
+
+      {/* Error Popup */}
+      <StandardPopup
+        visible={showErrorPopup}
+        title={errorTitle}
+        message={errorMessage}
+        onConfirm={() => setShowErrorPopup(false)}
+        confirmText="OK"
+        showCancel={false}
+      />
+
+      {/* Success Popup */}
+      <StandardPopup
+        visible={showSuccessPopup}
+        title="Success"
+        message={successMessage}
+        onConfirm={() => setShowSuccessPopup(false)}
+        confirmText="OK"
+        showCancel={false}
       />
     </View>
   );
