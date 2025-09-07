@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import AppButton from '../atoms/AppButton';
 import FloorplanWebView, { FloorplanWebViewRef } from '../atoms/FloorplanWebView';
 import FloorplanHeader from '../molecules/FloorplanHeader';
+import FloorplanFooter from '../molecules/FloorplanFooter';
 import RoomDetailsModal from '../molecules/RoomDetailsModal';
 import StandardPopup from '../atoms/StandardPopup';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
@@ -546,28 +547,14 @@ export default function AdminFloorplanEditorContent() {
         />
       </View>
 
-      <View style={[styles.footer, { borderTopColor: colors.border }]}>
-        <Text style={[styles.footerText, { color: colors.text }]}>
-          {roomMarkers.length} rooms • {pathMarkers.length} paths
-          {selectedPathId && (
-            <Text style={{ color: '#FF9800', marginLeft: 12 }}> Selected Path</Text>
-          )}
-        </Text>
-        {selectedPathId && (
-          <TouchableOpacity
-            onPress={deleteSelectedPath}
-            style={[styles.doneButton, { backgroundColor: '#D32F2F', marginRight: 8 }]}
-          >
-            <Text style={styles.doneButtonText}>Delete Path</Text>
-          </TouchableOpacity>
-        )}
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={[styles.doneButton, { backgroundColor: colors.primary }]}
-        >
-          <Text style={styles.doneButtonText}>Done</Text>
-        </TouchableOpacity>
-      </View>
+      <FloorplanFooter
+        roomCount={roomMarkers.length}
+        pathCount={pathMarkers.length}
+        selectedPathId={selectedPathId}
+        onDeletePath={deleteSelectedPath}
+        onDone={() => navigation.goBack()}
+        colors={colors}
+      />
 
       {/* Modal for room details */}
       <RoomDetailsModal
@@ -629,28 +616,5 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     elevation: 2,
     marginVertical: 16,
-  },
-  footer: {
-    padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderTopWidth: 1,
-  },
-  footerText: {
-    fontSize: 16,
-  },
-  doneButton: {
-    paddingHorizontal: 40,
-    paddingVertical: 15,
-    minWidth: 140,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 8,
-  },
-  doneButtonText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFFFFF',
   },
 });
