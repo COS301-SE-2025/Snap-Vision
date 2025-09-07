@@ -352,7 +352,195 @@ const FloorplanWebView = forwardRef<FloorplanWebViewRef, FloorplanWebViewProps>(
               }
             }, { passive: false });
             
+            document.addEventListener('touchmove', function(e) {
+              if (e.touches.length === 2) {
+                const distance = getDistance(
+                  e.touches[0].clientX, e.touches[0].clientY,
+                  e.touches[1].clientX, e.touches[1].clientY
+                );
+                
+                if (startDistance > 0) {
+                  const newScale = Math.min(Math.max(currentScale * (distance / startDistance), 0.5), 5);
+                  
+                  // Get pinch center
+                  const pinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                  const pinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                  
+                  // Calculate new offset to zoom around pinch center
+                  const scaleDiff = newScale - currentScale;
+                  const rect = container.getBoundingClientRect();
+                  
+                  currentOffsetX -= (pinchCenterX - rect.left - currentOffsetX) * scaleDiff / currentScale;
+                  currentOffsetY -= (pinchCenterY - rect.top - currentOffsetY) * scaleDiff / currentScale;
+                  
+                  currentScale = newScale;
+                  startDistance = distance;
+                  
+                  applyTransform();
+                  updateMarkerScales();
+                }
+                
+                e.preventDefault();
+              } else if (e.touches.length === 1 && isDragging && currentScale > 1) {
+                const deltaX = e.touches[0].clientX - lastX;
+                const deltaY = e.touches[0].clientY - lastY;
+                
+                currentOffsetX += deltaX;
+                currentOffsetY += deltaY;
+                
+                applyTransform();
+                
+                lastX = e.touches[0].clientX;
+                lastY = e.touches[0].clientY;
+                
+                const moveDistance = Math.sqrt(
+                  Math.pow(e.touches[0].clientX - clickStartX, 2) +
+                  Math.pow(e.touches[0].clientY - clickStartY, 2)
+                );
+                
+                if (moveDistance > 10) {
+                  clickStartTime = 0;
+                }
+                
+                e.preventDefault();
+              }
+            }, { passive: false });
             
+            document.addEventListener('touchend', function(e) {
+              if (e.touches.length < 2) {
+                startDistance = 0;
+              }
+              
+              if (e.touches.length === 0) {
+                isDragging = false;
+                
+                const clickDuration = Date.now() - clickStartTime;
+                const currentTime = Date.now();
+                
+                // Handle single tap
+                if (clickDuration < 300 && clickStartTime > 0) {
+                  // Check for double tap
+                  if (currentTime - lastTapTime < 300) {
+                    // Double tap detected - reset zoom
+                    currentScale = 1;
+                    currentOffsetX = 0;
+                    currentOffsetY = 0;
+                    applyTransform();
+                    updateMarkerScales();
+                    lastTapTime = 0;
+                  } else {
+                    // Single tap - set a timeout to handle it if no second tap comes
+                    tapTimeout = setTimeout(() => {
+                      handleTap(clickStartX, clickStartY);
+                      tapTimeout = null;
+                    }, 300);
+                    lastTapTime = currentTime;
+                  }
+                }
+                
+                clickStartTime = 0;
+              }
+            });
+            
+            function applyTransform() {
+              zoomableArea.style.transform = \`translate(\${currentOffsetX}px, \${currentOffsetY}px) scale(\${currentScale})\`;
+            }
+            
+            function handleTap(x, y) {
+              const element = document.elementFromPoint(x, y);
+              if (element && element.classList.contains('marker')) {
+                return;
+              }
+              
+              // Convert screen coordinates to image coordinates accounting for zoom and pan
+              const rect = container.getBoundingClientRect();
+              const imageRect = floorplan.getBoundingClientRect();
+              
+              // Calculate the position relative to the image
+              const imageX = (x - imageRect.left) / imageRect.width;
+              const imageY = (y - imageRect.top) / imageRect.height;
+              
+              // Ensure coordinates are within bounds
+              if (imageX >= 0 && imageX <= 1 && imageY >= 0 && imageY <= 1) {
+                if (isPathMode && selectedRooms.length === 2) {
+                  // Add waypoint in path mode
+                  window.addWaypoint(imageX, imageY);
+                } else {
+                  // Regular room marker creation
+                  window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'add_marker',
+                    x: imageX,
+                    y: imageY
+                  }));
+                }
+              }
+            }
+            
+            function getDistance(x1, y1, x2, y2) {
+              const xDiff = x2 - x1;
+              const yDiff = y2 - y1;
+              return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+            }
+            
+            // Function to add marker to the floorplan
+            window.addMarker = function(id, x, y, label) {
+              const existingMarker = document.getElementById('marker-' + id);
+              if (existingMarker) {
+                existingMarker.remove();
+              }
+              
+              const marker = document.createElement('div');
+              marker.className = 'marker';
+              marker.id = 'marker-' + id;
+              marker.dataset.id = id;
+              
+              // Position markers using absolute positioning relative to the image
+              marker.style.left = (x * 100) + '%';
+              marker.style.top = (y * 100) + '%';
+              
+              const labelEl = document.createElement('div');
+              labelEl.className = 'marker-label';
+              labelEl.textContent = label;
+              marker.appendChild(labelEl);
+              
+              marker.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (isPathMode) {
+                  // Select room for path creation
+                  window.selectRoomForPath(id);
+                } else {
+                  // Regular room editing
+                  document.querySelectorAll('.marker.selected').forEach(m => {
+                    m.classList.remove('selected');
+                  });
+                  
+                  marker.classList.add('selected');
+                  updateMarkerScales();
+                  
+                  window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'edit_marker',
+                    id: id
+                  }));
+                }
+              });
+              
+              zoomableArea.appendChild(marker);
+              updateMarkerScales();
+            };
+            
+            window.highlightMarker = function(id) {
+              document.querySelectorAll('.marker.selected').forEach(m => {
+                m.classList.remove('selected');
+              });
+              
+              const marker = document.getElementById('marker-' + id);
+              if (marker) {
+                marker.classList.add('selected');
+                updateMarkerScales();
+              }
+            };
             
             // Initialize marker scales when image loads
             floorplan.addEventListener('load', function() {
