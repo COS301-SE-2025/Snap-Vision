@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import AppButton from '../atoms/AppButton';
 import FloorplanWebView, { FloorplanWebViewRef } from '../atoms/FloorplanWebView';
-import PathModeButton from '../atoms/PathModeButton';
+import FloorplanHeader from '../molecules/FloorplanHeader';
 import Modal from 'react-native-modal';
 import StandardPopup from '../atoms/StandardPopup';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
@@ -524,34 +524,15 @@ export default function AdminFloorplanEditorContent() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>
-          Add Room POIs - {floorLabel}
-        </Text>
-        <Text style={[styles.headerSubtitle, { color: colors.text }]}>
-          {isPathMode
-            ? `Path Mode: Select 2 rooms, then tap to add waypoints. Selected: ${selectedRooms.length}/2`
-            : 'Tap on the floorplan to add rooms or tap existing markers to edit'}
-        </Text>
-
-        {/* Path creation controls */}
-        <View style={styles.pathControls}>
-          <PathModeButton
-            isPathMode={isPathMode}
-            onTogglePathMode={togglePathMode}
-            colors={colors}
-          />
-
-          {isPathMode && selectedRooms.length === 2 && (
-            <TouchableOpacity
-              onPress={savePath}
-              style={[styles.pathButton, { backgroundColor: colors.primary }]}
-            >
-              <Text style={{ color: '#FFFFFF' }}>Save Path ({currentPath.length} waypoints)</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
+      <FloorplanHeader
+        floorLabel={floorLabel}
+        isPathMode={isPathMode}
+        selectedRooms={selectedRooms}
+        currentPath={currentPath}
+        onTogglePathMode={togglePathMode}
+        onSavePath={savePath}
+        colors={colors}
+      />
 
       <View style={styles.fixedFloorplanContainer}>
         <FloorplanWebView
@@ -792,31 +773,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     elevation: 2,
     marginVertical: 16,
-  },
-  header: {
-    padding: 16,
-    borderBottomWidth: 1,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    marginTop: 4,
-  },
-  pathControls: {
-    flexDirection: 'row',
-    marginTop: 12,
-    gap: 8,
-  },
-  pathButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   footer: {
     padding: 16,
