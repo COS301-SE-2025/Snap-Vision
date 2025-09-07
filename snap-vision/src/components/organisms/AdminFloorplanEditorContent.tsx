@@ -2,8 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import AppButton from '../atoms/AppButton';
 import FloorplanWebView, { FloorplanWebViewRef } from '../atoms/FloorplanWebView';
-import FloorplanHeader from '../molecules/FloorplanHeader';
-import FloorplanFooter from '../molecules/FloorplanFooter';
+import FloorplanEditor from '../organisms/FloorplanEditor';
 import RoomDetailsModal from '../molecules/RoomDetailsModal';
 import StandardPopup from '../atoms/StandardPopup';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
@@ -11,9 +10,6 @@ import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import firestore from '@react-native-firebase/firestore';
 import type { StackNavigationProp } from '@react-navigation/stack';
-
-const FLOORPLAN_CONTAINER_WIDTH = 360;
-const FLOORPLAN_CONTAINER_HEIGHT = 300;
 
 type FloorplanEditorScreenRouteParams = {
   locationId: string;
@@ -525,35 +521,23 @@ export default function AdminFloorplanEditorContent() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <FloorplanHeader
+      <FloorplanEditor
         floorLabel={floorLabel}
         isPathMode={isPathMode}
         selectedRooms={selectedRooms}
         currentPath={currentPath}
         onTogglePathMode={togglePathMode}
         onSavePath={savePath}
-        colors={colors}
-      />
-
-      <View style={styles.fixedFloorplanContainer}>
-        <FloorplanWebView
-          ref={webViewRef}
-          imageUri={imageUri}
-          isDarkMode={isDarkMode}
-          colors={colors}
-          onMessage={handleMessage}
-          containerWidth={FLOORPLAN_CONTAINER_WIDTH}
-          containerHeight={FLOORPLAN_CONTAINER_HEIGHT}
-        />
-      </View>
-
-      <FloorplanFooter
+        imageUri={imageUri}
+        isDarkMode={isDarkMode}
+        onMessage={handleMessage}
         roomCount={roomMarkers.length}
         pathCount={pathMarkers.length}
         selectedPathId={selectedPathId}
         onDeletePath={deleteSelectedPath}
         onDone={() => navigation.goBack()}
         colors={colors}
+        webViewRef={webViewRef}
       />
 
       {/* Modal for room details */}
@@ -606,15 +590,5 @@ export default function AdminFloorplanEditorContent() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  fixedFloorplanContainer: {
-    width: FLOORPLAN_CONTAINER_WIDTH,
-    height: FLOORPLAN_CONTAINER_HEIGHT,
-    alignSelf: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    overflow: 'hidden',
-    elevation: 2,
-    marginVertical: 16,
   },
 });
