@@ -180,7 +180,177 @@ const FloorplanWebView = forwardRef<FloorplanWebViewRef, FloorplanWebViewProps>(
             let lastTapTime = 0;
             let tapTimeout = null;
             
+            // Update marker and waypoint scales when zoom changes
+            function updateMarkerScales() {
+              const markers = document.querySelectorAll('.marker');
+              const labels = document.querySelectorAll('.marker-label');
+              const waypoints = document.querySelectorAll('.path-waypoint');
+              
+              const inverseScale = 1 / currentScale;
+              
+              markers.forEach(marker => {
+                const isSelected = marker.classList.contains('selected');
+                const baseScale = isSelected ? 1.2 : 1;
+                marker.style.transform = \`translate(-50%, -50%) scale(\${baseScale * inverseScale})\`;
+              });
+              
+              labels.forEach(label => {
+                label.style.transform = \`translateX(-50%) scale(\${inverseScale})\`;
+              });
+              
+              // Scale waypoints inversely to maintain consistent size
+              waypoints.forEach(waypoint => {
+                waypoint.style.transform = \`translate(-50%, -50%) scale(\${inverseScale})\`;
+              });
+            }
             
+            // Toggle path creation mode
+            window.togglePathMode = function(enabled) {
+              isPathMode = enabled;
+              selectedRooms = [];
+              currentPath = [];
+              
+              // Clear any existing path selection
+              document.querySelectorAll('.marker').forEach(marker => {
+                marker.classList.remove('room-selected');
+              });
+              
+              // Clear temporary waypoints
+              document.querySelectorAll('.path-waypoint').forEach(waypoint => {
+                waypoint.remove();
+              });
+              
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'path_mode_changed',
+                enabled: enabled
+              }));
+            };
+            
+            // Handle room selection for path creation
+            window.selectRoomForPath = function(roomId) {
+              if (!isPathMode) return;
+              
+              const marker = document.getElementById('marker-' + roomId);
+              if (!marker) return;
+              
+              if (selectedRooms.includes(roomId)) {
+                // Deselect room
+                selectedRooms = selectedRooms.filter(id => id !== roomId);
+                marker.classList.remove('room-selected');
+              } else if (selectedRooms.length < 2) {
+                // Select room
+                selectedRooms.push(roomId);
+                marker.classList.add('room-selected');
+              }
+              
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'rooms_selected',
+                selectedRooms: selectedRooms
+              }));
+            };
+            
+            // Draw paths on the floorplan
+            window.drawPaths = function(pathData) {
+              pathSvg.innerHTML = '';
+              
+              pathData.forEach(path => {
+                const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                pathElement.setAttribute('class', 'path-line');
+                pathElement.setAttribute('d', path.d);
+                pathElement.setAttribute('data-path-id', path.id);
+                 pathElement.onclick = function(e) {
+                e.stopPropagation();
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                  type: 'select_path',
+                  pathId: path.id
+                }));
+              };
+                pathSvg.appendChild(pathElement);
+              });
+            };
+            
+            // Draw a single path
+            window.drawSinglePath = function(pathData) {
+              const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+              pathElement.setAttribute('class', 'path-line');
+              pathElement.setAttribute('d', pathData.d);
+              pathElement.setAttribute('data-path-id', pathData.id);
+              pathElement.onclick = function(e) {
+              e.stopPropagation();
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'select_path',
+                pathId: pathData.id
+              }));
+            };
+              pathSvg.appendChild(pathElement);
+            };
+            
+            // Add waypoint to current path
+            window.addWaypoint = function(x, y) {
+              if (!isPathMode || selectedRooms.length !== 2) return;
+              
+              currentPath.push({ x, y });
+              
+              // Create waypoint marker
+              const waypoint = document.createElement('div');
+              waypoint.className = 'path-waypoint';
+              waypoint.style.left = (x * 100) + '%';
+              waypoint.style.top = (y * 100) + '%';
+              
+              // Apply current scale to new waypoint
+              const inverseScale = 1 / currentScale;
+              waypoint.style.transform = \`translate(-50%, -50%) scale(\${inverseScale})\`;
+              
+              waypoint.onclick = function() {
+                // Remove waypoint
+                const index = currentPath.findIndex(p => p.x === x && p.y === y);
+                if (index > -1) {
+                  currentPath.splice(index, 1);
+                  waypoint.remove();
+                  
+                  window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'waypoint_removed',
+                    waypoint: { x, y },
+                    currentPath: currentPath
+                  }));
+                }
+              };
+              
+              zoomableArea.appendChild(waypoint);
+              
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'waypoint_added',
+                waypoint: { x, y },
+                currentPath: currentPath
+              }));
+            };
+            
+            // Handle pinch zoom
+            document.addEventListener('touchstart', function(e) {
+              // Clear any pending tap timeout
+              if (tapTimeout) {
+                clearTimeout(tapTimeout);
+                tapTimeout = null;
+              }
+              
+              if (e.touches.length === 2) {
+                startDistance = getDistance(
+                  e.touches[0].clientX, e.touches[0].clientY,
+                  e.touches[1].clientX, e.touches[1].clientY
+                );
+                e.preventDefault();
+              } else if (e.touches.length === 1) {
+                if (currentScale > 1) {
+                  lastX = e.touches[0].clientX;
+                  lastY = e.touches[0].clientY;
+                  isDragging = true;
+                }
+                
+                clickStartTime = Date.now();
+                clickStartX = e.touches[0].clientX;
+                clickStartY = e.touches[0].clientY;
+              }
+            }, { passive: false });
             
             
             
