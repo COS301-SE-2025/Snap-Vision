@@ -50,7 +50,7 @@ interface UseMapNavigationReturn {
   setDestinationCoords: (coords: [number, number] | null) => void;
 }
 
-const ROUTING_API_BASE = 'http://10.0.2.2:3000';
+const ROUTING_API_BASE = 'http://192.168.0.197:3000';
 
 // Helper to calculate distance between two lat/lon points (Haversine formula)
 function getDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
