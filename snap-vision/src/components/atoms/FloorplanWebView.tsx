@@ -1,0 +1,234 @@
+import React, { useRef, forwardRef, useImperativeHandle } from 'react';
+import { StyleSheet } from 'react-native';
+import { WebView } from 'react-native-webview';
+
+interface FloorplanWebViewProps {
+  imageUri: string;
+  isDarkMode: boolean;
+  colors: {
+    background: string;
+    text: string;
+    border: string;
+    primary: string;
+  };
+  onMessage: (event: { nativeEvent: { data: string } }) => void;
+  containerWidth: number;
+  containerHeight: number;
+}
+
+export interface FloorplanWebViewRef {
+  injectJavaScript: (script: string) => void;
+}
+
+const FloorplanWebView = forwardRef<FloorplanWebViewRef, FloorplanWebViewProps>(
+  ({ imageUri, isDarkMode, colors, onMessage, containerWidth, containerHeight }, ref) => {
+    const webViewRef = useRef<WebView>(null);
+
+    useImperativeHandle(ref, () => ({
+      injectJavaScript: (script: string) => {
+        webViewRef.current?.injectJavaScript(script);
+      },
+    }));
+
+    const getHTML = () => {
+      return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=10.0">
+          <style>
+            body, html { 
+              margin: 0; 
+              padding: 0; 
+              width: 100%; 
+              height: 100%; 
+              overflow: hidden; 
+              touch-action: manipulation;
+              background-color: ${isDarkMode ? '#121212' : '#ffffff'};
+              color: ${isDarkMode ? '#ffffff' : '#000000'};
+            }
+            #container { 
+              position: relative; 
+              width: 100%; 
+              height: 100%; 
+              overflow: hidden;
+            }
+            #zoomable-area {
+              position: absolute;
+              transform-origin: 0 0;
+              transition: transform 0.1s ease-out;
+            }
+            #floorplan { 
+              width: 100vw; 
+              height: 100vh; 
+              object-fit: contain;
+              display: block;
+              filter: ${isDarkMode ? 'brightness(0.9) contrast(1.1)' : 'none'};
+            }
+            .marker { 
+              position: absolute; 
+              width: 20px; 
+              height: 20px; 
+              background-color: ${colors.primary}; 
+              border: 2px solid ${isDarkMode ? '#ffffff' : '#000000'};
+              border-radius: 50%; 
+              transform: translate(-50%, -50%);
+              box-shadow: 0 0 5px rgba(0,0,0,0.5);
+              cursor: pointer;
+              z-index: 10;
+              transform-origin: center center;
+            }
+            .marker.selected {
+              background-color: #ff9800;
+              box-shadow: 0 0 8px rgba(255,152,0,0.8);
+            }
+            .marker.room-selected {
+              background-color: #ff9800 !important;
+              box-shadow: 0 0 10px rgba(255,152,0,0.8) !important;
+            }
+            .marker-label { 
+              position: absolute; 
+              top: 25px; 
+              left: 50%;
+              transform: translateX(-50%);
+              background: ${isDarkMode ? '#333333' : 'white'}; 
+              color: ${isDarkMode ? '#ffffff' : '#000000'};
+              padding: 4px 8px; 
+              font-size: 12px;
+              border-radius: 4px;
+              white-space: nowrap;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+              pointer-events: auto;
+              transform-origin: center top;
+            }
+            .path-line {
+              stroke: ${colors.primary};
+              stroke-width: 1;
+              fill: none;
+              stroke-dasharray: 3,3;
+              opacity: 0.8;
+              vector-effect: non-scaling-stroke;
+            }
+            .path-waypoint {
+              width: 12px;
+              height: 12px;
+              background-color: ${colors.primary};
+              border: 2px solid white;
+              border-radius: 50%;
+              position: absolute;
+              transform: translate(-50%, -50%);
+              cursor: pointer;
+              z-index: 15;
+              transform-origin: center center;
+            }
+            .path-waypoint:hover {
+              background-color: #ff9800;
+            }
+              .path-line {
+            stroke: ${colors.primary};
+            stroke-width: 1;
+            fill: none;
+            stroke-dasharray: 3,3;
+            opacity: 0.8;
+            vector-effect: non-scaling-stroke;
+            cursor: pointer;
+            transition: stroke 0.2s, opacity 0.2s, stroke-width 0.2s;
+          }
+          </style>
+        </head>
+        <body>
+          <div id="container">
+            <div id="zoomable-area">
+              <img id="floorplan" src="${imageUri}" onerror="console.error('Failed to load image: ' + this.src);" />
+              <svg id="path-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: auto; z-index: 5;" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+            </div>
+          </div>
+          
+          <script>
+
+          
+            const container = document.getElementById('container');
+            const zoomableArea = document.getElementById('zoomable-area');
+            const floorplan = document.getElementById('floorplan');
+            const pathSvg = document.getElementById('path-svg');
+            
+            // Theme info from React Native
+            const isDarkMode = ${isDarkMode};
+            const themeColors = {
+              background: "${colors.background}",
+              text: "${colors.text}",
+              border: "${colors.border}",
+              primary: "${colors.primary}"
+            };
+            
+            // Path creation variables
+            let isPathMode = false;
+            let selectedRooms = [];
+            let currentPath = [];
+            
+            // Zoom variables
+            let currentScale = 1;
+            let currentOffsetX = 0;
+            let currentOffsetY = 0;
+            let startDistance = 0;
+            let lastX = 0;
+            let lastY = 0;
+            let isDragging = false;
+            let clickStartTime = 0;
+            let clickStartX = 0;
+            let clickStartY = 0;
+            let lastTapTime = 0;
+            let tapTimeout = null;
+            
+            
+            
+            
+            
+            // Initialize marker scales when image loads
+            floorplan.addEventListener('load', function() {
+              updateMarkerScales();
+            });
+          </script>
+        </body>
+        </html>
+      `;
+    };
+
+    return (
+      <WebView
+        ref={webViewRef}
+        originWhitelist={['*']}
+        source={{ html: getHTML() }}
+        onMessage={onMessage}
+        style={[
+          styles.webView,
+          {
+            width: containerWidth,
+            height: containerHeight,
+          },
+        ]}
+        injectedJavaScriptBeforeContentLoaded={`
+          window.isDarkMode = ${isDarkMode};
+          window.themeColors = {
+            background: "${colors.background}",
+            text: "${colors.text}",
+            border: "${colors.border}",
+            primary: "${colors.primary}"
+          };
+          true;
+        `}
+      />
+    );
+  }
+);
+
+const styles = StyleSheet.create({
+  webView: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+  },
+});
+
+FloorplanWebView.displayName = 'FloorplanWebView';
+
+export default FloorplanWebView;
