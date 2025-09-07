@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import AppButton from '../atoms/AppButton';
 import FloorplanWebView, { FloorplanWebViewRef } from '../atoms/FloorplanWebView';
+import PathModeButton from '../atoms/PathModeButton';
 import Modal from 'react-native-modal';
 import StandardPopup from '../atoms/StandardPopup';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
@@ -535,20 +536,11 @@ export default function AdminFloorplanEditorContent() {
 
         {/* Path creation controls */}
         <View style={styles.pathControls}>
-          <TouchableOpacity
-            onPress={togglePathMode}
-            style={[
-              styles.pathButton,
-              {
-                backgroundColor: isPathMode ? colors.primary : colors.card,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <Text style={{ color: isPathMode ? '#FFFFFF' : colors.text }}>
-              {isPathMode ? 'Exit Path Mode' : 'Create Path'}
-            </Text>
-          </TouchableOpacity>
+          <PathModeButton
+            isPathMode={isPathMode}
+            onTogglePathMode={togglePathMode}
+            colors={colors}
+          />
 
           {isPathMode && selectedRooms.length === 2 && (
             <TouchableOpacity
