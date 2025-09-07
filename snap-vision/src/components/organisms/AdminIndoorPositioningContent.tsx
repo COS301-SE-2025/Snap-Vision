@@ -17,6 +17,9 @@ import { getThemeColors } from '../../theme';
 // Removed: WiFiFingerprintCollector
 import SettingsHeader from '../molecules/SettingsHeader';
 import StandardPopup from '../atoms/StandardPopup';
+import { LocationSelector } from '../molecules/LocationSelector';
+import BuildingSelector from '../molecules/BuildingSelector';
+import FloorSelector from '../molecules/FloorSelector';
 
 type Props = {
   buildingId?: string | null;
@@ -26,6 +29,7 @@ type Props = {
 
 type LocationItem = { id: string; name: string };
 type BuildingItem = { id: string; name: string };
+type FloorItem = { id: string; name: string };
 type Floorplan = {
   locationId: string;
   buildingId: string;
@@ -54,9 +58,11 @@ export default function AdminIndoorPositioningContent(props: Props) {
   const [adminLocations, setAdminLocations] = useState<string[]>([]);
   const [locations, setLocations] = useState<LocationItem[]>([]);
   const [buildings, setBuildings] = useState<BuildingItem[]>([]);
+  const [floors, setFloors] = useState<FloorItem[]>([]);
   const [floorplans, setFloorplans] = useState<Floorplan[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(props.buildingId || null);
+  const [selectedFloorId, setSelectedFloorId] = useState<string | null>(null);
   const [selectedFloorplan, setSelectedFloorplan] = useState<Floorplan | null>(null);
   const [selectedFloorplanId, setSelectedFloorplanId] = useState<string | null>(null);
   const [selectedBuildingName, setSelectedBuildingName] = useState<string | null>(null);
@@ -150,12 +156,20 @@ export default function AdminIndoorPositioningContent(props: Props) {
       });
       setFloorplans(list);
 
+      // Create floors array for the FloorSelector component
+      const floorsList = list.map((fp) => ({
+        id: fp.id,
+        name: fp.floorLabel,
+      }));
+      setFloors(floorsList);
+
       // Auto-select by prop if provided
       if (props.floorId) {
         const match = list.find((fp) => (fp.floorLabel === props.floorId || fp.id.endsWith(`_${props.floorId}`)));
         if (match) {
           setSelectedFloorplan(match);
           setSelectedFloorplanId(match.id);
+          setSelectedFloorId(match.id);
         }
       }
     };
@@ -196,6 +210,24 @@ export default function AdminIndoorPositioningContent(props: Props) {
     fetchBeacons();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFloorplan]);
+
+  // Handler functions for selectors
+  const handleLocationSelect = (locationId: string) => {
+    setSelectedLocation(locationId);
+    setSelectedBuildingId(props.buildingId || null);
+    setSelectedBuildingName(null);
+    setSelectedFloorId(null);
+    setSelectedFloorplan(null);
+    setSelectedFloorplanId(null);
+    setCoords(null);
+  };
+
+  const handleFloorSelect = (floorId: string | null) => {
+    setSelectedFloorId(floorId);
+    const match = floorplans.find((fp) => fp.id === floorId);
+    setSelectedFloorplan(match || null);
+    setCoords(null);
+  };
 
   // 6) Handle messages from WebView (tap to place or select existing beacon)
   const handleMessage = (event: any) => {
@@ -490,86 +522,39 @@ export default function AdminIndoorPositioningContent(props: Props) {
       <SettingsHeader title="Indoor Positioning – Bluetooth Beacons" />
 
       <ScrollView style={styles.scroll}>
-        {/* Step 1: Location */}
-        <View style={styles.section}>
-          <Text style={[styles.label, { color: colors.primary }]}>Step 1: Select Location</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {locations.map((loc) => (
-              <TouchableOpacity
-                key={loc.id}
-                style={[
-                  styles.item,
-                  { backgroundColor: selectedLocation === loc.id ? colors.primary : colors.card },
-                ]}
-                onPress={() => {
-                  setSelectedLocation(loc.id);
-                  setSelectedBuildingId(props.buildingId || null);
-                  setSelectedBuildingName(null);
-                  setSelectedFloorplan(null);
-                  setCoords(null);
-                }}
-              >
-                <Text style={{ color: selectedLocation === loc.id ? '#FFF' : colors.text }}>
-                  {loc.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+        {/* Step 1: Location Selection */}
+        <LocationSelector
+          locations={locations}
+          selectedLocation={selectedLocation || ''}
+          onLocationSelect={handleLocationSelect}
+        />
 
-        {/* Step 2: Building */}
+        {/* Step 2: Building Selection - Only show when location is selected */}
         {selectedLocation && (
-          <View style={styles.section}>
-            <Text style={[styles.label, { color: colors.primary }]}>Step 2: Select Building</Text>
-            <DropDownPicker
-              open={buildingDropdownOpen}
-              setOpen={setBuildingDropdownOpen}
-              items={buildingDropdownItems}
-              setItems={setBuildingDropdownItems}
-              value={selectedBuildingId}
-              setValue={setSelectedBuildingId}
-              onChangeValue={(value) => {
-                setSelectedBuildingId(value);
-                setSelectedBuildingName(buildings.find((b) => b.id === value)?.name || '');
-              }}
-              searchable
-              placeholder="Select a building"
-              zIndex={3000}
-              zIndexInverse={1000}
-              style={{ backgroundColor: colors.card, borderColor: colors.primary }}
-              dropDownContainerStyle={{ backgroundColor: colors.card }}
-              textStyle={{ color: colors.text }}
-              searchTextInputStyle={{ color: colors.text }}
-            />
-          </View>
+          <BuildingSelector
+            buildings={buildings}
+            selectedBuildingId={selectedBuildingId}
+            setSelectedBuildingId={setSelectedBuildingId}
+            dropdownOpen={buildingDropdownOpen}
+            setDropdownOpen={setBuildingDropdownOpen}
+            title="Step 2: Select Building"
+          />
         )}
 
-        {/* Step 3: Floor */}
-        {selectedBuildingId && (
-          <View style={styles.section}>
-            <Text style={[styles.label, { color: colors.primary }]}>Step 3: Select Floor</Text>
-            <DropDownPicker
-              open={floorDropdownOpen}
-              setOpen={setFloorDropdownOpen}
-              items={floorplans.map((fp) => ({ label: `Floor ${fp.floorLabel}`, value: fp.id }))}
-              value={selectedFloorplanId}
-              setValue={setSelectedFloorplanId}
-              onChangeValue={(value) => {
-                const match = floorplans.find((fp) => fp.id === value);
-                setSelectedFloorplan(match || null);
-                setCoords(null);
-              }}
-              placeholder="Select a floor"
-              style={{ backgroundColor: colors.card, borderColor: colors.primary }}
-              dropDownContainerStyle={{ backgroundColor: colors.card }}
-              textStyle={{ color: colors.text }}
-              searchTextInputStyle={{ color: colors.text }}
-            />
-          </View>
+        {/* Step 3: Floor Selection - Only show when building is selected */}
+        {selectedLocation && selectedBuildingId && buildings.length > 0 && (
+          <FloorSelector
+            floors={floors}
+            selectedFloorId={selectedFloorId}
+            setSelectedFloorId={handleFloorSelect}
+            dropdownOpen={floorDropdownOpen}
+            setDropdownOpen={setFloorDropdownOpen}
+            title="Step 3: Select Floor"
+          />
         )}
 
-        {/* Step 4: Floorplan & beacons */}
-        {selectedFloorplan && (
+        {/* Step 4: Beacon Management - Only show when floor is selected */}
+        {selectedLocation && selectedBuildingId && selectedFloorplan && (
           <View style={styles.section}>
             <Text style={[styles.label, { color: colors.primary }]}>
               Step 4: Tap existing beacons to view/delete, or tap empty space to place a new beacon
