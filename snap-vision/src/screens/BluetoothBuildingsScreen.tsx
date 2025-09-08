@@ -19,7 +19,7 @@ interface Building {
 
 type RootStackParamList = {
     // ... other screens
-    IndoorNavigation: {
+    BluetoothIndoorNavigation: {
       buildingId: string;
       buildingName: string;
       locationId: string;
@@ -91,7 +91,7 @@ const BluetoothBuildingsScreen: React.FC = () => {
 
   // Building selection handler
   const handleSelectBuilding = (building: Building) => {
-    navigation.navigate('IndoorNavigation', {
+    navigation.navigate('BluetoothIndoorNavigation', {
       buildingId: building.id,
       buildingName: building.name,
       locationId: building.locationId
