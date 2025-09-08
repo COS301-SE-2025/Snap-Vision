@@ -29,6 +29,7 @@ import IndoorNavigationInstructionsScreen from './src/screens/IndoorNavigationIn
 import IndoorSchematicNavScreen from './src/screens/IndoorSchematicNavScreen';
 import ARIndoorNavScreen from './src/screens/ARIndoorNavScreen';
 import QRCodeAdminScreen from './src/screens/QRCodeAdminScreen';
+import BluetoothBuildingsScreen from './src/screens/BluetoothBuildingsScreen';
 
 import { navigationRef } from './src/navigation/RootNavigation';
 LogBox.ignoreLogs([
@@ -111,6 +112,11 @@ function AppInner() {
             <Stack.Screen
               name="ARIndoorNav"
               component={ARIndoorNavScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="BluetoothBuildings"
+              component={BluetoothBuildingsScreen}
               options={{ headerShown: false }}
             />
           </Stack.Navigator>

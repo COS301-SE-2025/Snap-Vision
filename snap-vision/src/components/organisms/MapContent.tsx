@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Pressable } from 'react-native';
 import { WebView as WebViewType } from 'react-native-webview';
+import { useNavigation } from '@react-navigation/native';
 import MapWebView from './MapWebView';
 import AdminPOIModal from '../molecules/AdminPOIModal';
 import AdminActionsModal from '../molecules/AdminActionsModal';
@@ -14,6 +15,7 @@ import CrowdReportModal from '../molecules/CrowdReportModal';
 import IndoorPickerModal from '../molecules/IndoorPickerModal';
 import IndoorNavigationButton from '../atoms/IndoorNavigationButton';
 import ARNavigationOverlay from './ARNavigationOverlay';
+import BluetoothNavigationButton from '../molecules/BluetoothNavigationButton';
 
 // Define the props interface for MapContent
 interface MapContentProps {
@@ -67,6 +69,9 @@ interface MapContentProps {
   onDestinationChange: (text: string) => void;
   onDestinationSearch: () => void;
   onSelectPOI: (poi: any) => void;
+
+  // Bluetooth navigation
+  onOpenBluetoothNavigation: () => void;
 
   // Admin functionality - Fixed types to match hooks
   isAdmin: boolean;
@@ -194,6 +199,9 @@ const MapContent: React.FC<MapContentProps> = ({
   onDestinationChange,
   onDestinationSearch,
   onSelectPOI,
+
+  // Bluetooth navigation
+  onOpenBluetoothNavigation,
 
   // Admin
   isAdmin,
@@ -344,13 +352,20 @@ const MapContent: React.FC<MapContentProps> = ({
 
       {/* Search Bar - Only shown when not navigating */}
       {!isNavigating && (
-        <DestinationSearch
-          value={destination}
-          onChange={onDestinationChange}
-          onSearch={onDestinationSearch}
-          suggestions={poiSuggestions}
-          onSelectSuggestion={onSelectPOI}
-        />
+        <>
+          <DestinationSearch
+            value={destination}
+            onChange={onDestinationChange}
+            onSearch={onDestinationSearch}
+            suggestions={poiSuggestions}
+            onSelectSuggestion={onSelectPOI}
+          />
+          
+          {/* Bluetooth Navigation Button */}
+          <BluetoothNavigationButton
+            onPress={onOpenBluetoothNavigation}
+          />
+        </>
       )}
 
       {/* Main Map View */}
