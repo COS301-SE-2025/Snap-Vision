@@ -61,12 +61,16 @@ export default function AdminIndoorPositioningContent(props: Props) {
   const [floors, setFloors] = useState<FloorItem[]>([]);
   const [floorplans, setFloorplans] = useState<Floorplan[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
-  const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(props.buildingId || null);
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(
+    props.buildingId || null,
+  );
   const [selectedFloorId, setSelectedFloorId] = useState<string | null>(null);
   const [selectedFloorplan, setSelectedFloorplan] = useState<Floorplan | null>(null);
   const [selectedFloorplanId, setSelectedFloorplanId] = useState<string | null>(null);
   const [selectedBuildingName, setSelectedBuildingName] = useState<string | null>(null);
-  const [buildingDropdownItems, setBuildingDropdownItems] = useState<{ label: string; value: string }[]>([]);
+  const [buildingDropdownItems, setBuildingDropdownItems] = useState<
+    { label: string; value: string }[]
+  >([]);
   const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -86,8 +90,10 @@ export default function AdminIndoorPositioningContent(props: Props) {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [beaconToDelete, setBeaconToDelete] = useState<BeaconDoc | null>(null);
   const [showCoordinatesPopup, setShowCoordinatesPopup] = useState(false);
-  const [selectedCoordinates, setSelectedCoordinates] = useState<{ x: number; y: number } | null>(null);
-  
+  const [selectedCoordinates, setSelectedCoordinates] = useState<{ x: number; y: number } | null>(
+    null,
+  );
+
   // Error and success popups
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -112,8 +118,12 @@ export default function AdminIndoorPositioningContent(props: Props) {
   useEffect(() => {
     const fetchLocations = async () => {
       const locSnap = await firestore().collection('locations').get();
-      const all = locSnap.docs.map((doc) => ({ id: doc.id, name: (doc.data() as any).name || doc.id }));
-      const filtered = role === 'editor' ? all.filter((loc) => adminLocations.includes(loc.id)) : all;
+      const all = locSnap.docs.map((doc) => ({
+        id: doc.id,
+        name: (doc.data() as any).name || doc.id,
+      }));
+      const filtered =
+        role === 'editor' ? all.filter((loc) => adminLocations.includes(loc.id)) : all;
       setLocations(filtered);
 
       // If screen passed props, keep existing flow but let user pick location manually
@@ -126,7 +136,10 @@ export default function AdminIndoorPositioningContent(props: Props) {
     const fetchBuildings = async () => {
       if (!selectedLocation) return;
       const snap = await firestore().collection(`locations/${selectedLocation}/buildingPOIs`).get();
-      const list = snap.docs.map((doc) => ({ id: doc.id, name: (doc.data() as any).name || doc.id }));
+      const list = snap.docs.map((doc) => ({
+        id: doc.id,
+        name: (doc.data() as any).name || doc.id,
+      }));
       setBuildings(list);
       setBuildingDropdownItems(list.map((b) => ({ label: b.name, value: b.id })));
       if (!props.buildingId) {
@@ -165,7 +178,9 @@ export default function AdminIndoorPositioningContent(props: Props) {
 
       // Auto-select by prop if provided
       if (props.floorId) {
-        const match = list.find((fp) => (fp.floorLabel === props.floorId || fp.id.endsWith(`_${props.floorId}`)));
+        const match = list.find(
+          (fp) => fp.floorLabel === props.floorId || fp.id.endsWith(`_${props.floorId}`),
+        );
         if (match) {
           setSelectedFloorplan(match);
           setSelectedFloorplanId(match.id);
@@ -180,7 +195,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
   const fetchBeacons = async () => {
     if (!selectedLocation || !selectedBuildingId || !selectedFloorplan) return;
     const col = firestore().collection(
-      `locations/${selectedLocation}/buildingPOIs/${selectedBuildingId}/floorplans/${selectedFloorplan.floorLabel}/beacons`
+      `locations/${selectedLocation}/buildingPOIs/${selectedBuildingId}/floorplans/${selectedFloorplan.floorLabel}/beacons`,
     );
     const snap = await col.get();
 
@@ -200,7 +215,9 @@ export default function AdminIndoorPositioningContent(props: Props) {
 
     console.log('🔷 Stored Beacons:');
     list.forEach((b, i) => {
-      console.log(`  ${i + 1}. ${b.label || 'Beacon'} @ (${b.x.toFixed(3)}, ${b.y.toFixed(3)})  ${b.uuid}/${b.major}/${b.minor}`);
+      console.log(
+        `  ${i + 1}. ${b.label || 'Beacon'} @ (${b.x.toFixed(3)}, ${b.y.toFixed(3)})  ${b.uuid}/${b.major}/${b.minor}`,
+      );
     });
 
     setExistingBeacons(list);
@@ -254,7 +271,9 @@ export default function AdminIndoorPositioningContent(props: Props) {
     if (!beaconToDelete || !selectedLocation || !selectedBuildingId || !selectedFloorplan) return;
     try {
       await firestore()
-        .collection(`locations/${selectedLocation}/buildingPOIs/${selectedBuildingId}/floorplans/${selectedFloorplan.floorLabel}/beacons`)
+        .collection(
+          `locations/${selectedLocation}/buildingPOIs/${selectedBuildingId}/floorplans/${selectedFloorplan.floorLabel}/beacons`,
+        )
         .doc(beaconToDelete.id)
         .delete();
 
@@ -481,7 +500,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
     try {
       setIsLoading(true);
       const col = firestore().collection(
-        `locations/${selectedLocation}/buildingPOIs/${selectedBuildingId}/floorplans/${selectedFloorplan.floorLabel}/beacons`
+        `locations/${selectedLocation}/buildingPOIs/${selectedBuildingId}/floorplans/${selectedFloorplan.floorLabel}/beacons`,
       );
       await col.add({
         uuid: beaconUUID.trim(),
@@ -641,8 +660,8 @@ export default function AdminIndoorPositioningContent(props: Props) {
                 </View>
 
                 <Text style={{ color: colors.text, marginTop: 8, opacity: 0.8 }}>
-                  Tip: You can start with txPowerAt1m = -59 and refine later using a 1 m
-                  calibration (stand 1 m away, average RSSI for ~15 s).
+                  Tip: You can start with txPowerAt1m = -59 and refine later using a 1 m calibration
+                  (stand 1 m away, average RSSI for ~15 s).
                 </Text>
               </>
             )}

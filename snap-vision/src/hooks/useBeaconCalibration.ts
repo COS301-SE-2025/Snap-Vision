@@ -50,9 +50,9 @@ export function useBeaconCalibration(scanner: BeaconScanner) {
   const start = useCallback(
     async (target: IBeaconKey, durationMs = 15000) => {
       if (active) return; // prevent double start
-      
+
       console.log(`🔄 Starting calibration for ${durationMs}ms for beacon:`, target);
-      
+
       // reset state
       targetRef.current = { ...target, uuid: target.uuid.toLowerCase() };
       samplesRef.current = [];
@@ -69,11 +69,7 @@ export function useBeaconCalibration(scanner: BeaconScanner) {
       await scanner.start((batch: IBeaconReading[]) => {
         const t = targetRef.current!;
         for (const r of batch) {
-          if (
-            r.uuid.toLowerCase() === t.uuid &&
-            r.major === t.major &&
-            r.minor === t.minor
-          ) {
+          if (r.uuid.toLowerCase() === t.uuid && r.major === t.major && r.minor === t.minor) {
             samplesRef.current.push(r.rssi);
             setLastRssi(r.rssi);
           }
@@ -94,7 +90,9 @@ export function useBeaconCalibration(scanner: BeaconScanner) {
 
         // Auto-stop after duration
         if (elapsed >= durationRef.current) {
-          console.log(`🔄 Auto-stopping calibration after ${elapsed}ms (target: ${durationRef.current}ms)`);
+          console.log(
+            `🔄 Auto-stopping calibration after ${elapsed}ms (target: ${durationRef.current}ms)`,
+          );
           // Clear the timer first to prevent multiple calls
           clearTimers();
           setActive(false);
@@ -104,7 +102,7 @@ export function useBeaconCalibration(scanner: BeaconScanner) {
         }
       }, 250);
     },
-    [scanner, stop, active]
+    [scanner, stop, active],
   );
 
   // Ensure we stop scanning if the component unmounts

@@ -206,7 +206,7 @@ export class PermissionService {
         permissions.push('BLUETOOTH_CONNECT');
       }
 
-      const permissionStrings = permissions.map(p => PermissionsAndroid.PERMISSIONS[p]);
+      const permissionStrings = permissions.map((p) => PermissionsAndroid.PERMISSIONS[p]);
       const results = await PermissionsAndroid.requestMultiple(permissionStrings);
 
       const allGranted = permissionStrings.every(
