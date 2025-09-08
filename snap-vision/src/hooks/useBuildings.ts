@@ -82,4 +82,43 @@ export const useBuildings = () => {
         }
       });
 
-    
+      const buildingsWithNavigation = await Promise.all(
+        allBuildings.map(async (building) => {
+          if (building.source === 'roomPOIs') {
+            return building;
+          }
+
+          const roomSnapById = await firestore()
+            .collection('locations')
+            .doc(building.location)
+            .collection('roomPOIs')
+            .where('buildingId', '==', building.id)
+            .limit(1)
+            .get();
+
+          const roomSnapByName = await firestore()
+            .collection('locations')
+            .doc(building.location)
+            .collection('roomPOIs')
+            .where('buildingId', '==', building.name)
+            .limit(1)
+            .get();
+
+          return {
+            ...building,
+            hasNavigation: !roomSnapById.empty || !roomSnapByName.empty,
+          };
+        }),
+      );
+
+      const navigableBuildings = buildingsWithNavigation.filter((b) => b.hasNavigation);
+      setBuildings(navigableBuildings);
+    } catch (error) {
+      console.error('Error loading buildings:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return { buildings, isLoading };
+};
