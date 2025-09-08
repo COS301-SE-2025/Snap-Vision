@@ -36,6 +36,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-native": "0.79.2",
+    "react-native-ble-manager": "^12.2.0",
     "react-native-ble-plx": "^3.5.0",
     "react-native-camera-kit": "^15.1.0",
     "react-native-compass-heading": "^2.0.2",

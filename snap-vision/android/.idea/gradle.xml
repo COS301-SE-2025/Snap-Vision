@@ -40,6 +40,8 @@
             <option value="$PROJECT_DIR$/../node_modules/@react-native/gradle-plugin/shared" />
             <option value="$PROJECT_DIR$/../node_modules/@react-native/gradle-plugin/shared-testutil" />
             <option value="$PROJECT_DIR$/../node_modules/@shopify/react-native-skia/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-ble-manager/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-ble-plx/android" />
             <option value="$PROJECT_DIR$/../node_modules/react-native-camera-kit/android" />
             <option value="$PROJECT_DIR$/../node_modules/react-native-compass-heading/android" />
             <option value="$PROJECT_DIR$/../node_modules/react-native-fs/android" />
