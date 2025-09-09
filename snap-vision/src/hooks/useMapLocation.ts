@@ -47,11 +47,11 @@ export const useMapLocation = (
     forceZoom = false,
   ) => {
     setCurrentLocation({ latitude: lat, longitude: lon });
-    console.log('📍 Sending location to WebView:', { lat, lon, centerMap, isMapReady });
+    // console.log('📍 Sending location to WebView:', { lat, lon, centerMap, isMapReady });
 
     // Only inject JavaScript if the map is ready
     if (!isMapReady || !webViewRef.current) {
-      console.log('⏳ Map not ready yet, location will be sent when ready');
+      // console.log('⏳ Map not ready yet, location will be sent when ready');
       return;
     }
 
@@ -73,13 +73,13 @@ export const useMapLocation = (
       `;
     }
 
-    console.log('📤 Injecting location JavaScript:', jsCode);
+    // console.log('📤 Injecting location JavaScript:', jsCode);
     webViewRef.current.injectJavaScript(jsCode);
   };
 
   const requestLocation = async () => {
     try {
-      console.log('📍 Requesting location permissions...');
+      // console.log('📍 Requesting location permissions...');
       setStatus('Getting your location...');
       setError(null);
 
@@ -97,18 +97,18 @@ export const useMapLocation = (
         return;
       }
 
-      console.log('✅ Location permissions granted, getting current position...');
+      // console.log('✅ Location permissions granted, getting current position...');
 
       Geolocation.getCurrentPosition(
         (position) => {
-          console.log('✅ Location received:', position.coords);
+          // console.log('✅ Location received:', position.coords);
           const { latitude, longitude } = position.coords;
           sendLocationToWebView(latitude, longitude, true, true);
           setStatus('Location found');
           setError(null);
         },
         (err) => {
-          console.error('❌ Location error:', err);
+          // console.error('❌ Location error:', err);
           setError(`Failed to get location: ${err.message}`);
           setStatus('Location unavailable');
         },
@@ -119,7 +119,7 @@ export const useMapLocation = (
         },
       );
     } catch (err) {
-      console.error('❌ Location request failed:', err);
+      // console.error('❌ Location request failed:', err);
       setError('Failed to request location permissions');
       setStatus('Location setup failed');
     }
@@ -132,7 +132,7 @@ export const useMapLocation = (
     setShouldCenterMap(true);
 
     try {
-      console.log('🔄 Refreshing location...');
+      // console.log('🔄 Refreshing location...');
 
       const permissions = await PermissionsAndroid.requestMultiple([
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
@@ -150,14 +150,14 @@ export const useMapLocation = (
 
       Geolocation.getCurrentPosition(
         (position) => {
-          console.log('✅ Location refreshed:', position.coords);
+          // console.log('✅ Location refreshed:', position.coords);
           const { latitude, longitude } = position.coords;
           sendLocationToWebView(latitude, longitude, true, true);
           setStatus('Location updated successfully');
           setError(null);
         },
         (err) => {
-          console.error('❌ Location refresh error:', err);
+          // console.error('❌ Location refresh error:', err);
           setError(`Failed to refresh location: ${err.message}`);
           setStatus('Refresh failed');
         },
@@ -168,7 +168,7 @@ export const useMapLocation = (
         },
       );
     } catch (error) {
-      console.error('❌ Location refresh failed:', error);
+      // console.error('❌ Location refresh failed:', error);
       setError('Location refresh failed');
       setStatus('Refresh failed');
     } finally {
@@ -231,7 +231,7 @@ export const useMapLocation = (
               }
             },
             (error) => {
-              console.error('❌ Location watch error:', error);
+              // console.error('❌ Location watch error:', error);
               setError(`Location tracking error: ${error.message}`);
             },
             watchOptions,
@@ -242,7 +242,7 @@ export const useMapLocation = (
           setError('Location permissions required for navigation');
         }
       } catch (err) {
-        console.error('❌ Location watch setup failed:', err);
+        // console.error('❌ Location watch setup failed:', err);
         setError('Failed to setup location tracking');
       }
     };
@@ -258,7 +258,7 @@ export const useMapLocation = (
 
   // Initial location request on component mount
   useEffect(() => {
-    console.log('🚀 useMapLocation mounted, requesting initial location...');
+    // console.log('🚀 useMapLocation mounted, requesting initial location...');
     // Small delay to ensure component is fully mounted
     const timer = setTimeout(() => {
       requestLocation();
@@ -270,7 +270,7 @@ export const useMapLocation = (
   // Send current location to map when map becomes ready
   useEffect(() => {
     if (isMapReady && currentLocation && webViewRef.current && shouldCenterMap) {
-      console.log('🗺️ Map is ready, sending current location:', currentLocation);
+      // console.log('🗺️ Map is ready, sending current location:', currentLocation);
       sendLocationToWebView(currentLocation.latitude, currentLocation.longitude, true, true);
       setShouldCenterMap(false); // Prevent repeated centering
     }
