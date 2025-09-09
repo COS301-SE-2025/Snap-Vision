@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 
 interface Building {
   id: string;
@@ -12,8 +13,14 @@ interface Building {
   location: string;
 }
 
+interface Location {
+  id: string;
+  name: string;
+}
+
 export const useBuildings = () => {
   const [buildings, setBuildings] = useState<Building[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -23,9 +30,23 @@ export const useBuildings = () => {
   const loadBuildingsWithNavigation = async () => {
     try {
       setIsLoading(true);
+      console.log('[useBuildings] Starting to load buildings...');
+
+      // Check authentication
+      const currentUser = auth().currentUser;
+      console.log('[useBuildings] Current user:', currentUser?.uid || 'Not authenticated');
 
       const locationSnapshot = await firestore().collection('locations').get();
       const locationIds = locationSnapshot.docs.map((doc) => doc.id);
+      console.log('[useBuildings] Found location IDs:', locationIds);
+
+      // Extract location data for LocationSelector
+      const locationData: Location[] = locationSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        name: doc.data().name || doc.id,
+      }));
+      console.log('[useBuildings] Location data:', locationData);
+      setLocations(locationData);
 
       const allBuildings: Building[] = [];
       const buildingsFromRooms = new Map<string, Building>();
@@ -112,13 +133,16 @@ export const useBuildings = () => {
       );
 
       const navigableBuildings = buildingsWithNavigation.filter((b) => b.hasNavigation);
+      console.log('[useBuildings] Final navigable buildings:', navigableBuildings.length);
       setBuildings(navigableBuildings);
     } catch (error) {
       console.error('Error loading buildings:', error);
+      setBuildings([]); // Clear buildings on error to avoid stale data
     } finally {
       setIsLoading(false);
+      console.log('[useBuildings] Loading completed');
     }
   };
 
-  return { buildings, isLoading };
+  return { buildings, locations, isLoading };
 };
