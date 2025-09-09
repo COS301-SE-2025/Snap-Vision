@@ -11,7 +11,7 @@ interface LocationSelectorProps {
 }
 
 export const LocationSelector: React.FC<LocationSelectorProps> = ({
-  locations,
+  locations = [],
   selectedLocation,
   onLocationSelect,
 }) => {
@@ -26,7 +26,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.buildingList}
       >
-        {locations.map((loc) => (
+        {locations?.map((loc) => (
           <TouchableOpacity
             key={loc.id}
             style={[
