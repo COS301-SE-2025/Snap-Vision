@@ -1,0 +1,308 @@
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
+import firestore from '@react-native-firebase/firestore';
+import SettingsHeader from '../molecules/SettingsHeader';
+import {
+  calculateRoute,
+  generateDetailedDirections,
+  NavigationStep,
+} from '../../utils/navigationUtils';
+import StandardPopup from '../atoms/StandardPopup';
+
+interface Props {
+  buildingId: string;
+  floorId: string;
+  startRoomId: string;
+  endRoomId: string;
+  locationId: string;
+  onNavigationComplete: () => void;
+  onBack: () => void;
+}
+
+export default function IndoorNavigationInstructionsContent({
+  buildingId,
+  floorId,
+  startRoomId,
+  endRoomId,
+  locationId,
+  onNavigationComplete,
+  onBack,
+}: Props) {
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
+
+  const [steps, setSteps] = useState<NavigationStep[]>([]);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [startRoomName, setStartRoomName] = useState('');
+  const [endRoomName, setEndRoomName] = useState('');
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupProps, setPopupProps] = useState<{
+    title?: string;
+    message: string;
+    onConfirm?: () => void;
+  } | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const roomsSnap = await firestore()
+          .collection('locations')
+          .doc(locationId)
+          .collection('roomPOIs')
+          .where('buildingId', '==', buildingId)
+          .where('floorId', '==', floorId)
+          .get();
+
+        const rooms = roomsSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as any[];
+
+        const pathsSnap = await firestore()
+          .collection('locations')
+          .doc(locationId)
+          .collection('pathPOIs')
+          .where('buildingId', '==', buildingId)
+          .where('floorId', '==', floorId)
+          .get();
+
+        const paths = pathsSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as any[];
+
+        if (!rooms.length) {
+          setError('No rooms found for this floor');
+          return;
+        }
+        if (!paths.length) {
+          setError('No navigation paths available for this floor');
+          return;
+        }
+
+        const startRoom = rooms.find((r) => r.id === startRoomId);
+        const endRoom = rooms.find((r) => r.id === endRoomId);
+        if (!startRoom || !endRoom) {
+          setError('Selected rooms not found');
+          return;
+        }
+
+        setStartRoomName(startRoom.name || startRoomId);
+        setEndRoomName(endRoom.name || endRoomId);
+
+        const routeSteps = calculateRoute(startRoomId, endRoomId, rooms, paths);
+        if (!routeSteps.length) {
+          setError('No route found between selected rooms');
+          return;
+        }
+
+        const detailed = generateDetailedDirections(routeSteps);
+        setSteps(detailed);
+      } catch (e) {
+        console.error(e);
+        setError('Failed to generate navigation route');
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, [buildingId, floorId, startRoomId, endRoomId, locationId]);
+
+  const markStepCompleted = (i: number) => {
+    if (i === steps.length - 1) {
+      setPopupProps({
+        title: 'Destination Reached!',
+        message: `You have arrived at ${endRoomName}`,
+        onConfirm: () => {
+          setShowPopup(false);
+          onNavigationComplete();
+        },
+      });
+      setShowPopup(true);
+    } else {
+      setCurrentStep(i + 1);
+    }
+  };
+
+  const stepIcon = (step: NavigationStep, index: number) => {
+    if (index < currentStep) return 'check-circle';
+    if (step.type === 'start') return 'play-circle';
+    if (step.type === 'destination') return 'flag-checkered';
+    if (step.type === 'turn')
+      return step.instruction.includes('left') ? 'arrow-left' : 'arrow-right';
+    return 'arrow-up';
+  };
+
+  const stepColor = (index: number) =>
+    index < currentStep
+      ? colors.success || '#4CAF50'
+      : index === currentStep
+        ? colors.primary
+        : colors.secondary;
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <SettingsHeader title="Generating Route..." />
+        <View style={styles.center}>
+          <Text style={[styles.loadingText, { color: colors.text }]}>
+            Calculating best route...
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <SettingsHeader title="Navigation Error" />
+        <View style={styles.center}>
+          <Icon name="alert-circle" size={64} color={colors.danger} />
+          <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>
+          <StandardPopup
+            visible={true}
+            title="Navigation Error"
+            message={error}
+            onConfirm={onBack}
+            confirmText="Go Back"
+            showCancel={false}
+          />
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <SettingsHeader title="Indoor Navigation" />
+      <View style={styles.header}>
+        <Text style={[styles.routeTitle, { color: colors.text }]}>
+          {startRoomName} → {endRoomName}
+        </Text>
+        <Text style={[styles.progressText, { color: colors.secondary }]}>
+          Step {currentStep + 1} of {steps.length}
+        </Text>
+      </View>
+
+      <ScrollView style={styles.stepsList} showsVerticalScrollIndicator={false}>
+        {steps.map((step, index) => (
+          <View
+            key={index}
+            style={[
+              styles.stepItem,
+              {
+                backgroundColor: index === currentStep ? colors.primary + '20' : colors.card,
+                borderColor: index === currentStep ? colors.primary : colors.border,
+                opacity: index > currentStep ? 0.7 : 1,
+              },
+            ]}
+          >
+            <View style={styles.stepHeader}>
+              <View style={[styles.stepIcon, { backgroundColor: stepColor(index) }]}>
+                <Icon name={stepIcon(step, index)} size={20} color="#FFFFFF" />
+              </View>
+              <View style={styles.stepContent}>
+                <Text
+                  style={[
+                    styles.stepInstruction,
+                    {
+                      color: colors.text,
+                      textDecorationLine: index < currentStep ? 'line-through' : 'none',
+                    },
+                  ]}
+                >
+                  {step.instruction}
+                </Text>
+                {!!step.distance && (
+                  <Text style={[styles.stepDistance, { color: colors.secondary }]}>
+                    {Math.round(step.distance)} m
+                  </Text>
+                )}
+              </View>
+            </View>
+
+            {index === currentStep && (
+              <TouchableOpacity
+                style={[
+                  styles.completeButton,
+                  {
+                    backgroundColor:
+                      index === steps.length - 1 ? colors.success || '#4CAF50' : colors.primary,
+                  },
+                ]}
+                onPress={() => markStepCompleted(index)}
+              >
+                <Text style={styles.completeButtonText}>
+                  {index === steps.length - 1 ? "I've arrived!" : "I've completed this step"}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        ))}
+      </ScrollView>
+
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={onBack}
+        >
+          <Icon name="arrow-left" size={20} color={colors.text} />
+          <Text style={[styles.backButtonText, { color: colors.text }]}>
+            Back to Room Selection
+          </Text>
+        </TouchableOpacity>
+      </View>
+      <StandardPopup
+        visible={showPopup}
+        title={popupProps?.title}
+        message={popupProps?.message || ''}
+        onConfirm={() => {
+          setShowPopup(false);
+          popupProps?.onConfirm && popupProps.onConfirm();
+        }}
+        showCancel={false}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  header: { padding: 16, alignItems: 'center' },
+  routeTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 4 },
+  progressText: { fontSize: 14 },
+  stepsList: { flex: 1, paddingHorizontal: 16 },
+  stepItem: { marginBottom: 12, padding: 16, borderRadius: 12, borderWidth: 2 },
+  stepHeader: { flexDirection: 'row', alignItems: 'flex-start' },
+  stepIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  stepContent: { flex: 1 },
+  stepInstruction: { fontSize: 16, fontWeight: '600', marginBottom: 4 },
+  stepDistance: { fontSize: 14 },
+  completeButton: { marginTop: 12, padding: 12, borderRadius: 8, alignItems: 'center' },
+  completeButtonText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+  footer: { padding: 16 },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 8,
+  },
+  backButtonText: { fontSize: 16, fontWeight: '500' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 },
+  loadingText: { fontSize: 16, textAlign: 'center' },
+  errorText: { fontSize: 16, textAlign: 'center', marginVertical: 16 },
+  button: { padding: 12, borderRadius: 8, marginTop: 16 },
+  buttonText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+});
