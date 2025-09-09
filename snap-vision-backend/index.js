@@ -3,6 +3,14 @@ const cors = require("cors");
 const axios = require("axios");
 require("dotenv").config();
 
+// Initialize Firebase Admin SDK for App Hosting
+const admin = require('firebase-admin');
+
+// Firebase App Hosting automatically provides credentials
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -10,8 +18,6 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.send("Snap Vision backend is running");
 });
-
-//app.use("/api/badges", require("./src/routes/badges"));
 
 app.get("/api/directions", async (req, res) => {
   const { start, end, mode = "foot-walking" } = req.query;
@@ -50,7 +56,7 @@ app.get("/api/directions", async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080; // Firebase App Hosting typically uses 8080
 const server = app.listen(PORT, () =>
   console.log(`Server running on port ${server.address().port}`),
 );

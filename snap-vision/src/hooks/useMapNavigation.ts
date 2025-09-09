@@ -50,7 +50,16 @@ interface UseMapNavigationReturn {
   setDestinationCoords: (coords: [number, number] | null) => void;
 }
 
-const ROUTING_API_BASE = 'http://192.168.0.197:3000';
+const ROUTING_API_BASE = 'https://snap-vision-backend--snap-vision-f6954.europe-west4.hosted.app';
+// emulator: 10.0.2.2
+// B home:  192.168.56.1
+// L wifi: 192.168.0.127
+// T home: 192.168.0.133
+// T data: 192.168.43.155
+// Th home: 10.0.0.9
+// T Durban: 192.168.1.93
+// S home:  192.168.0.197
+// L harties: 192.168.101.238
 
 // Helper to calculate distance between two lat/lon points (Haversine formula)
 function getDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
