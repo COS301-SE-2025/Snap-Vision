@@ -97,11 +97,11 @@ export default function IndoorSchematicNavScreen() {
   const findNearestRoom = (rooms: RoomPOI[], pos: { x: number; y: number }, floorId: string) => {
     if (!pos || !rooms || !rooms.length) return null;
 
-    console.log(`Finding nearest room on floor ${floorId}. Total rooms: ${rooms.length}`);
+    //consolelog(`Finding nearest room on floor ${floorId}. Total rooms: ${rooms.length}`);
 
     // Filter rooms by floor
     const roomsOnFloor = rooms.filter((r) => r.floorId === floorId);
-    console.log(`Rooms on floor ${floorId}: ${roomsOnFloor.length}`);
+    //consolelog(`Rooms on floor ${floorId}: ${roomsOnFloor.length}`);
 
     if (!roomsOnFloor.length) return null;
 
@@ -125,7 +125,7 @@ export default function IndoorSchematicNavScreen() {
     (async () => {
       try {
         setLoading(true);
-        console.log('Loading rooms data with userPos:', userPos);
+        //consolelog('Loading rooms data with userPos:', userPos);
 
         const roomSnap = await firestore()
           .collection('locations')
@@ -158,14 +158,14 @@ export default function IndoorSchematicNavScreen() {
         // Set initial position and start room
         if (userPos) {
           // We have coordinates from QR code, set current position
-          console.log('Setting current position from QR scan:', userPos);
+          //consolelog('Setting current position from QR scan:', userPos);
           setCurrentPos(userPos);
 
           // Find the nearest room to use as starting point
           const nearestRoom = findNearestRoom(roomsData, userPos, selectedFloorId);
 
           if (nearestRoom) {
-            console.log('Setting start room from QR coordinates:', nearestRoom.name);
+            //consolelog('Setting start room from QR coordinates:', nearestRoom.name);
             setStartId(nearestRoom.id);
             // setStatusMessage(`Current position: ${nearestRoom.name}`);
 
@@ -187,7 +187,7 @@ export default function IndoorSchematicNavScreen() {
           }
         }
       } catch (e) {
-        console.error(e);
+        //consoleerror(e);
         setPopupTitle('Error');
         setPopupMessage('Failed to load indoor data.');
         setPopupConfirmText('OK');
@@ -230,7 +230,7 @@ export default function IndoorSchematicNavScreen() {
             try {
               url = await storage().ref(storagePath).getDownloadURL();
             } catch (e) {
-              console.warn('getDownloadURL failed for', storagePath, e);
+              //consolewarn('getDownloadURL failed for', storagePath, e);
             }
           }
         }
@@ -245,13 +245,13 @@ export default function IndoorSchematicNavScreen() {
               ) || list.items[0];
             if (match) url = await match.getDownloadURL();
           } catch (e) {
-            console.warn('Storage folder fallback failed', e);
+            //consolewarn('Storage folder fallback failed', e);
           }
         }
 
         if (!cancelled) setFloorplanUrl(url ?? null);
       } catch (e) {
-        console.warn('Floorplan fetch failed', e);
+        //consolewarn('Floorplan fetch failed', e);
         if (!cancelled) setFloorplanUrl(null);
       } finally {
         if (!cancelled) setFloorplanLoading(false);
@@ -286,7 +286,7 @@ export default function IndoorSchematicNavScreen() {
         return;
       }
 
-      console.log('Processing QR code value:', qrValue);
+      //consolelog('Processing QR code value:', qrValue);
 
       // Use the qrService to get mapping data - same as QrCard
       const qrMapping = await getQRCodeMappingByValue(qrValue);
@@ -298,7 +298,7 @@ export default function IndoorSchematicNavScreen() {
         return;
       }
 
-      console.log('QR mapping found:', JSON.stringify(qrMapping));
+      //consolelog('QR mapping found:', JSON.stringify(qrMapping));
 
       // Use the mapping as saved by createQRCodeMapping
       const {
@@ -344,7 +344,7 @@ export default function IndoorSchematicNavScreen() {
       // We're in the same building, try to get room details
       try {
         // Switch to the floor from the QR code
-        console.log('Changing to floor:', qrFloorId, 'from floor:', selectedFloorId);
+        //consolelog('Changing to floor:', qrFloorId, 'from floor:', selectedFloorId);
         setSelectedFloorId(qrFloorId);
 
         // Reset navigation state when changing floors
@@ -357,7 +357,7 @@ export default function IndoorSchematicNavScreen() {
           .collection('roomPOIs')
           .doc(qrRoomId);
 
-        console.log('Fetching room data for:', qrRoomId, 'in location:', qrLocationId);
+        //consolelog('Fetching room data for:', qrRoomId, 'in location:', qrLocationId);
         const roomDoc = await roomRef.get();
 
         // In newer Firebase versions, exists is a property or function
@@ -367,7 +367,7 @@ export default function IndoorSchematicNavScreen() {
         } else {
           docExists = !!roomDoc.exists;
         }
-        console.log('Room exists:', docExists, 'Room ID:', roomDoc.id);
+        //consolelog('Room exists:', docExists, 'Room ID:', roomDoc.id);
 
         if (!docExists) {
           // Room not found, try to find by name in existing rooms
@@ -380,7 +380,7 @@ export default function IndoorSchematicNavScreen() {
 
           if (roomByName) {
             // Found room by name
-            console.log('Found room by name:', roomByName.name);
+            //consolelog('Found room by name:', roomByName.name);
             setCurrentPos(roomByName.coordinates);
             setStartId(roomByName.id);
 
@@ -391,7 +391,7 @@ export default function IndoorSchematicNavScreen() {
           }
 
           // Not found by id or name, use fallback
-          console.warn('Room document not found:', qrRoomId);
+          //consolewarn('Room document not found:', qrRoomId);
           setCurrentPos(fallbackCoordinates);
 
           // Try to find the nearest room to use as starting point
@@ -410,7 +410,7 @@ export default function IndoorSchematicNavScreen() {
 
         // Room document exists, try to get coordinates
         const roomData = roomDoc.data() as any;
-        console.log('Room data retrieved:', roomData ? JSON.stringify(roomData) : 'undefined');
+        //consolelog('Room data retrieved:', roomData ? JSON.stringify(roomData) : 'undefined');
 
         // Pre-define coordinates as fallback to guarantee we always have something
         let coordinates = fallbackCoordinates;
@@ -418,10 +418,10 @@ export default function IndoorSchematicNavScreen() {
         if (roomData) {
           if (roomData.coordinates) {
             coordinates = roomData.coordinates;
-            console.log('Room coordinates found:', coordinates);
+            //consolelog('Room coordinates found:', coordinates);
           } else if (roomData.position) {
             coordinates = roomData.position;
-            console.log('Room position found:', coordinates);
+            //consolelog('Room position found:', coordinates);
           }
         }
 
@@ -432,7 +432,7 @@ export default function IndoorSchematicNavScreen() {
         const nearestRoom = findNearestRoom(allRooms, coordinates, qrFloorId);
 
         if (nearestRoom) {
-          console.log('Setting start room from QR coordinates:', nearestRoom.name);
+          //consolelog('Setting start room from QR coordinates:', nearestRoom.name);
           setStartId(nearestRoom.id);
 
           // Show popup notification to user
@@ -446,7 +446,7 @@ export default function IndoorSchematicNavScreen() {
           setPopupVisible(true);
         }
       } catch (roomError) {
-        console.error('Error fetching room data:', roomError);
+        //consoleerror('Error fetching room data:', roomError);
         // Use fallback coordinates
         setCurrentPos(fallbackCoordinates);
 
@@ -460,7 +460,7 @@ export default function IndoorSchematicNavScreen() {
         }
       }
     } catch (error) {
-      console.error('Error processing QR code:', error);
+      //consoleerror('Error processing QR code:', error);
       setPopupTitle('Error');
       setPopupMessage('Failed to process QR code. Please try again.');
       setPopupVisible(true);

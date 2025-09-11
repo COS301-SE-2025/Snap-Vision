@@ -118,7 +118,7 @@ export default function ARIndoorNavScreen() {
 
         setDevice(back);
       } catch (e) {
-        console.warn('[AR] Failed to enumerate cameras', e);
+        //consolewarn('[AR] Failed to enumerate cameras', e);
         setDevice(null);
       }
     })();
@@ -174,7 +174,7 @@ export default function ARIndoorNavScreen() {
           setCurrentPos(detailed[0].coordinates);
         }
       } catch (e) {
-        console.error(e);
+        //consoleerror(e);
         setPopupTitle('Error');
         setPopupMessage('Failed to load indoor AR.');
         setPopupConfirmText('Go Back');

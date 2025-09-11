@@ -387,11 +387,11 @@ const MapScreen = () => {
   };
 
   const handleStartNavigation = () => {
-    console.log('[DirectionsModal] Start pressed');
-    console.log('Current destination:', destination);
-    console.log('Current steps:', steps);
-    console.log('CurrentStep:', currentStep);
-    console.log('CurrentLocation:', currentLocation);
+    //consolelog('[DirectionsModal] Start pressed');
+    //consolelog('Current destination:', destination);
+    //consolelog('Current steps:', steps);
+    //consolelog('CurrentStep:', currentStep);
+    //consolelog('CurrentLocation:', currentLocation);
     setIsNavigating(true);
     setShouldStartTTS(true);
     setCurrentStep(0);
@@ -471,7 +471,7 @@ const MapScreen = () => {
               Tts.speak(instruction);
             }, 500);
           } catch (e) {
-            console.error('TTS Error:', e);
+            //consoleerror('TTS Error:', e);
             setError('Voice guidance is not available.');
           }
         }
