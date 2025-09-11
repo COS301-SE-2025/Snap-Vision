@@ -38,23 +38,18 @@ export const initializePreBundledFloorplans = async () => {
       const existing = await AsyncStorage.getItem(storageKey);
       if (!existing) {
         await AsyncStorage.setItem(storageKey, JSON.stringify(floorplanData));
-        console.log(
-          `Pre-bundled floorplan initialized: ${floorplanData.buildingName} - ${floorplanData.floorLabel}`,
-        );
+
       } else {
         // Update existing with isPrebundled flag if it doesn't have it
         const existingData = JSON.parse(existing);
         if (!existingData.isPrebundled) {
           existingData.isPrebundled = true;
           await AsyncStorage.setItem(storageKey, JSON.stringify(existingData));
-          console.log(
-            `Updated existing floorplan with prebundled flag: ${floorplanData.buildingName} - ${floorplanData.floorLabel}`,
-          );
         }
       }
     }
   } catch (error) {
-    console.error('Failed to initialize pre-bundled floorplans:', error);
+    //consoleerror('Failed to initialize pre-bundled floorplans:', error);
   }
 };
 
@@ -86,7 +81,7 @@ export const getAllFloorplans = async () => {
 
     return Array.from(uniqueFloorplans.values());
   } catch (error) {
-    console.error('Failed to get floorplans:', error);
+    //consoleerror('Failed to get floorplans:', error);
     return [];
   }
 };
@@ -120,18 +115,18 @@ export const clearDuplicateFloorplans = async () => {
     // Remove duplicates (keep the first one)
     for (const [uniqueKey, items] of grouped.entries()) {
       if (items.length > 1) {
-        console.log(`Found ${items.length} duplicates for ${uniqueKey}, removing extras`);
+        //consolelog(`Found ${items.length} duplicates for ${uniqueKey}, removing extras`);
 
         // Keep the first item, remove the rest
         for (let i = 1; i < items.length; i++) {
           await AsyncStorage.removeItem(items[i].key);
-          console.log(`Removed duplicate: ${items[i].key}`);
+          //consolelog(`Removed duplicate: ${items[i].key}`);
         }
       }
     }
 
-    console.log('Duplicate cleanup completed');
+    //consolelog('Duplicate cleanup completed');
   } catch (error) {
-    console.error('Failed to clear duplicate floorplans:', error);
+    //consoleerror('Failed to clear duplicate floorplans:', error);
   }
 };
