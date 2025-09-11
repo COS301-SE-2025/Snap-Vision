@@ -64,7 +64,7 @@ export const useRoomManagement = ({
       setRoomMarkers(markers);
       return markers;
     } catch (error) {
-      console.error('Error loading room POIs:', error);
+      //consoleerror('Error loading room POIs:', error);
       onError('Failed to load rooms');
       return [];
     }
@@ -121,14 +121,14 @@ export const useRoomManagement = ({
       resetRoomForm();
       onSuccess(isEditing ? 'Room updated successfully' : 'Room created successfully');
     } catch (error) {
-      console.error('Error saving room POI:', error);
+      //consoleerror('Error saving room POI:', error);
       onError('Failed to save room POI');
     }
   }, [roomData, currentPoint, editingRoomId, isEditing, buildingId, floorLabel, locationId, roomMarkers, onError, onSuccess]);
 
   const deleteRoomPOI = useCallback(async (webViewRef: any) => {
     if (!editingRoomId) {
-      console.error('No room selected for deletion');
+      //consoleerror('No room selected for deletion');
       return;
     }
 
@@ -148,7 +148,7 @@ export const useRoomManagement = ({
       resetRoomForm();
       onSuccess('Room deleted successfully');
     } catch (error) {
-      console.error('Error deleting room POI:', error);
+      //consoleerror('Error deleting room POI:', error);
       onError('Failed to delete room POI');
     }
   }, [editingRoomId, locationId, roomMarkers, onError, onSuccess]);
