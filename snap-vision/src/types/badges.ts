@@ -10,6 +10,7 @@ export type BadgeId =
   | '100-destinations'
   | '150-destinations'
   | '200-destinations'
+| '250-destinations'
   | 'enabled-notifications'
   | 'reported-crowd' //done
   | 'points-150' //done
@@ -66,6 +67,11 @@ export const BADGES: Record<BadgeId, Badge> = {
   },
   '200-destinations': {
     id: '200-destinations',
+    title: 'Legendary Explorer',
+    description: 'Completed 200 destinations!',
+  },
+   '250-destinations': {
+    id: '250-destinations',
     title: 'Legendary Explorer',
     description: 'Completed 200 destinations!',
   },
