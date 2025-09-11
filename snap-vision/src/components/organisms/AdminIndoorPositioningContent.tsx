@@ -136,13 +136,6 @@ export default function AdminIndoorPositioningContent() {
       };
     });
 
-    console.log('📌 Stored WiFi fingerprint locations:');
-    list.forEach((point, i) => {
-      console.log(
-        `  ${i + 1}. ${point.description} at (${point.x?.toFixed(3)}, ${point.y?.toFixed(3)})`,
-      );
-    });
-
     setExistingPoints(list);
   };
 
@@ -166,7 +159,7 @@ export default function AdminIndoorPositioningContent() {
         }
       }
     } catch (err) {
-      console.error('Invalid message from WebView', err);
+      //consoleerror('Invalid message from WebView', err);
     }
   };
 
@@ -183,7 +176,7 @@ export default function AdminIndoorPositioningContent() {
       setShowDeleteConfirmation(false);
       setPointToDelete(null);
     } catch (error) {
-      console.error('Error deleting WiFi point:', error);
+      //consoleerror('Error deleting WiFi point:', error);
     }
   };
 

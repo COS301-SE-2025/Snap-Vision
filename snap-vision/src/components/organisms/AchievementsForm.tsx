@@ -40,9 +40,9 @@ export default function AchievementsForm() {
   //   { id: '3', title: 'Parks', icon: 'leaf', color: colors.secondary },
   // ];
 
-  // const handleCategoryPress = (title: string) => console.log(`${title} category pressed`);
-  const handleChallengePress = (c: Challenge) => console.log(`Challenge ${c.title} pressed`);
-  // const handleActionPress = (a: string) => console.log(`${a} button pressed`);
+  // const handleCategoryPress = (title: string) => //consolelog(`${title} category pressed`);
+  //const handleChallengePress = (c: Challenge) => //consolelog(`Challenge ${c.title} pressed`);
+  // const handleActionPress = (a: string) => //consolelog(`${a} button pressed`);
 
   return (
     <ScrollView
@@ -105,7 +105,6 @@ export default function AchievementsForm() {
           <ChallengeItem
             key={challenge.id}
             challenge={challenge}
-            onPress={() => handleChallengePress(challenge)}
           />
         ))}
       </View>
