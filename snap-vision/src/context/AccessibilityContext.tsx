@@ -41,7 +41,7 @@ export const AccessibilityProvider = ({ children }: { children: React.ReactNode 
         isHapticFeedbackEnabled: hapticEnabled !== null ? JSON.parse(hapticEnabled) : true,
       });
     } catch (error) {
-      console.error('Failed to load accessibility settings:', error);
+      //consoleerror('Failed to load accessibility settings:', error);
       // Use defaults if loading fails
       setSettings(defaultSettings);
     } finally {
@@ -54,7 +54,7 @@ export const AccessibilityProvider = ({ children }: { children: React.ReactNode 
       await AsyncStorage.setItem(STORAGE_KEYS.HAPTIC_FEEDBACK, JSON.stringify(enabled));
       setSettings((prev) => ({ ...prev, isHapticFeedbackEnabled: enabled }));
     } catch (error) {
-      console.error('Failed to save haptic feedback setting:', error);
+      //consoleerror('Failed to save haptic feedback setting:', error);
       throw error;
     }
   };

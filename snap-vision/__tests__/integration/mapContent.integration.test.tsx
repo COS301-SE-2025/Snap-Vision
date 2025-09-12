@@ -38,9 +38,9 @@ jest.mock('../../src/components/organisms/ARNavigationOverlay', () => {
 // Mock the ARNavigationOverlay import for tracking
 const MockARNavigationOverlay = require('../../src/components/organisms/ARNavigationOverlay');
 
-const originalError = console.error;
+const originalError = //consoleerror;
 beforeAll(() => {
-  console.error = (...args) => {
+  //consoleerror = (...args) => {
     if (
       typeof args[0] === 'string' &&
       (args[0].includes('was not wrapped in act') || args[0].includes('Warning: React'))
@@ -52,7 +52,7 @@ beforeAll(() => {
 });
 
 afterAll(() => {
-  console.error = originalError;
+  //consoleerror = originalError;
 });
 
 describe('MapContent Integration', () => {

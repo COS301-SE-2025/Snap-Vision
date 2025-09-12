@@ -55,7 +55,6 @@ export const useMapPOI = (
 
       for (const locationDoc of locationsSnapshot.docs) {
         const locationId = locationDoc.id;
-        console.log(`📍 Fetching POIs from: locations/${locationId}/buildingPOIs`);
 
         const buildingPOIsSnapshot = await firestore()
           .collection(`locations/${locationId}/buildingPOIs`)
@@ -73,10 +72,8 @@ export const useMapPOI = (
         });
       }
 
-      console.log('✅ Total POIs fetched:', allPOIs.length);
       setPOIs(allPOIs);
     } catch (e) {
-      console.error('❌ Failed to fetch POIs:', e);
       setError('Failed to load buildings');
     }
   }, [setError]);

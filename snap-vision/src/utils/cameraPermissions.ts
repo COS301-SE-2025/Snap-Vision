@@ -23,7 +23,7 @@ export const requestCameraPermission = async (): Promise<boolean> => {
         return false;
       }
     } catch (err) {
-      console.warn('Camera permission error:', err);
+      //consolewarn('Camera permission error:', err);
       return false;
     }
   }
@@ -38,7 +38,7 @@ export const hasCameraPermission = async (): Promise<boolean> => {
       const granted = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.CAMERA);
       return granted;
     } catch (err) {
-      console.warn('Camera permission check error:', err);
+      //consolewarn('Camera permission check error:', err);
       return false;
     }
   }

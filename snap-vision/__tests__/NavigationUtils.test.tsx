@@ -494,7 +494,7 @@ describe('navigationUtils Testing Branches', () => {
       { id: 'P2', buildingId: 'B', floorId: '1', startRoomId: 'B', endRoomId: 'C', waypoints: [] },
     ];
     const steps = calculateRoute('A', 'C', rooms, paths);
-    console.log(steps.map((s) => s.instruction));
+    //consolelog(steps.map((s) => s.instruction));
     expect(steps.some((s) => s.instruction.startsWith('Turn left'))).toBe(true);
   });
 

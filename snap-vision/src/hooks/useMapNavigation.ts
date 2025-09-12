@@ -166,7 +166,7 @@ export const useMapNavigation = (
       // Reset progress
       setRouteProgress(0);
     } catch (error) {
-      console.error('Route fetch error:', error);
+      //consoleerror('Route fetch error:', error);
       setError('Failed to fetch or draw route');
     } finally {
       setIsRouteLoading(false);
@@ -238,8 +238,6 @@ export const useMapNavigation = (
   const destinationReached = async () => {
     if (!isNavigating || hasReachedDestination) return;
 
-    console.log('🎯 Destination reached - triggering once');
-
     // Set the flag immediately to prevent re-entry
     setHasReachedDestination(true);
     setIsNavigating(false);
@@ -268,7 +266,7 @@ export const useMapNavigation = (
         await addRecentlyVisitedPOI(visit);
       }
     } catch (error) {
-      console.error('Failed to record visit:', error);
+      //consoleerror('Failed to record visit:', error);
     }
 
     setStatus('You have reached your destination!');
@@ -342,7 +340,7 @@ export const useMapNavigation = (
 
       setStatus(`Route updated! ${walkedFormatted} progress preserved`);
     } catch (error) {
-      console.error('Route fetch error:', error);
+      //consoleerror('Route fetch error:', error);
       setError('Failed to fetch or draw route');
     } finally {
       setIsRouteLoading(false);
@@ -381,7 +379,7 @@ export const useMapNavigation = (
 
         // Add safety check for each route point
         if (!Array.isArray(routePoint) || routePoint.length < 2) {
-          console.warn('Invalid route point at index', i, routePoint);
+          //consolewarn('Invalid route point at index', i, routePoint);
           continue;
         }
 
@@ -580,7 +578,6 @@ export const useMapNavigation = (
         );
       }
     } catch (err) {
-      console.error('❌ Navigation tracking setup failed:', err);
       setError('Failed to setup navigation tracking');
     }
   }, [updateNavigationProgress, setError]);
