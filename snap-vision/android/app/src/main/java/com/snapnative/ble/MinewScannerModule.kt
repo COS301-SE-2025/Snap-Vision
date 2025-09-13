@@ -9,7 +9,7 @@ import com.minew.beaconplus.sdk.MTCentralManager
 import com.minew.beaconplus.sdk.MTPeripheral
 import com.minew.beaconplus.sdk.frames.IBeaconFrame
 import com.minew.beaconplus.sdk.frames.MinewFrame
-import com.minew.beaconplus.sdk.interfaces.MTCentralManagerListener  // <-- IMPORTANT
+import com.minew.beaconplus.sdk.interfaces.MTCentralManagerListener
 import java.util.Locale
 
 class MinewScannerModule(
@@ -44,7 +44,9 @@ class MinewScannerModule(
       val mgr = MTCentralManager.getInstance(reactCtx.applicationContext)
       central = mgr
 
-      // NOTE: Use the interfaces listener + the exact method name from the AAR:
+      // Detach any previous listener defensively
+      mgr.setMTCentralManagerListener(null)
+
       mgr.setMTCentralManagerListener(object : MTCentralManagerListener {
         override fun onScanedPeripheral(peripherals: List<MTPeripheral>?) {
           peripherals?.forEach { p ->
@@ -60,8 +62,11 @@ class MinewScannerModule(
                     putInt("major", f.major)
                     putInt("minor", f.minor)
                     putInt("rssi", rssi)
-                    // If your AAR exposes it, you can also include:
-                    // putInt("txPower", f.txPower)
+                    // Some Minew AARs expose txPower on IBeaconFrame; if not, omit.
+                    try {
+                      val tx = f.txPower // may not exist on all versions
+                      putInt("txPower", tx)
+                    } catch (_: Throwable) { }
                     putDouble("timestamp", System.currentTimeMillis().toDouble())
                   }
                   emit(EVENT_BEACON, map)
@@ -84,7 +89,10 @@ class MinewScannerModule(
   @ReactMethod
   fun stopScan(promise: Promise) {
     try {
-      central?.stopScan()
+      central?.apply {
+        try { stopScan() } catch (_: Throwable) {}
+        setMTCentralManagerListener(null)
+      }
       running = false
       promise.resolve(true)
     } catch (t: Throwable) {
@@ -103,7 +111,10 @@ class MinewScannerModule(
   @SuppressLint("MissingPermission")
   override fun onHostDestroy() {
     try {
-      central?.stopScan()
+      central?.apply {
+        try { stopScan() } catch (_: Throwable) {}
+        setMTCentralManagerListener(null)
+      }
       running = false
     } catch (_: Throwable) { }
   }
