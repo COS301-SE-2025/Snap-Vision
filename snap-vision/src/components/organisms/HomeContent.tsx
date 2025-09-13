@@ -1,9 +1,10 @@
 // src/components/organisms/HomeContent.tsx
 import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
 import HeaderWithIcons from '../molecules/HeaderWithIcons';
 import QrCard from '../molecules/QrCard';
 import AppButton from '../atoms/AppButton';
+import TimetableSection from './TimetableSection';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -13,9 +14,11 @@ import auth from '@react-native-firebase/auth';
 import RecentlyVisitedCarousel from '../molecules/RecentlyVisitedCarousel';
 import { useEffect, useState } from 'react';
 import { getRecentlyVPOIs, Visit } from '../../services/firebase/recentlyVService';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 type RootStackParamList = {
   Map: undefined;
+  Timetable: undefined;
   // add other screens here if needed
 };
 
@@ -47,7 +50,7 @@ export default function HomeContent() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       <HeaderWithIcons />
 
       <View style={{ height: 20 }} />
@@ -79,6 +82,30 @@ export default function HomeContent() {
       {/* Second separator */}
       <View style={[styles.separator, { borderBottomColor: colors.border }]} />
 
+      {/* Timetable Section */}
+        <View style={styles.timetableSection}>
+          <TouchableOpacity
+            style={[styles.timetableCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => navigation.navigate('Timetable')}
+          >
+            <View style={styles.timetableHeader}>
+              <View style={styles.timetableIcon}>
+                <Icon name="calendar-clock" size={32} color={colors.primary} />
+              </View>
+              <View style={styles.timetableInfo}>
+                <Text style={[styles.timetableTitle, { color: colors.text }]}>My Timetable</Text>
+                <Text style={[styles.timetableSubtitle, { color: colors.secondary }]}>
+                  View and manage your class schedule
+                </Text>
+              </View>
+              <Icon name="chevron-right" size={24} color={colors.secondary} />
+            </View>
+          </TouchableOpacity>
+        </View>
+
+      {/* Third separator */}
+      <View style={[styles.separator, { borderBottomColor: colors.border }]} />
+
       {/* Recently Visited */}
       <Text style={[styles.recentlyVisitedLabel, { color: colors.secondary }]}>
         Recently Visited
@@ -91,7 +118,10 @@ export default function HomeContent() {
       ) : (
         <RecentlyVisitedCarousel visits={recentlyVisited} />
       )}
-    </View>
+
+      {/* Bottom padding for scroll */}
+      <View style={{ height: 40 }} />
+    </ScrollView>
   );
 }
 
@@ -140,5 +170,32 @@ const styles = StyleSheet.create({
   qrWrapper: {
     flex: 1,
     marginLeft: 8,
+  },
+  timetableSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  timetableCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 20,
+  },
+  timetableHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  timetableIcon: {
+    marginRight: 16,
+  },
+  timetableInfo: {
+    flex: 1,
+  },
+  timetableTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  timetableSubtitle: {
+    fontSize: 14,
   },
 });

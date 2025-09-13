@@ -29,6 +29,8 @@ import IndoorNavigationInstructionsScreen from './src/screens/IndoorNavigationIn
 import IndoorSchematicNavScreen from './src/screens/IndoorSchematicNavScreen';
 import ARIndoorNavScreen from './src/screens/ARIndoorNavScreen';
 import QRCodeAdminScreen from './src/screens/QRCodeAdminScreen';
+import TimetableScreen from './src/screens/TimetableScreen';
+
 
 import { navigationRef } from './src/navigation/RootNavigation';
 LogBox.ignoreLogs([
@@ -92,6 +94,7 @@ function AppInner() {
             <Stack.Screen name="AdminQRCodes" component={QRCodeAdminScreen} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
             <Stack.Screen name="ShopScreen" component={ShopScreen} />
+            <Stack.Screen name="Timetable" component={TimetableScreen} />
             <Stack.Screen
               name="BuildingSelection"
               component={BuildingSelectionScreen}
