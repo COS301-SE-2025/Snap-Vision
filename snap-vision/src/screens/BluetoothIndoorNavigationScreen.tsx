@@ -18,6 +18,9 @@ import IndoorSchematicMap from '../components/organisms/IndoorSchematicMap';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import { Picker } from '@react-native-picker/picker';
+import { useBluetoothPositioning } from '../hooks/useBluetoothPositioning';
+import { NativeBeaconScanner } from '../utils/indoor/NativeBeaconScanner';
+
 
 interface RoomPOI {
   id: string;
@@ -62,6 +65,89 @@ export default function BluetoothIndoorNavigationScreen() {
   // Floorplan image state - same as IndoorSchematicNavScreen
   const [floorplanUrl, setFloorplanUrl] = useState<string | null>(null);
   const [floorplanLoading, setFloorplanLoading] = useState<boolean>(false);
+
+  // create scanner once per mount
+  // inside component
+const scanner = React.useMemo(() => new NativeBeaconScanner(), []);
+
+const { currentPos, visible, beacons } = useBluetoothPositioning({
+  locationId,
+  buildingId,
+  floorId: selectedFloorId,
+  scanner,
+  pathLossN: 2.6,
+  smoothing: 0.25,
+});
+
+  // Debug state
+  const [debugInfo, setDebugInfo] = useState({
+    scannerRunning: false,
+    beaconsLoaded: 0,
+    positionFound: false,
+    visible: false,
+  });
+
+  // Update debug info
+  useEffect(() => {
+    setDebugInfo({
+      scannerRunning: scanner.isRunning(),
+      beaconsLoaded: beacons.length,
+      positionFound: !!currentPos,
+      visible: visible,
+    });
+  }, [scanner, beacons, currentPos, visible]);
+
+  // Test BLE manually
+  const testBLEManually = async () => {
+    try {
+      console.log('[Test] Manual BLE test starting...');
+      const BleManager = require('react-native-ble-manager').default;
+      
+      // Start BLE
+      await BleManager.start({ showAlert: false });
+      console.log('[Test] BLE Manager started');
+      
+      // Check state
+      const state = await BleManager.checkState();
+      console.log('[Test] BLE State:', state);
+      
+      // Start scan
+      console.log('[Test] Starting manual scan...');
+      await BleManager.scan([], 5, true);
+      console.log('[Test] Manual scan started');
+      
+      // Check results after 6 seconds
+      setTimeout(async () => {
+        try {
+          const devices = await BleManager.getDiscoveredPeripherals();
+          console.log('[Test] Found', devices.length, 'devices:');
+          devices.forEach((device, index) => {
+            console.log(`[Test] Device ${index + 1}:`, {
+              id: device.id,
+              name: device.name || 'unnamed',
+              rssi: device.rssi,
+              advertising: device.advertising
+            });
+          });
+        } catch (e) {
+          console.error('[Test] Error getting devices:', e);
+        }
+      }, 6000);
+      
+    } catch (e) {
+      console.error('[Test] Manual BLE test failed:', e);
+    }
+  };// track container size to position the dot in pixels
+const [mapSize, setMapSize] = React.useState({ width: 0, height: 0 });
+const dotPx = React.useMemo(() => {
+  if (!currentPos || !mapSize.width || !mapSize.height) return null;
+  return {
+    left: currentPos.x * mapSize.width,
+    top: currentPos.y * mapSize.height,
+  };
+}, [currentPos, mapSize]);
+
+
 
   // Load all rooms data - same pattern as IndoorSchematicNavScreen
   useEffect(() => {
@@ -249,7 +335,38 @@ export default function BluetoothIndoorNavigationScreen() {
             Rooms ({roomsOnSelectedFloor.length})
           </Text>
         </TouchableOpacity>
+
+        {/* Debug Test Button */}
+        <TouchableOpacity
+          style={[
+            styles.debugButton,
+            { backgroundColor: colors.background }
+          ]}
+          onPress={testBLEManually}
+        >
+          <MaterialIcons name="bug-report" size={24} color={colors.primary} />
+          <Text style={[styles.debugButtonText, { color: colors.text }]}>
+            Test BLE
+          </Text>
+        </TouchableOpacity>
       </View>
+
+      {/* Debug Info Bar */}
+      {__DEV__ && (
+        <View style={[styles.debugBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+          <Text style={[styles.debugText, { color: colors.text }]}>
+            Scanner: {debugInfo.scannerRunning ? '✅' : '❌'} | 
+            Beacons: {debugInfo.beaconsLoaded} | 
+            Position: {debugInfo.positionFound ? '✅' : '❌'} | 
+            Visible: {debugInfo.visible ? '✅' : '❌'}
+          </Text>
+          {currentPos && (
+            <Text style={[styles.debugText, { color: colors.secondary }]}>
+              Pos: ({currentPos.x.toFixed(3)}, {currentPos.y.toFixed(3)})
+            </Text>
+          )}
+        </View>
+      )}
 
       {/* Selected Room Info */}
       {selectedRoom && (
@@ -276,17 +393,91 @@ export default function BluetoothIndoorNavigationScreen() {
             <ActivityIndicator size="large" color={colors.primary} />
           </View>
         )}
-        <IndoorSchematicMap
-          rooms={roomsOnSelectedFloor}
-          startId={selectedRoom?.id}
-          endId={undefined}
-          routePolyline={[]}
-          completedPolyline={[]}
-          onSelectRoom={handleRoomSelect}
-          themeColors={colors}
-          currentPos={undefined}
-          floorplanUrl={floorplanUrl || undefined}
-        />
+        <View style={{ flex: 1 }}
+  onLayout={e => {
+    const { width, height } = e.nativeEvent.layout;
+    setMapSize({ width, height });
+  }}
+>
+  <IndoorSchematicMap
+    rooms={roomsOnSelectedFloor}
+    startId={selectedRoom?.id}
+    endId={undefined}
+    routePolyline={[]}
+    completedPolyline={[]}
+    onSelectRoom={handleRoomSelect}
+    themeColors={colors}
+    currentPos={currentPos}                 // still pass through
+    floorplanUrl={floorplanUrl || undefined}
+  />
+
+  /* Blue dot overlay */
+  {dotPx && (
+    <View
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        left: dotPx.left - 8,
+        top: dotPx.top - 8,
+        width: 16,
+        height: 16,
+        borderRadius: 8,
+        backgroundColor: '#007AFF',
+        borderWidth: 3,
+        borderColor: '#fff',
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+      }}
+    />
+  )}
+
+  {/* Debug dot position info */}
+  {__DEV__ && currentPos && (
+    <View
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        top: 8,
+        left: 8,
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        padding: 4,
+        borderRadius: 4,
+      }}
+    >
+      <Text style={{ color: 'white', fontSize: 10 }}>
+        Map: {mapSize.width}x{mapSize.height}
+      </Text>
+      <Text style={{ color: 'white', fontSize: 10 }}>
+        Pos: {currentPos.x.toFixed(3)}, {currentPos.y.toFixed(3)}
+      </Text>
+      {dotPx && (
+        <Text style={{ color: 'white', fontSize: 10 }}>
+          Dot: {Math.round(dotPx.left)}, {Math.round(dotPx.top)}
+        </Text>
+      )}
+    </View>
+  )}
+
+  {/* Optional “no-signal” banner */}
+  {!visible && (
+    <View style={{
+      position: 'absolute',
+      bottom: 8, left: 8, right: 8,
+      alignItems: 'center',
+      paddingVertical: 6,
+      borderRadius: 12,
+      backgroundColor: colors.card,
+    }}>
+      <Text style={{ color: colors.secondary, fontSize: 12 }}>
+        No Bluetooth signal here yet
+      </Text>
+    </View>
+  )}
+</View>
+
       </View>
 
       {/* Rooms List Overlay */}
@@ -446,5 +637,35 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginLeft: 8,
     fontStyle: 'italic',
+  },
+  debugBar: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+  },
+  debugText: {
+    fontSize: 10,
+    fontFamily: 'monospace',
+  },
+  debugButton: {
+    position: 'absolute',
+    bottom: 80,
+    right: 20,
+    width: 80,
+    height: 40,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  debugButtonText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginLeft: 4,
   },
 });
