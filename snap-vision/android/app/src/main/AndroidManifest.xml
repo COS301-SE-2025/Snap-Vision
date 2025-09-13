@@ -1,4 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools"
     package="com.anonymous.snapvision">
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -35,6 +36,16 @@
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
         android:hardwareAccelerated="true">
+
+        <service android:name="com.minew.beaconplus.sdk.ConnectService"/>
+  <receiver
+    android:name="com.minew.beaconplus.sdk.receivers.BluetoothChangedReceiver"
+    android:exported="true"
+    tools:node="replace">
+  <intent-filter>
+    <action android:name="android.bluetooth.adapter.action.STATE_CHANGED"/>
+  </intent-filter>
+</receiver>
 
         <activity
             android:name=".MainActivity"
