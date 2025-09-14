@@ -309,11 +309,10 @@ function SimpleARGuidance({
   const [bearingHistory, setBearingHistory] = useState<number[]>([]);
   const [smoothedBearing, setSmoothedBearing] = useState<number | null>(null);
 
-  // Calculate raw bearing first (before early return)
+  // Calculate raw bearing firs
   const rawBearing =
     currentLocation && destinationCoords
       ? (() => {
-          // FIXED: Use the actual route coordinates correctly
           // routeCoordinates are in [longitude, latitude] format from the routing API
           let nextPoint: [number, number];
 
