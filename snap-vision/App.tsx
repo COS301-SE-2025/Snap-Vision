@@ -29,6 +29,9 @@ import IndoorNavigationInstructionsScreen from './src/screens/IndoorNavigationIn
 import IndoorSchematicNavScreen from './src/screens/IndoorSchematicNavScreen';
 import ARIndoorNavScreen from './src/screens/ARIndoorNavScreen';
 import QRCodeAdminScreen from './src/screens/QRCodeAdminScreen';
+import messaging from '@react-native-firebase/messaging';
+import { requestNotificationPermission, getFCMToken } from './src/services/NotificationService';
+import notifee from '@notifee/react-native';
 
 import { navigationRef } from './src/navigation/RootNavigation';
 LogBox.ignoreLogs([
@@ -74,6 +77,42 @@ function AppInner() {
   useEffect(() => {
     initializePreBundledFloorplans();
   }, []);
+
+useEffect(() => {
+  async function setupFCM() {
+    const permissionGranted = await requestNotificationPermission();
+    if (permissionGranted) {
+      const token = await getFCMToken();
+      console.log('FCM Token:', token);
+    }
+  }
+  setupFCM();
+}, []);
+
+//notfication channel needed for notifee
+useEffect(() => {
+  async function createChannel() {
+    await notifee.createChannel({
+      id: 'default',
+      name: 'Default Channel',
+    });
+  }
+  createChannel();
+}, []);
+
+//foreground notifications
+useEffect(() => {
+  const unsubscribe = messaging().onMessage(async remoteMessage => {
+    await notifee.displayNotification({
+      title: remoteMessage.notification?.title || 'Notification',
+      body: remoteMessage.notification?.body || '',
+      android: {
+        channelId: 'default',
+      },
+    });
+  });
+  return unsubscribe;
+}, []);
 
   return (
     <BadgeProvider>
