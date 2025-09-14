@@ -9,4 +9,4 @@ if (__DEV__ && !process.env.FIREBASE_USE_PRODUCTION) {
 }
 // No need for manual initialization — already auto-initialized via native setup
 
-export { auth, firestore};
+export { auth, firestore };

@@ -31,10 +31,7 @@ export async function getFCMToken(): Promise<string | null> {
 export async function storeFCMToken(token: string): Promise<void> {
   const user = auth().currentUser;
   if (user && token) {
-    await firestore()
-      .collection('userFCMTokens')
-      .doc(user.uid)
-      .set({ token }, { merge: true });
+    await firestore().collection('userFCMTokens').doc(user.uid).set({ token }, { merge: true });
   }
 }
 

@@ -9,7 +9,7 @@ export function useNotificationInstruction(isNavigating: boolean, currentInstruc
     notifee.createChannel({
       id: 'navigation-channel',
       name: 'Navigation Channel',
-    importance: AndroidImportance.HIGH,
+      importance: AndroidImportance.HIGH,
       sound: 'default',
     });
 
@@ -21,7 +21,7 @@ export function useNotificationInstruction(isNavigating: boolean, currentInstruc
             body: currentInstruction,
             android: {
               channelId: 'navigation-channel',
-                importance: AndroidImportance.HIGH,
+              importance: AndroidImportance.HIGH,
               sound: 'default',
               pressAction: { id: 'default', launchActivity: 'default' },
             },

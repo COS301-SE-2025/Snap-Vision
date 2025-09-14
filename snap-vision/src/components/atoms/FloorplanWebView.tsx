@@ -577,7 +577,7 @@ const FloorplanWebView = forwardRef<FloorplanWebViewRef, FloorplanWebViewProps>(
         `}
       />
     );
-  }
+  },
 );
 
 const styles = StyleSheet.create({

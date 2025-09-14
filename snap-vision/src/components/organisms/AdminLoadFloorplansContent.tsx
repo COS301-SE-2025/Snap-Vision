@@ -31,11 +31,7 @@ export default function AdminLoadFloorplansContent() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const navigation = useNavigation<AdminLoadFloorplansNavigationProp>();
-  const {
-    buildings,
-    locations,
-    isLoading: isLoadingBuildings,
-  } = useBuildings();
+  const { buildings, locations, isLoading: isLoadingBuildings } = useBuildings();
 
   const { role: userRole, adminLocations } = useUserRole();
 

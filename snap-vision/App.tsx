@@ -81,23 +81,23 @@ function AppInner() {
     initializePreBundledFloorplans();
   }, []);
 
-//fcm token for notifications upon loading of app
-useEffect(() => {
-  setupFCM();
-}, []);
+  //fcm token for notifications upon loading of app
+  useEffect(() => {
+    setupFCM();
+  }, []);
 
-//notfication channel needed for notifee
-useEffect(() => {
-  createDefaultChannel();
-}, []);
+  //notfication channel needed for notifee
+  useEffect(() => {
+    createDefaultChannel();
+  }, []);
 
-//foreground notifications
-useEffect(() => {
-  const unsubscribe = messaging().onMessage(async remoteMessage => {
-    await displayForegroundNotification(remoteMessage);
-  });
-  return unsubscribe;
-}, []);
+  //foreground notifications
+  useEffect(() => {
+    const unsubscribe = messaging().onMessage(async (remoteMessage) => {
+      await displayForegroundNotification(remoteMessage);
+    });
+    return unsubscribe;
+  }, []);
 
   return (
     <BadgeProvider>

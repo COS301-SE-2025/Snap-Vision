@@ -26,9 +26,7 @@ const FloorplanFooter: React.FC<FloorplanFooterProps> = ({
     <View style={[styles.footer, { borderTopColor: colors.border }]}>
       <Text style={[styles.footerText, { color: colors.text }]}>
         {roomCount} rooms • {pathCount} paths
-        {selectedPathId && (
-          <Text style={{ color: '#FF9800', marginLeft: 12 }}> Selected Path</Text>
-        )}
+        {selectedPathId && <Text style={{ color: '#FF9800', marginLeft: 12 }}> Selected Path</Text>}
       </Text>
       {selectedPathId && (
         <TouchableOpacity

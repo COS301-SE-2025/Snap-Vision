@@ -66,7 +66,9 @@ export default function BuildingSelectionScreen() {
       </View>
       <FlatList
         data={buildings}
-        renderItem={({ item }) => <BuildingListItem building={item} onPress={handleBuildingSelect} />}
+        renderItem={({ item }) => (
+          <BuildingListItem building={item} onPress={handleBuildingSelect} />
+        )}
         keyExtractor={(item) => item.id}
         style={styles.buildingsList}
         contentContainerStyle={styles.buildingsListContent}

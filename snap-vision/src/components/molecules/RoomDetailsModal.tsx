@@ -41,11 +41,7 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
   const roomTypes = ['classroom', 'office', 'lab', 'restroom', 'stairs', 'elevator', 'entrance'];
 
   return (
-    <Modal
-      isVisible={isVisible}
-      onBackdropPress={onCancel}
-      avoidKeyboard
-    >
+    <Modal isVisible={isVisible} onBackdropPress={onCancel} avoidKeyboard>
       <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
         <Text style={[styles.modalTitle, { color: colors.text }]}>
           {isEditing ? 'Edit Room Details' : 'Add Room Details'}
