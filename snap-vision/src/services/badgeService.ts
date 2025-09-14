@@ -1,5 +1,7 @@
 // src/services/badgeService.ts
 import firestore from '@react-native-firebase/firestore';
+import { Badge } from '../types/badges';
+
 
 const db = firestore();
 
@@ -162,4 +164,20 @@ export async function incrementRoutesCompletedForUser(userId: string) {
 
   const updatedUser = await userRef.get();
   return updatedUser.data();
+}
+
+export async function getBadges(): Promise<Record<string, Badge>> {
+  // Read badges from Firestore badges collection
+  const badgesRef = db.collection('badges');
+  const snapshot = await badgesRef.get();
+  const badges: Record<string, Badge> = {};
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    badges[doc.id] = {
+      id: doc.id as any, // Assuming doc.id matches BadgeId
+      title: data.title,
+      description: data.description,
+    };
+  });
+  return badges;
 }
