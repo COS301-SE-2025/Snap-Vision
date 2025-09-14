@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { BadgeId } from '../types/badges';
+import { BadgeId, Badge } from '../types/badges';
 import {
   unlockBadgeForUser,
   getUserBadgeData,
   completeChallengeForUser,
   incrementRoutesCompletedForUser,
+  getBadges,
 } from '../services/badgeService';
 import auth from '@react-native-firebase/auth';
 import { Challenge } from '../types/achievements';
@@ -17,6 +18,7 @@ type BadgeState = {
   routesCompleted: number;
   purchases: { itemId: string; [key: string]: any }[];
   completedChallenges: Set<string>;
+  badges: Record<BadgeId, Badge>;
 };
 
 type Ctx = {
@@ -42,6 +44,7 @@ const empty: BadgeState = {
   routesCompleted: 0,
   purchases: [],
   completedChallenges: new Set(),
+  badges: {} as Record<BadgeId, Badge>,
 };
 
 const BadgeContext = createContext<Ctx | undefined>(undefined);
@@ -66,6 +69,18 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
+    const loadBadges = async () => {
+      try {
+        const badges = await getBadges();
+        setState(prev => ({ ...prev, badges: badges as Record<BadgeId, Badge> }));
+      } catch (e) {
+        console.warn('Failed to load badges:', e);
+      }
+    };
+    loadBadges();
+  }, []);
+
+  useEffect(() => {
     if (!uid) return;
 
     const loadUserData = async () => {
@@ -73,7 +88,8 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
       try {
         const snap = await getUserBadgeData(uid);
         if (snap) {
-          setState({
+          setState(prev => ({
+            ...prev,
             unlocked: new Set<BadgeId>(snap.badges || []),
             justUnlocked: [],
             points: snap.points || 0,
@@ -81,7 +97,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
             routesCompleted: snap.routesCompleted || 0,
             purchases: snap.purchases || [],
             completedChallenges: new Set<string>(snap.completedChallenges || []),
-          });
+          }));
         }
       } catch (e) {
         console.warn('Failed to load badge data:', e);
@@ -117,7 +133,8 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
       // Sync with latest data
       const snap = await getUserBadgeData(uid);
       if (snap) {
-        setState({
+        setState(prev => ({
+          ...prev,
           unlocked: new Set<BadgeId>(snap.badges || []),
           justUnlocked: [],
           points: snap.points || 0,
@@ -125,7 +142,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
           routesCompleted: snap.routesCompleted || 0,
           purchases: snap.purchases || [],
           completedChallenges: new Set<string>(snap.completedChallenges || []),
-        });
+        }));
       }
     } catch (e) {
       console.error('Failed to unlock badge:', e);
