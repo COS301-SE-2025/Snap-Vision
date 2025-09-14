@@ -22,71 +22,71 @@ export interface Badge {
   description: string;
 }
 
-// 3. Badge dictionary
+// 3. Badge definitions
 export const BADGES: Record<BadgeId, Badge> = {
   'first-login': {
     id: 'first-login',
-    title: 'First Login',
-    description: 'You signed up for the first time!',
+    title: 'Welcome Aboard',
+    description: 'Complete your first login to the app',
   },
   'qr-scan': {
     id: 'qr-scan',
-    title: 'QR Code Scanned',
-    description: 'You scanned your first QR!',
+    title: 'QR Scanner',
+    description: 'Scan your first QR code',
   },
   'destination-reached': {
     id: 'destination-reached',
-    title: 'Destination Reached',
-    description: 'You arrived at your first destination!',
+    title: 'First Steps',
+    description: 'Reach your first destination',
   },
   'share-location': {
     id: 'share-location',
-    title: 'Navigator Buddy',
-    description: 'Shared your location with a friend.',
+    title: 'Location Sharer',
+    description: 'Share your location with others',
   },
   '10-destinations': {
     id: '10-destinations',
-    title: 'Wayfarer',
-    description: 'Completed 10 destinations.',
+    title: 'Explorer',
+    description: 'Reach 10 destinations',
   },
   '50-destinations': {
     id: '50-destinations',
-    title: 'Pathfinder',
-    description: 'Completed 50 destinations.',
+    title: 'Adventurer',
+    description: 'Reach 50 destinations',
   },
   '100-destinations': {
     id: '100-destinations',
-    title: 'Adventurer',
-    description: 'Completed 100 destinations.',
+    title: 'Pathfinder',
+    description: 'Reach 100 destinations',
   },
   '150-destinations': {
     id: '150-destinations',
-    title: 'Trail Master',
-    description: 'Completed 150 destinations.',
+    title: 'Trailblazer',
+    description: 'Reach 150 destinations',
   },
   '200-destinations': {
     id: '200-destinations',
-    title: 'Legendary Explorer',
-    description: 'Completed 200 destinations!',
+    title: 'Legend',
+    description: 'Reach 200 destinations',
   },
   'enabled-notifications': {
     id: 'enabled-notifications',
-    title: 'Heads Up!',
-    description: 'Enabled push notifications.',
+    title: 'Stay Connected',
+    description: 'Enable push notifications',
   },
   'reported-crowd': {
     id: 'reported-crowd',
-    title: 'Safety Watch',
-    description: 'Reported a crowded area.',
+    title: 'Community Helper',
+    description: 'Report crowd levels at locations',
   },
   'points-150': {
     id: 'points-150',
-    title: 'Points Collector',
-    description: 'Earned 150 points.',
+    title: 'Point Collector',
+    description: 'Earn 150 points',
   },
   'fast-finisher': {
     id: 'fast-finisher',
     title: 'Speed Runner',
-    description: 'Reached your destination in under 5 minutes!',
+    description: 'Reach a destination within 5 minutes of starting navigation',
   },
 };
