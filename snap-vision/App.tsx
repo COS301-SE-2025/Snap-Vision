@@ -31,6 +31,7 @@ import ARIndoorNavScreen from './src/screens/ARIndoorNavScreen';
 import QRCodeAdminScreen from './src/screens/QRCodeAdminScreen';
 import BluetoothBuildingsScreen from './src/screens/BluetoothBuildingsScreen';
 import BluetoothIndoorNavigationScreen from './src/screens/BluetoothIndoorNavigationScreen';
+import BeaconTestScreen from './src/screens/BeaconTestScreen';
 
 import { navigationRef } from './src/navigation/RootNavigation';
 LogBox.ignoreLogs([
@@ -94,6 +95,7 @@ function AppInner() {
             <Stack.Screen name="AdminQRCodes" component={QRCodeAdminScreen} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
             <Stack.Screen name="ShopScreen" component={ShopScreen} />
+            <Stack.Screen name="BeaconTest" component={BeaconTestScreen} />
             <Stack.Screen
               name="BuildingSelection"
               component={BuildingSelectionScreen}
