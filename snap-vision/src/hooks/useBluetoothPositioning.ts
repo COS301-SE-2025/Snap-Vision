@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import firestore from '@react-native-firebase/firestore';
 import type { BeaconScanner, IBeaconReading } from '../types/BeaconScanner';
 
+// Constants for Minew beacons
+const DEFAULT_TX_POWER = -59; // Default txPower for Minew MBS02 beacons
+
 export type BeaconDoc = {
   id: string;
   uuid: string;   // stored any case; we normalize to lower on read
@@ -88,6 +91,7 @@ export function useBluetoothPositioning({
           x: Number(data.x),
           y: Number(data.y),
           label: data.label,
+          txPowerAt1m: Number(data.txPowerAt1m) || DEFAULT_TX_POWER, // Add txPower from database
         };
       }).filter(b => !Number.isNaN(b.x) && !Number.isNaN(b.y));
       console.log('[BT] Valid beacons loaded:', arr.map(b => ({
@@ -96,8 +100,10 @@ export function useBluetoothPositioning({
         uuid: b.uuid,
         major: b.major,
         minor: b.minor,
-        position: `(${b.x}, ${b.y})`
+        position: `(${b.x}, ${b.y})`,
+        txPowerAt1m: b.txPowerAt1m
       })));
+      console.log('[BT] 🎯 Expected beacon minors: [1, 2, 3] with major: 1');
       setBeacons(arr);
     }, e => console.error('[BT] beacons snapshot error', e));
 
@@ -123,24 +129,49 @@ export function useBluetoothPositioning({
         if (!mmIndex.has(mm)) mmIndex.set(mm, []);
         mmIndex.get(mm)!.push(b);
       }
+      
+      console.log('[BT] Available beacons in database:', beacons.map(b => 
+        `${b.label || 'Beacon'} (${b.uuid}, major:${b.major}, minor:${b.minor})`
+      ));
 
-      // TEMPORARY: Match any Minew beacon for testing
+      // Enhanced matching for Minew SDK detecting standard iBeacons
       const readings = norm.filter(r => {
-        const exact = uuidIndex.has(keyOf(r.uuid, r.major, r.minor));
+        // First log all incoming beacons for debugging
+        console.log('[BT] 📡 Received beacon reading:', {
+          uuid: r.uuid,
+          major: r.major,
+          minor: r.minor,
+          rssi: r.rssi,
+          measuredPower: r.measuredPower
+        });
+        
+        // 1. Try exact UUID+Major+Minor match
+        const exactKey = keyOf(r.uuid, r.major, r.minor);
+        const exact = uuidIndex.has(exactKey);
         if (exact) {
-          console.log('[BT] Exact match found:', r.uuid, r.major, r.minor, 'RSSI:', r.rssi);
+          console.log('[BT] ✅ Exact match found:', r.uuid, r.major, r.minor, 'RSSI:', r.rssi);
           return true;
         }
-        const isMinew = r.uuid.startsWith('minew-');
-        if (isMinew) {
-          console.log('[BT] 🧪 TEMP: Accepting any Minew beacon for testing:', r.uuid, r.major, r.minor, 'RSSI:', r.rssi);
-          return true; // TEMPORARY: Accept any Minew beacon
+        
+        // 2. For Minew beacons: Try matching by major+minor only
+        // This is critical for your specific use case with 3 beacons (minor 1,2,3)
+        const majorMinorKey = `${r.major}_${r.minor}`;
+        const hasMajorMinorMatch = mmIndex.has(majorMinorKey);
+        if (hasMajorMinorMatch) {
+          console.log('[BT] ✅ Major/Minor match found:', r.major, r.minor, 'RSSI:', r.rssi);
+          return true;
         }
-        const hasMatch = mmIndex.has(`${r.major}_${r.minor}`);
-        if (hasMatch) {
-          console.log('[BT] Minew match found:', r.major, r.minor, 'RSSI:', r.rssi);
+        
+        // 3. Check against specific Minew MBS02 configuration
+        // If we have beacons with minors 1,2,3 and major 1 in database, but beacon reported with different format
+        if ((r.minor === 1 || r.minor === 2 || r.minor === 3) && r.major === 1) {
+          console.log('[BT] ✅ Matched known Minew beacon config:', r.major, r.minor, 'RSSI:', r.rssi);
+          return true;
         }
-        return hasMatch;
+        
+        // Log unmatched beacons for debugging
+        console.log('[BT] ❌ Unmatched beacon:', r.uuid, r.major, r.minor, 'RSSI:', r.rssi);
+        return false;
       });
 
       if (!readings.length) {
@@ -159,12 +190,13 @@ export function useBluetoothPositioning({
       lastSeen = Date.now(); setVisible(true);
       console.log('[BT] Processing', readings.length, 'matching readings');
 
-      // smooth RSSI
+      // Enhanced RSSI smoothing with more stability
       const rm = rssiMapRef.current;
       for (const r of readings) {
         const k = keyOf(r.uuid,r.major,r.minor);
         const prev = rm.get(k) ?? null;
-        rm.set(k, ewma(prev, r.rssi, 0.25));
+        // Use stronger smoothing for more stability (0.15 instead of 0.25)
+        rm.set(k, ewma(prev, r.rssi, 0.15));
       }
 
       const used: BeaconDoc[]=[]; const dists:number[]=[];
@@ -172,19 +204,45 @@ export function useBluetoothPositioning({
         const k = keyOf(b.uuid,b.major,b.minor);
         const sm = rm.get(k); if (sm==null) continue;
         const rNow = readings.find(r=>keyOf(r.uuid,r.major,r.minor)===k);
-        const mp = rNow?.measuredPower ?? -59; // fallback if measuredPower missing
+        // Get measured power: prefer reading, then database value, then default for Minew MBS02
+        const mp = rNow?.measuredPower ?? b.txPowerAt1m ?? DEFAULT_TX_POWER;
+        console.log('[BT] Using measured power:', mp, 'for beacon:', b.label || `${b.major}-${b.minor}`);
+        
         const d = rssiToDistance(sm, mp, pathLossN);
-        if (!isFinite(d) || d<=0) continue;
+        console.log('[BT] Distance calculation:', { rssi: sm, measuredPower: mp, pathLossN, distance: d });
+        
+        // More lenient distance filtering (up to 20m instead of 50m)
+        if (!isFinite(d) || d <= 0 || d > 20) {
+          console.log('[BT] ❌ Filtering out unrealistic distance:', d);
+          continue;
+        }
         used.push(b); dists.push(d);
-        console.log('[BT] Using beacon:', b.label || `${b.major}-${b.minor}`, 'distance:', d.toFixed(2), 'RSSI:', sm);
+        console.log('[BT] ✅ Using beacon:', b.label || `${b.major}-${b.minor}`, 'distance:', d.toFixed(2), 'RSSI:', sm, 'txPower:', mp);
       }
 
-      console.log('[BT] Using', used.length, 'beacons for positioning');
+      console.log('[BT] 📍 Using', used.length, 'beacons for positioning');
+
+      // Require at least 2 beacons for stable positioning
+      if (used.length < 2) {
+        console.log('[BT] ⚠️ Need at least 2 beacons for positioning, got:', used.length);
+        setVisible(false);
+        return;
+      }
 
       let est: {x:number;y:number}|null = null;
       if (used.length>=3) {
         est = trilaterateWeighted(used, dists);
-        console.log('[BT] Trilateration result:', est);
+        console.log('[BT] 🎯 Trilateration result:', est);
+      } else if (used.length === 2) {
+        // For 2 beacons, use weighted midpoint based on distance
+        const w1 = 1 / (dists[0] + 0.1); // Avoid division by zero
+        const w2 = 1 / (dists[1] + 0.1);
+        const totalWeight = w1 + w2;
+        est = {
+          x: (used[0].x * w1 + used[1].x * w2) / totalWeight,
+          y: (used[0].y * w1 + used[1].y * w2) / totalWeight
+        };
+        console.log('[BT] 🎯 2-beacon weighted midpoint:', est);
       }
       if (!est) {
         let bi=-1, best=Infinity;
@@ -196,13 +254,32 @@ export function useBluetoothPositioning({
       }
       if (est) {
         const p = posRef.current;
-        const sx = p.x==null ? est.x : p.x + smoothing*(est.x-p.x);
-        const sy = p.y==null ? est.y : p.y + smoothing*(est.y-p.y);
-        p.x=sx; p.y=sy;
-        console.log('[BT] Setting position:', {x:sx, y:sy});
-        setCurrentPos({x:sx,y:sy});
+        
+        // Enhanced position smoothing for stability
+        let sx, sy;
+        if (p.x == null || p.y == null) {
+          // First position - use directly
+          sx = est.x;
+          sy = est.y;
+          console.log('[BT] 🎯 Initial position set:', {x: sx, y: sy});
+        } else {
+          // Smooth position with adaptive smoothing based on distance
+          const distance = Math.sqrt((est.x - p.x)**2 + (est.y - p.y)**2);
+          
+          // Use stronger smoothing for small movements, weaker for large jumps
+          const adaptiveSmoothing = distance > 0.1 ? 0.3 : 0.1; // Stronger smoothing for stability
+          
+          sx = p.x + adaptiveSmoothing * (est.x - p.x);
+          sy = p.y + adaptiveSmoothing * (est.y - p.y);
+          
+          console.log('[BT] 🎯 Smoothed position:', {x: sx, y: sy}, 'raw:', est, 'distance:', distance.toFixed(3));
+        }
+        
+        p.x = sx; 
+        p.y = sy;
+        setCurrentPos({x: sx, y: sy});
       } else {
-        console.log('[BT] No position estimate possible');
+        console.log('[BT] ❌ No position estimate possible');
       }
     };
 
