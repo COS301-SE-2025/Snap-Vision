@@ -224,10 +224,65 @@ export default function BluetoothIndoorNavigationScreen() {
   useEffect(() => { console.log(BT, 'DB Beacons count:', floorBeacons.length); }, [floorBeacons.length]);
   useEffect(() => {
     if (beacons?.length) {
-      const latest = beacons.slice(0, 5).map(b => `(${b.major}/${b.minor} rssi=${b.rssi})`).join(', ');
-      console.log(BT, `Hook beacons sample [${beacons.length}]: ${latest}`);
+      console.log(BT, '🔍 DETECTED beacons from scanner:');
+      beacons.slice(0, 10).forEach((b, index) => {
+        console.log(BT, `  📡 Detected ${index + 1}: UUID=${b.uuid}, Major=${b.major}, Minor=${b.minor}, RSSI=${b.rssi}`);
+      });
+      
+      // Show if any match our expected pattern (major=1, minor=1,2,3)
+      const expectedMatches = beacons.filter(b => b.major === 1 && [1,2,3].includes(b.minor));
+      if (expectedMatches.length > 0) {
+        console.log(BT, '✅ Found expected pattern matches:', expectedMatches.length);
+        expectedMatches.forEach(m => {
+          console.log(BT, `  ✅ Match: Major=${m.major}, Minor=${m.minor}, RSSI=${m.rssi}`);
+        });
+      } else {
+        console.log(BT, '❌ No beacons match expected pattern (Major=1, Minor=1,2,3)');
+      }
     }
   }, [beacons]);
+
+  // Debug beacon matching
+  useEffect(() => {
+    if (floorBeacons.length > 0 && beacons?.length > 0) {
+      console.log(BT, '🔍 BEACON MATCHING DEBUG:');
+      console.log(BT, 'Database beacons (expected):');
+      floorBeacons.forEach(db => {
+        console.log(BT, `  DB: ${db.label} - UUID="${db.uuid}" Major=${db.major} Minor=${db.minor} x=${db.x} y=${db.y}`);
+      });
+      console.log(BT, 'Detected beacons (from scanner):');
+      beacons.slice(0, 5).forEach(det => {
+        console.log(BT, `  DETECTED: UUID="${det.uuid}" Major=${det.major} Minor=${det.minor} RSSI=${det.rssi}`);
+        
+        // Check if this detected beacon matches any database beacon
+        const exactMatch = floorBeacons.find(db => 
+          db.uuid === det.uuid && db.major === det.major && db.minor === det.minor
+        );
+        const majorMinorMatch = floorBeacons.find(db => 
+          db.major === det.major && db.minor === det.minor
+        );
+        
+        if (exactMatch) {
+          console.log(BT, `    ✅ EXACT MATCH with ${exactMatch.label} (x=${exactMatch.x}, y=${exactMatch.y})`);
+        } else if (majorMinorMatch) {
+          console.log(BT, `    🟡 MAJOR/MINOR MATCH with ${majorMinorMatch.label} (UUID differs, x=${majorMinorMatch.x}, y=${majorMinorMatch.y})`);
+        } else {
+          console.log(BT, `    ❌ NO MATCH found`);
+        }
+      });
+      
+      // Check if we have enough beacons with coordinates for positioning
+      const beaconsWithCoords = floorBeacons.filter(b => typeof b.x === 'number' && typeof b.y === 'number');
+      console.log(BT, `📍 Beacons with coordinates: ${beaconsWithCoords.length}/3 needed for positioning`);
+      if (beaconsWithCoords.length < 3) {
+        console.log(BT, '⚠️ Need at least 3 beacons with x,y coordinates for trilateration');
+        beaconsWithCoords.forEach(b => {
+          console.log(BT, `  📍 ${b.label}: (${b.x}, ${b.y})`);
+        });
+      }
+    }
+  }, [floorBeacons, beacons]);
+  
   useEffect(() => {
     console.log(BT, 'Live position:', currentPos ? { x:+currentPos.x.toFixed(3), y:+currentPos.y.toFixed(3) } : '—', 'visible=', visible);
   }, [currentPos, visible]);
@@ -312,13 +367,6 @@ export default function BluetoothIndoorNavigationScreen() {
             currentPos={currentPos}
             floorplanUrl={floorplanUrl || undefined}
           />
-          {dotPx && (
-            <View pointerEvents="none" style={{
-              position: 'absolute', left: dotPx.left - 8, top: dotPx.top - 8,
-              width: 16, height: 16, borderRadius: 8, backgroundColor: '#007AFF',
-              borderWidth: 3, borderColor: '#fff', elevation: 4
-            }}/>
-          )}
           {!visible && (
             <View style={{ position: 'absolute', bottom: 8, left: 8, right: 8, alignItems: 'center', paddingVertical: 6, borderRadius: 12, backgroundColor: colors.card }}>
               <Text style={{ color: colors.secondary, fontSize: 12 }}>Waiting for beacon signals…</Text>
