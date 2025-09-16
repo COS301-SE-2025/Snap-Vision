@@ -49,7 +49,7 @@ export const usePathManagement = ({
       setPathMarkers(paths);
       return paths;
     } catch (error) {
-      console.error('Error loading paths:', error);
+      //consoleerror('Error loading paths:', error);
       onError('Failed to load paths');
       return [];
     }
@@ -125,23 +125,12 @@ export const usePathManagement = ({
         true;
       `);
 
-        onSuccess('Path created successfully');
-      } catch (error) {
-        console.error('Error saving path:', error);
-        onError('Failed to save path');
-      }
-    },
-    [
-      selectedRooms,
-      currentPath,
-      buildingId,
-      floorLabel,
-      locationId,
-      pathMarkers,
-      onError,
-      onSuccess,
-    ],
-  );
+      onSuccess('Path created successfully');
+    } catch (error) {
+      //consoleerror('Error saving path:', error);
+      onError('Failed to save path');
+    }
+  }, [selectedRooms, currentPath, buildingId, floorLabel, locationId, pathMarkers, onError, onSuccess]);
 
   const handleSelectPath = useCallback((pathId: string, webViewRef: any, colors: any) => {
     setSelectedPathId(pathId);

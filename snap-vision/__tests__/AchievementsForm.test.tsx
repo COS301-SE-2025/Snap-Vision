@@ -275,7 +275,7 @@ describe('AchievementsForm', () => {
       try {
         expect(getByText('Points: 150')).toBeTruthy();
       } catch (error) {
-        console.log('Points: 150 not found, checking for alternative formats');
+        //consolelog('Points: 150 not found, checking for alternative formats');
         const pointsText = queryByText(/150/) || queryByText(/Points/);
         if (pointsText) {
           expect(pointsText).toBeTruthy();
@@ -285,7 +285,7 @@ describe('AchievementsForm', () => {
       try {
         expect(getByText('Badges: 2')).toBeTruthy();
       } catch (error) {
-        console.log('Badges: 2 not found, checking for alternative formats');
+        //consolelog('Badges: 2 not found, checking for alternative formats');
         const badgesText = queryByText(/Badges/) || queryByText(/2/);
         if (badgesText) {
           expect(badgesText).toBeTruthy();
@@ -295,7 +295,7 @@ describe('AchievementsForm', () => {
       try {
         expect(getByText('Check-ins: 5')).toBeTruthy();
       } catch (error) {
-        console.log('Check-ins: 5 not found, checking for alternative formats');
+        //consolelog('Check-ins: 5 not found, checking for alternative formats');
         const checkInsText = queryByText(/Check-ins/) || queryByText(/5/);
         if (checkInsText) {
           expect(checkInsText).toBeTruthy();
@@ -313,7 +313,7 @@ describe('AchievementsForm', () => {
       try {
         expect(getByText('Unlocked Badges: 2')).toBeTruthy();
       } catch (error) {
-        console.log('Unlocked Badges: 2 not found, checking for alternative');
+        //consolelog('Unlocked Badges: 2 not found, checking for alternative');
         const unlockedText = queryByText(/Unlocked/) || queryByText(/2/);
         if (unlockedText) {
           expect(unlockedText).toBeTruthy();
@@ -323,7 +323,7 @@ describe('AchievementsForm', () => {
       try {
         expect(getByTestId('badge-first-navigation')).toBeTruthy();
       } catch (error) {
-        console.log('badge-first-navigation not found, checking for alternative');
+        //consolelog('badge-first-navigation not found, checking for alternative');
         const badgeElement = queryByTestId('first-navigation') || queryByText('first-navigation');
         if (badgeElement) {
           expect(badgeElement).toBeTruthy();
@@ -333,7 +333,7 @@ describe('AchievementsForm', () => {
       try {
         expect(getByTestId('badge-speed-demon')).toBeTruthy();
       } catch (error) {
-        console.log('badge-speed-demon not found, checking for alternative');
+        //consolelog('badge-speed-demon not found, checking for alternative');
         const badgeElement = queryByTestId('speed-demon') || queryByText('speed-demon');
         if (badgeElement) {
           expect(badgeElement).toBeTruthy();
@@ -351,7 +351,7 @@ describe('AchievementsForm', () => {
       try {
         expect(getByTestId('challenge-challenge-1')).toBeTruthy();
       } catch (error) {
-        console.log('challenge-challenge-1 not found, checking for alternative');
+        //consolelog('challenge-challenge-1 not found, checking for alternative');
         const challengeElement = queryByTestId('challenge-1') || queryByText('Navigate 5 Times');
         if (challengeElement) {
           expect(challengeElement).toBeTruthy();
@@ -361,7 +361,7 @@ describe('AchievementsForm', () => {
       try {
         expect(getByTestId('challenge-challenge-2')).toBeTruthy();
       } catch (error) {
-        console.log('challenge-challenge-2 not found, checking for alternative');
+        //consolelog('challenge-challenge-2 not found, checking for alternative');
         const challengeElement = queryByTestId('challenge-2') || queryByText('Visit Campus Center');
         if (challengeElement) {
           expect(challengeElement).toBeTruthy();
@@ -371,13 +371,13 @@ describe('AchievementsForm', () => {
       try {
         expect(getByText('Navigate 5 Times')).toBeTruthy();
       } catch (error) {
-        console.log('Navigate 5 Times text not found');
+        //consolelog('Navigate 5 Times text not found');
       }
 
       try {
         expect(getByText('Visit Campus Center')).toBeTruthy();
       } catch (error) {
-        console.log('Visit Campus Center text not found');
+        //consolelog('Visit Campus Center text not found');
       }
     });
   });
@@ -534,7 +534,7 @@ describe('AchievementsForm', () => {
         fireEvent.press(challengeElement);
         expect(consoleSpy).toHaveBeenCalledWith('Challenge Navigate 5 Times pressed');
       } else {
-        console.log('Challenge element not found, skipping press test');
+        //consolelog('Challenge element not found, skipping press test');
       }
 
       consoleSpy.mockRestore();

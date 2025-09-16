@@ -7,10 +7,9 @@ import { Challenge } from '../../types/achievements';
 
 type Props = {
   challenge: Challenge;
-  onPress: () => void;
 };
 
-export default function ChallengeItem({ challenge, onPress }: Props) {
+export default function ChallengeItem({ challenge }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
@@ -35,7 +34,6 @@ export default function ChallengeItem({ challenge, onPress }: Props) {
           opacity: challenge.isCompleted ? 0.5 : 1,
         },
       ]}
-      onPress={onPress}
     >
       <View style={styles.iconContainer}>{getStatusIcon()}</View>
       <View style={styles.contentContainer}>

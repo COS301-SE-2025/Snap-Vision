@@ -195,7 +195,7 @@ export default function ShopScreen({ navigation }: { navigation: any }) {
 
       setPopupItem({ title: item.title, cost: item.cost });
     } catch (err: any) {
-      console.error('Purchase error:', err);
+      //consoleerror('Purchase error:', err);
       setErrorPopupMessage(err.message || 'Purchase failed');
       setShowErrorPopup(true);
     }

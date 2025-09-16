@@ -51,14 +51,14 @@ app.get("/api/directions", async (req, res) => {
 
     res.json(response.data);
   } catch (error) {
-    console.error("ORS error:", error?.response?.data || error.message);
+    //consoleerror("ORS error:", error?.response?.data || error.message);
     res.status(500).json({ error: "Failed to fetch directions" });
   }
 });
 
 const PORT = process.env.PORT || 8080; // Firebase App Hosting typically uses 8080
 const server = app.listen(PORT, () =>
-  console.log(`Server running on port ${server.address().port}`),
+  //consolelog(`Server running on port ${server.address().port}`),
 );
 
 module.exports = server;

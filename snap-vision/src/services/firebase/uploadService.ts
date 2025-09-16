@@ -10,8 +10,8 @@ export const uploadFloorplanImage = async (
   const floorNumber = floorLabel;
   const storagePath = `floorplans/${locationId}/${buildingId}/${floorNumber}.jpg`;
 
-  console.log('Uploading to:', storagePath);
-  console.log('Current user UID:', auth().currentUser?.uid);
+  //consolelog('Uploading to:', storagePath);
+  //consolelog('Current user UID:', auth().currentUser?.uid);
 
   const reference = storage().ref(storagePath);
   await reference.putFile(fileUri);

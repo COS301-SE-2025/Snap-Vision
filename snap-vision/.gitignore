@@ -60,3 +60,6 @@ app-example
 package.json 
 
 package-lock.json
+
+android/app/my-upload-key.keystore
+

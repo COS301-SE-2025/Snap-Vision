@@ -218,20 +218,18 @@ export const useWebViewCommunication = (
   // Main WebView message handler
   const handleWebViewMessage = useCallback(
     async (event: any) => {
-      console.log('[WebView message]', event.nativeEvent.data);
+      //consolelog('[WebView message]', event.nativeEvent.data);
 
       try {
         const data = event.nativeEvent.data;
 
         // === Handle simple message ===
         if (data === 'MAP_READY') {
-          console.log('🗺️ Map is ready!');
           setStatus('Map loaded');
           setIsMapReady(true);
 
           // If we already have a location, send it to the map immediately
           if (currentLocation) {
-            console.log('📍 Sending existing location to newly ready map:', currentLocation);
             sendLocationToWebView(currentLocation.latitude, currentLocation.longitude, true);
           }
 
@@ -282,10 +280,10 @@ export const useWebViewCommunication = (
           }
 
           default:
-          // console.log('Unknown message type from WebView:', parsed.type);
+          // //consolelog('Unknown message type from WebView:', parsed.type);
         }
       } catch (e) {
-        // console.log('WebView message error:', event.nativeEvent.data);
+        // //consolelog('WebView message error:', event.nativeEvent.data);
       }
     },
     [

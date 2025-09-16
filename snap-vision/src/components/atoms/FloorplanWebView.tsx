@@ -139,7 +139,7 @@ const FloorplanWebView = forwardRef<FloorplanWebViewRef, FloorplanWebViewProps>(
         <body>
           <div id="container">
             <div id="zoomable-area">
-              <img id="floorplan" src="${imageUri}" onerror="console.error('Failed to load image: ' + this.src);" />
+              <img id="floorplan" src="${imageUri}" />
               <svg id="path-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: auto; z-index: 5;" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
             </div>
           </div>
