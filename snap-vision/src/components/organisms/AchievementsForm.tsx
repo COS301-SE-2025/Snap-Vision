@@ -4,13 +4,11 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import WelcomeHeader from '../molecules/WelcomeHeader';
-import ChallengeItem from '../molecules/ChallengeItem';
 import ProgressCard from '../atoms/ProgressCard';
 import RewardCard from '../molecules/RewardCard';
 import ActionButton from '../molecules/ActionButton';
 import { useBadges } from '../../context/BadgeContext';
 import { BADGES, BadgeId } from '../../types/badges';
-import { Challenge } from '../../types/achievements';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../navigation/types'; // Adjust path if needed
@@ -23,9 +21,8 @@ export default function AchievementsForm() {
   const colors = getThemeColors(isDark);
   type NavigationProp = StackNavigationProp<RootStackParamList, 'Dashboard'>;
 
-  const { state, clearJustUnlocked, getChallenges } = useBadges();
+  const { state, clearJustUnlocked } = useBadges();
   const unlockedArray = Array.from(state.unlocked);
-  const currentChallenges = getChallenges();
   const navigation = useNavigation<NavigationProp>();
 
   useEffect(() => {
@@ -41,7 +38,6 @@ export default function AchievementsForm() {
   // ];
 
   // const handleCategoryPress = (title: string) => console.log(`${title} category pressed`);
-  const handleChallengePress = (c: Challenge) => console.log(`Challenge ${c.title} pressed`);
   // const handleActionPress = (a: string) => console.log(`${a} button pressed`);
 
   return (
@@ -93,22 +89,6 @@ export default function AchievementsForm() {
           ))}
         </View>
       </View> */}
-
-      {/* Dynamic Challenges */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.primary }]}>Current Challenges</Text>
-        <Text style={[styles.sectionSubtitle, { color: colors.text }]}>
-          Complete these to earn points!
-        </Text>
-
-        {currentChallenges.map((challenge) => (
-          <ChallengeItem
-            key={challenge.id}
-            challenge={challenge}
-            onPress={() => handleChallengePress(challenge)}
-          />
-        ))}
-      </View>
 
       {/* Action Buttons */}
       <View style={styles.actionButtons}>
