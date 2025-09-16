@@ -67,6 +67,7 @@ export default function BluetoothIndoorNavigationScreen() {
     if (room) {
       setSelectedPOI(room);
       setShowPOIPopup(true);
+      // Don't set as selectedRoom to avoid destination color
     }
   };
 
@@ -93,7 +94,10 @@ export default function BluetoothIndoorNavigationScreen() {
   };
 
   const handleRoomListSelect = (room: any) => {
-    roomManager.setSelectedRoom(room);
+    // Don't set as selectedRoom to avoid destination color
+    setSelectedPOI(room);
+    setShowPOIPopup(true);
+    setShowRoomsList(false); // Close the rooms list
   };
 
   if (roomManager.loading) {
@@ -147,7 +151,7 @@ export default function BluetoothIndoorNavigationScreen() {
         >
           <IndoorSchematicMap
             rooms={roomManager.roomsOnSelectedFloor}
-            startId={roomManager.selectedRoom?.id}
+            startId={undefined} // Don't highlight any POI with destination color
             endId={undefined}
             routePolyline={[]}
             completedPolyline={[]}
