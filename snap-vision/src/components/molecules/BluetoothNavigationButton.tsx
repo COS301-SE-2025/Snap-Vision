@@ -9,7 +9,6 @@ interface BluetoothNavigationButtonProps {
   disabled?: boolean;
 }
 
-
 const BluetoothNavigationButton: React.FC<BluetoothNavigationButtonProps> = ({
   onPress,
   disabled = false,

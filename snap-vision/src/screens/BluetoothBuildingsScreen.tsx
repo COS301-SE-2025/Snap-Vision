@@ -39,7 +39,6 @@ type BluetoothBuildingsScreenNavigationProp = StackNavigationProp<
   'BluetoothBuildings'
 >;
 
-
 const BluetoothBuildingsScreen: React.FC = () => {
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [loading, setLoading] = useState(true);
