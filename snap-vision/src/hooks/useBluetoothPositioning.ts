@@ -470,7 +470,8 @@ export function useBluetoothPositioning(opts: Options) {
 
   useEffect(() => {
     const t = setInterval(() => {
-      if (visible && Date.now() - lastComputeTsRef.current > 4000) setVisible(false);
+      // Increased timeout from 4000ms to 8000ms for less aggressive hiding
+      if (visible && Date.now() - lastComputeTsRef.current > 8000) setVisible(false);
     }, 1000);
     return () => clearInterval(t);
   }, [visible]);
