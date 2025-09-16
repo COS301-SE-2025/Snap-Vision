@@ -13,7 +13,10 @@ export type BadgeId =
   | 'enabled-notifications'
   | 'reported-crowd' //done
   | 'points-150' //done
-  | 'fast-finisher';
+  | 'fast-finisher'
+  | 'lecture-halls'
+  | 'explore-buildings'
+  | 'points-master';
 
 // 2. Badge shape
 export interface Badge {
