@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme } from '../theme/ThemeContext';
@@ -8,9 +8,11 @@ import { getThemeColors } from '../theme';
 import SettingsHeader from '../components/molecules/SettingsHeader';
 import NavigationBar from '../components/molecules/NavigationBar';
 import DebugInfoBar from '../components/molecules/DebugInfoBar';
+import POIPopup from '../components/molecules/POIPopup';
+import POIInfoModal from '../components/molecules/POIInfoModal';
 import IndoorSchematicMap from '../components/organisms/IndoorSchematicMap';
 import RoomsListOverlay from '../components/organisms/RoomsListOverlay';
-import { useRoomManager } from '../hooks/useRoomManager';
+import { useRoomManager, RoomPOI } from '../hooks/useRoomManager';
 import { useFloorplanManager } from '../hooks/useFloorplanManager';
 import { useBeaconManager } from '../hooks/useBeaconManager';
 
@@ -33,6 +35,11 @@ export default function BluetoothIndoorNavigationScreen() {
 
   const [showRoomsList, setShowRoomsList] = useState(false);
   const [mapSize, setMapSize] = useState({ width: 0, height: 0 });
+  
+  // POI popup state
+  const [showPOIPopup, setShowPOIPopup] = useState(false);
+  const [showPOIInfoModal, setShowPOIInfoModal] = useState(false);
+  const [selectedPOI, setSelectedPOI] = useState<RoomPOI | null>(null);
 
   // Custom hooks for managing different aspects
   const roomManager = useRoomManager({ locationId, buildingId });
@@ -56,7 +63,29 @@ export default function BluetoothIndoorNavigationScreen() {
   }, [beaconManager.currentPos, mapSize]);
 
   const handleRoomSelect = (roomId: string) => {
-    roomManager.handleRoomSelect(roomId);
+    const room = roomManager.allRooms.find(r => r.id === roomId);
+    if (room) {
+      setSelectedPOI(room);
+      setShowPOIPopup(true);
+    }
+  };
+
+  const handleNavigateHere = () => {
+    if (selectedPOI) {
+      console.log('Navigate to:', selectedPOI.name);
+      // TODO: Implement navigation logic
+      setShowPOIPopup(false);
+    }
+  };
+
+  const handleMoreInfo = () => {
+    setShowPOIPopup(false);
+    setShowPOIInfoModal(true);
+  };
+
+  const handleClosePOIPopup = () => {
+    setShowPOIPopup(false);
+    setSelectedPOI(null);
   };
 
   const handleShowRoomsList = () => {
@@ -153,6 +182,24 @@ export default function BluetoothIndoorNavigationScreen() {
         rooms={roomManager.roomsOnSelectedFloor}
         onClose={() => setShowRoomsList(false)}
         onSelectRoom={handleRoomListSelect}
+        themeColors={colors}
+      />
+
+      {showPOIPopup && selectedPOI && (
+        <POIPopup
+          visible={showPOIPopup}
+          poi={selectedPOI}
+          onClose={handleClosePOIPopup}
+          onNavigate={handleNavigateHere}
+          onMoreInfo={handleMoreInfo}
+          themeColors={colors}
+        />
+      )}
+
+      <POIInfoModal
+        visible={showPOIInfoModal}
+        poi={selectedPOI}
+        onClose={() => setShowPOIInfoModal(false)}
         themeColors={colors}
       />
     </SafeAreaView>
