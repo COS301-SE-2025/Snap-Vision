@@ -54,7 +54,10 @@ const POIPopup: React.FC<POIPopupProps> = ({
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[styles.button, styles.primaryButton, { backgroundColor: themeColors.primary }]}
-          onPress={onNavigate}
+          onPress={() => {
+            console.log('[POI_POPUP] Navigate Here button pressed');
+            onNavigate();
+          }}
         >
           <MaterialIcons name="navigation" size={18} color="white" />
           <Text style={styles.primaryButtonText}>Navigate Here</Text>
