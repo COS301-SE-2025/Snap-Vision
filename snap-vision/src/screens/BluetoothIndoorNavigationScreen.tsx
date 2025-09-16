@@ -10,11 +10,15 @@ import NavigationBar from '../components/molecules/NavigationBar';
 import DebugInfoBar from '../components/molecules/DebugInfoBar';
 import POIPopup from '../components/molecules/POIPopup';
 import POIInfoModal from '../components/molecules/POIInfoModal';
+import NavigationInstructionsBar from '../components/molecules/NavigationInstructionsBar';
+import DirectionsModal from '../components/organisms/DirectionsModal';
+import DestinationReachedPopup from '../components/molecules/DestinationReachedPopup';
 import IndoorSchematicMap from '../components/organisms/IndoorSchematicMap';
 import RoomsListOverlay from '../components/organisms/RoomsListOverlay';
 import { useRoomManager, RoomPOI } from '../hooks/useRoomManager';
 import { useFloorplanManager } from '../hooks/useFloorplanManager';
 import { useBeaconManager } from '../hooks/useBeaconManager';
+import { useNavigationManager } from '../hooks/useNavigationManager';
 
 type RootStackParamList = {
   BluetoothIndoorNavigation: {
@@ -41,6 +45,9 @@ export default function BluetoothIndoorNavigationScreen() {
   const [showPOIInfoModal, setShowPOIInfoModal] = useState(false);
   const [selectedPOI, setSelectedPOI] = useState<RoomPOI | null>(null);
 
+  // Navigation state
+  const [showDirectionsModal, setShowDirectionsModal] = useState(false);
+
   // Custom hooks for managing different aspects
   const roomManager = useRoomManager({ locationId, buildingId });
   const floorplanManager = useFloorplanManager({
@@ -52,6 +59,20 @@ export default function BluetoothIndoorNavigationScreen() {
     locationId,
     buildingId,
     selectedFloorId: roomManager.selectedFloorId,
+  });
+  const navigationManager = useNavigationManager({
+    locationId,
+    buildingId,
+    currentPosition: beaconManager.currentPos,
+    allRooms: roomManager.allRooms,
+  });
+
+  // Debug navigation manager state
+  console.log('[SCREEN] Navigation manager state:', {
+    isNavigating: navigationManager.isNavigating,
+    destination: navigationManager.destination?.name,
+    stepsCount: navigationManager.steps.length,
+    pathPOIsLoaded: navigationManager.pathPOIsLoaded,
   });
 
   const dotPx = useMemo(() => {
@@ -71,11 +92,27 @@ export default function BluetoothIndoorNavigationScreen() {
     }
   };
 
-  const handleNavigateHere = () => {
+  const handleNavigateHere = async () => {
+    console.log('[SCREEN] handleNavigateHere called');
+    console.log('[SCREEN] selectedPOI:', selectedPOI);
+    console.log('[SCREEN] Navigation manager isNavigating:', navigationManager.isNavigating);
+    
     if (selectedPOI) {
-      console.log('Navigate to:', selectedPOI.name);
-      // TODO: Implement navigation logic
-      setShowPOIPopup(false);
+      console.log('Starting navigation to:', selectedPOI.name);
+      const success = await navigationManager.startNavigation(selectedPOI);
+      console.log('[SCREEN] Navigation start result:', success);
+      
+      if (success) {
+        console.log('[SCREEN] Navigation started successfully, closing popup');
+        setShowPOIPopup(false);
+        // Optionally show directions modal
+        // setShowDirectionsModal(true);
+      } else {
+        console.warn('Failed to start navigation');
+        // Could show an error message here
+      }
+    } else {
+      console.warn('[SCREEN] No selectedPOI available');
     }
   };
 
@@ -152,9 +189,9 @@ export default function BluetoothIndoorNavigationScreen() {
           <IndoorSchematicMap
             rooms={roomManager.roomsOnSelectedFloor}
             startId={undefined} // Don't highlight any POI with destination color
-            endId={undefined}
-            routePolyline={[]}
-            completedPolyline={[]}
+            endId={navigationManager.destination?.id} // Highlight destination when navigating
+            routePolyline={navigationManager.routePolyline}
+            completedPolyline={navigationManager.completedPolyline}
             onSelectRoom={handleRoomSelect}
             themeColors={colors}
             currentPos={beaconManager.currentPos}
@@ -174,7 +211,10 @@ export default function BluetoothIndoorNavigationScreen() {
               }}
             >
               <Text style={{ color: colors.secondary, fontSize: 12 }}>
-                Waiting for beacon signals…
+                {beaconManager.isRunning 
+                  ? 'Improving location accuracy...' 
+                  : 'Waiting for beacon signals…'
+                }
               </Text>
             </View>
           )}
@@ -186,6 +226,34 @@ export default function BluetoothIndoorNavigationScreen() {
         rooms={roomManager.roomsOnSelectedFloor}
         onClose={() => setShowRoomsList(false)}
         onSelectRoom={handleRoomListSelect}
+        themeColors={colors}
+      />
+
+      <NavigationInstructionsBar
+        visible={navigationManager.isNavigating}
+        currentStep={navigationManager.steps[navigationManager.currentStep] || null}
+        stepNumber={navigationManager.currentStep}
+        totalSteps={navigationManager.steps.length}
+        destination={navigationManager.destination?.name || ''}
+        onShowAllDirections={() => setShowDirectionsModal(true)}
+        onStopNavigation={navigationManager.stopNavigation}
+        themeColors={colors}
+      />
+
+      <DirectionsModal
+        visible={showDirectionsModal}
+        onClose={() => setShowDirectionsModal(false)}
+        onStart={() => {}} // Already started
+        destination={navigationManager.destination?.name || ''}
+        steps={navigationManager.steps}
+        currentStep={navigationManager.currentStep}
+        isNavigating={navigationManager.isNavigating}
+      />
+
+      <DestinationReachedPopup
+        visible={navigationManager.destinationReached}
+        destination={navigationManager.destination?.name || ''}
+        onClose={navigationManager.handleDestinationReachedClose}
         themeColors={colors}
       />
 
