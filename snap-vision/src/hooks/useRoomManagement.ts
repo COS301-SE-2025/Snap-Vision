@@ -70,50 +70,51 @@ export const useRoomManagement = ({
     }
   }, [locationId, buildingId, floorLabel, onError]);
 
-  const saveRoomPOI = useCallback(async (webViewRef: any) => {
-    if (!roomData.name.trim()) {
-      onError('Room name is required');
-      return;
-    }
-    if (!currentPoint) {
-      onError('No location selected for the room.');
-      return;
-    }
-
-    try {
-      let roomId = editingRoomId;
-
-      if (!isEditing) {
-        roomId = generateRoomId(buildingId, floorLabel);
+  const saveRoomPOI = useCallback(
+    async (webViewRef: any) => {
+      if (!roomData.name.trim()) {
+        onError('Room name is required');
+        return;
+      }
+      if (!currentPoint) {
+        onError('No location selected for the room.');
+        return;
       }
 
-      const roomPOI: RoomPOI = {
-        id: roomId as string,
-        name: roomData.name,
-        buildingId: buildingId,
-        floorId: floorLabel,
-        coordinates: {
-          x: currentPoint.x,
-          y: currentPoint.y,
-        },
-        type: roomData.type,
-        description: roomData.description || null,
-        isEntrance: !!roomData.isEntrance,
-        connectorGroupId: roomData.connectorGroupId || '',
-      };
+      try {
+        let roomId = editingRoomId;
 
-      await firestore()
-        .collection(`locations/${locationId}/roomPOIs`)
-        .doc(roomId as string)
-        .set(roomPOI);
+        if (!isEditing) {
+          roomId = generateRoomId(buildingId, floorLabel);
+        }
 
-      if (isEditing) {
-        setRoomMarkers(roomMarkers.map((room) => (room.id === roomId ? roomPOI : room)));
-      } else {
-        setRoomMarkers([...roomMarkers, roomPOI]);
-      }
+        const roomPOI: RoomPOI = {
+          id: roomId as string,
+          name: roomData.name,
+          buildingId: buildingId,
+          floorId: floorLabel,
+          coordinates: {
+            x: currentPoint.x,
+            y: currentPoint.y,
+          },
+          type: roomData.type,
+          description: roomData.description || null,
+          isEntrance: !!roomData.isEntrance,
+          connectorGroupId: roomData.connectorGroupId || '',
+        };
 
-      webViewRef.current?.injectJavaScript(`
+        await firestore()
+          .collection(`locations/${locationId}/roomPOIs`)
+          .doc(roomId as string)
+          .set(roomPOI);
+
+        if (isEditing) {
+          setRoomMarkers(roomMarkers.map((room) => (room.id === roomId ? roomPOI : room)));
+        } else {
+          setRoomMarkers([...roomMarkers, roomPOI]);
+        }
+
+        webViewRef.current?.injectJavaScript(`
         addMarker("${roomId}", ${currentPoint.x}, ${currentPoint.y}, "${roomData.name}");
         true;
       `);
@@ -132,12 +133,15 @@ export const useRoomManagement = ({
       return;
     }
 
-    try {
-      await firestore().collection(`locations/${locationId}/roomPOIs`).doc(editingRoomId).delete();
+      try {
+        await firestore()
+          .collection(`locations/${locationId}/roomPOIs`)
+          .doc(editingRoomId)
+          .delete();
 
-      setRoomMarkers(roomMarkers.filter((room) => room.id !== editingRoomId));
+        setRoomMarkers(roomMarkers.filter((room) => room.id !== editingRoomId));
 
-      webViewRef.current?.injectJavaScript(`
+        webViewRef.current?.injectJavaScript(`
         const markerToRemove = document.getElementById('marker-${editingRoomId}');
         if (markerToRemove) {
           markerToRemove.remove();
@@ -167,22 +171,25 @@ export const useRoomManagement = ({
     setIsModalVisible(true);
   }, []);
 
-  const startEditRoom = useCallback((roomId: string) => {
-    const roomToEdit = roomMarkers.find((room) => room.id === roomId);
-    if (roomToEdit) {
-      setEditingRoomId(roomId);
-      setIsEditing(true);
-      setCurrentPoint(roomToEdit.coordinates);
-      setRoomData({
-        name: roomToEdit.name,
-        type: roomToEdit.type,
-        description: roomToEdit.description || '',
-        isEntrance: !!roomToEdit.isEntrance,
-        connectorGroupId: roomToEdit.connectorGroupId || '',
-      });
-      setIsModalVisible(true);
-    }
-  }, [roomMarkers]);
+  const startEditRoom = useCallback(
+    (roomId: string) => {
+      const roomToEdit = roomMarkers.find((room) => room.id === roomId);
+      if (roomToEdit) {
+        setEditingRoomId(roomId);
+        setIsEditing(true);
+        setCurrentPoint(roomToEdit.coordinates);
+        setRoomData({
+          name: roomToEdit.name,
+          type: roomToEdit.type,
+          description: roomToEdit.description || '',
+          isEntrance: !!roomToEdit.isEntrance,
+          connectorGroupId: roomToEdit.connectorGroupId || '',
+        });
+        setIsModalVisible(true);
+      }
+    },
+    [roomMarkers],
+  );
 
   const resetRoomForm = useCallback(() => {
     setRoomData({
@@ -204,7 +211,7 @@ export const useRoomManagement = ({
     roomData,
     isEditing,
     editingRoomId,
-    
+
     // Actions
     loadRoomPOIs,
     saveRoomPOI,

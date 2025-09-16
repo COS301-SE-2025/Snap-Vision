@@ -29,6 +29,12 @@ import IndoorNavigationInstructionsScreen from './src/screens/IndoorNavigationIn
 import IndoorSchematicNavScreen from './src/screens/IndoorSchematicNavScreen';
 import ARIndoorNavScreen from './src/screens/ARIndoorNavScreen';
 import QRCodeAdminScreen from './src/screens/QRCodeAdminScreen';
+import messaging from '@react-native-firebase/messaging';
+import { requestNotificationPermission, getFCMToken } from './src/services/NotificationService';
+import notifee from '@notifee/react-native';
+import { createDefaultChannel } from './src/services/NotificationService';
+import { displayForegroundNotification } from './src/services/NotificationService';
+import { setupFCM } from './src/services/NotificationService';
 
 import { navigationRef } from './src/navigation/RootNavigation';
 LogBox.ignoreLogs([
@@ -73,6 +79,24 @@ function AppInner() {
 
   useEffect(() => {
     initializePreBundledFloorplans();
+  }, []);
+
+  //fcm token for notifications upon loading of app
+  useEffect(() => {
+    setupFCM();
+  }, []);
+
+  //notfication channel needed for notifee
+  useEffect(() => {
+    createDefaultChannel();
+  }, []);
+
+  //foreground notifications
+  useEffect(() => {
+    const unsubscribe = messaging().onMessage(async (remoteMessage) => {
+      await displayForegroundNotification(remoteMessage);
+    });
+    return unsubscribe;
   }, []);
 
   return (

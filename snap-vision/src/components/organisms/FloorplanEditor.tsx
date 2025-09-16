@@ -15,19 +15,19 @@ interface FloorplanEditorProps {
   currentPath: { x: number; y: number }[];
   onTogglePathMode: () => void;
   onSavePath: () => void;
-  
+
   // WebView props
   imageUri: string;
   isDarkMode: boolean;
   onMessage: (event: { nativeEvent: { data: string } }) => void;
-  
+
   // Footer props
   roomCount: number;
   pathCount: number;
   selectedPathId: string | null;
   onDeletePath: () => void;
   onDone: () => void;
-  
+
   // Shared
   colors: {
     background: string;
@@ -36,7 +36,7 @@ interface FloorplanEditorProps {
     primary: string;
     card: string;
   };
-  
+
   // WebView ref forwarding
   webViewRef?: React.RefObject<FloorplanWebViewRef | null>;
 }

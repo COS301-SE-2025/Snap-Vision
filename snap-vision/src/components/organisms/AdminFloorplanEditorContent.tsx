@@ -29,7 +29,7 @@ export default function AdminFloorplanEditorContent() {
   const isDarkMode = isDark;
 
   const webViewRef = useRef<FloorplanWebViewRef>(null);
-  
+
   // Error/Success handling
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -79,7 +79,7 @@ export default function AdminFloorplanEditorContent() {
   // Load data on mount
   useEffect(() => {
     if (!route.params || !buildingId || !floorLabel) return;
-    
+
     roomManagement.loadRoomPOIs().then((markers) => {
       if (markers.length > 0) {
         setTimeout(() => {
@@ -96,7 +96,7 @@ export default function AdminFloorplanEditorContent() {
 
   useEffect(() => {
     if (!route.params || !buildingId || !floorLabel) return;
-    
+
     pathManagement.loadPaths().then((paths) => {
       if (paths.length > 0) {
         setTimeout(() => {
