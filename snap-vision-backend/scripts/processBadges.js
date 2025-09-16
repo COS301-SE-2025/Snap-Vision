@@ -1,7 +1,7 @@
 const admin = require("firebase-admin");
 
 // Adjust the path to your service account key file if needed
-const serviceAccountPath = "./serviceAccountKey.json";
+const serviceAccountPath = "../serviceAccountKey.json";
 
 let serviceAccount;
 try {
