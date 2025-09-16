@@ -397,24 +397,6 @@ export default function BluetoothIndoorNavigationScreen() {
           } />
         </View>
       )}
-
-      <View style={[styles.bluetoothFooter, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
-        <MaterialIcons name="bluetooth" size={16} color={visible ? colors.primary : 'orange'} />
-        <Text style={[styles.bluetoothText, { color: colors.secondary }]}>{visible ? 'Beacon navigation active' : 'Waiting for beacon signals'}</Text>
-        <TouchableOpacity style={[styles.refreshButton, { backgroundColor: colors.primary }]} onPress={() => {
-          (async () => {
-            try {
-              console.log(BT, 'Manual restart clicked');
-              await scannerRef.current.stop?.();
-              await new Promise(r => setTimeout(r, 400));
-              await scannerRef.current.start?.(handleBatch, { uuid: MINEW_DEFAULT_UUID, allowed: allowedList });
-              console.log(BT, '✅ Scanner manually restarted with whitelist');
-            } catch (e) { console.error(BT, 'Manual restart failed:', e); }
-          })();
-        }}>
-          <MaterialIcons name="refresh" size={16} color="white" />
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 }
@@ -440,9 +422,6 @@ const styles = StyleSheet.create({
   roomName: { fontSize: 16, fontWeight: '500', marginBottom: 2 },
   roomType: { fontSize: 14, marginBottom: 2 },
   roomDescription: { fontSize: 12 },
-  bluetoothFooter: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8, borderTopWidth: 1 },
-  bluetoothText: { fontSize: 12, marginLeft: 8, fontStyle: 'italic', flex: 1 },
-  refreshButton: { padding: 6, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
   debugBar: { paddingHorizontal: 12, paddingVertical: 6, borderBottomWidth: 1 },
   debugBarRow: { flexDirection: 'row', flexWrap: 'wrap', marginVertical: 2 },
   debugText: { fontSize: 10, fontFamily: 'monospace' },
