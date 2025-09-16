@@ -5,8 +5,8 @@ import {
   getUserBadgeData,
   completeChallengeForUser,
   incrementRoutesCompletedForUser,
-  getBadges,
 } from '../services/badgeService';
+import { BADGES } from '../types/badges';
 import auth from '@react-native-firebase/auth';
 import { Challenge } from '../types/achievements';
 
@@ -69,15 +69,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    const loadBadges = async () => {
-      try {
-        const badges = await getBadges();
-        setState(prev => ({ ...prev, badges: badges as Record<BadgeId, Badge> }));
-      } catch (e) {
-        console.warn('Failed to load badges:', e);
-      }
-    };
-    loadBadges();
+    setState(prev => ({ ...prev, badges: BADGES }));
   }, []);
 
   useEffect(() => {
