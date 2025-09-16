@@ -1,6 +1,14 @@
 // BluetoothIndoorNavigationScreen.tsx
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, TouchableOpacity, FlatList } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  ActivityIndicator,
+  TouchableOpacity,
+  FlatList,
+} from 'react-native';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -32,7 +40,7 @@ type RoomPOI = {
   name: string;
   buildingId: string;
   floorId: string;
-  coordinates: { x:number; y:number };
+  coordinates: { x: number; y: number };
   type?: string;
   description?: string | null;
   isEntrance?: boolean;
@@ -70,7 +78,6 @@ export default function BluetoothIndoorNavigationScreen() {
 
   const scannerRef = useRef(new NativeBeaconScanner());
 
-  // ⬇️ Pass beaconsMeta, and destructure handleBatch from the hook
   const { currentPos, visible, beacons, handleBatch } = useBluetoothPositioning({
     locationId,
     buildingId,
@@ -78,7 +85,7 @@ export default function BluetoothIndoorNavigationScreen() {
     scanner: scannerRef.current,
     pathLossN: 2.6,
     smoothing: 0.25,
-    beaconsMeta: floorBeacons,         // <-- give x,y,txPower to the solver
+    beaconsMeta: floorBeacons,
   });
 
   const [mapSize, setMapSize] = useState({ width: 0, height: 0 });
@@ -94,13 +101,14 @@ export default function BluetoothIndoorNavigationScreen() {
         setLoading(true);
         console.log(BT, 'Loading rooms for building:', buildingId);
         const roomSnap = await firestore()
-          .collection('locations').doc(locationId)
+          .collection('locations')
+          .doc(locationId)
           .collection('roomPOIs')
           .where('buildingId', '==', buildingId)
           .get();
-        const roomsData = roomSnap.docs.map(d => ({ id: d.id, ...d.data() })) as RoomPOI[];
+        const roomsData = roomSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as RoomPOI[];
         setAllRooms(roomsData);
-        const floorSet = Array.from(new Set(roomsData.map(r => r.floorId))).sort();
+        const floorSet = Array.from(new Set(roomsData.map((r) => r.floorId))).sort();
         setFloors(floorSet);
         if (floorSet.length > 0) setSelectedFloorId(floorSet[0]);
         console.log(BT, 'Rooms loaded:', roomsData.length, 'Floors:', floorSet);
@@ -121,8 +129,10 @@ export default function BluetoothIndoorNavigationScreen() {
         setFloorplanUrl(null);
 
         const fpSnap = await firestore()
-          .collection('locations').doc(locationId)
-          .collection('buildingPOIs').doc(buildingId)
+          .collection('locations')
+          .doc(locationId)
+          .collection('buildingPOIs')
+          .doc(buildingId)
           .collection('floorplans')
           .where('floorId', '==', selectedFloorId)
           .limit(1)
@@ -133,19 +143,25 @@ export default function BluetoothIndoorNavigationScreen() {
           const data: any = fpSnap.docs[0].data();
           url = data?.imageUrl || data?.url || null;
           if (!url && data?.storagePath) {
-            try { url = await storage().ref(data.storagePath).getDownloadURL(); }
-            catch (e) { console.warn(BT, 'getDownloadURL failed', e); }
+            try {
+              url = await storage().ref(data.storagePath).getDownloadURL();
+            } catch (e) {
+              console.warn(BT, 'getDownloadURL failed', e);
+            }
           }
         }
         if (!url) {
           try {
             const baseRef = storage().ref(`floorplans/${locationId}/${buildingId}`);
             const list = await baseRef.listAll();
-            const match = list.items.find(it =>
-              it.name.toLowerCase().includes(String(selectedFloorId).toLowerCase()),
-            ) || list.items[0];
+            const match =
+              list.items.find((it) =>
+                it.name.toLowerCase().includes(String(selectedFloorId).toLowerCase()),
+              ) || list.items[0];
             if (match) url = await match.getDownloadURL();
-          } catch (e) { console.warn(BT, 'Storage fallback failed', e); }
+          } catch (e) {
+            console.warn(BT, 'Storage fallback failed', e);
+          }
         }
         if (!cancelled) setFloorplanUrl(url ?? null);
         console.log(BT, 'Floorplan URL for floor', selectedFloorId, '=>', url ? 'OK' : 'MISSING');
@@ -156,7 +172,9 @@ export default function BluetoothIndoorNavigationScreen() {
         if (!cancelled) setFloorplanLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [buildingId, locationId, selectedFloorId]);
 
   // DB beacons (with x,y,txPower)
@@ -164,39 +182,53 @@ export default function BluetoothIndoorNavigationScreen() {
     if (!selectedFloorId) return;
     console.log(BT, 'Subscribing beacons for floor', selectedFloorId);
     const unsub = firestore()
-      .collection('locations').doc(locationId)
-      .collection('buildingPOIs').doc(buildingId)
-      .collection('floorplans').doc(selectedFloorId)
+      .collection('locations')
+      .doc(locationId)
+      .collection('buildingPOIs')
+      .doc(buildingId)
+      .collection('floorplans')
+      .doc(selectedFloorId)
       .collection('beacons')
-      .onSnapshot(snap => {
-        const norm: BeaconMeta[] = snap.docs.map(d => {
-          const b: any = d.data() || {};
-          return {
-            id: d.id,
-            label: b.label,
-            uuid: String(b.uuid || '').toLowerCase(),
-            major: Number(b.major),
-            minor: Number(b.minor),
-            txPowerAt1m: typeof b.txPowerAt1m === 'number' ? b.txPowerAt1m : undefined,
-            x: typeof b.x === 'number' ? b.x : undefined,
-            y: typeof b.y === 'number' ? b.y : undefined,
-          };
-        });
-        setFloorBeacons(norm);
-        console.log(BT, 'EXPECTED beacons (from DB):');
-        norm.forEach(b => {
-          console.log(BT, `  📍 ${b.label ?? '(unlabeled)'}: UUID=${b.uuid}, M=${b.major}, m=${b.minor}, tx=${b.txPowerAt1m ?? 'n/a'}, x=${b.x}, y=${b.y}`);
-        });
-      }, e => console.warn(BT, 'Beacon subscribe error', e));
+      .onSnapshot(
+        (snap) => {
+          const norm: BeaconMeta[] = snap.docs.map((d) => {
+            const b: any = d.data() || {};
+            return {
+              id: d.id,
+              label: b.label,
+              uuid: String(b.uuid || '').toLowerCase(),
+              major: Number(b.major),
+              minor: Number(b.minor),
+              txPowerAt1m: typeof b.txPowerAt1m === 'number' ? b.txPowerAt1m : undefined,
+              x: typeof b.x === 'number' ? b.x : undefined,
+              y: typeof b.y === 'number' ? b.y : undefined,
+            };
+          });
+          setFloorBeacons(norm);
+          console.log(BT, 'EXPECTED beacons (from DB):');
+          norm.forEach((b) => {
+            console.log(
+              BT,
+              `  ${b.label ?? '(unlabeled)'}: UUID=${b.uuid}, M=${b.major}, m=${b.minor}, tx=${b.txPowerAt1m ?? 'n/a'}, x=${b.x}, y=${b.y}`,
+            );
+          });
+        },
+        (e) => console.warn(BT, 'Beacon subscribe error', e),
+      );
     return () => unsub();
   }, [locationId, buildingId, selectedFloorId]);
 
   const allowedList = useMemo(
-    () => floorBeacons.map(b => ({ uuid: b.uuid, major: b.major, minor: b.minor, txPowerAt1m: b.txPowerAt1m })),
-    [floorBeacons]
+    () =>
+      floorBeacons.map((b) => ({
+        uuid: b.uuid,
+        major: b.major,
+        minor: b.minor,
+        txPowerAt1m: b.txPowerAt1m,
+      })),
+    [floorBeacons],
   );
 
-  // Auto scan on focus — IMPORTANT: feed handleBatch to scanner.start
   useFocusEffect(
     useCallback(() => {
       if (!selectedFloorId) return;
@@ -207,37 +239,48 @@ export default function BluetoothIndoorNavigationScreen() {
             await scannerRef.current.stop();
           }
           console.log(BT, 'Starting scanner with UUID + whitelist… size=', allowedList.length);
-          await scannerRef.current.start(handleBatch, {   // <-- feed batches to the hook
+          await scannerRef.current.start(handleBatch, {
             uuid: MINEW_DEFAULT_UUID,
             allowed: allowedList,
           });
-          console.log(BT, '✅ Scanner started (focus)');
+          console.log(BT, 'Scanner started (focus)');
         } catch (e) {
-          console.error(BT, '❌ Scanner start error (focus):', e);
+          console.error(BT, 'Scanner start error (focus):', e);
         }
       })();
-      return () => { (async () => { try { await scannerRef.current.stop?.(); } catch {} })(); };
-    }, [selectedFloorId, allowedList, handleBatch])
+      return () => {
+        (async () => {
+          try {
+            await scannerRef.current.stop?.();
+          } catch {}
+        })();
+      };
+    }, [selectedFloorId, allowedList, handleBatch]),
   );
 
   // Debug
-  useEffect(() => { console.log(BT, 'DB Beacons count:', floorBeacons.length); }, [floorBeacons.length]);
+  useEffect(() => {
+    console.log(BT, 'DB Beacons count:', floorBeacons.length);
+  }, [floorBeacons.length]);
   useEffect(() => {
     if (beacons?.length) {
-      console.log(BT, '🔍 DETECTED beacons from scanner:');
+      console.log(BT, 'DETECTED beacons from scanner:');
       beacons.slice(0, 10).forEach((b, index) => {
-        console.log(BT, `  📡 Detected ${index + 1}: UUID=${b.uuid}, Major=${b.major}, Minor=${b.minor}, RSSI=${b.rssi}`);
+        console.log(
+          BT,
+          `  Detected ${index + 1}: UUID=${b.uuid}, Major=${b.major}, Minor=${b.minor}, RSSI=${b.rssi}`,
+        );
       });
-      
-      // Show if any match our expected pattern (major=1, minor=1,2,3)
-      const expectedMatches = beacons.filter(b => b.major === 1 && [1,2,3].includes(b.minor));
+
+      // Show if any match expected pattern (major=1, minor=1,2,3)
+      const expectedMatches = beacons.filter((b) => b.major === 1 && [1, 2, 3].includes(b.minor));
       if (expectedMatches.length > 0) {
-        console.log(BT, '✅ Found expected pattern matches:', expectedMatches.length);
-        expectedMatches.forEach(m => {
-          console.log(BT, `  ✅ Match: Major=${m.major}, Minor=${m.minor}, RSSI=${m.rssi}`);
+        console.log(BT, 'Found expected pattern matches:', expectedMatches.length);
+        expectedMatches.forEach((m) => {
+          console.log(BT, `  Match: Major=${m.major}, Minor=${m.minor}, RSSI=${m.rssi}`);
         });
       } else {
-        console.log(BT, '❌ No beacons match expected pattern (Major=1, Minor=1,2,3)');
+        console.log(BT, 'No beacons match expected pattern (Major=1, Minor=1,2,3)');
       }
     }
   }, [beacons]);
@@ -245,53 +288,82 @@ export default function BluetoothIndoorNavigationScreen() {
   // Debug beacon matching
   useEffect(() => {
     if (floorBeacons.length > 0 && beacons?.length > 0) {
-      console.log(BT, '🔍 BEACON MATCHING DEBUG:');
+      console.log(BT, 'BEACON MATCHING DEBUG:');
       console.log(BT, 'Database beacons (expected):');
-      floorBeacons.forEach(db => {
-        console.log(BT, `  DB: ${db.label} - UUID="${db.uuid}" Major=${db.major} Minor=${db.minor} x=${db.x} y=${db.y}`);
+      floorBeacons.forEach((db) => {
+        console.log(
+          BT,
+          `  DB: ${db.label} - UUID="${db.uuid}" Major=${db.major} Minor=${db.minor} x=${db.x} y=${db.y}`,
+        );
       });
       console.log(BT, 'Detected beacons (from scanner):');
-      beacons.slice(0, 5).forEach(det => {
-        console.log(BT, `  DETECTED: UUID="${det.uuid}" Major=${det.major} Minor=${det.minor} RSSI=${det.rssi}`);
-        
+      beacons.slice(0, 5).forEach((det) => {
+        console.log(
+          BT,
+          `  DETECTED: UUID="${det.uuid}" Major=${det.major} Minor=${det.minor} RSSI=${det.rssi}`,
+        );
+
         // Check if this detected beacon matches any database beacon
-        const exactMatch = floorBeacons.find(db => 
-          db.uuid === det.uuid && db.major === det.major && db.minor === det.minor
+        const exactMatch = floorBeacons.find(
+          (db) => db.uuid === det.uuid && db.major === det.major && db.minor === det.minor,
         );
-        const majorMinorMatch = floorBeacons.find(db => 
-          db.major === det.major && db.minor === det.minor
+        const majorMinorMatch = floorBeacons.find(
+          (db) => db.major === det.major && db.minor === det.minor,
         );
-        
+
         if (exactMatch) {
-          console.log(BT, `    ✅ EXACT MATCH with ${exactMatch.label} (x=${exactMatch.x}, y=${exactMatch.y})`);
+          console.log(
+            BT,
+            `    EXACT MATCH with ${exactMatch.label} (x=${exactMatch.x}, y=${exactMatch.y})`,
+          );
         } else if (majorMinorMatch) {
-          console.log(BT, `    🟡 MAJOR/MINOR MATCH with ${majorMinorMatch.label} (UUID differs, x=${majorMinorMatch.x}, y=${majorMinorMatch.y})`);
+          console.log(
+            BT,
+            `    MAJOR/MINOR MATCH with ${majorMinorMatch.label} (UUID differs, x=${majorMinorMatch.x}, y=${majorMinorMatch.y})`,
+          );
         } else {
-          console.log(BT, `    ❌ NO MATCH found`);
+          console.log(BT, `    NO MATCH found`);
         }
       });
-      
-      // Check if we have enough beacons with coordinates for positioning
-      const beaconsWithCoords = floorBeacons.filter(b => typeof b.x === 'number' && typeof b.y === 'number');
-      console.log(BT, `📍 Beacons with coordinates: ${beaconsWithCoords.length}/3 needed for positioning`);
+
+      // Check if we have enough beacons with coordinates for positioning (3)
+      const beaconsWithCoords = floorBeacons.filter(
+        (b) => typeof b.x === 'number' && typeof b.y === 'number',
+      );
+      console.log(
+        BT,
+        `Beacons with coordinates: ${beaconsWithCoords.length}/3 needed for positioning`,
+      );
       if (beaconsWithCoords.length < 3) {
-        console.log(BT, '⚠️ Need at least 3 beacons with x,y coordinates for trilateration');
-        beaconsWithCoords.forEach(b => {
-          console.log(BT, `  📍 ${b.label}: (${b.x}, ${b.y})`);
+        console.log(BT, 'Need at least 3 beacons with x,y coordinates for trilateration');
+        beaconsWithCoords.forEach((b) => {
+          console.log(BT, `  ${b.label}: (${b.x}, ${b.y})`);
         });
       }
     }
   }, [floorBeacons, beacons]);
-  
+
   useEffect(() => {
-    console.log(BT, 'Live position:', currentPos ? { x:+currentPos.x.toFixed(3), y:+currentPos.y.toFixed(3) } : '—', 'visible=', visible);
+    console.log(
+      BT,
+      'Live position:',
+      currentPos ? { x: +currentPos.x.toFixed(3), y: +currentPos.y.toFixed(3) } : '—',
+      'visible=',
+      visible,
+    );
   }, [currentPos, visible]);
 
   // POIs UI
-  const roomsOnSelectedFloor = useMemo(() => allRooms.filter(r => r.floorId === selectedFloorId), [allRooms, selectedFloorId]);
+  const roomsOnSelectedFloor = useMemo(
+    () => allRooms.filter((r) => r.floorId === selectedFloorId),
+    [allRooms, selectedFloorId],
+  );
   const handleRoomSelect = (roomId: string) => {
-    const room = allRooms.find(r => r.id === roomId);
-    if (room) { setSelectedRoom(room); console.log(BT, 'Room selected:', room.name); }
+    const room = allRooms.find((r) => r.id === roomId);
+    if (room) {
+      setSelectedRoom(room);
+      console.log(BT, 'Room selected:', room.name);
+    }
   };
 
   if (loading) {
@@ -300,7 +372,9 @@ export default function BluetoothIndoorNavigationScreen() {
         <SettingsHeader title={`${buildingName} - Bluetooth Navigation`} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: colors.secondary }]}>Loading building layout...</Text>
+          <Text style={[styles.loadingText, { color: colors.secondary }]}>
+            Loading building layout...
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -318,24 +392,32 @@ export default function BluetoothIndoorNavigationScreen() {
           dropdownIconColor={colors.text}
           mode="dropdown"
         >
-          {floors.map((f) => <Picker.Item key={f} label={`Floor ${f}`} value={f} color={colors.text} />)}
+          {floors.map((f) => (
+            <Picker.Item key={f} label={`Floor ${f}`} value={f} color={colors.text} />
+          ))}
         </Picker>
 
-        <TouchableOpacity style={[styles.roomsButton, { backgroundColor: colors.primary }]} onPress={() => setShowRoomsList(!showRoomsList)}>
+        <TouchableOpacity
+          style={[styles.roomsButton, { backgroundColor: colors.primary }]}
+          onPress={() => setShowRoomsList(!showRoomsList)}
+        >
           <MaterialIcons name="list" size={16} color="white" />
           <Text style={styles.roomsButtonText}>Rooms ({roomsOnSelectedFloor.length})</Text>
         </TouchableOpacity>
       </View>
 
       {__DEV__ && (
-        <View style={[styles.debugBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <View
+          style={[
+            styles.debugBar,
+            { backgroundColor: colors.card, borderBottomColor: colors.border },
+          ]}
+        >
           <View style={styles.debugBarRow}>
             <Text style={[styles.debugText, { color: colors.text }]}>
-              Scanner: {scannerRef.current.isRunning?.() ? '✅' : '❌'} |
-              DB Beacons: {floorBeacons.length} |
-              Hook Beacons: {beacons?.length ?? 0} |
-              Position: {currentPos ? '✅' : '❌'} |
-              Visible: {visible ? '✅' : '❌'}
+              Scanner: {scannerRef.current.isRunning?.() ? 'Y' : 'N'} | DB Beacons:{' '}
+              {floorBeacons.length} | Hook Beacons: {beacons?.length ?? 0} | Position:{' '}
+              {currentPos ? 'Y' : 'N'} | Visible: {visible ? 'Y' : 'N'}
             </Text>
           </View>
           {currentPos && (
@@ -345,17 +427,22 @@ export default function BluetoothIndoorNavigationScreen() {
               </Text>
             </View>
           )}
-          <View style={styles.debugBarRow}>
-            <Text style={[styles.debugNote, { color: colors.secondary }]}>
-              Accepts iBeacon UUID or Minew service frames (fef3/c5e2) via major/minor match
-            </Text>
-          </View>
+          <View style={styles.debugBarRow}></View>
         </View>
       )}
 
       <View style={{ flex: 1 }}>
-        {floorplanLoading && <View style={styles.loadingOverlay}><ActivityIndicator size="large" color={colors.primary} /></View>}
-        <View style={{ flex: 1 }} onLayout={e => setMapSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })}>
+        {floorplanLoading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        )}
+        <View
+          style={{ flex: 1 }}
+          onLayout={(e) =>
+            setMapSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })
+          }
+        >
           <IndoorSchematicMap
             rooms={roomsOnSelectedFloor}
             startId={selectedRoom?.id}
@@ -368,8 +455,21 @@ export default function BluetoothIndoorNavigationScreen() {
             floorplanUrl={floorplanUrl || undefined}
           />
           {!visible && (
-            <View style={{ position: 'absolute', bottom: 8, left: 8, right: 8, alignItems: 'center', paddingVertical: 6, borderRadius: 12, backgroundColor: colors.card }}>
-              <Text style={{ color: colors.secondary, fontSize: 12 }}>Waiting for beacon signals…</Text>
+            <View
+              style={{
+                position: 'absolute',
+                bottom: 8,
+                left: 8,
+                right: 8,
+                alignItems: 'center',
+                paddingVertical: 6,
+                borderRadius: 12,
+                backgroundColor: colors.card,
+              }}
+            >
+              <Text style={{ color: colors.secondary, fontSize: 12 }}>
+                Waiting for beacon signals…
+              </Text>
             </View>
           )}
         </View>
@@ -379,22 +479,51 @@ export default function BluetoothIndoorNavigationScreen() {
         <View style={[styles.roomsListOverlay, { backgroundColor: colors.background }]}>
           <View style={[styles.roomsListHeader, { borderBottomColor: colors.border }]}>
             <Text style={[styles.roomsListTitle, { color: colors.text }]}>Rooms & POIs</Text>
-            <TouchableOpacity onPress={() => setShowRoomsList(false)} style={styles.closeListButton}>
+            <TouchableOpacity
+              onPress={() => setShowRoomsList(false)}
+              style={styles.closeListButton}
+            >
               <MaterialIcons name="close" size={24} color={colors.secondary} />
             </TouchableOpacity>
           </View>
-          <FlatList data={roomsOnSelectedFloor} keyExtractor={(item) => item.id} renderItem={({item}) =>
-            <TouchableOpacity style={[styles.roomItem, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => { setSelectedRoom(item); setShowRoomsList(false); }}>
-              <View style={styles.roomContent}>
-                <MaterialIcons name={item.type === 'office' ? 'meeting-room' : 'place'} size={20} color={colors.primary} />
-                <View style={styles.roomDetails}>
-                  <Text style={[styles.roomName, { color: colors.text }]}>{item.name}</Text>
-                  <Text style={[styles.roomType, { color: colors.secondary }]}>{item.type || 'POI'}</Text>
-                  {item.description && <Text style={[styles.roomDescription, { color: colors.secondary }]} numberOfLines={1}>{item.description}</Text>}
+          <FlatList
+            data={roomsOnSelectedFloor}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[
+                  styles.roomItem,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                ]}
+                onPress={() => {
+                  setSelectedRoom(item);
+                  setShowRoomsList(false);
+                }}
+              >
+                <View style={styles.roomContent}>
+                  <MaterialIcons
+                    name={item.type === 'office' ? 'meeting-room' : 'place'}
+                    size={20}
+                    color={colors.primary}
+                  />
+                  <View style={styles.roomDetails}>
+                    <Text style={[styles.roomName, { color: colors.text }]}>{item.name}</Text>
+                    <Text style={[styles.roomType, { color: colors.secondary }]}>
+                      {item.type || 'POI'}
+                    </Text>
+                    {item.description && (
+                      <Text
+                        style={[styles.roomDescription, { color: colors.secondary }]}
+                        numberOfLines={1}
+                      >
+                        {item.description}
+                      </Text>
+                    )}
+                  </View>
                 </View>
-              </View>
-            </TouchableOpacity>
-          } />
+              </TouchableOpacity>
+            )}
+          />
         </View>
       )}
     </SafeAreaView>
@@ -405,16 +534,44 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: 16, fontSize: 16 },
-  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 8 },
-  roomsButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  roomsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
   roomsButtonText: { color: 'white', fontSize: 12, fontWeight: '500', marginLeft: 4 },
-  selectedRoomBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8 },
+  selectedRoomBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
   selectedRoomContent: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   selectedRoomText: { color: 'white', fontSize: 14, fontWeight: '500', marginLeft: 8 },
   closeListButton: { padding: 4 },
-  loadingOverlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', zIndex: 5 },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 5,
+  },
   roomsListOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000 },
-  roomsListHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1 },
+  roomsListHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
   roomsListTitle: { fontSize: 18, fontWeight: '600', flex: 1 },
   roomItem: { borderBottomWidth: 1, paddingHorizontal: 16, paddingVertical: 12 },
   roomContent: { flexDirection: 'row', alignItems: 'center' },

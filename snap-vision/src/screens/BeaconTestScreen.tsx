@@ -49,7 +49,7 @@ export default function BeaconTestScreen() {
   // Add a log entry
   const addLog = (message: string) => {
     const timestamp = new Date().toLocaleTimeString();
-    setLogs(prev => [`[${timestamp}] ${message}`, ...prev.slice(0, 99)]); // Keep last 100 logs
+    setLogs((prev) => [`[${timestamp}] ${message}`, ...prev.slice(0, 99)]); // Keep last 100 logs
   };
 
   // Request permissions for BLE scanning
@@ -73,11 +73,11 @@ export default function BeaconTestScreen() {
     try {
       addLog(`Requesting ${perms.length} permissions...`);
       const results = await PermissionsAndroid.requestMultiple(perms);
-      
+
       const granted = Object.values(results).every(
-        result => result === PermissionsAndroid.RESULTS.GRANTED
+        (result) => result === PermissionsAndroid.RESULTS.GRANTED,
       );
-      
+
       if (granted) {
         addLog('✅ All permissions granted');
         return true;
@@ -103,36 +103,36 @@ export default function BeaconTestScreen() {
         addLog('❌ MinewScanner module not found!');
         return false;
       }
-      
+
       if (!Minew.checkBluetoothStatus) {
         addLog('❌ checkBluetoothStatus method not found!');
         return false;
       }
-      
+
       const status = await Minew.checkBluetoothStatus();
       setBluetoothStatus(status);
-      
+
       if (!status.available) {
         addLog(`❌ Bluetooth not available: ${status.status}`);
         return false;
       }
-      
+
       if (!status.enabled) {
         addLog(`❌ Bluetooth is turned off: ${status.status}`);
         return false;
       }
-      
+
       addLog(`✅ Bluetooth ready: ${status.status}`);
       if (status.name) addLog(`Device name: ${status.name}`);
       if (status.address) addLog(`Device address: ${status.address}`);
-      
+
       return true;
     } catch (err) {
       addLog(`❌ Error checking Bluetooth status: ${err}`);
       return false;
     }
   };
-  
+
   // Setup Minew scanner
   const setupMinew = async () => {
     try {
@@ -142,7 +142,7 @@ export default function BeaconTestScreen() {
         addLog('❌ MinewScanner module not found!');
         return false;
       }
-      
+
       // Check if we can access the Minew SDK
       try {
         const isRunning = await Minew.isRunning();
@@ -150,7 +150,7 @@ export default function BeaconTestScreen() {
       } catch (e) {
         addLog(`❌ Error checking Minew status: ${e}`);
       }
-      
+
       minewRef.current = Minew;
       minewEmitterRef.current = new NativeEventEmitter(Minew);
       addLog('✅ Minew scanner setup complete');
@@ -167,7 +167,7 @@ export default function BeaconTestScreen() {
       addLog('Already scanning, stopping first...');
       await stopScan();
     }
-    
+
     try {
       addLog('Starting scan...');
       const permsOk = await requestPermissions();
@@ -175,32 +175,32 @@ export default function BeaconTestScreen() {
         addLog('❌ Cannot start without permissions');
         return;
       }
-      
+
       // Check Bluetooth status
       const btStatus = await checkBluetoothStatus();
       if (!btStatus) {
         addLog('❌ Bluetooth not ready, cannot scan');
         return;
       }
-      
-      if (!await setupMinew()) {
+
+      if (!(await setupMinew())) {
         addLog('❌ Failed to setup Minew scanner');
         return;
       }
-      
+
       // Clear previous state
       setDetectedBeacons([]);
       setDebugEvents([]);
-      
+
       // Setup beacon listener
       addLog('Setting up beacon listener...');
       beaconSubRef.current = minewEmitterRef.current.addListener('onBeacon', (beacon: any) => {
-        setDetectedBeacons(prev => {
+        setDetectedBeacons((prev) => {
           // Check if we already have this beacon
           const existingIndex = prev.findIndex(
-            b => b.uuid === beacon.uuid && b.major === beacon.major && b.minor === beacon.minor
+            (b) => b.uuid === beacon.uuid && b.major === beacon.major && b.minor === beacon.minor,
           );
-          
+
           if (existingIndex >= 0) {
             // Update existing beacon
             const newList = [...prev];
@@ -210,53 +210,61 @@ export default function BeaconTestScreen() {
               txPower: beacon.txPower,
               timestamp: beacon.timestamp,
               count: (newList[existingIndex].count || 0) + 1,
-              lastSeen: new Date().toLocaleTimeString()
+              lastSeen: new Date().toLocaleTimeString(),
             };
             return newList;
           } else {
             // Add new beacon
-            const isTarget = beacon.major === 1 && (beacon.minor === 1 || beacon.minor === 2 || beacon.minor === 3);
+            const isTarget =
+              beacon.major === 1 &&
+              (beacon.minor === 1 || beacon.minor === 2 || beacon.minor === 3);
             const isCorrectUuid = beacon.uuid?.toLowerCase() === MINEW_DEFAULT_UUID.toLowerCase();
-            
-            addLog(`📡 New beacon: UUID=${beacon.uuid}, M:${beacon.major}, m:${beacon.minor}, RSSI:${beacon.rssi} ${isTarget ? '✅ TARGET' : ''}`);
-            
-            return [...prev, {
-              ...beacon,
-              count: 1,
-              firstSeen: new Date().toLocaleTimeString(),
-              lastSeen: new Date().toLocaleTimeString(),
-              isTarget,
-              isCorrectUuid
-            }];
+
+            addLog(
+              `📡 New beacon: UUID=${beacon.uuid}, M:${beacon.major}, m:${beacon.minor}, RSSI:${beacon.rssi} ${isTarget ? '✅ TARGET' : ''}`,
+            );
+
+            return [
+              ...prev,
+              {
+                ...beacon,
+                count: 1,
+                firstSeen: new Date().toLocaleTimeString(),
+                lastSeen: new Date().toLocaleTimeString(),
+                isTarget,
+                isCorrectUuid,
+              },
+            ];
           }
         });
       });
-      
+
       // Setup debug listener
       addLog('Setting up debug listener...');
       debugSubRef.current = minewEmitterRef.current.addListener('onBeaconDebug', (debug: any) => {
         const timestamp = new Date().toLocaleTimeString();
-        
-        setDebugEvents(prev => [{
-          ...debug,
-          timestamp,
-          id: `${timestamp}-${Math.random().toString(36).substr(2, 5)}`
-        }, ...prev.slice(0, 49)]); // Keep last 50 debug events
-        
+
+        setDebugEvents((prev) => [
+          {
+            ...debug,
+            timestamp,
+            id: `${timestamp}-${Math.random().toString(36).substr(2, 5)}`,
+          },
+          ...prev.slice(0, 49),
+        ]); // Keep last 50 debug events
+
         // Also log important debug events
         if (debug.message === 'iBeacon detected') {
           addLog(`🔔 iBeacon detected: UUID=${debug.uuid}, M:${debug.major}, m:${debug.minor}`);
-        }
-        else if (debug.message === 'Raw peripheral detected') {
+        } else if (debug.message === 'Raw peripheral detected') {
           addLog(`📱 Peripheral: ${debug.mac}, RSSI:${debug.rssi}`);
         }
       });
-      
+
       // Start scanning with no UUID filter to see everything
       await minewRef.current.startScan({});
       addLog('✅ Scan started');
       setIsScanning(true);
-      
     } catch (err) {
       addLog(`❌ Error starting scan: ${err}`);
     }
@@ -266,23 +274,23 @@ export default function BeaconTestScreen() {
   const stopScan = async () => {
     try {
       addLog('Stopping scan...');
-      
+
       // Remove listeners
       if (beaconSubRef.current) {
         beaconSubRef.current.remove();
         beaconSubRef.current = null;
       }
-      
+
       if (debugSubRef.current) {
         debugSubRef.current.remove();
         debugSubRef.current = null;
       }
-      
+
       // Stop native scanner
       if (minewRef.current) {
         await minewRef.current.stopScan();
       }
-      
+
       addLog('✅ Scan stopped');
       setIsScanning(false);
     } catch (err) {
@@ -297,7 +305,7 @@ export default function BeaconTestScreen() {
       await stopRawScan();
       return;
     }
-    
+
     try {
       addLog('Starting raw Bluetooth device scan...');
       const permsOk = await requestPermissions();
@@ -305,45 +313,43 @@ export default function BeaconTestScreen() {
         addLog('❌ Cannot start raw scan without permissions');
         return;
       }
-      
+
       // Import BLE Manager
       const BleManager = require('react-native-ble-manager').default;
-      
+
       // Start BLE Manager
       await BleManager.start({ showAlert: false });
       addLog('✅ BLE Manager started');
-      
+
       // Check state
       const state = await BleManager.checkState();
       addLog(`Bluetooth state: ${state}`);
-      
+
       if (state !== 'on') {
         addLog('❌ Bluetooth is not enabled');
-        Alert.alert(
-          'Bluetooth Required',
-          'Please enable Bluetooth to scan for devices',
-          [{ text: 'OK' }]
-        );
+        Alert.alert('Bluetooth Required', 'Please enable Bluetooth to scan for devices', [
+          { text: 'OK' },
+        ]);
         return;
       }
-      
+
       // Clear previous devices
       setRawDevices([]);
-      
+
       // Start scan
       addLog('Starting raw BLE scan (5 seconds)...');
       setIsRawScanning(true);
-      
+
       // Start scan with no filters to see all devices
       await BleManager.scan([], 5, true);
-      
+
       // Set a timeout to get results
       setTimeout(async () => {
         try {
           // Get discovered devices
           const devices = await BleManager.getDiscoveredPeripherals();
           addLog(`Raw scan found ${devices.length} devices`);
-          
+
           // Process devices
           const formattedDevices = devices.map((device: any) => ({
             id: device.id,
@@ -356,47 +362,46 @@ export default function BeaconTestScreen() {
             serviceData: device.advertising?.serviceData,
             serviceUUIDs: device.advertising?.serviceUUIDs,
             // Check if this might be a Minew beacon based on name or service UUIDs
-            possibleMinew: 
+            possibleMinew:
               (device.name && device.name.toLowerCase().includes('minew')) ||
               (device.id && device.id.toLowerCase().includes('minew')) ||
-              (device.advertising?.serviceUUIDs?.some((uuid: string) => 
-                uuid.toLowerCase().includes('e2c56db5')
-              )),
+              device.advertising?.serviceUUIDs?.some((uuid: string) =>
+                uuid.toLowerCase().includes('e2c56db5'),
+              ),
           }));
-          
+
           // Sort with possible Minew beacons first
           formattedDevices.sort((a, b) => {
             if (a.possibleMinew && !b.possibleMinew) return -1;
             if (!a.possibleMinew && b.possibleMinew) return 1;
             return (b.rssi || -100) - (a.rssi || -100); // Then by signal strength
           });
-          
+
           setRawDevices(formattedDevices);
-          
+
           // Log interesting devices
           formattedDevices.forEach((device, index) => {
             if (device.possibleMinew) {
               addLog(`🔍 Possible Minew: ${device.name || device.id} (RSSI: ${device.rssi})`);
-            } else if (index < 5) { // Only log first few non-Minew devices
+            } else if (index < 5) {
+              // Only log first few non-Minew devices
               addLog(`📱 Device: ${device.name || device.id} (RSSI: ${device.rssi})`);
             }
           });
-          
+
           setIsRawScanning(false);
           addLog('Raw scan completed');
-          
         } catch (e) {
           addLog(`❌ Error getting raw devices: ${e}`);
           setIsRawScanning(false);
         }
       }, 6000);
-      
     } catch (e) {
       addLog(`❌ Error in raw scan: ${e}`);
       setIsRawScanning(false);
     }
   };
-  
+
   const stopRawScan = async () => {
     try {
       const BleManager = require('react-native-ble-manager').default;
@@ -413,28 +418,28 @@ export default function BeaconTestScreen() {
     addLog('Testing for specific beacon values...');
     addLog(`Looking for UUID=${MINEW_DEFAULT_UUID}`);
     addLog('Looking for Major=1, Minors=[1,2,3]');
-    
+
     // Make logs more visible
-    setLogs(prev => [
+    setLogs((prev) => [
       '==== EXPECTED MINEW BEACON CONFIGURATIONS ====',
       `UUID: ${MINEW_DEFAULT_UUID}`,
       'Major: 1',
       'Minors: 1, 2, 3',
       '=======================================',
-      ...prev
+      ...prev,
     ]);
-    
+
     // Check Bluetooth status
     await checkBluetoothStatus();
-    
+
     // Add useful debug info about Minew module
     try {
       if (minewRef.current) {
-        addLog(`Is Minew scanner running: ${await minewRef.current.isRunning() ? 'YES' : 'NO'}`);
+        addLog(`Is Minew scanner running: ${(await minewRef.current.isRunning()) ? 'YES' : 'NO'}`);
       } else {
         const Minew = NativeModules.MinewScanner;
         if (Minew) {
-          addLog(`Is Minew scanner running: ${await Minew.isRunning() ? 'YES' : 'NO'}`);
+          addLog(`Is Minew scanner running: ${(await Minew.isRunning()) ? 'YES' : 'NO'}`);
         } else {
           addLog('❌ MinewScanner module not found');
         }
@@ -456,65 +461,60 @@ export default function BeaconTestScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
-      
+
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+      <View
+        style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}
+      >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>
-          Beacon Test Mode
-        </Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Beacon Test Mode</Text>
         <View style={styles.spacer} />
       </View>
-      
+
       {/* Control Panel */}
-      <View style={[styles.controlPanel, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View
+        style={[
+          styles.controlPanel,
+          { backgroundColor: colors.card, borderBottomColor: colors.border },
+        ]}
+      >
         <View style={styles.controlRow}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[
-              styles.controlButton, 
-              { backgroundColor: isScanning ? colors.notification : colors.primary }
+              styles.controlButton,
+              { backgroundColor: isScanning ? colors.notification : colors.primary },
             ]}
             onPress={isScanning ? stopScan : startScan}
           >
-            <MaterialIcons 
-              name={isScanning ? "stop" : "play-arrow"} 
-              size={20} 
-              color="white" 
-            />
-            <Text style={styles.buttonText}>
-              {isScanning ? "Stop Scan" : "Minew Scan"}
-            </Text>
+            <MaterialIcons name={isScanning ? 'stop' : 'play-arrow'} size={20} color="white" />
+            <Text style={styles.buttonText}>{isScanning ? 'Stop Scan' : 'Minew Scan'}</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.controlButton, { backgroundColor: isRawScanning ? colors.notification : 'purple' }]}
+
+          <TouchableOpacity
+            style={[
+              styles.controlButton,
+              { backgroundColor: isRawScanning ? colors.notification : 'purple' },
+            ]}
             onPress={scanRawDevices}
             disabled={isScanning}
           >
-            <MaterialIcons name={isRawScanning ? "stop" : "search"} size={20} color="white" />
-            <Text style={styles.buttonText}>
-              {isRawScanning ? "Stop Raw" : "Raw BLE"}
-            </Text>
+            <MaterialIcons name={isRawScanning ? 'stop' : 'search'} size={20} color="white" />
+            <Text style={styles.buttonText}>{isRawScanning ? 'Stop Raw' : 'Raw BLE'}</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={[styles.controlButton, { backgroundColor: colors.secondary }]}
             onPress={testSpecificBeacon}
           >
             <MaterialIcons name="lightbulb" size={20} color="white" />
-            <Text style={styles.buttonText}>
-              Beacon Info
-            </Text>
+            <Text style={styles.buttonText}>Beacon Info</Text>
           </TouchableOpacity>
         </View>
-        
+
         <View style={styles.controlRow}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.controlButton, { backgroundColor: colors.border }]}
             onPress={() => {
               setLogs([]);
@@ -523,105 +523,132 @@ export default function BeaconTestScreen() {
             }}
           >
             <MaterialIcons name="clear" size={20} color="white" />
-            <Text style={styles.buttonText}>
-              Clear Logs
-            </Text>
+            <Text style={styles.buttonText}>Clear Logs</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={[styles.controlButton, { backgroundColor: 'orange' }]}
             onPress={checkBluetoothStatus}
           >
             <MaterialIcons name="bluetooth" size={20} color="white" />
-            <Text style={styles.buttonText}>
-              BT Status
-            </Text>
+            <Text style={styles.buttonText}>BT Status</Text>
           </TouchableOpacity>
         </View>
       </View>
-      
+
       {/* Bluetooth Status */}
       {bluetoothStatus.status && (
-        <View style={[styles.btStatusBar, { 
-          backgroundColor: bluetoothStatus.enabled ? colors.success + '20' : colors.notification + '20',
-          borderBottomColor: colors.border
-        }]}>
-          <MaterialIcons 
+        <View
+          style={[
+            styles.btStatusBar,
+            {
+              backgroundColor: bluetoothStatus.enabled
+                ? colors.success + '20'
+                : colors.notification + '20',
+              borderBottomColor: colors.border,
+            },
+          ]}
+        >
+          <MaterialIcons
             name="bluetooth"
             size={16}
             color={bluetoothStatus.enabled ? 'green' : 'red'}
           />
-          <Text style={[styles.btStatusText, { 
-            color: bluetoothStatus.enabled ? 'green' : 'red'
-          }]}>
+          <Text
+            style={[
+              styles.btStatusText,
+              {
+                color: bluetoothStatus.enabled ? 'green' : 'red',
+              },
+            ]}
+          >
             {bluetoothStatus.status}
           </Text>
         </View>
       )}
-      
+
       {/* Content */}
       <View style={styles.content}>
         {/* Stats panel */}
-        <View style={[styles.statsPanel, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <View
+          style={[
+            styles.statsPanel,
+            { backgroundColor: colors.card, borderBottomColor: colors.border },
+          ]}
+        >
           <Text style={[styles.statTitle, { color: colors.text }]}>Beacon Statistics</Text>
           <View style={styles.statRow}>
             <View style={styles.stat}>
-              <Text style={[styles.statValue, { color: colors.primary }]}>{detectedBeacons.length}</Text>
+              <Text style={[styles.statValue, { color: colors.primary }]}>
+                {detectedBeacons.length}
+              </Text>
               <Text style={[styles.statLabel, { color: colors.secondary }]}>Total Beacons</Text>
             </View>
             <View style={styles.stat}>
               <Text style={[styles.statValue, { color: colors.primary }]}>
-                {detectedBeacons.filter(b => b.isTarget).length}
+                {detectedBeacons.filter((b) => b.isTarget).length}
               </Text>
               <Text style={[styles.statLabel, { color: colors.secondary }]}>Target Beacons</Text>
             </View>
             <View style={styles.stat}>
               <Text style={[styles.statValue, { color: colors.primary }]}>
-                {debugEvents.filter(d => d.message === 'Raw peripheral detected').length}
+                {debugEvents.filter((d) => d.message === 'Raw peripheral detected').length}
               </Text>
               <Text style={[styles.statLabel, { color: colors.secondary }]}>Peripherals</Text>
             </View>
           </View>
         </View>
-        
+
         {/* Tabs for different views */}
         <View style={styles.tabContainer}>
           <View style={styles.tabContent}>
             <View style={styles.tabHeader}>
               <Text style={[styles.tabHeaderText, { color: colors.primary }]}>
-                {rawDevices.length > 0 ? `Raw BLE Devices (${rawDevices.length})` : 'No Raw Devices'}
+                {rawDevices.length > 0
+                  ? `Raw BLE Devices (${rawDevices.length})`
+                  : 'No Raw Devices'}
               </Text>
               <Text style={[styles.tabHeaderText, { color: colors.primary }]}>
-                {detectedBeacons.length > 0 ? `Minew Beacons (${detectedBeacons.length})` : 'No Minew Beacons'}
+                {detectedBeacons.length > 0
+                  ? `Minew Beacons (${detectedBeacons.length})`
+                  : 'No Minew Beacons'}
               </Text>
             </View>
-            
+
             <View style={styles.tabBody}>
-              <ScrollView 
+              <ScrollView
                 style={[styles.tabPanel, { borderColor: colors.border }]}
                 contentContainerStyle={{ paddingBottom: 20 }}
               >
                 {rawDevices.length === 0 ? (
                   <Text style={[styles.emptyMessage, { color: colors.secondary }]}>
-                    No raw devices detected yet.{"\n"}Try the "Raw BLE" scan.
+                    No raw devices detected yet.{'\n'}Try the "Raw BLE" scan.
                   </Text>
                 ) : (
                   rawDevices.map((device, index) => (
-                    <View 
+                    <View
                       key={device.id || index}
                       style={[
-                        styles.deviceItem, 
-                        { 
-                          backgroundColor: device.possibleMinew ? colors.notification + '20' : colors.card,
-                          borderBottomColor: colors.border
-                        }
+                        styles.deviceItem,
+                        {
+                          backgroundColor: device.possibleMinew
+                            ? colors.notification + '20'
+                            : colors.card,
+                          borderBottomColor: colors.border,
+                        },
                       ]}
                     >
                       <View style={styles.deviceHeader}>
                         <Text style={[styles.deviceTitle, { color: colors.text }]}>
-                          {device.possibleMinew ? '🔍 ' : ''}{device.name || 'Unknown'}
+                          {device.possibleMinew ? '🔍 ' : ''}
+                          {device.name || 'Unknown'}
                         </Text>
-                        <Text style={[styles.deviceRssi, { color: device.rssi > -70 ? 'green' : colors.notification }]}>
+                        <Text
+                          style={[
+                            styles.deviceRssi,
+                            { color: device.rssi > -70 ? 'green' : colors.notification },
+                          ]}
+                        >
                           RSSI: {device.rssi} dB
                         </Text>
                       </View>
@@ -630,7 +657,8 @@ export default function BeaconTestScreen() {
                       </Text>
                       {device.serviceUUIDs && device.serviceUUIDs.length > 0 && (
                         <Text style={[styles.deviceDetail, { color: colors.secondary }]}>
-                          Services: {device.serviceUUIDs.slice(0, 1).join(', ')}{device.serviceUUIDs.length > 1 ? '...' : ''}
+                          Services: {device.serviceUUIDs.slice(0, 1).join(', ')}
+                          {device.serviceUUIDs.length > 1 ? '...' : ''}
                         </Text>
                       )}
                       <Text style={[styles.deviceDetail, { color: colors.secondary }]}>
@@ -643,25 +671,25 @@ export default function BeaconTestScreen() {
                   ))
                 )}
               </ScrollView>
-              
-              <ScrollView 
-                style={[styles.tabPanel, { borderColor: colors.border }]} 
+
+              <ScrollView
+                style={[styles.tabPanel, { borderColor: colors.border }]}
                 contentContainerStyle={{ paddingBottom: 20 }}
               >
                 {detectedBeacons.length === 0 ? (
                   <Text style={[styles.emptyMessage, { color: colors.secondary }]}>
-                    No Minew beacons detected yet.{"\n"}Try the "Minew Scan" button.
+                    No Minew beacons detected yet.{'\n'}Try the "Minew Scan" button.
                   </Text>
                 ) : (
                   detectedBeacons.map((beacon, index) => (
-                    <View 
-                      key={`${beacon.uuid}-${beacon.major}-${beacon.minor}`} 
+                    <View
+                      key={`${beacon.uuid}-${beacon.major}-${beacon.minor}`}
                       style={[
-                        styles.beaconItem, 
-                        { 
+                        styles.beaconItem,
+                        {
                           backgroundColor: beacon.isTarget ? colors.primary + '20' : colors.card,
-                          borderBottomColor: colors.border
-                        }
+                          borderBottomColor: colors.border,
+                        },
                       ]}
                     >
                       <View style={styles.beaconHeader}>
@@ -690,21 +718,19 @@ export default function BeaconTestScreen() {
               </ScrollView>
             </View>
           </View>
-          
+
           <View style={styles.logOutput}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Log Output</Text>
             <ScrollView style={[styles.scrollView, { borderColor: colors.border }]}>
               {logs.length === 0 && (
-                <Text style={[styles.emptyMessage, { color: colors.secondary }]}>
-                  No logs yet
-                </Text>
+                <Text style={[styles.emptyMessage, { color: colors.secondary }]}>No logs yet</Text>
               )}
               {logs.map((log, index) => (
-                <Text 
-                  key={index} 
+                <Text
+                  key={index}
                   style={[
-                    styles.logLine, 
-                    { color: log.includes('❌') ? colors.notification : colors.text }
+                    styles.logLine,
+                    { color: log.includes('❌') ? colors.notification : colors.text },
                   ]}
                 >
                   {log}

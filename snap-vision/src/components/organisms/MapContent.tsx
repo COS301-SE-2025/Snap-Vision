@@ -360,11 +360,9 @@ const MapContent: React.FC<MapContentProps> = ({
             suggestions={poiSuggestions}
             onSelectSuggestion={onSelectPOI}
           />
-          
+
           {/* Bluetooth Navigation Button */}
-          <BluetoothNavigationButton
-            onPress={onOpenBluetoothNavigation}
-          />
+          <BluetoothNavigationButton onPress={onOpenBluetoothNavigation} />
         </>
       )}
 

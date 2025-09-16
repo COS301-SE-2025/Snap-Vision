@@ -9,26 +9,24 @@ interface BluetoothNavigationButtonProps {
   disabled?: boolean;
 }
 
-/**
- * BluetoothNavigationButton - A standalone button for Bluetooth navigation
- */
-const BluetoothNavigationButton: React.FC<BluetoothNavigationButtonProps> = ({ 
-  onPress, 
-  disabled = false 
+
+const BluetoothNavigationButton: React.FC<BluetoothNavigationButtonProps> = ({
+  onPress,
+  disabled = false,
 }) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  
+
   return (
     <View style={styles.container}>
       <TouchableOpacity
         style={[
-          styles.button, 
-          { 
+          styles.button,
+          {
             backgroundColor: colors.card,
             borderColor: colors.border,
-            opacity: disabled ? 0.5 : 1 
-          }
+            opacity: disabled ? 0.5 : 1,
+          },
         ]}
         onPress={onPress}
         disabled={disabled}
@@ -37,14 +35,8 @@ const BluetoothNavigationButton: React.FC<BluetoothNavigationButtonProps> = ({
         accessibilityHint="Navigate to buildings with Bluetooth beacons"
       >
         <View style={styles.buttonContent}>
-          <MaterialIcons 
-            name="bluetooth" 
-            size={20} 
-            color={colors.primary} 
-          />
-          <Text style={[styles.buttonText, { color: colors.text }]}>
-            Bluetooth Navigation
-          </Text>
+          <MaterialIcons name="bluetooth" size={20} color={colors.primary} />
+          <Text style={[styles.buttonText, { color: colors.text }]}>Bluetooth Navigation</Text>
         </View>
       </TouchableOpacity>
     </View>

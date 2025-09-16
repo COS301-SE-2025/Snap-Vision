@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, SafeAreaView } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  SafeAreaView,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { firestore } from '../services/firebase';
@@ -18,20 +26,20 @@ interface Building {
 }
 
 type RootStackParamList = {
-    // ... other screens
-    BluetoothIndoorNavigation: {
-      buildingId: string;
-      buildingName: string;
-      locationId: string;
-    };
-    // ... other screens
+  // ... other screens
+  BluetoothIndoorNavigation: {
+    buildingId: string;
+    buildingName: string;
+    locationId: string;
   };
+};
 
-  type BluetoothBuildingsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'BluetoothBuildings'>;
+type BluetoothBuildingsScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'BluetoothBuildings'
+>;
 
-/**
- * BluetoothBuildingsScreen - Shows all buildings with Bluetooth beacons
- */
+
 const BluetoothBuildingsScreen: React.FC = () => {
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,32 +54,32 @@ const BluetoothBuildingsScreen: React.FC = () => {
         setLoading(true);
         // Get all locations
         const locationsSnapshot = await firestore().collection('locations').get();
-        
+
         const beaconBuildings: Building[] = [];
-        
+
         // For each location, get buildings with beacons
         for (const locationDoc of locationsSnapshot.docs) {
           const locationId = locationDoc.id;
-          
+
           const buildingSnapshot = await firestore()
             .collection('locations')
             .doc(locationId)
             .collection('buildingPOIs')
             .where('hasBluetoothBeacons', '==', true)
             .get();
-          
-          buildingSnapshot.docs.forEach(doc => {
+
+          buildingSnapshot.docs.forEach((doc) => {
             beaconBuildings.push({
               id: doc.id,
               name: doc.data().name || 'Unnamed Building',
               locationId: locationId,
               hasBluetoothBeacons: true,
               floors: doc.data().floors || 1,
-              description: doc.data().description
+              description: doc.data().description,
             });
           });
         }
-        
+
         setBuildings(beaconBuildings);
       } catch (err) {
         console.error('Error fetching beacon buildings:', err);
@@ -94,7 +102,7 @@ const BluetoothBuildingsScreen: React.FC = () => {
     navigation.navigate('BluetoothIndoorNavigation', {
       buildingId: building.id,
       buildingName: building.name,
-      locationId: building.locationId
+      locationId: building.locationId,
     });
   };
 
@@ -108,17 +116,12 @@ const BluetoothBuildingsScreen: React.FC = () => {
         <MaterialIcons name="location-on" size={24} color={colors.primary} />
       </View>
       <View style={styles.buildingContent}>
-        <Text style={[styles.buildingName, { color: colors.text }]}>
-          {item.name}
-        </Text>
+        <Text style={[styles.buildingName, { color: colors.text }]}>{item.name}</Text>
         <Text style={[styles.buildingDetails, { color: colors.secondary }]}>
           {item.floors} {item.floors === 1 ? 'floor' : 'floors'}
         </Text>
         {item.description && (
-          <Text 
-            style={[styles.buildingDescription, { color: colors.secondary }]}
-            numberOfLines={2}
-          >
+          <Text style={[styles.buildingDescription, { color: colors.secondary }]} numberOfLines={2}>
             {item.description}
           </Text>
         )}

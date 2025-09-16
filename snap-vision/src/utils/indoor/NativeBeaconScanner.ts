@@ -1,4 +1,3 @@
-// utils/indoor/NativeBeaconScanner.ts
 import { NativeEventEmitter, NativeModules, Platform, PermissionsAndroid } from 'react-native';
 import type { IBeaconReading } from '../../hooks/useBluetoothPositioning';
 import BleManager from 'react-native-ble-manager';
@@ -8,11 +7,11 @@ const TAG = '[BeaconScanner]';
 const log = (...a: any[]) => console.log(TAG, ...a);
 const err = (...a: any[]) => console.error(TAG, ...a);
 
-// ---------- Helpers ----------
+//Helpers
 function toHex(bytes?: number[] | null, maxLen = 24): string {
   if (!bytes || !bytes.length) return '—';
   const slice = bytes.slice(0, maxLen);
-  const hex = slice.map(b => b.toString(16).padStart(2, '0')).join(' ');
+  const hex = slice.map((b) => b.toString(16).padStart(2, '0')).join(' ');
   return bytes.length > maxLen ? `${hex}…` : hex;
 }
 
@@ -21,12 +20,7 @@ function mdToBytes(md: any): number[] | null {
   try {
     if (!md) return null;
     if (Array.isArray(md.bytes)) return md.bytes as number[]; // Android shape
-    const b64 =
-      typeof md?.data === 'string'
-        ? md.data
-        : typeof md === 'string'
-        ? md
-        : null;
+    const b64 = typeof md?.data === 'string' ? md.data : typeof md === 'string' ? md : null;
     if (b64) return Array.from(Buffer.from(b64, 'base64').values());
   } catch (e) {
     err('mdToBytes error:', e);
@@ -38,10 +32,13 @@ function mdToBytes(md: any): number[] | null {
 function parseIBeaconBytes(bytes: number[]) {
   if (!bytes || bytes.length < 25) return null;
 
-  // Find the header (some devices prepend company id)
+  // Find the header
   let idx = -1;
   for (let i = 0; i < bytes.length - 1; i++) {
-    if (bytes[i] === 0x02 && bytes[i + 1] === 0x15) { idx = i; break; }
+    if (bytes[i] === 0x02 && bytes[i + 1] === 0x15) {
+      idx = i;
+      break;
+    }
   }
   if (idx < 0) return null;
 
@@ -50,7 +47,8 @@ function parseIBeaconBytes(bytes: number[]) {
 
   const uu = bytes.slice(start, start + 16);
   const h = (n: number) => n.toString(16).padStart(2, '0');
-  const uuid = `${uu.slice(0,4).map(h).join('')}-${uu.slice(4,6).map(h).join('')}-${uu.slice(6,8).map(h).join('')}-${uu.slice(8,10).map(h).join('')}-${uu.slice(10,16).map(h).join('')}`.toLowerCase();
+  const uuid =
+    `${uu.slice(0, 4).map(h).join('')}-${uu.slice(4, 6).map(h).join('')}-${uu.slice(6, 8).map(h).join('')}-${uu.slice(8, 10).map(h).join('')}-${uu.slice(10, 16).map(h).join('')}`.toLowerCase();
 
   const major = (bytes[start + 16] << 8) | bytes[start + 17];
   const minor = (bytes[start + 18] << 8) | bytes[start + 19];
@@ -60,8 +58,7 @@ function parseIBeaconBytes(bytes: number[]) {
   return { uuid, major, minor, measuredPower: mp };
 }
 
-// Parse Minew service-data as a fallback (often service UUIDs FEF3 / C5E2)
-// Heuristic: last 5 bytes encode [major2][minor2][tx1]
+// Parse Minew service-data as a fallback
 function parseMinewServiceFrame(bytes: number[], serviceKey: string) {
   if (!bytes || bytes.length < 6) return null;
   const n = bytes.length;
@@ -73,9 +70,9 @@ function parseMinewServiceFrame(bytes: number[], serviceKey: string) {
   return { uuid, major, minor, measuredPower: mp };
 }
 
-// ---------- Types ----------
+//Types
 type StartOpts = {
-  uuid?: string;                 // optional UUID filter (for Minew native path)
+  uuid?: string; // optional UUID filter (for Minew native path)
   allowed?: Array<{ uuid?: string; major: number; minor: number; txPowerAt1m?: number }>;
 };
 
@@ -87,7 +84,7 @@ export class NativeBeaconScanner {
   private minewEmitter?: NativeEventEmitter;
   private minewSub?: { remove: () => void };
 
-  // BLE fallback path (react-native-ble-manager)
+  // BLE fallback path
   private bleEmitter = new NativeEventEmitter(NativeModules.BleManager);
   private subDiscover?: any;
   private subStop?: any;
@@ -120,10 +117,10 @@ export class NativeBeaconScanner {
     perms.push(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
     perms.push(PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION);
 
-    log('🔐 Requesting scanner-scoped permissions:', perms);
+    log('Requesting scanner-scoped permissions:', perms);
     const res = await PermissionsAndroid.requestMultiple(perms);
-    const granted = Object.values(res).every(v => v === PermissionsAndroid.RESULTS.GRANTED);
-    log('🔐 Permission result:', granted ? '✅ ALL GRANTED' : '❌ SOME DENIED', res);
+    const granted = Object.values(res).every((v) => v === PermissionsAndroid.RESULTS.GRANTED);
+    log('Permission result:', granted ? 'ALL GRANTED' : 'SOME DENIED', res);
     return granted;
   }
 
@@ -143,12 +140,12 @@ export class NativeBeaconScanner {
     this.buffer.push(reading);
   }
 
-  // ----------------- Minew path -----------------
+  //Minew stuff
   private attachMinew(onBatch: (r: IBeaconReading[]) => void, opts?: StartOpts) {
     const Minew = (NativeModules as any).MinewScanner;
     this.minewEmitter = new NativeEventEmitter(Minew);
 
-    log('🔵 Minew attach: UUID filter =', opts?.uuid || 'none');
+    log('Minew attach: UUID filter =', opts?.uuid || 'none');
     this.minewSub = this.minewEmitter.addListener('onBeacon', (e: any) => {
       if (!e) return;
       // Minew native event shape: { uuid, major, minor, rssi, txPower?, timestamp, mac?, name? }
@@ -159,10 +156,10 @@ export class NativeBeaconScanner {
     });
 
     Minew.startScan(opts?.uuid ? { uuid: opts.uuid } : {})
-      .then(() => log('✅ Minew scan started - looking for all beacon formats'))
+      .then(() => log('Minew scan started - looking for all beacon formats'))
       .catch((e: any) => {
-        err('❌ Minew start error:', e);
-        // If Minew fails at runtime, make sure we still fall back to BLE scan
+        err('Minew start error:', e);
+        // If Minew fails at runtime, make sure it still falls back to BLE scan
         this.detachMinew();
         this.attachBle(onBatch);
       });
@@ -170,14 +167,16 @@ export class NativeBeaconScanner {
 
   private detachMinew() {
     const Minew = (NativeModules as any).MinewScanner;
-    try { Minew.stopScan?.(); } catch {}
+    try {
+      Minew.stopScan?.();
+    } catch {}
     this.minewSub?.remove?.();
     this.minewSub = undefined;
     this.minewEmitter = undefined;
-    log('🔵 Minew scan stopped');
+    log('Minew scan stopped');
   }
 
-  // ----------------- BLE fallback path -----------------
+  //BLE fallback
   private async attachBle(onBatch: (r: IBeaconReading[]) => void) {
     try {
       await BleManager.start({ showAlert: false });
@@ -188,7 +187,7 @@ export class NativeBeaconScanner {
     } catch {}
 
     this.subState = this.bleEmitter.addListener('BleManagerDidUpdateState', (s: any) => {
-      log('🔷 BLE state updated:', s?.state);
+      log('BLE state updated:', s?.state);
       if (s?.state === 'on' && this.running) this.doBleScan().catch(() => {});
     });
 
@@ -197,7 +196,7 @@ export class NativeBeaconScanner {
         const rssi = p?.rssi ?? -127;
         const adv = p?.advertising || {};
         const name = p?.name || 'unnamed';
-        log('🔷 DISCOVER:', { id: p?.id, name, rssi, hasAdv: !!adv });
+        log('DISCOVER:', { id: p?.id, name, rssi, hasAdv: !!adv });
 
         // 1) Manufacturer data -> iBeacon
         const md = adv.manufacturerData ?? adv.kCBAdvDataManufacturerData ?? null;
@@ -207,12 +206,19 @@ export class NativeBeaconScanner {
           if (ib) {
             const mm = `${ib.major}|${ib.minor}`;
             if (!this.allowedMM.size || this.allowedMM.has(mm)) {
-              log('🎯 iBeacon via manufacturer:', { uuid: ib.uuid, major: ib.major, minor: ib.minor, rssi, mp: ib.measuredPower, raw: toHex(mdBytes) });
+              log('iBeacon via manufacturer:', {
+                uuid: ib.uuid,
+                major: ib.major,
+                minor: ib.minor,
+                rssi,
+                mp: ib.measuredPower,
+                raw: toHex(mdBytes),
+              });
               this.push(rssi, ib.uuid, ib.major, ib.minor, ib.measuredPower);
               return;
             }
           } else {
-            log('ℹ️ Manufacturer present but not iBeacon:', toHex(mdBytes));
+            log('Manufacturer present but not iBeacon:', toHex(mdBytes));
           }
         }
 
@@ -226,15 +232,22 @@ export class NativeBeaconScanner {
             if (!m) continue;
             const mm = `${m.major}|${m.minor}`;
             if (!this.allowedMM.size || this.allowedMM.has(mm)) {
-              log('🎯 Minew via service:', { service: key, major: m.major, minor: m.minor, rssi, mp: m.measuredPower, raw: toHex(b) });
+              log('Minew via service:', {
+                service: key,
+                major: m.major,
+                minor: m.minor,
+                rssi,
+                mp: m.measuredPower,
+                raw: toHex(b),
+              });
               this.push(rssi, m.uuid, m.major, m.minor, m.measuredPower);
               return;
             }
           }
         }
 
-        // 3) Nothing usable found
-        log('❌ Not iBeacon/Minew:', { name, rssi, advKeys: Object.keys(adv || {}) });
+        // 3) Nothing usable found :(
+        log('Not iBeacon/Minew:', { name, rssi, advKeys: Object.keys(adv || {}) });
       } catch (e) {
         err('Discover handler error:', e);
       }
@@ -246,9 +259,11 @@ export class NativeBeaconScanner {
 
     // kick initial scan + keepalive scans
     await this.doBleScan().catch(() => {});
-    this.rescanTimer = setInterval(() => { if (this.running) this.doBleScan().catch(() => {}); }, 12000);
+    this.rescanTimer = setInterval(() => {
+      if (this.running) this.doBleScan().catch(() => {});
+    }, 12000);
 
-    // Probe discovered list periodically (some devices drop discover events)
+    // Probe discovered list periodically
     this.probeTimer = setInterval(async () => {
       if (!this.running) return;
       try {
@@ -266,7 +281,14 @@ export class NativeBeaconScanner {
             if (ib) {
               const mm = `${ib.major}|${ib.minor}`;
               if (!this.allowedMM.size || this.allowedMM.has(mm)) {
-                polled.push({ uuid: ib.uuid.toLowerCase(), major: ib.major, minor: ib.minor, rssi, ts: Date.now(), measuredPower: ib.measuredPower } as any);
+                polled.push({
+                  uuid: ib.uuid.toLowerCase(),
+                  major: ib.major,
+                  minor: ib.minor,
+                  rssi,
+                  ts: Date.now(),
+                  measuredPower: ib.measuredPower,
+                } as any);
                 continue;
               }
             }
@@ -274,12 +296,20 @@ export class NativeBeaconScanner {
           const sd = adv.serviceData;
           if (sd && typeof sd === 'object') {
             for (const key of Object.keys(sd)) {
-              const b = mdToBytes(sd[key]); if (!b) continue;
+              const b = mdToBytes(sd[key]);
+              if (!b) continue;
               const m = parseMinewServiceFrame(b, key);
               if (m) {
                 const mm = `${m.major}|${m.minor}`;
                 if (!this.allowedMM.size || this.allowedMM.has(mm)) {
-                  polled.push({ uuid: m.uuid.toLowerCase(), major: m.major, minor: m.minor, rssi, ts: Date.now(), measuredPower: m.measuredPower } as any);
+                  polled.push({
+                    uuid: m.uuid.toLowerCase(),
+                    major: m.major,
+                    minor: m.minor,
+                    rssi,
+                    ts: Date.now(),
+                    measuredPower: m.measuredPower,
+                  } as any);
                   break;
                 }
               }
@@ -287,7 +317,7 @@ export class NativeBeaconScanner {
           }
         }
         if (polled.length) {
-          log('🔷 Probe pushed', polled.length, 'readings');
+          log('Probe pushed', polled.length, 'readings');
           onBatch(polled);
         }
       } catch (e) {
@@ -297,7 +327,9 @@ export class NativeBeaconScanner {
   }
 
   private detachBle() {
-    try { BleManager.stopScan(); } catch {}
+    try {
+      BleManager.stopScan();
+    } catch {}
     this.subDiscover?.remove?.();
     this.subStop?.remove?.();
     this.subState?.remove?.();
@@ -305,28 +337,28 @@ export class NativeBeaconScanner {
     if (this.rescanTimer) clearInterval(this.rescanTimer);
     if (this.probeTimer) clearInterval(this.probeTimer);
     this.rescanTimer = this.probeTimer = undefined;
-    log('🔷 BLE scan stopped');
+    log('BLE scan stopped');
   }
 
   private async doBleScan() {
-    log('🔍 BLE scan start (10s, allow dupes)');
+    log('BLE scan start (10s, allow dupes)');
     try {
       await BleManager.scan([], 10, true);
-      log('✅ BLE scan running');
+      log('BLE scan running');
     } catch (e) {
       err('BLE scan start failed:', e);
     }
   }
 
-  // ----------------- Public API -----------------
+  //Public API
   async start(onBatch?: (r: IBeaconReading[]) => void, opts?: StartOpts) {
     if (this.running) {
-      log('⚠️ Already running; stop first to restart');
+      log('Already running; stop first to restart');
       return;
     }
     this.running = true;
 
-    // Build whitelists (fast MM match; also allow exact uuid if provided)
+    // Build whitelists
     this.allowedKeys.clear();
     this.allowedMM.clear();
     if (opts?.allowed?.length) {
@@ -337,51 +369,57 @@ export class NativeBeaconScanner {
         this.allowedKeys.add(k2);
         this.allowedMM.add(`${b.major}|${b.minor}`);
       }
-      log('✅ Loaded whitelist:', Array.from(this.allowedKeys));
+      log('Loaded whitelist:', Array.from(this.allowedKeys));
     } else {
-      // sensible default for your project (UUID + major 1, minors 1/2/3)
-      log('⚠️ No whitelist provided - using default Minew beacon config for minors 1, 2, 3');
+      log('No whitelist provided - using default Minew beacon config for minors 1, 2, 3');
       const minors = [1, 2, 3];
       for (const m of minors) {
         this.allowedMM.add(`1|${m}`);
       }
-      log('✅ Default MM whitelist:', Array.from(this.allowedMM));
+      log('Default MM whitelist:', Array.from(this.allowedMM));
     }
 
     const permsOk = await this.ensurePerms();
-    if (!permsOk) err('❌ Missing permissions; results may be empty');
+    if (!permsOk) err('Missing permissions; results may be empty');
 
-    // Flush timer (aggregate & ship to hook)
+    // Flush timer
     if (onBatch) {
       this.buffer = [];
       this.flushTimer = setInterval(() => {
         if (!this.running || !this.buffer.length) return;
         const out = this.buffer;
         this.buffer = [];
-        log('📦 Flushing', out.length, 'readings');
-        try { onBatch(out); } catch (e) { err('onBatch error:', e); }
+        log('Flushing', out.length, 'readings');
+        try {
+          onBatch(out);
+        } catch (e) {
+          err('onBatch error:', e);
+        }
       }, 800);
     }
 
-    // Always start BLE fallback (most reliable)
+    // Always start BLE fallback (more reliable)
     await this.attachBle(onBatch || (() => {}));
-    log('🔍 NATIVE: Starting scanner with UUID filter:', opts?.uuid || 'none');
+    log('NATIVE: Starting scanner with UUID filter:', opts?.uuid || 'none');
 
-    // Try Minew native side in parallel (if present)
+    // Try Minew native side in parallel (probs won't work)
     if (this.isMinew) {
       this.attachMinew(onBatch || (() => {}), { uuid: opts?.uuid });
     }
 
-    log('✅ NATIVE: Scan successfully started');
+    log('NATIVE: Scan successfully started');
   }
 
   async stop() {
     if (!this.running) return;
     this.running = false;
-    if (this.flushTimer) { clearInterval(this.flushTimer); this.flushTimer = undefined; }
+    if (this.flushTimer) {
+      clearInterval(this.flushTimer);
+      this.flushTimer = undefined;
+    }
     this.buffer = [];
     if (this.isMinew) this.detachMinew();
     this.detachBle();
-    log('✅ Scanner stopped');
+    log('Scanner stopped');
   }
 }
