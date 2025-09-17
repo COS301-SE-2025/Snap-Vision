@@ -70,6 +70,27 @@ function parseMinewServiceFrame(bytes: number[], serviceKey: string) {
   return { uuid, major, minor, measuredPower: mp };
 }
 
+// Parse iBeacon data directly from service data (for beacons using c5e2 service)
+function parseDirectServiceIBeacon(bytes: number[]) {
+  if (!bytes || bytes.length < 20) return null;
+  
+  // Service data format: [UUID16][major2][minor2][tx1]
+  if (bytes.length >= 20) {
+    const uu = bytes.slice(0, 16);
+    const h = (n: number) => n.toString(16).padStart(2, '0');
+    const uuid = `${uu.slice(0, 4).map(h).join('')}-${uu.slice(4, 6).map(h).join('')}-${uu.slice(6, 8).map(h).join('')}-${uu.slice(8, 10).map(h).join('')}-${uu.slice(10, 16).map(h).join('')}`.toLowerCase();
+    
+    const major = (bytes[16] << 8) | bytes[17];
+    const minor = (bytes[18] << 8) | bytes[19];
+    let mp = bytes.length > 20 ? bytes[20] : -59; // Default measured power
+    if (mp > 127) mp -= 256;
+    
+    return { uuid, major, minor, measuredPower: mp };
+  }
+  
+  return null;
+}
+
 //Types
 type StartOpts = {
   uuid?: string; // optional UUID filter (for Minew native path)
@@ -80,7 +101,7 @@ export class NativeBeaconScanner {
   private running = false;
 
   // RSSI smoothing: keep a moving average per beacon (uuid|major|minor)
-  private rssiAverages: Record<string, { sum: number; count: number; avg: number }> = {};
+  private rssiAverages: Record<string, { sum: number; count: number; avg: number; lastUpdate?: number }> = {};
   private RSSI_WINDOW = 5; // Number of readings to average
 
   // Ignore small movement: only update if estimated distance changes by > threshold (meters)
@@ -99,6 +120,7 @@ export class NativeBeaconScanner {
   private subState?: any;
   private rescanTimer?: NodeJS.Timer;
   private probeTimer?: NodeJS.Timer;
+  private cacheCleanTimer?: NodeJS.Timer;
 
   // Batching
   private flushTimer?: NodeJS.Timer;
@@ -143,7 +165,7 @@ export class NativeBeaconScanner {
 
     //RSSI smoothing
     if (!this.rssiAverages[key]) {
-      this.rssiAverages[key] = { sum: 0, count: 0, avg: rssi };
+      this.rssiAverages[key] = { sum: 0, count: 0, avg: rssi, lastUpdate: Date.now() };
     }
     const avgObj = this.rssiAverages[key];
     avgObj.sum += rssi;
@@ -301,13 +323,28 @@ export class NativeBeaconScanner {
 
     // kick initial scan + keepalive scans
     await this.doBleScan().catch(() => {});
-    // Faster rescan for more responsive updates
+    // Multiple initial scans to populate discovery cache quickly
+    setTimeout(() => this.doBleScan().catch(() => {}), 200);
+    setTimeout(() => this.doBleScan().catch(() => {}), 400);
+    setTimeout(() => this.doBleScan().catch(() => {}), 600);
+    
+    // Much faster rescan for instant detection
     this.rescanTimer = setInterval(() => {
       if (this.running) this.doBleScan().catch(() => {});
-    }, 4000); // was 12000
+    }, 1000); // was 4000 - now every 1s for instant detection
 
-    // Probe discovered list periodically
-    // Faster probe, and use smoothed RSSI for polled readings
+    // Clear BLE cache periodically to prevent stale data
+    this.cacheCleanTimer = setInterval(async () => {
+      if (!this.running) return;
+      try {
+        // Clear the discovered peripherals cache to force fresh discoveries
+        await BleManager.retrieveServices(''); // This often clears internal cache
+      } catch (e) {
+        // Ignore errors - this is just cache maintenance
+      }
+    }, 10000); // Clear cache every 10 seconds
+
+    // Probe discovered list very frequently for instant detection
     this.probeTimer = setInterval(async () => {
       if (!this.running) return;
       try {
@@ -315,33 +352,125 @@ export class NativeBeaconScanner {
         if (!Array.isArray(list) || !list.length) return;
 
         const polled: IBeaconReading[] = [];
+        let foundBeacons = 0;
+        const now = Date.now();
+        
         for (const p of list) {
           let rssi = p?.rssi ?? -127;
           const adv = p?.advertising || {};
+          
+          // DEBUG: Log all peripheral data to see what's available
+          if (p.id || p.name) {
+            console.log(`[BEACON SCAN DEBUG] Peripheral:`, {
+              id: p.id,
+              name: p.name, 
+              rssi: rssi,
+              manufacturerData: adv.manufacturerData,
+              manufacturerDataRaw: JSON.stringify(adv.manufacturerData),
+              serviceData: adv.serviceData,
+              serviceDataRaw: JSON.stringify(adv.serviceData),
+              serviceUUIDs: adv.serviceUUIDs,
+              localName: adv.localName,
+              txPowerLevel: adv.txPowerLevel,
+              isConnectable: adv.isConnectable,
+              allKeys: Object.keys(p),
+              advKeys: Object.keys(adv)
+            });
+            
+            // DEBUG: Try to parse the manufacturer data manually
+            const md = adv.manufacturerData ?? adv.kCBAdvDataManufacturerData ?? null;
+            console.log(`[BEACON SCAN DEBUG] Raw manufacturer data:`, md);
+            const mdBytes = mdToBytes(md);
+            console.log(`[BEACON SCAN DEBUG] Converted to bytes:`, mdBytes);
+            if (mdBytes) {
+              console.log(`[BEACON SCAN DEBUG] Bytes as hex:`, mdBytes.map(b => b.toString(16).padStart(2, '0')).join(' '));
+              const ib = parseIBeaconBytes(mdBytes);
+              console.log(`[BEACON SCAN DEBUG] Parsed iBeacon:`, ib);
+            }
+          }
+          
+          // Filter out stale cached entries - only use recent discoveries
+          // If RSSI is too weak, likely a stale cache entry
+          if (rssi < -95) {
+            continue; // Skip very weak signals (likely stale cache)
+          }
+          
           const md = adv.manufacturerData ?? adv.kCBAdvDataManufacturerData ?? null;
           const mdBytes = mdToBytes(md);
           let uuid = '', major = 0, minor = 0, measuredPower;
           let found = false;
+          
+          console.log(`[BEACON PARSE DEBUG] Processing peripheral ${p.id}, md:`, md, 'mdBytes:', mdBytes);
+          
           if (mdBytes) {
             const ib = parseIBeaconBytes(mdBytes);
+            console.log(`[BEACON PARSE DEBUG] parseIBeaconBytes result:`, ib);
             if (ib) {
               const mm = `${ib.major}|${ib.minor}`;
+              console.log(`[BEACON PARSE DEBUG] Checking allowedMM for ${mm}, allowedMM size:`, this.allowedMM.size, 'has:', this.allowedMM.has(mm));
               if (!this.allowedMM.size || this.allowedMM.has(mm)) {
                 uuid = ib.uuid.toLowerCase();
                 major = ib.major;
                 minor = ib.minor;
                 measuredPower = ib.measuredPower;
                 found = true;
+                console.log(`[BEACON PARSE DEBUG] ✅ FOUND iBeacon: UUID=${uuid} Major=${major} Minor=${minor}`);
+              } else {
+                console.log(`[BEACON PARSE DEBUG] ❌ iBeacon rejected by allowedMM filter`);
               }
+            } else {
+              console.log(`[BEACON PARSE DEBUG] ❌ parseIBeaconBytes returned null`);
             }
+          } else {
+            console.log(`[BEACON PARSE DEBUG] ❌ No manufacturer data bytes`);
           }
           if (!found) {
             const sd = adv.serviceData;
+            
+            // DEBUG: Log peripherals that couldn't be parsed as beacons
+            if (rssi > -80) { // Only log relatively strong signals
+              console.log(`[BEACON SCAN DEBUG] Strong peripheral but no beacon data:`, {
+                id: p.id,
+                name: p.name,
+                rssi: rssi,
+                hasManufacturerData: !!md,
+                manufacturerDataLength: mdBytes ? mdBytes.length : 0,
+                serviceDataKeys: sd ? Object.keys(sd) : [],
+                possibleMAC: p.id?.includes(':') ? p.id : null
+              });
+            }
             if (sd && typeof sd === 'object') {
               for (const key of Object.keys(sd)) {
+                console.log(`[BEACON PARSE DEBUG] Service key ${key}:`, sd[key]);
                 const b = mdToBytes(sd[key]);
+                console.log(`[BEACON PARSE DEBUG] Service data bytes for ${key}:`, b);
                 if (!b) continue;
+                
+                // Try direct iBeacon parsing from service data first (for c5e2 service)
+                if (key.toLowerCase() === 'c5e2' && b.length >= 20) {
+                  console.log(`[BEACON PARSE DEBUG] Trying direct iBeacon parse from c5e2 service data`);
+                  const directBeacon = parseDirectServiceIBeacon(b);
+                  console.log(`[BEACON PARSE DEBUG] Direct service parse result:`, directBeacon);
+                  if (directBeacon) {
+                    const mm = `${directBeacon.major}|${directBeacon.minor}`;
+                    console.log(`[BEACON PARSE DEBUG] Checking allowedMM for direct service ${mm}, allowedMM size:`, this.allowedMM.size);
+                    if (!this.allowedMM.size || this.allowedMM.has(mm)) {
+                      uuid = directBeacon.uuid.toLowerCase();
+                      major = directBeacon.major;
+                      minor = directBeacon.minor;
+                      measuredPower = directBeacon.measuredPower;
+                      found = true;
+                      console.log(`[BEACON PARSE DEBUG] ✅ FOUND via direct service parse: UUID=${uuid} Major=${major} Minor=${minor}`);
+                      break;
+                    } else {
+                      console.log(`[BEACON PARSE DEBUG] ❌ Direct service beacon rejected by allowedMM filter`);
+                    }
+                  }
+                }
+                
+                // Fall back to standard Minew service frame
                 const m = parseMinewServiceFrame(b, key);
+                console.log(`[BEACON PARSE DEBUG] Minew parse result:`, m);
                 if (m) {
                   const mm = `${m.major}|${m.minor}`;
                   if (!this.allowedMM.size || this.allowedMM.has(mm)) {
@@ -350,6 +479,7 @@ export class NativeBeaconScanner {
                     minor = m.minor;
                     measuredPower = m.measuredPower;
                     found = true;
+                    console.log(`[BEACON PARSE DEBUG] ✅ FOUND via Minew service: UUID=${uuid} Major=${major} Minor=${minor}`);
                     break;
                   }
                 }
@@ -358,53 +488,84 @@ export class NativeBeaconScanner {
           }
           if (found) {
             const key = `${uuid}|${major}|${minor}`;
-            // Use smoothed RSSI for polled readings
+            
+            // For instant detection, be more aggressive with updates
             if (!this.rssiAverages[key]) {
-              this.rssiAverages[key] = { sum: 0, count: 0, avg: rssi };
+              this.rssiAverages[key] = { sum: 0, count: 0, avg: rssi, lastUpdate: now };
             }
             const avgObj = this.rssiAverages[key];
+            
+            // Check if this is a fresh reading vs stale cache
+            const lastUpdate = avgObj.lastUpdate || 0;
+            const timeSinceUpdate = now - lastUpdate;
+            
+            // Only use readings that seem fresh (updated recently or strong signal)
+            if (timeSinceUpdate > 5000 && rssi < -70) {
+              continue; // Skip likely stale cache entries
+            }
+            
             avgObj.sum += rssi;
             avgObj.count++;
-            if (avgObj.count > this.RSSI_WINDOW) {
+            avgObj.lastUpdate = now;
+            if (avgObj.count > 2) {
               avgObj.sum -= avgObj.sum / avgObj.count;
-              avgObj.count = this.RSSI_WINDOW;
+              avgObj.count = 2;
             }
             avgObj.avg = avgObj.sum / avgObj.count;
             const smoothRssi = avgObj.avg;
+            
             // Distance estimation
             const tx = typeof measuredPower === 'number' ? measuredPower : -59;
             const n = 2.0;
             const estDist = Math.pow(10, (tx - smoothRssi) / (10 * n));
-            // Ignore small changes
+            
+            // Very relaxed distance filtering - prioritize consistent detection
             let shouldPush = true;
             if (this.lastDistances[key] !== undefined) {
               const delta = Math.abs(estDist - this.lastDistances[key]);
-              if (delta < this.DISTANCE_THRESHOLD) {
+              if (delta < 0.2) {
                 shouldPush = false;
               }
             }
             this.lastDistances[key] = estDist;
+            
             if (shouldPush) {
+              foundBeacons++;
               polled.push({
                 uuid,
                 major,
                 minor,
                 rssi: smoothRssi,
-                ts: Date.now(),
+                ts: now,
                 measuredPower,
                 estDist,
               } as any);
             }
           }
         }
+        
+        // Clean up very old RSSI averages that might be causing stale cache issues
+        if (foundBeacons > 0) {
+          const keys = Object.keys(this.rssiAverages);
+          for (const k of keys) {
+            const lastUpdate = this.rssiAverages[k].lastUpdate || 0;
+            if (now - lastUpdate > 15000) { // 15 seconds old
+              delete this.rssiAverages[k];
+              delete this.lastDistances[k];
+            }
+          }
+        }
+        
         if (polled.length) {
-          log('Probe pushed', polled.length, 'readings');
+          log('Probe pushed', polled.length, 'readings:', polled.map(p => `${p.major}|${p.minor} rssi:${p.rssi.toFixed(1)}`));
           onBatch(polled);
+        } else if (foundBeacons === 0 && list.length > 0) {
+          log('Probe found', list.length, 'peripherals but no beacons - checking discovery cache...');
         }
       } catch (e) {
         err('Probe error:', e);
       }
-    }, 1500); 
+    }, 300); // Reduced from 500ms to 300ms for even faster detection 
   }
 
   private detachBle() {
@@ -417,19 +578,20 @@ export class NativeBeaconScanner {
     this.subDiscover = this.subStop = this.subState = undefined;
   if (this.rescanTimer) clearInterval(this.rescanTimer as any);
   if (this.probeTimer) clearInterval(this.probeTimer as any);
+  if (this.cacheCleanTimer) clearInterval(this.cacheCleanTimer as any);
     this.rescanTimer = this.probeTimer = undefined;
     log('BLE scan stopped');
   }
 
-  private async doBleScan() {
-    log('BLE scan start (10s, allow dupes)');
-    try {
-      await BleManager.scan([], 2, true);
-      log('BLE scan running');
-    } catch (e) {
-      err('BLE scan start failed:', e);
+    private async doBleScan() {
+      log('BLE scan start (1s, allow dupes)');
+      try {
+        await BleManager.scan([], 1, true); // Reduced from 2s to 1s for faster discovery
+        log('BLE scan running');
+      } catch (e) {
+        err('BLE scan start failed:', e);
+      }
     }
-  }
 
   //Public API
   async start(onBatch?: (r: IBeaconReading[]) => void, opts?: StartOpts) {
@@ -476,7 +638,7 @@ export class NativeBeaconScanner {
         } catch (e) {
           err('onBatch error:', e);
         }
-      }, 400); 
+              }, 200); // was 400 - now every 200ms for instant updates 
     }
 
     // Always start BLE fallback (more reliable)
