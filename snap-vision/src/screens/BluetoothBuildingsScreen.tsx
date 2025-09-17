@@ -1,32 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  SafeAreaView,
-} from 'react-native';
+import { View, FlatList, SafeAreaView, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { firestore } from '../services/firebase';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 import { StackNavigationProp } from '@react-navigation/stack';
 import SettingsHeader from '../components/molecules/SettingsHeader';
-
-interface Building {
-  id: string;
-  name: string;
-  locationId: string;
-  hasBluetoothBeacons: boolean;
-  floors?: number;
-  description?: string;
-}
+import BuildingCard from '../components/molecules/BuildingCard';
+import LoadingState from '../components/atoms/LoadingState';
+import ErrorState from '../components/atoms/ErrorState';
+import EmptyState from '../components/atoms/EmptyState';
+import { Building } from '../types/Building';
 
 type RootStackParamList = {
-  // ... other screens
+  BluetoothBuildings: undefined;
   BluetoothIndoorNavigation: {
     buildingId: string;
     buildingName: string;
@@ -105,60 +92,27 @@ const BluetoothBuildingsScreen: React.FC = () => {
     });
   };
 
+
   // Render building item
   const renderBuildingItem = ({ item }: { item: Building }) => (
-    <TouchableOpacity
-      style={[styles.buildingCard, { backgroundColor: colors.card }]}
-      onPress={() => handleSelectBuilding(item)}
-    >
-      <View style={styles.buildingIconContainer}>
-        <MaterialIcons name="location-on" size={24} color={colors.primary} />
-      </View>
-      <View style={styles.buildingContent}>
-        <Text style={[styles.buildingName, { color: colors.text }]}>{item.name}</Text>
-        <Text style={[styles.buildingDetails, { color: colors.secondary }]}>
-          {item.floors} {item.floors === 1 ? 'floor' : 'floors'}
-        </Text>
-        {item.description && (
-          <Text style={[styles.buildingDescription, { color: colors.secondary }]} numberOfLines={2}>
-            {item.description}
-          </Text>
-        )}
-      </View>
-      <View style={styles.bluetoothIndicator}>
-        <MaterialIcons name="bluetooth" size={20} color={colors.primary} />
-      </View>
-    </TouchableOpacity>
+    <BuildingCard item={item} colors={colors} onPress={handleSelectBuilding} />
   );
+
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}> 
         <SettingsHeader title="Bluetooth Navigation" />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: colors.secondary }]}>
-            Loading buildings...
-          </Text>
-        </View>
+        <LoadingState colors={colors} />
       </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}> 
         <SettingsHeader title="Bluetooth Navigation" />
-        <View style={styles.errorContainer}>
-          <MaterialIcons name="error-outline" size={48} color={colors.secondary} />
-          <Text style={[styles.errorText, { color: colors.text }]}>{error}</Text>
-          <TouchableOpacity
-            style={[styles.retryButton, { backgroundColor: colors.primary }]}
-            onPress={() => navigation.replace('BluetoothBuildings')}
-          >
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
+        <ErrorState colors={colors} error={error} onRetry={() => navigation.replace('BluetoothBuildings')} />
       </SafeAreaView>
     );
   }
@@ -176,12 +130,7 @@ const BluetoothBuildingsScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
         />
       ) : (
-        <View style={styles.emptyContainer}>
-          <MaterialIcons name="bluetooth-disabled" size={48} color={colors.secondary} />
-          <Text style={[styles.emptyText, { color: colors.secondary }]}>
-            No buildings with Bluetooth beacons found
-          </Text>
-        </View>
+        <EmptyState colors={colors} />
       )}
     </SafeAreaView>
   );
@@ -229,46 +178,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 4,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  errorText: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginVertical: 16,
-  },
-  retryButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 4,
-  },
-  retryButtonText: {
-    color: '#fff',
-    fontWeight: '500',
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  emptyText: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 16,
   },
 });
 
