@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../theme/ThemeContext';
@@ -9,6 +9,7 @@ import AppButton from '../atoms/AppButton';
 import SettingsHeader from '../molecules/SettingsHeader';
 import StandardPopup from '../atoms/StandardPopup';
 import { TimetableEntry, DAYS_OF_WEEK } from '../../types/timetable.types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function TimetableContent() {
   const { isDark } = useTheme();
@@ -27,6 +28,33 @@ export default function TimetableContent() {
   const [editingEntry, setEditingEntry] = useState<TimetableEntry | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<TimetableEntry | null>(null);
+
+  const [autoNavigationEnabled, setAutoNavigationEnabled] = useState(true);
+
+  // Load auto navigation preference
+  useEffect(() => {
+    const loadAutoNavigationPreference = async () => {
+      try {
+        const stored = await AsyncStorage.getItem('autoNavigationEnabled');
+        if (stored !== null) {
+          setAutoNavigationEnabled(JSON.parse(stored));
+        }
+      } catch (error) {
+        console.error('Error loading auto navigation preference:', error);
+      }
+    };
+
+    loadAutoNavigationPreference();
+  }, []);
+
+  const toggleAutoNavigation = async (enabled: boolean) => {
+    try {
+      setAutoNavigationEnabled(enabled);
+      await AsyncStorage.setItem('autoNavigationEnabled', JSON.stringify(enabled));
+    } catch (error) {
+      console.error('Error saving auto navigation preference:', error);
+    }
+  };
 
   // Group entries by day
   const entriesByDay = DAYS_OF_WEEK.reduce((acc, day) => {
@@ -133,6 +161,39 @@ export default function TimetableContent() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title="My Timetable" />
+
+      {/* Settings Section */}
+      <View style={styles.settingsSection}>
+        <View style={styles.settingRow}>
+          <View style={styles.settingInfo}>
+            <Text style={[styles.settingTitle, { color: colors.text }]}>
+              Auto Navigation
+            </Text>
+            <Text style={[styles.settingSubtitle, { color: colors.secondary }]}>
+              Automatically generate routes 10 minutes before class
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={[
+              styles.toggle,
+              {
+                backgroundColor: autoNavigationEnabled ? colors.primary : colors.border,
+              }
+            ]}
+            onPress={() => toggleAutoNavigation(!autoNavigationEnabled)}
+          >
+            <View
+              style={[
+                styles.toggleCircle,
+                {
+                  backgroundColor: colors.background,
+                  transform: [{ translateX: autoNavigationEnabled ? 20 : 2 }],
+                }
+              ]}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
       
       {/* Add Class Button - Fixed styling to match other buttons */}
       <View style={styles.headerActions}>
@@ -354,5 +415,41 @@ const styles = StyleSheet.create({
   venueText: {
     fontSize: 12,
     flex: 1,
+  },
+  settingsSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  settingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  settingInfo: {
+    flex: 1,
+    marginRight: 16,
+  },
+  settingTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  settingSubtitle: {
+    fontSize: 14,
+  },
+  toggle: {
+    width: 50,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  toggleCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    position: 'absolute',
   },
 });
