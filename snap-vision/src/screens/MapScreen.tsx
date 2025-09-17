@@ -445,6 +445,10 @@ const MapScreen = () => {
     enableAdminPOICreation(webViewRef, setTempMessage);
   };
 
+  const handleOpenBluetoothNavigation = () => {
+    navigation.navigate('BluetoothBuildings');
+  };
+
   //effects
   useEffect(() => {
     if (tempMessage) {
@@ -558,6 +562,8 @@ const MapScreen = () => {
       onDestinationChange={handleDestinationChange}
       onDestinationSearch={handleDestinationSearch}
       onSelectPOI={handleSelectPOI}
+      // Bluetooth navigation
+      onOpenBluetoothNavigation={handleOpenBluetoothNavigation}
       //admin
       isAdmin={isAdmin}
       showAddPOIModal={showAddPOIModal}
