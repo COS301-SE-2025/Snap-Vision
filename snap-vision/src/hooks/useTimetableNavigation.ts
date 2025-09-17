@@ -99,8 +99,6 @@ export const useTimetableNavigation = ({
     }
 
     console.log('[TimetableNav] No building found for entry');
-    // Debug: Log all available POI names
-    console.log('[TimetableNav] Available POI names:', pois.map(p => p.name || p.id));
     return null;
   }, [pois]);
 
@@ -122,16 +120,6 @@ export const useTimetableNavigation = ({
   const checkForUpcomingClasses = useCallback(() => {
     console.log('[TimetableNav] ===== CHECKING FOR UPCOMING CLASSES =====');
     
-    // Debug all conditions
-    console.log('[TimetableNav] Conditions check:', {
-      autoNavigationEnabled,
-      entriesCount: entries?.length || 0,
-      hasCurrentLocation: !!currentLocation,
-      currentLocation: currentLocation ? `${currentLocation.latitude}, ${currentLocation.longitude}` : 'null',
-      isMapReady,
-      poisCount: pois?.length || 0
-    });
-
     // Check if auto navigation is enabled
     if (!autoNavigationEnabled) {
       console.log('[TimetableNav] Auto navigation disabled - skipping');
@@ -155,13 +143,11 @@ export const useTimetableNavigation = ({
 
     const currentDay = getCurrentDay();
     const currentTimeMinutes = getCurrentTimeMinutes();
-    const currentTime = new Date();
     
     console.log('[TimetableNav] Time info:', {
       currentDay,
       currentTimeMinutes,
       currentTimeFormatted: `${Math.floor(currentTimeMinutes / 60)}:${String(currentTimeMinutes % 60).padStart(2, '0')}`,
-      fullTime: currentTime.toLocaleString()
     });
     
     // Find classes for today
@@ -243,35 +229,61 @@ export const useTimetableNavigation = ({
     entries,
     currentLocation,
     isMapReady,
-    getCurrentDay,
-    getCurrentTimeMinutes,
-    getTimeMinutes,
-    findBuildingForEntry,
-    onAutoNavigationTriggered, // Remove the navigation setup functions from dependencies
+    pois, // Changed: Use pois directly instead of findBuildingForEntry
+    onAutoNavigationTriggered,
   ]);
 
-  // Start monitoring
+  // **REMOVE** the circular dependency effect
+  // useEffect(() => {
+  //   console.log('[TimetableNav] Timetable entries updated, clearing triggered state');
+  //   lastTriggeredRef.current = null;
+  //   
+  //   // Immediately check for upcoming classes when data changes
+  //   if (entries && entries.length > 0) {
+  //     console.log('[TimetableNav] Running immediate check due to data change...');
+  //     checkForUpcomingClasses();
+  //   }
+  // }, [entries, checkForUpcomingClasses]); // This causes infinite loop
+
+  // **NEW:** Clear triggered entries when entries change (without calling check)
+  useEffect(() => {
+    console.log('[TimetableNav] Timetable entries updated, clearing triggered state');
+    lastTriggeredRef.current = null;
+  }, [entries]); // Only depend on entries, not checkForUpcomingClasses
+
+  // Start monitoring with reactive interval management
   useEffect(() => {
     console.log('[TimetableNav] Setting up monitoring:', {
       hasEntries: !!(entries && entries.length > 0),
-      entriesCount: entries?.length || 0
+      entriesCount: entries?.length || 0,
+      autoNavigationEnabled,
+      isMapReady,
+      hasCurrentLocation: !!currentLocation
     });
 
-    if (!entries || entries.length === 0) {
-      console.log('[TimetableNav] No entries - not setting up monitoring');
+    // Clear any existing interval
+    if (checkIntervalRef.current) {
+      console.log('[TimetableNav] Clearing existing interval');
+      clearInterval(checkIntervalRef.current);
+      checkIntervalRef.current = null;
+    }
+
+    // Only set up monitoring if we have all required conditions
+    if (!entries || entries.length === 0 || !autoNavigationEnabled || !isMapReady || !currentLocation) {
+      console.log('[TimetableNav] Conditions not met - not setting up monitoring');
       return;
     }
 
-    // Check immediately
-    console.log('[TimetableNav] Running immediate check...');
+    // Check immediately when setting up
+    console.log('[TimetableNav] Running immediate check when setting up monitoring');
     checkForUpcomingClasses();
-    
-    // Set up interval to check every minute
-    console.log('[TimetableNav] Setting up 1-minute interval check');
+
+    // Set up interval to check every 30 seconds
+    console.log('[TimetableNav] Setting up 30-second interval check');
     checkIntervalRef.current = setInterval(() => {
       console.log('[TimetableNav] Interval check triggered');
       checkForUpcomingClasses();
-    }, 60000);
+    }, 30000);
     
     return () => {
       if (checkIntervalRef.current) {
@@ -280,7 +292,7 @@ export const useTimetableNavigation = ({
         checkIntervalRef.current = null;
       }
     };
-  }, [checkForUpcomingClasses]);
+  }, [entries, autoNavigationEnabled, isMapReady, currentLocation]); // Removed checkForUpcomingClasses
 
   // Reset triggered classes at midnight
   useEffect(() => {
