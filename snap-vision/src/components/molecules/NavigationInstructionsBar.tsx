@@ -73,7 +73,7 @@ const NavigationInstructionsBar: React.FC<NavigationBarProps> = ({
             {currentStep.instruction}
           </Text>
           <Text style={[styles.destination, { color: themeColors.secondary }]}>
-            to {destination} • Step {stepNumber + 1} of {totalSteps}
+            to {destination} • Step {stepNumber + 1} of {totalSteps} • Live Updates
           </Text>
           {currentStep.distance && (
             <Text style={[styles.distance, { color: themeColors.secondary }]}>
@@ -106,7 +106,7 @@ const NavigationInstructionsBar: React.FC<NavigationBarProps> = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 60, // Below the navigation bar
+    bottom: 20, 
     left: 16,
     right: 16,
     flexDirection: 'row',
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: -2 }, 
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 5,

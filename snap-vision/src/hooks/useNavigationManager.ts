@@ -19,8 +19,8 @@ interface UseNavigationManagerParams {
   allRooms: RoomPOI[];
 }
 
-const DESTINATION_THRESHOLD = 0.05; // 5% of map size
-const STEP_THRESHOLD = 0.03; // 3% of map size for step completion
+const DESTINATION_THRESHOLD = 0.08; // 8% of map size - more forgiving
+const STEP_THRESHOLD = 0.05; // 5% of map size for step completion - more forgiving
 
 export function useNavigationManager({ 
   locationId,
@@ -293,9 +293,16 @@ export function useNavigationManager({
 
     const { destination, steps, currentStep } = navigationState;
 
+    console.log('[NAV] Position update - checking progress');
+    console.log('[NAV] Current position:', currentPosition);
+    console.log('[NAV] Current step:', currentStep, 'of', steps.length);
+    console.log('[NAV] Current step coordinates:', steps[currentStep]?.coordinates);
+
     // Check if destination is reached
     if (destination) {
       const distanceToDestination = calculateDistance(currentPosition, destination.coordinates);
+      console.log('[NAV] Distance to destination:', distanceToDestination.toFixed(4));
+      
       if (distanceToDestination < DESTINATION_THRESHOLD) {
         console.log('[NAV] Destination reached!');
         setDestinationReached(true);
@@ -305,10 +312,19 @@ export function useNavigationManager({
 
     // Check if current step should be advanced
     if (currentStep < steps.length - 1) {
+      const currentStepCoords = steps[currentStep].coordinates;
       const nextStep = steps[currentStep + 1];
+      const distanceToCurrentStep = calculateDistance(currentPosition, currentStepCoords);
       const distanceToNextStep = calculateDistance(currentPosition, nextStep.coordinates);
       
-      if (distanceToNextStep < STEP_THRESHOLD) {
+      console.log('[NAV] Distance to current step:', distanceToCurrentStep.toFixed(4));
+      console.log('[NAV] Distance to next step:', distanceToNextStep.toFixed(4), 'threshold:', STEP_THRESHOLD);
+      
+      // Advance if we're close to the next step OR if we've passed the current step
+      const shouldAdvance = distanceToNextStep < STEP_THRESHOLD || 
+                           (distanceToCurrentStep < STEP_THRESHOLD && distanceToNextStep < distanceToCurrentStep * 2);
+      
+      if (shouldAdvance) {
         console.log(`[NAV] Advancing to step ${currentStep + 1}`);
         
         // Add current step to completed polyline
