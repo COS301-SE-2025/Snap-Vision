@@ -507,9 +507,12 @@ export class NativeBeaconScanner {
             avgObj.sum += rssi;
             avgObj.count++;
             avgObj.lastUpdate = now;
-            if (avgObj.count > 2) {
+            
+            // Adaptive smoothing - more smoothing when signal is noisy, less when moving
+            const maxReadings = rssi > -60 ? 2 : 3; // Less smoothing for strong signals (closer beacons)
+            if (avgObj.count > maxReadings) {
               avgObj.sum -= avgObj.sum / avgObj.count;
-              avgObj.count = 2;
+              avgObj.count = maxReadings;
             }
             avgObj.avg = avgObj.sum / avgObj.count;
             const smoothRssi = avgObj.avg;
@@ -519,11 +522,16 @@ export class NativeBeaconScanner {
             const n = 2.0;
             const estDist = Math.pow(10, (tx - smoothRssi) / (10 * n));
             
-            // Very relaxed distance filtering - prioritize consistent detection
+            // Adaptive distance filtering for smooth movement tracking
             let shouldPush = true;
             if (this.lastDistances[key] !== undefined) {
               const delta = Math.abs(estDist - this.lastDistances[key]);
-              if (delta < 0.2) {
+              const timeSinceLastUpdate = now - lastUpdate;
+              
+              // More relaxed filtering if enough time has passed (user likely moving)
+              const threshold = timeSinceLastUpdate > 2000 ? 0.5 : 0.3; // Larger threshold for movement
+              
+              if (delta < threshold) {
                 shouldPush = false;
               }
             }
