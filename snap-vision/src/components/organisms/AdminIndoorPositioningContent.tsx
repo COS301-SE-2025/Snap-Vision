@@ -262,7 +262,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
         }
       }
     } catch (err) {
-      console.error('Invalid message from WebView', err);
+      //consoleerror('Invalid message from WebView', err);
     }
   };
 

@@ -41,7 +41,7 @@ export function useIndoorPosition(
 
     // If the jump is too large (>0.3 of the floorplan), smooth it
     if (distance > 0.3) {
-      console.log(`Large position jump detected: ${distance.toFixed(3)}, smoothing...`);
+      //consolelog(`Large position jump detected: ${distance.toFixed(3)}, smoothing...`);
 
       // Use weighted average with previous position
       const smoothedPosition = {

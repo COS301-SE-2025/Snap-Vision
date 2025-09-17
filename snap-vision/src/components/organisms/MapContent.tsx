@@ -15,6 +15,7 @@ import CrowdReportModal from '../molecules/CrowdReportModal';
 import IndoorPickerModal from '../molecules/IndoorPickerModal';
 import IndoorNavigationButton from '../atoms/IndoorNavigationButton';
 import ARNavigationOverlay from './ARNavigationOverlay';
+import { useNotificationInstruction } from '../../hooks/useNotificationInstruction';
 import BluetoothNavigationButton from '../molecules/BluetoothNavigationButton';
 
 // Define the props interface for MapContent
@@ -277,6 +278,7 @@ const MapContent: React.FC<MapContentProps> = ({
   onHandleDestinationReachedConfirm,
   onRefreshMap,
 }) => {
+  useNotificationInstruction(isNavigating, steps[currentStep]?.instruction || '');
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Modals */}

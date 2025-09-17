@@ -84,7 +84,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
           });
         }
       } catch (e) {
-        console.warn('Failed to load badge data:', e);
+        //consolewarn('Failed to load badge data:', e);
       } finally {
         setLoading(false);
       }
@@ -95,7 +95,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
 
   const unlock = async (id: BadgeId) => {
     if (!uid) {
-      console.log('Unlock aborted: no UID');
+      //consolelog('Unlock aborted: no UID');
       return;
     }
 
@@ -128,7 +128,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
         });
       }
     } catch (e) {
-      console.error('Failed to unlock badge:', e);
+      //consoleerror('Failed to unlock badge:', e);
       // Revert optimistic update
       setState((prev) => ({
         ...prev,
@@ -151,7 +151,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
         justUnlocked: (updated?.badges || []).filter((b: BadgeId) => !prev.unlocked.has(b)),
       }));
     } catch (e) {
-      console.error('Failed to increment routes:', e);
+      //consoleerror('Failed to increment routes:', e);
     }
   };
 
@@ -168,7 +168,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
         ),
       }));
     } catch (e) {
-      console.error('Failed to complete challenge:', e);
+      //consoleerror('Failed to complete challenge:', e);
     }
   };
 

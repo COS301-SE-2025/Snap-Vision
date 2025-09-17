@@ -13,6 +13,7 @@ import { getThemeColors } from '../../theme';
 import { LocationSelector } from '../molecules/LocationSelector';
 import { useBuildings } from '../../hooks/useBuildings';
 import { useFloorplanUpload } from '../../hooks/useFloorplanUpload';
+import { useUserRole } from '../../hooks/useUserRole';
 import BuildingSelector from '../molecules/BuildingSelector';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -30,14 +31,9 @@ export default function AdminLoadFloorplansContent() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const navigation = useNavigation<AdminLoadFloorplansNavigationProp>();
-  const {
-    buildings,
-    locations,
-    userRole,
-    adminLocations,
-    isLoading: isLoadingBuildings,
-    loadBuildings,
-  } = useBuildings();
+  const { buildings, locations, isLoading: isLoadingBuildings } = useBuildings();
+
+  const { role: userRole, adminLocations } = useUserRole();
 
   const {
     isLoading: isUploading,
@@ -59,10 +55,15 @@ export default function AdminLoadFloorplansContent() {
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [buildingDropdownOpen, setBuildingDropdownOpen] = useState(false);
 
-  // Load buildings when location changes
+  // Filter buildings based on selected location
+  const filteredBuildings = selectedLocation
+    ? buildings.filter((building) => building.location === selectedLocation)
+    : [];
+
+  // Filter buildings when location changes
   useEffect(() => {
     if (selectedLocation) {
-      loadBuildings(selectedLocation);
+      setSelectedBuildingId(null);
       setCurrentStep(1);
     }
   }, [selectedLocation]);
@@ -78,10 +79,10 @@ export default function AdminLoadFloorplansContent() {
     const selectedBuilding = buildings.find((b) => b.id === selectedBuildingId) || null;
     const result = await handleUpload(
       selectedBuilding,
-      selectedLocation,
+      selectedLocation || '',
       floorLabel,
       userRole,
-      adminLocations,
+      adminLocations || [],
     );
     if (result.success) setShowSuccessPopup(true);
     else setShowErrorPopup(true);
@@ -150,7 +151,7 @@ export default function AdminLoadFloorplansContent() {
               </View>
             ) : (
               <BuildingSelector
-                buildings={buildings}
+                buildings={filteredBuildings}
                 selectedBuildingId={selectedBuildingId}
                 setSelectedBuildingId={(id) => {
                   setSelectedBuildingId(id);

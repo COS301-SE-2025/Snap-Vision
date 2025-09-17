@@ -52,14 +52,17 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 ---
 <div align="center">
 
-## Demo 2 Documentation
+## Demo 3 Documentation
 
 | Links |
 |----------|
-| [Software Requirements Specification](https://drive.google.com/file/d/1ZwdJ4slAG9rBswc-FJ1uZZKdij2qLxT6/view?usp=drive_link) | 
-| [Architectural Requirements Document](https://drive.google.com/file/d/1297XANKvZ-0ZENCkwyRvbVo7bmlyzOiI/view?usp=drive_link)  | 
-| [Coding Standards Document](https://drive.google.com/file/d/1UnVcH-iDmQy6fTr2APq-fl1N_pfToWLM/view?usp=drive_link)  | 
-| [User Manual Document](https://drive.google.com/file/d/15NznNY6MGvb_iEyiwZGN0bEE6kgJazXO/view?usp=drive_link) |
+| [Software Requirements Specification](https://drive.google.com/file/d/10e8IgY9iwg686H7SVhVbZazR4wlA8sTt/view?usp=drive_link) | 
+| [Architectural Requirements Document](https://drive.google.com/file/d/1RyBbxY6jlmmzAKqBadArbz94CJaxCXC8/view?usp=drive_link) | 
+| [Architectural Diagram](https://drive.google.com/file/d/11ixKR4wulQl7omdKBBOfcJoy1uzE7qCJ/view?usp=sharing) |
+| [Coding Standards Document](https://drive.google.com/file/d/1aSgT-wrqmAOK-CeXChkGBrNOdwMBVqLD/view?usp=drive_link) | 
+| [User Manual Document](https://drive.google.com/file/d/1ihAcTBi3OJW2Nfc64QRTLByx0WuS_oLS/view?usp=sharing) |
+| [Technical Installation Manual](https://drive.google.com/file/d/1MA92v3quEqsQEBygiR96L8RzZ_uxIscm/view?usp=sharing) |
+| [Deployment Model](https://drive.google.com/file/d/1MDQDhpUTNp6GCvZiLt6aiDLuHODiKSaI/view?usp=drive_link) |
 | [Wireframes](https://drive.google.com/file/d/1a_7AzWcia41O58lXFiizQpyJt3ljBOdw/view?usp=drive_link)|
 
 ---
@@ -68,9 +71,9 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 
 | Demo    | Demo Slides | Documentation | Demo Video |
 |---------|-------------|---------------|------------|
-| Demo 1  | [Slides 1](https://drive.google.com/file/d/1e_UbI8kLICTHZ9I2SDv51N_GJ24E8VHI/view?usp=drive_link) | [Docs 1](https://drive.google.com/file/d/1PjbgsJOFsjdsjYa_vm__W2UnuMKIfOYw/view?usp=drive_link)  | [Video 1](https://drive.google.com/file/d/1rTIKg24IbTOZThUpLjTd6B59khP-cZaL/view?usp=drive_link)
+| Demo 1  | [Slides 1](https://drive.google.com/file/d/1e_UbI8kLICTHZ9I2SDv51N_GJ24E8VHI/view?usp=drive_link) | [Docs 1](https://drive.google.com/file/d/1PjbgsJOFsjdsjYa_vm__W2UnuMKIfOYw/view?usp=drive_link) | [Video 1](https://drive.google.com/file/d/1rTIKg24IbTOZThUpLjTd6B59khP-cZaL/view?usp=drive_link)
 | Demo 2  | [Slides 2](https://drive.google.com/file/d/1YEE-ge010J0ZCaks0T8ggVH2uF7fEHC8/view?usp=drive_link) | [Docs 2](https://drive.google.com/drive/folders/1paIiMCL94TNsxWsi4ypYfgUZSIqwxIns?usp=drive_link)    | [Video 2](https://drive.google.com/file/d/1p8kSaRAugtSsM8uUkssOBTTXFzVAtIey/view?usp=drive_link) |
-| Demo 3  | [Slides 3] | [Docs 3]   | [Video 3] |
+| Demo 3  | [Slides 3](https://drive.google.com/file/d/1Wye-mflSMjL4sFv2WY0GXM5HZVb3kPbo/view?usp=sharing) | [Docs 3](https://drive.google.com/drive/folders/1MNeGPrEBpp5LMoOav7cew51myI6ndEDu?usp=sharing) | [Video 3](https://drive.google.com/file/d/1ckHsvY1-KsHNIP-jYk25CsysI22DOYQr/view?usp=drive_link) |
 | Demo 4  | [Slides 4] | [Docs 4]    | [Video 4] |
 
 ---

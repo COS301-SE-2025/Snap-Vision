@@ -343,4 +343,35 @@ describe('AccessibilitySettingsContent Unit Tests', () => {
 
     expect(screen.getByText('Touch & Vibration')).toBeTruthy();
   });
+
+  it('should close error popup when OK button is pressed', async () => {
+    const mockError = new Error('Network error');
+    mockSetHapticFeedbackEnabled.mockRejectedValue(mockError);
+
+    render(<AccessibilitySettingsContent isDark={false} />);
+
+    // Trigger the error by attempting to toggle haptic feedback
+    const toggleButton = screen.getByTestId('toggle-button');
+    fireEvent.press(toggleButton);
+
+    // Wait for the error popup to appear
+    await waitFor(() => {
+      expect(screen.getByTestId('standard-popup')).toBeTruthy();
+    });
+
+    // Verify the popup is visible
+    expect(screen.getByTestId('popup-title')).toHaveTextContent('Error');
+    expect(screen.getByTestId('popup-message')).toHaveTextContent(
+      'Failed to save haptic feedback setting. Please try again.',
+    );
+
+    // Press the OK button to close the popup (this covers line 71)
+    const okButton = screen.getByTestId('popup-confirm');
+    fireEvent.press(okButton);
+
+    // Verify the popup is no longer visible
+    await waitFor(() => {
+      expect(screen.queryByTestId('standard-popup')).toBeNull();
+    });
+  });
 });

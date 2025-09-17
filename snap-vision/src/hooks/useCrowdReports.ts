@@ -89,7 +89,7 @@ export const useCrowdReports = (
         // Refresh crowd reports to get the latest data
         await fetchRecentCrowdReports();
       } catch (error) {
-        console.error('Error saving crowd report:', error);
+        //consoleerror('Error saving crowd report:', error);
         setError('Failed to submit crowd report');
       }
     },
@@ -130,7 +130,7 @@ export const useCrowdReports = (
         });
       }
     } catch (error) {
-      console.error('Error fetching crowd reports:', error);
+      //consoleerror('Error fetching crowd reports:', error);
       // More informative error handling
       if (
         typeof error === 'object' &&

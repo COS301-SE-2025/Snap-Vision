@@ -309,36 +309,65 @@ function SimpleARGuidance({
   const [bearingHistory, setBearingHistory] = useState<number[]>([]);
   const [smoothedBearing, setSmoothedBearing] = useState<number | null>(null);
 
-  // Calculate raw bearing first (before early return)
+  // Replace the target point calculation in SimpleARGuidance
   const rawBearing =
     currentLocation && destinationCoords
       ? (() => {
-          // FIXED: Use the actual route coordinates correctly
-          // routeCoordinates are in [longitude, latitude] format from the routing API
           let nextPoint: [number, number];
-
+  
           if (routeCoordinates.length > 0) {
-            // Find the next point ahead in the route
-            const lookAheadDistance = 1; // Reduced look ahead for more accurate direction
-            const nextIndex = Math.min(
-              currentRouteIndex + lookAheadDistance,
-              routeCoordinates.length - 1,
-            );
-            nextPoint = routeCoordinates[nextIndex];
+            //Prevent backward jumps
+            const safeBaseIndex = Math.max(0, currentRouteIndex);
+            
+            // First, try to find a good forward point
+            let targetIndex = safeBaseIndex;
+            let bestDistance = Infinity;
+            
+            // Search only FORWARD in the route (prevent going backward)
+            for (let i = safeBaseIndex; i < Math.min(safeBaseIndex + 8, routeCoordinates.length); i++) {
+              const point = routeCoordinates[i];
+              const distanceToPoint = calculateDistance(
+                currentLocation.y, currentLocation.x,
+                point[1], point[0]
+              );
+              
+              // Prefer points 15-40 meters ahead (good range for direction)
+              if (distanceToPoint >= 15 && distanceToPoint <= 40 && distanceToPoint < bestDistance) {
+                targetIndex = i;
+                bestDistance = distanceToPoint;
+              }
+            }
+            
+            // Fallback: if no good point found, just look ahead by 3-5 points
+            if (targetIndex === safeBaseIndex) {
+              targetIndex = Math.min(safeBaseIndex + 3, routeCoordinates.length - 1);
+            }
+            
+            nextPoint = routeCoordinates[targetIndex];
+    
+            console.log(`🎯 AR Target: index ${targetIndex}/${routeCoordinates.length}, distance: ${bestDistance.toFixed(1)}m`);
+            
           } else {
-            // Fallback to destination if no route
             nextPoint = [destinationCoords.x, destinationCoords.y];
           }
 
-          // Ensure coordinates are in the right order
-          // currentLocation: { x: longitude, y: latitude }
-          // nextPoint: [longitude, latitude]
-          // calculateBearing expects (lat1, lon1, lat2, lon2)
+          // debug for turn around
+          console.log('🔍 Coordinate Debug:', {
+            currentLocation: currentLocation,
+            routeCoordinates: routeCoordinates.slice(0, 3), // First 3 points
+            currentRouteIndex,
+            nextPoint: nextPoint,
+            calculatedBearing: calculateBearing(
+              currentLocation.y, currentLocation.x,
+              nextPoint[1], nextPoint[0]
+            )
+          });
+  
           return calculateBearing(
-            currentLocation.y, // current latitude
-            currentLocation.x, // current longitude
-            nextPoint[1], // target latitude
-            nextPoint[0], // target longitude
+            currentLocation.y,
+            currentLocation.x,
+            nextPoint[1],
+            nextPoint[0],
           );
         })()
       : 0;
@@ -348,19 +377,29 @@ function SimpleARGuidance({
     if (!currentLocation || !destinationCoords) return;
 
     setBearingHistory((prev) => {
-      const newHistory = [...prev, rawBearing].slice(-5); // Keep last 5 readings
+      const newHistory = [...prev, rawBearing].slice(-8); // Keep last 8 readings for better smoothing
 
-      // Calculate weighted average (more weight to recent readings)
-      let weightedSum = 0;
+      // Calculate weighted average with circular angle handling
+      let sinSum = 0;
+      let cosSum = 0;
       let totalWeight = 0;
+      
       newHistory.forEach((bearing, index) => {
-        const weight = index + 1; // More recent = higher weight
-        weightedSum += bearing * weight;
+        const weight = Math.pow(index + 1, 1.5); // Exponential weight favoring recent readings
+        const radians = bearing * (Math.PI / 180);
+        
+        sinSum += Math.sin(radians) * weight;
+        cosSum += Math.cos(radians) * weight;
         totalWeight += weight;
       });
 
-      const smoothed = weightedSum / totalWeight;
-      setSmoothedBearing(smoothed);
+      // Convert back to degrees
+      const avgSin = sinSum / totalWeight;
+      const avgCos = cosSum / totalWeight;
+      const smoothedRadians = Math.atan2(avgSin, avgCos);
+      const smoothed = smoothedRadians * (180 / Math.PI);
+      
+      setSmoothedBearing(normalizeAngle(smoothed));
 
       return newHistory;
     });
@@ -374,29 +413,29 @@ function SimpleARGuidance({
   const normalizedDeviceHeading = ((deviceHeading % 360) + 360) % 360;
   const relativeBearing = normalizeAngle(bearing - normalizedDeviceHeading);
 
-  //direction logic with relaxed tolerances - 35 degrees for straight
+  //direction logic with relaxed tolerances - 45 degrees for straight
   const getDirectionInstruction = () => {
     const absRelativeBearing = Math.abs(relativeBearing);
 
-    if (absRelativeBearing < 35) return 'Continue Straight'; // Set to 35 but can increase to about 45
-    if (relativeBearing >= 35 && relativeBearing < 80) return 'Turn Right';
-    if (relativeBearing >= 80 && relativeBearing < 120) return 'Sharp Right';
-    if (relativeBearing >= 120) return 'Turn Around';
-    if (relativeBearing <= -35 && relativeBearing > -80) return 'Turn Left';
-    if (relativeBearing <= -80 && relativeBearing > -120) return 'Sharp Left';
-    if (relativeBearing <= -120) return 'Turn Around';
+    if (absRelativeBearing < 45) return 'Continue Straight'; // Increased tolerance for straight
+    if (relativeBearing >= 45 && relativeBearing < 100) return 'Turn Right';
+    if (relativeBearing >= 100 && relativeBearing < 140) return 'Sharp Right';
+    if (relativeBearing >= 140) return 'Turn Around';
+    if (relativeBearing <= -45 && relativeBearing > -100) return 'Turn Left';
+    if (relativeBearing <= -100 && relativeBearing > -140) return 'Sharp Left';
+    if (relativeBearing <= -140) return 'Turn Around';
     return 'Continue';
   };
 
   // More precise direction logic with relaxed tolerances
   const getDirectionType = () => {
-    if (Math.abs(relativeBearing) < 35) return 'up';
-    if (relativeBearing >= 35 && relativeBearing < 80) return 'up-right';
-    if (relativeBearing >= 80 && relativeBearing < 120) return 'right';
-    if (relativeBearing >= 120) return 'turn-around';
-    if (relativeBearing <= -35 && relativeBearing > -80) return 'up-left';
-    if (relativeBearing <= -80 && relativeBearing > -120) return 'left';
-    if (relativeBearing <= -120) return 'turn-around';
+    if (Math.abs(relativeBearing) < 45) return 'up'; // Increased tolerance
+    if (relativeBearing >= 45 && relativeBearing < 100) return 'up-right';
+    if (relativeBearing >= 100 && relativeBearing < 140) return 'right';
+    if (relativeBearing >= 140) return 'turn-around';
+    if (relativeBearing <= -45 && relativeBearing > -100) return 'up-left';
+    if (relativeBearing <= -100 && relativeBearing > -140) return 'left';
+    if (relativeBearing <= -140) return 'turn-around';
     return 'up';
   };
 
@@ -410,7 +449,7 @@ function SimpleARGuidance({
             styles.directionCircle,
             {
               backgroundColor:
-                Math.abs(relativeBearing) < 35
+                Math.abs(relativeBearing) < 45
                   ? 'rgba(76, 175, 80, 0.8)'
                   : 'rgba(244, 67, 54, 0.8)',
             },
@@ -421,6 +460,18 @@ function SimpleARGuidance({
 
         {/* Direction Text */}
         <Text style={styles.directionText}>{getDirectionInstruction()}</Text>
+        
+        {/* Debug Information - Remove in production */}
+        {__DEV__ && (
+          <View style={styles.debugContainer}>
+            <Text style={styles.debugText}>
+              Bearing: {bearing.toFixed(1)}° | Heading: {deviceHeading.toFixed(1)}°
+            </Text>
+            <Text style={styles.debugText}>
+              Relative: {relativeBearing.toFixed(1)}° | Route: {currentRouteIndex}/{routeCoordinates.length}
+            </Text>
+          </View>
+        )}
       </View>
     </>
   );
@@ -948,4 +999,19 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: 'bold',
   },
+
+  // Debug styles
+  debugContainer: {
+    marginTop: 10,
+    padding: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  // debugText: {
+  //   color: '#00ff00',
+  //   fontSize: 12,
+  //   fontFamily: 'monospace',
+  //   textAlign: 'center',
+  // },
 });

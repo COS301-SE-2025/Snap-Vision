@@ -117,7 +117,7 @@ export const useMapAdmin = (
           setAdminLocations(editorLocations);
         }
       } catch (error) {
-        console.error('Error fetching user role:', error);
+        //consoleerror('Error fetching user role:', error);
         setError('Failed to check admin permissions');
       }
     };
@@ -133,7 +133,7 @@ export const useMapAdmin = (
         const snapshot = await firestore().collection('locations').get();
         setAvailableLocations(snapshot.docs.map((doc) => doc.id));
       } catch (error) {
-        console.error('Error fetching locations:', error);
+        //consoleerror('Error fetching locations:', error);
         setError('Failed to fetch locations');
       }
     };
@@ -165,7 +165,7 @@ export const useMapAdmin = (
             await deleteBuilding(poi);
             onConfirmCallback();
           } catch (error) {
-            console.error('Error in delete confirmation:', error);
+            //consoleerror('Error in delete confirmation:', error);
           }
         },
       });
@@ -215,7 +215,7 @@ export const useMapAdmin = (
 
       await refreshPOIs();
     } catch (error) {
-      console.error('Error adding building:', error);
+      //consoleerror('Error adding building:', error);
       setError('Failed to add building');
     }
   }, [
@@ -242,7 +242,7 @@ export const useMapAdmin = (
     }
 
     if (!editingPOI || !editingPOI.id || !editingPOI.location) {
-      console.error('No valid POI ID or location found:', editingPOI);
+      //consoleerror('No valid POI ID or location found:', editingPOI);
       setError('Invalid building data');
       return;
     }
@@ -264,7 +264,7 @@ export const useMapAdmin = (
       await refreshPOIs();
       showSuccessPopup('Building information updated successfully.');
     } catch (error) {
-      console.error('Error updating building:', error);
+      //consoleerror('Error updating building:', error);
       setError('Failed to update building');
     }
   }, [
@@ -287,7 +287,7 @@ export const useMapAdmin = (
         setStatus(`Building "${poi.name}" deleted`);
         await refreshPOIs();
       } catch (error) {
-        console.error('Error deleting building:', error);
+        //consoleerror('Error deleting building:', error);
         showErrorPopup('Failed to delete building');
       }
     },
@@ -372,9 +372,9 @@ export const useMapAdmin = (
           const adminPOI = pois.find((p) => p.id === parsed.poi.id);
           if (!adminPOI) return true;
 
-          console.log('userRole:', userRole);
-          console.log('adminLocations:', adminLocations);
-          console.log('adminPOI.location:', adminPOI.location);
+          //consolelog('userRole:', userRole);
+          //consolelog('adminLocations:', adminLocations);
+          //consolelog('adminPOI.location:', adminPOI.location);
 
           const canEdit = validateAdminPermission(adminPOI);
 

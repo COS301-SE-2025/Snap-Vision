@@ -22,10 +22,6 @@ const MapWebView = forwardRef<WebViewType, Props>(({ onMessage }, ref) => {
       originWhitelist={['*']}
       onMessage={onMessage}
       style={styles.webview}
-      onLoadEnd={() => console.log('WebView fully loaded')}
-      onError={(e) => {
-        console.error('WebView error:', e.nativeEvent.description);
-      }}
     />
   );
 });
