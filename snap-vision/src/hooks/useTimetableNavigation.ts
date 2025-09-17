@@ -233,19 +233,7 @@ export const useTimetableNavigation = ({
     onAutoNavigationTriggered,
   ]);
 
-  // **REMOVE** the circular dependency effect
-  // useEffect(() => {
-  //   console.log('[TimetableNav] Timetable entries updated, clearing triggered state');
-  //   lastTriggeredRef.current = null;
-  //   
-  //   // Immediately check for upcoming classes when data changes
-  //   if (entries && entries.length > 0) {
-  //     console.log('[TimetableNav] Running immediate check due to data change...');
-  //     checkForUpcomingClasses();
-  //   }
-  // }, [entries, checkForUpcomingClasses]); // This causes infinite loop
-
-  // **NEW:** Clear triggered entries when entries change (without calling check)
+  // Clear triggered entries when entries change (without calling check)
   useEffect(() => {
     console.log('[TimetableNav] Timetable entries updated, clearing triggered state');
     lastTriggeredRef.current = null;
