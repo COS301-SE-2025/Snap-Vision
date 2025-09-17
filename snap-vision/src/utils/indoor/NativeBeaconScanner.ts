@@ -79,6 +79,14 @@ type StartOpts = {
 export class NativeBeaconScanner {
   private running = false;
 
+  // RSSI smoothing: keep a moving average per beacon (uuid|major|minor)
+  private rssiAverages: Record<string, { sum: number; count: number; avg: number }> = {};
+  private RSSI_WINDOW = 5; // Number of readings to average
+
+  // Ignore small movement: only update if estimated distance changes by > threshold (meters)
+  private lastDistances: Record<string, number> = {};
+  private DISTANCE_THRESHOLD = 1.2; // meters
+
   // Minew native path
   private isMinew = Platform.OS === 'android' && !!(NativeModules as any).MinewScanner;
   private minewEmitter?: NativeEventEmitter;
@@ -108,8 +116,6 @@ export class NativeBeaconScanner {
   private async ensurePerms() {
     if (Platform.OS !== 'android') return true;
     const perms: any[] = [];
-    // Android 12+
-    // @ts-ignore
     if (Platform.Version >= 31) {
       perms.push(PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN);
       perms.push(PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT);
@@ -129,15 +135,53 @@ export class NativeBeaconScanner {
   }
 
   private push(rssi: number, uuid: string, major: number, minor: number, measuredPower?: number) {
-    const reading: IBeaconReading = {
-      uuid: (uuid || '').toLowerCase(),
-      major: Number(major),
-      minor: Number(minor),
-      rssi: typeof rssi === 'number' ? Number(rssi) : -127,
-      ts: Date.now(),
-    };
-    if (typeof measuredPower === 'number') (reading as any).measuredPower = measuredPower;
-    this.buffer.push(reading);
+    uuid = (uuid || '').toLowerCase();
+    major = Number(major);
+    minor = Number(minor);
+    rssi = typeof rssi === 'number' ? Number(rssi) : -127;
+    const key = `${uuid}|${major}|${minor}`;
+
+    //RSSI smoothing
+    if (!this.rssiAverages[key]) {
+      this.rssiAverages[key] = { sum: 0, count: 0, avg: rssi };
+    }
+    const avgObj = this.rssiAverages[key];
+    avgObj.sum += rssi;
+    avgObj.count++;
+    if (avgObj.count > this.RSSI_WINDOW) {
+      avgObj.sum -= avgObj.sum / avgObj.count; 
+      avgObj.count = this.RSSI_WINDOW;
+    }
+    avgObj.avg = avgObj.sum / avgObj.count;
+    const smoothRssi = avgObj.avg;
+
+    //Distance estimation
+    const tx = typeof measuredPower === 'number' ? measuredPower : -59;
+    const n = 2.0;
+    const estDist = Math.pow(10, (tx - smoothRssi) / (10 * n));
+
+    //Ignore small changes
+    let shouldPush = true;
+    if (this.lastDistances[key] !== undefined) {
+      const delta = Math.abs(estDist - this.lastDistances[key]);
+      if (delta < this.DISTANCE_THRESHOLD) {
+        shouldPush = false;
+      }
+    }
+    this.lastDistances[key] = estDist;
+
+    if (shouldPush) {
+      const reading: IBeaconReading = {
+        uuid,
+        major,
+        minor,
+        rssi: smoothRssi,
+        ts: Date.now(),
+      };
+      if (typeof measuredPower === 'number') (reading as any).measuredPower = measuredPower;
+      (reading as any).estDist = estDist;
+      this.buffer.push(reading);
+    }
   }
 
   //Minew stuff
@@ -159,7 +203,6 @@ export class NativeBeaconScanner {
       .then(() => log('Minew scan started - looking for all beacon formats'))
       .catch((e: any) => {
         err('Minew start error:', e);
-        // If Minew fails at runtime, make sure it still falls back to BLE scan
         this.detachMinew();
         this.attachBle(onBatch);
       });
@@ -182,7 +225,6 @@ export class NativeBeaconScanner {
       await BleManager.start({ showAlert: false });
     } catch {}
     try {
-      // @ts-ignore
       if (BleManager.enableBluetooth) await BleManager.enableBluetooth();
     } catch {}
 
@@ -259,11 +301,13 @@ export class NativeBeaconScanner {
 
     // kick initial scan + keepalive scans
     await this.doBleScan().catch(() => {});
+    // Faster rescan for more responsive updates
     this.rescanTimer = setInterval(() => {
       if (this.running) this.doBleScan().catch(() => {});
-    }, 12000);
+    }, 4000); // was 12000
 
     // Probe discovered list periodically
+    // Faster probe, and use smoothed RSSI for polled readings
     this.probeTimer = setInterval(async () => {
       if (!this.running) return;
       try {
@@ -272,47 +316,84 @@ export class NativeBeaconScanner {
 
         const polled: IBeaconReading[] = [];
         for (const p of list) {
-          const rssi = p?.rssi ?? -127;
+          let rssi = p?.rssi ?? -127;
           const adv = p?.advertising || {};
           const md = adv.manufacturerData ?? adv.kCBAdvDataManufacturerData ?? null;
           const mdBytes = mdToBytes(md);
+          let uuid = '', major = 0, minor = 0, measuredPower;
+          let found = false;
           if (mdBytes) {
             const ib = parseIBeaconBytes(mdBytes);
             if (ib) {
               const mm = `${ib.major}|${ib.minor}`;
               if (!this.allowedMM.size || this.allowedMM.has(mm)) {
-                polled.push({
-                  uuid: ib.uuid.toLowerCase(),
-                  major: ib.major,
-                  minor: ib.minor,
-                  rssi,
-                  ts: Date.now(),
-                  measuredPower: ib.measuredPower,
-                } as any);
-                continue;
+                uuid = ib.uuid.toLowerCase();
+                major = ib.major;
+                minor = ib.minor;
+                measuredPower = ib.measuredPower;
+                found = true;
               }
             }
           }
-          const sd = adv.serviceData;
-          if (sd && typeof sd === 'object') {
-            for (const key of Object.keys(sd)) {
-              const b = mdToBytes(sd[key]);
-              if (!b) continue;
-              const m = parseMinewServiceFrame(b, key);
-              if (m) {
-                const mm = `${m.major}|${m.minor}`;
-                if (!this.allowedMM.size || this.allowedMM.has(mm)) {
-                  polled.push({
-                    uuid: m.uuid.toLowerCase(),
-                    major: m.major,
-                    minor: m.minor,
-                    rssi,
-                    ts: Date.now(),
-                    measuredPower: m.measuredPower,
-                  } as any);
-                  break;
+          if (!found) {
+            const sd = adv.serviceData;
+            if (sd && typeof sd === 'object') {
+              for (const key of Object.keys(sd)) {
+                const b = mdToBytes(sd[key]);
+                if (!b) continue;
+                const m = parseMinewServiceFrame(b, key);
+                if (m) {
+                  const mm = `${m.major}|${m.minor}`;
+                  if (!this.allowedMM.size || this.allowedMM.has(mm)) {
+                    uuid = m.uuid.toLowerCase();
+                    major = m.major;
+                    minor = m.minor;
+                    measuredPower = m.measuredPower;
+                    found = true;
+                    break;
+                  }
                 }
               }
+            }
+          }
+          if (found) {
+            const key = `${uuid}|${major}|${minor}`;
+            // Use smoothed RSSI for polled readings
+            if (!this.rssiAverages[key]) {
+              this.rssiAverages[key] = { sum: 0, count: 0, avg: rssi };
+            }
+            const avgObj = this.rssiAverages[key];
+            avgObj.sum += rssi;
+            avgObj.count++;
+            if (avgObj.count > this.RSSI_WINDOW) {
+              avgObj.sum -= avgObj.sum / avgObj.count;
+              avgObj.count = this.RSSI_WINDOW;
+            }
+            avgObj.avg = avgObj.sum / avgObj.count;
+            const smoothRssi = avgObj.avg;
+            // Distance estimation
+            const tx = typeof measuredPower === 'number' ? measuredPower : -59;
+            const n = 2.0;
+            const estDist = Math.pow(10, (tx - smoothRssi) / (10 * n));
+            // Ignore small changes
+            let shouldPush = true;
+            if (this.lastDistances[key] !== undefined) {
+              const delta = Math.abs(estDist - this.lastDistances[key]);
+              if (delta < this.DISTANCE_THRESHOLD) {
+                shouldPush = false;
+              }
+            }
+            this.lastDistances[key] = estDist;
+            if (shouldPush) {
+              polled.push({
+                uuid,
+                major,
+                minor,
+                rssi: smoothRssi,
+                ts: Date.now(),
+                measuredPower,
+                estDist,
+              } as any);
             }
           }
         }
@@ -323,7 +404,7 @@ export class NativeBeaconScanner {
       } catch (e) {
         err('Probe error:', e);
       }
-    }, 3000);
+    }, 1500); 
   }
 
   private detachBle() {
@@ -334,8 +415,8 @@ export class NativeBeaconScanner {
     this.subStop?.remove?.();
     this.subState?.remove?.();
     this.subDiscover = this.subStop = this.subState = undefined;
-    if (this.rescanTimer) clearInterval(this.rescanTimer);
-    if (this.probeTimer) clearInterval(this.probeTimer);
+  if (this.rescanTimer) clearInterval(this.rescanTimer as any);
+  if (this.probeTimer) clearInterval(this.probeTimer as any);
     this.rescanTimer = this.probeTimer = undefined;
     log('BLE scan stopped');
   }
@@ -343,7 +424,7 @@ export class NativeBeaconScanner {
   private async doBleScan() {
     log('BLE scan start (10s, allow dupes)');
     try {
-      await BleManager.scan([], 10, true);
+      await BleManager.scan([], 2, true);
       log('BLE scan running');
     } catch (e) {
       err('BLE scan start failed:', e);
@@ -395,7 +476,7 @@ export class NativeBeaconScanner {
         } catch (e) {
           err('onBatch error:', e);
         }
-      }, 800);
+      }, 400); 
     }
 
     // Always start BLE fallback (more reliable)
@@ -414,12 +495,14 @@ export class NativeBeaconScanner {
     if (!this.running) return;
     this.running = false;
     if (this.flushTimer) {
-      clearInterval(this.flushTimer);
+      clearInterval(this.flushTimer as any);
       this.flushTimer = undefined;
     }
     this.buffer = [];
-    if (this.isMinew) this.detachMinew();
-    this.detachBle();
-    log('Scanner stopped');
+  if (this.isMinew) this.detachMinew();
+  this.detachBle();
+  this.rssiAverages = {};
+  this.lastDistances = {};
+  log('Scanner stopped');
   }
 }
