@@ -154,6 +154,48 @@ const SHOP_ITEMS: ShopItem[] = [
     icon: 'cloud',
     cost: 170,
   },
+  {
+    id: 'user-icon-star',
+    title: 'Star Location Marker',
+    description: 'Display your location with a shining star',
+    icon: 'star',
+    cost: 150,
+  },
+  {
+    id: 'user-icon-heart',
+    title: 'Heart Location Marker',
+    description: 'Show your location with a loving heart',
+    icon: 'heart',
+    cost: 150,
+  },
+  {
+    id: 'user-icon-compass',
+    title: 'Compass Location Marker',
+    description: 'Navigate with a classic compass',
+    icon: 'compass',
+    cost: 50,
+  },
+  {
+    id: 'user-icon-rocket',
+    title: 'Rocket Location Marker',
+    description: 'Blast off with a rocket icon',
+    icon: 'rocket',
+    cost: 50,
+  },
+  {
+    id: 'user-icon-gem',
+    title: 'Gem Location Marker',
+    description: 'Sparkle with a precious gem',
+    icon: 'diamond',
+    cost: 10,
+  },
+  {
+    id: 'user-icon-crown',
+    title: 'Crown Location Marker',
+    description: 'Rule the map with a royal crown',
+    icon: 'crown',
+    cost: 10,
+  },
 ];
 
 export default function ShopScreen({ navigation }: { navigation: any }) {
@@ -187,11 +229,26 @@ export default function ShopScreen({ navigation }: { navigation: any }) {
         cost: item.cost,
       });
 
-      setState((prev) => ({
-        ...prev,
-        points: updatedData?.points ?? prev.points,
-        purchases: updatedData?.purchases ?? prev.purchases,
-      }));
+      setState((prev) => {
+        // If the item is a user icon, update the map icon accordingly
+        if (item.id.startsWith('user-icon-')) {
+          const iconName = item.icon;
+          if (typeof window !== 'undefined' && (window as any).ReactNativeWebView) {
+            // Send message to WebView to update user icon
+            (window as any).ReactNativeWebView.postMessage(
+              JSON.stringify({
+                type: 'SET_USER_ICON',
+                iconName,
+              }),
+            );
+          }
+        }
+        return {
+          ...prev,
+          points: updatedData?.points ?? prev.points,
+          purchases: updatedData?.purchases ?? prev.purchases,
+        };
+      });
 
       setPopupItem({ title: item.title, cost: item.cost });
     } catch (err: any) {
