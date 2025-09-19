@@ -41,7 +41,9 @@ LogBox.ignoreLogs([
   'Text strings must be rendered within a <Text> component',
   'VirtualizedLists should never be nested inside plain ScrollViews with the same orientation',
 ]);
-
+if (__DEV__) {
+  require("./ReactotronConfig");
+}
 const Stack = createNativeStackNavigator();
 
 function AppInner() {
