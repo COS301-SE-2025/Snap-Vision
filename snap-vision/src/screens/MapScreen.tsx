@@ -22,6 +22,7 @@ import { useMapAdmin } from '../hooks/useMapAdmin';
 import { useCrowdReports } from '../hooks/useCrowdReports';
 import { useMapIndoor } from '../hooks/useMapIndoor';
 import { useWebViewCommunication } from '../hooks/useWebViewCommunication';
+import { useTimetableNavigation } from '../hooks/useTimetableNavigation';
 
 // utils
 import { requestCameraPermission } from '../utils/cameraPermissions';
@@ -161,6 +162,68 @@ const MapScreen = () => {
     isNavigating,
     setIsNavigating,
   );
+
+  // auto navigation popup state
+  const [autoNavigationPopup, setAutoNavigationPopup] = useState<{
+    visible: boolean;
+    entry: any;
+    building: any;
+  }>({ visible: false, entry: null, building: null });
+
+  // timetable navigation hook 
+  const { checkForUpcomingClasses, findBuildingForEntry } = useTimetableNavigation({
+    currentLocation,
+    isMapReady,
+    webViewRef,
+    fetchRoute,
+    setDestination,
+    setDestinationCoords,
+    selectPOI: setHookSelectedPOI,
+    setStatus,
+    onAutoNavigationTriggered: (entry, building) => {
+      setAutoNavigationPopup({
+        visible: true,
+        entry,
+        building,
+      });
+    },
+  });
+
+  //  auto navigation handlers
+  const handleAutoNavigationConfirm = () => {
+    const { entry, building } = autoNavigationPopup;
+    
+    if (building && building.centroid) {
+      console.log('[MapScreen] User confirmed auto-navigation, setting up route...');
+      
+      // Clear any existing route first
+      webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+      
+      // Now set up the navigation
+      setDestination(building.name || building.title || entry.venue);
+      setDestinationCoords([building.centroid.longitude, building.centroid.latitude]);
+      setHookSelectedPOI(building);
+      
+      // Generate route
+      fetchRoute([building.centroid.longitude, building.centroid.latitude]);
+      
+      // Update status
+      setStatus(`Auto-route to ${entry.course} at ${entry.venue}`);
+      
+      // Show directions sheet
+      setShowDirectionsSheet(true);
+    }
+    
+    // Close the popup
+    setAutoNavigationPopup({ visible: false, entry: null, building: null });
+  };
+
+  const handleAutoNavigationDismiss = () => {
+    console.log('[MapScreen] User dismissed auto-navigation');
+    
+    // Just close the popup - no navigation setup was done
+    setAutoNavigationPopup({ visible: false, entry: null, building: null });
+  };
 
   //helper functions for admin hook
   const showErrorPopupHelper = (message: string) => {
@@ -633,6 +696,10 @@ const MapScreen = () => {
       onSetShowLocationRefreshPopup={setShowLocationRefreshPopup}
       onHandleDestinationReachedConfirm={handleDestinationReachedConfirm}
       onRefreshMap={refreshMap}
+      // auto nav props
+      autoNavigationPopup={autoNavigationPopup}
+      onAutoNavigationConfirm={handleAutoNavigationConfirm}
+      onAutoNavigationDismiss={handleAutoNavigationDismiss}
     />
   );
 };

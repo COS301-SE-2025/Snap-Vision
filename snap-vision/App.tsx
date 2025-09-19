@@ -29,6 +29,7 @@ import IndoorNavigationInstructionsScreen from './src/screens/IndoorNavigationIn
 import IndoorSchematicNavScreen from './src/screens/IndoorSchematicNavScreen';
 import ARIndoorNavScreen from './src/screens/ARIndoorNavScreen';
 import QRCodeAdminScreen from './src/screens/QRCodeAdminScreen';
+
 import messaging from '@react-native-firebase/messaging';
 import { requestNotificationPermission, getFCMToken } from './src/services/NotificationService';
 import notifee from '@notifee/react-native';
@@ -37,6 +38,8 @@ import { displayForegroundNotification } from './src/services/NotificationServic
 import { setupFCM } from './src/services/NotificationService';
 import BluetoothBuildingsScreen from './src/screens/BluetoothBuildingsScreen';
 import BluetoothIndoorNavigationScreen from './src/screens/BluetoothIndoorNavigationScreen';
+import TimetableScreen from './src/screens/TimetableScreen';
+
 
 import { navigationRef } from './src/navigation/RootNavigation';
 LogBox.ignoreLogs([
@@ -118,6 +121,7 @@ function AppInner() {
             <Stack.Screen name="AdminQRCodes" component={QRCodeAdminScreen} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
             <Stack.Screen name="ShopScreen" component={ShopScreen} />
+            <Stack.Screen name="Timetable" component={TimetableScreen} />
             <Stack.Screen
               name="BuildingSelection"
               component={BuildingSelectionScreen}
