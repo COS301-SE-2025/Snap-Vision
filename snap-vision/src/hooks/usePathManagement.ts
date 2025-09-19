@@ -55,68 +55,72 @@ export const usePathManagement = ({
     }
   }, [locationId, buildingId, floorLabel, onError]);
 
-  const togglePathMode = useCallback((webViewRef: any) => {
-    const newPathMode = !isPathMode;
-    setIsPathMode(newPathMode);
-    setSelectedRooms([]);
-    setCurrentPath([]);
-
-    webViewRef.current?.injectJavaScript(`
-      window.togglePathMode && window.togglePathMode(${newPathMode});
-      true;
-    `);
-  }, [isPathMode]);
-
-  const savePath = useCallback(async (roomMarkers: any[], webViewRef: any) => {
-    if (selectedRooms.length !== 2 || currentPath.length < 2) {
-      onError('Please select two rooms and add waypoints to create a path');
-      return;
-    }
-
-    try {
-      const pathId = generatePathId(buildingId, floorLabel);
-
-      const startRoom = roomMarkers.find((r) => r.id === selectedRooms[0]);
-      const endRoom = roomMarkers.find((r) => r.id === selectedRooms[1]);
-
-      if (!startRoom || !endRoom) {
-        onError('Selected rooms not found');
-        return;
-      }
-
-      const waypoints = [startRoom.coordinates, ...currentPath, endRoom.coordinates];
-
-      const pathPOI: PathPOI = {
-        id: pathId,
-        buildingId: buildingId,
-        floorId: floorLabel,
-        startRoomId: selectedRooms[0],
-        endRoomId: selectedRooms[1],
-        waypoints: waypoints,
-        distance: calculatePathDistance(waypoints),
-        accessible: true,
-        createdAt: new Date().toISOString(),
-      };
-
-      await firestore().collection(`locations/${locationId}/pathPOIs`).doc(pathId).set(pathPOI);
-
-      setPathMarkers([...pathMarkers, pathPOI]);
-
-      const pathData = {
-        id: pathId,
-        d: generatePathSVG(waypoints),
-      };
-
-      webViewRef.current?.injectJavaScript(`
-        window.drawSinglePath && window.drawSinglePath(${JSON.stringify(pathData)});
-        true;
-      `);
-
-      setIsPathMode(false);
+  const togglePathMode = useCallback(
+    (webViewRef: any) => {
+      const newPathMode = !isPathMode;
+      setIsPathMode(newPathMode);
       setSelectedRooms([]);
       setCurrentPath([]);
 
       webViewRef.current?.injectJavaScript(`
+      window.togglePathMode && window.togglePathMode(${newPathMode});
+      true;
+    `);
+    },
+    [isPathMode],
+  );
+
+  const savePath = useCallback(
+    async (roomMarkers: any[], webViewRef: any) => {
+      if (selectedRooms.length !== 2 || currentPath.length < 2) {
+        onError('Please select two rooms and add waypoints to create a path');
+        return;
+      }
+
+      try {
+        const pathId = generatePathId(buildingId, floorLabel);
+
+        const startRoom = roomMarkers.find((r) => r.id === selectedRooms[0]);
+        const endRoom = roomMarkers.find((r) => r.id === selectedRooms[1]);
+
+        if (!startRoom || !endRoom) {
+          onError('Selected rooms not found');
+          return;
+        }
+
+        const waypoints = [startRoom.coordinates, ...currentPath, endRoom.coordinates];
+
+        const pathPOI: PathPOI = {
+          id: pathId,
+          buildingId: buildingId,
+          floorId: floorLabel,
+          startRoomId: selectedRooms[0],
+          endRoomId: selectedRooms[1],
+          waypoints: waypoints,
+          distance: calculatePathDistance(waypoints),
+          accessible: true,
+          createdAt: new Date().toISOString(),
+        };
+
+        await firestore().collection(`locations/${locationId}/pathPOIs`).doc(pathId).set(pathPOI);
+
+        setPathMarkers([...pathMarkers, pathPOI]);
+
+        const pathData = {
+          id: pathId,
+          d: generatePathSVG(waypoints),
+        };
+
+        webViewRef.current?.injectJavaScript(`
+        window.drawSinglePath && window.drawSinglePath(${JSON.stringify(pathData)});
+        true;
+      `);
+
+        setIsPathMode(false);
+        setSelectedRooms([]);
+        setCurrentPath([]);
+
+        webViewRef.current?.injectJavaScript(`
         window.togglePathMode && window.togglePathMode(false);
         true;
       `);
@@ -140,21 +144,27 @@ export const usePathManagement = ({
     `);
   }, []);
 
-  const deleteSelectedPath = useCallback(async (webViewRef: any) => {
-    if (!selectedPathId) return;
-    try {
-      await firestore().collection(`locations/${locationId}/pathPOIs`).doc(selectedPathId).delete();
-      setPathMarkers(pathMarkers.filter((p) => p.id !== selectedPathId));
-      setSelectedPathId(null);
-      webViewRef.current?.injectJavaScript(`
+  const deleteSelectedPath = useCallback(
+    async (webViewRef: any) => {
+      if (!selectedPathId) return;
+      try {
+        await firestore()
+          .collection(`locations/${locationId}/pathPOIs`)
+          .doc(selectedPathId)
+          .delete();
+        setPathMarkers(pathMarkers.filter((p) => p.id !== selectedPathId));
+        setSelectedPathId(null);
+        webViewRef.current?.injectJavaScript(`
         document.querySelectorAll('.path-line[data-path-id="${selectedPathId}"]').forEach(p => p.remove());
         true;
       `);
-      onSuccess('Path deleted successfully');
-    } catch (error) {
-      onError('Failed to delete path');
-    }
-  }, [selectedPathId, locationId, pathMarkers, onError, onSuccess]);
+        onSuccess('Path deleted successfully');
+      } catch (error) {
+        onError('Failed to delete path');
+      }
+    },
+    [selectedPathId, locationId, pathMarkers, onError, onSuccess],
+  );
 
   return {
     // State

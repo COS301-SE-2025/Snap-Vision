@@ -28,9 +28,7 @@ const FloorplanHeader: React.FC<FloorplanHeaderProps> = ({
 }) => {
   return (
     <View style={[styles.header, { borderBottomColor: colors.border }]}>
-      <Text style={[styles.headerTitle, { color: colors.text }]}>
-        Add Room POIs - {floorLabel}
-      </Text>
+      <Text style={[styles.headerTitle, { color: colors.text }]}>Add Room POIs - {floorLabel}</Text>
       <Text style={[styles.headerSubtitle, { color: colors.text }]}>
         {isPathMode
           ? `Path Mode: Select 2 rooms, then tap to add waypoints. Selected: ${selectedRooms.length}/2`

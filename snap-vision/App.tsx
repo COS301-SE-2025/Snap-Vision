@@ -29,6 +29,15 @@ import IndoorNavigationInstructionsScreen from './src/screens/IndoorNavigationIn
 import IndoorSchematicNavScreen from './src/screens/IndoorSchematicNavScreen';
 import ARIndoorNavScreen from './src/screens/ARIndoorNavScreen';
 import QRCodeAdminScreen from './src/screens/QRCodeAdminScreen';
+
+import messaging from '@react-native-firebase/messaging';
+import { requestNotificationPermission, getFCMToken } from './src/services/NotificationService';
+import notifee from '@notifee/react-native';
+import { createDefaultChannel } from './src/services/NotificationService';
+import { displayForegroundNotification } from './src/services/NotificationService';
+import { setupFCM } from './src/services/NotificationService';
+import BluetoothBuildingsScreen from './src/screens/BluetoothBuildingsScreen';
+import BluetoothIndoorNavigationScreen from './src/screens/BluetoothIndoorNavigationScreen';
 import TimetableScreen from './src/screens/TimetableScreen';
 
 
@@ -77,6 +86,24 @@ function AppInner() {
     initializePreBundledFloorplans();
   }, []);
 
+  //fcm token for notifications upon loading of app
+  useEffect(() => {
+    setupFCM();
+  }, []);
+
+  //notfication channel needed for notifee
+  useEffect(() => {
+    createDefaultChannel();
+  }, []);
+
+  //foreground notifications
+  useEffect(() => {
+    const unsubscribe = messaging().onMessage(async (remoteMessage) => {
+      await displayForegroundNotification(remoteMessage);
+    });
+    return unsubscribe;
+  }, []);
+
   return (
     <BadgeProvider>
       <ThemeProvider>
@@ -114,6 +141,16 @@ function AppInner() {
             <Stack.Screen
               name="ARIndoorNav"
               component={ARIndoorNavScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="BluetoothBuildings"
+              component={BluetoothBuildingsScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="BluetoothIndoorNavigation"
+              component={BluetoothIndoorNavigationScreen}
               options={{ headerShown: false }}
             />
           </Stack.Navigator>

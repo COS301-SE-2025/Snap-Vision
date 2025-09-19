@@ -14,53 +14,94 @@ import auth from '@react-native-firebase/auth';
 import { WebView } from 'react-native-webview';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
-import WiFiFingerprintCollector from '../molecules/WiFiFingerprintCollector';
+// Removed: WiFiFingerprintCollector
 import SettingsHeader from '../molecules/SettingsHeader';
 import StandardPopup from '../atoms/StandardPopup';
+import { LocationSelector } from '../molecules/LocationSelector';
+import BuildingSelector from '../molecules/BuildingSelector';
+import FloorSelector from '../molecules/FloorSelector';
 
-export default function AdminIndoorPositioningContent() {
+type Props = {
+  buildingId?: string | null;
+  floorId?: string | null;
+  onBack?: () => void;
+};
+
+type LocationItem = { id: string; name: string };
+type BuildingItem = { id: string; name: string };
+type FloorItem = { id: string; name: string };
+type Floorplan = {
+  locationId: string;
+  buildingId: string;
+  floorLabel: string;
+  downloadURL: string;
+  id: string;
+};
+
+type BeaconDoc = {
+  id: string;
+  uuid: string;
+  major: number;
+  minor: number;
+  x: number; // 0..1 normalized
+  y: number; // 0..1 normalized
+  txPowerAt1m: number; // e.g. -59
+  label?: string;
+};
+
+export default function AdminIndoorPositioningContent(props: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const webViewRef = useRef<WebView>(null);
 
   const [role, setRole] = useState<string | null>(null);
   const [adminLocations, setAdminLocations] = useState<string[]>([]);
-  const [locations, setLocations] = useState<{ id: string; name: string }[]>([]);
-  const [buildings, setBuildings] = useState<{ id: string; name: string }[]>([]);
-  const [floorplans, setFloorplans] = useState<any[]>([]);
+  const [locations, setLocations] = useState<LocationItem[]>([]);
+  const [buildings, setBuildings] = useState<BuildingItem[]>([]);
+  const [floors, setFloors] = useState<FloorItem[]>([]);
+  const [floorplans, setFloorplans] = useState<Floorplan[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
-  const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
-  const [selectedFloorplan, setSelectedFloorplan] = useState<any | null>(null);
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(
+    props.buildingId || null,
+  );
+  const [selectedFloorId, setSelectedFloorId] = useState<string | null>(null);
+  const [selectedFloorplan, setSelectedFloorplan] = useState<Floorplan | null>(null);
+  const [selectedFloorplanId, setSelectedFloorplanId] = useState<string | null>(null);
   const [selectedBuildingName, setSelectedBuildingName] = useState<string | null>(null);
   const [buildingDropdownItems, setBuildingDropdownItems] = useState<
     { label: string; value: string }[]
   >([]);
   const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [pointName, setPointName] = useState('');
-  const [existingPoints, setExistingPoints] = useState<
-    { id: string; x: number; y: number; description?: string }[]
-  >([]);
+
+  // Beacon state (replaces WiFi fingerprints)
+  const [existingBeacons, setExistingBeacons] = useState<BeaconDoc[]>([]);
+  const [beaconLabel, setBeaconLabel] = useState('');
+  const [beaconUUID, setBeaconUUID] = useState('');
+  const [beaconMajor, setBeaconMajor] = useState('');
+  const [beaconMinor, setBeaconMinor] = useState('');
+  const [txPowerAt1m, setTxPowerAt1m] = useState('-59'); // sensible default
   const [buildingDropdownOpen, setBuildingDropdownOpen] = useState(false);
   const [floorDropdownOpen, setFloorDropdownOpen] = useState(false);
 
-  // Popup states
-  const [showPointInfoPopup, setShowPointInfoPopup] = useState(false);
-  const [selectedPointInfo, setSelectedPointInfo] = useState<{
-    id: string;
-    x: number;
-    y: number;
-    description?: string;
-  } | null>(null);
+  // Popups
+  const [showBeaconInfoPopup, setShowBeaconInfoPopup] = useState(false);
+  const [selectedBeaconInfo, setSelectedBeaconInfo] = useState<BeaconDoc | null>(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [pointToDelete, setPointToDelete] = useState<{ id: string; description?: string } | null>(
-    null,
-  );
+  const [beaconToDelete, setBeaconToDelete] = useState<BeaconDoc | null>(null);
   const [showCoordinatesPopup, setShowCoordinatesPopup] = useState(false);
   const [selectedCoordinates, setSelectedCoordinates] = useState<{ x: number; y: number } | null>(
     null,
   );
 
+  // Error and success popups
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [errorTitle, setErrorTitle] = useState('');
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+
+  // 1) Auth & RBAC
   useEffect(() => {
     const fetchUserInfo = async () => {
       const uid = auth().currentUser?.uid;
@@ -73,30 +114,43 @@ export default function AdminIndoorPositioningContent() {
     fetchUserInfo();
   }, []);
 
+  // 2) Locations (respect editor RBAC)
   useEffect(() => {
     const fetchLocations = async () => {
       const locSnap = await firestore().collection('locations').get();
-      const all = locSnap.docs.map((doc) => ({ id: doc.id, name: doc.data().name || doc.id }));
+      const all = locSnap.docs.map((doc) => ({
+        id: doc.id,
+        name: (doc.data() as any).name || doc.id,
+      }));
       const filtered =
         role === 'editor' ? all.filter((loc) => adminLocations.includes(loc.id)) : all;
       setLocations(filtered);
+
+      // If screen passed props, keep existing flow but let user pick location manually
     };
     if (role) fetchLocations();
   }, [role, adminLocations]);
 
+  // 3) Buildings under location
   useEffect(() => {
     const fetchBuildings = async () => {
       if (!selectedLocation) return;
       const snap = await firestore().collection(`locations/${selectedLocation}/buildingPOIs`).get();
-      const list = snap.docs.map((doc) => ({ id: doc.id, name: doc.data().name || doc.id }));
+      const list = snap.docs.map((doc) => ({
+        id: doc.id,
+        name: (doc.data() as any).name || doc.id,
+      }));
       setBuildings(list);
       setBuildingDropdownItems(list.map((b) => ({ label: b.name, value: b.id })));
-      setSelectedBuildingId(null);
-      setSelectedFloorplan(null);
+      if (!props.buildingId) {
+        setSelectedBuildingId(null);
+        setSelectedFloorplan(null);
+      }
     };
     if (selectedLocation) fetchBuildings();
   }, [selectedLocation]);
 
+  // 4) Floorplans for a selected building
   useEffect(() => {
     const fetchFloorplans = async () => {
       if (!selectedLocation || !selectedBuildingId) return;
@@ -104,45 +158,95 @@ export default function AdminIndoorPositioningContent() {
         .collection(`locations/${selectedLocation}/buildingPOIs/${selectedBuildingId}/floorplans`)
         .get();
       const list = snap.docs.map((doc) => {
-        const d = doc.data();
+        const d = doc.data() as any;
         return {
           locationId: selectedLocation,
           buildingId: selectedBuildingId,
           floorLabel: d.floorLabel || doc.id,
           downloadURL: d.downloadURL,
           id: `${selectedBuildingId}_${d.floorLabel || doc.id}`,
-        };
+        } as Floorplan;
       });
       setFloorplans(list);
+
+      // Create floors array for the FloorSelector component
+      const floorsList = list.map((fp) => ({
+        id: fp.id,
+        name: fp.floorLabel,
+      }));
+      setFloors(floorsList);
+
+      // Auto-select by prop if provided
+      if (props.floorId) {
+        const match = list.find(
+          (fp) => fp.floorLabel === props.floorId || fp.id.endsWith(`_${props.floorId}`),
+        );
+        if (match) {
+          setSelectedFloorplan(match);
+          setSelectedFloorplanId(match.id);
+          setSelectedFloorId(match.id);
+        }
+      }
     };
     if (selectedBuildingId) fetchFloorplans();
   }, [selectedBuildingId]);
 
-  const fetchPoints = async () => {
+  // 5) Fetch placed beacons for the selected floor
+  const fetchBeacons = async () => {
     if (!selectedLocation || !selectedBuildingId || !selectedFloorplan) return;
-    const snap = await firestore()
-      .collection(`locations/${selectedLocation}/wifiFingerprints`)
-      .where('buildingId', '==', selectedBuildingId)
-      .where('floorId', '==', selectedFloorplan.floorLabel)
-      .get();
+    const col = firestore().collection(
+      `locations/${selectedLocation}/buildingPOIs/${selectedBuildingId}/floorplans/${selectedFloorplan.floorLabel}/beacons`,
+    );
+    const snap = await col.get();
 
-    const list = snap.docs.map((doc) => {
-      const data = doc.data();
+    const list: BeaconDoc[] = snap.docs.map((doc) => {
+      const data = doc.data() as any;
       return {
         id: doc.id,
-        x: data.coordinates?.x,
-        y: data.coordinates?.y,
-        description: data.description || 'WiFi Point',
+        uuid: data.uuid,
+        major: Number(data.major),
+        minor: Number(data.minor),
+        x: Number(data.x),
+        y: Number(data.y),
+        txPowerAt1m: Number(data.txPowerAt1m ?? -59),
+        label: data.label || '',
       };
     });
 
-    setExistingPoints(list);
+    console.log('🔷 Stored Beacons:');
+    list.forEach((b, i) => {
+      console.log(
+        `  ${i + 1}. ${b.label || 'Beacon'} @ (${b.x.toFixed(3)}, ${b.y.toFixed(3)})  ${b.uuid}/${b.major}/${b.minor}`,
+      );
+    });
+
+    setExistingBeacons(list);
   };
 
   useEffect(() => {
-    fetchPoints();
-  }, [selectedFloorplan, coords, pointName]);
+    fetchBeacons();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFloorplan]);
 
+  // Handler functions for selectors
+  const handleLocationSelect = (locationId: string) => {
+    setSelectedLocation(locationId);
+    setSelectedBuildingId(props.buildingId || null);
+    setSelectedBuildingName(null);
+    setSelectedFloorId(null);
+    setSelectedFloorplan(null);
+    setSelectedFloorplanId(null);
+    setCoords(null);
+  };
+
+  const handleFloorSelect = (floorId: string | null) => {
+    setSelectedFloorId(floorId);
+    const match = floorplans.find((fp) => fp.id === floorId);
+    setSelectedFloorplan(match || null);
+    setCoords(null);
+  };
+
+  // 6) Handle messages from WebView (tap to place or select existing beacon)
   const handleMessage = (event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
@@ -151,11 +255,10 @@ export default function AdminIndoorPositioningContent() {
         setSelectedCoordinates({ x: data.x, y: data.y });
         setShowCoordinatesPopup(true);
       } else if (data.type === 'marker_click' && data.id) {
-        // Find the point info and show popup
-        const point = existingPoints.find((p) => p.id === data.id);
-        if (point) {
-          setSelectedPointInfo(point);
-          setShowPointInfoPopup(true);
+        const beacon = existingBeacons.find((p) => p.id === data.id);
+        if (beacon) {
+          setSelectedBeaconInfo(beacon);
+          setShowBeaconInfoPopup(true);
         }
       }
     } catch (err) {
@@ -163,41 +266,41 @@ export default function AdminIndoorPositioningContent() {
     }
   };
 
-  const handleDeletePoint = async () => {
-    if (!pointToDelete) return;
-
+  // 7) Delete a beacon document
+  const handleDeleteBeacon = async () => {
+    if (!beaconToDelete || !selectedLocation || !selectedBuildingId || !selectedFloorplan) return;
     try {
       await firestore()
-        .collection(`locations/${selectedLocation}/wifiFingerprints`)
-        .doc(pointToDelete.id)
+        .collection(
+          `locations/${selectedLocation}/buildingPOIs/${selectedBuildingId}/floorplans/${selectedFloorplan.floorLabel}/beacons`,
+        )
+        .doc(beaconToDelete.id)
         .delete();
 
-      await fetchPoints();
+      await fetchBeacons();
       setShowDeleteConfirmation(false);
-      setPointToDelete(null);
+      setBeaconToDelete(null);
     } catch (error) {
-      //consoleerror('Error deleting WiFi point:', error);
+      console.error('Error deleting beacon:', error);
+      setErrorTitle('Error');
+      setErrorMessage('Failed to delete beacon. Please try again.');
+      setShowErrorPopup(true);
     }
   };
 
+  // 8) Floorplan HTML with existing beacon markers
   const getHTML = () => {
-    const markers = existingPoints
-      .map(
-        (
-          p,
-        ) => `<div onclick="onMarkerClick('${p.id}')" data-id="${p.id}" class="marker" style="position:absolute;left:${p.x * 100}%;top:${p.y * 100}%;
-          transform:translate(-50%,-50%);width:12px;height:12px;border-radius:6px;
-          background:red;border:2px solid white;cursor:pointer;z-index:5;"></div>`,
-      )
+    const markers = existingBeacons
+      .map((b) => {
+        const left = b.x * 100;
+        const top = b.y * 100;
+        return `<div onclick="onMarkerClick('${b.id}')" data-id="${b.id}" class="marker"
+          style="left:${left}%;top:${top}%;"></div>`;
+      })
       .join('');
 
     const currentMarker = coords
-      ? `<div id="marker"
-            style="position:absolute;left:${coords.x * 100}%;top:${coords.y * 100}%;
-            transform:translate(-50%,-50%);
-            width:16px;height:16px;border-radius:8px;
-            background:blue;border:2px solid white;
-            cursor:pointer;z-index:10;"></div>`
+      ? `<div id="marker" style="left:${coords.x * 100}%;top:${coords.y * 100}%"></div>`
       : '';
 
     return `
@@ -207,63 +310,30 @@ export default function AdminIndoorPositioningContent() {
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
           <style>
-            body {
-              margin: 0;
-              padding: 0;
-              overflow: hidden;
-              background: ${colors.background};
-              touch-action: manipulation;
+            body { margin:0; padding:0; overflow:hidden; background:${colors.background}; touch-action: manipulation; }
+            #container { position:relative; width:100vw; height:100vh; overflow:hidden; }
+            #zoomable-area { position:absolute; transform-origin:0 0; transition:none; width:100%; height:100%; }
+            #floorplan { width:100%; height:100%; object-fit:contain; display:block; filter:${isDark ? 'brightness(0.9) contrast(1.1)' : 'none'}; }
+            .marker {
+              position:absolute; width:14px; height:14px; background-color:#7C3AED; /* purple */
+              border:2px solid white; border-radius:50%;
+              transform:translate(-50%, -50%);
+              box-shadow:0 0 3px rgba(0,0,0,0.5);
+              cursor:pointer; z-index:5; transition: transform 0.2s ease; pointer-events:auto;
             }
-            #container {
-              position: relative;
-              width: 100vw;
-              height: 100vh;
-              overflow: hidden;
-            }
-            #zoomable-area {
-              position: absolute;
-              transform-origin: 0 0;
-              transition: none;
-              width: 100%;
-              height: 100%;
-            }
-            #floorplan { 
-              width: 100%; 
-              height: 100%; 
-              object-fit: contain;
-              display: block;
-              filter: ${isDark ? 'brightness(0.9) contrast(1.1)' : 'none'};
-            }
-            .marker { 
-              position: absolute; 
-              width: 12px; 
-              height: 12px; 
-              background-color: red; 
-              border: 2px solid white;
-              border-radius: 50%; 
-              transform: translate(-50%, -50%);
-              box-shadow: 0 0 3px rgba(0,0,0,0.5);
-              cursor: pointer;
-              z-index: 5;
-              transition: transform 0.2s ease;
-              pointer-events: auto;
-            }
-            .marker:hover {
-              transform: translate(-50%, -50%) scale(1.2);
-            }
+            .marker:hover { transform: translate(-50%, -50%) scale(1.2); }
             #marker {
-              background-color: blue;
-              width: 16px;
-              height: 16px;
-              z-index: 10;
-              pointer-events: auto;
+              position:absolute; width:18px; height:18px; background-color:#0EA5E9; /* sky */
+              border:2px solid white; border-radius:50%;
+              transform:translate(-50%, -50%);
+              z-index:10; pointer-events:auto;
             }
           </style>
         </head>
         <body>
           <div id="container">
             <div id="zoomable-area">
-              <img id="floorplan" src="${selectedFloorplan.downloadURL}" alt="Floorplan" />
+              <img id="floorplan" src="${selectedFloorplan?.downloadURL}" alt="Floorplan" />
               ${markers}
               ${currentMarker}
             </div>
@@ -273,8 +343,7 @@ export default function AdminIndoorPositioningContent() {
             const container = document.getElementById('container');
             const zoomableArea = document.getElementById('zoomable-area');
             const floorplan = document.getElementById('floorplan');
-            
-            // EXACT SAME zoom and pan variables as AdminFloorplanEditorContent
+
             let currentScale = 1;
             let currentOffsetX = 0;
             let currentOffsetY = 0;
@@ -292,13 +361,10 @@ export default function AdminIndoorPositioningContent() {
             function applyTransform() {
               zoomableArea.style.transform = \`translate(\${currentOffsetX}px, \${currentOffsetY}px) scale(\${currentScale})\`;
             }
-
             function updateMarkerScales() {
               const markers = document.querySelectorAll('.marker, #marker');
               const inverseScale = 1 / currentScale;
-              
               markers.forEach(marker => {
-                // Keep markers at consistent visual size regardless of zoom
                 const originalTransform = marker.style.transform;
                 if (originalTransform.includes('translate')) {
                   marker.style.transform = originalTransform.replace(/scale\\([^)]*\\)/, '') + \` scale(\${inverseScale})\`;
@@ -307,62 +373,32 @@ export default function AdminIndoorPositioningContent() {
                 }
               });
             }
+            function getDistance(x1,y1,x2,y2){ const dx=x2-x1, dy=y2-y1; return Math.sqrt(dx*dx+dy*dy); }
+            function handleTap(x,y){
+              const element = document.elementFromPoint(x,y);
+              if (element && (element.classList.contains('marker') || element.id === 'marker')) return;
 
-            function getDistance(x1, y1, x2, y2) {
-              const xDiff = x2 - x1;
-              const yDiff = y2 - y1;
-              return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
-            }
-
-            function handleTap(x, y) {
-              const element = document.elementFromPoint(x, y);
-              
-              // Don't place marker if clicking on existing marker
-              if (element && (element.classList.contains('marker') || element.id === 'marker')) {
-                return;
-              }
-              
-              // FIXED: Use exact same coordinate calculation as AdminFloorplanEditorContent
               const rect = container.getBoundingClientRect();
               const containerX = x - rect.left;
               const containerY = y - rect.top;
-              
-              // Account for current zoom and pan
+
               const adjustedX = (containerX - currentOffsetX) / currentScale;
               const adjustedY = (containerY - currentOffsetY) / currentScale;
-              
-              // Convert to image coordinates (0-1 range)
+
               const imageX = adjustedX / rect.width;
               const imageY = adjustedY / rect.height;
-              
-              // Ensure coordinates are within bounds
+
               if (imageX >= 0 && imageX <= 1 && imageY >= 0 && imageY <= 1) {
-                window.ReactNativeWebView.postMessage(JSON.stringify({
-                  type: 'tap',
-                  x: imageX,
-                  y: imageY
-                }));
+                window.ReactNativeWebView.postMessage(JSON.stringify({ type:'tap', x:imageX, y:imageY }));
               }
             }
-
-            // Handle marker clicks
-            function onMarkerClick(markerId) {
-              window.ReactNativeWebView.postMessage(JSON.stringify({
-                type: 'marker_click',
-                id: markerId
-              }));
+            function onMarkerClick(markerId){
+              window.ReactNativeWebView.postMessage(JSON.stringify({ type:'marker_click', id:markerId }));
             }
 
-            // EXACT SAME touch event handlers as AdminFloorplanEditorContent
-            document.addEventListener('touchstart', function(e) {
+            document.addEventListener('touchstart', function(e){
               touchHandled = false;
-              
-              // Clear any pending tap timeout
-              if (tapTimeout) {
-                clearTimeout(tapTimeout);
-                tapTimeout = null;
-              }
-              
+              if (tapTimeout) { clearTimeout(tapTimeout); tapTimeout = null; }
               if (e.touches.length === 2) {
                 startDistance = getDistance(
                   e.touches[0].clientX, e.touches[0].clientY,
@@ -372,111 +408,61 @@ export default function AdminIndoorPositioningContent() {
                 touchHandled = true;
               } else if (e.touches.length === 1) {
                 if (currentScale > 1) {
-                  lastX = e.touches[0].clientX;
-                  lastY = e.touches[0].clientY;
-                  isDragging = true;
+                  lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; isDragging = true;
                 }
-                
-                clickStartTime = Date.now();
-                clickStartX = e.touches[0].clientX;
-                clickStartY = e.touches[0].clientY;
+                clickStartTime = Date.now(); clickStartX = e.touches[0].clientX; clickStartY = e.touches[0].clientY;
               }
-            }, { passive: false });
+            }, { passive:false });
 
-            document.addEventListener('touchmove', function(e) {
+            document.addEventListener('touchmove', function(e){
               if (e.touches.length === 2) {
                 const distance = getDistance(
                   e.touches[0].clientX, e.touches[0].clientY,
                   e.touches[1].clientX, e.touches[1].clientY
                 );
-                
                 if (startDistance > 0) {
                   const newScale = Math.min(Math.max(currentScale * (distance / startDistance), 0.5), 5);
-                  
-                  // Get pinch center
                   const pinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
                   const pinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-                  
-                  // Calculate new offset to zoom around pinch center
-                  const scaleDiff = newScale - currentScale;
                   const rect = container.getBoundingClientRect();
-                  
+                  const scaleDiff = newScale - currentScale;
                   currentOffsetX -= (pinchCenterX - rect.left - currentOffsetX) * scaleDiff / currentScale;
                   currentOffsetY -= (pinchCenterY - rect.top - currentOffsetY) * scaleDiff / currentScale;
-                  
-                  currentScale = newScale;
-                  startDistance = distance;
-                  
-                  applyTransform();
-                  updateMarkerScales();
+                  currentScale = newScale; startDistance = distance;
+                  applyTransform(); updateMarkerScales();
                 }
-                
-                e.preventDefault();
-                touchHandled = true;
+                e.preventDefault(); touchHandled = true;
               } else if (e.touches.length === 1 && isDragging && currentScale > 1) {
                 const deltaX = e.touches[0].clientX - lastX;
                 const deltaY = e.touches[0].clientY - lastY;
-                
-                currentOffsetX += deltaX;
-                currentOffsetY += deltaY;
-                
+                currentOffsetX += deltaX; currentOffsetY += deltaY;
                 applyTransform();
-                
-                lastX = e.touches[0].clientX;
-                lastY = e.touches[0].clientY;
-                
-                const moveDistance = Math.sqrt(
-                  Math.pow(e.touches[0].clientX - clickStartX, 2) +
-                  Math.pow(e.touches[0].clientY - clickStartY, 2)
-                );
-                
-                if (moveDistance > 10) {
-                  clickStartTime = 0;
-                  touchHandled = true;
-                }
-                
+                lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+
+                const moveDistance = Math.sqrt(Math.pow(e.touches[0].clientX - clickStartX,2) + Math.pow(e.touches[0].clientY - clickStartY,2));
+                if (moveDistance > 10) { clickStartTime = 0; touchHandled = true; }
                 e.preventDefault();
               }
-            }, { passive: false });
+            }, { passive:false });
 
-            document.addEventListener('touchend', function(e) {
-              if (e.touches.length < 2) {
-                startDistance = 0;
-              }
-              
+            document.addEventListener('touchend', function(e){
+              if (e.touches.length < 2) startDistance = 0;
               if (e.touches.length === 0) {
                 isDragging = false;
-                
                 const clickDuration = Date.now() - clickStartTime;
                 const currentTime = Date.now();
-                
-                // Handle single tap - only if not handled by other touch events
                 if (clickDuration < 300 && clickStartTime > 0 && !touchHandled) {
-                  // Check for double tap
                   if (currentTime - lastTapTime < 300) {
-                    // Double tap detected - reset zoom
-                    currentScale = 1;
-                    currentOffsetX = 0;
-                    currentOffsetY = 0;
-                    applyTransform();
-                    updateMarkerScales();
-                    lastTapTime = 0;
+                    currentScale = 1; currentOffsetX = 0; currentOffsetY = 0; applyTransform(); updateMarkerScales(); lastTapTime = 0;
                   } else {
-                    // Single tap - set a timeout to handle it if no second tap comes
-                    tapTimeout = setTimeout(() => {
-                      handleTap(clickStartX, clickStartY);
-                      tapTimeout = null;
-                    }, 300);
+                    tapTimeout = setTimeout(() => { handleTap(clickStartX, clickStartY); tapTimeout = null; }, 300);
                     lastTapTime = currentTime;
                   }
                 }
-                
                 clickStartTime = 0;
               }
             });
 
-            // Remove mouse/click events to prevent double firing on mobile
-            // Only add mouse events if not on a touch device
             if (!('ontouchstart' in window)) {
               floorplan.addEventListener('click', function(e) {
                 const rect = floorplan.getBoundingClientRect();
@@ -486,102 +472,113 @@ export default function AdminIndoorPositioningContent() {
               });
             }
 
-            // Initialize marker scales when image loads
-            floorplan.addEventListener('load', function() {
-              updateMarkerScales();
-            });
+            floorplan.addEventListener('load', function(){ updateMarkerScales(); });
           </script>
         </body>
       </html>
     `;
   };
 
+  // 9) Save new beacon at selected coords
+  const saveBeacon = async () => {
+    if (!selectedLocation || !selectedBuildingId || !selectedFloorplan || !coords) {
+      setErrorTitle('Missing selection');
+      setErrorMessage('Please select Location, Building, Floor, and tap a spot on the floorplan.');
+      setShowErrorPopup(true);
+      return;
+    }
+    if (!beaconUUID || !beaconMajor || !beaconMinor) {
+      setErrorTitle('Missing beacon details');
+      setErrorMessage('Please fill UUID, Major, and Minor.');
+      setShowErrorPopup(true);
+      return;
+    }
+    const numMajor = Number(beaconMajor);
+    const numMinor = Number(beaconMinor);
+    const tx = Number(txPowerAt1m || '-59');
+
+    try {
+      setIsLoading(true);
+      const col = firestore().collection(
+        `locations/${selectedLocation}/buildingPOIs/${selectedBuildingId}/floorplans/${selectedFloorplan.floorLabel}/beacons`,
+      );
+      await col.add({
+        uuid: beaconUUID.trim(),
+        major: numMajor,
+        minor: numMinor,
+        x: coords.x,
+        y: coords.y,
+        txPowerAt1m: tx,
+        label: beaconLabel.trim(),
+        buildingId: selectedBuildingId,
+        floorId: selectedFloorplan.floorLabel,
+        updatedAt: firestore.FieldValue.serverTimestamp(),
+      });
+
+      // Reset form
+      setBeaconLabel('');
+      setBeaconUUID('');
+      setBeaconMajor('');
+      setBeaconMinor('');
+      setTxPowerAt1m('-59');
+      setCoords(null);
+
+      await fetchBeacons();
+      setSuccessMessage('Beacon placed on this floor.');
+      setShowSuccessPopup(true);
+    } catch (e) {
+      console.error(e);
+      setErrorTitle('Error');
+      setErrorMessage('Failed to save beacon.');
+      setShowErrorPopup(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <SettingsHeader title="Indoor Positioning" />
+      <SettingsHeader title="Indoor Positioning – Bluetooth Beacons" />
+
       <ScrollView style={styles.scroll}>
-        {/* Location Select */}
-        <View style={styles.section}>
-          <Text style={[styles.label, { color: colors.primary }]}>Step 1: Select Location</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {locations.map((loc) => (
-              <TouchableOpacity
-                key={loc.id}
-                style={[
-                  styles.item,
-                  { backgroundColor: selectedLocation === loc.id ? colors.primary : colors.card },
-                ]}
-                onPress={() => {
-                  setSelectedLocation(loc.id);
-                  setSelectedBuildingId(null);
-                  setSelectedFloorplan(null);
-                  setCoords(null);
-                }}
-              >
-                <Text style={{ color: selectedLocation === loc.id ? '#FFF' : colors.text }}>
-                  {loc.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+        {/* Step 1: Location Selection */}
+        <LocationSelector
+          locations={locations}
+          selectedLocation={selectedLocation || ''}
+          onLocationSelect={handleLocationSelect}
+        />
 
-        {/* Building Select */}
+        {/* Step 2: Building Selection - Only show when location is selected */}
         {selectedLocation && (
-          <View style={styles.section}>
-            <Text style={[styles.label, { color: colors.primary }]}>Step 2: Select Building</Text>
-            <DropDownPicker
-              open={buildingDropdownOpen}
-              setOpen={setBuildingDropdownOpen}
-              items={buildingDropdownItems}
-              setItems={setBuildingDropdownItems}
-              value={selectedBuildingId}
-              setValue={(val) => {
-                const id = val();
-                setSelectedBuildingId(id);
-                setSelectedBuildingName(buildings.find((b) => b.id === id)?.name || '');
-              }}
-              searchable
-              placeholder="Select a building"
-              zIndex={3000}
-              zIndexInverse={1000}
-              style={{ backgroundColor: colors.card, borderColor: colors.primary }}
-              dropDownContainerStyle={{ backgroundColor: colors.card }}
-              textStyle={{ color: colors.text }}
-              searchTextInputStyle={{ color: colors.text }}
-            />
-          </View>
+          <BuildingSelector
+            buildings={buildings}
+            selectedBuildingId={selectedBuildingId}
+            setSelectedBuildingId={setSelectedBuildingId}
+            dropdownOpen={buildingDropdownOpen}
+            setDropdownOpen={setBuildingDropdownOpen}
+            title="Step 2: Select Building"
+          />
         )}
 
-        {/* Floor Select */}
-        {selectedBuildingId && (
-          <View style={styles.section}>
-            <Text style={[styles.label, { color: colors.primary }]}>Step 3: Select Floor</Text>
-            <DropDownPicker
-              open={floorDropdownOpen}
-              setOpen={setFloorDropdownOpen}
-              items={floorplans.map((fp) => ({ label: `Floor ${fp.floorLabel}`, value: fp.id }))}
-              value={selectedFloorplan?.id || null}
-              setValue={(val) => {
-                const match = floorplans.find((fp) => fp.id === val());
-                setSelectedFloorplan(match || null);
-                setCoords(null);
-              }}
-              placeholder="Select a floor"
-              style={{ backgroundColor: colors.card, borderColor: colors.primary }}
-              dropDownContainerStyle={{ backgroundColor: colors.card }}
-              textStyle={{ color: colors.text }}
-              searchTextInputStyle={{ color: colors.text }}
-            />
-          </View>
+        {/* Step 3: Floor Selection - Only show when building is selected */}
+        {selectedLocation && selectedBuildingId && buildings.length > 0 && (
+          <FloorSelector
+            floors={floors}
+            selectedFloorId={selectedFloorId}
+            setSelectedFloorId={handleFloorSelect}
+            dropdownOpen={floorDropdownOpen}
+            setDropdownOpen={setFloorDropdownOpen}
+            title="Step 3: Select Floor"
+          />
         )}
 
-        {/* Floorplan View */}
-        {selectedFloorplan && (
+        {/* Step 4: Beacon Management - Only show when floor is selected */}
+        {selectedLocation && selectedBuildingId && selectedFloorplan && (
           <View style={styles.section}>
             <Text style={[styles.label, { color: colors.primary }]}>
-              Step 4: Tap WiFi Points to View Info, or Tap Empty Space to Add New Point
+              Step 4: Tap existing beacons to view/delete, or tap empty space to place a new beacon
             </Text>
+
             <View style={{ height: 300, marginVertical: 12 }}>
               <WebView
                 ref={webViewRef}
@@ -591,38 +588,81 @@ export default function AdminIndoorPositioningContent() {
               />
             </View>
 
+            {/* Add beacon form when a map coordinate is selected */}
             {coords && (
               <>
-                <TextInput
-                  style={{
-                    borderColor: colors.primary,
-                    borderWidth: 1,
-                    padding: 8,
-                    color: colors.text,
-                    marginBottom: 8,
-                  }}
-                  placeholder="Enter point name (e.g. lab)"
-                  placeholderTextColor={colors.text}
-                  value={pointName}
-                  onChangeText={setPointName}
-                />
-                <Text style={{ color: colors.text }}>
+                <Text style={{ color: colors.text, marginBottom: 8 }}>
                   Selected Coordinates: ({coords.x.toFixed(3)}, {coords.y.toFixed(3)})
                 </Text>
-                <WiFiFingerprintCollector
-                  locationId={selectedLocation}
-                  buildingId={selectedFloorplan.buildingId}
-                  buildingName={selectedBuildingName || ''}
-                  floorId={selectedFloorplan.floorLabel}
-                  coordinates={coords}
-                  description={pointName}
-                  type="user_point"
-                  onFingerprintCollected={() => {
-                    setCoords(null);
-                    setPointName('');
-                    fetchPoints();
-                  }}
+
+                <TextInput
+                  style={[styles.input, { borderColor: colors.primary, color: colors.text }]}
+                  placeholder="Label (e.g., Door NE)"
+                  placeholderTextColor={colors.text}
+                  value={beaconLabel}
+                  onChangeText={setBeaconLabel}
                 />
+                <TextInput
+                  style={[styles.input, { borderColor: colors.primary, color: colors.text }]}
+                  placeholder="UUID (from Minew app)"
+                  placeholderTextColor={colors.text}
+                  autoCapitalize="none"
+                  value={beaconUUID}
+                  onChangeText={setBeaconUUID}
+                />
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <TextInput
+                    style={[styles.inputHalf, { borderColor: colors.primary, color: colors.text }]}
+                    placeholder="Major"
+                    placeholderTextColor={colors.text}
+                    keyboardType="numeric"
+                    value={beaconMajor}
+                    onChangeText={setBeaconMajor}
+                  />
+                  <TextInput
+                    style={[styles.inputHalf, { borderColor: colors.primary, color: colors.text }]}
+                    placeholder="Minor"
+                    placeholderTextColor={colors.text}
+                    keyboardType="numeric"
+                    value={beaconMinor}
+                    onChangeText={setBeaconMinor}
+                  />
+                </View>
+                <TextInput
+                  style={[styles.input, { borderColor: colors.primary, color: colors.text }]}
+                  placeholder="txPowerAt1m (default: -59)"
+                  placeholderTextColor={colors.text}
+                  keyboardType="numeric"
+                  value={txPowerAt1m}
+                  onChangeText={setTxPowerAt1m}
+                />
+
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                  <TouchableOpacity
+                    onPress={saveBeacon}
+                    style={[styles.btn, { backgroundColor: colors.primary }]}
+                  >
+                    <Text style={{ color: '#fff', fontWeight: '600' }}>Save Beacon</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setCoords(null);
+                      setBeaconLabel('');
+                      setBeaconUUID('');
+                      setBeaconMajor('');
+                      setBeaconMinor('');
+                      setTxPowerAt1m('-59');
+                    }}
+                    style={[styles.btn, { backgroundColor: colors.card }]}
+                  >
+                    <Text style={{ color: colors.text }}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={{ color: colors.text, marginTop: 8, opacity: 0.8 }}>
+                  Tip: You can start with txPowerAt1m = -59 and refine later using a 1 m calibration
+                  (stand 1 m away, average RSSI for ~15 s).
+                </Text>
               </>
             )}
           </View>
@@ -635,13 +675,13 @@ export default function AdminIndoorPositioningContent() {
         </View>
       )}
 
-      {/* Coordinates Selection Popup */}
+      {/* Coordinates Selected Popup */}
       <StandardPopup
         visible={showCoordinatesPopup}
         title="Coordinates Selected"
         message={
           selectedCoordinates
-            ? ` Location Selected\n\nCoordinates:\nX: ${selectedCoordinates.x.toFixed(3)}\nY: ${selectedCoordinates.y.toFixed(3)}\n\nYou can now add a WiFi fingerprint at this location.`
+            ? `Location Selected\n\nX: ${selectedCoordinates.x.toFixed(3)}\nY: ${selectedCoordinates.y.toFixed(3)}\n\nFill in the beacon details (UUID/Major/Minor) and Save.`
             : ''
         }
         onConfirm={() => {
@@ -651,53 +691,69 @@ export default function AdminIndoorPositioningContent() {
         onCancel={() => {
           setShowCoordinatesPopup(false);
           setSelectedCoordinates(null);
-          setCoords(null); // Clear coordinates if cancelled
+          setCoords(null);
         }}
         confirmText="Continue"
         cancelText="Cancel"
         showCancel={true}
       />
 
-      {/* WiFi Point Info Popup */}
+      {/* Beacon Info Popup */}
       <StandardPopup
-        visible={showPointInfoPopup}
-        title="WiFi Point Information"
+        visible={showBeaconInfoPopup}
+        title="Beacon Information"
         message={
-          selectedPointInfo
-            ? ` ${selectedPointInfo.description || 'WiFi Point'}\n\nCoordinates:\nX: ${selectedPointInfo.x.toFixed(3)}\nY: ${selectedPointInfo.y.toFixed(3)}`
+          selectedBeaconInfo
+            ? ` ${selectedBeaconInfo.label || 'Beacon'}\n\nUUID: ${selectedBeaconInfo.uuid}\nMajor/Minor: ${selectedBeaconInfo.major}/${selectedBeaconInfo.minor}\nCoords: (${selectedBeaconInfo.x.toFixed(3)}, ${selectedBeaconInfo.y.toFixed(3)})\nTx@1m: ${selectedBeaconInfo.txPowerAt1m} dBm`
             : ''
         }
         onConfirm={() => {
-          setShowPointInfoPopup(false);
-          // Show delete confirmation
-          setPointToDelete({
-            id: selectedPointInfo?.id || '',
-            description: selectedPointInfo?.description || 'WiFi Point',
-          });
+          setShowBeaconInfoPopup(false);
+          setBeaconToDelete(selectedBeaconInfo || null);
           setShowDeleteConfirmation(true);
         }}
         onCancel={() => {
-          setShowPointInfoPopup(false);
-          setSelectedPointInfo(null);
+          setShowBeaconInfoPopup(false);
+          setSelectedBeaconInfo(null);
         }}
-        confirmText="Delete Point"
+        confirmText="Delete Beacon"
         cancelText="Close"
         showCancel={true}
       />
 
-      {/* Delete Confirmation Popup */}
+      {/* Delete Confirmation */}
       <StandardPopup
         visible={showDeleteConfirmation}
-        title="Delete WiFi Point"
-        message={`Are you sure you want to delete "${pointToDelete?.description || 'this WiFi point'}"?\n\nThis action cannot be undone.`}
-        onConfirm={handleDeletePoint}
+        title="Delete Beacon"
+        message={`Are you sure you want to delete "${beaconToDelete?.label || 'this beacon'}"?\n\nThis action cannot be undone.`}
+        onConfirm={handleDeleteBeacon}
         onCancel={() => {
           setShowDeleteConfirmation(false);
-          setPointToDelete(null);
+          setBeaconToDelete(null);
         }}
         confirmText="Delete"
         cancelText="Cancel"
         showCancel={true}
+      />
+
+      {/* Error Popup */}
+      <StandardPopup
+        visible={showErrorPopup}
+        title={errorTitle}
+        message={errorMessage}
+        onConfirm={() => setShowErrorPopup(false)}
+        confirmText="OK"
+        showCancel={false}
+      />
+
+      {/* Success Popup */}
+      <StandardPopup
+        visible={showSuccessPopup}
+        title="Success"
+        message={successMessage}
+        onConfirm={() => setShowSuccessPopup(false)}
+        confirmText="OK"
+        showCancel={false}
       />
     </View>
   );
@@ -720,5 +776,25 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  input: {
+    borderWidth: 1,
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  inputHalf: {
+    flex: 1,
+    borderWidth: 1,
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  btn: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
