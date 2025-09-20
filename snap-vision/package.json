@@ -35,6 +35,8 @@
     "@shopify/react-native-skia": "^2.1.1",
     "babel-plugin-module-resolver": "^4.1.0",
     "cli-spinners": "^3.2.0",
+    "from": "^0.1.7",
+    "notifee": "^0.0.1",
     "query-string": "^9.2.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
