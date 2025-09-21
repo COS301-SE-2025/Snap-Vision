@@ -107,12 +107,6 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
 
         {/* Essential controls */}
         <View style={styles.minimizedControls}>
-          <Pressable
-            style={[styles.miniButton, { backgroundColor: colors.danger }]}
-            onPress={onCancelRoute}
-          >
-            <Icon name="close" size={12} color="#fff" />
-          </Pressable>
 
           <Pressable
             style={[styles.miniButton, { backgroundColor: '#E53935' }]}
