@@ -42,6 +42,9 @@ export default function ForgotPasswordScreen() {
             fontFamily: 'PermanentMarkerRegular',
             color: colors.primary,
             transform: [{ rotate: '-3deg' }],
+            textShadowColor: colors.text,
+            textShadowOffset: { width: 1, height: 1 },
+            textShadowRadius: 1,
           },
         ]}
       >

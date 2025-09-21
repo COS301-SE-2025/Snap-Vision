@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import AppInput from '../atoms/AppInput';
 import AppButton from '../atoms/AppButton';
 import auth from '@react-native-firebase/auth';
@@ -142,6 +142,14 @@ export default function RegisterForm() {
         REGISTER
       </Text>
 
+      <View style={styles.mascotWrapper}>
+        <Image 
+          source={require('../../../assets/mascot_half_wave.png')} 
+          style={styles.mascotImage} 
+          resizeMode="contain"
+        />
+      </View>
+
       <Text style={[styles.label, { color: colors.secondary }]}>Username</Text>
       <AppInput
         placeholder="Enter your name"
@@ -239,6 +247,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 15,
+    position: 'relative',
+    zIndex: 0,
   },
   error: {
     color: 'red',
@@ -280,5 +290,17 @@ const styles = StyleSheet.create({
   },
   buttonSpacing: {
     height: 12,
+  },
+  mascotWrapper: {
+    position: 'relative',
+    alignItems: 'flex-end',
+    marginTop: -60,
+    marginBottom: -53,
+    zIndex: 1,
+    paddingRight: 10,
+  },
+  mascotImage: {
+    width: 100,
+    height: 100,
   },
 });

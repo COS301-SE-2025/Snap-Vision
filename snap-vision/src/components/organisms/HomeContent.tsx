@@ -1,4 +1,3 @@
-// src/components/organisms/HomeContent.tsx
 import React from 'react';
 import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
 import HeaderWithIcons from '../molecules/HeaderWithIcons';
@@ -52,6 +51,15 @@ export default function HomeContent() {
 
       <View style={{ height: 20 }} />
 
+      {/* Mascot image */}
+      <View style={styles.mascotContainer}>
+        <Image
+          source={require('../../../assets/mascot_ponder.png')}
+          style={styles.mascotImage}
+          resizeMode="contain"
+        />
+      </View>
+
       {/* First separator (slightly lowered) */}
       <View style={{ marginTop: 20 }}>
         <View style={[styles.separator, { borderBottomColor: colors.border }]} />
@@ -75,6 +83,8 @@ export default function HomeContent() {
           </View>
         </View>
       </View>
+
+      
 
       {/* Second separator */}
       <View style={[styles.separator, { borderBottomColor: colors.border }]} />
@@ -140,5 +150,15 @@ const styles = StyleSheet.create({
   qrWrapper: {
     flex: 1,
     marginLeft: 8,
+  },
+  mascotContainer: {
+    alignItems: 'center',
+    marginTop: -25,
+    marginBottom: -51,
+    zIndex: 1,
+  },
+  mascotImage: {
+    width: 100,
+    height: 100,
   },
 });
