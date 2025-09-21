@@ -42,13 +42,6 @@ const SHOP_ITEMS: ShopItem[] = [
     cost: 150,
   },
   {
-    id: 'retro-map',
-    title: 'Retro Map Skin',
-    description: '8-bit nostalgic overlay',
-    icon: 'game-controller',
-    cost: 120,
-  },
-  {
     id: 'double-points',
     title: 'Double Points',
     description: 'Earn double points for next route',
