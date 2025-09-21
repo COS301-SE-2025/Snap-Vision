@@ -51,6 +51,7 @@ interface UseMapNavigationReturn {
 }
 
 const ROUTING_API_BASE = 'http://10.0.2.2:3000';
+// need to update for backend
 
 // Helper to calculate distance between two lat/lon points (Haversine formula)
 function getDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
