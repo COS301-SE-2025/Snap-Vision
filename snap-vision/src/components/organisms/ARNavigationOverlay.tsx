@@ -461,17 +461,6 @@ function SimpleARGuidance({
         {/* Direction Text */}
         <Text style={styles.directionText}>{getDirectionInstruction()}</Text>
         
-        {/* Debug Information - Remove in production */}
-        {__DEV__ && (
-          <View style={styles.debugContainer}>
-            <Text style={styles.debugText}>
-              Bearing: {bearing.toFixed(1)}° | Heading: {deviceHeading.toFixed(1)}°
-            </Text>
-            <Text style={styles.debugText}>
-              Relative: {relativeBearing.toFixed(1)}° | Route: {currentRouteIndex}/{routeCoordinates.length}
-            </Text>
-          </View>
-        )}
       </View>
     </>
   );
