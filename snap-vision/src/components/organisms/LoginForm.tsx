@@ -97,6 +97,9 @@ export default function LoginForm() {
             fontFamily: 'PermanentMarkerRegular',
             color: colors.primary,
             transform: [{ rotate: '-3deg' }],
+            textShadowColor: colors.text,
+            textShadowOffset: { width: 1, height: 1 },
+            textShadowRadius: 1,
           },
         ]}
       >
@@ -147,11 +150,11 @@ export default function LoginForm() {
         Don’t have an account? <Text style={styles.signUpBold}>SIGN UP</Text>
       </Text>
 
-      <View style={styles.dividerRow}>
+      {/* <View style={styles.dividerRow}>
         <View style={[styles.line, { backgroundColor: colors.secondary }]} />
         <Text style={[styles.orText, { color: colors.secondary }]}>Login With</Text>
         <View style={[styles.line, { backgroundColor: colors.secondary }]} />
-      </View>
+      </View> */}
     </View>
   );
 }

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import AppInput from '../atoms/AppInput';
 import AppButton from '../atoms/AppButton';
-import StandardPopup from '../atoms/StandardPopup';
 import auth from '@react-native-firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -43,10 +42,8 @@ export default function RegisterForm() {
   const [successMessage, setSuccessMessage] = useState('');
   const { unlock } = useBadges();
 
-  // Popup states
-  const [showErrorPopup, setShowErrorPopup] = useState(false);
-  const [errorPopupMessage, setErrorPopupMessage] = useState('');
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  // Success message state
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   const handleRegister = async () => {
     const newErrors = { username: '', email: '', password: '', confirmPassword: '' };
@@ -80,19 +77,7 @@ export default function RegisterForm() {
 
     if (hasError) {
       setErrors(newErrors);
-      if (newErrors.username) {
-        setErrorPopupMessage('Please fill in all fields');
-        setShowErrorPopup(true);
-      } else if (newErrors.email === 'Invalid email format.') {
-        setErrorPopupMessage('Please enter a valid email address');
-        setShowErrorPopup(true);
-      } else if (newErrors.password) {
-        setErrorPopupMessage(newErrors.password);
-        setShowErrorPopup(true);
-      } else if (newErrors.confirmPassword) {
-        setErrorPopupMessage('Passwords do not match');
-        setShowErrorPopup(true);
-      }
+      // Using inline error messages only, no popups
       return;
     }
 
@@ -109,8 +94,20 @@ export default function RegisterForm() {
 
       setHasSeenLanding(false); // triggers Landing screen on registration
       unlock('first-login');
-      setShowSuccessPopup(true);
-      setSuccessMessage('Account created!');
+      setShowSuccessMessage(true);
+      setSuccessMessage('Account created!');      
+      // Navigate after success
+      setTimeout(() => {
+        if (coords && coords.lat && coords.lng) {
+          navigation.replace('Tabs', {
+            screen: 'Map',
+            params: { lat: coords.lat, lng: coords.lng },
+          });
+          setCoords(null);
+        } else {
+          navigation.replace('Tabs');
+        }
+      }, 500);
     } catch (error: any) {
       const errorMessages: { [key: string]: string } = {
         'auth/email-already-in-use': 'This email is already registered.',
@@ -118,13 +115,7 @@ export default function RegisterForm() {
         'auth/weak-password': 'Password is too weak.',
       };
       const msg = errorMessages[error?.code] || 'Registration failed.';
-      if (error?.code === 'auth/email-already-in-use') {
-        setErrorPopupMessage('This email is already registered.');
-        setShowErrorPopup(true);
-      } else {
-        setErrorPopupMessage(msg);
-        setShowErrorPopup(true);
-      }
+      // Using inline error messages only
       setErrors({
         ...newErrors,
         email: msg,
@@ -132,21 +123,6 @@ export default function RegisterForm() {
     }
   };
 
-  // Handle success popup confirmation
-  const handleSuccessConfirm = () => {
-    setShowSuccessPopup(false);
-
-    // Navigate after popup is dismissed
-    if (coords && coords.lat && coords.lng) {
-      navigation.replace('Tabs', {
-        screen: 'Map',
-        params: { lat: coords.lat, lng: coords.lng },
-      });
-      setCoords(null);
-    } else {
-      navigation.replace('Tabs');
-    }
-  };
 
   return (
     <View>
@@ -157,6 +133,9 @@ export default function RegisterForm() {
             fontFamily: 'PermanentMarkerRegular',
             color: colors.primary,
             transform: [{ rotate: '-3deg' }],
+            textShadowColor: colors.text,
+            textShadowOffset: { width: 1, height: 1 },
+            textShadowRadius: 1,
           },
         ]}
       >
@@ -219,6 +198,7 @@ export default function RegisterForm() {
       />
       {errors.confirmPassword ? <Text style={styles.error}>{errors.confirmPassword}</Text> : null}
 
+      <View style={styles.buttonSpacing}></View>
       <AppButton title="REGISTER" onPress={handleRegister} testID="register-button" />
 
       {successMessage ? <Text style={styles.success}>{successMessage}</Text> : null}
@@ -230,29 +210,12 @@ export default function RegisterForm() {
         Already have an account? <Text style={styles.signUpBold}>LOGIN</Text>
       </Text>
 
-      <View style={styles.dividerRow}>
+      {/* <View style={styles.dividerRow}>
         <View style={[styles.line, { backgroundColor: colors.secondary }]} />
         <Text style={[styles.orText, { color: colors.secondary }]}>Register With</Text>
         <View style={[styles.line, { backgroundColor: colors.secondary }]} />
-      </View>
+      </View> */}
 
-      {/* Error Popup */}
-      <StandardPopup
-        visible={showErrorPopup}
-        title="Registration Error"
-        message={errorPopupMessage}
-        onClose={() => setShowErrorPopup(false)}
-        showCloseButton={true}
-      />
-
-      {/* Success Popup */}
-      <StandardPopup
-        visible={showSuccessPopup}
-        title="Registration Successful"
-        message="Your account has been created successfully!"
-        onClose={handleSuccessConfirm}
-        showCloseButton={true}
-      />
     </View>
   );
 }
@@ -314,5 +277,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     fontSize: 13,
     fontWeight: '600',
+  },
+  buttonSpacing: {
+    height: 12,
   },
 });
