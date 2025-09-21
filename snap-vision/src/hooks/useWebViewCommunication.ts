@@ -281,6 +281,11 @@ export const useWebViewCommunication = (
             break;
           }
 
+          case 'SET_USER_ICON':
+            const iconName = parsed.iconName;
+            injectJavaScript(`window.setUserIcon && window.setUserIcon('${iconName}');`);
+            break;
+
           default:
           // console.log('Unknown message type from WebView:', parsed.type);
         }

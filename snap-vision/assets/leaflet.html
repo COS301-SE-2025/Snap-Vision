@@ -162,6 +162,30 @@
         }, 500);
       }
 
+      // Function to set user location icon
+      window.setUserIcon = function(iconName) {
+        let iconHtml = '📍'; // default
+        if (iconName === 'star') iconHtml = '⭐';
+        else if (iconName === 'heart') iconHtml = '❤️';
+        else if (iconName === 'compass') iconHtml = '🧭';
+        else if (iconName === 'rocket') iconHtml = '🚀';
+        else if (iconName === 'gem') iconHtml = '💎';
+        else if (iconName === 'crown') iconHtml = '👑';
+
+        const customIcon = L.divIcon({
+          html: `<div style="font-size: 24px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">${iconHtml}</div>`,
+          className: 'user-location-icon',
+          iconSize: [24, 24],
+          iconAnchor: [12, 24] // anchor at bottom center
+        });
+
+        if (userMarker) {
+          userMarker.setIcon(customIcon);
+        }
+        // Store for future markers
+        window.currentUserIcon = customIcon;
+      };
+
       // Function to update user location
       window.updateUserLocation = function (lat, lon, centerMap = false, zoomLevel = null) {
         console.log('🗺️ updateUserLocation called:', {
@@ -193,7 +217,7 @@
             userMarker.setLatLng(coords);
           } else {
             console.log('📍 Creating new user marker');
-            userMarker = L.marker(coords).addTo(map).bindPopup('📍 You are here!').openPopup();
+            userMarker = L.marker(coords, { icon: window.currentUserIcon || undefined }).addTo(map).bindPopup('📍 You are here!').openPopup();
           }
           console.log('✅ User location updated successfully');
         } catch (error) {
