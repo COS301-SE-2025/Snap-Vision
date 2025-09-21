@@ -20,140 +20,7 @@ export interface ShopItem {
 }
 
 const SHOP_ITEMS: ShopItem[] = [
-  {
-    id: 'arrow-classic',
-    title: 'Classic Arrow',
-    description: 'Standard AR direction arrow',
-    icon: 'arrow-forward',
-    cost: 50,
-  },
-  {
-    id: 'arrow-flame',
-    title: 'Flame Arrow',
-    description: 'Burning animated arrow',
-    icon: 'flame',
-    cost: 100,
-  },
-  {
-    id: 'arrow-neon',
-    title: 'Neon Pulse',
-    description: 'Cool glowing arrow',
-    icon: 'flash',
-    cost: 150,
-  },
-  {
-    id: 'retro-map',
-    title: 'Retro Map Skin',
-    description: '8-bit nostalgic overlay',
-    icon: 'game-controller',
-    cost: 120,
-  },
-  {
-    id: 'double-points',
-    title: 'Double Points',
-    description: 'Earn double points for next route',
-    icon: 'rocket',
-    cost: 200,
-  },
-  {
-    id: 'stealth-arrow',
-    title: 'Stealth Arrow',
-    description: 'Invisible until fired',
-    icon: 'eye-off',
-    cost: 180,
-  },
-  { id: 'ice-arrow', title: 'Ice Arrow', description: 'Freezes targets', icon: 'snow', cost: 160 },
-  {
-    id: 'lightning-arrow',
-    title: 'Lightning Bolt',
-    description: 'Shocking strike',
-    icon: 'flash-outline',
-    cost: 175,
-  },
-  {
-    id: 'golden-arrow',
-    title: 'Golden Arrow',
-    description: 'Premium gold look',
-    icon: 'star',
-    cost: 220,
-  },
-  {
-    id: 'laser-pointer',
-    title: 'Laser Pointer',
-    description: 'Precision targeting',
-    icon: 'laser',
-    cost: 210,
-  },
-  {
-    id: 'explosive-arrow',
-    title: 'Explosive Arrow',
-    description: 'Area damage',
-    icon: 'bomb',
-    cost: 230,
-  },
-  {
-    id: 'shadow-arrow',
-    title: 'Shadow Arrow',
-    description: 'Silent but deadly',
-    icon: 'moon',
-    cost: 190,
-  },
-  {
-    id: 'plasma-arrow',
-    title: 'Plasma Arrow',
-    description: 'Futuristic tech',
-    icon: 'ellipse-outline',
-    cost: 250,
-  },
-  {
-    id: 'vortex-arrow',
-    title: 'Vortex Arrow',
-    description: 'Sucks in targets',
-    icon: 'git-branch',
-    cost: 270,
-  },
-  {
-    id: 'fireworks-arrow',
-    title: 'Fireworks Arrow',
-    description: 'Spectacular display',
-    icon: 'sparkles',
-    cost: 140,
-  },
-  {
-    id: 'rainbow-arrow',
-    title: 'Rainbow Arrow',
-    description: 'Colorful streak',
-    icon: 'color-palette',
-    cost: 130,
-  },
-  {
-    id: 'phantom-arrow',
-    title: 'Phantom Arrow',
-    description: 'Ghostly effect',
-    icon: 'git-commit',
-    cost: 160,
-  },
-  {
-    id: 'electric-arrow',
-    title: 'Electric Arrow',
-    description: 'Zaps enemies',
-    icon: 'zap',
-    cost: 200,
-  },
-  {
-    id: 'meteor-arrow',
-    title: 'Meteor Arrow',
-    description: 'Burns like a meteor',
-    icon: 'sunny',
-    cost: 240,
-  },
-  {
-    id: 'frost-arrow',
-    title: 'Frost Arrow',
-    description: 'Chills air on hit',
-    icon: 'cloud',
-    cost: 170,
-  },
+
   {
     id: 'user-icon-star',
     title: 'Star Location Marker',
@@ -223,32 +90,18 @@ export default function ShopScreen({ navigation }: { navigation: any }) {
 
     try {
       const updatedData = await purchaseItemForUser(uid, {
-        itemId: item.id,
+        id: item.id,
         name: item.title,
         type: 'shop',
         cost: item.cost,
       });
 
-      setState((prev) => {
-        // If the item is a user icon, update the map icon accordingly
-        if (item.id.startsWith('user-icon-')) {
-          const iconName = item.icon;
-          if (typeof window !== 'undefined' && (window as any).ReactNativeWebView) {
-            // Send message to WebView to update user icon
-            (window as any).ReactNativeWebView.postMessage(
-              JSON.stringify({
-                type: 'SET_USER_ICON',
-                iconName,
-              }),
-            );
-          }
-        }
-        return {
-          ...prev,
-          points: updatedData?.points ?? prev.points,
-          purchases: updatedData?.purchases ?? prev.purchases,
-        };
-      });
+      // Update state with new points and purchases
+      setState((prev) => ({
+        ...prev,
+        points: updatedData?.points ?? prev.points,
+        purchases: updatedData?.purchases ?? prev.purchases,
+      }));
 
       setPopupItem({ title: item.title, cost: item.cost });
     } catch (err: any) {
