@@ -20,7 +20,7 @@ export interface ShopItem {
   description: string;
   icon: string;
   cost: number;
-  tabType: 'Home' | 'Map' | 'Achievements' | 'Settings' | 'Admin' | 'Editor';
+  tabType: 'Home' | 'Map' | 'Achievements' | 'Settings';
   equipped?: boolean;
 }
 
@@ -30,7 +30,7 @@ const SHOP_ITEMS: ShopItem[] = [
     id: 'home-icon-home',
     title: 'Standard Home',
     description: 'Classic home icon for the Home tab',
-    icon: 'home',
+    icon: 'home-outline',
     tabType: 'Home',
     cost: 0, // Free (default)
     equipped: true,
@@ -39,7 +39,7 @@ const SHOP_ITEMS: ShopItem[] = [
     id: 'home-icon-home-heart',
     title: 'Home Heart',
     description: 'A cozy home icon with a heart',
-    icon: 'heart-circle',
+    icon: 'heart',
     tabType: 'Home',
     cost: 10,
   },
@@ -51,13 +51,37 @@ const SHOP_ITEMS: ShopItem[] = [
     tabType: 'Home',
     cost: 150,
   },
+  {
+    id: 'home-icon-home-filled',
+    title: 'Solid Home',
+    description: 'A solid home icon for a bold look',
+    icon: 'home',
+    tabType: 'Home',
+    cost: 80,
+  },
+  {
+    id: 'home-icon-apps',
+    title: 'Apps Grid',
+    description: 'A grid of apps for your home screen',
+    icon: 'apps',
+    tabType: 'Home',
+    cost: 120,
+  },
+  {
+    id: 'home-icon-desktop',
+    title: 'Desktop',
+    description: 'A sleek desktop computer icon',
+    icon: 'desktop',
+    tabType: 'Home',
+    cost: 200,
+  },
   
   // Map tab icons
   {
     id: 'map-icon-map',
     title: 'Standard Map',
     description: 'Classic map icon for the Map tab',
-    icon: 'map',
+    icon: 'map-outline',
     tabType: 'Map',
     cost: 0, // Free (default)
     equipped: true,
@@ -78,13 +102,37 @@ const SHOP_ITEMS: ShopItem[] = [
     tabType: 'Map',
     cost: 200,
   },
+  {
+    id: 'map-icon-navigate',
+    title: 'Navigate',
+    description: 'A navigation arrow for finding your way',
+    icon: 'navigate',
+    tabType: 'Map',
+    cost: 130,
+  },
+  {
+    id: 'map-icon-location',
+    title: 'Location Pin',
+    description: 'Mark your spot with a location pin',
+    icon: 'location',
+    tabType: 'Map',
+    cost: 170,
+  },
+  {
+    id: 'map-icon-map-filled',
+    title: 'Solid Map',
+    description: 'A solid map icon for clear navigation',
+    icon: 'map',
+    tabType: 'Map',
+    cost: 190,
+  },
   
   // Achievements tab icons
   {
     id: 'achievements-icon-trophy',
     title: 'Standard Trophy',
     description: 'Classic trophy icon for achievements',
-    icon: 'trophy',
+    icon: 'trophy-outline',
     tabType: 'Achievements',
     cost: 0, // Free (default)
     equipped: true,
@@ -105,13 +153,37 @@ const SHOP_ITEMS: ShopItem[] = [
     tabType: 'Achievements',
     cost: 180,
   },
+  {
+    id: 'achievements-icon-star',
+    title: 'Star',
+    description: 'A shining star for your achievements',
+    icon: 'star',
+    tabType: 'Achievements',
+    cost: 110,
+  },
+  {
+    id: 'achievements-icon-trophy-filled',
+    title: 'Solid Trophy',
+    description: 'A bold, solid trophy icon',
+    icon: 'trophy',
+    tabType: 'Achievements',
+    cost: 160,
+  },
+  {
+    id: 'achievements-icon-sparkles',
+    title: 'Sparkles',
+    description: 'Celebrate your achievements with sparkles',
+    icon: 'sparkles',
+    tabType: 'Achievements',
+    cost: 220,
+  },
   
   // Settings tab icons
   {
     id: 'settings-icon-settings',
     title: 'Standard Settings',
     description: 'Classic gear icon for settings',
-    icon: 'settings',
+    icon: 'settings-outline',
     tabType: 'Settings',
     cost: 0, // Free (default)
     equipped: true,
@@ -132,42 +204,28 @@ const SHOP_ITEMS: ShopItem[] = [
     tabType: 'Settings',
     cost: 150,
   },
-  
-  // Admin tab icons (visible to admins only)
   {
-    id: 'admin-icon-shield',
-    title: 'Standard Admin',
-    description: 'Classic shield icon for admin tab',
-    icon: 'shield',
-    tabType: 'Admin',
-    cost: 0, // Free (default)
-    equipped: true,
+    id: 'settings-icon-construct',
+    title: 'Tools',
+    description: 'Construction tools for settings',
+    icon: 'construct',
+    tabType: 'Settings',
+    cost: 130,
   },
   {
-    id: 'admin-icon-key',
-    title: 'Admin Key',
-    description: 'Key icon for the admin tab',
-    icon: 'key',
-    tabType: 'Admin',
-    cost: 250,
-  },
-  
-  // Editor tab icons (visible to editors only)
-  {
-    id: 'editor-icon-pencil',
-    title: 'Standard Editor',
-    description: 'Classic pencil icon for editor tab',
-    icon: 'pencil',
-    tabType: 'Editor',
-    cost: 0, // Free (default)
-    equipped: true,
+    id: 'settings-icon-settings-filled',
+    title: 'Solid Settings',
+    description: 'A bold, solid settings gear icon',
+    icon: 'settings',
+    tabType: 'Settings',
+    cost: 170,
   },
   {
-    id: 'editor-icon-brush',
-    title: 'Artist Brush',
-    description: 'Brush icon for the editor tab',
-    icon: 'brush',
-    tabType: 'Editor',
+    id: 'settings-icon-build',
+    title: 'Build',
+    description: 'Wrench icon for adjusting your settings',
+    icon: 'build',
+    tabType: 'Settings',
     cost: 200,
   },
 ];
@@ -256,10 +314,11 @@ export default function ShopScreen() {
 
   // Render function for shop items
   const renderItem = ({ item }: { item: ShopItem }) => {
-    // Check if user owns this item
-    const isOwned = state.purchases?.some(p => p.itemId === item.id) || item.cost === 0;
+    // Check if user owns this item (either it's free or they've purchased it)
+    // Using itemId for Firebase stored purchases
+    const isOwned = item.cost === 0 || state.purchases?.some(p => p.itemId === item.id);
     
-    // Check if this icon is currently equipped
+    // Check if this icon is currently equipped using UserIconContext
     const isEquipped = isItemEquipped(item.id);
     
     // Use a safe default icon if needed
@@ -332,7 +391,7 @@ export default function ShopScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.tabSelectorContent}
         >
-          {['Home', 'Map', 'Achievements', 'Settings', 'Admin', 'Editor'].map(renderTabButton)}
+          {['Home', 'Map', 'Achievements', 'Settings'].map(renderTabButton)}
         </ScrollView>
       </View>
 

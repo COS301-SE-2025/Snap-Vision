@@ -33,8 +33,6 @@ const DEFAULT_EQUIPPED_ITEMS = [
   'map-icon-map',
   'achievements-icon-trophy',
   'settings-icon-settings',
-  'admin-icon-shield',
-  'editor-icon-pencil',
 ];
 
 export const UserIconProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
