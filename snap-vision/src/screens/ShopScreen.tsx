@@ -6,8 +6,8 @@ import { useUserIcons } from '../context/UserIconContext';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 import { useBadges } from '../context/BadgeContext';
-import { purchaseItemForUser } from '../services/badgeService';
 import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 import PurchasePopup from '../components/molecules/PurchasePopup';
 import SettingsHeader from '../components/molecules/SettingsHeader';
 import StandardPopup from '../components/atoms/StandardPopup';
@@ -241,56 +241,85 @@ export default function ShopScreen() {
   const { equipIcon, isItemEquipped } = useUserIcons();
   const [selectedTab, setSelectedTab] = useState<string>('Home'); // Default selected tab
   
-  // Debug logging
+
+  // Load user points and purchases from Firestore on mount
   useEffect(() => {
-    console.log('Shop screen rendered');
-    console.log(`Available points: ${state.points}`);
-    console.log(`Purchases: ${state.purchases?.length || 0}`);
+    const fetchUserData = async () => {
+      const uid = auth().currentUser?.uid;
+      if (!uid) return;
+      try {
+        const userRef = firestore().collection('users').doc(uid);
+        const userDoc = await userRef.get();
+        if (userDoc.exists()) {
+          const data = userDoc.data() || {};
+          setState((prev) => ({
+            ...prev,
+            points: data.points ?? 0,
+            purchases: data.purchases ?? [],
+          }));
+        }
+      } catch (err) {
+        console.error('Failed to fetch user shop data:', err);
+      }
+    };
+    fetchUserData();
   }, []);
   
-  // Ultra-simplified purchase function - no external calls at all
-  const handlePurchase = (item: ShopItem) => {
+  // Purchase function that updates Firestore and then local state
+  const handlePurchase = async (item: ShopItem) => {
     try {
-      // Check if user has enough points (no need to check login since it's just local state)
+      const uid = auth().currentUser?.uid;
+      if (!uid) {
+        Alert.alert('Not logged in', 'Please log in to make purchases.');
+        return;
+      }
       if (state.points < item.cost) {
         Alert.alert('Not enough points', `You need ${item.cost} points.`);
         return;
       }
-      
-      console.log(`Purchasing ${item.title}`);
-      
-      // Just update state directly
-      setState(prev => ({
+      const userRef = firestore().collection('users').doc(uid);
+      // Fetch latest user data
+      const userDoc = await userRef.get();
+  if (!userDoc.exists()) throw new Error('User not found');
+  const userData = userDoc.data() || {};
+  const prevPoints = userData.points ?? 0;
+  const prevPurchases = userData.purchases ?? [];
+      // Add new purchase
+      const newPurchase = {
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        icon: item.icon,
+        tabType: item.tabType,
+        cost: item.cost,
+        equipped: false,
+        boughtAt: new Date().toISOString(),
+      };
+      const updatedPurchases = [...prevPurchases, newPurchase];
+      // Update Firestore
+      await userRef.update({
+        points: prevPoints - item.cost,
+        purchases: updatedPurchases,
+      });
+      // Update local state
+      setState((prev) => ({
         ...prev,
-        // Reduce points
-        points: prev.points - item.cost,
-        // Add to purchases
-        purchases: [
-          ...(prev.purchases || []),
-          {
-            itemId: item.id,
-            name: item.title,
-            type: 'shop',
-            cost: item.cost,
-            boughtAt: new Date().toISOString()
-          }
-        ]
+        points: prevPoints - item.cost,
+        purchases: updatedPurchases,
       }));
-      
       // Show success alert
       Alert.alert(
-        'Purchase Successful', 
+        'Purchase Successful',
         `You purchased ${item.title}! Would you like to equip it now?`,
         [
           { text: 'Not Now' },
-          { 
-            text: 'Equip', 
+          {
+            text: 'Equip',
             onPress: () => handleEquipIcon(item),
           },
         ]
       );
     } catch (err) {
-      // If anything fails, just show an alert
       console.error('Purchase error:', err);
       Alert.alert('Error', 'Something went wrong with your purchase.');
     }
@@ -314,9 +343,9 @@ export default function ShopScreen() {
 
   // Render function for shop items
   const renderItem = ({ item }: { item: ShopItem }) => {
-    // Check if user owns this item (either it's free or they've purchased it)
-    // Using itemId for Firebase stored purchases
-    const isOwned = item.cost === 0 || state.purchases?.some(p => p.itemId === item.id);
+  // Check if user owns this item (either it's free or they've purchased it)
+  // Using id for Firebase stored purchases
+  const isOwned = item.cost === 0 || state.purchases?.some(p => p.id === item.id);
     
     // Check if this icon is currently equipped using UserIconContext
     const isEquipped = isItemEquipped(item.id);
