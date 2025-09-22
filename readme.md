@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/img/Snap%20Vision.png" alt="Snap Vision Logo" width="300"/>
+  <img src="docs/img/Snap%20Vision%20cropped.png" alt="Snap Vision Logo" width="300"/>
   <h1>BLT’S</h1>
   <h1>Snap Vision</h1>
   <h2>AR Navigation for Indoor & Outdoor Spaces</h2>
@@ -167,5 +167,5 @@ We follow the **Gitflow branching model**:
 ## Stakeholders
 
 <div align="center">
-  <img src="https://github.com/COS301-SE-2025/Snap-Vision/blob/715d64ac39a0f5d102d1dfa768005163b7e2d806/docs/img/naked-insurance.png" alt="Stakeholders Image" width="400"/>
+  <img src="docs/img/naked-insurance.png" alt="Stakeholders Image" width="400"/>
 </div>
