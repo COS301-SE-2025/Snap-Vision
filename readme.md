@@ -50,6 +50,8 @@ Snap Vision is a mobile application designed to help users navigate complex indo
 This project was developed by Team BLT’S for the COS301 Capstone Module at the University of Pretoria.
 
 ---
+
+[Download APK](https://github.com/COS301-SE-2025/Snap-Visionreleases/download/v1.0/app-release.apk)
 <div align="center">
 
 ## Demo 3 Documentation
