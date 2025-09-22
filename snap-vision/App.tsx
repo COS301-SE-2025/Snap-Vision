@@ -17,6 +17,7 @@ import { LandingProvider } from './src/context/LandingContext';
 import { UserProvider } from './src/context/UserContext';
 import { BadgeProvider } from './src/context/BadgeContext';
 import { AccessibilityProvider } from './src/context/AccessibilityContext';
+import { UserIconProvider } from './src/context/UserIconContext';
 import BadgeUnlockNotifier from './src/components/organisms/BadgeUnlockNotifier';
 import ShopScreen from './src/screens/ShopScreen';
 import { initializePreBundledFloorplans } from './src/utils/floorplanUtils';
@@ -77,8 +78,9 @@ function AppInner() {
 
   return (
     <BadgeProvider>
-      <ThemeProvider>
-        <NavigationContainer ref={navigationRef}>
+      <UserIconProvider>
+        <ThemeProvider>
+          <NavigationContainer ref={navigationRef}>
           <BadgeUnlockNotifier />
           <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="AuthResolver">
             <Stack.Screen name="AuthResolver" component={AuthResolverScreen} />
@@ -115,8 +117,9 @@ function AppInner() {
             />
           </Stack.Navigator>
           <Toast config={toastConfig} />
-        </NavigationContainer>
-      </ThemeProvider>
+          </NavigationContainer>
+        </ThemeProvider>
+      </UserIconProvider>
     </BadgeProvider>
   );
 }
