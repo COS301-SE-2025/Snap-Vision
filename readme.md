@@ -43,15 +43,16 @@
 </div>
 
 ---
+<div align="center">
 
 ## About Snap Vision
 
 Snap Vision is a mobile application designed to help users navigate complex indoor and outdoor environments such as university campuses and malls using AR-powered visual guidance. The app uses a combination of GPS, Bluetooth beacons, and AR overlays to provide seamless real-time wayfinding.  
 This project was developed by Team BLT’S for the COS301 Capstone Module at the University of Pretoria.
-
+</div>
 ---
 
-[Download APK](https://github.com/COS301-SE-2025/Snap-Visionreleases/download/v1.0/app-release.apk)
+[Download APK](https://github.com/COS301-SE-2025/Snap-Vision/releases/download/v1.0/app-release.apk)
 <div align="center">
 
 ## Demo 3 Documentation
@@ -79,7 +80,7 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 | Demo 4  | [Slides 4] | [Docs 4] | [Video 4] |
 
 ---
-</div>
+<div align="center">
 
 ## Project Board
 
@@ -165,6 +166,7 @@ We follow the **Gitflow branching model**:
 - `test/*` - unit and integration testing
 
 ---
+</div>
 
 ## Stakeholders
 
