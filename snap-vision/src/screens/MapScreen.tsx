@@ -515,14 +515,14 @@ const MapScreen = () => {
   useEffect(() => {
     if (isMapReady && webViewRef.current) {
       // Find the latest user icon purchase
-      const userIconPurchases = state.purchases?.filter((purchase: any) =>
-        purchase.id?.startsWith('user-icon-')
-      ) || [];
+      const userIconPurchases =
+        state.purchases?.filter((purchase: any) => purchase.id?.startsWith('user-icon-')) || [];
 
       if (userIconPurchases.length > 0) {
         // Get the most recent user icon purchase
         const latestIconPurchase = userIconPurchases[userIconPurchases.length - 1];
-        const iconName = latestIconPurchase.icon || latestIconPurchase.id?.replace('user-icon-', '');
+        const iconName =
+          latestIconPurchase.icon || latestIconPurchase.id?.replace('user-icon-', '');
 
         // Update the WebView with the new icon
         const iconUpdateScript = `window.setUserIcon && window.setUserIcon('${iconName}');`;

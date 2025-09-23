@@ -100,17 +100,26 @@ export default function RegisterForm() {
       const userCredential = await auth().createUserWithEmailAndPassword(email, password);
       const uid = userCredential.user.uid;
 
-        // Create a Firestore entry for this user in the 'users' collection with default purchase
-        const defaultPurchase = {
-          id: 'home-icon-home',
-          title: 'Standard Home',
-          description: 'Classic home icon for the Home tab',
-          icon: 'home-outline',
-          tabType: 'Home',
-          cost: 0,
-          equipped: true,
-        };
-        await firestore().collection('users').doc(uid).set({
+      await firestore().collection('userInformation').doc(uid).set({
+        email,
+        name: username.trim(),
+        role: 'user',
+      });
+
+      // Create a Firestore entry for this user in the 'users' collection with default purchase
+      const defaultPurchase = {
+        id: 'home-icon-home',
+        title: 'Standard Home',
+        description: 'Classic home icon for the Home tab',
+        icon: 'home-outline',
+        tabType: 'Home',
+        cost: 0,
+        equipped: true,
+      };
+      await firestore()
+        .collection('users')
+        .doc(uid)
+        .set({
           badges: [],
           points: 0,
           checkIns: 0,

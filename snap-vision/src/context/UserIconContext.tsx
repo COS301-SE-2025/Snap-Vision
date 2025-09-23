@@ -47,16 +47,16 @@ export const UserIconProvider: React.FC<{ children: ReactNode }> = ({ children }
       try {
         const savedIcons = await AsyncStorage.getItem('@snap_vision_tab_icons');
         const savedEquippedItems = await AsyncStorage.getItem('@snap_vision_equipped_items');
-        
+
         if (savedIcons) {
-          setState(prev => ({
+          setState((prev) => ({
             ...prev,
             selectedIcons: { ...prev.selectedIcons, ...JSON.parse(savedIcons) },
           }));
         }
-        
+
         if (savedEquippedItems) {
-          setState(prev => ({
+          setState((prev) => ({
             ...prev,
             equippedItems: JSON.parse(savedEquippedItems),
           }));
@@ -79,12 +79,17 @@ export const UserIconProvider: React.FC<{ children: ReactNode }> = ({ children }
       };
 
       // Update equipped items - first unequip any other item of same tab type
-      const otherItemsOfSameTypeFiltered = state.equippedItems.filter(id => !id.startsWith(`${tabType.toLowerCase()}-icon-`));
+      const otherItemsOfSameTypeFiltered = state.equippedItems.filter(
+        (id) => !id.startsWith(`${tabType.toLowerCase()}-icon-`),
+      );
       const updatedEquippedItems = [...otherItemsOfSameTypeFiltered, itemId];
 
       // Save to storage
       await AsyncStorage.setItem('@snap_vision_tab_icons', JSON.stringify(updatedIcons));
-      await AsyncStorage.setItem('@snap_vision_equipped_items', JSON.stringify(updatedEquippedItems));
+      await AsyncStorage.setItem(
+        '@snap_vision_equipped_items',
+        JSON.stringify(updatedEquippedItems),
+      );
 
       // Update state
       setState({

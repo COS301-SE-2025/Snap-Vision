@@ -12,10 +12,10 @@ interface Props {
 export default function TabBarIcon({ routeName, color, size }: Props) {
   // Use custom icon from context if available
   const { getIconForTab } = useUserIcons();
-  
+
   // Get custom icon for this tab, or use default if none is set
   let iconName = getIconForTab(routeName) || 'ellipse-outline';
-  
+
   // If no custom icon is set, use the default icons
   if (!iconName) {
     if (routeName === 'Home') iconName = 'home-outline';

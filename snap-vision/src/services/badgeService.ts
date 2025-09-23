@@ -2,7 +2,6 @@
 import firestore from '@react-native-firebase/firestore';
 import { Badge } from '../types/badges';
 
-
 const db = firestore();
 
 export async function unlockBadgeForUser(userId: string, badgeId: string) {
@@ -156,7 +155,7 @@ export async function getBadges(): Promise<Record<string, Badge>> {
   const badgesRef = db.collection('badges');
   const snapshot = await badgesRef.get();
   const badges: Record<string, Badge> = {};
-  snapshot.forEach(doc => {
+  snapshot.forEach((doc) => {
     const data = doc.data();
     badges[doc.id] = {
       id: doc.id as any, // Assuming doc.id matches BadgeId

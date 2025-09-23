@@ -1,6 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GestureResponderEvent } from 'react-native';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Platform, SectionList, Pressable, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  SectionList,
+  Pressable,
+  ScrollView,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useUserIcons } from '../context/UserIconContext';
@@ -76,7 +86,7 @@ const SHOP_ITEMS: ShopItem[] = [
     tabType: 'Home',
     cost: 100,
   },
-  
+
   // Map tab icons
   {
     id: 'map-icon-map',
@@ -127,7 +137,7 @@ const SHOP_ITEMS: ShopItem[] = [
     tabType: 'Map',
     cost: 100,
   },
-  
+
   // Achievements tab icons
   {
     id: 'achievements-icon-trophy',
@@ -178,7 +188,7 @@ const SHOP_ITEMS: ShopItem[] = [
     tabType: 'Achievements',
     cost: 100,
   },
-  
+
   // Settings tab icons
   {
     id: 'settings-icon-settings',
@@ -286,7 +296,7 @@ export default function ShopScreen() {
     };
     fetchUserData();
   }, []);
-  
+
   // Purchase function that updates Firestore and then local state
   const handlePurchase = async (item: ShopItem) => {
     try {
@@ -320,10 +330,10 @@ export default function ShopScreen() {
       const userRef = firestore().collection('users').doc(uid);
       // Fetch latest user data
       const userDoc = await userRef.get();
-  if (!userDoc.exists()) throw new Error('User not found');
-  const userData = userDoc.data() || {};
-  const prevPoints = userData.points ?? 0;
-  const prevPurchases = userData.purchases ?? [];
+      if (!userDoc.exists()) throw new Error('User not found');
+      const userData = userDoc.data() || {};
+      const prevPoints = userData.points ?? 0;
+      const prevPurchases = userData.purchases ?? [];
       // Add new purchase
       const newPurchase = {
         id: item.id,
@@ -407,36 +417,44 @@ export default function ShopScreen() {
 
   // Filtered shop items based on selected tab
   const getFilteredItems = () => {
-    return SHOP_ITEMS.filter(item => item.tabType === selectedTab);
+    return SHOP_ITEMS.filter((item) => item.tabType === selectedTab);
   };
 
   // Render function for shop items
   const renderItem = ({ item }: { item: ShopItem }) => {
-  // Check if user owns this item (either it's free or they've purchased it)
-  // Using id for Firebase stored purchases
-  const isOwned = item.cost === 0 || state.purchases?.some(p => p.id === item.id);
-    
+    // Check if user owns this item (either it's free or they've purchased it)
+    // Using id for Firebase stored purchases
+    const isOwned = item.cost === 0 || state.purchases?.some((p) => p.id === item.id);
+
     // Check if this icon is currently equipped using UserIconContext
     const isEquipped = isItemEquipped(item.id);
-    
+
     // Use a safe default icon if needed
     const iconName = item.icon || 'help-circle';
-    
+
     return (
-      <View style={[styles.card, { 
-        backgroundColor: colors.card, 
-        borderColor: isEquipped ? colors.primary : colors.border,
-        borderWidth: isEquipped ? 2 : 1,
-      }]}>
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.card,
+            borderColor: isEquipped ? colors.primary : colors.border,
+            borderWidth: isEquipped ? 2 : 1,
+          },
+        ]}
+      >
         <Icon name={iconName} size={32} color={colors.primary} style={styles.cardIcon} />
         <Text style={[styles.cardTitle, { color: colors.text }]}>{item.title}</Text>
         <Text style={[styles.cardDesc, { color: colors.subtleText }]}>{item.description}</Text>
-        
+
         {isOwned ? (
           <TouchableOpacity
-            style={[styles.buyButton, { 
-              backgroundColor: isEquipped ? colors.secondary : colors.primary 
-            }]}
+            style={[
+              styles.buyButton,
+              {
+                backgroundColor: isEquipped ? colors.secondary : colors.primary,
+              },
+            ]}
             onPress={() => handleEquipIcon(item)}
           >
             <Text style={styles.buyText}>{isEquipped ? 'Equipped' : 'Equip'}</Text>
@@ -461,10 +479,10 @@ export default function ShopScreen() {
         key={tabName}
         style={[
           styles.tabButton,
-          { 
+          {
             backgroundColor: isSelected ? colors.primary : colors.card,
             borderColor: isSelected ? colors.primary : colors.border,
-          }
+          },
         ]}
         onPress={() => setSelectedTab(tabName)}
       >
@@ -476,16 +494,16 @@ export default function ShopScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}> 
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title="Icon Shop" />
-      <Text style={[styles.subtitle, { color: colors.text }]}> 
+      <Text style={[styles.subtitle, { color: colors.text }]}>
         Customize your navigation tabs with different icons!
       </Text>
 
       {/* Tab selector */}
       <View style={styles.tabSelector}>
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.tabSelectorContent}
         >
@@ -494,9 +512,9 @@ export default function ShopScreen() {
       </View>
 
       {/* Available points display */}
-      <View style={[styles.pointsContainer, { backgroundColor: colors.card }]}> 
+      <View style={[styles.pointsContainer, { backgroundColor: colors.card }]}>
         <Icon name="wallet-outline" size={16} color={colors.primary} style={styles.pointsIcon} />
-        <Text style={[styles.pointsText, { color: colors.text }]}> 
+        <Text style={[styles.pointsText, { color: colors.text }]}>
           {state.points} points available
         </Text>
       </View>

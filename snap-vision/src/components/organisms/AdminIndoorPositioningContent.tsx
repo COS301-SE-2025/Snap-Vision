@@ -541,7 +541,7 @@ export default function AdminIndoorPositioningContent() {
             <BuildingSelector
               buildings={buildings}
               selectedBuildingId={selectedBuildingId}
-              setSelectedBuildingId={id => {
+              setSelectedBuildingId={(id) => {
                 setSelectedBuildingId(id);
                 setSelectedBuildingName(buildings.find((b) => b.id === id)?.name || '');
               }}
@@ -557,10 +557,10 @@ export default function AdminIndoorPositioningContent() {
           <View style={styles.section}>
             <Text style={[styles.label, { color: colors.primary }]}>Step 3: Select Floor</Text>
             <FloorSelector
-              floors={floorplans.map(fp => ({ id: fp.id, name: fp.floorLabel }))}
+              floors={floorplans.map((fp) => ({ id: fp.id, name: fp.floorLabel }))}
               selectedFloorId={selectedFloorplan?.id || null}
-              setSelectedFloorId={id => {
-                const match = floorplans.find(fp => fp.id === id);
+              setSelectedFloorId={(id) => {
+                const match = floorplans.find((fp) => fp.id === id);
                 setSelectedFloorplan(match || null);
                 setCoords(null);
               }}

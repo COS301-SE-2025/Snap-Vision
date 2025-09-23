@@ -614,7 +614,7 @@ export default function IndoorSchematicNavScreen() {
       {/* Top bar: floor picker */}
       <View style={styles.topBar}>
         <FloorSelector
-          floors={floors.map(f => ({ id: f, name: f }))}
+          floors={floors.map((f) => ({ id: f, name: f }))}
           selectedFloorId={selectedFloorId}
           setSelectedFloorId={setSelectedFloorId}
           dropdownOpen={!!selectedFloorId}

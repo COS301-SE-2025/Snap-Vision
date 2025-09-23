@@ -63,7 +63,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    setState(prev => ({ ...prev, badges: BADGES }));
+    setState((prev) => ({ ...prev, badges: BADGES }));
   }, []);
 
   useEffect(() => {
@@ -74,7 +74,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
       try {
         const snap = await getUserBadgeData(uid);
         if (snap) {
-          setState(prev => ({
+          setState((prev) => ({
             ...prev,
             unlocked: new Set<BadgeId>(snap.badges || []),
             justUnlocked: [],
@@ -118,7 +118,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
       // Sync with latest data
       const snap = await getUserBadgeData(uid);
       if (snap) {
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           unlocked: new Set<BadgeId>(snap.badges || []),
           justUnlocked: [],
@@ -162,7 +162,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
     unlock,
     incrementRoutes,
     incrementCheckIns: async () => {}, // Implement if needed
-    clearJustUnlocked: () => setState(prev => ({ ...prev, justUnlocked: [] })),
+    clearJustUnlocked: () => setState((prev) => ({ ...prev, justUnlocked: [] })),
     setNavigationStartTime: (time) => setNavigationStartTime(time),
     maybeUnlockFastFinisher: async () => {
       if (!navigationStartTime || !uid) return;
