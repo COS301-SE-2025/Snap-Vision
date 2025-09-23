@@ -556,7 +556,7 @@ function normalizeAngle(angle: number): number {
   return angle;
 }
 
-// Custom Arrow Component with hand-drawn style
+// Skia-based Custom Arrow Component
 function CustomDirectionArrow({ direction, size = 50 }: { direction: string; size?: number }) {
   const getArrowStyle = () => {
     const baseStyle = {
@@ -590,88 +590,123 @@ function CustomDirectionArrow({ direction, size = 50 }: { direction: string; siz
     }
   };
 
+  // Special case for turn around
   if (direction === 'turn-around') {
     return (
       <View style={getArrowStyle()}>
-        <View style={styles.turnAroundContainer}>
-          <View style={[styles.turnAroundCircle, { width: size * 0.8, height: size * 0.8, borderRadius: size * 0.4 }]}>
-            <Text style={[styles.turnAroundText, { fontSize: size * 0.5 }]}>↻</Text>
-          </View>
-        </View>
+        <Canvas style={{ width: size, height: size }}>
+          {/* Circular arrow for turn around */}
+          <Path
+            path={createTurnAroundPath(size)}
+            paint={Skia.Paint()}
+            color="#FFFFFF"
+            style="stroke"
+            strokeWidth={size * 0.08}
+            strokeCap="round"
+            strokeJoin="round"
+          />
+          {/* Arrow head for turn around */}
+          <Path
+            path={createTurnAroundArrowHead(size)}
+            paint={Skia.Paint()}
+            color="#FFFFFF"
+            style="fill"
+          />
+        </Canvas>
       </View>
     );
   }
 
   return (
     <View style={getArrowStyle()}>
-      <View style={styles.doodleArrowContainer}>
-        {/* Doodle-style with multiple overlapping strokes */}
+      <Canvas style={{ width: size, height: size }}>
+        {/* Main arrow body (shaft) */}
+        <Path
+          path={createArrowShaft(size)}
+          paint={Skia.Paint()}
+          color="#FFFFFF"
+          style="fill"
+        />
         
-        {/* Main stroke */}
-        <View style={[styles.doodleStroke, {
-          width: size * 0.08,
-          height: size * 0.6,
-          top: size * 0.3,
-          left: (size - size * 0.08) / 2,
-          borderRadius: size * 0.04,
-        }]} />
+        {/* Arrow head (triangle) */}
+        <Path
+          path={createArrowHead(size)}
+          paint={Skia.Paint()}
+          color="#FFFFFF"
+          style="fill"
+        />
         
-        {/* Overlapping stroke for hand-drawn effect */}
-        <View style={[styles.doodleStrokeOverlay, {
-          width: size * 0.06,
-          height: size * 0.58,
-          top: size * 0.31,
-          left: (size - size * 0.06) / 2 + size * 0.01,
-          borderRadius: size * 0.03,
-        }]} />
-
-        {/* Arrow head strokes */}
-        <View style={[styles.doodleHeadStroke, {
-          width: size * 0.2,
-          height: size * 0.04,
-          top: size * 0.2,
-          left: size * 0.3,
-          borderRadius: size * 0.02,
-          transform: [{ rotate: '45deg' }],
-        }]} />
+        {/* Optional: Stroke outline for better visibility */}
+        <Path
+          path={createArrowShaft(size)}
+          paint={Skia.Paint()}
+          color="rgba(0, 0, 0, 0.3)"
+          style="stroke"
+          strokeWidth={1}
+        />
         
-        <View style={[styles.doodleHeadStroke, {
-          width: size * 0.2,
-          height: size * 0.04,
-          top: size * 0.2,
-          left: size * 0.5,
-          borderRadius: size * 0.02,
-          transform: [{ rotate: '-45deg' }],
-        }]} />
-
-        {/* Additional doodle marks */}
-        <View style={[styles.doodleMark, {
-          width: size * 0.02,
-          height: size * 0.05,
-          top: size * 0.45,
-          left: size * 0.4,
-          borderRadius: size * 0.01,
-        }]} />
-        
-        <View style={[styles.doodleMark, {
-          width: size * 0.02,
-          height: size * 0.04,
-          top: size * 0.65,
-          left: size * 0.58,
-          borderRadius: size * 0.01,
-        }]} />
-
-        {/* Subtle glow */}
-        <View style={[styles.doodleGlow, {
-          width: size * 1.15,
-          height: size * 1.15,
-          borderRadius: size * 0.575,
-          top: -size * 0.075,
-          left: -size * 0.075,
-        }]} />
-      </View>
+        <Path
+          path={createArrowHead(size)}
+          paint={Skia.Paint()}
+          color="rgba(0, 0, 0, 0.3)"
+          style="stroke"
+          strokeWidth={1}
+        />
+      </Canvas>
     </View>
   );
+}
+
+// Helper functions to create Skia paths
+function createArrowShaft(size: number): string {
+  const centerX = size / 2;
+  const shaftWidth = size * 0.15;
+  const shaftHeight = size * 0.45;
+  const startY = size * 0.45;
+  
+  return `M ${centerX - shaftWidth/2} ${startY} 
+          L ${centerX + shaftWidth/2} ${startY} 
+          L ${centerX + shaftWidth/2} ${startY + shaftHeight} 
+          L ${centerX - shaftWidth/2} ${startY + shaftHeight} 
+          Z`;
+}
+
+function createArrowHead(size: number): string {
+  const centerX = size / 2;
+  const headWidth = size * 0.35;
+  const headHeight = size * 0.35;
+  const tipY = size * 0.1;
+  
+  return `M ${centerX} ${tipY} 
+          L ${centerX - headWidth/2} ${tipY + headHeight} 
+          L ${centerX + headWidth/2} ${tipY + headHeight} 
+          Z`;
+}
+
+function createTurnAroundPath(size: number): string {
+  const centerX = size / 2;
+  const centerY = size / 2;
+  const radius = size * 0.3;
+  
+  // Create a circular path (3/4 circle)
+  return `M ${centerX + radius} ${centerY} 
+          A ${radius} ${radius} 0 1 1 ${centerX - radius * 0.7} ${centerY - radius * 0.7}`;
+}
+
+function createTurnAroundArrowHead(size: number): string {
+  const centerX = size / 2;
+  const centerY = size / 2;
+  const radius = size * 0.3;
+  
+  // Small arrow head at the end of the circular path
+  const arrowX = centerX - radius * 0.7;
+  const arrowY = centerY - radius * 0.7;
+  const headSize = size * 0.08;
+  
+  return `M ${arrowX} ${arrowY} 
+          L ${arrowX - headSize} ${arrowY - headSize} 
+          L ${arrowX + headSize} ${arrowY - headSize} 
+          Z`;
 }
 
 const styles = StyleSheet.create({
