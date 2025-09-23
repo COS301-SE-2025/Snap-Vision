@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Dimensions, Text, TouchableOpacity } from 'react-native';
 import { Camera, useCameraDevices, useCameraPermission } from 'react-native-vision-camera';
+import { Canvas, Path, Paint, Skia } from '@shopify/react-native-skia';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -549,6 +550,12 @@ function calculateBearing(lat1: number, lon1: number, lat2: number, lon2: number
   return bearing;
 }
 
+function normalizeAngle(angle: number): number {
+  while (angle > 180) angle -= 360;
+  while (angle < -180) angle += 360;
+  return angle;
+}
+
 // Custom Arrow Component with hand-drawn style
 function CustomDirectionArrow({ direction, size = 50 }: { direction: string; size?: number }) {
   const getArrowStyle = () => {
@@ -665,12 +672,6 @@ function CustomDirectionArrow({ direction, size = 50 }: { direction: string; siz
       </View>
     </View>
   );
-}
-
-function normalizeAngle(angle: number): number {
-  while (angle > 180) angle -= 360;
-  while (angle < -180) angle += 360;
-  return angle;
 }
 
 const styles = StyleSheet.create({
