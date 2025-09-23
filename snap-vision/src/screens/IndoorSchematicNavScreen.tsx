@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity, Modal } from 'react-native';
+import FloorSelector from '../components/molecules/FloorSelector';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeContext';
@@ -612,18 +613,14 @@ export default function IndoorSchematicNavScreen() {
 
       {/* Top bar: floor picker */}
       <View style={styles.topBar}>
-        {/* <Text style={{ color: colors.text, fontWeight: '700' }}>Floor</Text> */}
-        <Picker
-          selectedValue={selectedFloorId}
-          onValueChange={(v) => setSelectedFloorId(String(v))}
-          style={{ width: 160, color: colors.text }}
-          dropdownIconColor={colors.text}
-          mode="dropdown"
-        >
-          {floors.map((f) => (
-            <Picker.Item key={f} label={`Floor ${f}`} value={f} color={colors.text} />
-          ))}
-        </Picker>
+        <FloorSelector
+          floors={floors.map((f) => ({ id: f, name: f }))}
+          selectedFloorId={selectedFloorId}
+          setSelectedFloorId={setSelectedFloorId}
+          dropdownOpen={!!selectedFloorId}
+          setDropdownOpen={() => {}}
+          title="Select Floor"
+        />
       </View>
 
       {/* Prompt banner */}

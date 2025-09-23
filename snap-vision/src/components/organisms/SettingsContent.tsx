@@ -17,7 +17,7 @@ export default function SettingsContent({ isDark, navigation }: Props) {
     { icon: 'key', label: 'Account', screen: 'AccountSettings' },
     // { icon: 'star', label: 'Badges and Achievements', screen: 'Achievements' },
     { icon: 'human-wheelchair', label: 'Accessibility', screen: 'AccessibilitySettings' },
-    { icon: 'lock', label: 'Privacy and Security', screen: 'PrivacySecurity' },
+    //{ icon: 'lock', label: 'Privacy and Security', screen: 'PrivacySecurity' },
     { icon: 'bell', label: 'Notifications', screen: 'NotificationSettings' },
     { icon: 'cog', label: 'App Preferences', screen: 'AppPreferences' },
     { icon: 'information', label: 'Support', screen: 'Support' },
@@ -25,16 +25,6 @@ export default function SettingsContent({ isDark, navigation }: Props) {
 
   return (
     <View style={{ backgroundColor: colors.background }}>
-      <View style={styles.searchWrapper}>
-        <SearchInput
-          placeholder="Search Settings"
-          onSearch={() => {}}
-          textColor={colors.secondary}
-          backgroundColor={colors.background}
-          borderColor={colors.primary}
-        />
-      </View>
-
       <View style={styles.listWrapper}>
         {items.map((item, index) => (
           <SettingItem

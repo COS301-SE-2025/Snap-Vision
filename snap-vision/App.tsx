@@ -17,6 +17,7 @@ import { LandingProvider } from './src/context/LandingContext';
 import { UserProvider } from './src/context/UserContext';
 import { BadgeProvider } from './src/context/BadgeContext';
 import { AccessibilityProvider } from './src/context/AccessibilityContext';
+import { UserIconProvider } from './src/context/UserIconContext';
 import BadgeUnlockNotifier from './src/components/organisms/BadgeUnlockNotifier';
 import ShopScreen from './src/screens/ShopScreen';
 import { initializePreBundledFloorplans } from './src/utils/floorplanUtils';
@@ -103,42 +104,42 @@ function AppInner() {
 
   return (
     <BadgeProvider>
-      <ThemeProvider>
-        <NavigationContainer ref={navigationRef}>
-          <BadgeUnlockNotifier />
-          <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="AuthResolver">
-            <Stack.Screen name="AuthResolver" component={AuthResolverScreen} />
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Register" component={RegistrationScreen} />
-            <Stack.Screen name="Tabs" component={BottomTabs} />
-            <Stack.Screen name="AdminLoadFloorplans" component={AdminLoadFloorplansScreen} />
-            <Stack.Screen name="AdminFloorplanEditor" component={AdminFloorplanEditorScreen} />
-            <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
-            <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
-            <Stack.Screen name="AdminQRCodes" component={QRCodeAdminScreen} />
-            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-            <Stack.Screen name="ShopScreen" component={ShopScreen} />
-            <Stack.Screen
-              name="BuildingSelection"
-              component={BuildingSelectionScreen}
-              options={{ title: 'Indoor Navigation' }}
-            />
-            <Stack.Screen
-              name="IndoorNavigationInterface"
-              component={IndoorNavigationInterfaceScreen}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="IndoorNavigationInstructions"
-              component={IndoorNavigationInstructionsScreen}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen name="IndoorSchematicNav" component={IndoorSchematicNavScreen} />
-            <Stack.Screen
-              name="ARIndoorNav"
-              component={ARIndoorNavScreen}
-              options={{ headerShown: false }}
-            />
+        <ThemeProvider>
+          <NavigationContainer ref={navigationRef}>
+            <BadgeUnlockNotifier />
+            <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="AuthResolver">
+              <Stack.Screen name="AuthResolver" component={AuthResolverScreen} />
+              <Stack.Screen name="Login" component={LoginScreen} />
+              <Stack.Screen name="Register" component={RegistrationScreen} />
+              <Stack.Screen name="Tabs" component={BottomTabs} />
+              <Stack.Screen name="AdminLoadFloorplans" component={AdminLoadFloorplansScreen} />
+              <Stack.Screen name="AdminFloorplanEditor" component={AdminFloorplanEditorScreen} />
+              <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
+              <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
+              <Stack.Screen name="AdminQRCodes" component={QRCodeAdminScreen} />
+              <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+              <Stack.Screen name="ShopScreen" component={ShopScreen} />
+              <Stack.Screen
+                name="BuildingSelection"
+                component={BuildingSelectionScreen}
+                options={{ title: 'Indoor Navigation' }}
+              />
+              <Stack.Screen
+                name="IndoorNavigationInterface"
+                component={IndoorNavigationInterfaceScreen}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="IndoorNavigationInstructions"
+                component={IndoorNavigationInstructionsScreen}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen name="IndoorSchematicNav" component={IndoorSchematicNavScreen} />
+              <Stack.Screen
+                name="ARIndoorNav"
+                component={ARIndoorNavScreen}
+                options={{ headerShown: false }}
+              />
             <Stack.Screen
               name="BluetoothBuildings"
               component={BluetoothBuildingsScreen}
@@ -149,10 +150,10 @@ function AppInner() {
               component={BluetoothIndoorNavigationScreen}
               options={{ headerShown: false }}
             />
-          </Stack.Navigator>
-          <Toast config={toastConfig} />
-        </NavigationContainer>
-      </ThemeProvider>
+            </Stack.Navigator>
+            <Toast config={toastConfig} />
+          </NavigationContainer>
+        </ThemeProvider>
     </BadgeProvider>
   );
 }

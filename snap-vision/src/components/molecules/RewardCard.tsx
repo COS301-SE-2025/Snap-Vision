@@ -63,13 +63,12 @@ export default function RewardCard({ reward, backgroundColor, borderColor, onPre
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    padding: 16,
+    padding: 12,
     marginHorizontal: 4,
     borderRadius: 12,
     borderWidth: 1,
     alignItems: 'center',
-    minHeight: 200,
+    minHeight: 160,
   },
   tag: {
     position: 'absolute',
