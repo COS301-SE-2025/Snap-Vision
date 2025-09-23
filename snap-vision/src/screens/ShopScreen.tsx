@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Platform, Alert, SectionList, Pressable, ScrollView } from 'react-native';
+import { GestureResponderEvent } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Platform, SectionList, Pressable, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useUserIcons } from '../context/UserIconContext';
@@ -41,7 +42,7 @@ const SHOP_ITEMS: ShopItem[] = [
     description: 'A cozy home icon with a heart',
     icon: 'heart',
     tabType: 'Home',
-    cost: 10,
+    cost: 25,
   },
   {
     id: 'home-icon-planet',
@@ -49,7 +50,7 @@ const SHOP_ITEMS: ShopItem[] = [
     description: 'Earth icon for the Home tab',
     icon: 'planet',
     tabType: 'Home',
-    cost: 150,
+    cost: 25,
   },
   {
     id: 'home-icon-home-filled',
@@ -57,7 +58,7 @@ const SHOP_ITEMS: ShopItem[] = [
     description: 'A solid home icon for a bold look',
     icon: 'home',
     tabType: 'Home',
-    cost: 80,
+    cost: 50,
   },
   {
     id: 'home-icon-apps',
@@ -65,7 +66,7 @@ const SHOP_ITEMS: ShopItem[] = [
     description: 'A grid of apps for your home screen',
     icon: 'apps',
     tabType: 'Home',
-    cost: 120,
+    cost: 50,
   },
   {
     id: 'home-icon-desktop',
@@ -73,7 +74,7 @@ const SHOP_ITEMS: ShopItem[] = [
     description: 'A sleek desktop computer icon',
     icon: 'desktop',
     tabType: 'Home',
-    cost: 200,
+    cost: 100,
   },
   
   // Map tab icons
@@ -92,7 +93,7 @@ const SHOP_ITEMS: ShopItem[] = [
     description: 'Navigate with a classic compass icon',
     icon: 'compass',
     tabType: 'Map',
-    cost: 150,
+    cost: 25,
   },
   {
     id: 'map-icon-globe',
@@ -100,7 +101,7 @@ const SHOP_ITEMS: ShopItem[] = [
     description: 'See the world with a globe icon',
     icon: 'globe',
     tabType: 'Map',
-    cost: 200,
+    cost: 25,
   },
   {
     id: 'map-icon-navigate',
@@ -108,7 +109,7 @@ const SHOP_ITEMS: ShopItem[] = [
     description: 'A navigation arrow for finding your way',
     icon: 'navigate',
     tabType: 'Map',
-    cost: 130,
+    cost: 50,
   },
   {
     id: 'map-icon-location',
@@ -116,7 +117,7 @@ const SHOP_ITEMS: ShopItem[] = [
     description: 'Mark your spot with a location pin',
     icon: 'location',
     tabType: 'Map',
-    cost: 170,
+    cost: 50,
   },
   {
     id: 'map-icon-map-filled',
@@ -124,7 +125,7 @@ const SHOP_ITEMS: ShopItem[] = [
     description: 'A solid map icon for clear navigation',
     icon: 'map',
     tabType: 'Map',
-    cost: 190,
+    cost: 100,
   },
   
   // Achievements tab icons
@@ -143,7 +144,7 @@ const SHOP_ITEMS: ShopItem[] = [
     description: 'Award ribbon for your accomplishments',
     icon: 'ribbon',
     tabType: 'Achievements',
-    cost: 120,
+    cost: 25,
   },
   {
     id: 'achievements-icon-medal',
@@ -151,7 +152,7 @@ const SHOP_ITEMS: ShopItem[] = [
     description: 'Gold medal for achievements tab',
     icon: 'medal',
     tabType: 'Achievements',
-    cost: 180,
+    cost: 25,
   },
   {
     id: 'achievements-icon-star',
@@ -159,7 +160,7 @@ const SHOP_ITEMS: ShopItem[] = [
     description: 'A shining star for your achievements',
     icon: 'star',
     tabType: 'Achievements',
-    cost: 110,
+    cost: 50,
   },
   {
     id: 'achievements-icon-trophy-filled',
@@ -167,7 +168,7 @@ const SHOP_ITEMS: ShopItem[] = [
     description: 'A bold, solid trophy icon',
     icon: 'trophy',
     tabType: 'Achievements',
-    cost: 160,
+    cost: 50,
   },
   {
     id: 'achievements-icon-sparkles',
@@ -175,7 +176,7 @@ const SHOP_ITEMS: ShopItem[] = [
     description: 'Celebrate your achievements with sparkles',
     icon: 'sparkles',
     tabType: 'Achievements',
-    cost: 220,
+    cost: 100,
   },
   
   // Settings tab icons
@@ -194,7 +195,7 @@ const SHOP_ITEMS: ShopItem[] = [
     description: 'Options icon for the settings tab',
     icon: 'options',
     tabType: 'Settings',
-    cost: 100,
+    cost: 25,
   },
   {
     id: 'settings-icon-cog',
@@ -202,7 +203,7 @@ const SHOP_ITEMS: ShopItem[] = [
     description: 'Premium cog icon for the settings tab',
     icon: 'cog',
     tabType: 'Settings',
-    cost: 150,
+    cost: 25,
   },
   {
     id: 'settings-icon-construct',
@@ -210,7 +211,7 @@ const SHOP_ITEMS: ShopItem[] = [
     description: 'Construction tools for settings',
     icon: 'construct',
     tabType: 'Settings',
-    cost: 130,
+    cost: 50,
   },
   {
     id: 'settings-icon-settings-filled',
@@ -218,7 +219,7 @@ const SHOP_ITEMS: ShopItem[] = [
     description: 'A bold, solid settings gear icon',
     icon: 'settings',
     tabType: 'Settings',
-    cost: 170,
+    cost: 50,
   },
   {
     id: 'settings-icon-build',
@@ -226,21 +227,42 @@ const SHOP_ITEMS: ShopItem[] = [
     description: 'Wrench icon for adjusting your settings',
     icon: 'build',
     tabType: 'Settings',
-    cost: 200,
+    cost: 100,
   },
 ];
 
 export default function ShopScreen() {
   // Navigation
   const navigation = useNavigation();
-  
+
   // Theme and state
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const { state, setState } = useBadges();
   const { equipIcon, isItemEquipped } = useUserIcons();
   const [selectedTab, setSelectedTab] = useState<string>('Home'); // Default selected tab
-  
+
+  // Popup state
+  type PopupState = {
+    visible: boolean;
+    title: string;
+    message: string;
+    confirmText: string;
+    cancelText: string;
+    showCancel: boolean;
+    onConfirm?: (e?: GestureResponderEvent) => void;
+    onCancel?: (e?: GestureResponderEvent) => void;
+  };
+  const [popup, setPopup] = useState<PopupState>({
+    visible: false,
+    title: '',
+    message: '',
+    confirmText: 'OK',
+    cancelText: '',
+    showCancel: false,
+    onConfirm: undefined,
+    onCancel: undefined,
+  });
 
   // Load user points and purchases from Firestore on mount
   useEffect(() => {
@@ -270,11 +292,29 @@ export default function ShopScreen() {
     try {
       const uid = auth().currentUser?.uid;
       if (!uid) {
-        Alert.alert('Not logged in', 'Please log in to make purchases.');
+        setPopup({
+          visible: true,
+          title: 'Not logged in',
+          message: 'Please log in to make purchases.',
+          confirmText: 'OK',
+          showCancel: false,
+          onConfirm: () => setPopup((p) => ({ ...p, visible: false })),
+          cancelText: '',
+          onCancel: undefined,
+        });
         return;
       }
       if (state.points < item.cost) {
-        Alert.alert('Not enough points', `You need ${item.cost} points.`);
+        setPopup({
+          visible: true,
+          title: 'Not enough points',
+          message: `You need ${item.cost} points to purchase this item.`,
+          confirmText: 'OK',
+          showCancel: false,
+          onConfirm: () => setPopup((p) => ({ ...p, visible: false })),
+          cancelText: '',
+          onCancel: undefined,
+        });
         return;
       }
       const userRef = firestore().collection('users').doc(uid);
@@ -307,21 +347,32 @@ export default function ShopScreen() {
         points: prevPoints - item.cost,
         purchases: updatedPurchases,
       }));
-      // Show success alert
-      Alert.alert(
-        'Purchase Successful',
-        `You purchased ${item.title}! Would you like to equip it now?`,
-        [
-          { text: 'Not Now' },
-          {
-            text: 'Equip',
-            onPress: () => handleEquipIcon(item),
-          },
-        ]
-      );
+      // Show success popup with option to equip
+      setPopup({
+        visible: true,
+        title: 'Purchase Successful',
+        message: `You purchased ${item.title}! Would you like to equip it now?`,
+        confirmText: 'Equip',
+        cancelText: 'Not Now',
+        showCancel: true,
+        onConfirm: () => {
+          setPopup((p) => ({ ...p, visible: false }));
+          handleEquipIcon(item);
+        },
+        onCancel: () => setPopup((p) => ({ ...p, visible: false })),
+      });
     } catch (err) {
       console.error('Purchase error:', err);
-      Alert.alert('Error', 'Something went wrong with your purchase.');
+      setPopup({
+        visible: true,
+        title: 'Error',
+        message: 'Something went wrong with your purchase.',
+        confirmText: 'OK',
+        showCancel: false,
+        onConfirm: () => setPopup((p) => ({ ...p, visible: false })),
+        cancelText: '',
+        onCancel: undefined,
+      });
     }
   };
 
@@ -329,10 +380,28 @@ export default function ShopScreen() {
   const handleEquipIcon = async (item: ShopItem) => {
     try {
       await equipIcon(item.tabType, item.icon, item.id);
-      Alert.alert('Icon Equipped', `Your new icon for the ${item.tabType} tab is now active!`);
+      setPopup({
+        visible: true,
+        title: 'Icon Equipped',
+        message: `Your new icon for the ${item.tabType} tab is now active!`,
+        confirmText: 'OK',
+        showCancel: false,
+        onConfirm: () => setPopup((p) => ({ ...p, visible: false })),
+        cancelText: '',
+        onCancel: undefined,
+      });
     } catch (error) {
       console.error('Failed to equip icon:', error);
-      Alert.alert('Error', 'Something went wrong while equipping the icon.');
+      setPopup({
+        visible: true,
+        title: 'Error',
+        message: 'Something went wrong while equipping the icon.',
+        confirmText: 'OK',
+        showCancel: false,
+        onConfirm: () => setPopup((p) => ({ ...p, visible: false })),
+        cancelText: '',
+        onCancel: undefined,
+      });
     }
   };
 
@@ -407,9 +476,9 @@ export default function ShopScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}> 
       <SettingsHeader title="Icon Shop" />
-      <Text style={[styles.subtitle, { color: colors.text }]}>
+      <Text style={[styles.subtitle, { color: colors.text }]}> 
         Customize your navigation tabs with different icons!
       </Text>
 
@@ -425,9 +494,9 @@ export default function ShopScreen() {
       </View>
 
       {/* Available points display */}
-      <View style={[styles.pointsContainer, { backgroundColor: colors.card }]}>
+      <View style={[styles.pointsContainer, { backgroundColor: colors.card }]}> 
         <Icon name="wallet-outline" size={16} color={colors.primary} style={styles.pointsIcon} />
-        <Text style={[styles.pointsText, { color: colors.text }]}>
+        <Text style={[styles.pointsText, { color: colors.text }]}> 
           {state.points} points available
         </Text>
       </View>
@@ -441,6 +510,18 @@ export default function ShopScreen() {
         showsHorizontalScrollIndicator={false}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 16, paddingHorizontal: 8 }}
+      />
+
+      {/* StandardPopup for all shop actions */}
+      <StandardPopup
+        visible={popup.visible}
+        title={popup.title}
+        message={popup.message}
+        confirmText={popup.confirmText}
+        cancelText={popup.cancelText}
+        showCancel={popup.showCancel}
+        onConfirm={popup.onConfirm}
+        onCancel={popup.onCancel}
       />
     </View>
   );
