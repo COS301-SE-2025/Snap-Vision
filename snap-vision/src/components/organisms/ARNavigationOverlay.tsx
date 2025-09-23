@@ -166,54 +166,48 @@ function MiniMapOverlay({
 
   // Convert real coordinates to mini map coordinates
   const coordToMiniMap = (lng: number, lat: number) => {
-    const x = ((lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)) * 140;
-    const y = ((bounds.maxLat - lat) / (bounds.maxLat - bounds.minLat)) * 140;
+    const x = ((lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)) * 140; // 140 = minimap width - padding
+    const y = ((bounds.maxLat - lat) / (bounds.maxLat - bounds.minLat)) * 140; // Flip Y axis
     return { x: Math.max(10, Math.min(150, x)), y: Math.max(10, Math.min(150, y)) };
   };
 
-  // Use actual current location instead of route start
   const currentPos = coordToMiniMap(currentLocation.x, currentLocation.y);
   const destPos = coordToMiniMap(destinationCoords.x, destinationCoords.y);
 
-  // Calculate completed route segments (behind user)
-  const completedSegments = routeCoordinates.slice(0, currentRouteIndex + 1);
-  const remainingSegments = routeCoordinates.slice(currentRouteIndex);
+  // Use actual route start and end points for better alignment
+  const routeStartPos =
+    routeCoordinates.length > 0
+      ? coordToMiniMap(routeCoordinates[0][0], routeCoordinates[0][1])
+      : currentPos;
+  const routeEndPos =
+    routeCoordinates.length > 0
+      ? coordToMiniMap(
+          routeCoordinates[routeCoordinates.length - 1][0],
+          routeCoordinates[routeCoordinates.length - 1][1],
+        )
+      : destPos;
 
   // Get upcoming route points for preview
   const upcomingPoints = routeCoordinates.slice(currentRouteIndex, currentRouteIndex + 10);
 
-  // Calculate distance remaining
-  const distanceRemaining = calculateDistance(
-    currentLocation.y,
-    currentLocation.x,
-    destinationCoords.y,
-    destinationCoords.x,
-  );
-
-  // Calculate route progress percentage
-  const totalRoutePoints = routeCoordinates.length;
-  const progressPercentage = totalRoutePoints > 0 ? Math.round((currentRouteIndex / totalRoutePoints) * 100) : 0;
-
   return (
     <View style={[styles.miniMapContainer, isCollapsed && styles.miniMapCollapsed]}>
       <TouchableOpacity style={styles.miniMapHeader} onPress={onToggleCollapse} activeOpacity={0.7}>
-        <Text style={styles.miniMapTitle}>
-          {isCollapsed ? `${progressPercentage}%` : `Route Overview ${progressPercentage}%`}
-        </Text>
+        <Text style={styles.miniMapTitle}>{isCollapsed ? 'Map' : 'Route Overview'}</Text>
         <Text style={styles.miniMapToggle}>{isCollapsed ? '▲' : '▼'}</Text>
       </TouchableOpacity>
 
       {!isCollapsed && (
         <>
           <View style={styles.miniMapCanvas}>
-            {/* Completed Route Path (Green) */}
-            {completedSegments.length > 1 && (
+            {/* Route Path */}
+            {routeCoordinates.length > 1 && (
               <View style={styles.routePath}>
-                {completedSegments.slice(0, -1).map((point, index) => {
+                {routeCoordinates.slice(0, -1).map((point, index) => {
                   const start = coordToMiniMap(point[0], point[1]);
                   const end = coordToMiniMap(
-                    completedSegments[index + 1][0],
-                    completedSegments[index + 1][1],
+                    routeCoordinates[index + 1][0],
+                    routeCoordinates[index + 1][1],
                   );
 
                   const length = Math.sqrt(
@@ -223,15 +217,15 @@ function MiniMapOverlay({
 
                   return (
                     <View
-                      key={`completed-${index}`}
+                      key={index}
                       style={[
                         styles.routeSegment,
-                        styles.completedSegment,
                         {
                           left: start.x,
-                          top: start.y - 1,
+                          top: start.y - 1, // Center the line vertically
                           width: length,
                           transform: [{ rotate: `${angle}deg` }],
+                          opacity: index < currentRouteIndex ? 0.3 : 1, // Dim completed segments
                         },
                       ]}
                     />
@@ -240,108 +234,53 @@ function MiniMapOverlay({
               </View>
             )}
 
-            {/* Remaining Route Path (Blue) */}
-            {remainingSegments.length > 1 && (
-              <View style={styles.routePath}>
-                {remainingSegments.slice(0, -1).map((point, index) => {
-                  const start = coordToMiniMap(point[0], point[1]);
-                  const end = coordToMiniMap(
-                    remainingSegments[index + 1][0],
-                    remainingSegments[index + 1][1],
-                  );
-
-                  const length = Math.sqrt(
-                    Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2),
-                  );
-                  const angle = Math.atan2(end.y - start.y, end.x - start.x) * (180 / Math.PI);
-
-                  return (
-                    <View
-                      key={`remaining-${index}`}
-                      style={[
-                        styles.routeSegment,
-                        styles.remainingSegment,
-                        {
-                          left: start.x,
-                          top: start.y - 1,
-                          width: length,
-                          transform: [{ rotate: `${angle}deg` }],
-                        },
-                      ]}
-                    />
-                  );
-                })}
-              </View>
-            )}
-
-            {/* Current Location Marker (Updated position) */}
+            {/* Current Location Marker with heading - positioned at route start */}
             <View
               style={[
                 styles.currentLocationMarker,
                 {
-                  left: currentPos.x - 8,
-                  top: currentPos.y - 8,
+                  left: routeStartPos.x - 8,
+                  top: routeStartPos.y - 8,
                   transform: [{ rotate: `${deviceHeading}deg` }],
                 },
               ]}
             >
               <Text style={styles.currentLocationIcon}>📍</Text>
-              {/* Add pulsing animation */}
-              <View style={styles.locationPulse} />
             </View>
 
-            {/* Destination Marker */}
+            {/* Destination Marker - positioned at route end */}
             <View
               style={[
                 styles.destinationMarker,
-                { left: destPos.x - 6, top: destPos.y - 6 },
+                { left: routeEndPos.x - 6, top: routeEndPos.y - 6 },
               ]}
             >
               <Text style={styles.destinationIcon}>🎯</Text>
             </View>
 
-            {/* Next waypoints (only show next 3) */}
+            {/* Upcoming waypoints */}
             {upcomingPoints.slice(1, 4).map((point, index) => {
               const pos = coordToMiniMap(point[0], point[1]);
               return (
                 <View
                   key={index}
-                  style={[
-                    styles.waypointMarker,
-                    { 
-                      left: pos.x - 3, 
-                      top: pos.y - 3,
-                      backgroundColor: index === 0 ? '#FFD700' : 'rgba(255, 255, 255, 0.6)', // Highlight next waypoint
-                    }
-                  ]}
+                  style={[styles.waypointMarker, { left: pos.x - 3, top: pos.y - 3 }]}
                 />
               );
             })}
-
-            {/* Direction indicator (small arrow showing movement direction) */}
-            <View
-              style={[
-                styles.directionIndicator,
-                {
-                  left: currentPos.x - 6,
-                  top: currentPos.y - 15,
-                  transform: [{ rotate: `${deviceHeading}deg` }],
-                },
-              ]}
-            >
-              <Text style={styles.directionArrow}>▲</Text>
-            </View>
           </View>
 
-          {/* Enhanced Footer */}
           <View style={styles.miniMapFooter}>
             <Text style={styles.miniMapDistance}>
-              {distanceRemaining >= 1000 
-                ? `${(distanceRemaining / 1000).toFixed(1)}km` 
-                : `${Math.round(distanceRemaining)}m`} remaining
-            </Text>
-            <Text style={styles.miniMapProgress}>
-              {currentRouteIndex + 1}/{totalRoutePoints} waypoints
+              {Math.round(
+                calculateDistance(
+                  currentLocation.y,
+                  currentLocation.x,
+                  destinationCoords.y,
+                  destinationCoords.x,
+                ),
+              )}
+              m remaining
             </Text>
           </View>
         </>
@@ -991,41 +930,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
   },
-  // more minmap styles
-  completedSegment: {
-    backgroundColor: '#4CAF50', // Green for completed
-    height: 3,
-  },
-  remainingSegment: {
-    backgroundColor: '#2196F3', // Blue for remaining
-    height: 2,
-  },
-  locationPulse: {
-    position: 'absolute',
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: 'rgba(33, 150, 243, 0.3)',
-    top: -2,
-    left: -2,
-  },
-  directionIndicator: {
-    position: 'absolute',
-    width: 12,
-    height: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  directionArrow: {
-    fontSize: 8,
-    color: '#FFD700',
-    fontWeight: 'bold',
-  },
-  miniMapProgress: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 9,
-    marginTop: 2,
-  },
+
   // Custom Arrow Styles
   customArrowContainer: {
     position: 'relative',
