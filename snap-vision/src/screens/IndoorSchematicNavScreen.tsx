@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity, Modal } from 'react-native';
+import FloorSelector from '../components/molecules/FloorSelector';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
+import { useAccessibility } from '../context/AccessibilityContext';
 import SettingsHeader from '../components/molecules/SettingsHeader';
 import IndoorSchematicMap from '../components/organisms/IndoorSchematicMap';
 import StepsBottomSheet from '../components/molecules/StepsBottomSheet';
@@ -11,7 +13,6 @@ import * as NavUtils from '../utils/navigationUtils';
 import { Picker } from '@react-native-picker/picker';
 import StandardPopup from '../components/atoms/StandardPopup';
 import DestinationReachedPopup from '../components/molecules/DestinationReachedPopup';
-import AppSecondaryButton from '../components/atoms/AppSecondaryButton';
 import QRScanner from '../components/molecules/QRScanner';
 import { getQRCodeMappingByValue } from '../services/qrService';
 import firestore from '@react-native-firebase/firestore';
@@ -57,6 +58,7 @@ export default function IndoorSchematicNavScreen() {
   const { buildingId, buildingName, locationId, floorId: initialFloorId, userPos } = route.params;
 
   const { isDark } = useTheme();
+  const { isAccessibilityModeEnabled } = useAccessibility();
   const colors = getThemeColors(isDark);
 
   // Master data (ALL floors)
@@ -75,6 +77,41 @@ export default function IndoorSchematicNavScreen() {
   const [currentPos, setCurrentPos] = useState<{ x: number; y: number } | null>(userPos ?? null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  
+  // Check if floorplans exist immediately when screen loads
+  useEffect(() => {
+    const checkFloorplansExist = async () => {
+      try {
+        setLoading(true);
+        const floorplansSnap = await firestore()
+          .collection('locations')
+          .doc(locationId)
+          .collection('buildingPOIs')
+          .doc(buildingId)
+          .collection('floorplans')
+          .limit(1)
+          .get();
+        
+        if (floorplansSnap.empty) {
+          // No floorplans exist, navigate to unavailable screen
+          navigation.replace('IndoorNavigationUnavailable', {
+            buildingId,
+            buildingName,
+            locationId,
+          });
+        }
+      } catch (error) {
+        console.error('Error checking floorplans:', error);
+        navigation.replace('IndoorNavigationUnavailable', {
+          buildingId,
+          buildingName,
+          locationId,
+        });
+      }
+    };
+    
+    checkFloorplansExist();
+  }, [buildingId, buildingName, locationId, navigation]);
 
   // Popup state
   const [popupVisible, setPopupVisible] = useState(false);
@@ -513,10 +550,18 @@ export default function IndoorSchematicNavScreen() {
           allRooms as any,
           allPaths as any,
           {
-            accessible: false,
+            accessible: isAccessibilityModeEnabled,
           },
         )
-      : NavUtils.calculateRoute(startId, endId, allRooms as any, allPaths as any);
+      : NavUtils.calculateRoute(
+          startId, 
+          endId, 
+          allRooms as any, 
+          allPaths as any,
+          { 
+            accessible: isAccessibilityModeEnabled 
+          }
+        );
 
     if (!routeSteps || !routeSteps.length) {
       setPopupTitle('No route');
@@ -538,7 +583,7 @@ export default function IndoorSchematicNavScreen() {
     const firstStep = filtered[0];
     if (firstStep?.coordinates) setCurrentPos(firstStep.coordinates);
     if ((firstStep as any)?.floorId) setSelectedFloorId(String((firstStep as any).floorId));
-  }, [startId, endId, allRooms, allPaths]);
+  }, [startId, endId, allRooms, allPaths, isAccessibilityModeEnabled]);
 
   const handleAdvance = () => {
     if (!steps.length) return;
@@ -612,18 +657,14 @@ export default function IndoorSchematicNavScreen() {
 
       {/* Top bar: floor picker */}
       <View style={styles.topBar}>
-        {/* <Text style={{ color: colors.text, fontWeight: '700' }}>Floor</Text> */}
-        <Picker
-          selectedValue={selectedFloorId}
-          onValueChange={(v) => setSelectedFloorId(String(v))}
-          style={{ width: 160, color: colors.text }}
-          dropdownIconColor={colors.text}
-          mode="dropdown"
-        >
-          {floors.map((f) => (
-            <Picker.Item key={f} label={`Floor ${f}`} value={f} color={colors.text} />
-          ))}
-        </Picker>
+        <FloorSelector
+          floors={floors.map((f) => ({ id: f, name: f }))}
+          selectedFloorId={selectedFloorId}
+          setSelectedFloorId={setSelectedFloorId}
+          dropdownOpen={!!selectedFloorId}
+          setDropdownOpen={() => {}}
+          title="Select Floor"
+        />
       </View>
 
       {/* Prompt banner */}

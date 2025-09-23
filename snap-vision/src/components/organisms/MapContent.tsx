@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Pressable } from 'react-native';
 import { WebView as WebViewType } from 'react-native-webview';
-import { useNavigation } from '@react-navigation/native';
 import MapWebView from './MapWebView';
 import AdminPOIModal from '../molecules/AdminPOIModal';
 import AdminActionsModal from '../molecules/AdminActionsModal';
@@ -403,7 +402,7 @@ const MapContent: React.FC<MapContentProps> = ({
 
       {/* Indoor Navigation Button */}
       <IndoorNavigationButton
-        visible={!!selectedBuildingForIndoor}
+        visible={!!selectedBuildingForIndoor || !!selectedPOI}
         colors={colors}
         onPress={onOpenIndoorNavigation}
       />

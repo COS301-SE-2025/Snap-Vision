@@ -8,7 +8,8 @@ import {
   ActivityIndicator,
   TextInput,
 } from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker';
+import BuildingSelector from '../molecules/BuildingSelector';
+import FloorSelector from '../molecules/FloorSelector';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { WebView } from 'react-native-webview';
@@ -550,30 +551,43 @@ export default function AdminIndoorPositioningContent(props: Props) {
 
         {/* Step 2: Building Selection - Only show when location is selected */}
         {selectedLocation && (
-          <BuildingSelector
-            buildings={buildings}
-            selectedBuildingId={selectedBuildingId}
-            setSelectedBuildingId={setSelectedBuildingId}
-            dropdownOpen={buildingDropdownOpen}
-            setDropdownOpen={setBuildingDropdownOpen}
-            title="Step 2: Select Building"
-          />
+          <View style={styles.section}>
+            <Text style={[styles.label, { color: colors.primary }]}>Step 2: Select Building</Text>
+            <BuildingSelector
+              buildings={buildings}
+              selectedBuildingId={selectedBuildingId}
+              setSelectedBuildingId={(id) => {
+                setSelectedBuildingId(id);
+                setSelectedBuildingName(buildings.find((b) => b.id === id)?.name || '');
+              }}
+              dropdownOpen={buildingDropdownOpen}
+              setDropdownOpen={setBuildingDropdownOpen}
+              title="Select Building"
+            />
+          </View>
         )}
 
-        {/* Step 3: Floor Selection - Only show when building is selected */}
-        {selectedLocation && selectedBuildingId && buildings.length > 0 && (
-          <FloorSelector
-            floors={floors}
-            selectedFloorId={selectedFloorId}
-            setSelectedFloorId={handleFloorSelect}
-            dropdownOpen={floorDropdownOpen}
-            setDropdownOpen={setFloorDropdownOpen}
-            title="Step 3: Select Floor"
-          />
+        {/* Floor Select */}
+        {selectedBuildingId && (
+          <View style={styles.section}>
+            <Text style={[styles.label, { color: colors.primary }]}>Step 3: Select Floor</Text>
+            <FloorSelector
+              floors={floorplans.map((fp) => ({ id: fp.id, name: fp.floorLabel }))}
+              selectedFloorId={selectedFloorplan?.id || null}
+              setSelectedFloorId={(id) => {
+                const match = floorplans.find((fp) => fp.id === id);
+                setSelectedFloorplan(match || null);
+                setCoords(null);
+              }}
+              dropdownOpen={floorDropdownOpen}
+              setDropdownOpen={setFloorDropdownOpen}
+              title="Select Floor"
+            />
+          </View>
         )}
 
-        {/* Step 4: Beacon Management - Only show when floor is selected */}
-        {selectedLocation && selectedBuildingId && selectedFloorplan && (
+        {/* Floorplan View */}
+        {selectedFloorplan && (
           <View style={styles.section}>
             <Text style={[styles.label, { color: colors.primary }]}>
               Step 4: Tap existing beacons to view/delete, or tap empty space to place a new beacon
