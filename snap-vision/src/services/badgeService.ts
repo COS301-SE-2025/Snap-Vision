@@ -15,24 +15,9 @@ export async function unlockBadgeForUser(userId: string, badgeId: string) {
   try {
     await db.runTransaction(async (transaction) => {
       const userDoc = await transaction.get(userRef);
-
       if (!userDoc.exists) {
-        const startingPoints = POINT_INCREMENT;
-        const badges = [badgeId];
-
-        if (startingPoints >= POINTS_MILESTONE && !badges.includes(MILESTONE_BADGE)) {
-          badges.push(MILESTONE_BADGE);
-        }
-
-        transaction.set(userRef, {
-          badges,
-          points: startingPoints,
-          checkIns: 0,
-          routesCompleted: 0,
-        });
-        return;
+        throw new Error('User not found');
       }
-
       const data = userDoc.data();
       const badges = data?.badges ? [...data.badges] : [];
       let points = data?.points || 0;
