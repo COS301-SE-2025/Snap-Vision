@@ -587,8 +587,8 @@ function CustomDirectionArrow({ direction, size = 50 }: { direction: string; siz
     return (
       <View style={getArrowStyle()}>
         <View style={styles.turnAroundContainer}>
-          <View style={styles.turnAroundCircle}>
-            <Text style={styles.turnAroundText}>↻</Text>
+          <View style={[styles.turnAroundCircle, { width: size * 0.8, height: size * 0.8, borderRadius: size * 0.4 }]}>
+            <Text style={[styles.turnAroundText, { fontSize: size * 0.5 }]}>↻</Text>
           </View>
         </View>
       </View>
@@ -598,12 +598,110 @@ function CustomDirectionArrow({ direction, size = 50 }: { direction: string; siz
   return (
     <View style={getArrowStyle()}>
       <View style={styles.customArrowContainer}>
-        {/* Arrow Head */}
-        <View style={styles.arrowHead} />
-        {/* Arrow Body */}
-        <View style={styles.arrowBody} />
-        {/* Arrow Glow Effect */}
-        <View style={styles.arrowGlow} />
+        {/* Enhanced Arrow with better proportions */}
+        
+        {/* Arrow Head (Triangle) */}
+        <View 
+          style={[
+            styles.arrowHead,
+            {
+              borderLeftWidth: size * 0.3,
+              borderRightWidth: size * 0.3,
+              borderBottomWidth: size * 0.4,
+              top: size * 0.1,
+            }
+          ]} 
+        />
+        
+        {/* Arrow Body (Shaft) */}
+        <View 
+          style={[
+            styles.arrowBody,
+            {
+              width: size * 0.2,
+              height: size * 0.5,
+              top: size * 0.45,
+              borderRadius: size * 0.05,
+            }
+          ]} 
+        />
+        
+        {/* Enhanced Glow Effect */}
+        <View 
+          style={[
+            styles.arrowGlow,
+            {
+              width: size * 1.2,
+              height: size * 1.2,
+              borderRadius: size * 0.6,
+              top: -size * 0.1,
+              left: -size * 0.1,
+            }
+          ]} 
+        />
+        
+        {/* Add shadow for depth */}
+        <View 
+          style={[
+            styles.arrowShadow,
+            {
+              width: size * 0.8,
+              height: size * 0.8,
+              borderRadius: size * 0.4,
+              top: size * 0.1,
+              left: size * 0.1,
+            }
+          ]} 
+        />
+      </View>
+    </View>
+  );
+}             borderBottomWidth: size * 0.4,
+              top: size * 0.1,
+            }
+          ]} 
+        />
+        
+        {/* Arrow Body (Shaft) */}
+        <View 
+          style={[
+            styles.arrowBody,
+            {
+              width: size * 0.2,
+              height: size * 0.5,
+              top: size * 0.45,
+              borderRadius: size * 0.05,
+            }
+          ]} 
+        />
+        
+        {/* Enhanced Glow Effect */}
+        <View 
+          style={[
+            styles.arrowGlow,
+            {
+              width: size * 1.2,
+              height: size * 1.2,
+              borderRadius: size * 0.6,
+              top: -size * 0.1,
+              left: -size * 0.1,
+            }
+          ]} 
+        />
+        
+        {/* Add shadow for depth */}
+        <View 
+          style={[
+            styles.arrowShadow,
+            {
+              width: size * 0.8,
+              height: size * 0.8,
+              borderRadius: size * 0.4,
+              top: size * 0.1,
+              left: size * 0.1,
+            }
+          ]} 
+        />
       </View>
     </View>
   );
