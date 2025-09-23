@@ -36,7 +36,7 @@ export default function HomeContent() {
           const visits = await getRecentlyVPOIs(userId);
           setRecentlyVisited(visits);
         } catch (error) {
-          console.error('Error fetching recently visited:', error);
+          //consoleerror('Error fetching recently visited:', error);
         } finally {
           setLoading(false);
         }

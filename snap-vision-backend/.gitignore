@@ -5,3 +5,8 @@ npm-debug.log
 .DS_Store
 Thumbs.db
 serviceAccountKey.json
+*.json
+.firebase/
+.firebaserc
+firebase-debug.log
+firebase-debug.*.log

@@ -1,7 +1,11 @@
 {
   "hosting": {
     "public": "web",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
     "rewrites": [
       {
         "source": "**",
@@ -20,5 +24,25 @@
       "enabled": true
     },
     "singleProjectMode": true
+  },
+  "apphosting": {
+    "backendId": "snap-vision-backend",
+    "rootDir": "snap-vision-backend",
+    "ignore": [
+      "node_modules",
+      ".git",
+      "firebase-debug.log",
+      "firebase-debug.*.log",
+      "functions",
+      "snap-vision",
+      "snap-vision/*",
+      "android",
+      "ios",
+      ".env",
+      "__tests__",
+      "editTests",
+      "*.test.*",
+      "*.spec.*"
+    ]
   }
 }

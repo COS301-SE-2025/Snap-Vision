@@ -560,7 +560,7 @@ describe('useQRCodeAdmin', () => {
       expect(result.current.errorMessage).toBe('Failed to add QR code. Please try again.');
     });
 
-    it('should call console.error when QR code creation fails', async () => {
+    it('should call //consoleerror when QR code creation fails', async () => {
       // Set the mock before hook initialization!
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       (qrService.createQRCodeMapping as jest.Mock).mockRejectedValue(new Error('Network error'));

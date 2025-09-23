@@ -85,8 +85,8 @@ export const useMapIndoor = (): UseMapIndoorReturn => {
       const locationId = p.locationId || p.location || fallbackPOI?.location || 'up-campus'; // update default if needed
       const floorId = '1';
 
-      console.log('[IndoorNav] payload:', p);
-      console.log('[IndoorNav] resolved ->', { buildingId, buildingName, locationId });
+      //consolelog('[IndoorNav] payload:', p);
+      //consolelog('[IndoorNav] resolved ->', { buildingId, buildingName, locationId });
 
       if (!buildingId) {
         setError('Indoor navigation is only available for building POIs.');
@@ -267,14 +267,6 @@ export const useMapIndoor = (): UseMapIndoorReturn => {
       }
 
       setShowIndoorPicker(false);
-
-      console.log('Navigating to IndoorNavigation with:', {
-        locationId: b.location,
-        buildingId: b.id,
-        startRoomId: selectedStartRoom.id,
-        endRoomId: selectedIndoorRoom.id,
-        floorId: selectedIndoorRoom.floorId,
-      });
 
       navigation.navigate('IndoorNavigation', {
         locationId: b.location,

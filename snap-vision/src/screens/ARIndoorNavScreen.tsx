@@ -15,6 +15,7 @@ import {
   type NavigationStep,
   calculateARBearing,
 } from '../utils/navigationUtils';
+import CompassHeading from 'react-native-compass-heading';
 
 type ParamList = {
   ARIndoorNav: {
@@ -118,7 +119,7 @@ export default function ARIndoorNavScreen() {
 
         setDevice(back);
       } catch (e) {
-        console.warn('[AR] Failed to enumerate cameras', e);
+        //consolewarn('[AR] Failed to enumerate cameras', e);
         setDevice(null);
       }
     })();
@@ -174,7 +175,7 @@ export default function ARIndoorNavScreen() {
           setCurrentPos(detailed[0].coordinates);
         }
       } catch (e) {
-        console.error(e);
+        //consoleerror(e);
         setPopupTitle('Error');
         setPopupMessage('Failed to load indoor AR.');
         setPopupConfirmText('Go Back');
@@ -229,25 +230,35 @@ export default function ARIndoorNavScreen() {
   );
 
   const ar = useMemo(() => {
-    if (!currentPos || !dest) return { direction: 0, distance: 0, isAtDestination: false };
+  if (!currentPos || !dest) return { direction: 0, distance: 0, isAtDestination: false };
 
-    const target = nextWaypoint || dest;
+  const target = nextWaypoint || dest;
+  const bearingMap = calculateARBearing(currentPos, target, true);
+  const bearingWorld = normalizeDeg(bearingMap + orientationOffset);
 
-    const bearingMap = calculateARBearing(currentPos, target, true);
+  // IMPROVED: More stable relative bearing calculation
+  let rel = bearingWorld - heading;
+  
+  // Normalize to [-180, 180] range more carefully
+  while (rel > 180) rel -= 360;
+  while (rel < -180) rel += 360;
 
-    const bearingWorld = normalizeDeg(bearingMap + orientationOffset);
+  // Add some hysteresis to prevent flickering between directions
+  const absRel = Math.abs(rel);
+  
+  // If we're close to the threshold, apply some smoothing
+  if (absRel > 120 && absRel < 160) {
+    // Apply some dampening in the "turn around" zone
+    rel = rel * 0.8; // Reduce the severity slightly
+  }
 
-    let rel = bearingWorld - heading;
-    if (rel > 180) rel -= 360;
-    if (rel < -180) rel += 360;
+  const { distance, isAtDestination } = calculateARNavigationData(
+    currentPos,
+    remainingSteps.length ? remainingSteps : steps,
+    dest,
+  );
 
-    const { distance, isAtDestination } = calculateARNavigationData(
-      currentPos,
-      remainingSteps.length ? remainingSteps : steps,
-      dest,
-    );
-
-    return { direction: rel, distance, isAtDestination, bearingMap, bearingWorld };
+    return { direction: rel, distance, isAtDestination, bearingMap, bearingWorld,rawBearing:bearingMap };
   }, [currentPos, nextWaypoint, dest, remainingSteps, steps, heading, orientationOffset]);
 
   const calibrate = useCallback(() => {

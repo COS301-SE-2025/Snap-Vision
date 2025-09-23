@@ -34,7 +34,7 @@ export const useUserManagement = () => {
           setLoading(false);
         },
         (error) => {
-          console.error('Firestore error:', error);
+          //consoleerror('Firestore error:', error);
           setLoading(false);
         },
       );
@@ -76,7 +76,7 @@ export const useUserManagement = () => {
         }));
         setAllLocations(locations);
       } catch (error) {
-        console.error('Failed to fetch locations:', error);
+        //consoleerror('Failed to fetch locations:', error);
       }
     };
 
@@ -119,7 +119,7 @@ export const useUserManagement = () => {
 
       await firestore().collection('userInformation').doc(user.id).update(updateData);
     } catch (err) {
-      console.error('Failed to update role:', err);
+      //consoleerror('Failed to update role:', err);
     }
   };
 
@@ -127,7 +127,7 @@ export const useUserManagement = () => {
     try {
       await firestore().collection('userInformation').doc(user.id).delete();
     } catch (err) {
-      console.error('Failed to delete user:', err);
+      //consoleerror('Failed to delete user:', err);
     }
   };
 

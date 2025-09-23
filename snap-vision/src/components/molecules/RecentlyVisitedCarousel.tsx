@@ -34,7 +34,6 @@ const RecentlyVisitedCarousel = ({ visits }: { visits: Visit[] }) => {
               borderColor: colors.roleSecondary,
             },
           ]}
-          onPress={() => console.log('Selected:', item.name)}
         >
           <Text style={[styles.name, { color: colors.background }]} numberOfLines={1}>
             {item.name}

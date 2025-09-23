@@ -187,7 +187,7 @@ describe('floorplanUtils', () => {
     const error = new Error('AsyncStorage failure');
     (AsyncStorage.getAllKeys as jest.Mock).mockRejectedValue(error);
 
-    // Spy on console.error
+    // Spy on //consoleerror
     const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     const result = await getAllFloorplans();

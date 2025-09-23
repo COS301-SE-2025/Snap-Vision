@@ -39,7 +39,7 @@ export default function LiveTrackingScreen() {
 
   useEffect(() => {
     if (position) {
-      console.log('Current indoor position:', position);
+      //consolelog('Current indoor position:', position);
       updatePositionInWebView(position.x, position.y);
     }
   }, [position]);
@@ -76,14 +76,13 @@ export default function LiveTrackingScreen() {
         };
       });
 
-      console.log('📍 Loaded fingerprints for debugging:');
       fingerprintData.forEach((fp, i) => {
-        console.log(`  ${i + 1}. ${fp.description} at (${fp.x.toFixed(3)}, ${fp.y.toFixed(3)})`);
+        //consolelog(`  ${i + 1}. ${fp.description} at (${fp.x.toFixed(3)}, ${fp.y.toFixed(3)})`);
       });
 
       setFingerprints(fingerprintData);
     } catch (error) {
-      console.error('Failed to load fingerprints:', error);
+      //consoleerror('Failed to load fingerprints:', error);
     }
   };
 
@@ -107,15 +106,12 @@ export default function LiveTrackingScreen() {
         if (floorplanDoc) {
           const data = floorplanDoc.data();
           setFloorplanImage(data.downloadURL || null);
-          console.log('✅ Floorplan loaded:', data.downloadURL);
 
           // Load fingerprints after floorplan loads
           await loadFingerprints();
-        } else {
-          console.log('❌ No floorplan found for floor:', detectedLocation.floorId);
-        }
+        } 
       } catch (error) {
-        console.error('Failed to load floorplan:', error);
+        //consoleerror('Failed to load floorplan:', error);
       }
     };
 
@@ -286,12 +282,8 @@ export default function LiveTrackingScreen() {
 
             // Handle marker clicks (fingerprints)
             function onMarkerClick(markerId) {
-              console.log('🔍 Clicked fingerprint:', markerId);
               const fingerprints = ${JSON.stringify(fingerprints)};
               const fp = fingerprints.find(f => f.id === markerId);
-              if (fp) {
-                console.log(\`📍 Fingerprint "\${fp.description}" at (\${fp.x.toFixed(3)}, \${fp.y.toFixed(3)})\`);
-              }
             }
 
             // PREVIOUS VERSION: Smooth position updates with CSS transitions
@@ -438,7 +430,6 @@ export default function LiveTrackingScreen() {
 
             // Initialize marker scales when image loads
             floorplan.addEventListener('load', function() {
-              console.log('🖼️ Floorplan image loaded with same scaling as admin page');
               updateMarkerScales();
             });
           </script>

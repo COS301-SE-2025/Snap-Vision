@@ -22,7 +22,7 @@ export const useUserRole = () => {
         setRole(data?.role || 'user');
         setAdminLocations(data?.adminLocations || []);
       } catch (error) {
-        console.error('Error fetching user info:', error);
+        //consoleerror('Error fetching user info:', error);
         setRole('user');
         setAdminLocations([]);
       } finally {

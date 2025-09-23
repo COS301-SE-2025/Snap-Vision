@@ -13,7 +13,7 @@ export default function AchievementsScreen() {
   const { state, clearJustUnlocked } = useBadges();
 
   useEffect(() => {
-    console.log('Unlocked badges:', Array.from(state.unlocked));
+    //consolelog('Unlocked badges:', Array.from(state.unlocked));
   }, [state.justUnlocked]);
 
   return (

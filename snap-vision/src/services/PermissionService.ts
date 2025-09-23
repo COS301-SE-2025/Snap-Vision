@@ -23,7 +23,24 @@ export class PermissionService {
       }
       return false;
     } catch (error) {
-      console.error('Permission request failed:', error);
+      //consoleerror('Permission request failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Request Bluetooth permissions required for beacon scanning
+   */
+  async requestBluetoothPermissions(): Promise<boolean> {
+    try {
+      if (Platform.OS === 'android') {
+        return await this.requestAndroidBluetoothPermissions();
+      } else if (Platform.OS === 'ios') {
+        return await this.requestIOSBluetoothPermissions();
+      }
+      return false;
+    } catch (error) {
+      console.error('Bluetooth permission request failed:', error);
       return false;
     }
   }
@@ -40,7 +57,24 @@ export class PermissionService {
       }
       return false;
     } catch (error) {
-      console.error('Permission check failed:', error);
+      //consoleerror('Permission check failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if all required Bluetooth permissions are granted
+   */
+  async checkBluetoothPermissions(): Promise<boolean> {
+    try {
+      if (Platform.OS === 'android') {
+        return await this.checkAndroidBluetoothPermissions();
+      } else if (Platform.OS === 'ios') {
+        return await this.checkIOSBluetoothPermissions();
+      }
+      return false;
+    } catch (error) {
+      console.error('Bluetooth permission check failed:', error);
       return false;
     }
   }
@@ -83,7 +117,7 @@ export class PermissionService {
 
       return true;
     } catch (error) {
-      console.error('Android permission request failed:', error);
+      //consoleerror('Android permission request failed:', error);
       return false;
     }
   }
@@ -113,7 +147,7 @@ export class PermissionService {
 
       return fineLocationGranted && coarseLocationGranted && nearbyWiFiDevices;
     } catch (error) {
-      console.error('Android permission check failed:', error);
+      //consoleerror('Android permission check failed:', error);
       return false;
     }
   }
@@ -137,7 +171,7 @@ export class PermissionService {
 
       return false;
     } catch (error) {
-      console.error('iOS permission request failed:', error);
+      //consoleerror('iOS permission request failed:', error);
       return false;
     }
   }
@@ -150,7 +184,122 @@ export class PermissionService {
       const result = await check(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
       return result === RESULTS.GRANTED;
     } catch (error) {
-      console.error('iOS permission check failed:', error);
+      //consoleerror('iOS permission check failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Request Bluetooth permissions on Android
+   */
+  private async requestAndroidBluetoothPermissions(): Promise<boolean> {
+    try {
+      const androidVersion = Platform.Version as number;
+      const permissions: (keyof typeof PermissionsAndroid.PERMISSIONS)[] = [];
+
+      // Location permission is required for Bluetooth scanning
+      permissions.push('ACCESS_FINE_LOCATION');
+
+      // Bluetooth permissions for Android 12+ (API 31+)
+      if (androidVersion >= 31) {
+        permissions.push('BLUETOOTH_SCAN');
+        permissions.push('BLUETOOTH_CONNECT');
+      }
+
+      const permissionStrings = permissions.map((p) => PermissionsAndroid.PERMISSIONS[p]);
+      const results = await PermissionsAndroid.requestMultiple(permissionStrings);
+
+      const allGranted = permissionStrings.every(
+        (permission) => results[permission] === PermissionsAndroid.RESULTS.GRANTED,
+      );
+
+      if (!allGranted) {
+        Alert.alert(
+          'Bluetooth Permissions Required',
+          'Bluetooth beacon scanning requires location and Bluetooth permissions. Please enable these permissions in your device settings.',
+          [{ text: 'OK' }],
+        );
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Android Bluetooth permission request failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check Bluetooth permissions on Android
+   */
+  private async checkAndroidBluetoothPermissions(): Promise<boolean> {
+    try {
+      const androidVersion = Platform.Version as number;
+
+      // Location permission check
+      const fineLocationGranted = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      );
+
+      if (!fineLocationGranted) {
+        return false;
+      }
+
+      // Bluetooth permission checks based on Android version
+      if (androidVersion >= 31) {
+        const bluetoothScanGranted = await PermissionsAndroid.check(
+          PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+        );
+        const bluetoothConnectGranted = await PermissionsAndroid.check(
+          PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+        );
+        return bluetoothScanGranted && bluetoothConnectGranted;
+      } else {
+        // For older Android versions, we mainly need location permission
+        // and the manifest permissions should be sufficient
+        return true;
+      }
+    } catch (error) {
+      console.error('Android Bluetooth permission check failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Request Bluetooth permissions on iOS
+   */
+  private async requestIOSBluetoothPermissions(): Promise<boolean> {
+    try {
+      // iOS doesn't require explicit Bluetooth permissions for scanning
+      // but location permission is still needed
+      const locationResult = await request(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
+
+      if (locationResult === RESULTS.GRANTED) {
+        return true;
+      }
+
+      Alert.alert(
+        'Location Permission Required',
+        'Bluetooth beacon scanning requires location permission. Please enable location access in Settings.',
+        [{ text: 'OK' }],
+      );
+
+      return false;
+    } catch (error) {
+      console.error('iOS Bluetooth permission request failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check Bluetooth permissions on iOS
+   */
+  private async checkIOSBluetoothPermissions(): Promise<boolean> {
+    try {
+      const result = await check(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
+      return result === RESULTS.GRANTED;
+    } catch (error) {
+      console.error('iOS Bluetooth permission check failed:', error);
       return false;
     }
   }
@@ -165,6 +314,20 @@ export class PermissionService {
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Grant Permissions', onPress: () => this.requestWiFiPermissions() },
+      ],
+    );
+  }
+
+  /**
+   * Show Bluetooth permission explanation dialog
+   */
+  showBluetoothPermissionExplanation(): void {
+    Alert.alert(
+      'Bluetooth Beacon Scanning Permissions',
+      'This app uses Bluetooth beacon scanning for indoor positioning. To scan for nearby Bluetooth beacons, we need location and Bluetooth permissions.\n\nYour location data is only used locally for positioning and is not shared.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Grant Permissions', onPress: () => this.requestBluetoothPermissions() },
       ],
     );
   }
