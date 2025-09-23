@@ -75,6 +75,41 @@ export default function IndoorSchematicNavScreen() {
   const [currentPos, setCurrentPos] = useState<{ x: number; y: number } | null>(userPos ?? null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  
+  // Check if floorplans exist immediately when screen loads
+  useEffect(() => {
+    const checkFloorplansExist = async () => {
+      try {
+        setLoading(true);
+        const floorplansSnap = await firestore()
+          .collection('locations')
+          .doc(locationId)
+          .collection('buildingPOIs')
+          .doc(buildingId)
+          .collection('floorplans')
+          .limit(1)
+          .get();
+        
+        if (floorplansSnap.empty) {
+          // No floorplans exist, navigate to unavailable screen
+          navigation.replace('IndoorNavigationUnavailable', {
+            buildingId,
+            buildingName,
+            locationId,
+          });
+        }
+      } catch (error) {
+        console.error('Error checking floorplans:', error);
+        navigation.replace('IndoorNavigationUnavailable', {
+          buildingId,
+          buildingName,
+          locationId,
+        });
+      }
+    };
+    
+    checkFloorplansExist();
+  }, [buildingId, buildingName, locationId, navigation]);
 
   // Popup state
   const [popupVisible, setPopupVisible] = useState(false);
