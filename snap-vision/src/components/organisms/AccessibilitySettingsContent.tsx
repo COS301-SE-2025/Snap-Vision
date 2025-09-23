@@ -12,12 +12,20 @@ interface Props {
 
 export default function AccessibilitySettingsContent({ isDark }: Props) {
   const colors = getThemeColors(isDark);
-  const { isHapticFeedbackEnabled, setHapticFeedbackEnabled, loading } = useAccessibility();
+  const { isHapticFeedbackEnabled, isAccessibilityModeEnabled, setHapticFeedbackEnabled, setAccessibilityModeEnabled, loading } = useAccessibility();
   const [showErrorPopup, setShowErrorPopup] = useState(false);
 
   const handleHapticFeedbackToggle = async (enabled: boolean) => {
     try {
       await setHapticFeedbackEnabled(enabled);
+    } catch {
+      setShowErrorPopup(true);
+    }
+  };
+
+  const handleAccessibilityModeToggle = async (enabled: boolean) => {
+    try {
+      await setAccessibilityModeEnabled(enabled);
     } catch {
       setShowErrorPopup(true);
     }
@@ -54,11 +62,18 @@ export default function AccessibilitySettingsContent({ isDark }: Props) {
             />
           </View>
 
-          <View style={styles.infoSection}>
-            <Text style={[styles.infoText, { color: colors.secondary }]}>
-              Haptic feedback provides tactile confirmation of your actions and navigation events to
-              help make the app more accessible and easier to use.
-            </Text>
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Indoor Navigation</Text>
+            <SettingsToggleItem
+              icon="wheel-chair"
+              label="Accessibility Mode"
+              description="Prioritize elevators over stairs for indoor navigation routes"
+              value={isAccessibilityModeEnabled}
+              onToggle={handleAccessibilityModeToggle}
+              color={colors.primary}
+              textColor={colors.text}
+              descriptionColor={colors.secondary}
+            />
           </View>
         </View>
       </ScrollView>
@@ -67,7 +82,7 @@ export default function AccessibilitySettingsContent({ isDark }: Props) {
       <StandardPopup
         visible={showErrorPopup}
         title="Error"
-        message="Failed to save haptic feedback setting. Please try again."
+        message="Failed to save accessibility setting. Please try again."
         onConfirm={() => setShowErrorPopup(false)}
         confirmText="OK"
         showCancel={false}

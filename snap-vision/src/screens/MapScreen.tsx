@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View } from 'react-native';
 import { WebView as WebViewType } from 'react-native-webview';
 import { Share } from 'react-native';
 import Tts from 'react-native-tts';
@@ -421,7 +420,13 @@ const MapScreen = () => {
 
   const handleOpenIndoorNavigation = () => {
     if (selectedBuildingForIndoor) {
-      openIndoorNavigation(selectedBuildingForIndoor, setErrorPopupMessage, setShowErrorPopup);
+      openIndoorNavigation(selectedBuildingForIndoor, navigation, setErrorPopupMessage, setShowErrorPopup);
+    } else if (hookSelectedPOI) {
+      setSelectedBuildingForIndoor(hookSelectedPOI);
+      openIndoorNavigation(hookSelectedPOI, navigation, setErrorPopupMessage, setShowErrorPopup);
+    } else {
+      setErrorPopupMessage('Please select a building first');
+      setShowErrorPopup(true);
     }
   };
 

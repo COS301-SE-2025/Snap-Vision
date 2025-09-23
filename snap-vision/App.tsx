@@ -31,13 +31,12 @@ import IndoorSchematicNavScreen from './src/screens/IndoorSchematicNavScreen';
 import ARIndoorNavScreen from './src/screens/ARIndoorNavScreen';
 import QRCodeAdminScreen from './src/screens/QRCodeAdminScreen';
 import messaging from '@react-native-firebase/messaging';
-import { requestNotificationPermission, getFCMToken } from './src/services/NotificationService';
-import notifee from '@notifee/react-native';
 import { createDefaultChannel } from './src/services/NotificationService';
 import { displayForegroundNotification } from './src/services/NotificationService';
 import { setupFCM } from './src/services/NotificationService';
 import BluetoothBuildingsScreen from './src/screens/BluetoothBuildingsScreen';
 import BluetoothIndoorNavigationScreen from './src/screens/BluetoothIndoorNavigationScreen';
+import IndoorNavigationUnavailableScreen from './src/screens/IndoorNavigationUnavailableScreen';
 
 import { navigationRef } from './src/navigation/RootNavigation';
 LogBox.ignoreLogs([
@@ -150,10 +149,15 @@ function AppInner() {
               component={BluetoothIndoorNavigationScreen}
               options={{ headerShown: false }}
             />
-            </Stack.Navigator>
-            <Toast config={toastConfig} />
-          </NavigationContainer>
-        </ThemeProvider>
+            <Stack.Screen
+              name="IndoorNavigationUnavailable"
+              component={IndoorNavigationUnavailableScreen}
+              options={{ headerShown: false }}
+            />
+          </Stack.Navigator>
+          <Toast config={toastConfig} />
+        </NavigationContainer>
+      </ThemeProvider>
     </BadgeProvider>
   );
 }
