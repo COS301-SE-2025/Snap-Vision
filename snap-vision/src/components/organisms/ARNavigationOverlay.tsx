@@ -1056,4 +1056,62 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
+  // Hand-drawn arrow styles
+  handDrawnArrowContainer: {
+    position: 'relative',
+    width: 70,
+    height: 70,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  drawnArrowShaft: {
+    position: 'absolute',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 1, height: 1 },
+    shadowOpacity: 0.6,
+    shadowRadius: 2,
+  },
+  drawnArrowShaftEdge: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 1,
+  },
+  drawnArrowHeadLeft: {
+    position: 'absolute',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 1, height: 1 },
+    shadowOpacity: 0.6,
+    shadowRadius: 2,
+  },
+  drawnArrowHeadRight: {
+    position: 'absolute',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 1, height: 1 },
+    shadowOpacity: 0.6,
+    shadowRadius: 2,
+  },
+  sketchLine1: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderRadius: 1,
+  },
+  sketchLine2: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderRadius: 1,
+  },
+  drawnArrowGlow: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    zIndex: -1,
+  },
+
+
+
 });
