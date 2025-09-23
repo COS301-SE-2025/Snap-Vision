@@ -656,55 +656,6 @@ function CustomDirectionArrow({ direction, size = 50 }: { direction: string; siz
       </View>
     </View>
   );
-}             borderBottomWidth: size * 0.4,
-              top: size * 0.1,
-            }
-          ]} 
-        />
-        
-        {/* Arrow Body (Shaft) */}
-        <View 
-          style={[
-            styles.arrowBody,
-            {
-              width: size * 0.2,
-              height: size * 0.5,
-              top: size * 0.45,
-              borderRadius: size * 0.05,
-            }
-          ]} 
-        />
-        
-        {/* Enhanced Glow Effect */}
-        <View 
-          style={[
-            styles.arrowGlow,
-            {
-              width: size * 1.2,
-              height: size * 1.2,
-              borderRadius: size * 0.6,
-              top: -size * 0.1,
-              left: -size * 0.1,
-            }
-          ]} 
-        />
-        
-        {/* Add shadow for depth */}
-        <View 
-          style={[
-            styles.arrowShadow,
-            {
-              width: size * 0.8,
-              height: size * 0.8,
-              borderRadius: size * 0.4,
-              top: size * 0.1,
-              left: size * 0.1,
-            }
-          ]} 
-        />
-      </View>
-    </View>
-  );
 }
 
 function normalizeAngle(angle: number): number {
@@ -1038,63 +989,66 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
   },
 
-  // Custom Arrow Styles
-  customArrowContainer: {
-    position: 'relative',
-    width: 50,
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  arrowHead: {
-    position: 'absolute',
-    width: 0,
-    height: 0,
-    borderLeftWidth: 12,
-    borderRightWidth: 12,
-    borderBottomWidth: 20,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: '#FFFFFF',
-    top: 5,
-  },
-  arrowBody: {
-    position: 'absolute',
-    width: 8,
-    height: 25,
-    backgroundColor: '#FFFFFF',
-    top: 22,
-    borderRadius: 2,
-  },
-  arrowGlow: {
-    position: 'absolute',
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    top: -2,
-    left: -2,
-    zIndex: -1,
-  },
-  turnAroundContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  turnAroundCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255, 193, 7, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-  },
-  turnAroundText: {
-    fontSize: 24,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
+  // Enhanced Custom Arrow Styles
+    customArrowContainer: {
+      position: 'relative',
+      width: 70, // Increased from 50
+      height: 70, // Increased from 50
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    arrowHead: {
+      position: 'absolute',
+      width: 0,
+      height: 0,
+      borderLeftColor: 'transparent',
+      borderRightColor: 'transparent',
+      borderBottomColor: '#FFFFFF',
+      // Dynamic sizing now handled in component
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.8,
+      shadowRadius: 4,
+    },
+    arrowBody: {
+      position: 'absolute',
+      backgroundColor: '#FFFFFF',
+      // Dynamic sizing now handled in component
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.8,
+      shadowRadius: 4,
+    },
+    arrowGlow: {
+      position: 'absolute',
+      backgroundColor: 'rgba(255, 255, 255, 0.3)', // More visible glow
+      // Dynamic sizing now handled in component
+      zIndex: -1,
+    },
+    arrowShadow: {
+      position: 'absolute',
+      backgroundColor: 'rgba(0, 0, 0, 0.2)', // Subtle shadow for depth
+      zIndex: -2,
+    },
+    turnAroundContainer: {
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    turnAroundCircle: {
+      backgroundColor: 'rgba(255, 193, 7, 0.9)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 3,
+      borderColor: '#FFFFFF',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.8,
+      shadowRadius: 4,
+    },
+    turnAroundText: {
+      color: '#FFFFFF',
+      fontWeight: 'bold',
+    },
 
   // Debug styles
   debugContainer: {
