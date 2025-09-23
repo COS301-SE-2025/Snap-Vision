@@ -225,7 +225,8 @@ function MiniMapOverlay({
                           top: start.y - 1, // Center the line vertically
                           width: length,
                           transform: [{ rotate: `${angle}deg` }],
-                          opacity: index < currentRouteIndex ? 0.3 : 1, // Dim completed segments
+                          backgroundColor: index < currentRouteIndex ? '#4CAF50' : '#2196F3', // Green for completed, blue for remaining
+                          opacity: index < currentRouteIndex ? 0.8 : 1, // Slightly more visible for completed segments
                         },
                       ]}
                     />
@@ -234,13 +235,13 @@ function MiniMapOverlay({
               </View>
             )}
 
-            {/* Current Location Marker with heading - positioned at route start */}
+            /* Current Location Marker with heading - positioned at current location */
             <View
               style={[
                 styles.currentLocationMarker,
                 {
-                  left: routeStartPos.x - 8,
-                  top: routeStartPos.y - 8,
+                  left: currentPos.x - 8,
+                  top: currentPos.y - 8,
                   transform: [{ rotate: `${deviceHeading}deg` }],
                 },
               ]}
@@ -281,6 +282,9 @@ function MiniMapOverlay({
                 ),
               )}
               m remaining
+            </Text>
+            <Text style={styles.miniMapProgress}>
+              {currentRouteIndex + 1}/{routeCoordinates.length} waypoints
             </Text>
           </View>
         </>
@@ -882,6 +886,11 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  miniMapProgress: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 9,
+    marginTop: 2,
   },
   routePath: {
     position: 'absolute',
