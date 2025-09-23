@@ -4,6 +4,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
+import { useAccessibility } from '../context/AccessibilityContext';
 import SettingsHeader from '../components/molecules/SettingsHeader';
 import IndoorSchematicMap from '../components/organisms/IndoorSchematicMap';
 import StepsBottomSheet from '../components/molecules/StepsBottomSheet';
@@ -11,7 +12,6 @@ import * as NavUtils from '../utils/navigationUtils';
 import { Picker } from '@react-native-picker/picker';
 import StandardPopup from '../components/atoms/StandardPopup';
 import DestinationReachedPopup from '../components/molecules/DestinationReachedPopup';
-import AppSecondaryButton from '../components/atoms/AppSecondaryButton';
 import QRScanner from '../components/molecules/QRScanner';
 import { getQRCodeMappingByValue } from '../services/qrService';
 import firestore from '@react-native-firebase/firestore';
@@ -57,6 +57,7 @@ export default function IndoorSchematicNavScreen() {
   const { buildingId, buildingName, locationId, floorId: initialFloorId, userPos } = route.params;
 
   const { isDark } = useTheme();
+  const { isAccessibilityModeEnabled } = useAccessibility();
   const colors = getThemeColors(isDark);
 
   // Master data (ALL floors)
@@ -548,10 +549,18 @@ export default function IndoorSchematicNavScreen() {
           allRooms as any,
           allPaths as any,
           {
-            accessible: false,
+            accessible: isAccessibilityModeEnabled,
           },
         )
-      : NavUtils.calculateRoute(startId, endId, allRooms as any, allPaths as any);
+      : NavUtils.calculateRoute(
+          startId, 
+          endId, 
+          allRooms as any, 
+          allPaths as any,
+          { 
+            accessible: isAccessibilityModeEnabled 
+          }
+        );
 
     if (!routeSteps || !routeSteps.length) {
       setPopupTitle('No route');
@@ -573,7 +582,7 @@ export default function IndoorSchematicNavScreen() {
     const firstStep = filtered[0];
     if (firstStep?.coordinates) setCurrentPos(firstStep.coordinates);
     if ((firstStep as any)?.floorId) setSelectedFloorId(String((firstStep as any).floorId));
-  }, [startId, endId, allRooms, allPaths]);
+  }, [startId, endId, allRooms, allPaths, isAccessibilityModeEnabled]);
 
   const handleAdvance = () => {
     if (!steps.length) return;
