@@ -8,7 +8,8 @@ import {
   ActivityIndicator,
   TextInput,
 } from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker';
+import BuildingSelector from '../molecules/BuildingSelector';
+import FloorSelector from '../molecules/FloorSelector';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { WebView } from 'react-native-webview';
@@ -537,25 +538,16 @@ export default function AdminIndoorPositioningContent() {
         {selectedLocation && (
           <View style={styles.section}>
             <Text style={[styles.label, { color: colors.primary }]}>Step 2: Select Building</Text>
-            <DropDownPicker
-              open={buildingDropdownOpen}
-              setOpen={setBuildingDropdownOpen}
-              items={buildingDropdownItems}
-              setItems={setBuildingDropdownItems}
-              value={selectedBuildingId}
-              setValue={(val) => {
-                const id = val();
+            <BuildingSelector
+              buildings={buildings}
+              selectedBuildingId={selectedBuildingId}
+              setSelectedBuildingId={id => {
                 setSelectedBuildingId(id);
                 setSelectedBuildingName(buildings.find((b) => b.id === id)?.name || '');
               }}
-              searchable
-              placeholder="Select a building"
-              zIndex={3000}
-              zIndexInverse={1000}
-              style={{ backgroundColor: colors.card, borderColor: colors.primary }}
-              dropDownContainerStyle={{ backgroundColor: colors.card }}
-              textStyle={{ color: colors.text }}
-              searchTextInputStyle={{ color: colors.text }}
+              dropdownOpen={buildingDropdownOpen}
+              setDropdownOpen={setBuildingDropdownOpen}
+              title="Select Building"
             />
           </View>
         )}
@@ -564,21 +556,17 @@ export default function AdminIndoorPositioningContent() {
         {selectedBuildingId && (
           <View style={styles.section}>
             <Text style={[styles.label, { color: colors.primary }]}>Step 3: Select Floor</Text>
-            <DropDownPicker
-              open={floorDropdownOpen}
-              setOpen={setFloorDropdownOpen}
-              items={floorplans.map((fp) => ({ label: `Floor ${fp.floorLabel}`, value: fp.id }))}
-              value={selectedFloorplan?.id || null}
-              setValue={(val) => {
-                const match = floorplans.find((fp) => fp.id === val());
+            <FloorSelector
+              floors={floorplans.map(fp => ({ id: fp.id, name: fp.floorLabel }))}
+              selectedFloorId={selectedFloorplan?.id || null}
+              setSelectedFloorId={id => {
+                const match = floorplans.find(fp => fp.id === id);
                 setSelectedFloorplan(match || null);
                 setCoords(null);
               }}
-              placeholder="Select a floor"
-              style={{ backgroundColor: colors.card, borderColor: colors.primary }}
-              dropDownContainerStyle={{ backgroundColor: colors.card }}
-              textStyle={{ color: colors.text }}
-              searchTextInputStyle={{ color: colors.text }}
+              dropdownOpen={floorDropdownOpen}
+              setDropdownOpen={setFloorDropdownOpen}
+              title="Select Floor"
             />
           </View>
         )}
