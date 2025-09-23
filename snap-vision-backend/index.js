@@ -5,11 +5,69 @@ require("dotenv").config();
 
 const admin = require('firebase-admin');
 
+// Input sanitization utility
+const sanitizeInput = {
+  // Remove potentially harmful characters and normalize input
+  string: (input) => {
+    if (typeof input !== 'string') return '';
+    return input
+      .replace(/[<>\"'&]/g, '') // Remove XSS characters
+      .replace(/[\x00-\x1f\x7f-\x9f]/g, '') // Remove control characters
+      .trim()
+      .substring(0, 1000); // Limit length
+  },
+  
+  // Validate and sanitize coordinates
+  coordinate: (input) => {
+    const num = parseFloat(input);
+    if (isNaN(num) || !isFinite(num)) return null;
+    // Basic coordinate bounds check
+    if (num < -180 || num > 180) return null;
+    return num;
+  },
+  
+  // Validate mode parameter
+  mode: (input) => {
+    const allowedModes = [
+      'foot-walking', 
+      'driving-car', 
+      'cycling-regular', 
+      'wheelchair'
+    ];
+    return allowedModes.includes(input) ? input : 'foot-walking';
+  }
+};
+
+// Rate limiting
+const rateLimit = require('express-rate-limit');
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: {
+    error: 'Too many requests from this IP, please try again later.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 20, // Limit API requests to 20 per minute
+  message: {
+    error: 'API rate limit exceeded, please try again later.'
+  }
+});
+
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
 const app = express();
+
+// Apply rate limiting
+app.use(limiter);
+app.use('/api/', apiLimiter);
 
 // Secure CORS configuration
 const corsOptions = {
@@ -60,18 +118,73 @@ app.get("/", (req, res) => {
 });
 
 app.get("/api/directions", async (req, res) => {
-  const { start, end, mode = "foot-walking" } = req.query;
-  const apiKey = process.env.ORS_API_KEY;
-
-  if (!start || !end) {
-    return res.status(400).json({ error: "Missing start or end parameters" });
-  }
-
   try {
-    const url = `https://api.openrouteservice.org/v2/directions/${mode}/geojson`;
+    // Sanitize and validate inputs
+    const startRaw = sanitizeInput.string(req.query.start || '');
+    const endRaw = sanitizeInput.string(req.query.end || '');
+    const modeRaw = sanitizeInput.string(req.query.mode || 'foot-walking');
 
-    const [startLon, startLat] = start.split(",").map(Number);
-    const [endLon, endLat] = end.split(",").map(Number);
+    // Validate required parameters
+    if (!startRaw || !endRaw) {
+      return res.status(400).json({ 
+        error: "Missing or invalid start/end parameters",
+        details: "Both start and end coordinates are required"
+      });
+    }
+
+    // Parse and validate coordinates
+    const startCoords = startRaw.split(",");
+    const endCoords = endRaw.split(",");
+
+    if (startCoords.length !== 2 || endCoords.length !== 2) {
+      return res.status(400).json({ 
+        error: "Invalid coordinate format",
+        details: "Coordinates must be in format 'longitude,latitude'"
+      });
+    }
+
+    const startLon = sanitizeInput.coordinate(startCoords[0]);
+    const startLat = sanitizeInput.coordinate(startCoords[1]);
+    const endLon = sanitizeInput.coordinate(endCoords[0]);
+    const endLat = sanitizeInput.coordinate(endCoords[1]);
+
+    // Validate all coordinates are valid numbers
+    if (startLon === null || startLat === null || endLon === null || endLat === null) {
+      return res.status(400).json({ 
+        error: "Invalid coordinates",
+        details: "All coordinates must be valid numbers within valid ranges"
+      });
+    }
+
+    // Additional validation for realistic coordinate ranges
+    if (Math.abs(startLat) > 90 || Math.abs(endLat) > 90) {
+      return res.status(400).json({ 
+        error: "Invalid latitude",
+        details: "Latitude must be between -90 and 90 degrees"
+      });
+    }
+
+    if (Math.abs(startLon) > 180 || Math.abs(endLon) > 180) {
+      return res.status(400).json({ 
+        error: "Invalid longitude",
+        details: "Longitude must be between -180 and 180 degrees"
+      });
+    }
+
+    // Sanitize mode
+    const mode = sanitizeInput.mode(modeRaw);
+
+    // Validate API key exists
+    const apiKey = process.env.ORS_API_KEY;
+    if (!apiKey) {
+      console.error('ORS_API_KEY not configured');
+      return res.status(500).json({ 
+        error: "Service configuration error",
+        details: "External routing service not properly configured"
+      });
+    }
+
+    const url = `https://api.openrouteservice.org/v2/directions/${mode}/geojson`;
 
     const response = await axios.post(
       url,
@@ -86,13 +199,41 @@ app.get("/api/directions", async (req, res) => {
           Authorization: apiKey,
           "Content-Type": "application/json",
         },
+        timeout: 10000, // 10 second timeout
       },
     );
 
+    // Validate response structure before sending
+    if (!response.data || typeof response.data !== 'object') {
+      throw new Error('Invalid response from routing service');
+    }
+
     res.json(response.data);
   } catch (error) {
-    //consoleerror("ORS error:", error?.response?.data || error.message);
-    res.status(500).json({ error: "Failed to fetch directions" });
+    console.error("ORS error:", error?.response?.data || error.message);
+    
+    // Don't expose internal error details to client
+    if (error.code === 'ECONNABORTED') {
+      res.status(408).json({ 
+        error: "Request timeout",
+        details: "The routing service took too long to respond"
+      });
+    } else if (error?.response?.status === 429) {
+      res.status(429).json({ 
+        error: "Rate limit exceeded",
+        details: "Too many requests to routing service"
+      });
+    } else if (error?.response?.status >= 400 && error?.response?.status < 500) {
+      res.status(400).json({ 
+        error: "Invalid request",
+        details: "The routing service rejected the request"
+      });
+    } else {
+      res.status(500).json({ 
+        error: "Failed to fetch directions",
+        details: "An unexpected error occurred"
+      });
+    }
   }
 });
 
