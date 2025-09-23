@@ -41,14 +41,52 @@ const FloorSelector: React.FC<FloorSelectorProps> = ({
         value={selectedFloorId}
         setValue={(get) => setSelectedFloorId(get())}
         searchable
-        listMode="SCROLLVIEW"
+        listMode="MODAL"
         placeholder="Select a floor"
         zIndex={2000}
         zIndexInverse={900}
-        style={{ backgroundColor: colors.card, borderColor: colors.primary }}
-        dropDownContainerStyle={{ backgroundColor: colors.card, borderColor: colors.primary }}
-        textStyle={{ color: colors.text }}
-        searchTextInputStyle={{ color: colors.text }}
+        style={{
+          backgroundColor: colors.card,
+          borderColor: colors.primary,
+          borderWidth: 2,
+          borderRadius: 8,
+          fontFamily: 'System',
+          fontSize: 16,
+        }}
+        dropDownContainerStyle={{
+          backgroundColor: colors.card,
+          borderColor: colors.primary,
+          maxHeight: 250,
+          borderRadius: 8,
+        }}
+        textStyle={{
+          color: colors.text,
+          fontFamily: 'System',
+          fontSize: 16,
+        }}
+        searchTextInputStyle={{
+          color: colors.text,
+          backgroundColor: colors.background,
+          borderColor: colors.primary,
+          borderWidth: 1,
+          borderRadius: 8,
+          fontFamily: 'System',
+          fontSize: 16,
+        }}
+        selectedItemLabelStyle={{
+          color: colors.primary,
+          fontWeight: 'bold',
+        }}
+        placeholderStyle={{
+          color: colors.subtleText,
+          fontFamily: 'System',
+          fontSize: 16,
+        }}
+        listItemLabelStyle={{
+          color: colors.text,
+          fontFamily: 'System',
+          fontSize: 16,
+        }}
       />
     </View>
   );
