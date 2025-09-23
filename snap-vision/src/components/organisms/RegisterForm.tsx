@@ -100,12 +100,32 @@ export default function RegisterForm() {
       const userCredential = await auth().createUserWithEmailAndPassword(email, password);
       const uid = userCredential.user.uid;
 
-      // Automatically create a Firestore entry for this user
       await firestore().collection('userInformation').doc(uid).set({
         email,
         name: username.trim(),
         role: 'user',
       });
+
+      // Create a Firestore entry for this user in the 'users' collection with default purchase
+      const defaultPurchase = {
+        id: 'home-icon-home',
+        title: 'Standard Home',
+        description: 'Classic home icon for the Home tab',
+        icon: 'home-outline',
+        tabType: 'Home',
+        cost: 0,
+        equipped: true,
+      };
+      await firestore()
+        .collection('users')
+        .doc(uid)
+        .set({
+          badges: [],
+          points: 0,
+          checkIns: 0,
+          routesCompleted: 0,
+          purchases: [defaultPurchase],
+        });
 
       setHasSeenLanding(false); // triggers Landing screen on registration
       unlock('first-login');
@@ -241,8 +261,8 @@ export default function RegisterForm() {
         visible={showErrorPopup}
         title="Registration Error"
         message={errorPopupMessage}
-        onClose={() => setShowErrorPopup(false)}
-        showCloseButton={true}
+        onConfirm={() => setShowErrorPopup(false)}
+        confirmText="Close"
       />
 
       {/* Success Popup */}
@@ -250,8 +270,8 @@ export default function RegisterForm() {
         visible={showSuccessPopup}
         title="Registration Successful"
         message="Your account has been created successfully!"
-        onClose={handleSuccessConfirm}
-        showCloseButton={true}
+        onConfirm={handleSuccessConfirm}
+        confirmText="Continue"
       />
     </View>
   );

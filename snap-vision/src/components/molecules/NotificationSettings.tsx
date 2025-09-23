@@ -37,16 +37,6 @@ export default function NotificationSettings() {
           style={styles.switch}
         />
       </View>
-      <View style={[styles.row, { borderBottomColor: colors.border || colors.border }]}>
-        <Text style={[styles.label, { color: colors.text }]}>Email Alerts</Text>
-        <Switch
-          value={false}
-          trackColor={{ false: '#767577', true: colors.primary }}
-          thumbColor={isDark ? '#f4f3f4' : '#ffffff'}
-          ios_backgroundColor="#3e3e3e"
-          style={styles.switch}
-        />
-      </View>
     </View>
   );
 }
