@@ -597,73 +597,65 @@ function CustomDirectionArrow({ direction, size = 50 }: { direction: string; siz
 
   return (
     <View style={getArrowStyle()}>
-      <View style={styles.handDrawnArrowContainer}>
-        {/* Hand-drawn arrow using multiple overlapping elements */}
+      <View style={styles.chalkArrowContainer}>
+        {/* Chalk-style arrow with rough edges */}
         
-        {/* Main arrow shaft - slightly irregular */}
-        <View style={[styles.drawnArrowShaft, {
-          width: size * 0.15,
-          height: size * 0.6,
-          top: size * 0.3,
-          left: (size - size * 0.15) / 2,
-        }]} />
-        
-        {/* Left shaft edge (slightly wavy) */}
-        <View style={[styles.drawnArrowShaftEdge, {
-          width: size * 0.02,
+        {/* Main body with rough texture */}
+        <View style={[styles.chalkArrowBody, {
+          width: size * 0.12,
           height: size * 0.55,
-          top: size * 0.32,
-          left: (size - size * 0.15) / 2 - size * 0.01,
+          top: size * 0.35,
+          left: (size - size * 0.12) / 2,
         }]} />
         
-        {/* Right shaft edge */}
-        <View style={[styles.drawnArrowShaftEdge, {
-          width: size * 0.02,
-          height: size * 0.58,
-          top: size * 0.31,
-          left: (size - size * 0.15) / 2 + size * 0.14,
-        }]} />
-
-        {/* Arrow head - left side */}
-        <View style={[styles.drawnArrowHeadLeft, {
-          width: size * 0.25,
-          height: size * 0.03,
-          top: size * 0.15,
-          left: size * 0.3,
-          transform: [{ rotate: '135deg' }],
-        }]} />
-        
-        {/* Arrow head - right side */}
-        <View style={[styles.drawnArrowHeadRight, {
-          width: size * 0.25,
-          height: size * 0.03,
-          top: size * 0.15,
-          left: size * 0.45,
-          transform: [{ rotate: '45deg' }],
-        }]} />
-
-        {/* Additional sketch lines for texture */}
-        <View style={[styles.sketchLine1, {
-          width: size * 0.1,
-          height: size * 0.02,
+        {/* Rough edge details */}
+        <View style={[styles.chalkRoughEdge, {
+          width: size * 0.03,
+          height: size * 0.1,
           top: size * 0.4,
-          left: size * 0.45,
+          left: (size - size * 0.12) / 2 - size * 0.02,
         }]} />
         
-        <View style={[styles.sketchLine2, {
-          width: size * 0.1,
-          height: size * 0.02,
+        <View style={[styles.chalkRoughEdge, {
+          width: size * 0.03,
+          height: size * 0.08,
           top: size * 0.6,
-          left: size * 0.45,
+          left: (size - size * 0.12) / 2 + size * 0.11,
         }]} />
 
-        {/* Glow effect for visibility */}
-        <View style={[styles.drawnArrowGlow, {
-          width: size * 1.1,
-          height: size * 1.1,
-          borderRadius: size * 0.55,
-          top: -size * 0.05,
-          left: -size * 0.05,
+        {/* Arrow point - more organic shape */}
+        <View style={[styles.chalkArrowPoint, {
+          width: size * 0.3,
+          height: size * 0.3,
+          top: size * 0.1,
+          left: (size - size * 0.3) / 2,
+          borderRadius: size * 0.05,
+        }]} />
+        
+        {/* Point details */}
+        <View style={[styles.chalkPointDetail, {
+          width: size * 0.04,
+          height: size * 0.15,
+          top: size * 0.2,
+          left: size * 0.25,
+          transform: [{ rotate: '20deg' }],
+        }]} />
+        
+        <View style={[styles.chalkPointDetail, {
+          width: size * 0.04,
+          height: size * 0.15,
+          top: size * 0.2,
+          left: size * 0.71,
+          transform: [{ rotate: '-20deg' }],
+        }]} />
+
+        {/* Subtle glow for AR visibility */}
+        <View style={[styles.chalkGlow, {
+          width: size * 1.2,
+          height: size * 1.2,
+          borderRadius: size * 0.6,
+          top: -size * 0.1,
+          left: -size * 0.1,
         }]} />
       </View>
     </View>
