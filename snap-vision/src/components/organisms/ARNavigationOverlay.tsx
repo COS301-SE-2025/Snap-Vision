@@ -1112,6 +1112,36 @@ const styles = StyleSheet.create({
     zIndex: -1,
   },
 
-
+  // Chalk style
+  chalkArrowContainer: {
+    position: 'relative',
+    width: 70,
+    height: 70,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chalkArrowBody: {
+    position: 'absolute',
+    backgroundColor: '#F0F0F0',
+    opacity: 0.9,
+  },
+  chalkRoughEdge: {
+    position: 'absolute',
+    backgroundColor: 'rgba(240, 240, 240, 0.7)',
+  },
+  chalkArrowPoint: {
+    position: 'absolute',
+    backgroundColor: '#F0F0F0',
+    opacity: 0.9,
+  },
+  chalkPointDetail: {
+    position: 'absolute',
+    backgroundColor: 'rgba(240, 240, 240, 0.8)',
+  },
+  chalkGlow: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    zIndex: -1,
+  },
 
 });
