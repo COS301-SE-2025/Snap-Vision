@@ -597,65 +597,70 @@ function CustomDirectionArrow({ direction, size = 50 }: { direction: string; siz
 
   return (
     <View style={getArrowStyle()}>
-      <View style={styles.chalkArrowContainer}>
-        {/* Chalk-style arrow with rough edges */}
+      <View style={styles.doodleArrowContainer}>
+        {/* Doodle-style with multiple overlapping strokes */}
         
-        {/* Main body with rough texture */}
-        <View style={[styles.chalkArrowBody, {
-          width: size * 0.12,
-          height: size * 0.55,
-          top: size * 0.35,
-          left: (size - size * 0.12) / 2,
+        {/* Main stroke */}
+        <View style={[styles.doodleStroke, {
+          width: size * 0.08,
+          height: size * 0.6,
+          top: size * 0.3,
+          left: (size - size * 0.08) / 2,
+          borderRadius: size * 0.04,
         }]} />
         
-        {/* Rough edge details */}
-        <View style={[styles.chalkRoughEdge, {
-          width: size * 0.03,
-          height: size * 0.1,
-          top: size * 0.4,
-          left: (size - size * 0.12) / 2 - size * 0.02,
-        }]} />
-        
-        <View style={[styles.chalkRoughEdge, {
-          width: size * 0.03,
-          height: size * 0.08,
-          top: size * 0.6,
-          left: (size - size * 0.12) / 2 + size * 0.11,
+        {/* Overlapping stroke for hand-drawn effect */}
+        <View style={[styles.doodleStrokeOverlay, {
+          width: size * 0.06,
+          height: size * 0.58,
+          top: size * 0.31,
+          left: (size - size * 0.06) / 2 + size * 0.01,
+          borderRadius: size * 0.03,
         }]} />
 
-        {/* Arrow point - more organic shape */}
-        <View style={[styles.chalkArrowPoint, {
-          width: size * 0.3,
-          height: size * 0.3,
-          top: size * 0.1,
-          left: (size - size * 0.3) / 2,
-          borderRadius: size * 0.05,
+        {/* Arrow head strokes */}
+        <View style={[styles.doodleHeadStroke, {
+          width: size * 0.2,
+          height: size * 0.04,
+          top: size * 0.2,
+          left: size * 0.3,
+          borderRadius: size * 0.02,
+          transform: [{ rotate: '45deg' }],
         }]} />
         
-        {/* Point details */}
-        <View style={[styles.chalkPointDetail, {
-          width: size * 0.04,
-          height: size * 0.15,
+        <View style={[styles.doodleHeadStroke, {
+          width: size * 0.2,
+          height: size * 0.04,
           top: size * 0.2,
-          left: size * 0.25,
-          transform: [{ rotate: '20deg' }],
-        }]} />
-        
-        <View style={[styles.chalkPointDetail, {
-          width: size * 0.04,
-          height: size * 0.15,
-          top: size * 0.2,
-          left: size * 0.71,
-          transform: [{ rotate: '-20deg' }],
+          left: size * 0.5,
+          borderRadius: size * 0.02,
+          transform: [{ rotate: '-45deg' }],
         }]} />
 
-        {/* Subtle glow for AR visibility */}
-        <View style={[styles.chalkGlow, {
-          width: size * 1.2,
-          height: size * 1.2,
-          borderRadius: size * 0.6,
-          top: -size * 0.1,
-          left: -size * 0.1,
+        {/* Additional doodle marks */}
+        <View style={[styles.doodleMark, {
+          width: size * 0.02,
+          height: size * 0.05,
+          top: size * 0.45,
+          left: size * 0.4,
+          borderRadius: size * 0.01,
+        }]} />
+        
+        <View style={[styles.doodleMark, {
+          width: size * 0.02,
+          height: size * 0.04,
+          top: size * 0.65,
+          left: size * 0.58,
+          borderRadius: size * 0.01,
+        }]} />
+
+        {/* Subtle glow */}
+        <View style={[styles.doodleGlow, {
+          width: size * 1.15,
+          height: size * 1.15,
+          borderRadius: size * 0.575,
+          top: -size * 0.075,
+          left: -size * 0.075,
         }]} />
       </View>
     </View>
