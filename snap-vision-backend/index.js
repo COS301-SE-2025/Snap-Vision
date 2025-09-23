@@ -3,17 +3,57 @@ const cors = require("cors");
 const axios = require("axios");
 require("dotenv").config();
 
-// Initialize Firebase Admin SDK for App Hosting
 const admin = require('firebase-admin');
 
-// Firebase App Hosting automatically provides credentials
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+
+// Secure CORS configuration
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or Postman)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'https://snap-vision-f6954.web.app',
+      'https://snap-vision-f6954.firebaseapp.com',
+      'https://snap-vision-backend--snap-vision-f6954.europe-west4.hosted.app'
+      // For development
+      // ...(process.env.NODE_ENV === 'development' ? [
+      //   'http://localhost:3000',
+      //   'http://localhost:8081', // Metro bundler
+      //   'http://127.0.0.1:3000',
+      //   'http://127.0.0.1:8081'
+      // ] : [])
+    ];
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true, // Allow cookies if needed
+  maxAge: 86400 // Cache preflight requests for 24 hours
+};
+
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '10mb' })); // Add size limit
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Add security headers middleware
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  next();
+});
 
 app.get("/", (req, res) => {
   res.send("Snap Vision backend is running");
