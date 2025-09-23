@@ -549,7 +549,7 @@ function calculateBearing(lat1: number, lon1: number, lat2: number, lon2: number
   return bearing;
 }
 
-// Custom Arrow Component for more impressive direction display
+// Custom Arrow Component with hand-drawn style
 function CustomDirectionArrow({ direction, size = 50 }: { direction: string; size?: number }) {
   const getArrowStyle = () => {
     const baseStyle = {
@@ -597,62 +597,74 @@ function CustomDirectionArrow({ direction, size = 50 }: { direction: string; siz
 
   return (
     <View style={getArrowStyle()}>
-      <View style={styles.customArrowContainer}>
-        {/* Enhanced Arrow with better proportions */}
+      <View style={styles.handDrawnArrowContainer}>
+        {/* Hand-drawn arrow using multiple overlapping elements */}
         
-        {/* Arrow Head (Triangle) */}
-        <View 
-          style={[
-            styles.arrowHead,
-            {
-              borderLeftWidth: size * 0.3,
-              borderRightWidth: size * 0.3,
-              borderBottomWidth: size * 0.4,
-              top: size * 0.1,
-            }
-          ]} 
-        />
+        {/* Main arrow shaft - slightly irregular */}
+        <View style={[styles.drawnArrowShaft, {
+          width: size * 0.15,
+          height: size * 0.6,
+          top: size * 0.3,
+          left: (size - size * 0.15) / 2,
+        }]} />
         
-        {/* Arrow Body (Shaft) */}
-        <View 
-          style={[
-            styles.arrowBody,
-            {
-              width: size * 0.2,
-              height: size * 0.5,
-              top: size * 0.45,
-              borderRadius: size * 0.05,
-            }
-          ]} 
-        />
+        {/* Left shaft edge (slightly wavy) */}
+        <View style={[styles.drawnArrowShaftEdge, {
+          width: size * 0.02,
+          height: size * 0.55,
+          top: size * 0.32,
+          left: (size - size * 0.15) / 2 - size * 0.01,
+        }]} />
         
-        {/* Enhanced Glow Effect */}
-        <View 
-          style={[
-            styles.arrowGlow,
-            {
-              width: size * 1.2,
-              height: size * 1.2,
-              borderRadius: size * 0.6,
-              top: -size * 0.1,
-              left: -size * 0.1,
-            }
-          ]} 
-        />
+        {/* Right shaft edge */}
+        <View style={[styles.drawnArrowShaftEdge, {
+          width: size * 0.02,
+          height: size * 0.58,
+          top: size * 0.31,
+          left: (size - size * 0.15) / 2 + size * 0.14,
+        }]} />
+
+        {/* Arrow head - left side */}
+        <View style={[styles.drawnArrowHeadLeft, {
+          width: size * 0.25,
+          height: size * 0.03,
+          top: size * 0.15,
+          left: size * 0.3,
+          transform: [{ rotate: '135deg' }],
+        }]} />
         
-        {/* Add shadow for depth */}
-        <View 
-          style={[
-            styles.arrowShadow,
-            {
-              width: size * 0.8,
-              height: size * 0.8,
-              borderRadius: size * 0.4,
-              top: size * 0.1,
-              left: size * 0.1,
-            }
-          ]} 
-        />
+        {/* Arrow head - right side */}
+        <View style={[styles.drawnArrowHeadRight, {
+          width: size * 0.25,
+          height: size * 0.03,
+          top: size * 0.15,
+          left: size * 0.45,
+          transform: [{ rotate: '45deg' }],
+        }]} />
+
+        {/* Additional sketch lines for texture */}
+        <View style={[styles.sketchLine1, {
+          width: size * 0.1,
+          height: size * 0.02,
+          top: size * 0.4,
+          left: size * 0.45,
+        }]} />
+        
+        <View style={[styles.sketchLine2, {
+          width: size * 0.1,
+          height: size * 0.02,
+          top: size * 0.6,
+          left: size * 0.45,
+        }]} />
+
+        {/* Glow effect for visibility */}
+        <View style={[styles.drawnArrowGlow, {
+          width: size * 1.1,
+          height: size * 1.1,
+          borderRadius: size * 0.55,
+          top: -size * 0.05,
+          left: -size * 0.05,
+        }]} />
       </View>
     </View>
   );
@@ -989,7 +1001,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
   },
 
-// Enhanced Custom Arrow Styles
+  // Enhanced Custom Arrow Styles
   customArrowContainer: {
     position: 'relative',
     width: 70, // Increased from 50
