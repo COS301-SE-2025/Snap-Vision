@@ -1144,4 +1144,36 @@ const styles = StyleSheet.create({
     zIndex: -1,
   },
 
+  // Doodle style
+  doodleArrowContainer: {
+    position: 'relative',
+    width: 70,
+    height: 70,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  doodleStroke: {
+    position: 'absolute',
+    backgroundColor: '#FFFFFF',
+    opacity: 0.9,
+  },
+  doodleStrokeOverlay: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+  },
+  doodleHeadStroke: {
+    position: 'absolute',
+    backgroundColor: '#FFFFFF',
+    opacity: 0.9,
+  },
+  doodleMark: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  doodleGlow: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    zIndex: -1,
+  },
+
 });
