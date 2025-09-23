@@ -8,8 +8,6 @@ import {
   ActivityIndicator,
   TextInput,
 } from 'react-native';
-import BuildingSelector from '../molecules/BuildingSelector';
-import FloorSelector from '../molecules/FloorSelector';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { WebView } from 'react-native-webview';

@@ -164,6 +164,7 @@ function AppInner() {
 
 export default function App() {
   return (
+    <UserIconProvider>
     <DeepLinkProvider>
       <LandingProvider>
         <UserProvider>
@@ -173,5 +174,6 @@ export default function App() {
         </UserProvider>
       </LandingProvider>
     </DeepLinkProvider>
+    </UserIconProvider>
   );
 }
