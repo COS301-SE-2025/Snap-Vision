@@ -11,6 +11,7 @@ type EditorStackParamList = {
   AdminEditFloorplans: undefined;
   //AdminSettings: undefined;
   AdminFloorplanEditor: undefined;
+  AdminQRCodes: undefined;
 };
 
 type EditorNavigationProp = NavigationProp<EditorStackParamList>;
@@ -26,15 +27,18 @@ const EditorScreen = () => {
   const handleEditFloorplans = () => {
     navigation.navigate('AdminEditFloorplans');
   };
-  // const handleSettings = () => {
-  //   navigation.navigate('AdminSettings');
-  // };
+
+  const handleManageQRCodes = () => {
+    navigation.navigate('AdminQRCodes');
+  } 
 
   return (
     <AdminContent
       colors={colors}
       onLoadFloorplans={handleLoadFloorplans}
       onEditFloorplans={handleEditFloorplans}
+      onFloorplanEditor={handleManageQRCodes}
+      onManageQRCodes={handleManageQRCodes}
       //onSettings={handleSettings}
     />
   );
