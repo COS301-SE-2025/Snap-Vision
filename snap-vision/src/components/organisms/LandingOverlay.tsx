@@ -64,7 +64,7 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
                 styles.snapTitle,
                 {
                   color: swappedTextColor,
-                  fontFamily: 'PermanentMarkerRegular',
+                  fontFamily: 'ChicleRegular',
                   transform: [
                     {
                       scale: snapAnim1.interpolate({
@@ -86,8 +86,9 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
                 styles.snapTitle,
                 {
                   color: swappedTextColor,
-                  fontFamily: 'PermanentMarkerRegular',
-                  marginLeft: 10,
+                  fontFamily: 'ChicleRegular',
+                  includeFontPadding: false,
+                  marginLeft: 1,
                   transform: [
                     {
                       scale: snapAnim2.interpolate({
@@ -101,7 +102,7 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
                 },
               ]}
             >
-              Vision
+              {' Vision'}
             </Animated.Text>
           </View>
 
@@ -177,7 +178,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   snapTitle: {
-    fontSize: 42,
+    fontSize: 62,
     textAlign: 'center',
   },
   tagline: {

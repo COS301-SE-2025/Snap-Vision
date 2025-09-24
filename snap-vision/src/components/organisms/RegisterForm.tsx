@@ -11,6 +11,7 @@ import { useDeepLink } from '../../DeepLinkContext';
 import firestore from '@react-native-firebase/firestore';
 import { useBadges } from '../../context/BadgeContext';
 import { useLanding } from '../../context/LandingContext';
+import StandardPopup from '../atoms/StandardPopup';
 
 type RootStackParamList = {
   Login: undefined;
@@ -150,10 +151,10 @@ export default function RegisterForm() {
         style={[
           styles.header,
           {
-            fontFamily: 'PermanentMarkerRegular',
+            fontFamily: 'ChicleRegular',
             color: colors.primary,
-            transform: [{ rotate: '-3deg' }],
-            textShadowColor: colors.text,
+            // transform: [{ rotate: '-3deg' }],
+            textShadowColor: colors.secondary,
             textShadowOffset: { width: 1, height: 1 },
             textShadowRadius: 1,
           },
@@ -268,9 +269,9 @@ export default function RegisterForm() {
 const styles = StyleSheet.create({
   header: {
     fontSize: 60,
-    fontFamily: 'PermanentMarkerRegular',
+    fontFamily: 'ChicleRegular',
     textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: 50,
   },
   label: {
     fontWeight: '600',

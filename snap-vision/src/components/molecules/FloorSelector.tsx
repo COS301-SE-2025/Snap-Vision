@@ -32,7 +32,7 @@ const FloorSelector: React.FC<FloorSelectorProps> = ({
   const dropdownItems = floors.map((f) => ({ label: `Floor ${f.name}`, value: f.id }));
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Text style={[styles.title, { color: colors.primary }]}>{title}</Text>
       <DropDownPicker
         open={dropdownOpen}
@@ -43,8 +43,8 @@ const FloorSelector: React.FC<FloorSelectorProps> = ({
         searchable
         listMode="MODAL"
         placeholder="Select a floor"
-        zIndex={2000}
-        zIndexInverse={900}
+        zIndex={3000}
+        zIndexInverse={1000}
         style={{
           backgroundColor: colors.card,
           borderColor: colors.primary,
@@ -59,6 +59,15 @@ const FloorSelector: React.FC<FloorSelectorProps> = ({
           maxHeight: 250,
           borderRadius: 8,
         }}
+        modalProps={{
+          animationType: 'fade',
+        }}
+        modalContentContainerStyle={{
+          backgroundColor: colors.background,
+        }}
+        modalTitleStyle={{
+          color: colors.text,
+        }}
         textStyle={{
           color: colors.text,
           fontFamily: 'System',
@@ -66,7 +75,7 @@ const FloorSelector: React.FC<FloorSelectorProps> = ({
         }}
         searchTextInputStyle={{
           color: colors.text,
-          backgroundColor: colors.background,
+          backgroundColor: colors.card,
           borderColor: colors.primary,
           borderWidth: 1,
           borderRadius: 8,
@@ -87,6 +96,21 @@ const FloorSelector: React.FC<FloorSelectorProps> = ({
           fontFamily: 'System',
           fontSize: 16,
         }}
+        theme={isDark ? 'DARK' : 'LIGHT'}
+        closeIconContainerStyle={{
+          backgroundColor: 'transparent',
+        }}
+        arrowIconContainerStyle={{
+          backgroundColor: 'transparent',
+        }}
+        listItemContainerStyle={{
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+        }}
+        itemSeparator={true}
+        itemSeparatorStyle={{
+          backgroundColor: colors.border,
+        }}
       />
     </View>
   );
@@ -96,7 +120,6 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: 24,
     padding: 16,
-    backgroundColor: 'rgba(0,0,0,0.03)',
     borderRadius: 8,
   },
   title: {

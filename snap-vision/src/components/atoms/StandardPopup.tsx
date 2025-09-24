@@ -61,7 +61,7 @@ export default function StandardPopup({
                 activeOpacity={0.7}
                 style={[
                   verticalButtons ? styles.buttonOutlineVertical : styles.buttonOutline,
-                  { borderColor: colors.border },
+                  { borderColor: colors.text },
                 ]}
                 onPress={onCancel}
               >
@@ -83,7 +83,7 @@ export default function StandardPopup({
                 }
               }}
             >
-              <Text style={[styles.buttonTextFilled]}>{confirmText}</Text>
+              <Text style={[styles.buttonTextFilled, { color: colors.background }]}>{confirmText}</Text>
             </TouchableOpacity>
           </View>
         </View>

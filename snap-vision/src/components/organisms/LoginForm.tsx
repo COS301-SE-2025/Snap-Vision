@@ -94,10 +94,10 @@ export default function LoginForm() {
         style={[
           styles.header,
           {
-            fontFamily: 'PermanentMarkerRegular',
+            fontFamily: 'ChicleRegular',
             color: colors.primary,
-            transform: [{ rotate: '-3deg' }],
-            textShadowColor: colors.text,
+            // transform: [{ rotate: '-3deg' }],
+            textShadowColor: colors.secondary,
             textShadowOffset: { width: 1, height: 1 },
             textShadowRadius: 1,
           },
@@ -164,8 +164,8 @@ export default function LoginForm() {
 
 const styles = StyleSheet.create({
   header: {
-    fontSize: 72,
-    fontFamily: 'PermanentMarkerRegular',
+    fontSize: 82,
+    fontFamily: 'ChicleRegular',
     textAlign: 'center',
     marginBottom: 25,
   },
