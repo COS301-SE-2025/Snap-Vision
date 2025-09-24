@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import TTS from 'react-native-tts';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../theme/ThemeContext';
@@ -36,6 +37,13 @@ export default function IndoorNavigationInstructionsContent({
 
   const [steps, setSteps] = useState<NavigationStep[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
+  // Speak the current step's instruction when it changes
+  useEffect(() => {
+    if (steps.length && steps[currentStep]) {
+      TTS.stop();
+      TTS.speak(steps[currentStep].instruction);
+    }
+  }, [currentStep, steps]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [startRoomName, setStartRoomName] = useState('');
@@ -120,6 +128,8 @@ export default function IndoorNavigationInstructionsContent({
         },
       });
       setShowPopup(true);
+      TTS.stop();
+      TTS.speak(`You have arrived at ${endRoomName}`);
     } else {
       setCurrentStep(i + 1);
     }
@@ -136,7 +146,7 @@ export default function IndoorNavigationInstructionsContent({
 
   const stepColor = (index: number) =>
     index < currentStep
-      ? colors.success || '#4CAF50'
+      ? colors.statusActive
       : index === currentStep
         ? colors.primary
         : colors.secondary;
@@ -229,7 +239,7 @@ export default function IndoorNavigationInstructionsContent({
                   styles.completeButton,
                   {
                     backgroundColor:
-                      index === steps.length - 1 ? colors.success || '#4CAF50' : colors.primary,
+                      index === steps.length - 1 ? colors.statusActive : colors.primary,
                   },
                 ]}
                 onPress={() => markStepCompleted(index)}
