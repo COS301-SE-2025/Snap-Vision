@@ -89,7 +89,7 @@ export default function HomeContent() {
           <Text style={{ color: colors.secondary, textAlign: 'center' }}>Loading...</Text>
         </View>
       ) : (
-        <RecentlyVisitedCarousel visits={recentlyVisited} />
+        <RecentlyVisitedCarousel visits={recentlyVisited} testID="recently-visited-carousel" />
       )}
     </View>
   );

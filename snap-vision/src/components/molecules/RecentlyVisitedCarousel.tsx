@@ -3,8 +3,11 @@ import { FlatList, TouchableOpacity, Text, View, StyleSheet } from 'react-native
 import { Visit } from '../../services/firebase/recentlyVService';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
-
-const RecentlyVisitedCarousel = ({ visits }: { visits: Visit[] }) => {
+type Props = {
+  visits: Visit[];
+  testID?: string;
+};
+const RecentlyVisitedCarousel = ({ visits, testID }: Props) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
@@ -19,6 +22,7 @@ const RecentlyVisitedCarousel = ({ visits }: { visits: Visit[] }) => {
   }
 
   return (
+    <View testID={testID}>
     <FlatList
       horizontal
       showsHorizontalScrollIndicator={false}
@@ -46,6 +50,7 @@ const RecentlyVisitedCarousel = ({ visits }: { visits: Visit[] }) => {
         </TouchableOpacity>
       )}
     />
+    </View>
   );
 };
 
