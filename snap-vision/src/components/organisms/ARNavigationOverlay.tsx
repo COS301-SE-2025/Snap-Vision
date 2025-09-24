@@ -284,9 +284,6 @@ function MiniMapOverlay({
               )}
               m remaining
             </Text>
-            <Text style={styles.miniMapProgress}>
-              {currentRouteIndex + 1}/{routeCoordinates.length} waypoints
-            </Text>
           </View>
         </>
       )}
