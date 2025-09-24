@@ -349,24 +349,10 @@ function SimpleARGuidance({
             }
             
             nextPoint = routeCoordinates[targetIndex];
-    
-            //console.log(`🎯 AR Target: index ${targetIndex}/${routeCoordinates.length}, distance: ${bestDistance.toFixed(1)}m`);
-            
+               
           } else {
             nextPoint = [destinationCoords.x, destinationCoords.y];
           }
-
-          // // debug for turn around
-          // console.log('🔍 Coordinate Debug:', {
-          //   currentLocation: currentLocation,
-          //   routeCoordinates: routeCoordinates.slice(0, 3), // First 3 points
-          //   currentRouteIndex,
-          //   nextPoint: nextPoint,
-          //   calculatedBearing: calculateBearing(
-          //     currentLocation.y, currentLocation.x,
-          //     nextPoint[1], nextPoint[0]
-          //   )
-          // });
   
           return calculateBearing(
             currentLocation.y,
