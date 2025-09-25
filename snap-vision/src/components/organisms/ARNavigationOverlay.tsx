@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Dimensions, Text, TouchableOpacity } from 'react-native';
 import { Camera, useCameraDevices, useCameraPermission } from 'react-native-vision-camera';
 import { Canvas, Path, Paint, Skia } from '@shopify/react-native-skia';
+import { useTheme } from '@react-navigation/native';
+import { lightColors, darkColors } from '../../theme/colours';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -431,24 +433,13 @@ function SimpleARGuidance({
     <>
       {/* AR Navigation with Arrow and Direction */}
       <View style={styles.mainGuidanceContainer}>
-        {/* Direction Circle with Arrow */}
-        <View
-          style={[
-            styles.directionCircle,
-            {
-              backgroundColor:
-                Math.abs(relativeBearing) < 45
-                  ? 'rgba(76, 175, 80, 0.8)'
-                  : 'rgba(244, 67, 54, 0.8)',
-            },
-          ]}
-        >
-          <CustomDirectionArrow direction={getDirectionType()} size={60} />
+        {/* Simple Arrow without Circle */}
+        <View style={styles.arrowContainer}>
+          <CustomDirectionArrow direction={getDirectionType()} size={160} />
         </View>
 
         {/* Direction Text */}
         <Text style={styles.directionText}>{getDirectionInstruction()}</Text>
-        
       </View>
     </>
   );
@@ -539,101 +530,115 @@ function normalizeAngle(angle: number): number {
   return angle;
 }
 
-// Skia-based Custom Arrow Component
-function CustomDirectionArrow({ direction, size = 50 }: { direction: string; size?: number }) {
-  const getArrowStyle = () => {
-    const baseStyle = {
-      width: size,
-      height: size,
-      justifyContent: 'center' as const,
-      alignItems: 'center' as const,
-    };
 
+// Simplified Skia-based Arrow Component
+function CustomDirectionArrow({ direction, size = 160 }: { direction: string; size?: number }) {
+  const theme = useTheme();
+  const colors = theme.dark ? darkColors : lightColors;
+  
+  // Arrow colors based on theme
+  const primaryArrowColor = colors.text; // Blue: #2f6e83 (light) / #69c6d0 (dark)
+  const secondaryArrowColor = colors.secondary; // Blue-green: #3E5650 (light) / #90AFA8 (dark)
+  const strokeColor = theme.dark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)';
+
+  const getRotation = () => {
     switch (direction) {
       case 'up':
-        return { ...baseStyle, transform: [{ rotate: '0deg' }] };
+        return 0;
       case 'up-right':
-        return { ...baseStyle, transform: [{ rotate: '45deg' }] };
+        return 45;
       case 'right':
-        return { ...baseStyle, transform: [{ rotate: '90deg' }] };
+        return 90;
       case 'down-right':
-        return { ...baseStyle, transform: [{ rotate: '135deg' }] };
+        return 135;
       case 'down':
-        return { ...baseStyle, transform: [{ rotate: '180deg' }] };
+        return 180;
       case 'down-left':
-        return { ...baseStyle, transform: [{ rotate: '225deg' }] };
+        return 225;
       case 'left':
-        return { ...baseStyle, transform: [{ rotate: '270deg' }] };
+        return 270;
       case 'up-left':
-        return { ...baseStyle, transform: [{ rotate: '315deg' }] };
+        return 315;
       case 'turn-around':
-        return { ...baseStyle, transform: [{ rotate: '0deg' }] };
+        return 0; // Will use different path
       default:
-        return { ...baseStyle, transform: [{ rotate: '0deg' }] };
+        return 0;
     }
   };
 
-  // Special case for turn around
+  // Special case for turn around - circular arrow
   if (direction === 'turn-around') {
     return (
-      <View style={getArrowStyle()}>
+      <View style={{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }}>
         <Canvas style={{ width: size, height: size }}>
-          {/* Circular arrow for turn around */}
+          {/* Circular path */}
           <Path
             path={createTurnAroundPath(size)}
-            paint={Skia.Paint()}
-            color="#FFFFFF"
+            color={colors.text}
             style="stroke"
             strokeWidth={size * 0.08}
             strokeCap="round"
             strokeJoin="round"
           />
-          {/* Arrow head for turn around */}
+          {/* Arrow head at end of circle */}
           <Path
             path={createTurnAroundArrowHead(size)}
-            paint={Skia.Paint()}
-            color="#FFFFFF"
+            color={strokeColor}
             style="fill"
+          />
+          {/* Subtle outline for visibility */}
+          <Path
+            path={createTurnAroundPath(size)}
+            color={strokeColor}
+            style="stroke"
+            strokeWidth={size * 0.1}
+            strokeCap="round"
+            strokeJoin="round"
           />
         </Canvas>
       </View>
     );
   }
 
+  // Standard directional arrow
   return (
-    <View style={getArrowStyle()}>
+    <View 
+      style={{ 
+        width: size, 
+        height: size, 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        transform: [{ rotate: `${getRotation()}deg` }] 
+      }}
+    >
       <Canvas style={{ width: size, height: size }}>
-        {/* Main arrow body (shaft) */}
+        {/* Arrow shaft */}
         <Path
           path={createArrowShaft(size)}
-          paint={Skia.Paint()}
-          color="#FFFFFF"
+          color={secondaryArrowColor}
           style="fill"
         />
         
-        {/* Arrow head (triangle) */}
+        {/* Arrow head */}
         <Path
           path={createArrowHead(size)}
-          paint={Skia.Paint()}
-          color="#FFFFFF"
+          color={primaryArrowColor}
           style="fill"
         />
         
-        {/* Optional: Stroke outline for better visibility */}
+        {/* Subtle outline for visibility */}
         <Path
           path={createArrowShaft(size)}
-          paint={Skia.Paint()}
-          color="rgba(0, 0, 0, 0.3)"
+          color={strokeColor}
           style="stroke"
-          strokeWidth={1}
+          strokeWidth={4}
         />
         
         <Path
           path={createArrowHead(size)}
-          paint={Skia.Paint()}
-          color="rgba(0, 0, 0, 0.3)"
+          color={strokeColor}
           style="stroke"
-          strokeWidth={1}
+          strokeWidth={4}
         />
       </Canvas>
     </View>
@@ -643,9 +648,9 @@ function CustomDirectionArrow({ direction, size = 50 }: { direction: string; siz
 // Helper functions to create Skia paths
 function createArrowShaft(size: number): string {
   const centerX = size / 2;
-  const shaftWidth = size * 0.15;
-  const shaftHeight = size * 0.45;
-  const startY = size * 0.45;
+  const shaftWidth = size * 0.15; // Made thicker for better visibility
+  const shaftHeight = size * 0.42; // Slightly longer
+  const startY = size * 0.43; // Adjusted start position
   
   return `M ${centerX - shaftWidth/2} ${startY} 
           L ${centerX + shaftWidth/2} ${startY} 
@@ -656,9 +661,9 @@ function createArrowShaft(size: number): string {
 
 function createArrowHead(size: number): string {
   const centerX = size / 2;
-  const headWidth = size * 0.35;
-  const headHeight = size * 0.35;
-  const tipY = size * 0.1;
+  const headWidth = size * 0.35; // Made wider
+  const headHeight = size * 0.32; // Slightly taller
+  const tipY = size * 0.12; // Moved tip up slightly
   
   return `M ${centerX} ${tipY} 
           L ${centerX - headWidth/2} ${tipY + headHeight} 
@@ -669,9 +674,9 @@ function createArrowHead(size: number): string {
 function createTurnAroundPath(size: number): string {
   const centerX = size / 2;
   const centerY = size / 2;
-  const radius = size * 0.3;
+  const radius = size * 0.3; // Increased radius for bigger circular arrow
   
-  // Create a circular path (3/4 circle)
+  // Create a 3/4 circle path
   return `M ${centerX + radius} ${centerY} 
           A ${radius} ${radius} 0 1 1 ${centerX - radius * 0.7} ${centerY - radius * 0.7}`;
 }
@@ -679,12 +684,12 @@ function createTurnAroundPath(size: number): string {
 function createTurnAroundArrowHead(size: number): string {
   const centerX = size / 2;
   const centerY = size / 2;
-  const radius = size * 0.3;
+  const radius = size * 0.3; // Match the increased radius
   
-  // Small arrow head at the end of the circular path
+  // Arrow head at the end of the circular path
   const arrowX = centerX - radius * 0.7;
   const arrowY = centerY - radius * 0.7;
-  const headSize = size * 0.08;
+  const headSize = size * 0.08; // Increased head size
   
   return `M ${arrowX} ${arrowY} 
           L ${arrowX - headSize} ${arrowY - headSize} 
@@ -750,15 +755,23 @@ const styles = StyleSheet.create({
     fontSize: 50,
     color: 'white',
   },
+  // Updated arrow container without circle
+  arrowContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
   directionText: {
     fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
-    marginTop: 15,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     paddingHorizontal: 20,
     paddingVertical: 8,
     borderRadius: 20,
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   distanceText: {
     fontSize: 18,
@@ -1015,64 +1028,6 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
-  },
-
-  // Enhanced Custom Arrow Styles
-  customArrowContainer: {
-    position: 'relative',
-    width: 70, // Increased from 50
-    height: 70, // Increased from 50
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  arrowHead: {
-    position: 'absolute',
-    width: 0,
-    height: 0,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
-    shadowRadius: 4,
-  },
-  arrowBody: {
-    position: 'absolute',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
-    shadowRadius: 4,
-  },
-  arrowGlow: {
-    position: 'absolute',
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    zIndex: -1,
-  },
-  arrowShadow: {
-    position: 'absolute',
-    backgroundColor: 'rgba(0, 0, 0, 0.2)', // shadow for depth
-    zIndex: -2,
-  },
-  turnAroundContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  turnAroundCircle: {
-    backgroundColor: 'rgba(255, 193, 7, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
-    shadowRadius: 4,
-  },
-  turnAroundText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
   },
 
   // Debug styles
