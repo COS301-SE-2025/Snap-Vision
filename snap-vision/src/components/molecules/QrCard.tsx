@@ -260,13 +260,16 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
       />
 
       <TouchableOpacity
-        style={[styles.qrContainer, { backgroundColor: colors.background, borderColor: colors.secondary }]}
+        style={[
+          styles.qrContainer,
+          { backgroundColor: colors.background, borderColor: colors.secondary },
+        ]}
         onPress={() => setScannerVisible(true)}
         disabled={processing}
       >
         <Icon name="camera-outline" size={20} color={colors.secondary} />
         <View style={{ marginLeft: 6 }}>
-          <Text style={[styles.qrTitle, { color:colors.secondary }]}>
+          <Text style={[styles.qrTitle, { color: colors.secondary }]}>
             {processing ? 'Processing…' : 'Scan a nearby QR code'}
           </Text>
           {error && <Text style={styles.errorText}>{error}</Text>}

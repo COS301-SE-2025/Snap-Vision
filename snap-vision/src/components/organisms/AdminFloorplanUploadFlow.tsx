@@ -70,11 +70,11 @@ export const AdminFloorplanUploadFlow: React.FC<AdminFloorplanUploadFlowProps> =
 
   const handleBuildingSelect = (buildingId: string | null) => {
     setSelectedBuildingId(buildingId);
-    
+
     // Find building name
-    const building = buildings.find(b => b.id === buildingId);
+    const building = buildings.find((b) => b.id === buildingId);
     setSelectedBuildingName(building?.name || null);
-    
+
     setFloorNumber('');
   };
 
@@ -122,10 +122,10 @@ export const AdminFloorplanUploadFlow: React.FC<AdminFloorplanUploadFlowProps> =
             testID="input-floor-number"
             style={[
               styles.floorInput,
-              { 
-                borderColor: colors.primary, 
-                color: colors.text, 
-                backgroundColor: colors.background 
+              {
+                borderColor: colors.primary,
+                color: colors.text,
+                backgroundColor: colors.background,
               },
             ]}
           />

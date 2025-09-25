@@ -38,44 +38,39 @@ export default function IndoorNavigationUnavailableScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title="Indoor Navigation" />
-      
+
       <View style={styles.content}>
         <View style={styles.iconContainer}>
-          <MaterialCommunityIcons 
-            name="map-marker-off" 
-            size={80} 
-            color={colors.secondary} 
-          />
+          <MaterialCommunityIcons name="map-marker-off" size={80} color={colors.secondary} />
         </View>
-        
-        <Text style={[styles.title, { color: colors.text }]}>
-          Indoor Navigation Unavailable
-        </Text>
-        
+
+        <Text style={[styles.title, { color: colors.text }]}>Indoor Navigation Unavailable</Text>
+
         <Text style={[styles.message, { color: colors.secondary }]}>
           Indoor navigation is not available for{' '}
-          <Text style={[styles.buildingName, { color: colors.text }]}>
-            {buildingName}
-          </Text>
-          {' '}at this time.
+          <Text style={[styles.buildingName, { color: colors.text }]}>{buildingName}</Text> at this
+          time.
         </Text>
-        
+
         <Text style={[styles.details, { color: colors.secondary }]}>
-          This building may not have floor plans uploaded yet, or indoor navigation features may still be in development.
+          This building may not have floor plans uploaded yet, or indoor navigation features may
+          still be in development.
         </Text>
-        
+
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={[styles.button, styles.secondaryButton, { 
-              borderColor: colors.primary,
-              backgroundColor: colors.background 
-            }]}
+            style={[
+              styles.button,
+              styles.secondaryButton,
+              {
+                borderColor: colors.primary,
+                backgroundColor: colors.background,
+              },
+            ]}
             onPress={handleGoBack}
           >
             <MaterialCommunityIcons name="arrow-left" size={20} color={colors.primary} />
-            <Text style={[styles.secondaryButtonText, { color: colors.primary }]}>
-              Go Back
-            </Text>
+            <Text style={[styles.secondaryButtonText, { color: colors.primary }]}>Go Back</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -131,8 +126,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     gap: 8,
   },
-  primaryButton: {
-  },
+  primaryButton: {},
   secondaryButton: {
     borderWidth: 1,
   },

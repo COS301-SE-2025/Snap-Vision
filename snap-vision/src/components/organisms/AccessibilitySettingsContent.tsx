@@ -12,7 +12,13 @@ interface Props {
 
 export default function AccessibilitySettingsContent({ isDark }: Props) {
   const colors = getThemeColors(isDark);
-  const { isHapticFeedbackEnabled, isAccessibilityModeEnabled, setHapticFeedbackEnabled, setAccessibilityModeEnabled, loading } = useAccessibility();
+  const {
+    isHapticFeedbackEnabled,
+    isAccessibilityModeEnabled,
+    setHapticFeedbackEnabled,
+    setAccessibilityModeEnabled,
+    loading,
+  } = useAccessibility();
   const [showErrorPopup, setShowErrorPopup] = useState(false);
 
   const handleHapticFeedbackToggle = async (enabled: boolean) => {

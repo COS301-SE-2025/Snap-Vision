@@ -77,7 +77,7 @@ export default function IndoorSchematicNavScreen() {
   const [currentPos, setCurrentPos] = useState<{ x: number; y: number } | null>(userPos ?? null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
-  
+
   // Check if floorplans exist immediately when screen loads
   useEffect(() => {
     const checkFloorplansExist = async () => {
@@ -91,7 +91,7 @@ export default function IndoorSchematicNavScreen() {
           .collection('floorplans')
           .limit(1)
           .get();
-        
+
         if (floorplansSnap.empty) {
           // No floorplans exist, navigate to unavailable screen
           navigation.replace('IndoorNavigationUnavailable', {
@@ -109,7 +109,7 @@ export default function IndoorSchematicNavScreen() {
         });
       }
     };
-    
+
     checkFloorplansExist();
   }, [buildingId, buildingName, locationId, navigation]);
 
@@ -553,15 +553,9 @@ export default function IndoorSchematicNavScreen() {
             accessible: isAccessibilityModeEnabled,
           },
         )
-      : NavUtils.calculateRoute(
-          startId, 
-          endId, 
-          allRooms as any, 
-          allPaths as any,
-          { 
-            accessible: isAccessibilityModeEnabled 
-          }
-        );
+      : NavUtils.calculateRoute(startId, endId, allRooms as any, allPaths as any, {
+          accessible: isAccessibilityModeEnabled,
+        });
 
     if (!routeSteps || !routeSteps.length) {
       setPopupTitle('No route');

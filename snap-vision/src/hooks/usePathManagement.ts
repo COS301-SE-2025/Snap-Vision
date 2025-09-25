@@ -125,12 +125,23 @@ export const usePathManagement = ({
         true;
       `);
 
-      onSuccess('Path created successfully');
-    } catch (error) {
-      //consoleerror('Error saving path:', error);
-      onError('Failed to save path');
-    }
-  }, [selectedRooms, currentPath, buildingId, floorLabel, locationId, pathMarkers, onError, onSuccess]);
+        onSuccess('Path created successfully');
+      } catch (error) {
+        //consoleerror('Error saving path:', error);
+        onError('Failed to save path');
+      }
+    },
+    [
+      selectedRooms,
+      currentPath,
+      buildingId,
+      floorLabel,
+      locationId,
+      pathMarkers,
+      onError,
+      onSuccess,
+    ],
+  );
 
   const handleSelectPath = useCallback((pathId: string, webViewRef: any, colors: any) => {
     setSelectedPathId(pathId);

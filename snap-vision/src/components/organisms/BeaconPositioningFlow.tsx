@@ -46,7 +46,7 @@ export const BeaconPositioningFlow: React.FC<BeaconPositioningFlowProps> = ({
   const [locations, setLocations] = useState<LocationItem[]>([]);
   const [buildings, setBuildings] = useState<BuildingItem[]>([]);
   const [floorplans, setFloorplans] = useState<Floorplan[]>([]);
-  
+
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [selectedFloorplan, setSelectedFloorplan] = useState<Floorplan | null>(null);
@@ -62,8 +62,7 @@ export const BeaconPositioningFlow: React.FC<BeaconPositioningFlowProps> = ({
       id: doc.id,
       name: (doc.data() as any).name || doc.id,
     }));
-    const filtered =
-      role === 'editor' ? all.filter((loc) => adminLocations.includes(loc.id)) : all;
+    const filtered = role === 'editor' ? all.filter((loc) => adminLocations.includes(loc.id)) : all;
     setLocations(filtered);
   };
 
@@ -96,9 +95,7 @@ export const BeaconPositioningFlow: React.FC<BeaconPositioningFlowProps> = ({
 
     // Auto-select by prop if provided
     if (floorId) {
-      const match = list.find(
-        (fp) => fp.floorLabel === floorId || fp.id.endsWith(`_${floorId}`),
-      );
+      const match = list.find((fp) => fp.floorLabel === floorId || fp.id.endsWith(`_${floorId}`));
       if (match) {
         setSelectedFloorplan(match);
         onFloorplanSelect(match);

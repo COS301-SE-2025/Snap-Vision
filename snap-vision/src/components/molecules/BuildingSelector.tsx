@@ -96,7 +96,7 @@ const BuildingSelector: React.FC<BuildingSelectorProps> = ({
           fontFamily: 'System',
           fontSize: 16,
         }}
-        theme={isDark ? "DARK" : "LIGHT"}
+        theme={isDark ? 'DARK' : 'LIGHT'}
         closeIconContainerStyle={{
           backgroundColor: 'transparent',
         }}

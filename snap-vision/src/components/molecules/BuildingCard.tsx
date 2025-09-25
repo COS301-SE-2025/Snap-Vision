@@ -19,7 +19,7 @@ const BuildingCard: React.FC<BuildingCardProps> = ({ item, colors, onPress }) =>
     </View>
     <View style={styles.buildingContent}>
       <Text style={[styles.buildingName, { color: colors.text }]}>{item.name}</Text>
-      <Text style={[styles.buildingDetails, { color: colors.secondary }]}> 
+      <Text style={[styles.buildingDetails, { color: colors.secondary }]}>
         {item.floors} {item.floors === 1 ? 'floor' : 'floors'}
       </Text>
       {item.description && (

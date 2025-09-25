@@ -13,7 +13,13 @@ interface Props {
   containerStyle?: ViewStyle;
 }
 
-export default function RewardCard({ reward, backgroundColor, borderColor, onPress, containerStyle }: Props) {
+export default function RewardCard({
+  reward,
+  backgroundColor,
+  borderColor,
+  onPress,
+  containerStyle,
+}: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 

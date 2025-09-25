@@ -20,7 +20,7 @@ export default function ProgressSection({
   return (
     <View style={styles.section}>
       <SectionHeader title="Your Progress" subtitle="Keep track of your achievements" />
-      <View style={[styles.progressRow, {borderColor: colors.primary}]}>
+      <View style={[styles.progressRow, { borderColor: colors.primary }]}>
         <ProgressCard title="Points Earned" value={points} />
         <ProgressCard title="Badges Unlocked" value={badgeCount} />
         {/* <ProgressCard title="Check-ins" value={checkIns} /> */}

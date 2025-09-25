@@ -33,7 +33,7 @@ export default function LogoutButton({ onLogout, isLoading = false }: LogoutButt
       {isLoading ? (
         <ActivityIndicator color="#FFFFFF" size="small" />
       ) : (
-        <Text style={[styles.buttonText, {color: colors.primary}]}>Log Out</Text>
+        <Text style={[styles.buttonText, { color: colors.primary }]}>Log Out</Text>
       )}
     </TouchableOpacity>
   );

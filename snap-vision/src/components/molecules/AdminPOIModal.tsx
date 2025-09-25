@@ -61,7 +61,7 @@ export const AdminPOIModal: React.FC<AdminPOIModalProps> = ({
         }}
       >
         <View style={{ backgroundColor: colors.card, borderRadius: 10, padding: 20 }}>
-          <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 16, color:colors.text }}>
+          <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 16, color: colors.text }}>
             {mode === 'add' ? 'Add Building' : 'Edit Building'}
           </Text>
 
@@ -72,7 +72,7 @@ export const AdminPOIModal: React.FC<AdminPOIModalProps> = ({
                 <Picker
                   selectedValue={selectedLocation}
                   onValueChange={setSelectedLocation}
-                  style={{ height: 60 , color: colors.text}}
+                  style={{ height: 60, color: colors.text }}
                 >
                   <Picker.Item label="Select a location" value="" />
                   {availableLocations.map((loc) => (
@@ -86,7 +86,12 @@ export const AdminPOIModal: React.FC<AdminPOIModalProps> = ({
                 value={buildingName}
                 onChangeText={setBuildingName}
                 // placeholder="Building Name"
-                style={{ borderBottomWidth: 1, marginBottom: 10, paddingVertical: 8, color: colors.text }}
+                style={{
+                  borderBottomWidth: 1,
+                  marginBottom: 10,
+                  paddingVertical: 8,
+                  color: colors.text,
+                }}
               />
 
               <Text style={{ marginBottom: 5, color: colors.primary }}>Floors:</Text>
@@ -95,19 +100,29 @@ export const AdminPOIModal: React.FC<AdminPOIModalProps> = ({
                 onChangeText={setNumberOfFloors}
                 // placeholder="e.g. 3"
                 keyboardType="numeric"
-                style={{ borderBottomWidth: 1, marginBottom: 20, paddingVertical: 8, color: colors.text }}
+                style={{
+                  borderBottomWidth: 1,
+                  marginBottom: 20,
+                  paddingVertical: 8,
+                  color: colors.text,
+                }}
               />
             </>
           )}
 
           {mode === 'edit' && (
             <>
-              <Text style={{ marginBottom: 5 , color: colors.primary}}>Name:</Text>
+              <Text style={{ marginBottom: 5, color: colors.primary }}>Name:</Text>
               <TextInput
                 value={newName}
                 onChangeText={setNewName}
                 // placeholder="New Name"
-                style={{ borderBottomWidth: 1, marginBottom: 10, paddingVertical: 8, color: colors.text }}
+                style={{
+                  borderBottomWidth: 1,
+                  marginBottom: 10,
+                  paddingVertical: 8,
+                  color: colors.text,
+                }}
               />
 
               <Text style={{ marginBottom: 5, color: colors.primary }}>Floors:</Text>
@@ -116,7 +131,12 @@ export const AdminPOIModal: React.FC<AdminPOIModalProps> = ({
                 onChangeText={setNewFloors}
                 // placeholder="e.g. 4"
                 keyboardType="numeric"
-                style={{ borderBottomWidth: 1, marginBottom: 20, paddingVertical: 8, color: colors.text }}
+                style={{
+                  borderBottomWidth: 1,
+                  marginBottom: 20,
+                  paddingVertical: 8,
+                  color: colors.text,
+                }}
               />
             </>
           )}

@@ -17,7 +17,6 @@ import IndoorNavigationButton from '../atoms/IndoorNavigationButton';
 import ARNavigationOverlay from './ARNavigationOverlay';
 import { useNotificationInstruction } from '../../hooks/useNotificationInstruction';
 
-
 // Define the props interface for MapContent
 interface MapContentProps {
   // Theme and styling
@@ -493,7 +492,7 @@ const MapContent: React.FC<MapContentProps> = ({
       ) : null}
 
       {/* Custom Location Error Popup */}
-            <StandardPopup
+      <StandardPopup
         visible={showLocationRefreshPopup}
         title="Location Not Found"
         message="Unable to find your location. This can happen indoors or in areas with poor GPS signal."

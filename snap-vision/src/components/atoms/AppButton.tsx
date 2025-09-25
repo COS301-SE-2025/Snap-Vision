@@ -14,7 +14,10 @@ export default function AppButton({ title, testID, ...rest }: Props) {
 
   return (
     <TouchableOpacity
-      style={[styles.button, { backgroundColor: colors.primary, borderColor: colors.roleSecondary, borderWidth: 1 }]}
+      style={[
+        styles.button,
+        { backgroundColor: colors.primary, borderColor: colors.roleSecondary, borderWidth: 1 },
+      ]}
       testID={testID}
       {...rest}
     >

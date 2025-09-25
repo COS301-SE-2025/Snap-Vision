@@ -62,7 +62,7 @@ const moveDirectories = async (userInput) => {
         } else {
           await fs.promises.rm(oldDirPath, { recursive: true, force: true });
         }
-      } 
+      }
     }
 
     // Create new /app directory
@@ -75,7 +75,6 @@ const moveDirectories = async (userInput) => {
 
     // Create _layout.tsx
     const layoutPath = path.join(newAppDirPath, '_layout.tsx');
-
   } catch (error) {
     //consoleerror(`Error during script execution: ${error.message}`);
   }

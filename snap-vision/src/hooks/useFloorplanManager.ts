@@ -10,13 +10,17 @@ interface UseFloorplanManagerParams {
   selectedFloorId: string;
 }
 
-export function useFloorplanManager({ locationId, buildingId, selectedFloorId }: UseFloorplanManagerParams) {
+export function useFloorplanManager({
+  locationId,
+  buildingId,
+  selectedFloorId,
+}: UseFloorplanManagerParams) {
   const [floorplanUrl, setFloorplanUrl] = useState<string | null>(null);
   const [floorplanLoading, setFloorplanLoading] = useState<boolean>(false);
 
   useEffect(() => {
     let cancelled = false;
-    
+
     (async () => {
       if (!selectedFloorId) {
         setFloorplanUrl(null);
@@ -49,7 +53,7 @@ export function useFloorplanManager({ locationId, buildingId, selectedFloorId }:
             }
           }
         }
-        
+
         if (!url) {
           try {
             const baseRef = storage().ref(`floorplans/${locationId}/${buildingId}`);
@@ -63,7 +67,7 @@ export function useFloorplanManager({ locationId, buildingId, selectedFloorId }:
             console.warn(BT, 'Storage fallback failed', e);
           }
         }
-        
+
         if (!cancelled) setFloorplanUrl(url ?? null);
         console.log(BT, 'Floorplan URL for floor', selectedFloorId, '=>', url ? 'OK' : 'MISSING');
       } catch (e) {
@@ -73,7 +77,7 @@ export function useFloorplanManager({ locationId, buildingId, selectedFloorId }:
         if (!cancelled) setFloorplanLoading(false);
       }
     })();
-    
+
     return () => {
       cancelled = true;
     };

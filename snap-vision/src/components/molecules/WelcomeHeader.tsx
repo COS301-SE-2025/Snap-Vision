@@ -56,10 +56,12 @@ export default function WelcomeHeader(_props: Props) {
   }, []);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.primary }]}>      
+    <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.primary }]}>
       <View style={styles.textContainerLeft}>
         <Text style={[styles.welcomeText, { color: colors.primary }]}>Welcome, {name}!</Text>
-        <Text style={[styles.subText, { color: colors.text, opacity: 0.7 }]}>Explore and unlock achievements</Text>
+        <Text style={[styles.subText, { color: colors.text, opacity: 0.7 }]}>
+          Explore and unlock achievements
+        </Text>
       </View>
 
       <Image

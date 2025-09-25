@@ -25,7 +25,10 @@ const DestinationSearch = ({
 
   return (
     <View
-      style={[styles.container, { backgroundColor: colors.primary, borderBottomColor: colors.border }]}
+      style={[
+        styles.container,
+        { backgroundColor: colors.primary, borderBottomColor: colors.border },
+      ]}
     >
       <Text style={[styles.label, { color: colors.background }]}>Where to?</Text>
       <View

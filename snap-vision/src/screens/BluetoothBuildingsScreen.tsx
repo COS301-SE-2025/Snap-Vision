@@ -92,16 +92,14 @@ const BluetoothBuildingsScreen: React.FC = () => {
     });
   };
 
-
   // Render building item
   const renderBuildingItem = ({ item }: { item: Building }) => (
     <BuildingCard item={item} colors={colors} onPress={handleSelectBuilding} />
   );
 
-
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}> 
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <SettingsHeader title="Bluetooth Navigation" />
         <LoadingState colors={colors} />
       </SafeAreaView>
@@ -110,9 +108,13 @@ const BluetoothBuildingsScreen: React.FC = () => {
 
   if (error) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}> 
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <SettingsHeader title="Bluetooth Navigation" />
-        <ErrorState colors={colors} error={error} onRetry={() => navigation.replace('BluetoothBuildings')} />
+        <ErrorState
+          colors={colors}
+          error={error}
+          onRetry={() => navigation.replace('BluetoothBuildings')}
+        />
       </SafeAreaView>
     );
   }

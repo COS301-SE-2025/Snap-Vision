@@ -99,10 +99,10 @@ export const useMapIndoor = (): UseMapIndoorReturn => {
       webViewRef.current?.injectJavaScript(
         'try{map && map.closePopup && map.closePopup();}catch(e){}',
       );
-      
+
       // Check if floorplans exist for this building
       const hasFloorplans = await checkFloorplansExist(locationId, buildingId);
-      
+
       if (!hasFloorplans) {
         // Navigate to unavailable screen if no floorplans
         navigation.navigate('IndoorNavigationUnavailable', {
@@ -205,31 +205,34 @@ export const useMapIndoor = (): UseMapIndoorReturn => {
   );
 
   // Check if floorplans exist for a building
-  const checkFloorplansExist = useCallback(async (locationId: string, buildingId: string): Promise<boolean> => {
-    if (!locationId || !buildingId) {
-      console.error('Invalid parameters for checkFloorplansExist', { locationId, buildingId });
-      return false;
-    }
-    
-    try {
-      console.log(`Checking floorplans for building ${buildingId} in location ${locationId}`);
-      const floorplansSnap = await firestore()
-        .collection('locations')
-        .doc(locationId)
-        .collection('buildingPOIs')
-        .doc(buildingId)
-        .collection('floorplans')
-        .limit(1)
-        .get();
-      
-      const hasFloorplans = !floorplansSnap.empty;
-      console.log(`Building ${buildingId} has floorplans: ${hasFloorplans}`);
-      return hasFloorplans;
-    } catch (error) {
-      console.error('Error checking floorplans:', error);
-      return false;
-    }
-  }, []);
+  const checkFloorplansExist = useCallback(
+    async (locationId: string, buildingId: string): Promise<boolean> => {
+      if (!locationId || !buildingId) {
+        console.error('Invalid parameters for checkFloorplansExist', { locationId, buildingId });
+        return false;
+      }
+
+      try {
+        console.log(`Checking floorplans for building ${buildingId} in location ${locationId}`);
+        const floorplansSnap = await firestore()
+          .collection('locations')
+          .doc(locationId)
+          .collection('buildingPOIs')
+          .doc(buildingId)
+          .collection('floorplans')
+          .limit(1)
+          .get();
+
+        const hasFloorplans = !floorplansSnap.empty;
+        console.log(`Building ${buildingId} has floorplans: ${hasFloorplans}`);
+        return hasFloorplans;
+      } catch (error) {
+        console.error('Error checking floorplans:', error);
+        return false;
+      }
+    },
+    [],
+  );
 
   // Open indoor navigation for a building
   const openIndoorNavigation = useCallback(
@@ -245,7 +248,7 @@ export const useMapIndoor = (): UseMapIndoorReturn => {
 
       // Check if floorplans exist for this building
       const hasFloorplans = await checkFloorplansExist(locationId, buildingId);
-      
+
       if (!hasFloorplans) {
         // Navigate to unavailable screen
         navigation.navigate('IndoorNavigationUnavailable', {
@@ -264,10 +267,10 @@ export const useMapIndoor = (): UseMapIndoorReturn => {
           .collection(`locations/${locationId}/roomPOIs`)
           .where('buildingId', '==', buildingId)
           .get();
-          
-        rooms = roomSnap.docs.map(d => ({ 
-          id: d.id, 
-          ...d.data() as any,
+
+        rooms = roomSnap.docs.map((d) => ({
+          id: d.id,
+          ...(d.data() as any),
         })) as Room[];
 
         if (!rooms.length) {

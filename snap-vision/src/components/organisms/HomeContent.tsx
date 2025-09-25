@@ -83,8 +83,6 @@ export default function HomeContent() {
         </View>
       </View>
 
-      
-
       {/* Second separator */}
       <View style={[styles.separator, { borderBottomColor: colors.primary }]} />
 

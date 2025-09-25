@@ -9,7 +9,9 @@ interface EmptyStateProps {
 const EmptyState: React.FC<EmptyStateProps> = ({ colors }) => (
   <View style={styles.emptyContainer}>
     <MaterialIcons name="bluetooth-disabled" size={48} color={colors.secondary} />
-    <Text style={[styles.emptyText, { color: colors.secondary }]}>No buildings with Bluetooth beacons found</Text>
+    <Text style={[styles.emptyText, { color: colors.secondary }]}>
+      No buildings with Bluetooth beacons found
+    </Text>
   </View>
 );
 

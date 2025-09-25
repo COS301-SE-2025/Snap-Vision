@@ -10,7 +10,7 @@ interface Props {
   currentLocation: boolean;
   onShare: () => void;
   onReport: () => void;
-  onAddPOI?: () => void; 
+  onAddPOI?: () => void;
   onOpenBluetoothNavigation: () => void;
   isAdmin?: boolean;
   shareTooltip: boolean;
@@ -45,19 +45,19 @@ const MapActionsPanel = ({
 
   const toggleDrawer = () => {
     const toValue = isDrawerOpen ? 0 : 1;
-    
+
     Animated.timing(drawerAnimation, {
       toValue,
       duration: 300,
       useNativeDriver: true,
     }).start();
-    
+
     setIsDrawerOpen(!isDrawerOpen);
   };
 
   const drawerTranslateX = drawerAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [80, 0], 
+    outputRange: [80, 0],
   });
 
   const arrowRotation = drawerAnimation.interpolate({

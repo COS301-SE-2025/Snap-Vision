@@ -105,11 +105,11 @@ export default function LoginForm() {
       >
         LOGIN
       </Text>
-      
+
       <View style={styles.mascotWrapper}>
-        <Image 
-          source={require('../../../assets/mascot_half_wave.png')} 
-          style={styles.mascotImage} 
+        <Image
+          source={require('../../../assets/mascot_half_wave.png')}
+          style={styles.mascotImage}
           resizeMode="contain"
         />
       </View>
@@ -157,7 +157,6 @@ export default function LoginForm() {
       >
         Don’t have an account? <Text style={styles.signUpBold}>SIGN UP</Text>
       </Text>
-
     </View>
   );
 }

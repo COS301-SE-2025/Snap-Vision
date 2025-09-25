@@ -52,7 +52,15 @@ export const AdminActionsModal: React.FC<AdminActionsModalProps> = ({
             minWidth: 250,
           }}
         >
-          <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 16, color: colors.text, borderColor: colors.primary }}>
+          <Text
+            style={{
+              fontWeight: 'bold',
+              fontSize: 18,
+              marginBottom: 16,
+              color: colors.text,
+              borderColor: colors.primary,
+            }}
+          >
             Building: {adminActionPOI.name}
           </Text>
 

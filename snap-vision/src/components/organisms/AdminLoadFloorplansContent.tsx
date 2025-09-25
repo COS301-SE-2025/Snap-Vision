@@ -29,9 +29,9 @@ export default function AdminLoadFloorplansContent() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const navigation = useNavigation<AdminLoadFloorplansNavigationProp>();
-  
+
   const { role, adminLocations, isLoading: isLoadingUser } = useUserRole();
-  
+
   const {
     isLoading: isUploading,
     error,
@@ -51,9 +51,9 @@ export default function AdminLoadFloorplansContent() {
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [selectedBuildingName, setSelectedBuildingName] = useState<string | null>(null);
-  
+
   const isLoading = isLoadingUser || isUploading;
-  
+
   // Handle upload
   const onUpload = async () => {
     try {
@@ -62,7 +62,7 @@ export default function AdminLoadFloorplansContent() {
         setShowErrorPopup(true);
         return;
       }
-      
+
       const result = await handleUpload(
         {
           id: selectedBuildingId,
@@ -73,7 +73,7 @@ export default function AdminLoadFloorplansContent() {
         role || undefined,
         adminLocations || [],
       );
-      
+
       if (result.success) {
         setShowSuccessPopup(true);
       } else {
@@ -128,14 +128,14 @@ export default function AdminLoadFloorplansContent() {
           setFloorLabel(data.floorNumber);
         }}
       />
-      
+
       {selectedBuildingId && selectedBuildingName && floorLabel && (
         <View style={styles.uploadSection}>
           <View style={styles.sectionContainer}>
             <Text style={[styles.sectionTitle, { color: colors.primary }]}>
               Upload Floorplan for {selectedBuildingName} - Floor {floorLabel}
             </Text>
-            
+
             <View style={styles.fileSection}>
               <AppSecondaryButton
                 title={fileUri ? 'Change Image' : 'Select Floorplan Image'}
@@ -219,10 +219,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.03)',
     borderRadius: 8,
   },
-  sectionTitle: { 
-    fontSize: 18, 
-    fontWeight: 'bold', 
-    marginBottom: 16 
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
   },
   fileSection: {
     marginBottom: 24,
@@ -234,8 +234,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 12,
   },
-  fileName: { 
-    marginLeft: 8, 
-    flex: 1 
+  fileName: {
+    marginLeft: 8,
+    flex: 1,
   },
 });

@@ -20,8 +20,8 @@ interface Props {
   confirmText?: string;
   cancelText?: string;
   showCancel?: boolean;
-  verticalButtons?: boolean; 
-  onClose?: () => void; 
+  verticalButtons?: boolean;
+  onClose?: () => void;
 }
 
 export default function StandardPopup({
@@ -34,7 +34,7 @@ export default function StandardPopup({
   cancelText = 'Cancel',
   showCancel = false,
   verticalButtons = false,
-  onClose, 
+  onClose,
 }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
@@ -83,7 +83,9 @@ export default function StandardPopup({
                 }
               }}
             >
-              <Text style={[styles.buttonTextFilled, { color: colors.background }]}>{confirmText}</Text>
+              <Text style={[styles.buttonTextFilled, { color: colors.background }]}>
+                {confirmText}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -95,7 +97,7 @@ export default function StandardPopup({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: '#00000099', 
+    backgroundColor: '#00000099',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
@@ -129,7 +131,7 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 16, 
+    gap: 16,
   },
   buttonColumn: {
     flexDirection: 'column',
@@ -152,7 +154,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     justifyContent: 'center',
     alignItems: 'center',
-    width: '100%', 
+    width: '100%',
   },
   buttonFilled: {
     paddingVertical: 12,
@@ -173,7 +175,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    width: '100%', 
+    width: '100%',
     shadowColor: '#000',
     shadowOpacity: 0.25,
     shadowRadius: 4,

@@ -76,56 +76,58 @@ function getDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 // GPS smoothing function to reduce location jumping
 function smoothGPSLocation(
-  newLocation: {latitude: number, longitude: number}, 
-  history: Array<{lat: number, lon: number, timestamp: number}>,
-  lastSmoothed: {latitude: number, longitude: number} | null
-): {latitude: number, longitude: number} {
+  newLocation: { latitude: number; longitude: number },
+  history: Array<{ lat: number; lon: number; timestamp: number }>,
+  lastSmoothed: { latitude: number; longitude: number } | null,
+): { latitude: number; longitude: number } {
   const now = Date.now();
-  
+
   // Add to history
-  history.push({lat: newLocation.latitude, lon: newLocation.longitude, timestamp: now});
-  
+  history.push({ lat: newLocation.latitude, lon: newLocation.longitude, timestamp: now });
+
   // Keep only last 10 seconds of data
   const cutoff = now - 10000;
   while (history.length > 0 && history[0].timestamp < cutoff) {
     history.shift();
   }
-  
+
   // If we have previous smoothed location, check if new reading is reasonable
   if (lastSmoothed && history.length > 1) {
     const distanceFromPrevious = getDistanceMeters(
-      lastSmoothed.latitude, lastSmoothed.longitude,
-      newLocation.latitude, newLocation.longitude
+      lastSmoothed.latitude,
+      lastSmoothed.longitude,
+      newLocation.latitude,
+      newLocation.longitude,
     );
-    
+
     // If GPS jumped more than 50m, use weighted average with previous location
     if (distanceFromPrevious > 50) {
       return {
         latitude: lastSmoothed.latitude * 0.7 + newLocation.latitude * 0.3,
-        longitude: lastSmoothed.longitude * 0.7 + newLocation.longitude * 0.3
+        longitude: lastSmoothed.longitude * 0.7 + newLocation.longitude * 0.3,
       };
     }
   }
-  
+
   // Use weighted average of recent locations
   if (history.length >= 3) {
     let totalWeight = 0;
     let weightedLat = 0;
     let weightedLon = 0;
-    
+
     history.forEach((loc, index) => {
       const weight = index + 1; // More recent = higher weight
       weightedLat += loc.lat * weight;
       weightedLon += loc.lon * weight;
       totalWeight += weight;
     });
-    
+
     return {
       latitude: weightedLat / totalWeight,
-      longitude: weightedLon / totalWeight
+      longitude: weightedLon / totalWeight,
     };
   }
-  
+
   return newLocation;
 }
 
@@ -164,11 +166,11 @@ export const useMapNavigation = (
   const [isRouteLoading, setIsRouteLoading] = useState(false);
   const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
 
-  // Navigation route reference  
+  // Navigation route reference
   const lastRoute = useRef<any[]>([]);
   const navigationWatchId = useRef<number | null>(null);
-  const locationHistory = useRef<Array<{lat: number, lon: number, timestamp: number}>>([]);
-  const lastSmoothedLocation = useRef<{latitude: number, longitude: number} | null>(null);
+  const locationHistory = useRef<Array<{ lat: number; lon: number; timestamp: number }>>([]);
+  const lastSmoothedLocation = useRef<{ latitude: number; longitude: number } | null>(null);
 
   const fetchRoute = async (destCoords: [number, number]) => {
     if (!currentLocation) {
@@ -413,14 +415,14 @@ export const useMapNavigation = (
       }
 
       // Apply GPS smoothing
-      const rawLocation = {latitude, longitude};
+      const rawLocation = { latitude, longitude };
       const smoothedLocation = smoothGPSLocation(
-        rawLocation, 
-        locationHistory.current, 
-        lastSmoothedLocation.current
+        rawLocation,
+        locationHistory.current,
+        lastSmoothedLocation.current,
       );
       lastSmoothedLocation.current = smoothedLocation;
-      
+
       // Use smoothed coordinates for all calculations
       const smoothedLat = smoothedLocation.latitude;
       const smoothedLon = smoothedLocation.longitude;
@@ -443,7 +445,10 @@ export const useMapNavigation = (
       // Find closest point on the route with improved logic to prevent backtracking
       let minDist = Infinity;
       let closestPointIndex = 0;
-      let currentProgressIndex = Math.max(0, Math.floor((routeProgress / 100) * (lastRoute.current.length - 1)));
+      let currentProgressIndex = Math.max(
+        0,
+        Math.floor((routeProgress / 100) * (lastRoute.current.length - 1)),
+      );
 
       // Search in a range around current progress to prevent sudden jumps backward
       const searchStart = Math.max(0, currentProgressIndex - 5);
@@ -476,7 +481,8 @@ export const useMapNavigation = (
       }
 
       // Fallback: if no point found in range, search entire route
-      if (minDist > 50) { // If still too far, search entire route
+      if (minDist > 50) {
+        // If still too far, search entire route
         for (let i = 0; i < lastRoute.current.length; i++) {
           const routePoint = lastRoute.current[i];
           if (!Array.isArray(routePoint) || routePoint.length < 2) continue;

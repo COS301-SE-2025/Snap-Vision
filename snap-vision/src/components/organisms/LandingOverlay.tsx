@@ -141,7 +141,7 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
                 }}
               >
                 <LinearGradient
-                  colors={[colors.text,  colors.secondary]}
+                  colors={[colors.text, colors.secondary]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={{ flex: 1 }}
@@ -167,7 +167,9 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
         </ScrollView>
 
         <View style={styles.getStartedRow} pointerEvents="none">
-          <Text style={[styles.getStartedText, { color: colors.text }]}>Hi, I'm Snaps, tap to get started!</Text>
+          <Text style={[styles.getStartedText, { color: colors.text }]}>
+            Hi, I'm Snaps, tap to get started!
+          </Text>
           {/* <Text style={[styles.getStartedText, { color: swappedAccentColor }]}>Tap to Get Started!</Text> */}
         </View>
       </View>
@@ -266,9 +268,9 @@ const styles = StyleSheet.create({
   footer: {
     fontSize: 12,
     marginTop: 0,
-    
+
     bottom: -120,
-    right: 80, 
+    right: 80,
     textAlign: 'right',
     position: 'relative',
   },

@@ -116,7 +116,7 @@ export default function RegisterForm() {
       setHasSeenLanding(false); // triggers Landing screen on registration
       unlock('first-login');
       setShowSuccessMessage(true);
-      setSuccessMessage('Account created!');      
+      setSuccessMessage('Account created!');
       // Navigate after success
       setTimeout(() => {
         if (coords && coords.lat && coords.lng) {
@@ -144,7 +144,6 @@ export default function RegisterForm() {
     }
   };
 
-
   return (
     <View>
       <Text
@@ -164,9 +163,9 @@ export default function RegisterForm() {
       </Text>
 
       <View style={styles.mascotWrapper}>
-        <Image 
-          source={require('../../../assets/mascot_half_wave.png')} 
-          style={styles.mascotImage} 
+        <Image
+          source={require('../../../assets/mascot_half_wave.png')}
+          style={styles.mascotImage}
           resizeMode="contain"
         />
       </View>
