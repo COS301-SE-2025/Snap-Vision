@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Dimensions, Text, TouchableOpacity } from 'react-native';
 import { Camera, useCameraDevices, useCameraPermission } from 'react-native-vision-camera';
+import { Canvas, Path, Paint, Skia } from '@shopify/react-native-skia';
+import { useTheme } from '@react-navigation/native';
+import { lightColors, darkColors } from '../../theme/colours';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -283,9 +286,6 @@ function MiniMapOverlay({
               )}
               m remaining
             </Text>
-            <Text style={styles.miniMapProgress}>
-              {currentRouteIndex + 1}/{routeCoordinates.length} waypoints
-            </Text>
           </View>
         </>
       )}
@@ -348,24 +348,10 @@ function SimpleARGuidance({
             }
             
             nextPoint = routeCoordinates[targetIndex];
-    
-            console.log(`🎯 AR Target: index ${targetIndex}/${routeCoordinates.length}, distance: ${bestDistance.toFixed(1)}m`);
-            
+               
           } else {
             nextPoint = [destinationCoords.x, destinationCoords.y];
           }
-
-          // debug for turn around
-          console.log('🔍 Coordinate Debug:', {
-            currentLocation: currentLocation,
-            routeCoordinates: routeCoordinates.slice(0, 3), // First 3 points
-            currentRouteIndex,
-            nextPoint: nextPoint,
-            calculatedBearing: calculateBearing(
-              currentLocation.y, currentLocation.x,
-              nextPoint[1], nextPoint[0]
-            )
-          });
   
           return calculateBearing(
             currentLocation.y,
@@ -447,24 +433,13 @@ function SimpleARGuidance({
     <>
       {/* AR Navigation with Arrow and Direction */}
       <View style={styles.mainGuidanceContainer}>
-        {/* Direction Circle with Arrow */}
-        <View
-          style={[
-            styles.directionCircle,
-            {
-              backgroundColor:
-                Math.abs(relativeBearing) < 45
-                  ? 'rgba(76, 175, 80, 0.8)'
-                  : 'rgba(244, 67, 54, 0.8)',
-            },
-          ]}
-        >
-          <CustomDirectionArrow direction={getDirectionType()} size={60} />
+        {/* Simple Arrow without Circle */}
+        <View style={styles.arrowContainer}>
+          <CustomDirectionArrow direction={getDirectionType()} size={160} />
         </View>
 
         {/* Direction Text */}
         <Text style={styles.directionText}>{getDirectionInstruction()}</Text>
-        
       </View>
     </>
   );
@@ -549,70 +524,185 @@ function calculateBearing(lat1: number, lon1: number, lat2: number, lon2: number
   return bearing;
 }
 
-// Custom Arrow Component for more impressive direction display
-function CustomDirectionArrow({ direction, size = 50 }: { direction: string; size?: number }) {
-  const getArrowStyle = () => {
-    const baseStyle = {
-      width: size,
-      height: size,
-      justifyContent: 'center' as const,
-      alignItems: 'center' as const,
-    };
-
-    switch (direction) {
-      case 'up':
-        return { ...baseStyle, transform: [{ rotate: '0deg' }] };
-      case 'up-right':
-        return { ...baseStyle, transform: [{ rotate: '45deg' }] };
-      case 'right':
-        return { ...baseStyle, transform: [{ rotate: '90deg' }] };
-      case 'down-right':
-        return { ...baseStyle, transform: [{ rotate: '135deg' }] };
-      case 'down':
-        return { ...baseStyle, transform: [{ rotate: '180deg' }] };
-      case 'down-left':
-        return { ...baseStyle, transform: [{ rotate: '225deg' }] };
-      case 'left':
-        return { ...baseStyle, transform: [{ rotate: '270deg' }] };
-      case 'up-left':
-        return { ...baseStyle, transform: [{ rotate: '315deg' }] };
-      case 'turn-around':
-        return { ...baseStyle, transform: [{ rotate: '0deg' }] };
-      default:
-        return { ...baseStyle, transform: [{ rotate: '0deg' }] };
-    }
-  };
-
-  if (direction === 'turn-around') {
-    return (
-      <View style={getArrowStyle()}>
-        <View style={styles.turnAroundContainer}>
-          <View style={styles.turnAroundCircle}>
-            <Text style={styles.turnAroundText}>↻</Text>
-          </View>
-        </View>
-      </View>
-    );
-  }
-
-  return (
-    <View style={getArrowStyle()}>
-      <View style={styles.customArrowContainer}>
-        {/* Arrow Head */}
-        <View style={styles.arrowHead} />
-        {/* Arrow Body */}
-        <View style={styles.arrowBody} />
-        {/* Arrow Glow Effect */}
-        <View style={styles.arrowGlow} />
-      </View>
-    </View>
-  );
-}
-
 function normalizeAngle(angle: number): number {
   while (angle > 180) angle -= 360;
   while (angle < -180) angle += 360;
   return angle;
+}
+
+
+// Simplified Skia-based Arrow Component
+function CustomDirectionArrow({ direction, size = 160 }: { direction: string; size?: number }) {
+  const theme = useTheme();
+  const colors = theme.dark ? darkColors : lightColors;
+  
+  // Arrow colors based on theme
+  const primaryArrowColor = colors.text; // Blue: #2f6e83 (light) / #69c6d0 (dark)
+  const secondaryArrowColor = colors.secondary; // Blue-green: #3E5650 (light) / #90AFA8 (dark)
+  const strokeColor = theme.dark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)';
+
+  const getRotation = () => {
+    switch (direction) {
+      case 'up':
+        return 0;
+      case 'up-right':
+        return 45;
+      case 'right':
+        return 90;
+      case 'down-right':
+        return 135;
+      case 'down':
+        return 180;
+      case 'down-left':
+        return 225;
+      case 'left':
+        return 270;
+      case 'up-left':
+        return 315;
+      case 'turn-around':
+        return 0; // Will use different path
+      default:
+        return 0;
+    }
+  };
+
+  // Special case for turn around - circular arrow
+  if (direction === 'turn-around') {
+    return (
+      <View style={{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }}>
+        <Canvas style={{ width: size, height: size }}>
+          {/* Subtle outline for circular path (drawn first) */}
+          <Path
+            path={createTurnAroundPath(size)}
+            color={strokeColor}
+            style="stroke"
+            strokeWidth={size * 0.12}
+            strokeCap="round"
+            strokeJoin="round"
+          />
+          {/* Main circular path */}
+          <Path
+            path={createTurnAroundPath(size)}
+            color={primaryArrowColor}
+            style="stroke"
+            strokeWidth={size * 0.08}
+            strokeCap="round"
+            strokeJoin="round"
+          />
+          {/* Arrow head outline (drawn first) */}
+          <Path
+            path={createTurnAroundArrowHead(size)}
+            color={strokeColor}
+            style="stroke"
+            strokeWidth={3}
+          />
+          {/* Arrow head at end of circle */}
+          <Path
+            path={createTurnAroundArrowHead(size)}
+            color={primaryArrowColor}
+            style="fill"
+          />
+        </Canvas>
+      </View>
+    );
+  }
+
+  // Standard directional arrow
+  return (
+    <View 
+      style={{ 
+        width: size, 
+        height: size, 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        transform: [{ rotate: `${getRotation()}deg` }] 
+      }}
+    >
+      <Canvas style={{ width: size, height: size }}>
+        {/* Arrow shaft */}
+        <Path
+          path={createArrowShaft(size)}
+          color={primaryArrowColor}
+          style="fill"
+        />
+        
+        {/* Arrow head */}
+        <Path
+          path={createArrowHead(size)}
+          color={primaryArrowColor}
+          style="fill"
+        />
+        
+        {/* Subtle outline for visibility */}
+        <Path
+          path={createArrowShaft(size)}
+          color={strokeColor}
+          style="stroke"
+          strokeWidth={4}
+        />
+        
+        <Path
+          path={createArrowHead(size)}
+          color={strokeColor}
+          style="stroke"
+          strokeWidth={4}
+        />
+      </Canvas>
+    </View>
+  );
+}
+
+// Helper functions to create Skia paths
+function createArrowShaft(size: number): string {
+  const centerX = size / 2;
+  const shaftWidth = size * 0.15; // Made thicker for better visibility
+  const shaftHeight = size * 0.42; // Slightly longer
+  const startY = size * 0.43; // Adjusted start position
+  
+  return `M ${centerX - shaftWidth/2} ${startY} 
+          L ${centerX + shaftWidth/2} ${startY} 
+          L ${centerX + shaftWidth/2} ${startY + shaftHeight} 
+          L ${centerX - shaftWidth/2} ${startY + shaftHeight} 
+          Z`;
+}
+
+function createArrowHead(size: number): string {
+  const centerX = size / 2;
+  const headWidth = size * 0.35; // Made wider
+  const headHeight = size * 0.32; // Slightly taller
+  const tipY = size * 0.12; // Moved tip up slightly
+  
+  return `M ${centerX} ${tipY} 
+          L ${centerX - headWidth/2} ${tipY + headHeight} 
+          L ${centerX + headWidth/2} ${tipY + headHeight} 
+          Z`;
+}
+
+function createTurnAroundPath(size: number): string {
+  const centerX = size / 2;
+  const centerY = size / 2;
+  const radius = size * 0.3; // Increased radius for bigger circular arrow
+  
+  // Create a 3/4 circle path
+  return `M ${centerX + radius} ${centerY} 
+          A ${radius} ${radius} 0 1 1 ${centerX - radius * 0.7} ${centerY - radius * 0.7}`;
+}
+
+function createTurnAroundArrowHead(size: number): string {
+  const centerX = size / 2;
+  const centerY = size / 2;
+  const radius = size * 0.3; // Match the increased radius
+  
+  const arrowX = centerX - radius * 0.7 - size * 0.04; // Shifted left by 3.5% of size
+  const arrowY = centerY - radius * 0.7;
+  const headSize = size * 0.1; // Increased head size
+  
+  // Flipped arrow head to point at 270 degrees (to the left)
+  // Creating a triangular arrow head pointing left (270 degrees)
+  return `M ${arrowX - headSize} ${arrowY} 
+          L ${arrowX + headSize} ${arrowY - headSize} 
+          L ${arrowX + headSize} ${arrowY + headSize} 
+          Z`;
 }
 
 const styles = StyleSheet.create({
@@ -673,15 +763,23 @@ const styles = StyleSheet.create({
     fontSize: 50,
     color: 'white',
   },
+  // Updated arrow container without circle
+  arrowContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
   directionText: {
     fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
-    marginTop: 15,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     paddingHorizontal: 20,
     paddingVertical: 8,
     borderRadius: 20,
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   distanceText: {
     fontSize: 18,
@@ -940,64 +1038,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
   },
 
-  // Custom Arrow Styles
-  customArrowContainer: {
-    position: 'relative',
-    width: 50,
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  arrowHead: {
-    position: 'absolute',
-    width: 0,
-    height: 0,
-    borderLeftWidth: 12,
-    borderRightWidth: 12,
-    borderBottomWidth: 20,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: '#FFFFFF',
-    top: 5,
-  },
-  arrowBody: {
-    position: 'absolute',
-    width: 8,
-    height: 25,
-    backgroundColor: '#FFFFFF',
-    top: 22,
-    borderRadius: 2,
-  },
-  arrowGlow: {
-    position: 'absolute',
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    top: -2,
-    left: -2,
-    zIndex: -1,
-  },
-  turnAroundContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  turnAroundCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255, 193, 7, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-  },
-  turnAroundText: {
-    fontSize: 24,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-
   // Debug styles
   debugContainer: {
     marginTop: 10,
@@ -1006,10 +1046,5 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
-  // debugText: {
-  //   color: '#00ff00',
-  //   fontSize: 12,
-  //   fontFamily: 'monospace',
-  //   textAlign: 'center',
-  // },
+
 });
