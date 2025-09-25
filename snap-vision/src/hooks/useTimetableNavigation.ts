@@ -120,7 +120,7 @@ export const useTimetableNavigation = ({
     for (const entry of todayClasses) {
       const classStartTime = getTimeMinutes(entry.startTime);
       const timeDifference = classStartTime - currentTimeMinutes;
-      const triggerTime = 10; // Changed from 5 to 10 minutes to match background service
+      const triggerTime = 10; 
       
       if (timeDifference > 0 && timeDifference <= triggerTime) {
         const entryKey = `${entry.id}-${entry.startTime}-${currentDay}`;
