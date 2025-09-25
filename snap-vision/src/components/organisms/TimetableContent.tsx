@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ToastAndroid, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
@@ -10,6 +10,7 @@ import SettingsHeader from '../molecules/SettingsHeader';
 import StandardPopup from '../atoms/StandardPopup';
 import { TimetableEntry, DAYS_OF_WEEK } from '../../types/timetable.types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import TimetableBackgroundService from '../../services/TimetableBackgroundService';
 
 export default function TimetableContent() {
   const { isDark } = useTheme();
@@ -51,6 +52,21 @@ export default function TimetableContent() {
     try {
       setAutoNavigationEnabled(enabled);
       await AsyncStorage.setItem('autoNavigationEnabled', JSON.stringify(enabled));
+      
+      // Refresh notifications when auto-navigation setting changes
+      try {
+        await TimetableBackgroundService.getInstance().refreshNotifications();
+        console.log('[TimetableContent] Refreshed notifications after toggling auto-navigation');
+        
+        if (Platform.OS === 'android') {
+          ToastAndroid.show(
+            enabled ? 'Auto-navigation enabled' : 'Auto-navigation disabled', 
+            ToastAndroid.SHORT
+          );
+        }
+      } catch (refreshError) {
+        console.error('[TimetableContent] Failed to refresh notifications:', refreshError);
+      }
     } catch (error) {
       console.error('Error saving auto navigation preference:', error);
     }
@@ -85,6 +101,19 @@ export default function TimetableContent() {
     if (entryToDelete) {
       await deleteEntry(entryToDelete.id);
       setEntryToDelete(null);
+
+      // Refresh notifications after deleting an entry
+      try {
+        await TimetableBackgroundService.getInstance().refreshNotifications();
+        console.log('[TimetableContent] Refreshed notifications after entry deletion');
+        
+        // Show a toast notification
+        if (Platform.OS === 'android') {
+          ToastAndroid.show('Entry deleted and notifications refreshed', ToastAndroid.SHORT);
+        }
+      } catch (refreshError) {
+        console.error('[TimetableContent] Failed to refresh notifications:', refreshError);
+      }
     }
     setShowDeleteConfirm(false);
   };
@@ -96,6 +125,20 @@ export default function TimetableContent() {
       } else {
         await addEntry(entryData);
       }
+
+      // Refresh notifications after adding/editing an entry
+      try {
+        await TimetableBackgroundService.getInstance().refreshNotifications();
+        console.log('[TimetableContent] Refreshed notifications after timetable update');
+        
+        // Show a toast notification
+        if (Platform.OS === 'android') {
+          ToastAndroid.show('Timetable updated and notifications refreshed', ToastAndroid.SHORT);
+        }
+      } catch (refreshError) {
+        console.error('[TimetableContent] Failed to refresh notifications:', refreshError);
+      }
+      
       setShowForm(false);
       setEditingEntry(null);
     } catch (error) {
