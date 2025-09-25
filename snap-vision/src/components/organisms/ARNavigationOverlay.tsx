@@ -571,29 +571,36 @@ function CustomDirectionArrow({ direction, size = 160 }: { direction: string; si
     return (
       <View style={{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }}>
         <Canvas style={{ width: size, height: size }}>
-          {/* Circular path */}
+          {/* Subtle outline for circular path (drawn first) */}
           <Path
             path={createTurnAroundPath(size)}
-            color={colors.text}
+            color={strokeColor}
+            style="stroke"
+            strokeWidth={size * 0.12}
+            strokeCap="round"
+            strokeJoin="round"
+          />
+          {/* Main circular path */}
+          <Path
+            path={createTurnAroundPath(size)}
+            color={primaryArrowColor}
             style="stroke"
             strokeWidth={size * 0.08}
             strokeCap="round"
             strokeJoin="round"
           />
-          {/* Arrow head at end of circle */}
+          {/* Arrow head outline (drawn first) */}
           <Path
             path={createTurnAroundArrowHead(size)}
             color={strokeColor}
-            style="fill"
-          />
-          {/* Subtle outline for visibility */}
-          <Path
-            path={createTurnAroundPath(size)}
-            color={strokeColor}
             style="stroke"
-            strokeWidth={size * 0.1}
-            strokeCap="round"
-            strokeJoin="round"
+            strokeWidth={3}
+          />
+          {/* Arrow head at end of circle */}
+          <Path
+            path={createTurnAroundArrowHead(size)}
+            color={primaryArrowColor}
+            style="fill"
           />
         </Canvas>
       </View>
@@ -615,7 +622,7 @@ function CustomDirectionArrow({ direction, size = 160 }: { direction: string; si
         {/* Arrow shaft */}
         <Path
           path={createArrowShaft(size)}
-          color={secondaryArrowColor}
+          color={primaryArrowColor}
           style="fill"
         />
         
@@ -686,14 +693,15 @@ function createTurnAroundArrowHead(size: number): string {
   const centerY = size / 2;
   const radius = size * 0.3; // Match the increased radius
   
-  // Arrow head at the end of the circular path
-  const arrowX = centerX - radius * 0.7;
+  const arrowX = centerX - radius * 0.7 - size * 0.04; // Shifted left by 3.5% of size
   const arrowY = centerY - radius * 0.7;
-  const headSize = size * 0.08; // Increased head size
+  const headSize = size * 0.1; // Increased head size
   
-  return `M ${arrowX} ${arrowY} 
-          L ${arrowX - headSize} ${arrowY - headSize} 
+  // Flipped arrow head to point at 270 degrees (to the left)
+  // Creating a triangular arrow head pointing left (270 degrees)
+  return `M ${arrowX - headSize} ${arrowY} 
           L ${arrowX + headSize} ${arrowY - headSize} 
+          L ${arrowX + headSize} ${arrowY + headSize} 
           Z`;
 }
 
