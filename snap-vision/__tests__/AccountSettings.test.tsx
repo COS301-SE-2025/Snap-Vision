@@ -63,7 +63,7 @@ async function fetchUserData() {
     const currentUser = auth().currentUser;
 
     if (!currentUser) {
-      console.log('No user is currently logged in');
+      //consolelog('No user is currently logged in');
       return null;
     }
 
@@ -90,12 +90,12 @@ async function fetchUserData() {
         };
       }
     } catch (firestoreError) {
-      console.error('Error fetching from Firestore:', firestoreError);
+      //consoleerror('Error fetching from Firestore:', firestoreError);
     }
 
     return userInfo;
   } catch (error) {
-    console.error('Error fetching user data:', error);
+    //consoleerror('Error fetching user data:', error);
     return null;
   }
 }
@@ -210,7 +210,7 @@ describe('User Settings Functions', () => {
       const firestoreError = new Error('Firestore error');
       firestore().collection().where().get.mockRejectedValueOnce(firestoreError);
 
-      // Spy on console.error
+      // Spy on //consoleerror
       jest.spyOn(console, 'error').mockImplementation(() => {});
 
       const userData = await fetchUserData();
@@ -223,7 +223,7 @@ describe('User Settings Functions', () => {
       });
 
       // Verify error was logged
-      expect(console.error).toHaveBeenCalled();
+      expect(//consoleerror).toHaveBeenCalled();
     });
   });
 

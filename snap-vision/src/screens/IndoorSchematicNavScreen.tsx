@@ -1,21 +1,23 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity, Modal } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity, Modal, FlatList } from 'react-native';
+// import FloorSelector from '../components/molecules/FloorSelector';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
+import { useAccessibility } from '../context/AccessibilityContext';
 import SettingsHeader from '../components/molecules/SettingsHeader';
 import IndoorSchematicMap from '../components/organisms/IndoorSchematicMap';
 import StepsBottomSheet from '../components/molecules/StepsBottomSheet';
 import * as NavUtils from '../utils/navigationUtils';
-import { Picker } from '@react-native-picker/picker';
 import StandardPopup from '../components/atoms/StandardPopup';
 import DestinationReachedPopup from '../components/molecules/DestinationReachedPopup';
-import AppSecondaryButton from '../components/atoms/AppSecondaryButton';
 import QRScanner from '../components/molecules/QRScanner';
 import { getQRCodeMappingByValue } from '../services/qrService';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
+import TTS from 'react-native-tts';
+import { useBadges } from '../context/BadgeContext';
 
 type ParamList = {
   IndoorSchematicNav: {
@@ -57,7 +59,9 @@ export default function IndoorSchematicNavScreen() {
   const { buildingId, buildingName, locationId, floorId: initialFloorId, userPos } = route.params;
 
   const { isDark } = useTheme();
+  const { isAccessibilityModeEnabled } = useAccessibility();
   const colors = getThemeColors(isDark);
+  const { unlock } = useBadges();
 
   // Master data (ALL floors)
   const [allRooms, setAllRooms] = useState<RoomPOI[]>([]);
@@ -75,6 +79,41 @@ export default function IndoorSchematicNavScreen() {
   const [currentPos, setCurrentPos] = useState<{ x: number; y: number } | null>(userPos ?? null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  
+  // Check if floorplans exist immediately when screen loads
+  useEffect(() => {
+    const checkFloorplansExist = async () => {
+      try {
+        setLoading(true);
+        const floorplansSnap = await firestore()
+          .collection('locations')
+          .doc(locationId)
+          .collection('buildingPOIs')
+          .doc(buildingId)
+          .collection('floorplans')
+          .limit(1)
+          .get();
+        
+        if (floorplansSnap.empty) {
+          // No floorplans exist, navigate to unavailable screen
+          navigation.replace('IndoorNavigationUnavailable', {
+            buildingId,
+            buildingName,
+            locationId,
+          });
+        }
+      } catch (error) {
+        console.error('Error checking floorplans:', error);
+        navigation.replace('IndoorNavigationUnavailable', {
+          buildingId,
+          buildingName,
+          locationId,
+        });
+      }
+    };
+    
+    checkFloorplansExist();
+  }, [buildingId, buildingName, locationId, navigation]);
 
   // Popup state
   const [popupVisible, setPopupVisible] = useState(false);
@@ -89,19 +128,48 @@ export default function IndoorSchematicNavScreen() {
   // QR Scanner state
   const [qrScannerVisible, setQrScannerVisible] = useState(false);
 
+  // Custom Floor Dropdown state
+  const [floorDropdownVisible, setFloorDropdownVisible] = useState(false);
+
+  // TTS state
+  const [isTtsEnabled, setIsTtsEnabled] = useState(true);
+
   // Floorplan image state
   const [floorplanUrl, setFloorplanUrl] = useState<string | null>(null);
   const [floorplanLoading, setFloorplanLoading] = useState<boolean>(false);
+
+  // TTS: Setup and configuration
+  useEffect(() => {
+    // Set TTS defaults (only once)
+    TTS.setDefaultLanguage('en-US');
+    TTS.setDefaultRate(0.5);
+    TTS.setDefaultPitch(1.0);
+    
+    return () => {
+      // Just stop TTS on cleanup - avoid removeEventListener issues
+      TTS.stop();
+    };
+  }, []);
+
+  // TTS: Speak the current step's instruction when it changes
+  useEffect(() => {
+    if (isTtsEnabled && steps.length && steps[currentStep] && sheetOpen) {
+      TTS.stop();
+      setTimeout(() => {
+        TTS.speak(steps[currentStep].instruction);
+      }, 250);
+    }
+  }, [currentStep, steps, sheetOpen, isTtsEnabled]);
 
   // Helper function to find nearest room to a point
   const findNearestRoom = (rooms: RoomPOI[], pos: { x: number; y: number }, floorId: string) => {
     if (!pos || !rooms || !rooms.length) return null;
 
-    console.log(`Finding nearest room on floor ${floorId}. Total rooms: ${rooms.length}`);
+    //consolelog(`Finding nearest room on floor ${floorId}. Total rooms: ${rooms.length}`);
 
     // Filter rooms by floor
     const roomsOnFloor = rooms.filter((r) => r.floorId === floorId);
-    console.log(`Rooms on floor ${floorId}: ${roomsOnFloor.length}`);
+    //consolelog(`Rooms on floor ${floorId}: ${roomsOnFloor.length}`);
 
     if (!roomsOnFloor.length) return null;
 
@@ -125,7 +193,7 @@ export default function IndoorSchematicNavScreen() {
     (async () => {
       try {
         setLoading(true);
-        console.log('Loading rooms data with userPos:', userPos);
+        //consolelog('Loading rooms data with userPos:', userPos);
 
         const roomSnap = await firestore()
           .collection('locations')
@@ -158,14 +226,14 @@ export default function IndoorSchematicNavScreen() {
         // Set initial position and start room
         if (userPos) {
           // We have coordinates from QR code, set current position
-          console.log('Setting current position from QR scan:', userPos);
+          //consolelog('Setting current position from QR scan:', userPos);
           setCurrentPos(userPos);
 
           // Find the nearest room to use as starting point
           const nearestRoom = findNearestRoom(roomsData, userPos, selectedFloorId);
 
           if (nearestRoom) {
-            console.log('Setting start room from QR coordinates:', nearestRoom.name);
+            //consolelog('Setting start room from QR coordinates:', nearestRoom.name);
             setStartId(nearestRoom.id);
             // setStatusMessage(`Current position: ${nearestRoom.name}`);
 
@@ -187,7 +255,7 @@ export default function IndoorSchematicNavScreen() {
           }
         }
       } catch (e) {
-        console.error(e);
+        //consoleerror(e);
         setPopupTitle('Error');
         setPopupMessage('Failed to load indoor data.');
         setPopupConfirmText('OK');
@@ -230,7 +298,7 @@ export default function IndoorSchematicNavScreen() {
             try {
               url = await storage().ref(storagePath).getDownloadURL();
             } catch (e) {
-              console.warn('getDownloadURL failed for', storagePath, e);
+              //consolewarn('getDownloadURL failed for', storagePath, e);
             }
           }
         }
@@ -245,13 +313,13 @@ export default function IndoorSchematicNavScreen() {
               ) || list.items[0];
             if (match) url = await match.getDownloadURL();
           } catch (e) {
-            console.warn('Storage folder fallback failed', e);
+            //consolewarn('Storage folder fallback failed', e);
           }
         }
 
         if (!cancelled) setFloorplanUrl(url ?? null);
       } catch (e) {
-        console.warn('Floorplan fetch failed', e);
+        //consolewarn('Floorplan fetch failed', e);
         if (!cancelled) setFloorplanUrl(null);
       } finally {
         if (!cancelled) setFloorplanLoading(false);
@@ -286,7 +354,7 @@ export default function IndoorSchematicNavScreen() {
         return;
       }
 
-      console.log('Processing QR code value:', qrValue);
+      //consolelog('Processing QR code value:', qrValue);
 
       // Use the qrService to get mapping data - same as QrCard
       const qrMapping = await getQRCodeMappingByValue(qrValue);
@@ -298,7 +366,15 @@ export default function IndoorSchematicNavScreen() {
         return;
       }
 
-      console.log('QR mapping found:', JSON.stringify(qrMapping));
+      //consolelog('QR mapping found:', JSON.stringify(qrMapping));
+
+      // Unlock the QR scan badge for successful scan
+      try {
+        await unlock('qr-scan');
+      } catch (badgeError) {
+        // Don't fail the whole operation if badge unlock fails
+        console.warn('Failed to unlock qr-scan badge:', badgeError);
+      }
 
       // Use the mapping as saved by createQRCodeMapping
       const {
@@ -344,7 +420,7 @@ export default function IndoorSchematicNavScreen() {
       // We're in the same building, try to get room details
       try {
         // Switch to the floor from the QR code
-        console.log('Changing to floor:', qrFloorId, 'from floor:', selectedFloorId);
+        //consolelog('Changing to floor:', qrFloorId, 'from floor:', selectedFloorId);
         setSelectedFloorId(qrFloorId);
 
         // Reset navigation state when changing floors
@@ -357,7 +433,7 @@ export default function IndoorSchematicNavScreen() {
           .collection('roomPOIs')
           .doc(qrRoomId);
 
-        console.log('Fetching room data for:', qrRoomId, 'in location:', qrLocationId);
+        //consolelog('Fetching room data for:', qrRoomId, 'in location:', qrLocationId);
         const roomDoc = await roomRef.get();
 
         // In newer Firebase versions, exists is a property or function
@@ -367,7 +443,7 @@ export default function IndoorSchematicNavScreen() {
         } else {
           docExists = !!roomDoc.exists;
         }
-        console.log('Room exists:', docExists, 'Room ID:', roomDoc.id);
+        //consolelog('Room exists:', docExists, 'Room ID:', roomDoc.id);
 
         if (!docExists) {
           // Room not found, try to find by name in existing rooms
@@ -380,7 +456,7 @@ export default function IndoorSchematicNavScreen() {
 
           if (roomByName) {
             // Found room by name
-            console.log('Found room by name:', roomByName.name);
+            //consolelog('Found room by name:', roomByName.name);
             setCurrentPos(roomByName.coordinates);
             setStartId(roomByName.id);
 
@@ -391,7 +467,7 @@ export default function IndoorSchematicNavScreen() {
           }
 
           // Not found by id or name, use fallback
-          console.warn('Room document not found:', qrRoomId);
+          //consolewarn('Room document not found:', qrRoomId);
           setCurrentPos(fallbackCoordinates);
 
           // Try to find the nearest room to use as starting point
@@ -410,7 +486,7 @@ export default function IndoorSchematicNavScreen() {
 
         // Room document exists, try to get coordinates
         const roomData = roomDoc.data() as any;
-        console.log('Room data retrieved:', roomData ? JSON.stringify(roomData) : 'undefined');
+        //consolelog('Room data retrieved:', roomData ? JSON.stringify(roomData) : 'undefined');
 
         // Pre-define coordinates as fallback to guarantee we always have something
         let coordinates = fallbackCoordinates;
@@ -418,10 +494,10 @@ export default function IndoorSchematicNavScreen() {
         if (roomData) {
           if (roomData.coordinates) {
             coordinates = roomData.coordinates;
-            console.log('Room coordinates found:', coordinates);
+            //consolelog('Room coordinates found:', coordinates);
           } else if (roomData.position) {
             coordinates = roomData.position;
-            console.log('Room position found:', coordinates);
+            //consolelog('Room position found:', coordinates);
           }
         }
 
@@ -432,7 +508,7 @@ export default function IndoorSchematicNavScreen() {
         const nearestRoom = findNearestRoom(allRooms, coordinates, qrFloorId);
 
         if (nearestRoom) {
-          console.log('Setting start room from QR coordinates:', nearestRoom.name);
+          //consolelog('Setting start room from QR coordinates:', nearestRoom.name);
           setStartId(nearestRoom.id);
 
           // Show popup notification to user
@@ -446,7 +522,7 @@ export default function IndoorSchematicNavScreen() {
           setPopupVisible(true);
         }
       } catch (roomError) {
-        console.error('Error fetching room data:', roomError);
+        //consoleerror('Error fetching room data:', roomError);
         // Use fallback coordinates
         setCurrentPos(fallbackCoordinates);
 
@@ -460,7 +536,7 @@ export default function IndoorSchematicNavScreen() {
         }
       }
     } catch (error) {
-      console.error('Error processing QR code:', error);
+      //consoleerror('Error processing QR code:', error);
       setPopupTitle('Error');
       setPopupMessage('Failed to process QR code. Please try again.');
       setPopupVisible(true);
@@ -513,10 +589,18 @@ export default function IndoorSchematicNavScreen() {
           allRooms as any,
           allPaths as any,
           {
-            accessible: false,
+            accessible: isAccessibilityModeEnabled,
           },
         )
-      : NavUtils.calculateRoute(startId, endId, allRooms as any, allPaths as any);
+      : NavUtils.calculateRoute(
+          startId, 
+          endId, 
+          allRooms as any, 
+          allPaths as any,
+          { 
+            accessible: isAccessibilityModeEnabled 
+          }
+        );
 
     if (!routeSteps || !routeSteps.length) {
       setPopupTitle('No route');
@@ -535,10 +619,18 @@ export default function IndoorSchematicNavScreen() {
     setCurrentStep(0);
     setSheetOpen(true);
 
+    // TTS: Announce route found
+    if (isTtsEnabled && filtered.length > 0) {
+      TTS.stop();
+      setTimeout(() => {
+        TTS.speak(`Route found with ${filtered.length} steps. ${filtered[0].instruction}`);
+      }, 500);
+    }
+
     const firstStep = filtered[0];
     if (firstStep?.coordinates) setCurrentPos(firstStep.coordinates);
     if ((firstStep as any)?.floorId) setSelectedFloorId(String((firstStep as any).floorId));
-  }, [startId, endId, allRooms, allPaths]);
+  }, [startId, endId, allRooms, allPaths, isAccessibilityModeEnabled]);
 
   const handleAdvance = () => {
     if (!steps.length) return;
@@ -556,8 +648,18 @@ export default function IndoorSchematicNavScreen() {
     if (currentStep >= steps.length - 1) {
       // Use custom destination reached popup with confetti instead of standard popup
       const destinationRoom = allRooms.find((room) => room.id === endId);
-      setReachedDestination(destinationRoom?.name || 'Your Destination');
+      const destinationName = destinationRoom?.name || 'Your Destination';
+      setReachedDestination(destinationName);
       setShowDestinationReachedPopup(true);
+      
+      // TTS: Announce arrival
+      if (isTtsEnabled) {
+        TTS.stop();
+        setTimeout(() => {
+          TTS.speak(`You have arrived at ${destinationName}`);
+        }, 250);
+      }
+      
       resetRoute();
       return;
     }
@@ -599,7 +701,7 @@ export default function IndoorSchematicNavScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <SettingsHeader title={`Indoor Map — ${buildingName}`} />
-        <View style={styles.center}>
+        <View style={styles.loadingContainer}>
           <ActivityIndicator />
         </View>
       </View>
@@ -610,21 +712,59 @@ export default function IndoorSchematicNavScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title={`Indoor Map — ${buildingName}`} />
 
-      {/* Top bar: floor picker */}
+      {/* Top bar: custom floor picker */}
       <View style={styles.topBar}>
-        {/* <Text style={{ color: colors.text, fontWeight: '700' }}>Floor</Text> */}
-        <Picker
-          selectedValue={selectedFloorId}
-          onValueChange={(v) => setSelectedFloorId(String(v))}
-          style={{ width: 160, color: colors.text }}
-          dropdownIconColor={colors.text}
-          mode="dropdown"
+        <TouchableOpacity
+          style={[styles.floorDropdown, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => setFloorDropdownVisible(true)}
         >
-          {floors.map((f) => (
-            <Picker.Item key={f} label={`Floor ${f}`} value={f} color={colors.text} />
-          ))}
-        </Picker>
+          <Text style={[styles.floorDropdownText, { color: colors.text }]}>
+            Floor: {selectedFloorId}
+          </Text>
+          <Icon name="chevron-down" size={20} color={colors.text} />
+        </TouchableOpacity>
       </View>
+
+      {/* Custom Floor Dropdown Modal */}
+      <Modal
+        visible={floorDropdownVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setFloorDropdownVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setFloorDropdownVisible(false)}
+        >
+          <View style={[styles.dropdownContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.dropdownTitle, { color: colors.text }]}>Select Floor</Text>
+            <FlatList
+              data={floors}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.dropdownItem,
+                    selectedFloorId === item && { backgroundColor: colors.primary + '20' }
+                  ]}
+                  onPress={() => {
+                    setSelectedFloorId(item);
+                    setFloorDropdownVisible(false);
+                  }}
+                >
+                  <Text style={[styles.dropdownItemText, { color: colors.text }]}>
+                    {item}
+                  </Text>
+                  {selectedFloorId === item && (
+                    <Icon name="checkmark" size={20} color={colors.primary} />
+                  )}
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Prompt banner */}
       <View
@@ -700,7 +840,7 @@ export default function IndoorSchematicNavScreen() {
         </TouchableOpacity>
       )}
 
-      {/* Floating AR button Uncomment to see AR */}
+      {/* Floating AR button
       {steps.length > 0 && startId && endId && (
         <TouchableOpacity
           onPress={() =>
@@ -717,6 +857,40 @@ export default function IndoorSchematicNavScreen() {
           style={[styles.fabAR, { backgroundColor: colors.card, borderColor: colors.border }]}
         >
           <Text style={{ color: colors.text, fontWeight: '700' }}>AR</Text>
+        </TouchableOpacity>
+      )} */}
+
+      {/* Floating TTS toggle button */}
+      {steps.length > 0 && (
+        <TouchableOpacity
+          onPress={() => {
+            setIsTtsEnabled(!isTtsEnabled);
+            if (!isTtsEnabled) {
+              // If enabling TTS and there's a current step, speak it
+              if (steps[currentStep]) {
+                TTS.stop();
+                setTimeout(() => {
+                  TTS.speak(steps[currentStep].instruction);
+                }, 250);
+              }
+            } else {
+              // If disabling TTS, stop any current speech
+              TTS.stop();
+            }
+          }}
+          style={[
+            styles.fabTTS, 
+            { 
+              backgroundColor: isTtsEnabled ? colors.primary : colors.card, 
+              borderColor: colors.border 
+            }
+          ]}
+        >
+          <Icon 
+            name={isTtsEnabled ? "volume-high" : "volume-mute"} 
+            size={20} 
+            color={isTtsEnabled ? "#FFFFFF" : colors.text} 
+          />
         </TouchableOpacity>
       )}
 
@@ -755,9 +929,9 @@ export default function IndoorSchematicNavScreen() {
         onClose={() => setShowDestinationReachedPopup(false)}
         themeColors={{
           primary: colors.primary,
-          background: colors.backgroundLighter || colors.background,
+          background: colors.background,
           text: colors.text,
-          success: colors.success || '#4CAF50',
+          success: '#4CAF50',
         }}
       />
     </View>
@@ -862,6 +1036,19 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
 
+  fabTTS: {
+    position: 'absolute',
+    right: 16,
+    top: 194,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    elevation: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
   fabTest: {
     position: 'absolute',
     right: 16,
@@ -888,5 +1075,63 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 8,
     marginTop: -2,
+  },
+
+  // Custom Floor Dropdown Styles
+  floorDropdown: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+
+  floorDropdownText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  dropdownContainer: {
+    width: '80%',
+    maxHeight: '50%',
+    borderRadius: 12,
+    borderWidth: 1,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+
+  dropdownTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+  },
+
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+
+  dropdownItemText: {
+    fontSize: 16,
+    fontWeight: '500',
   },
 });

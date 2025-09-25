@@ -16,10 +16,11 @@
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "firebase": "^11.9.1",
     "firebase-admin": "^13.4.0"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.0",
+    "firebase": "^12.3.0",
     "jest": "^30.0.4",
     "supertest": "^7.1.3"
   },

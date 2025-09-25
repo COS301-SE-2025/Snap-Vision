@@ -11,7 +11,7 @@ interface LocationSelectorProps {
 }
 
 export const LocationSelector: React.FC<LocationSelectorProps> = ({
-  locations,
+  locations = [],
   selectedLocation,
   onLocationSelect,
 }) => {
@@ -20,13 +20,13 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
   return (
     <View style={styles.inputSection}>
-      <Text style={[styles.inputTitle, { color: colors.primary }]}>Select a Location</Text>
+      <Text style={[styles.inputTitle, { color: colors.primary }]}>Step 1: Select Location</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.buildingList}
       >
-        {locations.map((loc) => (
+        {locations?.map((loc) => (
           <TouchableOpacity
             key={loc.id}
             style={[
@@ -53,9 +53,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   inputTitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 8,
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    marginTop: 8,
   },
   buildingList: {
     paddingVertical: 8,

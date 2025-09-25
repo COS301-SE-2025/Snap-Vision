@@ -6,9 +6,9 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import { getRecentlyVPOIs } from '../src/services/firebase/recentlyVService';
 
-const originalError = console.error;
+const originalError = //consoleerror;
 beforeAll(() => {
-  console.error = (...args) => {
+  //consoleerror = (...args) => {
     if (
       typeof args[0] === 'string' &&
       (args[0].includes('was not wrapped in act') ||
@@ -21,7 +21,7 @@ beforeAll(() => {
 });
 
 afterAll(() => {
-  console.error = originalError;
+  //consoleerror = originalError;
 });
 
 const mockNavigate = jest.fn();

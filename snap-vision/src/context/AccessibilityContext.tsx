@@ -3,32 +3,36 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface AccessibilitySettings {
   isHapticFeedbackEnabled: boolean;
+  isAccessibilityModeEnabled: boolean;
 }
 
 interface AccessibilityContextType extends AccessibilitySettings {
   setHapticFeedbackEnabled: (enabled: boolean) => Promise<void>;
+  setAccessibilityModeEnabled: (enabled: boolean) => Promise<void>;
   loading: boolean;
 }
 
 const defaultSettings: AccessibilitySettings = {
   isHapticFeedbackEnabled: true,
+  isAccessibilityModeEnabled: false,
 };
 
 const AccessibilityContext = createContext<AccessibilityContextType>({
   ...defaultSettings,
   setHapticFeedbackEnabled: async () => {},
+  setAccessibilityModeEnabled: async () => {},
   loading: true,
 });
 
 const STORAGE_KEYS = {
   HAPTIC_FEEDBACK: '@accessibility/hapticFeedback',
+  ACCESSIBILITY_MODE: '@accessibility/accessibilityMode',
 };
 
 export const AccessibilityProvider = ({ children }: { children: React.ReactNode }) => {
   const [settings, setSettings] = useState<AccessibilitySettings>(defaultSettings);
   const [loading, setLoading] = useState(true);
 
-  // Load settings from AsyncStorage on app start
   useEffect(() => {
     loadSettings();
   }, []);
@@ -36,12 +40,14 @@ export const AccessibilityProvider = ({ children }: { children: React.ReactNode 
   const loadSettings = async () => {
     try {
       const hapticEnabled = await AsyncStorage.getItem(STORAGE_KEYS.HAPTIC_FEEDBACK);
+      const accessibilityMode = await AsyncStorage.getItem(STORAGE_KEYS.ACCESSIBILITY_MODE);
 
       setSettings({
         isHapticFeedbackEnabled: hapticEnabled !== null ? JSON.parse(hapticEnabled) : true,
+        isAccessibilityModeEnabled:
+          accessibilityMode !== null ? JSON.parse(accessibilityMode) : false,
       });
     } catch (error) {
-      console.error('Failed to load accessibility settings:', error);
       // Use defaults if loading fails
       setSettings(defaultSettings);
     } finally {
@@ -54,7 +60,16 @@ export const AccessibilityProvider = ({ children }: { children: React.ReactNode 
       await AsyncStorage.setItem(STORAGE_KEYS.HAPTIC_FEEDBACK, JSON.stringify(enabled));
       setSettings((prev) => ({ ...prev, isHapticFeedbackEnabled: enabled }));
     } catch (error) {
-      console.error('Failed to save haptic feedback setting:', error);
+      //consoleerror('Failed to save haptic feedback setting:', error);
+      throw error;
+    }
+  };
+
+  const setAccessibilityModeEnabled = async (enabled: boolean) => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.ACCESSIBILITY_MODE, JSON.stringify(enabled));
+      setSettings((prev) => ({ ...prev, isAccessibilityModeEnabled: enabled }));
+    } catch (error) {
       throw error;
     }
   };
@@ -62,6 +77,7 @@ export const AccessibilityProvider = ({ children }: { children: React.ReactNode 
   const value: AccessibilityContextType = {
     ...settings,
     setHapticFeedbackEnabled,
+    setAccessibilityModeEnabled,
     loading,
   };
 

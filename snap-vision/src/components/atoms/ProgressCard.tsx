@@ -14,8 +14,8 @@ interface Props {
 export default function ProgressCard({ title, value, backgroundColor, borderColor }: Props) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  const bgColor = backgroundColor ?? colors.card;
-  const bColor = borderColor ?? colors.border;
+  const bgColor = colors.card;
+  const bColor = colors.primary;
   return (
     <View style={[styles.container, { backgroundColor: bgColor, borderColor: bColor }]}>
       <Text style={[styles.title, { color: colors.primary }]}>{title}</Text>

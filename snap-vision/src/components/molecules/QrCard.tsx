@@ -7,6 +7,9 @@ import { getQRCodeMappingByValue } from '../../services/qrService';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import firestore from '@react-native-firebase/firestore';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
+import { useBadges } from '../../context/BadgeContext';
 
 interface Props {
   backgroundColor: string;
@@ -38,10 +41,13 @@ interface RoomPOI {
 }
 
 export default function QrCard({ backgroundColor, titleColor, subtitleColor }: Props) {
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
   const [scannerVisible, setScannerVisible] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const { unlock } = useBadges();
 
   // Popup states
   const [showErrorPopup, setShowErrorPopup] = useState(false);
@@ -60,7 +66,7 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
         return;
       }
 
-      console.log('Processing QR code value:', qrValue);
+      //consolelog('Processing QR code value:', qrValue);
 
       const qrMapping = await getQRCodeMappingByValue(qrValue);
 
@@ -71,7 +77,15 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
         return;
       }
 
-      console.log('QR mapping found:', JSON.stringify(qrMapping));
+      //consolelog('QR mapping found:', JSON.stringify(qrMapping));
+
+      // Unlock the QR scan badge for successful scan
+      try {
+        await unlock('qr-scan');
+      } catch (badgeError) {
+        // Don't fail the whole operation if badge unlock fails
+        console.warn('Failed to unlock qr-scan badge:', badgeError);
+      }
 
       // Use the mapping as saved by createQRCodeMapping
       const { locationId, buildingId, buildingName, roomId, floorId } = qrMapping;
@@ -86,7 +100,7 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
 
       // Navigate without trying to get room details if something is missing
       if (!locationId || !buildingId || !roomId) {
-        console.warn('Missing required data for room lookup', { locationId, buildingId, roomId });
+        //consolewarn('Missing required data for room lookup', { locationId, buildingId, roomId });
         navigation.navigate('IndoorSchematicNav', {
           locationId,
           buildingId,
@@ -101,10 +115,10 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
       try {
         // Log the exact path we're accessing to debug
         const dbPath = `locations/${locationId}/roomPOIs/${roomId}`;
-        console.log('Accessing Firestore path:', dbPath);
+        //consolelog('Accessing Firestore path:', dbPath);
 
         // Try using collection group query which searches across all collections named 'roomPOIs'
-        console.log('Trying collection group query for roomId:', roomId);
+        //consolelog('Trying collection group query for roomId:', roomId);
 
         try {
           // Try querying by name from QR mapping
@@ -116,14 +130,14 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
 
           if (!groupQuery.empty) {
             const roomDoc = groupQuery.docs[0];
-            console.log('Found room via collection group query:', roomDoc.id);
+            //consolelog('Found room via collection group query:', roomDoc.id);
             const roomData = roomDoc.data();
-            console.log('Room data via collection group:', JSON.stringify(roomData));
+            //consolelog('Room data via collection group:', JSON.stringify(roomData));
 
             // If found via collection group, process this data and continue
             if (roomData && (roomData.coordinates || roomData.position)) {
               const coordinates = roomData.coordinates || roomData.position;
-              console.log('Room coordinates found via collection group:', coordinates);
+              //consolelog('Room coordinates found via collection group:', coordinates);
 
               // Navigate with all needed params including userPos
               navigation.navigate('IndoorSchematicNav', {
@@ -137,7 +151,7 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
             }
           }
         } catch (groupError) {
-          console.warn('Error in collection group query:', groupError);
+          //consolewarn('Error in collection group query:', groupError);
         }
 
         // Regular direct document access as fallback
@@ -147,21 +161,21 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
           .collection('roomPOIs')
           .doc(roomId);
 
-        console.log('Fetching room data for:', roomId, 'in location:', locationId);
+        //consolelog('Fetching room data for:', roomId, 'in location:', locationId);
         const roomDoc = await roomRef.get();
 
         // In newer Firebase versions, exists is a property or function
         let docExists = false;
         if (typeof roomDoc.exists === 'function') {
           docExists = roomDoc.exists();
-          console.log('Room exists (from function):', docExists, 'Room ID:', roomDoc.id);
+          //consolelog('Room exists (from function):', docExists, 'Room ID:', roomDoc.id);
         } else {
           docExists = !!roomDoc.exists;
-          console.log('Room exists (from property):', docExists, 'Room ID:', roomDoc.id);
+          //consolelog('Room exists (from property):', docExists, 'Room ID:', roomDoc.id);
         }
 
         if (!docExists) {
-          console.warn('Room document not found:', roomId);
+          //consolewarn('Room document not found:', roomId);
           // Navigate WITH fallback coordinates even when room not found
           navigation.navigate('IndoorSchematicNav', {
             locationId,
@@ -176,8 +190,8 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
         // Room document exists, try to get coordinates
         const roomData = roomDoc.data() as any;
         // Log the actual room data for debugging
-        console.log('Room data retrieved:', roomData ? JSON.stringify(roomData) : 'undefined');
-        console.log('Type of roomData:', roomData ? typeof roomData : 'undefined');
+        //consolelog('Room data retrieved:', roomData ? JSON.stringify(roomData) : 'undefined');
+        //consolelog('Type of roomData:', roomData ? typeof roomData : 'undefined');
 
         // Pre-define coordinates as fallback to guarantee we always have something
         let coordinates = fallbackCoordinates;
@@ -185,7 +199,7 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
         // Some room documents store position as 'position' instead of 'coordinates'
         // Check for both fields
         if (!roomData) {
-          console.warn('Room data is null or undefined for room:', roomId);
+          //consolewarn('Room data is null or undefined for room:', roomId);
           navigation.navigate('IndoorSchematicNav', {
             locationId,
             buildingId,
@@ -200,20 +214,20 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
         // let coordinates = null;
         if (roomData.coordinates) {
           coordinates = roomData.coordinates;
-          console.log('Room coordinates found:', coordinates);
+          //consolelog('Room coordinates found:', coordinates);
         } else if (roomData.position) {
           coordinates = roomData.position;
-          console.log('Room position found:', coordinates);
+          //consolelog('Room position found:', coordinates);
         } else {
-          console.warn('No coordinates or position found for room:', roomId);
+          //consolewarn('No coordinates or position found for room:', roomId);
 
           // FALLBACK: Always use hardcoded coordinates when room data is missing
           // This is a reliable workaround for demo/testing purposes
-          console.log('Using fallback coordinates for QR code room');
+          //consolelog('Using fallback coordinates for QR code room');
 
           // Always use simple coordinates for any building/floor
           coordinates = fallbackCoordinates; // Use the same fallback coordinates defined above
-          console.log('Using fallback coordinates:', coordinates);
+          //consolelog('Using fallback coordinates:', coordinates);
         }
 
         // Navigate with all needed params including userPos from room coordinates
@@ -225,7 +239,7 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
           userPos: coordinates, // Set starting position from room coordinates
         });
       } catch (roomError) {
-        console.error('Error fetching room data:', roomError);
+        //consoleerror('Error fetching room data:', roomError);
         // Continue navigation without coordinates
         navigation.navigate('IndoorSchematicNav', {
           locationId,
@@ -236,7 +250,7 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
         return;
       }
     } catch (err) {
-      console.error('Error processing QR code:', err);
+      //consoleerror('Error processing QR code:', err);
       setError('Error processing QR code. Please try again.');
       setErrorMessage('Something went wrong while processing the code.');
       setShowErrorPopup(true);
@@ -256,13 +270,16 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
       />
 
       <TouchableOpacity
-        style={[styles.qrContainer, { backgroundColor }]}
+        style={[
+          styles.qrContainer,
+          { backgroundColor: colors.background, borderColor: colors.secondary },
+        ]}
         onPress={() => setScannerVisible(true)}
         disabled={processing}
       >
-        <Icon name="camera-outline" size={20} color="#f7d85c" />
+        <Icon name="camera-outline" size={20} color={colors.secondary} />
         <View style={{ marginLeft: 6 }}>
-          <Text style={[styles.qrTitle, { color: titleColor }]}>
+          <Text style={[styles.qrTitle, { color: colors.secondary }]}>
             {processing ? 'Processing…' : 'Scan a nearby QR code'}
           </Text>
           {error && <Text style={styles.errorText}>{error}</Text>}

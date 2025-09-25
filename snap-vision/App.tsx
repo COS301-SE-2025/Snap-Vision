@@ -17,6 +17,7 @@ import { LandingProvider } from './src/context/LandingContext';
 import { UserProvider } from './src/context/UserContext';
 import { BadgeProvider } from './src/context/BadgeContext';
 import { AccessibilityProvider } from './src/context/AccessibilityContext';
+import { UserIconProvider } from './src/context/UserIconContext';
 import BadgeUnlockNotifier from './src/components/organisms/BadgeUnlockNotifier';
 import ShopScreen from './src/screens/ShopScreen';
 import { initializePreBundledFloorplans } from './src/utils/floorplanUtils';
@@ -29,13 +30,22 @@ import IndoorNavigationInstructionsScreen from './src/screens/IndoorNavigationIn
 import IndoorSchematicNavScreen from './src/screens/IndoorSchematicNavScreen';
 import ARIndoorNavScreen from './src/screens/ARIndoorNavScreen';
 import QRCodeAdminScreen from './src/screens/QRCodeAdminScreen';
+import messaging from '@react-native-firebase/messaging';
+import { createDefaultChannel } from './src/services/NotificationService';
+import { displayForegroundNotification } from './src/services/NotificationService';
+import { setupFCM } from './src/services/NotificationService';
+import BluetoothBuildingsScreen from './src/screens/BluetoothBuildingsScreen';
+import BluetoothIndoorNavigationScreen from './src/screens/BluetoothIndoorNavigationScreen';
+import IndoorNavigationUnavailableScreen from './src/screens/IndoorNavigationUnavailableScreen';
 
 import { navigationRef } from './src/navigation/RootNavigation';
 LogBox.ignoreLogs([
   'Text strings must be rendered within a <Text> component',
   'VirtualizedLists should never be nested inside plain ScrollViews with the same orientation',
 ]);
-
+if (__DEV__) {
+  require('./ReactotronConfig');
+}
 const Stack = createNativeStackNavigator();
 
 function AppInner() {
@@ -75,42 +85,75 @@ function AppInner() {
     initializePreBundledFloorplans();
   }, []);
 
+  //fcm token for notifications upon loading of app
+  useEffect(() => {
+    setupFCM();
+  }, []);
+
+  //notfication channel needed for notifee
+  useEffect(() => {
+    createDefaultChannel();
+  }, []);
+
+  //foreground notifications
+  useEffect(() => {
+    const unsubscribe = messaging().onMessage(async (remoteMessage) => {
+      await displayForegroundNotification(remoteMessage);
+    });
+    return unsubscribe;
+  }, []);
+
   return (
     <BadgeProvider>
-      <ThemeProvider>
-        <NavigationContainer ref={navigationRef}>
-          <BadgeUnlockNotifier />
-          <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="AuthResolver">
-            <Stack.Screen name="AuthResolver" component={AuthResolverScreen} />
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Register" component={RegistrationScreen} />
-            <Stack.Screen name="Tabs" component={BottomTabs} />
-            <Stack.Screen name="AdminLoadFloorplans" component={AdminLoadFloorplansScreen} />
-            <Stack.Screen name="AdminFloorplanEditor" component={AdminFloorplanEditorScreen} />
-            <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
-            <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
-            <Stack.Screen name="AdminQRCodes" component={QRCodeAdminScreen} />
-            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-            <Stack.Screen name="ShopScreen" component={ShopScreen} />
+        <ThemeProvider>
+          <NavigationContainer ref={navigationRef}>
+            <BadgeUnlockNotifier />
+            <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="AuthResolver">
+              <Stack.Screen name="AuthResolver" component={AuthResolverScreen} />
+              <Stack.Screen name="Login" component={LoginScreen} />
+              <Stack.Screen name="Register" component={RegistrationScreen} />
+              <Stack.Screen name="Tabs" component={BottomTabs} />
+              <Stack.Screen name="AdminLoadFloorplans" component={AdminLoadFloorplansScreen} />
+              <Stack.Screen name="AdminFloorplanEditor" component={AdminFloorplanEditorScreen} />
+              <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
+              <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
+              <Stack.Screen name="AdminQRCodes" component={QRCodeAdminScreen} />
+              <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+              <Stack.Screen name="ShopScreen" component={ShopScreen} />
+              <Stack.Screen
+                name="BuildingSelection"
+                component={BuildingSelectionScreen}
+                options={{ title: 'Indoor Navigation' }}
+              />
+              <Stack.Screen
+                name="IndoorNavigationInterface"
+                component={IndoorNavigationInterfaceScreen}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="IndoorNavigationInstructions"
+                component={IndoorNavigationInstructionsScreen}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen name="IndoorSchematicNav" component={IndoorSchematicNavScreen} />
+              <Stack.Screen
+                name="ARIndoorNav"
+                component={ARIndoorNavScreen}
+                options={{ headerShown: false }}
+              />
             <Stack.Screen
-              name="BuildingSelection"
-              component={BuildingSelectionScreen}
-              options={{ title: 'Indoor Navigation' }}
-            />
-            <Stack.Screen
-              name="IndoorNavigationInterface"
-              component={IndoorNavigationInterfaceScreen}
+              name="BluetoothBuildings"
+              component={BluetoothBuildingsScreen}
               options={{ headerShown: false }}
             />
             <Stack.Screen
-              name="IndoorNavigationInstructions"
-              component={IndoorNavigationInstructionsScreen}
+              name="BluetoothIndoorNavigation"
+              component={BluetoothIndoorNavigationScreen}
               options={{ headerShown: false }}
             />
-            <Stack.Screen name="IndoorSchematicNav" component={IndoorSchematicNavScreen} />
             <Stack.Screen
-              name="ARIndoorNav"
-              component={ARIndoorNavScreen}
+              name="IndoorNavigationUnavailable"
+              component={IndoorNavigationUnavailableScreen}
               options={{ headerShown: false }}
             />
           </Stack.Navigator>
@@ -123,6 +166,7 @@ function AppInner() {
 
 export default function App() {
   return (
+    <UserIconProvider>
     <DeepLinkProvider>
       <LandingProvider>
         <UserProvider>
@@ -132,5 +176,6 @@ export default function App() {
         </UserProvider>
       </LandingProvider>
     </DeepLinkProvider>
+    </UserIconProvider>
   );
 }

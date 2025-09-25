@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import TTS from 'react-native-tts';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../theme/ThemeContext';
@@ -36,6 +37,37 @@ export default function IndoorNavigationInstructionsContent({
 
   const [steps, setSteps] = useState<NavigationStep[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
+  // TTS: Setup and speak current step
+  useEffect(() => {
+    // Set TTS defaults and add listeners (only once)
+    TTS.setDefaultLanguage('en-US');
+    TTS.setDefaultRate(0.5);
+    TTS.setDefaultPitch(1.0);
+    const onTtsError = (e: any) => console.warn('TTS error', e);
+    const onTtsStart = () => {};
+    const onTtsFinish = () => {};
+    TTS.addEventListener('tts-start', onTtsStart);
+    TTS.addEventListener('tts-finish', onTtsFinish);
+    TTS.addEventListener('tts-cancel', onTtsFinish);
+    TTS.addEventListener('tts-error', onTtsError);
+    return () => {
+      TTS.stop();
+      TTS.removeEventListener('tts-start', onTtsStart);
+      TTS.removeEventListener('tts-finish', onTtsFinish);
+      TTS.removeEventListener('tts-cancel', onTtsFinish);
+      TTS.removeEventListener('tts-error', onTtsError);
+    };
+  }, []);
+
+  // Speak the current step's instruction when it changes
+  useEffect(() => {
+    if (steps.length && steps[currentStep]) {
+      TTS.stop();
+      setTimeout(() => {
+        TTS.speak(steps[currentStep].instruction);
+      }, 250);
+    }
+  }, [currentStep, steps]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [startRoomName, setStartRoomName] = useState('');
@@ -101,7 +133,7 @@ export default function IndoorNavigationInstructionsContent({
         const detailed = generateDetailedDirections(routeSteps);
         setSteps(detailed);
       } catch (e) {
-        console.error(e);
+        //consoleerror(e);
         setError('Failed to generate navigation route');
       } finally {
         setIsLoading(false);
@@ -120,6 +152,10 @@ export default function IndoorNavigationInstructionsContent({
         },
       });
       setShowPopup(true);
+      TTS.stop();
+      setTimeout(() => {
+        TTS.speak(`You have arrived at ${endRoomName}`);
+      }, 250);
     } else {
       setCurrentStep(i + 1);
     }
@@ -136,7 +172,7 @@ export default function IndoorNavigationInstructionsContent({
 
   const stepColor = (index: number) =>
     index < currentStep
-      ? colors.success || '#4CAF50'
+      ? colors.statusActive
       : index === currentStep
         ? colors.primary
         : colors.secondary;
@@ -229,7 +265,7 @@ export default function IndoorNavigationInstructionsContent({
                   styles.completeButton,
                   {
                     backgroundColor:
-                      index === steps.length - 1 ? colors.success || '#4CAF50' : colors.primary,
+                      index === steps.length - 1 ? colors.statusActive : colors.primary,
                   },
                 ]}
                 onPress={() => markStepCompleted(index)}

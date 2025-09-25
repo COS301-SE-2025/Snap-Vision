@@ -17,7 +17,7 @@ export async function collectWiFiFingerprint(fingerprint: FingerprintData): Prom
     // Scan Wi-Fi networks
     const results = await WifiManager.reScanAndLoadWifiList();
 
-    console.log('WiFi scan results:', results);
+    //consolelog('WiFi scan results:', results);
 
     // Structure data
     const wifiSignals = results.map((wifi) => ({
@@ -38,7 +38,7 @@ export async function collectWiFiFingerprint(fingerprint: FingerprintData): Prom
       .collection(`locations/${fingerprint.locationId}/wifiFingerprints`)
       .add(payload);
   } catch (error) {
-    console.error('Failed to collect WiFi fingerprint:', error);
+    //consoleerror('Failed to collect WiFi fingerprint:', error);
     throw new Error('Failed to save WiFi fingerprint to database');
   }
 }
@@ -75,7 +75,7 @@ export async function deleteWiFiFingerprint({
     docsToDelete.forEach((doc) => batch.delete(doc.ref));
     await batch.commit();
   } catch (error) {
-    console.error('Failed to delete WiFi fingerprint:', error);
+    //consoleerror('Failed to delete WiFi fingerprint:', error);
     throw new Error('Failed to delete WiFi fingerprint from database');
   }
 }

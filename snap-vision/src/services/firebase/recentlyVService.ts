@@ -39,7 +39,7 @@ export async function getRecentlyVPOIs(userId?: string): Promise<Visit[]> {
 
     return pois.slice(0, 10);
   } catch (error) {
-    console.error('Error fetching recently visited POIs:', error);
+    //consoleerror('Error fetching recently visited POIs:', error);
     return [];
   }
 }
@@ -64,7 +64,7 @@ export async function addRecentlyVisitedPOI(visit: Omit<Visit, 'timestamp'>): Pr
       // Prevent duplicate POIs
       const alreadyExists = pois.some((poi) => poi.poiId === poiId);
       if (alreadyExists) {
-        console.log(`POI ${poiId} already exists for user ${userId}`);
+        //consolelog(`POI ${poiId} already exists for user ${userId}`);
         return;
       }
 
@@ -77,7 +77,7 @@ export async function addRecentlyVisitedPOI(visit: Omit<Visit, 'timestamp'>): Pr
       });
     }
   } catch (error) {
-    console.error('Error adding recently visited POI:', error);
+    //consoleerror('Error adding recently visited POI:', error);
     throw error;
   }
 }

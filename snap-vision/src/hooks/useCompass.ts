@@ -16,7 +16,7 @@ export function useCompass() {
       if (isSubscribed) {
         // The callback receives an object with heading and accuracy
         const currentHeading = data.heading;
-        console.log('Compass heading:', currentHeading, 'accuracy:', data.accuracy);
+        //consolelog('Compass heading:', currentHeading, 'accuracy:', data.accuracy);
 
         // Simple moving average filter to reduce jitter
         setReadings((prev) => {

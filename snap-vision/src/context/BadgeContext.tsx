@@ -1,13 +1,12 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { BadgeId } from '../types/badges';
+import { BadgeId, Badge } from '../types/badges';
 import {
   unlockBadgeForUser,
   getUserBadgeData,
-  completeChallengeForUser,
   incrementRoutesCompletedForUser,
 } from '../services/badgeService';
+import { BADGES } from '../types/badges';
 import auth from '@react-native-firebase/auth';
-import { Challenge } from '../types/achievements';
 
 type BadgeState = {
   unlocked: Set<BadgeId>;
@@ -16,7 +15,7 @@ type BadgeState = {
   checkIns: number;
   routesCompleted: number;
   purchases: { itemId: string; [key: string]: any }[];
-  completedChallenges: Set<string>;
+  badges: Record<BadgeId, Badge>;
 };
 
 type Ctx = {
@@ -26,10 +25,8 @@ type Ctx = {
   incrementRoutes: () => Promise<void>;
   incrementCheckIns: () => Promise<void>;
   clearJustUnlocked: () => void;
-  getChallenges: () => Challenge[];
   setNavigationStartTime: (time: number) => void;
   maybeUnlockFastFinisher: () => Promise<void>;
-  completeChallenge: (challengeId: string) => Promise<void>;
   loading: boolean;
   uid: string | null;
 };
@@ -41,7 +38,7 @@ const empty: BadgeState = {
   checkIns: 0,
   routesCompleted: 0,
   purchases: [],
-  completedChallenges: new Set(),
+  badges: {} as Record<BadgeId, Badge>,
 };
 
 const BadgeContext = createContext<Ctx | undefined>(undefined);
@@ -66,6 +63,10 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
+    setState((prev) => ({ ...prev, badges: BADGES }));
+  }, []);
+
+  useEffect(() => {
     if (!uid) return;
 
     const loadUserData = async () => {
@@ -73,18 +74,18 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
       try {
         const snap = await getUserBadgeData(uid);
         if (snap) {
-          setState({
+          setState((prev) => ({
+            ...prev,
             unlocked: new Set<BadgeId>(snap.badges || []),
             justUnlocked: [],
             points: snap.points || 0,
             checkIns: snap.checkIns || 0,
             routesCompleted: snap.routesCompleted || 0,
             purchases: snap.purchases || [],
-            completedChallenges: new Set<string>(snap.completedChallenges || []),
-          });
+          }));
         }
       } catch (e) {
-        console.warn('Failed to load badge data:', e);
+        //consolewarn('Failed to load badge data:', e);
       } finally {
         setLoading(false);
       }
@@ -95,7 +96,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
 
   const unlock = async (id: BadgeId) => {
     if (!uid) {
-      console.log('Unlock aborted: no UID');
+      //consolelog('Unlock aborted: no UID');
       return;
     }
 
@@ -117,18 +118,18 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
       // Sync with latest data
       const snap = await getUserBadgeData(uid);
       if (snap) {
-        setState({
+        setState((prev) => ({
+          ...prev,
           unlocked: new Set<BadgeId>(snap.badges || []),
           justUnlocked: [],
           points: snap.points || 0,
           checkIns: snap.checkIns || 0,
           routesCompleted: snap.routesCompleted || 0,
           purchases: snap.purchases || [],
-          completedChallenges: new Set<string>(snap.completedChallenges || []),
-        });
+        }));
       }
     } catch (e) {
-      console.error('Failed to unlock badge:', e);
+      //consoleerror('Failed to unlock badge:', e);
       // Revert optimistic update
       setState((prev) => ({
         ...prev,
@@ -151,71 +152,9 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
         justUnlocked: (updated?.badges || []).filter((b: BadgeId) => !prev.unlocked.has(b)),
       }));
     } catch (e) {
-      console.error('Failed to increment routes:', e);
+      //consoleerror('Failed to increment routes:', e);
     }
   };
-
-  const completeChallenge = async (challengeId: string) => {
-    if (!uid) return;
-
-    try {
-      const updated = await completeChallengeForUser(uid, challengeId);
-      setState((prev) => ({
-        ...prev,
-        points: updated?.points || prev.points,
-        completedChallenges: new Set<string>(
-          updated?.completedChallenges || [...prev.completedChallenges, challengeId],
-        ),
-      }));
-    } catch (e) {
-      console.error('Failed to complete challenge:', e);
-    }
-  };
-
-  const clearJustUnlocked = () => setState((prev) => ({ ...prev, justUnlocked: [] }));
-
-  const getChallenges = (): Challenge[] => [
-    {
-      id: 'earn_150_pts',
-      title: 'Earn 150 Points',
-      description: 'Unlock the Point Collector badge',
-      isCompleted: state.completedChallenges.has('earn_150_pts'),
-      icon: 'wallet',
-      type: 'current',
-    },
-    {
-      id: 'lecture_halls',
-      title: 'Visit 5 Lecture Halls',
-      description: 'Unlock a special guide',
-      isCompleted: state.completedChallenges.has('lecture_halls'),
-      icon: 'school',
-      type: 'current',
-    },
-    {
-      id: 'explore_buildings',
-      title: 'Explore 3 New Buildings',
-      description: 'Unlock a badge',
-      isCompleted: state.completedChallenges.has('explore_buildings'),
-      icon: 'business',
-      type: 'current',
-    },
-    {
-      id: 'fast_finisher',
-      title: 'Speed Runner',
-      description: 'Reach a destination within 5 minutes of starting navigation',
-      isCompleted: state.completedChallenges.has('fast_finisher'),
-      icon: 'speedometer',
-      type: 'current',
-    },
-    {
-      id: 'points_master',
-      title: 'Earn 500 Points',
-      description: 'Become a legend!',
-      isCompleted: state.completedChallenges.has('points_master'),
-      icon: 'star',
-      type: 'current',
-    },
-  ];
 
   const value: Ctx = {
     state,
@@ -223,9 +162,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
     unlock,
     incrementRoutes,
     incrementCheckIns: async () => {}, // Implement if needed
-    clearJustUnlocked,
-    getChallenges,
-    completeChallenge,
+    clearJustUnlocked: () => setState((prev) => ({ ...prev, justUnlocked: [] })),
     setNavigationStartTime: (time) => setNavigationStartTime(time),
     maybeUnlockFastFinisher: async () => {
       if (!navigationStartTime || !uid) return;

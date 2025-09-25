@@ -135,9 +135,8 @@ export default function QRCodeAdminContent() {
         {/* Step 1: Select Location */}
         <LocationSelector
           locations={locations}
-          selectedLocationId={selectedLocationId}
+          selectedLocation={selectedLocationId || ''}
           onLocationSelect={handleLocationSelect}
-          title="Step 1: Select Location"
         />
 
         {/* Step 2: Select Building */}

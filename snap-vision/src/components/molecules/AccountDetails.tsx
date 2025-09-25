@@ -24,7 +24,6 @@ export default function AccountDetails() {
         const currentUser = auth().currentUser;
 
         if (!currentUser) {
-          console.log('No user is currently logged in');
           setLoading(false);
           return;
         }
@@ -50,16 +49,14 @@ export default function AccountDetails() {
               name: firestoreData.name || '',
               role: firestoreData.role || '',
             };
-          } else {
-            console.log('No matching document found in userInformation collection');
           }
         } catch (firestoreError) {
-          console.error('Error fetching from Firestore:', firestoreError);
+          //consoleerror('Error fetching from Firestore:', firestoreError);
         }
 
         setUserData(userInfo);
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        //consoleerror('Error fetching user data:', error);
       } finally {
         setLoading(false);
       }

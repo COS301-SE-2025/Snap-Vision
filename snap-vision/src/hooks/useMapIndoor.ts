@@ -32,9 +32,11 @@ interface UseMapIndoorReturn {
   ) => void;
   openIndoorNavigation: (
     building: POI,
+    navigation: any,
     setErrorPopupMessage: (message: string) => void,
     setShowErrorPopup: (show: boolean) => void,
   ) => Promise<void>;
+  checkFloorplansExist: (locationId: string, buildingId: string) => Promise<boolean>;
   areRoomsConnected: (
     locationId: string,
     buildingId: string,
@@ -67,7 +69,7 @@ export const useMapIndoor = (): UseMapIndoorReturn => {
 
   // Handle indoor navigation from map WebView message
   const handleIndoorNavFromMap = useCallback(
-    (
+    async (
       parsed: any,
       hookSelectedPOI: POI | null,
       pois: POI[],
@@ -85,8 +87,8 @@ export const useMapIndoor = (): UseMapIndoorReturn => {
       const locationId = p.locationId || p.location || fallbackPOI?.location || 'up-campus'; // update default if needed
       const floorId = '1';
 
-      console.log('[IndoorNav] payload:', p);
-      console.log('[IndoorNav] resolved ->', { buildingId, buildingName, locationId });
+      //consolelog('[IndoorNav] payload:', p);
+      //consolelog('[IndoorNav] resolved ->', { buildingId, buildingName, locationId });
 
       if (!buildingId) {
         setError('Indoor navigation is only available for building POIs.');
@@ -98,6 +100,20 @@ export const useMapIndoor = (): UseMapIndoorReturn => {
         'try{map && map.closePopup && map.closePopup();}catch(e){}',
       );
 
+      // Check if floorplans exist for this building
+      const hasFloorplans = await checkFloorplansExist(locationId, buildingId);
+
+      if (!hasFloorplans) {
+        // Navigate to unavailable screen if no floorplans
+        navigation.navigate('IndoorNavigationUnavailable', {
+          buildingId,
+          buildingName,
+          locationId,
+        });
+        return;
+      }
+
+      // Navigate to indoor schematic only if floorplans exist
       navigation.navigate('IndoorSchematicNav', {
         buildingId,
         buildingName,
@@ -105,7 +121,7 @@ export const useMapIndoor = (): UseMapIndoorReturn => {
         floorId,
       });
     },
-    [],
+    [checkFloorplansExist],
   );
 
   // Count how many paths touch each room (higher = better default start)
@@ -188,22 +204,83 @@ export const useMapIndoor = (): UseMapIndoorReturn => {
     [],
   );
 
+  // Check if floorplans exist for a building
+  const checkFloorplansExist = useCallback(
+    async (locationId: string, buildingId: string): Promise<boolean> => {
+      if (!locationId || !buildingId) {
+        console.error('Invalid parameters for checkFloorplansExist', { locationId, buildingId });
+        return false;
+      }
+
+      try {
+        console.log(`Checking floorplans for building ${buildingId} in location ${locationId}`);
+        const floorplansSnap = await firestore()
+          .collection('locations')
+          .doc(locationId)
+          .collection('buildingPOIs')
+          .doc(buildingId)
+          .collection('floorplans')
+          .limit(1)
+          .get();
+
+        const hasFloorplans = !floorplansSnap.empty;
+        console.log(`Building ${buildingId} has floorplans: ${hasFloorplans}`);
+        return hasFloorplans;
+      } catch (error) {
+        console.error('Error checking floorplans:', error);
+        return false;
+      }
+    },
+    [],
+  );
+
   // Open indoor navigation for a building
   const openIndoorNavigation = useCallback(
     async (
       building: POI,
+      navigation: any,
       setErrorPopupMessage: (message: string) => void,
       setShowErrorPopup: (show: boolean) => void,
     ) => {
       const b = building;
-      // b.location is how you store location id on buildingPOI in fetchPOIs()
       const locationId = b.location;
       const buildingId = b.id;
 
-      // TODO: Implement proper room fetching
-      const rooms: Room[] = []; // Placeholder - no rooms available
-      if (!rooms.length) {
-        setErrorPopupMessage('No rooms available for indoor navigation');
+      // Check if floorplans exist for this building
+      const hasFloorplans = await checkFloorplansExist(locationId, buildingId);
+
+      if (!hasFloorplans) {
+        // Navigate to unavailable screen
+        navigation.navigate('IndoorNavigationUnavailable', {
+          buildingId,
+          buildingName: building.name || building.title || 'Building',
+          locationId,
+        });
+        return;
+      }
+
+      // Attempt to fetch indoor rooms for this building
+      let rooms: Room[] = [];
+      try {
+        // TODO: Implement proper room fetching
+        const roomSnap = await firestore()
+          .collection(`locations/${locationId}/roomPOIs`)
+          .where('buildingId', '==', buildingId)
+          .get();
+
+        rooms = roomSnap.docs.map((d) => ({
+          id: d.id,
+          ...(d.data() as any),
+        })) as Room[];
+
+        if (!rooms.length) {
+          setErrorPopupMessage('No rooms available for indoor navigation');
+          setShowErrorPopup(true);
+          return;
+        }
+      } catch (error) {
+        console.error('Error fetching rooms:', error);
+        setErrorPopupMessage('Error loading indoor navigation data');
         setShowErrorPopup(true);
         return;
       }
@@ -231,7 +308,7 @@ export const useMapIndoor = (): UseMapIndoorReturn => {
       setSelectedIndoorRoom(defaultDest);
       setShowIndoorPicker(true);
     },
-    [selectedIndoorRoom, getRoomDegrees],
+    [selectedIndoorRoom, getRoomDegrees, checkFloorplansExist],
   );
 
   // Close indoor picker modal
@@ -268,14 +345,6 @@ export const useMapIndoor = (): UseMapIndoorReturn => {
 
       setShowIndoorPicker(false);
 
-      console.log('Navigating to IndoorNavigation with:', {
-        locationId: b.location,
-        buildingId: b.id,
-        startRoomId: selectedStartRoom.id,
-        endRoomId: selectedIndoorRoom.id,
-        floorId: selectedIndoorRoom.floorId,
-      });
-
       navigation.navigate('IndoorNavigation', {
         locationId: b.location,
         buildingId: b.id,
@@ -298,6 +367,7 @@ export const useMapIndoor = (): UseMapIndoorReturn => {
     // Functions
     handleIndoorNavFromMap,
     openIndoorNavigation,
+    checkFloorplansExist,
     areRoomsConnected,
     closeIndoorPicker,
     startIndoorNavigation,

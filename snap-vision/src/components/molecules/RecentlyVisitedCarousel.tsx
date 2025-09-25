@@ -3,8 +3,11 @@ import { FlatList, TouchableOpacity, Text, View, StyleSheet } from 'react-native
 import { Visit } from '../../services/firebase/recentlyVService';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
-
-const RecentlyVisitedCarousel = ({ visits }: { visits: Visit[] }) => {
+type Props = {
+  visits: Visit[];
+  testID?: string;
+};
+const RecentlyVisitedCarousel = ({ visits, testID }: Props) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
@@ -19,47 +22,50 @@ const RecentlyVisitedCarousel = ({ visits }: { visits: Visit[] }) => {
   }
 
   return (
-    <FlatList
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.listContainer}
-      data={visits}
-      keyExtractor={(item, index) => item.id || item.poiId || index.toString()}
-      renderItem={({ item }) => (
-        <TouchableOpacity
-          style={[
-            styles.card,
-            {
-              backgroundColor: colors.primary,
-              borderColor: colors.roleSecondary,
-            },
-          ]}
-          onPress={() => console.log('Selected:', item.name)}
-        >
-          <Text style={[styles.name, { color: colors.background }]} numberOfLines={1}>
-            {item.name}
-          </Text>
-          {item.timestamp && (
-            <Text style={[styles.timestamp, { color: colors.background }]} numberOfLines={1}>
-              {new Date(item.timestamp.toDate()).toLocaleDateString()}
+    <View testID={testID}>
+      <FlatList
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.listContainer}
+        data={visits}
+        keyExtractor={(item, index) => item.id || item.poiId || index.toString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={[
+              styles.card,
+              {
+                backgroundColor: colors.primary,
+                borderColor: colors.roleSecondary,
+              },
+            ]}
+          >
+            <Text style={[styles.name, { color: colors.background }]} numberOfLines={1}>
+              {item.name}
             </Text>
-          )}
-        </TouchableOpacity>
-      )}
-    />
+            {item.timestamp && (
+              <Text style={[styles.timestamp, { color: colors.background }]} numberOfLines={1}>
+                {new Date(item.timestamp.toDate()).toLocaleDateString()}
+              </Text>
+            )}
+          </TouchableOpacity>
+        )}
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   listContainer: {
     paddingHorizontal: 10,
+    marginLeft: 10,
+    marginTop: 5,
   },
   card: {
     marginRight: 10,
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 10,
-    borderWidth: 0,
+    borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'flex-start',
     height: 80,

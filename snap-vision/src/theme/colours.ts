@@ -1,11 +1,10 @@
-//snap-vision\src\theme\colours.ts
 export const lightColors = {
-  background: '#f9eadaff',
+  background: '#fef4ec',
   text: '#2f6e83',
   subtleText: '#666666',
   border: '#ddd',
-  card: '#f0f0f0',
-  primary: '#824713',
+  card: '#e4ddcfff', //#f0f0f0
+  primary: '#824713', //#824713
   roleSecondary: '#B78459',
   statusActive: '#4CAF50',
   statusInactive: '#FF9800',
@@ -20,7 +19,7 @@ export const darkColors = {
   subtleText: '#999999',
   border: '#444',
   card: '#1e1e1e',
-  primary: '#B78459',
+  primary: '#B78459', //B78459
   roleSecondary: '#824713',
   statusActive: '#4CAF50',
   statusInactive: '#FF9800',

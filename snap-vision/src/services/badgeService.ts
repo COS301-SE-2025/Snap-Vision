@@ -1,5 +1,6 @@
 // src/services/badgeService.ts
 import firestore from '@react-native-firebase/firestore';
+import { Badge } from '../types/badges';
 
 const db = firestore();
 
@@ -13,24 +14,9 @@ export async function unlockBadgeForUser(userId: string, badgeId: string) {
   try {
     await db.runTransaction(async (transaction) => {
       const userDoc = await transaction.get(userRef);
-
       if (!userDoc.exists) {
-        const startingPoints = POINT_INCREMENT;
-        const badges = [badgeId];
-
-        if (startingPoints >= POINTS_MILESTONE && !badges.includes(MILESTONE_BADGE)) {
-          badges.push(MILESTONE_BADGE);
-        }
-
-        transaction.set(userRef, {
-          badges,
-          points: startingPoints,
-          checkIns: 0,
-          routesCompleted: 0,
-        });
-        return;
+        throw new Error('User not found');
       }
-
       const data = userDoc.data();
       const badges = data?.badges ? [...data.badges] : [];
       let points = data?.points || 0;
@@ -50,7 +36,7 @@ export async function unlockBadgeForUser(userId: string, badgeId: string) {
       });
     });
   } catch (error) {
-    console.error(`Error unlocking badge ${badgeId} for user ${userId}:`, error);
+    //consoleerror(`Error unlocking badge ${badgeId} for user ${userId}:`, error);
     throw error;
   }
 }
@@ -162,4 +148,20 @@ export async function incrementRoutesCompletedForUser(userId: string) {
 
   const updatedUser = await userRef.get();
   return updatedUser.data();
+}
+
+export async function getBadges(): Promise<Record<string, Badge>> {
+  // Read badges from Firestore badges collection
+  const badgesRef = db.collection('badges');
+  const snapshot = await badgesRef.get();
+  const badges: Record<string, Badge> = {};
+  snapshot.forEach((doc) => {
+    const data = doc.data();
+    badges[doc.id] = {
+      id: doc.id as any, // Assuming doc.id matches BadgeId
+      title: data.title,
+      description: data.description,
+    };
+  });
+  return badges;
 }
