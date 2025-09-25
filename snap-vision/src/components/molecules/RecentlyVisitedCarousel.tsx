@@ -57,13 +57,15 @@ const RecentlyVisitedCarousel = ({ visits, testID }: Props) => {
 const styles = StyleSheet.create({
   listContainer: {
     paddingHorizontal: 10,
+    marginLeft: 10,
+    marginTop: 5,
   },
   card: {
     marginRight: 10,
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 10,
-    borderWidth: 0,
+    borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'flex-start',
     height: 80,

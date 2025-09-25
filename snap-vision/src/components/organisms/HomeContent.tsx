@@ -1,4 +1,3 @@
-// src/components/organisms/HomeContent.tsx
 import React from 'react';
 import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
 import HeaderWithIcons from '../molecules/HeaderWithIcons';
@@ -8,7 +7,6 @@ import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import RecentlyVisitedCarousel from '../molecules/RecentlyVisitedCarousel';
 import { useEffect, useState } from 'react';
@@ -56,9 +54,18 @@ export default function HomeContent() {
 
       <View style={{ height: 20 }} />
 
+      {/* Mascot image */}
+      <View style={styles.mascotContainer}>
+        <Image
+          source={require('../../../assets/mascot_ponder.png')}
+          style={styles.mascotImage}
+          resizeMode="contain"
+        />
+      </View>
+
       {/* First separator (slightly lowered) */}
       <View style={{ marginTop: 20 }}>
-        <View style={[styles.separator, { borderBottomColor: colors.border }]} />
+        <View style={[styles.separator, { borderBottomColor: colors.primary }]} />
       </View>
 
       {/* Go to Maps + QR Section */}
@@ -81,7 +88,7 @@ export default function HomeContent() {
       </View>
 
       {/* Second separator */}
-      <View style={[styles.separator, { borderBottomColor: colors.border }]} />
+      <View style={[styles.separator, { borderBottomColor: colors.primary }]} />
 
       {/* Recently Visited */}
       <Text style={[styles.recentlyVisitedLabel, { color: colors.secondary }]}>
@@ -113,7 +120,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginHorizontal: 20,
     marginBottom: 10,
-    marginTop: 40,
+    marginTop: 10,
   },
   imageRow: {
     paddingHorizontal: 20,
@@ -144,5 +151,15 @@ const styles = StyleSheet.create({
   qrWrapper: {
     flex: 1,
     marginLeft: 8,
+  },
+  mascotContainer: {
+    alignItems: 'center',
+    marginTop: -25,
+    marginBottom: -51,
+    zIndex: 1,
+  },
+  mascotImage: {
+    width: 100,
+    height: 100,
   },
 });
