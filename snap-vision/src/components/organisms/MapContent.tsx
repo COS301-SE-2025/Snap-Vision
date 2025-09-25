@@ -516,7 +516,7 @@ const MapContent: React.FC<MapContentProps> = ({
         }
         onConfirm={onAutoNavigationConfirm}
         onCancel={onAutoNavigationDismiss}
-        confirmText="Start Navigation"
+        confirmText="Navigate"
         cancelText="Dismiss"
         showCancel={true}
       />
