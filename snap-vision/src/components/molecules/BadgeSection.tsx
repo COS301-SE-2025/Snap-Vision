@@ -10,7 +10,7 @@ import { useBadges } from '../../context/BadgeContext';
 
 const { width } = Dimensions.get('window');
 const numColumns = 2;
-const cardWidth = (width - 48) / numColumns; // increased padding and gap to reduce card width
+const cardWidth = (width - 48) / numColumns; // used for item width when laying out cards
 
 export default function BadgesSection({ unlockedIds }: { unlockedIds: BadgeId[] }) {
   const { isDark } = useTheme();
@@ -27,9 +27,10 @@ export default function BadgesSection({ unlockedIds }: { unlockedIds: BadgeId[] 
           title: badges[item]?.title || '',
           description: badges[item]?.description || '',
           type: 'limited',
-          unlockCondition: badges[item]?.description || '',
+          unlockCondition: '',
           isUnlocked: unlockedIds.includes(item),
         }}
+        containerStyle={{ height: 210 }}
         backgroundColor={colors.card}
         borderColor={colors.border}
       />
@@ -43,9 +44,9 @@ export default function BadgesSection({ unlockedIds }: { unlockedIds: BadgeId[] 
         data={badgeIds}
         renderItem={renderItem}
         keyExtractor={(item) => item}
-        numColumns={numColumns}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.grid}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.gridHorizontal}
       />
     </View>
   );
@@ -54,5 +55,6 @@ export default function BadgesSection({ unlockedIds }: { unlockedIds: BadgeId[] 
 const styles = StyleSheet.create({
   section: { marginBottom: 24 },
   grid: { paddingHorizontal: 16 },
-  cardContainer: { width: cardWidth, margin: 8 },
+  gridHorizontal: { paddingHorizontal: 16, alignItems: 'center' },
+  cardContainer: { width: cardWidth, marginHorizontal: 8 },
 });

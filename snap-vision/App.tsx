@@ -165,15 +165,15 @@ function AppInner() {
 export default function App() {
   return (
     <UserIconProvider>
-    <DeepLinkProvider>
-      <LandingProvider>
-        <UserProvider>
-          <AccessibilityProvider>
-            <AppInner />
-          </AccessibilityProvider>
-        </UserProvider>
-      </LandingProvider>
-    </DeepLinkProvider>
+      <DeepLinkProvider>
+        <LandingProvider>
+          <UserProvider>
+            <AccessibilityProvider>
+              <AppInner />
+            </AccessibilityProvider>
+          </UserProvider>
+        </LandingProvider>
+      </DeepLinkProvider>
     </UserIconProvider>
   );
 }

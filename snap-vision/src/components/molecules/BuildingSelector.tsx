@@ -32,7 +32,7 @@ const BuildingSelector: React.FC<BuildingSelectorProps> = ({
   const dropdownItems = buildings.map((b) => ({ label: b.name, value: b.id }));
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Text style={[styles.title, { color: colors.primary }]}>{title}</Text>
       <DropDownPicker
         open={dropdownOpen}
@@ -59,6 +59,15 @@ const BuildingSelector: React.FC<BuildingSelectorProps> = ({
           maxHeight: 250,
           borderRadius: 8,
         }}
+        modalProps={{
+          animationType: 'fade',
+        }}
+        modalContentContainerStyle={{
+          backgroundColor: colors.background,
+        }}
+        modalTitleStyle={{
+          color: colors.text,
+        }}
         textStyle={{
           color: colors.text,
           fontFamily: 'System',
@@ -66,7 +75,7 @@ const BuildingSelector: React.FC<BuildingSelectorProps> = ({
         }}
         searchTextInputStyle={{
           color: colors.text,
-          backgroundColor: colors.background,
+          backgroundColor: colors.card,
           borderColor: colors.primary,
           borderWidth: 1,
           borderRadius: 8,
@@ -87,6 +96,21 @@ const BuildingSelector: React.FC<BuildingSelectorProps> = ({
           fontFamily: 'System',
           fontSize: 16,
         }}
+        theme={isDark ? "DARK" : "LIGHT"}
+        closeIconContainerStyle={{
+          backgroundColor: 'transparent',
+        }}
+        arrowIconContainerStyle={{
+          backgroundColor: 'transparent',
+        }}
+        listItemContainerStyle={{
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+        }}
+        itemSeparator={true}
+        itemSeparatorStyle={{
+          backgroundColor: colors.border,
+        }}
       />
     </View>
   );
@@ -96,7 +120,6 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: 24,
     padding: 16,
-    backgroundColor: 'rgba(0,0,0,0.03)',
     borderRadius: 8,
   },
   title: {

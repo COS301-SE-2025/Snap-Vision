@@ -94,13 +94,13 @@ describe('EditorContent Integration Tests', () => {
 
       expect(editorText.props.style).toMatchObject({
         fontSize: 56,
-        fontFamily: 'PermanentMarkerRegular',
+        fontFamily: 'ChicleRegular',
         color: mockColors.primary,
       });
 
       expect(dashboardText.props.style).toMatchObject({
         fontSize: 52,
-        fontFamily: 'PermanentMarkerRegular',
+        fontFamily: 'ChicleRegular',
         color: mockColors.primary,
       });
 

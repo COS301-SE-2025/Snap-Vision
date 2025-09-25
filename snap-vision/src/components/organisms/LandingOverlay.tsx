@@ -3,6 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
+  Image,
   ScrollView,
   TouchableWithoutFeedback,
   Animated,
@@ -57,6 +58,13 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
   return (
     <TouchableWithoutFeedback onPress={onDismiss}>
       <View style={[styles.overlay, { backgroundColor: bg }]}>
+        <View style={styles.mascotWrapper} pointerEvents="none">
+          <Image
+            source={require('../../../assets/mascot_welcome.png')}
+            style={styles.mascotImage}
+            accessibilityIgnoresInvertColors
+          />
+        </View>
         <ScrollView contentContainerStyle={styles.container}>
           <View style={styles.snapTitleRow}>
             <Animated.Text
@@ -64,7 +72,7 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
                 styles.snapTitle,
                 {
                   color: swappedTextColor,
-                  fontFamily: 'PermanentMarkerRegular',
+                  fontFamily: 'ChicleRegular',
                   transform: [
                     {
                       scale: snapAnim1.interpolate({
@@ -86,8 +94,9 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
                 styles.snapTitle,
                 {
                   color: swappedTextColor,
-                  fontFamily: 'PermanentMarkerRegular',
-                  marginLeft: 10,
+                  fontFamily: 'ChicleRegular',
+                  includeFontPadding: false,
+                  marginLeft: 1,
                   transform: [
                     {
                       scale: snapAnim2.interpolate({
@@ -101,20 +110,20 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
                 },
               ]}
             >
-              Vision
+              {' Vision'}
             </Animated.Text>
           </View>
 
-          <Text style={[styles.tagline, { color: swappedAccentColor }]}>
+          {/* <Text style={[styles.tagline, { color: swappedAccentColor, fontFamily: 'ChicleRegular' }]}>
             Wander Less, Discover More
-          </Text>
+          </Text> */}
 
-          <Text style={[styles.description, { color: swappedTextColor }]}>
+          {/* <Text style={[styles.description, { color: swappedTextColor }]}>
             Snap Vision is an indoor and outdoor navigation system designed to help students and
             visitors find their way around university spaces. Our mission is to make every step
             intuitive, accessible, and fast — whether you’re locating a lecture hall or the nearest
             exit.
-          </Text>
+          </Text> */}
 
           <View style={styles.featureSection}>
             <MaskedView
@@ -132,7 +141,7 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
                 }}
               >
                 <LinearGradient
-                  colors={['#69c6d0', '#ffffff', '#69c6d0']}
+                  colors={[colors.text,  colors.secondary]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={{ flex: 1 }}
@@ -141,13 +150,13 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
             </MaskedView>
 
             {[
-              'Turn-by-turn Navigation',
-              'Indoor & Outdoor Coverage',
-              'Voice Assistance',
-              'AR Navigation',
+              'Indoor and Outdoor Navigation',
+              'AR Mode',
+              'Earn Badges and Shop Icons!',
+              'Integrated Timetable Builder',
             ].map((feature, index) => (
-              <View key={index} style={[styles.featureBox, { backgroundColor: colors.secondary }]}>
-                <Text style={[styles.featureText, { color: bg }]}>{feature}</Text>
+              <View key={index} style={[styles.featureBox, { backgroundColor: colors.background }]}>
+                <Text style={[styles.featureText, { color: colors.primary }]}>{feature}</Text>
               </View>
             ))}
           </View>
@@ -156,6 +165,11 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
             © 2025 Snap Vision Team
           </Text>
         </ScrollView>
+
+        <View style={styles.getStartedRow} pointerEvents="none">
+          <Text style={[styles.getStartedText, { color: colors.text }]}>Hi, I'm Snaps, tap to get started!</Text>
+          {/* <Text style={[styles.getStartedText, { color: swappedAccentColor }]}>Tap to Get Started!</Text> */}
+        </View>
       </View>
     </TouchableWithoutFeedback>
   );
@@ -171,19 +185,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexGrow: 1,
+    paddingBottom: 0, // leave room for mascot and absolute footer
+  },
+  mascotWrapper: {
+    position: 'absolute',
+    right: -40,
+    bottom: 0,
+    width: 300,
+    height: 300,
+    zIndex: 20,
+  },
+  mascotImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
   },
   snapTitleRow: {
     flexDirection: 'row',
+    marginTop: -100,
     marginBottom: 10,
   },
   snapTitle: {
-    fontSize: 42,
+    fontSize: 62,
     textAlign: 'center',
   },
   tagline: {
     fontSize: 18,
     fontStyle: 'italic',
     marginBottom: 20,
+    fontFamily: 'ChicleRegular',
   },
   description: {
     fontSize: 16,
@@ -209,19 +239,38 @@ const styles = StyleSheet.create({
     width: '90%',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#69c6d0',
+    borderColor: '#90AFA8',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 4,
+    marginBottom: 2,
   },
   featureText: {
     fontSize: 16,
   },
+  getStartedRow: {
+    width: '80%',
+    alignItems: 'center',
+    paddingRight: 180,
+    marginBottom: 0,
+    left: 60,
+    bottom: 145,
+  },
+  getStartedText: {
+    fontSize: 22,
+    fontWeight: '400',
+    fontFamily: 'ChicleRegular',
+  },
   footer: {
     fontSize: 12,
     marginTop: 0,
+    
+    bottom: -120,
+    right: 80, 
+    textAlign: 'right',
+    position: 'relative',
   },
 });
 

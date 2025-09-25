@@ -1,6 +1,8 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity } from 'react-native';
 import { AdminPOI } from '../../hooks/useMapAdmin';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
 
 interface AdminActionsModalProps {
   visible: boolean;
@@ -17,6 +19,8 @@ export const AdminActionsModal: React.FC<AdminActionsModalProps> = ({
   onDelete,
   onClose,
 }) => {
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
   if (!visible || !adminActionPOI) return null;
 
   return (
@@ -39,21 +43,23 @@ export const AdminActionsModal: React.FC<AdminActionsModalProps> = ({
       >
         <View
           style={{
-            backgroundColor: '#fff',
+            backgroundColor: colors.card,
             borderRadius: 12,
+            borderColor: colors.primary,
+            borderWidth: 1,
             padding: 24,
             alignItems: 'center',
             minWidth: 250,
           }}
         >
-          <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 16 }}>
+          <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 16, color: colors.text, borderColor: colors.primary }}>
             Building: {adminActionPOI.name}
           </Text>
 
           {/* Edit Building Button */}
           <TouchableOpacity
             style={{
-              backgroundColor: '#FF9800',
+              backgroundColor: colors.primary,
               paddingVertical: 10,
               paddingHorizontal: 20,
               borderRadius: 8,
@@ -66,13 +72,13 @@ export const AdminActionsModal: React.FC<AdminActionsModalProps> = ({
               onClose();
             }}
           >
-            <Text style={{ color: 'white', fontWeight: 'bold' }}>Edit</Text>
+            <Text style={{ color: colors.background, fontWeight: 'bold' }}>Edit</Text>
           </TouchableOpacity>
 
           {/* Delete Building Button */}
           <TouchableOpacity
             style={{
-              backgroundColor: '#D32F2F',
+              backgroundColor: colors.primary,
               paddingVertical: 10,
               paddingHorizontal: 20,
               borderRadius: 8,
@@ -84,13 +90,13 @@ export const AdminActionsModal: React.FC<AdminActionsModalProps> = ({
               onDelete(adminActionPOI);
             }}
           >
-            <Text style={{ color: 'white', fontWeight: 'bold' }}>Delete</Text>
+            <Text style={{ color: colors.background, fontWeight: 'bold' }}>Delete</Text>
           </TouchableOpacity>
 
           {/* Cancel Button */}
           <TouchableOpacity
             style={{
-              backgroundColor: '#B0B0B0',
+              backgroundColor: colors.subtleText,
               paddingVertical: 10,
               paddingHorizontal: 20,
               borderRadius: 8,
@@ -99,7 +105,7 @@ export const AdminActionsModal: React.FC<AdminActionsModalProps> = ({
             }}
             onPress={onClose}
           >
-            <Text style={{ color: 'white', fontWeight: 'bold' }}>Cancel</Text>
+            <Text style={{ color: colors.background, fontWeight: 'bold' }}>Cancel</Text>
           </TouchableOpacity>
         </View>
       </View>

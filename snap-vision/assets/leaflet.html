@@ -22,21 +22,21 @@
         font-size: 14px;
       }
       .poi-marker {
-        background-color: #007bff;
-        border: 2px solid white;
+        background-color: #2f6e83;
+        border: 2px #573825;
         border-radius: 50%;
         width: 12px;
         height: 12px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
       }
       .poi-marker:hover {
-        background-color: #0056b3;
+        background-color: #2f6e83;
         transform: scale(1.2);
         cursor: pointer;
       }
       .poi-label {
-        background-color: rgba(255, 255, 255, 0.9);
-        border: 1px solid #ccc;
+        background-color: #e4ddcfff;
+        border: 1px solid #B78459;
         border-radius: 4px;
         padding: 2px 6px;
         font-size: 12px;
@@ -163,38 +163,38 @@
       }
 
       // Function to set user location icon
-      window.setUserIcon = function (iconName) {
-        let iconHtml = '📍'; // default
-        if (iconName === 'star') iconHtml = '⭐';
-        else if (iconName === 'heart') iconHtml = '❤️';
-        else if (iconName === 'compass') iconHtml = '🧭';
-        else if (iconName === 'rocket') iconHtml = '🚀';
-        else if (iconName === 'gem') iconHtml = '💎';
-        else if (iconName === 'crown') iconHtml = '👑';
+      // window.setUserIcon = function (iconName) {
+      //   let iconHtml = '📍'; // default
+      //   if (iconName === 'star') iconHtml = '⭐';
+      //   else if (iconName === 'heart') iconHtml = '❤️';
+      //   else if (iconName === 'compass') iconHtml = '🧭';
+      //   else if (iconName === 'rocket') iconHtml = '🚀';
+      //   else if (iconName === 'gem') iconHtml = '💎';
+      //   else if (iconName === 'crown') iconHtml = '👑';
 
-        const customIcon = L.divIcon({
-          html: `<div style="font-size: 24px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">${iconHtml}</div>`,
-          className: 'user-location-icon',
-          iconSize: [24, 24],
-          iconAnchor: [12, 24], // anchor at bottom center
-        });
+      //   const customIcon = L.divIcon({
+      //     html: `<div style="font-size: 24px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">${iconHtml}</div>`,
+      //     className: 'user-location-icon',
+      //     iconSize: [24, 24],
+      //     iconAnchor: [12, 24], // anchor at bottom center
+      //   });
 
-        if (userMarker) {
-          userMarker.setIcon(customIcon);
-        }
-        // Store for future markers
-        window.currentUserIcon = customIcon;
-      };
+      //   if (userMarker) {
+      //     userMarker.setIcon(customIcon);
+      //   }
+      //   // Store for future markers
+      //   window.currentUserIcon = customIcon;
+      // };
 
       // Function to update user location
       window.updateUserLocation = function (lat, lon, centerMap = false, zoomLevel = null) {
         //consolelog('🗺️ updateUserLocation called:', {
-          lat,
-          lon,
-          centerMap,
-          zoomLevel,
-          mapLoaded: map && map._loaded,
-        });
+        //  lat,
+        //  lon,
+        //  centerMap,
+        //  zoomLevel,
+        //  mapLoaded: map && map._loaded,
+        //});
         const coords = [lat, lon];
         if (!map || !map._loaded) {
           //consolelog('❌ Map not loaded yet, cannot update user location');
@@ -217,10 +217,7 @@
             userMarker.setLatLng(coords);
           } else {
             console.log('📍 Creating new user marker');
-            userMarker = L.marker(coords, { icon: window.currentUserIcon || undefined })
-              .addTo(map)
-              .bindPopup('📍 You are here!')
-              .openPopup();
+            userMarker = L.marker(coords).addTo(map).bindPopup('You are here!').openPopup();
           }
           //consolelog('✅ User location updated successfully');
         } catch (error) {
@@ -312,12 +309,13 @@
       <div style="margin-top: 8px;">
         <button onclick="window.showAdminActions('${buildingId}')" style="
           padding: 6px 12px;
-          background-color: #FF9800;
+          background-color: #573825;
           color: white;
           border: none;
           border-radius: 4px;
           cursor: pointer;
           font-size: 12px;
+          font-weight: bold;
           width: 100%;
         ">Admin Actions</button>
       </div>
@@ -327,7 +325,7 @@
         return `
     <div style="text-align: center; min-width: 150px;">
       <div style="margin-bottom: 8px;">
-        <strong>🏢 ${poi.name || 'Unnamed Building'}</strong>
+        <strong>${poi.name || 'Unnamed Building'}</strong>
       </div>
 
       ${crowdHtml}
@@ -336,12 +334,13 @@
       <div style="margin-top: 8px;">
         <button onclick="window.navigateToPOI('${poi.id}')" style="
           padding: 6px 12px;
-          background-color: #007bff;
+          background-color: #573825;
           color: white;
           border: none;
           border-radius: 4px;
           cursor: pointer;
           font-size: 12px;
+          font-weight: bold;
           width: 100%;
         ">Navigate Here</button>
       </div>
@@ -352,11 +351,11 @@
       <!-- Indoor navigation (ALWAYS last, under both) -->
       <div style="margin-top: 8px;">
         <button onclick="window.indoorNavToPOI('${poi.id}')" style="
-          padding: 10px 12px;
-          background-color: #5E5CE6;
+          padding: 6px 12px;
+          background-color: #573825;
           color: white;
           border: none;
-          border-radius: 8px;
+          border-radius: 4px;
           cursor: pointer;
           font-weight: bold;
           font-size: 12px;
