@@ -31,7 +31,7 @@ export default function HomeContent() {
     React.useCallback(() => {
       const fetchRecentlyVisited = async () => {
         const trace = await perf().newTrace('recently_visited_firestore_load');
-      await trace.start();
+        await trace.start();
         try {
           const userId = auth().currentUser?.uid;
           if (!userId) return;

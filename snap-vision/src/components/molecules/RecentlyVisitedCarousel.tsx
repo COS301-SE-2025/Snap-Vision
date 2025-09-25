@@ -23,33 +23,33 @@ const RecentlyVisitedCarousel = ({ visits, testID }: Props) => {
 
   return (
     <View testID={testID}>
-    <FlatList
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.listContainer}
-      data={visits}
-      keyExtractor={(item, index) => item.id || item.poiId || index.toString()}
-      renderItem={({ item }) => (
-        <TouchableOpacity
-          style={[
-            styles.card,
-            {
-              backgroundColor: colors.primary,
-              borderColor: colors.roleSecondary,
-            },
-          ]}
-        >
-          <Text style={[styles.name, { color: colors.background }]} numberOfLines={1}>
-            {item.name}
-          </Text>
-          {item.timestamp && (
-            <Text style={[styles.timestamp, { color: colors.background }]} numberOfLines={1}>
-              {new Date(item.timestamp.toDate()).toLocaleDateString()}
+      <FlatList
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.listContainer}
+        data={visits}
+        keyExtractor={(item, index) => item.id || item.poiId || index.toString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={[
+              styles.card,
+              {
+                backgroundColor: colors.primary,
+                borderColor: colors.roleSecondary,
+              },
+            ]}
+          >
+            <Text style={[styles.name, { color: colors.background }]} numberOfLines={1}>
+              {item.name}
             </Text>
-          )}
-        </TouchableOpacity>
-      )}
-    />
+            {item.timestamp && (
+              <Text style={[styles.timestamp, { color: colors.background }]} numberOfLines={1}>
+                {new Date(item.timestamp.toDate()).toLocaleDateString()}
+              </Text>
+            )}
+          </TouchableOpacity>
+        )}
+      />
     </View>
   );
 };

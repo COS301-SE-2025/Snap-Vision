@@ -42,7 +42,7 @@ LogBox.ignoreLogs([
   'VirtualizedLists should never be nested inside plain ScrollViews with the same orientation',
 ]);
 if (__DEV__) {
-  require("./ReactotronConfig");
+  require('./ReactotronConfig');
 }
 const Stack = createNativeStackNavigator();
 

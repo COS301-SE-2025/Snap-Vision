@@ -314,39 +314,50 @@ function SimpleARGuidance({
     currentLocation && destinationCoords
       ? (() => {
           let nextPoint: [number, number];
-  
+
           if (routeCoordinates.length > 0) {
             //Prevent backward jumps
             const safeBaseIndex = Math.max(0, currentRouteIndex);
-            
+
             // First, try to find a good forward point
             let targetIndex = safeBaseIndex;
             let bestDistance = Infinity;
-            
+
             // Search only FORWARD in the route (prevent going backward)
-            for (let i = safeBaseIndex; i < Math.min(safeBaseIndex + 8, routeCoordinates.length); i++) {
+            for (
+              let i = safeBaseIndex;
+              i < Math.min(safeBaseIndex + 8, routeCoordinates.length);
+              i++
+            ) {
               const point = routeCoordinates[i];
               const distanceToPoint = calculateDistance(
-                currentLocation.y, currentLocation.x,
-                point[1], point[0]
+                currentLocation.y,
+                currentLocation.x,
+                point[1],
+                point[0],
               );
-              
+
               // Prefer points 15-40 meters ahead (good range for direction)
-              if (distanceToPoint >= 15 && distanceToPoint <= 40 && distanceToPoint < bestDistance) {
+              if (
+                distanceToPoint >= 15 &&
+                distanceToPoint <= 40 &&
+                distanceToPoint < bestDistance
+              ) {
                 targetIndex = i;
                 bestDistance = distanceToPoint;
               }
             }
-            
+
             // Fallback: if no good point found, just look ahead by 3-5 points
             if (targetIndex === safeBaseIndex) {
               targetIndex = Math.min(safeBaseIndex + 3, routeCoordinates.length - 1);
             }
-            
+
             nextPoint = routeCoordinates[targetIndex];
-    
-            console.log(`🎯 AR Target: index ${targetIndex}/${routeCoordinates.length}, distance: ${bestDistance.toFixed(1)}m`);
-            
+
+            console.log(
+              `🎯 AR Target: index ${targetIndex}/${routeCoordinates.length}, distance: ${bestDistance.toFixed(1)}m`,
+            );
           } else {
             nextPoint = [destinationCoords.x, destinationCoords.y];
           }
@@ -358,17 +369,14 @@ function SimpleARGuidance({
             currentRouteIndex,
             nextPoint: nextPoint,
             calculatedBearing: calculateBearing(
-              currentLocation.y, currentLocation.x,
-              nextPoint[1], nextPoint[0]
-            )
+              currentLocation.y,
+              currentLocation.x,
+              nextPoint[1],
+              nextPoint[0],
+            ),
           });
-  
-          return calculateBearing(
-            currentLocation.y,
-            currentLocation.x,
-            nextPoint[1],
-            nextPoint[0],
-          );
+
+          return calculateBearing(currentLocation.y, currentLocation.x, nextPoint[1], nextPoint[0]);
         })()
       : 0;
 
@@ -383,11 +391,11 @@ function SimpleARGuidance({
       let sinSum = 0;
       let cosSum = 0;
       let totalWeight = 0;
-      
+
       newHistory.forEach((bearing, index) => {
         const weight = Math.pow(index + 1, 1.5); // Exponential weight favoring recent readings
         const radians = bearing * (Math.PI / 180);
-        
+
         sinSum += Math.sin(radians) * weight;
         cosSum += Math.cos(radians) * weight;
         totalWeight += weight;
@@ -398,7 +406,7 @@ function SimpleARGuidance({
       const avgCos = cosSum / totalWeight;
       const smoothedRadians = Math.atan2(avgSin, avgCos);
       const smoothed = smoothedRadians * (180 / Math.PI);
-      
+
       setSmoothedBearing(normalizeAngle(smoothed));
 
       return newHistory;
@@ -460,7 +468,7 @@ function SimpleARGuidance({
 
         {/* Direction Text */}
         <Text style={styles.directionText}>{getDirectionInstruction()}</Text>
-        
+
         {/* Debug Information - Remove in production */}
         {__DEV__ && (
           <View style={styles.debugContainer}>
@@ -468,7 +476,8 @@ function SimpleARGuidance({
               Bearing: {bearing.toFixed(1)}° | Heading: {deviceHeading.toFixed(1)}°
             </Text>
             <Text style={styles.debugText}>
-              Relative: {relativeBearing.toFixed(1)}° | Route: {currentRouteIndex}/{routeCoordinates.length}
+              Relative: {relativeBearing.toFixed(1)}° | Route: {currentRouteIndex}/
+              {routeCoordinates.length}
             </Text>
           </View>
         )}
