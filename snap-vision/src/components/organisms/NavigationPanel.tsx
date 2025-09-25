@@ -105,34 +105,29 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
           <Icon name="chevron-up" size={16} color={colors.text} />
         </Pressable>
 
-        {/* Essential controls */}
-        <View style={styles.minimizedControls}>
-          <Pressable
-            style={[styles.miniButton, { backgroundColor: colors.danger }]}
-            onPress={onCancelRoute}
-          >
-            <Icon name="close" size={12} color="#fff" />
-          </Pressable>
-
-          <Pressable
-            style={[styles.miniButton, { backgroundColor: '#E53935' }]}
-            onPress={onStopNavigation}
-          >
-            <Icon name="stop" size={12} color="#fff" />
-          </Pressable>
-
-          {onToggleAR && (
+        {/* Essential controls - only show when navigating */}
+        {isNavigating && (
+          <View style={styles.minimizedControls}>
             <Pressable
-              style={[
-                styles.miniButton,
-                { backgroundColor: showAR ? colors.primary : colors.secondary },
-              ]}
-              onPress={onToggleAR}
+              style={[styles.miniButton, { backgroundColor: '#E53935' }]}
+              onPress={onStopNavigation}
             >
-              <Icon name="camera-outline" size={12} color="#fff" />
+              <Icon name="stop" size={12} color="#fff" />
             </Pressable>
-          )}
-        </View>
+
+            {onToggleAR && (
+              <Pressable
+                style={[
+                  styles.miniButton,
+                  { backgroundColor: showAR ? colors.primary : colors.secondary },
+                ]}
+                onPress={onToggleAR}
+              >
+                <Icon name="camera-outline" size={12} color="#fff" />
+              </Pressable>
+            )}
+          </View>
+        )}
       </View>
     );
   }
@@ -272,9 +267,6 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
                   />
                 ) : (
                   <>
-                    <Text style={styles.primaryButtonIcon}>
-                      {isLoading ? '⏳' : isNavigating ? '🛑' : '🧭'}
-                    </Text>
                     <Text style={styles.primaryButtonLabel}>
                       {isLoading ? 'Loading' : isNavigating ? 'Stop' : 'Start'}
                     </Text>

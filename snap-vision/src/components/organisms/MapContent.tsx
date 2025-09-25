@@ -69,6 +69,7 @@ interface MapContentProps {
   onDestinationChange: (text: string) => void;
   onDestinationSearch: () => void;
   onSelectPOI: (poi: any) => void;
+  onSelectCrowdReportPOI: (poi: any) => void; // Add this new prop
 
   // Bluetooth navigation
   onOpenBluetoothNavigation: () => void;
@@ -199,6 +200,7 @@ const MapContent: React.FC<MapContentProps> = ({
   onDestinationChange,
   onDestinationSearch,
   onSelectPOI,
+  onSelectCrowdReportPOI,
 
   // Bluetooth navigation
   onOpenBluetoothNavigation,
@@ -281,16 +283,16 @@ const MapContent: React.FC<MapContentProps> = ({
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Modals */}
-      <CrowdReportModal
-        visible={showCrowdPopup}
-        selectedDensity={selectedDensity}
-        selectedPOI={selectedPOI}
-        availablePOIs={pois}
-        onChangeDensity={onSetSelectedDensity}
-        onChangePOI={onSelectPOI}
-        onSubmit={onSubmitCrowdReport}
-        onCancel={onCloseCrowdReportModal}
-      />
+              <CrowdReportModal
+          visible={showCrowdPopup}
+          selectedDensity={selectedDensity}
+          selectedPOI={selectedPOI}
+          availablePOIs={pois}
+          onChangeDensity={onSetSelectedDensity}
+          onChangePOI={onSelectCrowdReportPOI}
+          onSubmit={onSubmitCrowdReport}
+          onCancel={onCloseCrowdReportModal}
+        />
 
       <AdminPOIModal
         visible={showAddPOIModal}

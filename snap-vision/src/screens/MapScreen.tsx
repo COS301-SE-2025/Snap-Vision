@@ -447,6 +447,11 @@ const MapScreen = () => {
     openCrowdReportModal(selectedFeature, destination, destinationCoords, pois, setHookSelectedPOI);
   };
 
+  const handleSelectCrowdReportPOI = (poi: any) => {
+    // Only update the selected POI for crowd reporting, don't trigger navigation
+    setHookSelectedPOI(poi);
+  };
+
   const handleOpenEditBuildingModal = (poi: any) => {
     openEditBuildingModal(poi);
   };
@@ -592,6 +597,7 @@ const MapScreen = () => {
       onDestinationChange={handleDestinationChange}
       onDestinationSearch={handleDestinationSearch}
       onSelectPOI={handleSelectPOI}
+      onSelectCrowdReportPOI={handleSelectCrowdReportPOI}
       // Bluetooth navigation
       onOpenBluetoothNavigation={handleOpenBluetoothNavigation}
       //admin
