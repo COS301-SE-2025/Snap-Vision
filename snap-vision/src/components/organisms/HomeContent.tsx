@@ -13,6 +13,7 @@ import auth from '@react-native-firebase/auth';
 import RecentlyVisitedCarousel from '../molecules/RecentlyVisitedCarousel';
 import { useEffect, useState } from 'react';
 import { getRecentlyVPOIs, Visit } from '../../services/firebase/recentlyVService';
+import perf from '@react-native-firebase/perf';
 
 type RootStackParamList = {
   Map: undefined;
@@ -29,6 +30,8 @@ export default function HomeContent() {
   useFocusEffect(
     React.useCallback(() => {
       const fetchRecentlyVisited = async () => {
+        const trace = await perf().newTrace('recently_visited_firestore_load');
+      await trace.start();
         try {
           const userId = auth().currentUser?.uid;
           if (!userId) return;
@@ -39,6 +42,7 @@ export default function HomeContent() {
           //consoleerror('Error fetching recently visited:', error);
         } finally {
           setLoading(false);
+          await trace.stop();
         }
       };
 
