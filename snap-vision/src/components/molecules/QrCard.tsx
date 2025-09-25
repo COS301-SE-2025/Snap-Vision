@@ -7,6 +7,9 @@ import { getQRCodeMappingByValue } from '../../services/qrService';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import firestore from '@react-native-firebase/firestore';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
+import { useBadges } from '../../context/BadgeContext';
 
 interface Props {
   backgroundColor: string;

@@ -140,26 +140,14 @@ export default function IndoorSchematicNavScreen() {
 
   // TTS: Setup and configuration
   useEffect(() => {
-    // Set TTS defaults and add listeners (only once)
+    // Set TTS defaults (only once)
     TTS.setDefaultLanguage('en-US');
     TTS.setDefaultRate(0.5);
     TTS.setDefaultPitch(1.0);
     
-    const onTtsError = (e: any) => console.warn('TTS error', e);
-    const onTtsStart = () => {};
-    const onTtsFinish = () => {};
-    
-    TTS.addEventListener('tts-start', onTtsStart);
-    TTS.addEventListener('tts-finish', onTtsFinish);
-    TTS.addEventListener('tts-cancel', onTtsFinish);
-    TTS.addEventListener('tts-error', onTtsError);
-    
     return () => {
+      // Just stop TTS on cleanup - avoid removeEventListener issues
       TTS.stop();
-      TTS.removeEventListener('tts-start', onTtsStart);
-      TTS.removeEventListener('tts-finish', onTtsFinish);
-      TTS.removeEventListener('tts-cancel', onTtsFinish);
-      TTS.removeEventListener('tts-error', onTtsError);
     };
   }, []);
 
