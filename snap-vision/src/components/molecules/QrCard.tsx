@@ -7,6 +7,7 @@ import { getQRCodeMappingByValue } from '../../services/qrService';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import firestore from '@react-native-firebase/firestore';
+import { useBadges } from '../../context/BadgeContext';
 
 interface Props {
   backgroundColor: string;
@@ -42,6 +43,7 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const { unlock } = useBadges();
 
   // Popup states
   const [showErrorPopup, setShowErrorPopup] = useState(false);
@@ -72,6 +74,14 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
       }
 
       //consolelog('QR mapping found:', JSON.stringify(qrMapping));
+
+      // Unlock the QR scan badge for successful scan
+      try {
+        await unlock('qr-scan');
+      } catch (badgeError) {
+        // Don't fail the whole operation if badge unlock fails
+        console.warn('Failed to unlock qr-scan badge:', badgeError);
+      }
 
       // Use the mapping as saved by createQRCodeMapping
       const { locationId, buildingId, buildingName, roomId, floorId } = qrMapping;

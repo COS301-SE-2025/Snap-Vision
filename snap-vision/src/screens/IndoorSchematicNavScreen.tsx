@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity, Modal } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity, Modal, FlatList } from 'react-native';
 // import FloorSelector from '../components/molecules/FloorSelector';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -10,13 +10,14 @@ import SettingsHeader from '../components/molecules/SettingsHeader';
 import IndoorSchematicMap from '../components/organisms/IndoorSchematicMap';
 import StepsBottomSheet from '../components/molecules/StepsBottomSheet';
 import * as NavUtils from '../utils/navigationUtils';
-import { Picker } from '@react-native-picker/picker';
 import StandardPopup from '../components/atoms/StandardPopup';
 import DestinationReachedPopup from '../components/molecules/DestinationReachedPopup';
 import QRScanner from '../components/molecules/QRScanner';
 import { getQRCodeMappingByValue } from '../services/qrService';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
+import TTS from 'react-native-tts';
+import { useBadges } from '../context/BadgeContext';
 
 type ParamList = {
   IndoorSchematicNav: {
@@ -60,6 +61,7 @@ export default function IndoorSchematicNavScreen() {
   const { isDark } = useTheme();
   const { isAccessibilityModeEnabled } = useAccessibility();
   const colors = getThemeColors(isDark);
+  const { unlock } = useBadges();
 
   // Master data (ALL floors)
   const [allRooms, setAllRooms] = useState<RoomPOI[]>([]);
@@ -126,9 +128,50 @@ export default function IndoorSchematicNavScreen() {
   // QR Scanner state
   const [qrScannerVisible, setQrScannerVisible] = useState(false);
 
+  // Custom Floor Dropdown state
+  const [floorDropdownVisible, setFloorDropdownVisible] = useState(false);
+
+  // TTS state
+  const [isTtsEnabled, setIsTtsEnabled] = useState(true);
+
   // Floorplan image state
   const [floorplanUrl, setFloorplanUrl] = useState<string | null>(null);
   const [floorplanLoading, setFloorplanLoading] = useState<boolean>(false);
+
+  // TTS: Setup and configuration
+  useEffect(() => {
+    // Set TTS defaults and add listeners (only once)
+    TTS.setDefaultLanguage('en-US');
+    TTS.setDefaultRate(0.5);
+    TTS.setDefaultPitch(1.0);
+    
+    const onTtsError = (e: any) => console.warn('TTS error', e);
+    const onTtsStart = () => {};
+    const onTtsFinish = () => {};
+    
+    TTS.addEventListener('tts-start', onTtsStart);
+    TTS.addEventListener('tts-finish', onTtsFinish);
+    TTS.addEventListener('tts-cancel', onTtsFinish);
+    TTS.addEventListener('tts-error', onTtsError);
+    
+    return () => {
+      TTS.stop();
+      TTS.removeEventListener('tts-start', onTtsStart);
+      TTS.removeEventListener('tts-finish', onTtsFinish);
+      TTS.removeEventListener('tts-cancel', onTtsFinish);
+      TTS.removeEventListener('tts-error', onTtsError);
+    };
+  }, []);
+
+  // TTS: Speak the current step's instruction when it changes
+  useEffect(() => {
+    if (isTtsEnabled && steps.length && steps[currentStep] && sheetOpen) {
+      TTS.stop();
+      setTimeout(() => {
+        TTS.speak(steps[currentStep].instruction);
+      }, 250);
+    }
+  }, [currentStep, steps, sheetOpen, isTtsEnabled]);
 
   // Helper function to find nearest room to a point
   const findNearestRoom = (rooms: RoomPOI[], pos: { x: number; y: number }, floorId: string) => {
@@ -336,6 +379,14 @@ export default function IndoorSchematicNavScreen() {
       }
 
       //consolelog('QR mapping found:', JSON.stringify(qrMapping));
+
+      // Unlock the QR scan badge for successful scan
+      try {
+        await unlock('qr-scan');
+      } catch (badgeError) {
+        // Don't fail the whole operation if badge unlock fails
+        console.warn('Failed to unlock qr-scan badge:', badgeError);
+      }
 
       // Use the mapping as saved by createQRCodeMapping
       const {
@@ -580,6 +631,14 @@ export default function IndoorSchematicNavScreen() {
     setCurrentStep(0);
     setSheetOpen(true);
 
+    // TTS: Announce route found
+    if (isTtsEnabled && filtered.length > 0) {
+      TTS.stop();
+      setTimeout(() => {
+        TTS.speak(`Route found with ${filtered.length} steps. ${filtered[0].instruction}`);
+      }, 500);
+    }
+
     const firstStep = filtered[0];
     if (firstStep?.coordinates) setCurrentPos(firstStep.coordinates);
     if ((firstStep as any)?.floorId) setSelectedFloorId(String((firstStep as any).floorId));
@@ -601,8 +660,18 @@ export default function IndoorSchematicNavScreen() {
     if (currentStep >= steps.length - 1) {
       // Use custom destination reached popup with confetti instead of standard popup
       const destinationRoom = allRooms.find((room) => room.id === endId);
-      setReachedDestination(destinationRoom?.name || 'Your Destination');
+      const destinationName = destinationRoom?.name || 'Your Destination';
+      setReachedDestination(destinationName);
       setShowDestinationReachedPopup(true);
+      
+      // TTS: Announce arrival
+      if (isTtsEnabled) {
+        TTS.stop();
+        setTimeout(() => {
+          TTS.speak(`You have arrived at ${destinationName}`);
+        }, 250);
+      }
+      
       resetRoute();
       return;
     }
@@ -644,7 +713,7 @@ export default function IndoorSchematicNavScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <SettingsHeader title={`Indoor Map — ${buildingName}`} />
-        <View style={styles.center}>
+        <View style={styles.loadingContainer}>
           <ActivityIndicator />
         </View>
       </View>
@@ -655,19 +724,59 @@ export default function IndoorSchematicNavScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title={`Indoor Map — ${buildingName}`} />
 
-      {/* Top bar: floor picker */}
+      {/* Top bar: custom floor picker */}
       <View style={styles.topBar}>
-        <Picker
-          selectedValue={selectedFloorId}
-          onValueChange={(itemValue) => setSelectedFloorId(itemValue)}
-          style={{ flex: 1, color: colors.text }}
-          dropdownIconColor={colors.text}
+        <TouchableOpacity
+          style={[styles.floorDropdown, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => setFloorDropdownVisible(true)}
         >
-          {floors.map((f) => (
-            <Picker.Item key={f} label={f} value={f} color={colors.text} />
-          ))}
-        </Picker>
+          <Text style={[styles.floorDropdownText, { color: colors.text }]}>
+            Floor: {selectedFloorId}
+          </Text>
+          <Icon name="chevron-down" size={20} color={colors.text} />
+        </TouchableOpacity>
       </View>
+
+      {/* Custom Floor Dropdown Modal */}
+      <Modal
+        visible={floorDropdownVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setFloorDropdownVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setFloorDropdownVisible(false)}
+        >
+          <View style={[styles.dropdownContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.dropdownTitle, { color: colors.text }]}>Select Floor</Text>
+            <FlatList
+              data={floors}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.dropdownItem,
+                    selectedFloorId === item && { backgroundColor: colors.primary + '20' }
+                  ]}
+                  onPress={() => {
+                    setSelectedFloorId(item);
+                    setFloorDropdownVisible(false);
+                  }}
+                >
+                  <Text style={[styles.dropdownItemText, { color: colors.text }]}>
+                    {item}
+                  </Text>
+                  {selectedFloorId === item && (
+                    <Icon name="checkmark" size={20} color={colors.primary} />
+                  )}
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Prompt banner */}
       <View
@@ -743,7 +852,7 @@ export default function IndoorSchematicNavScreen() {
         </TouchableOpacity>
       )}
 
-      {/* Floating AR button Uncomment to see AR */}
+      {/* Floating AR button
       {steps.length > 0 && startId && endId && (
         <TouchableOpacity
           onPress={() =>
@@ -760,6 +869,40 @@ export default function IndoorSchematicNavScreen() {
           style={[styles.fabAR, { backgroundColor: colors.card, borderColor: colors.border }]}
         >
           <Text style={{ color: colors.text, fontWeight: '700' }}>AR</Text>
+        </TouchableOpacity>
+      )} */}
+
+      {/* Floating TTS toggle button */}
+      {steps.length > 0 && (
+        <TouchableOpacity
+          onPress={() => {
+            setIsTtsEnabled(!isTtsEnabled);
+            if (!isTtsEnabled) {
+              // If enabling TTS and there's a current step, speak it
+              if (steps[currentStep]) {
+                TTS.stop();
+                setTimeout(() => {
+                  TTS.speak(steps[currentStep].instruction);
+                }, 250);
+              }
+            } else {
+              // If disabling TTS, stop any current speech
+              TTS.stop();
+            }
+          }}
+          style={[
+            styles.fabTTS, 
+            { 
+              backgroundColor: isTtsEnabled ? colors.primary : colors.card, 
+              borderColor: colors.border 
+            }
+          ]}
+        >
+          <Icon 
+            name={isTtsEnabled ? "volume-high" : "volume-mute"} 
+            size={20} 
+            color={isTtsEnabled ? "#FFFFFF" : colors.text} 
+          />
         </TouchableOpacity>
       )}
 
@@ -798,9 +941,9 @@ export default function IndoorSchematicNavScreen() {
         onClose={() => setShowDestinationReachedPopup(false)}
         themeColors={{
           primary: colors.primary,
-          background: colors.backgroundLighter || colors.background,
+          background: colors.background,
           text: colors.text,
-          success: colors.success || '#4CAF50',
+          success: '#4CAF50',
         }}
       />
     </View>
@@ -905,6 +1048,19 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
 
+  fabTTS: {
+    position: 'absolute',
+    right: 16,
+    top: 194,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    elevation: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
   fabTest: {
     position: 'absolute',
     right: 16,
@@ -931,5 +1087,63 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 8,
     marginTop: -2,
+  },
+
+  // Custom Floor Dropdown Styles
+  floorDropdown: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+
+  floorDropdownText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  dropdownContainer: {
+    width: '80%',
+    maxHeight: '50%',
+    borderRadius: 12,
+    borderWidth: 1,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+
+  dropdownTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+  },
+
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+
+  dropdownItemText: {
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
