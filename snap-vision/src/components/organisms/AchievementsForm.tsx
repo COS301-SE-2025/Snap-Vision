@@ -98,7 +98,7 @@ export default function AchievementsForm() {
           title="SHOP"
           variant="primary"
           backgroundColor={colors.primary}
-          textColor="#fff"
+          textColor={colors.background}
           onPress={() => navigation.navigate('ShopScreen')}
         />
       </View>

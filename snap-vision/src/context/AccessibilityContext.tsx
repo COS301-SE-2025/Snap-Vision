@@ -44,10 +44,10 @@ export const AccessibilityProvider = ({ children }: { children: React.ReactNode 
 
       setSettings({
         isHapticFeedbackEnabled: hapticEnabled !== null ? JSON.parse(hapticEnabled) : true,
-        isAccessibilityModeEnabled: accessibilityMode !== null ? JSON.parse(accessibilityMode) : false,
+        isAccessibilityModeEnabled:
+          accessibilityMode !== null ? JSON.parse(accessibilityMode) : false,
       });
     } catch (error) {
-
       // Use defaults if loading fails
       setSettings(defaultSettings);
     } finally {

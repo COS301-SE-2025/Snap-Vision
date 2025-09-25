@@ -420,7 +420,12 @@ const MapScreen = () => {
 
   const handleOpenIndoorNavigation = () => {
     if (selectedBuildingForIndoor) {
-      openIndoorNavigation(selectedBuildingForIndoor, navigation, setErrorPopupMessage, setShowErrorPopup);
+      openIndoorNavigation(
+        selectedBuildingForIndoor,
+        navigation,
+        setErrorPopupMessage,
+        setShowErrorPopup,
+      );
     } else if (hookSelectedPOI) {
       setSelectedBuildingForIndoor(hookSelectedPOI);
       openIndoorNavigation(hookSelectedPOI, navigation, setErrorPopupMessage, setShowErrorPopup);

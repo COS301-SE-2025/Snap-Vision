@@ -25,13 +25,16 @@ const DestinationSearch = ({
 
   return (
     <View
-      style={[styles.container, { backgroundColor: colors.card, borderBottomColor: colors.border }]}
+      style={[
+        styles.container,
+        { backgroundColor: colors.primary, borderBottomColor: colors.border },
+      ]}
     >
-      <Text style={[styles.label, { color: colors.text }]}>Where to?</Text>
+      <Text style={[styles.label, { color: colors.background }]}>Where to?</Text>
       <View
         style={[
           styles.searchBox,
-          { backgroundColor: colors.background, borderColor: colors.border },
+          { backgroundColor: colors.background, borderColor: colors.roleSecondary },
         ]}
       >
         <TextInput
@@ -45,7 +48,7 @@ const DestinationSearch = ({
           onPress={onSearch}
           style={[styles.button, { backgroundColor: colors.primary }]}
         >
-          <Icon name="search" size={30} color="white" />
+          <Icon name="search" size={30} color={colors.background} />
         </TouchableOpacity>
       </View>
 

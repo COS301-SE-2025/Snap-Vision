@@ -109,7 +109,7 @@ export default function LiveTrackingScreen() {
 
           // Load fingerprints after floorplan loads
           await loadFingerprints();
-        } 
+        }
       } catch (error) {
         //consoleerror('Failed to load floorplan:', error);
       }

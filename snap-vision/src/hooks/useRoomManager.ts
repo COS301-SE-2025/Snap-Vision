@@ -32,21 +32,21 @@ export function useRoomManager({ locationId, buildingId }: UseRoomManagerParams)
       try {
         setLoading(true);
         console.log(BT, 'Loading rooms for building:', buildingId);
-        
+
         const roomSnap = await firestore()
           .collection('locations')
           .doc(locationId)
           .collection('roomPOIs')
           .where('buildingId', '==', buildingId)
           .get();
-          
+
         const roomsData = roomSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as RoomPOI[];
         setAllRooms(roomsData);
-        
+
         const floorSet = Array.from(new Set(roomsData.map((r) => r.floorId))).sort();
         setFloors(floorSet);
         if (floorSet.length > 0) setSelectedFloorId(floorSet[0]);
-        
+
         console.log(BT, 'Rooms loaded:', roomsData.length, 'Floors:', floorSet);
       } catch (e) {
         console.error(BT, 'Rooms load error:', e);

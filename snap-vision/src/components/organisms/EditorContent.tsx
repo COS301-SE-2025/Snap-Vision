@@ -26,27 +26,33 @@ export default function AdminScreenContent({
     >
       <Text
         style={{
-          fontSize: 56,
-          fontFamily: 'PermanentMarkerRegular',
+          fontSize: 72,
+          fontFamily: 'ChicleRegular',
           color: colors.primary,
           textAlign: 'center',
-          marginBottom: 40,
-          transform: [{ rotate: '-3deg' }],
+          marginBottom: 3,
+          // transform: [{ rotate: '-3deg' }],
+          textShadowColor: colors.secondary,
+          textShadowOffset: { width: 1, height: 1 },
+          textShadowRadius: 1,
         }}
       >
-        Editor
+        {' Editor '}
       </Text>
       <Text
         style={{
-          fontSize: 52,
-          fontFamily: 'PermanentMarkerRegular',
+          fontSize: 72,
+          fontFamily: 'ChicleRegular',
           color: colors.primary,
           textAlign: 'center',
           marginBottom: 40,
-          transform: [{ rotate: '-3deg' }],
+          // transform: [{ rotate: '-3deg' }],
+          textShadowColor: colors.secondary,
+          textShadowOffset: { width: 1, height: 1 },
+          textShadowRadius: 1,
         }}
       >
-        DASHBOARD
+        {' DASHBOARD '}
       </Text>
       <View style={styles.buttonContainer} testID="button-container">
         <AppButton

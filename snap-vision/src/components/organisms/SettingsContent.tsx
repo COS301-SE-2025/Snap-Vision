@@ -1,6 +1,6 @@
 // SettingsContent.tsx
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import SearchInput from '../atoms/SettingsSearch';
 import SettingItem from '../molecules/SettingsItem';
 import { getThemeColors } from '../../theme';
@@ -24,7 +24,7 @@ export default function SettingsContent({ isDark, navigation }: Props) {
   ];
 
   return (
-    <View style={{ backgroundColor: colors.background }}>
+    <View style={[{ backgroundColor: colors.background }, styles.container]}>
       <View style={styles.listWrapper}>
         {items.map((item, index) => (
           <SettingItem
@@ -36,6 +36,12 @@ export default function SettingsContent({ isDark, navigation }: Props) {
           />
         ))}
       </View>
+
+      <Image
+        source={require('../../../assets/mascot_settings.png')}
+        style={styles.mascot}
+        resizeMode="contain"
+      />
     </View>
   );
 }
@@ -47,5 +53,18 @@ const styles = StyleSheet.create({
   },
   listWrapper: {
     marginTop: 24,
+  },
+  container: {
+    position: 'relative',
+    flex: 1,
+  },
+  mascot: {
+    position: 'absolute',
+    right: 12,
+    bottom: -320,
+    width: 180,
+    height: 180,
+    opacity: 0.9,
+    pointerEvents: 'none',
   },
 });
