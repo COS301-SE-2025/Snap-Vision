@@ -194,7 +194,9 @@ export default function AdminFloorplanEditorContent() {
         roomCount={roomManagement.roomMarkers.length}
         pathCount={pathManagement.pathMarkers.length}
         selectedPathId={pathManagement.selectedPathId}
-        onDeletePath={() => pathManagement.deleteSelectedPath(webViewRef)}
+        paths={pathManagement.pathMarkers}
+        roomMarkers={roomManagement.roomMarkers}
+        onDeletePath={(pathId) => pathManagement.deletePathById(pathId, webViewRef)}
         onDone={() => navigation.goBack()}
         colors={colors}
         webViewRef={webViewRef}
