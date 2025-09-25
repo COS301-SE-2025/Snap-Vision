@@ -57,7 +57,7 @@ export default function HomeContent() {
   }, [fetchRecentlyVisited]);
 
   return (
-    <ScrollView 
+    <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={true}
@@ -105,7 +105,10 @@ export default function HomeContent() {
       {/* Timetable Section */}
       <View style={styles.timetableSection}>
         <TouchableOpacity
-          style={[styles.timetableCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+          style={[
+            styles.timetableCard,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
           onPress={() => navigation.navigate('Timetable')}
           activeOpacity={0.7}
         >

@@ -223,7 +223,7 @@ describe('User Settings Functions', () => {
       });
 
       // Verify error was logged
-      expect(//consoleerror).toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalled();
     });
   });
 

@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ToastAndroid, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ToastAndroid,
+  Platform,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
@@ -15,15 +23,8 @@ import TimetableBackgroundService from '../../services/TimetableBackgroundServic
 export default function TimetableContent() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  
-  const {
-    entries,
-    isLoading,
-    error,
-    addEntry,
-    updateEntry,
-    deleteEntry,
-  } = useTimetable();
+
+  const { entries, isLoading, error, addEntry, updateEntry, deleteEntry } = useTimetable();
 
   const [showForm, setShowForm] = useState(false);
   const [editingEntry, setEditingEntry] = useState<TimetableEntry | null>(null);
@@ -52,16 +53,16 @@ export default function TimetableContent() {
     try {
       setAutoNavigationEnabled(enabled);
       await AsyncStorage.setItem('autoNavigationEnabled', JSON.stringify(enabled));
-      
+
       // Refresh notifications when auto-navigation setting changes
       try {
         await TimetableBackgroundService.getInstance().refreshNotifications();
         console.log('[TimetableContent] Refreshed notifications after toggling auto-navigation');
-        
+
         if (Platform.OS === 'android') {
           ToastAndroid.show(
-            enabled ? 'Auto-navigation enabled' : 'Auto-navigation disabled', 
-            ToastAndroid.SHORT
+            enabled ? 'Auto-navigation enabled' : 'Auto-navigation disabled',
+            ToastAndroid.SHORT,
           );
         }
       } catch (refreshError) {
@@ -73,12 +74,15 @@ export default function TimetableContent() {
   };
 
   // Group entries by day
-  const entriesByDay = DAYS_OF_WEEK.reduce((acc, day) => {
-    acc[day] = entries
-      .filter(entry => entry.day === day)
-      .sort((a, b) => a.startTime.localeCompare(b.startTime));
-    return acc;
-  }, {} as Record<string, TimetableEntry[]>);
+  const entriesByDay = DAYS_OF_WEEK.reduce(
+    (acc, day) => {
+      acc[day] = entries
+        .filter((entry) => entry.day === day)
+        .sort((a, b) => a.startTime.localeCompare(b.startTime));
+      return acc;
+    },
+    {} as Record<string, TimetableEntry[]>,
+  );
 
   const handleAddEntry = () => {
     console.log('Add entry button pressed'); // Debug log
@@ -106,7 +110,7 @@ export default function TimetableContent() {
       try {
         await TimetableBackgroundService.getInstance().refreshNotifications();
         console.log('[TimetableContent] Refreshed notifications after entry deletion');
-        
+
         // Show a toast notification
         if (Platform.OS === 'android') {
           ToastAndroid.show('Entry deleted and notifications refreshed', ToastAndroid.SHORT);
@@ -118,7 +122,9 @@ export default function TimetableContent() {
     setShowDeleteConfirm(false);
   };
 
-  const handleSubmitEntry = async (entryData: Omit<TimetableEntry, 'id' | 'userId' | 'createdAt'>) => {
+  const handleSubmitEntry = async (
+    entryData: Omit<TimetableEntry, 'id' | 'userId' | 'createdAt'>,
+  ) => {
     try {
       if (editingEntry) {
         await updateEntry(editingEntry.id, entryData);
@@ -130,7 +136,7 @@ export default function TimetableContent() {
       try {
         await TimetableBackgroundService.getInstance().refreshNotifications();
         console.log('[TimetableContent] Refreshed notifications after timetable update');
-        
+
         // Show a toast notification
         if (Platform.OS === 'android') {
           ToastAndroid.show('Timetable updated and notifications refreshed', ToastAndroid.SHORT);
@@ -138,7 +144,7 @@ export default function TimetableContent() {
       } catch (refreshError) {
         console.error('[TimetableContent] Failed to refresh notifications:', refreshError);
       }
-      
+
       setShowForm(false);
       setEditingEntry(null);
     } catch (error) {
@@ -154,18 +160,18 @@ export default function TimetableContent() {
   const getSubjectColor = (course: string) => {
     const colorOptions = [
       '#E3F2FD', // Light Blue
-      '#E8F5E8', // Light Green  
+      '#E8F5E8', // Light Green
       '#FFF3E0', // Light Orange
       '#F3E5F5', // Light Purple
       '#FFEBEE', // Light Pink
       '#E0F2F1', // Light Teal
     ];
-    
+
     let hash = 0;
     for (let i = 0; i < course.length; i++) {
       hash = course.charCodeAt(i) + ((hash << 5) - hash);
     }
-    
+
     return colorOptions[Math.abs(hash) % colorOptions.length];
   };
 
@@ -209,9 +215,7 @@ export default function TimetableContent() {
       <View style={styles.settingsSection}>
         <View style={styles.settingRow}>
           <View style={styles.settingInfo}>
-            <Text style={[styles.settingTitle, { color: colors.text }]}>
-              Auto Navigation
-            </Text>
+            <Text style={[styles.settingTitle, { color: colors.text }]}>Auto Navigation</Text>
             <Text style={[styles.settingSubtitle, { color: colors.secondary }]}>
               Automatically generate routes 10 minutes before class
             </Text>
@@ -221,7 +225,7 @@ export default function TimetableContent() {
               styles.toggle,
               {
                 backgroundColor: autoNavigationEnabled ? colors.primary : colors.border,
-              }
+              },
             ]}
             onPress={() => toggleAutoNavigation(!autoNavigationEnabled)}
           >
@@ -231,13 +235,13 @@ export default function TimetableContent() {
                 {
                   backgroundColor: colors.background,
                   transform: [{ translateX: autoNavigationEnabled ? 20 : 2 }],
-                }
+                },
               ]}
             />
           </TouchableOpacity>
         </View>
       </View>
-      
+
       {/* Add Class Button - Fixed styling to match other buttons */}
       <View style={styles.headerActions}>
         <AppButton
@@ -260,12 +264,12 @@ export default function TimetableContent() {
           </View>
         ) : (
           <View style={styles.timetableGrid}>
-            {DAYS_OF_WEEK.map(day => (
+            {DAYS_OF_WEEK.map((day) => (
               <View key={day} style={styles.daySection}>
                 <Text style={[styles.dayHeader, { color: colors.primary }]}>
                   {day.toUpperCase()}
                 </Text>
-                
+
                 {entriesByDay[day].length === 0 ? (
                   <View style={[styles.emptyDay, { borderColor: colors.border }]}>
                     <Text style={[styles.emptyDayText, { color: colors.secondary }]}>
@@ -274,7 +278,7 @@ export default function TimetableContent() {
                   </View>
                 ) : (
                   <View style={styles.dayEntries}>
-                    {entriesByDay[day].map(entry => (
+                    {entriesByDay[day].map((entry) => (
                       <TouchableOpacity
                         key={entry.id}
                         style={[
@@ -282,12 +286,15 @@ export default function TimetableContent() {
                           {
                             backgroundColor: getSubjectColor(entry.course),
                             borderColor: colors.primary,
-                          }
+                          },
                         ]}
                         onPress={() => handleEditEntry(entry)}
                       >
                         <View style={styles.entryHeader}>
-                          <Text style={[styles.courseText, { color: colors.text }]} numberOfLines={1}>
+                          <Text
+                            style={[styles.courseText, { color: colors.text }]}
+                            numberOfLines={1}
+                          >
                             {entry.course}
                           </Text>
                           <TouchableOpacity
@@ -300,14 +307,17 @@ export default function TimetableContent() {
                             <Icon name="close" size={16} color="#FF6B6B" />
                           </TouchableOpacity>
                         </View>
-                        
+
                         <Text style={[styles.timeText, { color: colors.secondary }]}>
                           {formatTime(entry.startTime)} - {formatTime(entry.endTime)}
                         </Text>
-                        
+
                         <View style={styles.venueRow}>
                           <Icon name="map-marker" size={14} color={colors.secondary} />
-                          <Text style={[styles.venueText, { color: colors.secondary }]} numberOfLines={1}>
+                          <Text
+                            style={[styles.venueText, { color: colors.secondary }]}
+                            numberOfLines={1}
+                          >
                             {entry.venue}
                           </Text>
                         </View>

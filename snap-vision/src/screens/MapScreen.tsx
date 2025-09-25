@@ -176,7 +176,7 @@ const MapScreen = () => {
     building: any;
   }>({ visible: false, entry: null, building: null });
 
-  // timetable navigation hook 
+  // timetable navigation hook
   const { checkForUpcomingClasses, findBuildingForEntry } = useTimetableNavigation({
     currentLocation,
     isMapReady,
@@ -198,35 +198,35 @@ const MapScreen = () => {
   //  auto navigation handlers
   const handleAutoNavigationConfirm = () => {
     const { entry, building } = autoNavigationPopup;
-    
+
     if (building && building.centroid) {
       console.log('[MapScreen] User confirmed auto-navigation, setting up route...');
-      
+
       // Clear any existing route first
       webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
-      
+
       // Now set up the navigation
       setDestination(building.name || building.title || entry.venue);
       setDestinationCoords([building.centroid.longitude, building.centroid.latitude]);
       setHookSelectedPOI(building);
-      
+
       // Generate route
       fetchRoute([building.centroid.longitude, building.centroid.latitude]);
-      
+
       // Update status
       setStatus(`Auto-route to ${entry.course} at ${entry.venue}`);
-      
+
       // Show directions sheet
       setShowDirectionsSheet(true);
     }
-    
+
     // Close the popup
     setAutoNavigationPopup({ visible: false, entry: null, building: null });
   };
 
   const handleAutoNavigationDismiss = () => {
     console.log('[MapScreen] User dismissed auto-navigation');
-    
+
     // Just close the popup - no navigation setup was done
     setAutoNavigationPopup({ visible: false, entry: null, building: null });
   };
@@ -528,105 +528,106 @@ const MapScreen = () => {
     }
   }, [tempMessage]);
 
-    // Check for notification-triggered popup when screen focuses
-    useFocusEffect(
-      useCallback(() => {
-        const checkForNotificationPopup = async () => {
-          try {
-            console.log('[MapScreen] Checking for pending class popup...');
-            
-            const popupData = await AsyncStorage.getItem('pendingClassPopup');
-            if (popupData) {
-              const classData = JSON.parse(popupData);
-              await AsyncStorage.removeItem('pendingClassPopup');
-              
-              console.log('[MapScreen] Found pending class popup:', classData);
-              
-              // Wait a bit for POIs to load if they haven't yet
-              let retries = 0;
-              const maxRetries = 10;
-              
-              const waitForPOIs = () => {
-                if (pois && pois.length > 0) {
-                  console.log('[MapScreen] POIs loaded, processing popup');
-                  processClassPopup(classData);
-                } else if (retries < maxRetries) {
-                  retries++;
-                  console.log('[MapScreen] Waiting for POIs to load, retry', retries);
-                  setTimeout(waitForPOIs, 500);
-                } else {
-                  console.log('[MapScreen] POIs not loaded, using coordinates fallback');
-                  processClassPopup(classData);
-                }
-              };
-              
-              waitForPOIs();
-            }
-          } catch (error) {
-            console.error('[MapScreen] Error checking notification popup:', error);
-          }
-        };
-    
-        const processClassPopup = (classData: any) => {
-          // Find the building for this class
-          let building = null;
-          
-          // First try by buildingId
-          if (classData.buildingId && pois) {
-            building = pois.find(poi => poi.id === classData.buildingId);
-          }
-          
-          // Then try by building name
-          if (!building && classData.buildingName && pois) {
-            building = pois.find(poi => 
-              poi.name?.toLowerCase().includes(classData.buildingName.toLowerCase()) ||
-              poi.title?.toLowerCase().includes(classData.buildingName.toLowerCase())
-            );
-          }
-          
-          // Use coordinates as fallback
-          if (!building && classData.lat && classData.lng) {
-            building = {
-              id: 'notification-building',
-              name: classData.buildingName || classData.venue,
-              title: classData.buildingName || classData.venue,
-              centroid: {
-                latitude: parseFloat(classData.lat),
-                longitude: parseFloat(classData.lng),
+  // Check for notification-triggered popup when screen focuses
+  useFocusEffect(
+    useCallback(() => {
+      const checkForNotificationPopup = async () => {
+        try {
+          console.log('[MapScreen] Checking for pending class popup...');
+
+          const popupData = await AsyncStorage.getItem('pendingClassPopup');
+          if (popupData) {
+            const classData = JSON.parse(popupData);
+            await AsyncStorage.removeItem('pendingClassPopup');
+
+            console.log('[MapScreen] Found pending class popup:', classData);
+
+            // Wait a bit for POIs to load if they haven't yet
+            let retries = 0;
+            const maxRetries = 10;
+
+            const waitForPOIs = () => {
+              if (pois && pois.length > 0) {
+                console.log('[MapScreen] POIs loaded, processing popup');
+                processClassPopup(classData);
+              } else if (retries < maxRetries) {
+                retries++;
+                console.log('[MapScreen] Waiting for POIs to load, retry', retries);
+                setTimeout(waitForPOIs, 500);
+              } else {
+                console.log('[MapScreen] POIs not loaded, using coordinates fallback');
+                processClassPopup(classData);
               }
             };
+
+            waitForPOIs();
           }
-          
-          if (building && building.centroid) {
-            console.log('[MapScreen] Triggering auto navigation popup for:', classData.course);
-            
-            // Create a mock entry for the popup
-            const mockEntry = {
-              id: classData.entryKey,
-              course: classData.course,
-              venue: classData.venue,
-              startTime: classData.startTime,
-              buildingId: classData.buildingId,
-              buildingName: classData.buildingName,
-            };
-            
-            // Trigger the auto navigation popup
-            setAutoNavigationPopup({
-              visible: true,
-              entry: mockEntry,
-              building: building,
-            });
-          } else {
-            console.log('[MapScreen] Could not find building for notification popup');
-          }
-        };
-    
-        // Only check when map is ready
-        if (isMapReady) {
-          checkForNotificationPopup();
+        } catch (error) {
+          console.error('[MapScreen] Error checking notification popup:', error);
         }
-      }, [isMapReady, pois, setAutoNavigationPopup])
-    );
+      };
+
+      const processClassPopup = (classData: any) => {
+        // Find the building for this class
+        let building = null;
+
+        // First try by buildingId
+        if (classData.buildingId && pois) {
+          building = pois.find((poi) => poi.id === classData.buildingId);
+        }
+
+        // Then try by building name
+        if (!building && classData.buildingName && pois) {
+          building = pois.find(
+            (poi) =>
+              poi.name?.toLowerCase().includes(classData.buildingName.toLowerCase()) ||
+              poi.title?.toLowerCase().includes(classData.buildingName.toLowerCase()),
+          );
+        }
+
+        // Use coordinates as fallback
+        if (!building && classData.lat && classData.lng) {
+          building = {
+            id: 'notification-building',
+            name: classData.buildingName || classData.venue,
+            title: classData.buildingName || classData.venue,
+            centroid: {
+              latitude: parseFloat(classData.lat),
+              longitude: parseFloat(classData.lng),
+            },
+          };
+        }
+
+        if (building && building.centroid) {
+          console.log('[MapScreen] Triggering auto navigation popup for:', classData.course);
+
+          // Create a mock entry for the popup
+          const mockEntry = {
+            id: classData.entryKey,
+            course: classData.course,
+            venue: classData.venue,
+            startTime: classData.startTime,
+            buildingId: classData.buildingId,
+            buildingName: classData.buildingName,
+          };
+
+          // Trigger the auto navigation popup
+          setAutoNavigationPopup({
+            visible: true,
+            entry: mockEntry,
+            building: building,
+          });
+        } else {
+          console.log('[MapScreen] Could not find building for notification popup');
+        }
+      };
+
+      // Only check when map is ready
+      if (isMapReady) {
+        checkForNotificationPopup();
+      }
+    }, [isMapReady, pois, setAutoNavigationPopup]),
+  );
 
   //tts and haptic feedback effect
   useEffect(() => {
@@ -653,53 +654,53 @@ const MapScreen = () => {
   }, [isNavigating, steps, currentStep, shouldStartTTS, isHapticFeedbackEnabled, isVoiceEnabled]);
 
   // deep link handling
-useEffect(() => {
-  if (!hasHandledDeepLink && params && params.lat && params.lng && currentLocation) {
-    const lat = parseFloat(params.lat);
-    const lng = parseFloat(params.lng);
-    
-    // Check if this is from a notification
-    const isFromNotification = params.fromNotification || params.course || params.venue;
-    
-    if (isFromNotification) {
-      setDestination(`${params.course || 'Class'} at ${params.venue || 'Venue'}`);
-      setStatus('Auto-navigating to your class location');
-      
-      // Trigger the popup if we have the course info
-      if (params.course) {
-        setTimeout(() => {
-          setAutoNavigationPopup({
-            visible: true,
-            entry: {
-              course: params.course,
-              venue: params.venue,
-              startTime: params.startTime,
-            },
-            building: {
-              name: params.venue,
-              centroid: { latitude: lat, longitude: lng }
-            },
-          });
-        }, 1000); // Small delay to ensure map is ready
+  useEffect(() => {
+    if (!hasHandledDeepLink && params && params.lat && params.lng && currentLocation) {
+      const lat = parseFloat(params.lat);
+      const lng = parseFloat(params.lng);
+
+      // Check if this is from a notification
+      const isFromNotification = params.fromNotification || params.course || params.venue;
+
+      if (isFromNotification) {
+        setDestination(`${params.course || 'Class'} at ${params.venue || 'Venue'}`);
+        setStatus('Auto-navigating to your class location');
+
+        // Trigger the popup if we have the course info
+        if (params.course) {
+          setTimeout(() => {
+            setAutoNavigationPopup({
+              visible: true,
+              entry: {
+                course: params.course,
+                venue: params.venue,
+                startTime: params.startTime,
+              },
+              building: {
+                name: params.venue,
+                centroid: { latitude: lat, longitude: lng },
+              },
+            });
+          }, 1000); // Small delay to ensure map is ready
+        }
+      } else {
+        setDestination("Friend's Location");
       }
-    } else {
-      setDestination("Friend's Location");
+
+      setDestinationCoords([lng, lat]);
+      fetchRoute([lng, lat]);
+      setHasHandledDeepLink(true);
     }
-    
-    setDestinationCoords([lng, lat]);
-    fetchRoute([lng, lat]);
-    setHasHandledDeepLink(true);
-  }
-}, [
-  params,
-  currentLocation,
-  hasHandledDeepLink,
-  fetchRoute,
-  setDestination,
-  setDestinationCoords,
-  setStatus,
-  setAutoNavigationPopup,
-]);
+  }, [
+    params,
+    currentLocation,
+    hasHandledDeepLink,
+    fetchRoute,
+    setDestination,
+    setDestinationCoords,
+    setStatus,
+    setAutoNavigationPopup,
+  ]);
 
   // location availability check
   useEffect(() => {

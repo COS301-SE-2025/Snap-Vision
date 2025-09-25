@@ -1,5 +1,10 @@
 import { AppState, AppStateStatus } from 'react-native';
-import notifee, { TimestampTrigger, TriggerType, AndroidImportance, EventType } from '@notifee/react-native';
+import notifee, {
+  TimestampTrigger,
+  TriggerType,
+  AndroidImportance,
+  EventType,
+} from '@notifee/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
@@ -47,13 +52,13 @@ class TimetableBackgroundService {
 
   async start() {
     if (this.isRunning) return;
-    
+
     console.log('[TimetableService] Starting background service');
     this.isRunning = true;
-    
+
     // Schedule notifications for the next 7 days
     await this.scheduleWeekNotifications();
-    
+
     // Handle app state changes using the new subscription pattern
     this.appStateSubscription = AppState.addEventListener('change', this.handleAppStateChange);
   }
@@ -61,7 +66,7 @@ class TimetableBackgroundService {
   stop() {
     console.log('[TimetableService] Stopping background service');
     this.isRunning = false;
-    
+
     // Remove the app state listener using the subscription
     if (this.appStateSubscription) {
       this.appStateSubscription.remove();
@@ -96,10 +101,13 @@ class TimetableBackgroundService {
         return [];
       }
 
-      const entries: TimetableEntry[] = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as TimetableEntry));
+      const entries: TimetableEntry[] = snapshot.docs.map(
+        (doc) =>
+          ({
+            id: doc.id,
+            ...doc.data(),
+          }) as TimetableEntry,
+      );
 
       console.log('[TimetableService] Found', entries.length, 'timetable entries');
       return entries;
@@ -124,7 +132,7 @@ class TimetableBackgroundService {
 
       for (const locationDoc of locationsSnapshot.docs) {
         const locationId = locationDoc.id;
-        
+
         try {
           const buildingPOIsSnapshot = await firestore()
             .collection(`locations/${locationId}/buildingPOIs`)
@@ -141,7 +149,12 @@ class TimetableBackgroundService {
             }
           });
         } catch (locationError) {
-          console.warn('[TimetableService] Error fetching POIs for location', locationId, ':', locationError);
+          console.warn(
+            '[TimetableService] Error fetching POIs for location',
+            locationId,
+            ':',
+            locationError,
+          );
         }
       }
 
@@ -158,7 +171,7 @@ class TimetableBackgroundService {
 
     // First try to find by buildingId
     if (entry.buildingId) {
-      const buildingById = pois.find(poi => poi.id === entry.buildingId);
+      const buildingById = pois.find((poi) => poi.id === entry.buildingId);
       if (buildingById && buildingById.centroid) {
         return buildingById;
       }
@@ -166,9 +179,10 @@ class TimetableBackgroundService {
 
     // Then try by building name
     if (entry.buildingName) {
-      const buildingByName = pois.find(poi => 
-        poi.name?.toLowerCase().includes(entry.buildingName!.toLowerCase()) ||
-        poi.title?.toLowerCase().includes(entry.buildingName!.toLowerCase())
+      const buildingByName = pois.find(
+        (poi) =>
+          poi.name?.toLowerCase().includes(entry.buildingName!.toLowerCase()) ||
+          poi.title?.toLowerCase().includes(entry.buildingName!.toLowerCase()),
       );
       if (buildingByName && buildingByName.centroid) {
         return buildingByName;
@@ -176,11 +190,12 @@ class TimetableBackgroundService {
     }
 
     // Finally by venue name
-    const buildingByVenue = pois.find(poi => 
-      poi.name?.toLowerCase().includes(entry.venue.toLowerCase()) ||
-      poi.title?.toLowerCase().includes(entry.venue.toLowerCase()) ||
-      entry.venue.toLowerCase().includes(poi.name?.toLowerCase() || '') ||
-      entry.venue.toLowerCase().includes(poi.title?.toLowerCase() || '')
+    const buildingByVenue = pois.find(
+      (poi) =>
+        poi.name?.toLowerCase().includes(entry.venue.toLowerCase()) ||
+        poi.title?.toLowerCase().includes(entry.venue.toLowerCase()) ||
+        entry.venue.toLowerCase().includes(poi.name?.toLowerCase() || '') ||
+        entry.venue.toLowerCase().includes(poi.title?.toLowerCase() || ''),
     );
 
     return buildingByVenue && buildingByVenue.centroid ? buildingByVenue : null;
@@ -210,14 +225,11 @@ class TimetableBackgroundService {
         );
       }
 
-      const [entries, pois] = await Promise.all([
-        this.getTimetableEntries(),
-        this.getPOIs()
-      ]);
+      const [entries, pois] = await Promise.all([this.getTimetableEntries(), this.getPOIs()]);
 
       const mapping: Record<string, string> = {};
       const now = new Date();
-      
+
       console.log('[TimetableService] Current time:', now.toLocaleString());
       console.log('[TimetableService] Scheduling notifications for next 7 days');
 
@@ -225,25 +237,47 @@ class TimetableBackgroundService {
       for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
         const targetDate = new Date(now.getTime() + dayOffset * 24 * 60 * 60 * 1000);
         const targetDayName = this.getDayName(targetDate.getDay());
-        
+
         console.log('[TimetableService] Processing day:', targetDayName, targetDate.toDateString());
 
-        const dayEntries = entries.filter(entry => entry.day === targetDayName);
+        const dayEntries = entries.filter((entry) => entry.day === targetDayName);
         console.log('[TimetableService] Found', dayEntries.length, 'entries for', targetDayName);
 
         for (const entry of dayEntries) {
           // Calculate notification time: 10 minutes before class
           const [hh, mm] = (entry.startTime || '00:00').split(':').map(Number);
-          const scheduledDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), hh, mm, 0);
+          const scheduledDate = new Date(
+            targetDate.getFullYear(),
+            targetDate.getMonth(),
+            targetDate.getDate(),
+            hh,
+            mm,
+            0,
+          );
           const triggerTs = scheduledDate.getTime() - 10 * 60 * 1000; // 10 minutes before
-          
-          console.log('[TimetableService] Entry:', entry.course, 'at', entry.startTime, 'on', targetDayName);
+
+          console.log(
+            '[TimetableService] Entry:',
+            entry.course,
+            'at',
+            entry.startTime,
+            'on',
+            targetDayName,
+          );
           console.log('[TimetableService] Class time:', scheduledDate.toLocaleString());
-          console.log('[TimetableService] Notification time:', new Date(triggerTs).toLocaleString());
+          console.log(
+            '[TimetableService] Notification time:',
+            new Date(triggerTs).toLocaleString(),
+          );
 
           // Skip if the notification time has already passed
           if (triggerTs <= now.getTime()) {
-            console.log('[TimetableService] Skipping past time for:', entry.course, 'on', targetDayName);
+            console.log(
+              '[TimetableService] Skipping past time for:',
+              entry.course,
+              'on',
+              targetDayName,
+            );
             continue;
           }
 
@@ -260,7 +294,12 @@ class TimetableBackgroundService {
             timestamp: triggerTs,
           };
 
-          console.log('[TimetableService] Creating notification for:', entry.course, 'trigger timestamp:', triggerTs);
+          console.log(
+            '[TimetableService] Creating notification for:',
+            entry.course,
+            'trigger timestamp:',
+            triggerTs,
+          );
 
           const notifId = await notifee.createTriggerNotification(
             {
@@ -291,7 +330,14 @@ class TimetableBackgroundService {
 
           if (notifId) {
             mapping[entryKey] = notifId;
-            console.log('[TimetableService] Successfully scheduled notification', entryKey, 'with ID', notifId, 'for', new Date(triggerTs).toLocaleString());
+            console.log(
+              '[TimetableService] Successfully scheduled notification',
+              entryKey,
+              'with ID',
+              notifId,
+              'for',
+              new Date(triggerTs).toLocaleString(),
+            );
           } else {
             console.log('[TimetableService] Failed to create notification for', entryKey);
           }
@@ -299,8 +345,11 @@ class TimetableBackgroundService {
       }
 
       await AsyncStorage.setItem(this.SCHEDULED_KEY, JSON.stringify(mapping));
-      console.log('[TimetableService] Scheduled', Object.keys(mapping).length, 'notifications for the week');
-      
+      console.log(
+        '[TimetableService] Scheduled',
+        Object.keys(mapping).length,
+        'notifications for the week',
+      );
     } catch (error) {
       console.error('[TimetableService] Error scheduling notifications:', error);
     }

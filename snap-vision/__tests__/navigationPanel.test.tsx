@@ -30,20 +30,20 @@ jest.mock('../src/components/molecules/TextToSpeech', () => {
 });
 
 const originalError = //consoleerror;
-beforeAll(() => {
-  //consoleerror = (...args) => {
-    if (
-      typeof args[0] === 'string' &&
-      (args[0].includes('was not wrapped in act') || args[0].includes('Warning: React'))
-    ) {
-      return;
-    }
-    originalError.call(console, ...args);
-  };
-});
+  beforeAll(() => {
+    console.error = (...args) => {
+      if (
+        typeof args[0] === 'string' &&
+        (args[0].includes('was not wrapped in act') || args[0].includes('Warning: React'))
+      ) {
+        return;
+      }
+      originalError.call(console, ...args);
+    };
+  });
 
 afterAll(() => {
-  //consoleerror = originalError;
+  console.error = originalError;
 });
 
 describe('NavigationPanel', () => {

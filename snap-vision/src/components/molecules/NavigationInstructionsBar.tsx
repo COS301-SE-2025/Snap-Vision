@@ -57,17 +57,18 @@ const NavigationInstructionsBar: React.FC<NavigationBarProps> = ({
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: themeColors.card, borderColor: themeColors.border },
+      ]}
+    >
       {/* Step Icon and Instruction */}
       <View style={styles.instructionContainer}>
         <View style={[styles.iconContainer, { backgroundColor: getStepColor(currentStep.type) }]}>
-          <MaterialIcons 
-            name={getStepIcon(currentStep.type)} 
-            size={20} 
-            color="white" 
-          />
+          <MaterialIcons name={getStepIcon(currentStep.type)} size={20} color="white" />
         </View>
-        
+
         <View style={styles.textContainer}>
           <Text style={[styles.instruction, { color: themeColors.text }]} numberOfLines={2}>
             {currentStep.instruction}
@@ -85,14 +86,14 @@ const NavigationInstructionsBar: React.FC<NavigationBarProps> = ({
 
       {/* Action Buttons */}
       <View style={styles.actionsContainer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: themeColors.background }]}
           onPress={onShowAllDirections}
         >
           <MaterialIcons name="list" size={18} color={themeColors.primary} />
         </TouchableOpacity>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: themeColors.background }]}
           onPress={onStopNavigation}
         >
@@ -106,7 +107,7 @@ const NavigationInstructionsBar: React.FC<NavigationBarProps> = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 20, 
+    bottom: 20,
     left: 16,
     right: 16,
     flexDirection: 'row',
@@ -115,7 +116,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 }, 
+    shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 5,

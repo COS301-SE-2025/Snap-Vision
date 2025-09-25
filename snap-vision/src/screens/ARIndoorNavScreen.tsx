@@ -230,35 +230,42 @@ export default function ARIndoorNavScreen() {
   );
 
   const ar = useMemo(() => {
-  if (!currentPos || !dest) return { direction: 0, distance: 0, isAtDestination: false };
+    if (!currentPos || !dest) return { direction: 0, distance: 0, isAtDestination: false };
 
-  const target = nextWaypoint || dest;
-  const bearingMap = calculateARBearing(currentPos, target, true);
-  const bearingWorld = normalizeDeg(bearingMap + orientationOffset);
+    const target = nextWaypoint || dest;
+    const bearingMap = calculateARBearing(currentPos, target, true);
+    const bearingWorld = normalizeDeg(bearingMap + orientationOffset);
 
-  // IMPROVED: More stable relative bearing calculation
-  let rel = bearingWorld - heading;
-  
-  // Normalize to [-180, 180] range more carefully
-  while (rel > 180) rel -= 360;
-  while (rel < -180) rel += 360;
+    // IMPROVED: More stable relative bearing calculation
+    let rel = bearingWorld - heading;
 
-  // Add some hysteresis to prevent flickering between directions
-  const absRel = Math.abs(rel);
-  
-  // If we're close to the threshold, apply some smoothing
-  if (absRel > 120 && absRel < 160) {
-    // Apply some dampening in the "turn around" zone
-    rel = rel * 0.8; // Reduce the severity slightly
-  }
+    // Normalize to [-180, 180] range more carefully
+    while (rel > 180) rel -= 360;
+    while (rel < -180) rel += 360;
 
-  const { distance, isAtDestination } = calculateARNavigationData(
-    currentPos,
-    remainingSteps.length ? remainingSteps : steps,
-    dest,
-  );
+    // Add some hysteresis to prevent flickering between directions
+    const absRel = Math.abs(rel);
 
-    return { direction: rel, distance, isAtDestination, bearingMap, bearingWorld,rawBearing:bearingMap };
+    // If we're close to the threshold, apply some smoothing
+    if (absRel > 120 && absRel < 160) {
+      // Apply some dampening in the "turn around" zone
+      rel = rel * 0.8; // Reduce the severity slightly
+    }
+
+    const { distance, isAtDestination } = calculateARNavigationData(
+      currentPos,
+      remainingSteps.length ? remainingSteps : steps,
+      dest,
+    );
+
+    return {
+      direction: rel,
+      distance,
+      isAtDestination,
+      bearingMap,
+      bearingWorld,
+      rawBearing: bearingMap,
+    };
   }, [currentPos, nextWaypoint, dest, remainingSteps, steps, heading, orientationOffset]);
 
   const calibrate = useCallback(() => {

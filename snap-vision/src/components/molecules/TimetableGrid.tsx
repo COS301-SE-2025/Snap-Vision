@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 interface TimetableGridProps {
   days?: string[];
@@ -7,7 +7,7 @@ interface TimetableGridProps {
 }
 
 const TimetableGrid: React.FC<TimetableGridProps> = ({
-  days = ["Mon", "Tue", "Wed", "Thu", "Fri"],
+  days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
   startHour = 7,
   endHour = 20,
 }) => {

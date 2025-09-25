@@ -1,12 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, FlatList } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  TouchableOpacity,
+  ScrollView,
+  FlatList,
+} from 'react-native';
 import AppInput from '../atoms/AppInput';
 import AppButton from '../atoms/AppButton';
 import AppSecondaryButton from '../atoms/AppSecondaryButton';
 import StandardPopup from '../atoms/StandardPopup';
 import { TimetableEntry, DAYS_OF_WEEK } from '../../types/timetable.types';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { usePOIs } from '../../hooks/usePOIs'; 
+import { usePOIs } from '../../hooks/usePOIs';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface TimetableEntryFormProps {
@@ -34,25 +42,28 @@ export default function TimetableEntryForm({
   const [selectedLocationId, setSelectedLocationId] = useState('up-campus'); // Default campus
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
-  
+
   // Dropdown states
   const [showDayDropdown, setShowDayDropdown] = useState(false);
   const [showBuildingDropdown, setShowBuildingDropdown] = useState(false);
-  
+
   // Validation states
   const [showValidationPopup, setShowValidationPopup] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<{[key: string]: boolean}>({});
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: boolean }>({});
 
   // Get available buildings from POIs
   const { pois, isLoading: poisLoading } = usePOIs();
-  
+
   // Filter buildings from POIs
-  const buildings = pois.filter(poi => 
-    poi.tags?.building === 'yes' || 
-    poi.type === 'building' ||
-    poi.name?.toLowerCase().includes('building')
-  ).sort((a, b) => a.name.localeCompare(b.name));
+  const buildings = pois
+    .filter(
+      (poi) =>
+        poi.tags?.building === 'yes' ||
+        poi.type === 'building' ||
+        poi.name?.toLowerCase().includes('building'),
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   // Load data when editing
   useEffect(() => {
@@ -90,25 +101,25 @@ export default function TimetableEntryForm({
     setSelectedLocationId(building.location || 'up-campus');
     setShowBuildingDropdown(false);
     // Clear building error when user selects a building
-    setFieldErrors(prev => ({ ...prev, building: false }));
+    setFieldErrors((prev) => ({ ...prev, building: false }));
   };
 
   const handleDaySelect = (selectedDay: string) => {
     setDay(selectedDay);
     setShowDayDropdown(false);
-    setFieldErrors(prev => ({ ...prev, day: false }));
+    setFieldErrors((prev) => ({ ...prev, day: false }));
   };
 
   // Clear field errors when user inputs data
   const handleInputChange = (field: string, value: string, setter: (value: string) => void) => {
     setter(value);
     if (value.trim()) {
-      setFieldErrors(prev => ({ ...prev, [field]: false }));
+      setFieldErrors((prev) => ({ ...prev, [field]: false }));
     }
   };
 
   const validateForm = () => {
-    const errors: {[key: string]: boolean} = {};
+    const errors: { [key: string]: boolean } = {};
     let errorMessage = '';
 
     // Check course
@@ -188,7 +199,7 @@ export default function TimetableEntryForm({
   };
 
   const getFieldStyle = (fieldName: string) => {
-    return fieldErrors[fieldName] 
+    return fieldErrors[fieldName]
       ? { borderColor: '#FF6B6B', borderWidth: 2 }
       : { borderColor: colors.primary };
   };
@@ -200,14 +211,13 @@ export default function TimetableEntryForm({
         {
           backgroundColor: day === item ? colors.primary : colors.background,
           borderBottomColor: colors.border,
-        }
+        },
       ]}
       onPress={() => handleDaySelect(item)}
     >
-      <Text style={[
-        styles.dropdownItemText,
-        { color: day === item ? colors.background : colors.text }
-      ]}>
+      <Text
+        style={[styles.dropdownItemText, { color: day === item ? colors.background : colors.text }]}
+      >
         {item}
       </Text>
     </TouchableOpacity>
@@ -220,14 +230,16 @@ export default function TimetableEntryForm({
         {
           backgroundColor: selectedBuildingId === item.id ? colors.primary : colors.background,
           borderBottomColor: colors.border,
-        }
+        },
       ]}
       onPress={() => handleBuildingSelect(item)}
     >
-      <Text style={[
-        styles.dropdownItemText,
-        { color: selectedBuildingId === item.id ? colors.background : colors.text }
-      ]}>
+      <Text
+        style={[
+          styles.dropdownItemText,
+          { color: selectedBuildingId === item.id ? colors.background : colors.text },
+        ]}
+      >
         {item.name}
       </Text>
     </TouchableOpacity>
@@ -264,25 +276,25 @@ export default function TimetableEntryForm({
                 style={[
                   styles.dropdownButton,
                   { backgroundColor: colors.card, borderColor: colors.primary },
-                  getFieldStyle('day')
+                  getFieldStyle('day'),
                 ]}
                 onPress={() => setShowDayDropdown(!showDayDropdown)}
               >
-                <Text style={[styles.dropdownButtonText, { color: colors.text }]}>
-                  {day}
-                </Text>
-                <Icon 
-                  name={showDayDropdown ? "chevron-up" : "chevron-down"} 
-                  size={20} 
-                  color={colors.text} 
+                <Text style={[styles.dropdownButtonText, { color: colors.text }]}>{day}</Text>
+                <Icon
+                  name={showDayDropdown ? 'chevron-up' : 'chevron-down'}
+                  size={20}
+                  color={colors.text}
                 />
               </TouchableOpacity>
-              
+
               {showDayDropdown && (
-                <View style={[
-                  styles.dropdown,
-                  { backgroundColor: colors.card, borderColor: colors.border }
-                ]}>
+                <View
+                  style={[
+                    styles.dropdown,
+                    { backgroundColor: colors.card, borderColor: colors.border },
+                  ]}
+                >
                   <FlatList
                     data={DAYS_OF_WEEK}
                     renderItem={renderDayItem}
@@ -303,30 +315,34 @@ export default function TimetableEntryForm({
                 style={[
                   styles.dropdownButton,
                   { backgroundColor: colors.card, borderColor: colors.primary },
-                  getFieldStyle('building')
+                  getFieldStyle('building'),
                 ]}
                 onPress={() => setShowBuildingDropdown(!showBuildingDropdown)}
                 disabled={poisLoading}
               >
-                <Text style={[
-                  styles.dropdownButtonText, 
-                  { color: selectedBuildingName ? colors.text : colors.secondary }
-                ]}>
+                <Text
+                  style={[
+                    styles.dropdownButtonText,
+                    { color: selectedBuildingName ? colors.text : colors.secondary },
+                  ]}
+                >
                   {selectedBuildingName || 'Select Building'}
                 </Text>
-                <Icon 
-                  name={showBuildingDropdown ? "chevron-up" : "chevron-down"} 
-                  size={20} 
-                  color={colors.text} 
+                <Icon
+                  name={showBuildingDropdown ? 'chevron-up' : 'chevron-down'}
+                  size={20}
+                  color={colors.text}
                 />
               </TouchableOpacity>
-              
+
               {showBuildingDropdown && (
-                <View style={[
-                  styles.dropdown,
-                  styles.buildingDropdown,
-                  { backgroundColor: colors.card, borderColor: colors.border }
-                ]}>
+                <View
+                  style={[
+                    styles.dropdown,
+                    styles.buildingDropdown,
+                    { backgroundColor: colors.card, borderColor: colors.border },
+                  ]}
+                >
                   {buildings.length > 0 ? (
                     <FlatList
                       data={buildings}
@@ -344,7 +360,7 @@ export default function TimetableEntryForm({
                   )}
                 </View>
               )}
-              
+
               {poisLoading && (
                 <Text style={[styles.loadingText, { color: colors.secondary }]}>
                   Loading buildings...
@@ -374,9 +390,9 @@ export default function TimetableEntryForm({
                 <TouchableOpacity
                   onPress={() => setShowStartPicker(true)}
                   style={[
-                    styles.timeButton, 
-                    { backgroundColor: colors.card }, 
-                    getFieldStyle('startTime')
+                    styles.timeButton,
+                    { backgroundColor: colors.card },
+                    getFieldStyle('startTime'),
                   ]}
                 >
                   <Text style={{ color: startTime ? colors.text : colors.secondary }}>
@@ -394,13 +410,13 @@ export default function TimetableEntryForm({
                       if (date) {
                         const time = formatTime(date);
                         setStartTime(time);
-                        setFieldErrors(prev => ({ ...prev, startTime: false }));
+                        setFieldErrors((prev) => ({ ...prev, startTime: false }));
                       }
                     }}
                   />
                 )}
               </View>
-              
+
               <View style={[styles.fieldContainer, { flex: 1, marginLeft: 8 }]}>
                 <Text style={[styles.fieldLabel, { color: colors.text }]}>
                   End Time <Text style={styles.required}>*</Text>
@@ -408,9 +424,9 @@ export default function TimetableEntryForm({
                 <TouchableOpacity
                   onPress={() => setShowEndPicker(true)}
                   style={[
-                    styles.timeButton, 
-                    { backgroundColor: colors.card }, 
-                    getFieldStyle('endTime')
+                    styles.timeButton,
+                    { backgroundColor: colors.card },
+                    getFieldStyle('endTime'),
                   ]}
                 >
                   <Text style={{ color: endTime ? colors.text : colors.secondary }}>
@@ -428,7 +444,7 @@ export default function TimetableEntryForm({
                       if (date) {
                         const time = formatTime(date);
                         setEndTime(time);
-                        setFieldErrors(prev => ({ ...prev, endTime: false }));
+                        setFieldErrors((prev) => ({ ...prev, endTime: false }));
                       }
                     }}
                   />
@@ -443,23 +459,21 @@ export default function TimetableEntryForm({
               style={[
                 styles.actionButton,
                 styles.cancelButton,
-                { 
-                  backgroundColor: colors.background, 
-                  borderColor: colors.primary 
-                }
+                {
+                  backgroundColor: colors.background,
+                  borderColor: colors.primary,
+                },
               ]}
               onPress={handleClose}
             >
-              <Text style={[styles.actionButtonText, { color: colors.primary }]}>
-                Cancel
-              </Text>
+              <Text style={[styles.actionButtonText, { color: colors.primary }]}>Cancel</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={[
                 styles.actionButton,
                 styles.primaryButton,
-                { backgroundColor: colors.primary }
+                { backgroundColor: colors.primary },
               ]}
               onPress={handleSubmit}
             >

@@ -64,19 +64,16 @@ export default function TimetableSection({ colors }: TimetableSectionProps) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.headerLeft}
-          onPress={() => setIsExpanded(!isExpanded)}
-        >
+        <TouchableOpacity style={styles.headerLeft} onPress={() => setIsExpanded(!isExpanded)}>
           <Icon name="calendar-clock" size={24} color={colors.primary} />
           <Text style={[styles.title, { color: colors.text }]}>My Timetable</Text>
-          <Icon 
-            name={isExpanded ? "chevron-up" : "chevron-down"} 
-            size={20} 
-            color={colors.secondary} 
+          <Icon
+            name={isExpanded ? 'chevron-up' : 'chevron-down'}
+            size={20}
+            color={colors.secondary}
           />
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[styles.addButton, { backgroundColor: colors.primary }]}
           onPress={() => setShowForm(true)}

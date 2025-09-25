@@ -26,7 +26,7 @@ export const useTimetable = () => {
         .orderBy('startTime')
         .get();
 
-      const timetableEntries = snapshot.docs.map(doc => ({
+      const timetableEntries = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate() || new Date(),
@@ -62,13 +62,23 @@ export const useTimetable = () => {
         createdAt: new Date(),
       };
 
-      setEntries(prev => [...prev, newEntry].sort((a, b) => {
-        const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        const dayA = dayOrder.indexOf(a.day);
-        const dayB = dayOrder.indexOf(b.day);
-        if (dayA !== dayB) return dayA - dayB;
-        return a.startTime.localeCompare(b.startTime);
-      }));
+      setEntries((prev) =>
+        [...prev, newEntry].sort((a, b) => {
+          const dayOrder = [
+            'Monday',
+            'Tuesday',
+            'Wednesday',
+            'Thursday',
+            'Friday',
+            'Saturday',
+            'Sunday',
+          ];
+          const dayA = dayOrder.indexOf(a.day);
+          const dayB = dayOrder.indexOf(b.day);
+          if (dayA !== dayB) return dayA - dayB;
+          return a.startTime.localeCompare(b.startTime);
+        }),
+      );
 
       return { success: true };
     } catch (err) {
@@ -79,26 +89,34 @@ export const useTimetable = () => {
   };
 
   // Update entry
-  const updateEntry = async (entryId: string, entryData: Omit<TimetableEntry, 'id' | 'userId' | 'createdAt'>) => {
+  const updateEntry = async (
+    entryId: string,
+    entryData: Omit<TimetableEntry, 'id' | 'userId' | 'createdAt'>,
+  ) => {
     if (!userId) return;
 
     try {
-      await firestore()
-        .collection('timetables')
-        .doc(entryId)
-        .update(entryData);
+      await firestore().collection('timetables').doc(entryId).update(entryData);
 
-      setEntries(prev => prev.map(entry => 
-        entry.id === entryId 
-          ? { ...entry, ...entryData }
-          : entry
-      ).sort((a, b) => {
-        const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        const dayA = dayOrder.indexOf(a.day);
-        const dayB = dayOrder.indexOf(b.day);
-        if (dayA !== dayB) return dayA - dayB;
-        return a.startTime.localeCompare(b.startTime);
-      }));
+      setEntries((prev) =>
+        prev
+          .map((entry) => (entry.id === entryId ? { ...entry, ...entryData } : entry))
+          .sort((a, b) => {
+            const dayOrder = [
+              'Monday',
+              'Tuesday',
+              'Wednesday',
+              'Thursday',
+              'Friday',
+              'Saturday',
+              'Sunday',
+            ];
+            const dayA = dayOrder.indexOf(a.day);
+            const dayB = dayOrder.indexOf(b.day);
+            if (dayA !== dayB) return dayA - dayB;
+            return a.startTime.localeCompare(b.startTime);
+          }),
+      );
 
       return { success: true };
     } catch (err) {
@@ -113,12 +131,9 @@ export const useTimetable = () => {
     if (!userId) return;
 
     try {
-      await firestore()
-        .collection('timetables')
-        .doc(entryId)
-        .delete();
+      await firestore().collection('timetables').doc(entryId).delete();
 
-      setEntries(prev => prev.filter(entry => entry.id !== entryId));
+      setEntries((prev) => prev.filter((entry) => entry.id !== entryId));
       return { success: true };
     } catch (err) {
       console.error('Error deleting timetable entry:', err);

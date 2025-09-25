@@ -29,7 +29,7 @@ export const usePOIs = () => {
           .collection('locations/up-campus/buildingPOIs') // Adjust path as needed
           .get();
 
-        const poisData = snapshot.docs.map(doc => ({
+        const poisData = snapshot.docs.map((doc) => ({
           id: doc.id,
           location: 'up-campus',
           ...doc.data(),

@@ -42,7 +42,6 @@ import BluetoothIndoorNavigationScreen from './src/screens/BluetoothIndoorNaviga
 import TimetableScreen from './src/screens/TimetableScreen';
 import TimetableBackgroundService from './src/services/TimetableBackgroundService';
 
-
 import { navigationRef } from './src/navigation/RootNavigation';
 LogBox.ignoreLogs([
   'Text strings must be rendered within a <Text> component',
@@ -65,50 +64,55 @@ function AppInner() {
           const data = detail.notification?.data || {};
           const entryKey = data.entryKey;
           const action = data.action;
-          
+
           console.log('[App] Notification pressed (foreground):', { action, entryKey, data });
-          
+
           if (entryKey) {
             // Mark notification as opened to prevent in-app popup
             await TimetableBackgroundService.getInstance().markNotificationOpened(entryKey);
           }
-          
+
           // Handle class popup action
           if (action === 'open_class_popup') {
             console.log('[App] Handling class popup action');
-            
+
             // Store the class data for the popup
-            await AsyncStorage.setItem('pendingClassPopup', JSON.stringify({
-              course: data.course,
-              venue: data.venue,
-              startTime: data.startTime,
-              buildingId: data.buildingId,
-              buildingName: data.buildingName,
-              lat: data.lat,
-              lng: data.lng,
-              entryKey: entryKey,
-            }));
-            
+            await AsyncStorage.setItem(
+              'pendingClassPopup',
+              JSON.stringify({
+                course: data.course,
+                venue: data.venue,
+                startTime: data.startTime,
+                buildingId: data.buildingId,
+                buildingName: data.buildingName,
+                lat: data.lat,
+                lng: data.lng,
+                entryKey: entryKey,
+              }),
+            );
+
             console.log('[App] Stored pending class popup, navigating to Map');
-            
+
             // Use the same navigation pattern as login/register (replace instead of navigate)
             if (navigationRef.current) {
               navigationRef.current.reset({
                 index: 0,
-                routes: [{ 
-                  name: 'Tabs', 
-                  params: { 
-                    screen: 'Map',
+                routes: [
+                  {
+                    name: 'Tabs',
                     params: {
-                      fromNotification: true,
-                      course: data.course,
-                      venue: data.venue,
-                      startTime: data.startTime,
-                      lat: data.lat,
-                      lng: data.lng
-                    }
-                  } 
-                }],
+                      screen: 'Map',
+                      params: {
+                        fromNotification: true,
+                        course: data.course,
+                        venue: data.venue,
+                        startTime: data.startTime,
+                        lat: data.lat,
+                        lng: data.lng,
+                      },
+                    },
+                  },
+                ],
               });
             }
           } else {
@@ -121,18 +125,20 @@ function AppInner() {
               if (navigationRef.current) {
                 navigationRef.current.reset({
                   index: 0,
-                  routes: [{ 
-                    name: 'Tabs', 
-                    params: { 
-                      screen: 'Map',
-                      params: { lat, lng }
-                    } 
-                  }],
+                  routes: [
+                    {
+                      name: 'Tabs',
+                      params: {
+                        screen: 'Map',
+                        params: { lat, lng },
+                      },
+                    },
+                  ],
                 });
               }
             }
           }
-          
+
           // Cancel the tapped notification
           if (detail.notification?.id) {
             await notifee.cancelNotification(detail.notification.id);
@@ -156,50 +162,59 @@ function AppInner() {
           const data = detail.notification?.data || {};
           const entryKey = data.entryKey;
           const action = data.action;
-          
+
           console.log('[App] Notification pressed (background):', { action, entryKey, data });
-          
+
           if (entryKey) {
             await TimetableBackgroundService.getInstance().markNotificationOpened(entryKey);
           }
-          
+
           // Store for when app opens - use the same pattern as deep links
           if (action === 'open_class_popup') {
             console.log('[App] Storing class popup data for when app opens');
-            
+
             // Store both the popup data AND use the deep link system
-            await AsyncStorage.setItem('pendingClassPopup', JSON.stringify({
-              course: data.course,
-              venue: data.venue,
-              startTime: data.startTime,
-              buildingId: data.buildingId,
-              buildingName: data.buildingName,
-              lat: data.lat,
-              lng: data.lng,
-              entryKey: entryKey,
-            }));
-            
-            // Also set the deep link coords so it behaves like location sharing
-            if (data.lat && data.lng) {
-              await AsyncStorage.setItem('pendingNotificationDeepLink', JSON.stringify({
-                lat: data.lat,
-                lng: data.lng,
-                fromNotification: true,
+            await AsyncStorage.setItem(
+              'pendingClassPopup',
+              JSON.stringify({
                 course: data.course,
                 venue: data.venue,
-                startTime: data.startTime
-              }));
+                startTime: data.startTime,
+                buildingId: data.buildingId,
+                buildingName: data.buildingName,
+                lat: data.lat,
+                lng: data.lng,
+                entryKey: entryKey,
+              }),
+            );
+
+            // Also set the deep link coords so it behaves like location sharing
+            if (data.lat && data.lng) {
+              await AsyncStorage.setItem(
+                'pendingNotificationDeepLink',
+                JSON.stringify({
+                  lat: data.lat,
+                  lng: data.lng,
+                  fromNotification: true,
+                  course: data.course,
+                  venue: data.venue,
+                  startTime: data.startTime,
+                }),
+              );
             }
           } else {
             // Handle regular location deep links
             if (data.lat && data.lng) {
-              await AsyncStorage.setItem('pendingNotificationDeepLink', JSON.stringify({
-                lat: data.lat,
-                lng: data.lng
-              }));
+              await AsyncStorage.setItem(
+                'pendingNotificationDeepLink',
+                JSON.stringify({
+                  lat: data.lat,
+                  lng: data.lng,
+                }),
+              );
             }
           }
-          
+
           if (detail.notification?.id) {
             await notifee.cancelNotification(detail.notification.id);
           }
@@ -221,31 +236,33 @@ function AppInner() {
         if (pendingDeepLinkData) {
           const data = JSON.parse(pendingDeepLinkData);
           await AsyncStorage.removeItem('pendingNotificationDeepLink');
-          
+
           console.log('[App] App opened from background notification, setting up navigation');
-          
+
           // Set the deep link coords
           setCoords({ lat: data.lat, lng: data.lng });
-          
+
           // Navigate using the same pattern as successful flows
           setTimeout(() => {
             if (navigationRef.current) {
               navigationRef.current.reset({
                 index: 0,
-                routes: [{ 
-                  name: 'Tabs', 
-                  params: { 
-                    screen: 'Map',
+                routes: [
+                  {
+                    name: 'Tabs',
                     params: {
-                      lat: data.lat,
-                      lng: data.lng,
-                      fromNotification: data.fromNotification || false,
-                      course: data.course,
-                      venue: data.venue,
-                      startTime: data.startTime
-                    }
-                  } 
-                }],
+                      screen: 'Map',
+                      params: {
+                        lat: data.lat,
+                        lng: data.lng,
+                        fromNotification: data.fromNotification || false,
+                        course: data.course,
+                        venue: data.venue,
+                        startTime: data.startTime,
+                      },
+                    },
+                  },
+                ],
               });
             }
           }, 100);

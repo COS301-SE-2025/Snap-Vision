@@ -24,7 +24,11 @@ interface UseBeaconManagerParams {
   selectedFloorId: string;
 }
 
-export function useBeaconManager({ locationId, buildingId, selectedFloorId }: UseBeaconManagerParams) {
+export function useBeaconManager({
+  locationId,
+  buildingId,
+  selectedFloorId,
+}: UseBeaconManagerParams) {
   const [floorBeacons, setFloorBeacons] = useState<BeaconMeta[]>([]);
   const scannerRef = useRef(new NativeBeaconScanner());
 
@@ -53,7 +57,7 @@ export function useBeaconManager({ locationId, buildingId, selectedFloorId }: Us
   useEffect(() => {
     if (!selectedFloorId) return;
     console.log(BT, 'Subscribing beacons for floor', selectedFloorId);
-    
+
     const unsub = firestore()
       .collection('locations')
       .doc(locationId)
@@ -98,22 +102,22 @@ export function useBeaconManager({ locationId, buildingId, selectedFloorId }: Us
         console.log(BT, 'No selectedFloorId, skipping scanner start');
         return;
       }
-      
+
       console.log(BT, 'useFocusEffect triggered with allowedList size:', allowedList.length);
-      
+
       (async () => {
         try {
           if (scannerRef.current.isRunning?.()) {
             console.log(BT, 'Scanner already running → stopping before restart');
             await scannerRef.current.stop();
           }
-          
+
           // Small delay to ensure clean restart
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
+          await new Promise((resolve) => setTimeout(resolve, 100));
+
           console.log(BT, 'Starting scanner with UUID + whitelist… size=', allowedList.length);
           console.log(BT, 'Allowed list:', allowedList);
-          
+
           await scannerRef.current.start(handleBatch, {
             uuid: MINEW_DEFAULT_UUID,
             allowed: allowedList,
@@ -137,15 +141,15 @@ export function useBeaconManager({ locationId, buildingId, selectedFloorId }: Us
   // Additional effect to restart scanner when allowedList changes significantly
   useEffect(() => {
     if (!selectedFloorId || allowedList.length === 0) return;
-    
+
     console.log(BT, 'AllowedList changed, restarting scanner if running...');
-    
+
     (async () => {
       try {
         if (scannerRef.current.isRunning?.()) {
           console.log(BT, 'Restarting scanner due to allowedList change');
           await scannerRef.current.stop();
-          await new Promise(resolve => setTimeout(resolve, 200));
+          await new Promise((resolve) => setTimeout(resolve, 200));
           await scannerRef.current.start(handleBatch, {
             uuid: MINEW_DEFAULT_UUID,
             allowed: allowedList,
@@ -162,14 +166,21 @@ export function useBeaconManager({ locationId, buildingId, selectedFloorId }: Us
   useEffect(() => {
     console.log(BT, 'DB Beacons count:', floorBeacons.length);
     if (floorBeacons.length > 0) {
-      console.log(BT, 'Beacon allowedList will be:', floorBeacons.map(b => `${b.major}|${b.minor}`));
+      console.log(
+        BT,
+        'Beacon allowedList will be:',
+        floorBeacons.map((b) => `${b.major}|${b.minor}`),
+      );
     }
   }, [floorBeacons.length]);
 
   useEffect(() => {
     console.log(BT, 'AllowedList updated, size:', allowedList.length);
     allowedList.forEach((item, idx) => {
-      console.log(BT, `  Allow[${idx}]: UUID=${item.uuid}, Major=${item.major}, Minor=${item.minor}`);
+      console.log(
+        BT,
+        `  Allow[${idx}]: UUID=${item.uuid}, Major=${item.major}, Minor=${item.minor}`,
+      );
     });
   }, [allowedList]);
 

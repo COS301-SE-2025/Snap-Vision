@@ -17,7 +17,6 @@ import IndoorNavigationButton from '../atoms/IndoorNavigationButton';
 import ARNavigationOverlay from './ARNavigationOverlay';
 import { useNotificationInstruction } from '../../hooks/useNotificationInstruction';
 import BluetoothNavigationButton from '../molecules/BluetoothNavigationButton';
-import { useTimetableNavigation } from '../hooks/useTimetableNavigation';
 
 // Define the props interface for MapContent
 interface MapContentProps {

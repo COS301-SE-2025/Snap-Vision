@@ -102,10 +102,7 @@ export default function AchievementsForm() {
         </Text>
 
         {currentChallenges.map((challenge) => (
-          <ChallengeItem
-            key={challenge.id}
-            challenge={challenge}
-          />
+          <ChallengeItem key={challenge.id} challenge={challenge} />
         ))}
       </View>
 
