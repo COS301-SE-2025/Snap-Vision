@@ -1,4 +1,3 @@
-// src/screens/HomeScreen.tsx
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import MapHomeContent from '../components/organisms/HomeContent';

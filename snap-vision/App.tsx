@@ -28,7 +28,7 @@ import BuildingSelectionScreen from './src/screens/BuildingSelectionScreen';
 import IndoorNavigationInterfaceScreen from './src/screens/IndoorNavigationInterfaceScreen';
 import IndoorNavigationInstructionsScreen from './src/screens/IndoorNavigationInstructionsScreen';
 import IndoorSchematicNavScreen from './src/screens/IndoorSchematicNavScreen';
-import ARIndoorNavScreen from './src/screens/ARIndoorNavScreen';
+// import ARIndoorNavScreen from './src/screens/ARIndoorNavScreen';
 import QRCodeAdminScreen from './src/screens/QRCodeAdminScreen';
 import messaging from '@react-native-firebase/messaging';
 import { createDefaultChannel } from './src/services/NotificationService';
@@ -136,11 +136,11 @@ function AppInner() {
                 options={{ headerShown: false }}
               />
               <Stack.Screen name="IndoorSchematicNav" component={IndoorSchematicNavScreen} />
-              <Stack.Screen
+              {/* <Stack.Screen
                 name="ARIndoorNav"
                 component={ARIndoorNavScreen}
                 options={{ headerShown: false }}
-              />
+              /> */}
             <Stack.Screen
               name="BluetoothBuildings"
               component={BluetoothBuildingsScreen}
