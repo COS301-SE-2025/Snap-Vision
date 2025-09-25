@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, FlatList } from 'react-native';
 import AppInput from '../atoms/AppInput';
 import AppButton from '../atoms/AppButton';
 import AppSecondaryButton from '../atoms/AppSecondaryButton';
@@ -8,6 +7,7 @@ import StandardPopup from '../atoms/StandardPopup';
 import { TimetableEntry, DAYS_OF_WEEK } from '../../types/timetable.types';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { usePOIs } from '../../hooks/usePOIs'; 
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface TimetableEntryFormProps {
   visible: boolean;
@@ -34,6 +34,10 @@ export default function TimetableEntryForm({
   const [selectedLocationId, setSelectedLocationId] = useState('up-campus'); // Default campus
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
+  
+  // Dropdown states
+  const [showDayDropdown, setShowDayDropdown] = useState(false);
+  const [showBuildingDropdown, setShowBuildingDropdown] = useState(false);
   
   // Validation states
   const [showValidationPopup, setShowValidationPopup] = useState(false);
@@ -80,20 +84,19 @@ export default function TimetableEntryForm({
   const formatTime = (date: Date) =>
     date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 
-  const handleBuildingSelect = (buildingId: string) => {
-    const building = buildings.find(b => b.id === buildingId);
-    if (building) {
-      setSelectedBuildingId(buildingId);
-      setSelectedBuildingName(building.name);
-      setSelectedLocationId(building.location || 'up-campus');
-    } else {
-      setSelectedBuildingId('');
-      setSelectedBuildingName('');
-    }
+  const handleBuildingSelect = (building: any) => {
+    setSelectedBuildingId(building.id);
+    setSelectedBuildingName(building.name);
+    setSelectedLocationId(building.location || 'up-campus');
+    setShowBuildingDropdown(false);
     // Clear building error when user selects a building
-    if (buildingId) {
-      setFieldErrors(prev => ({ ...prev, building: false }));
-    }
+    setFieldErrors(prev => ({ ...prev, building: false }));
+  };
+
+  const handleDaySelect = (selectedDay: string) => {
+    setDay(selectedDay);
+    setShowDayDropdown(false);
+    setFieldErrors(prev => ({ ...prev, day: false }));
   };
 
   // Clear field errors when user inputs data
@@ -179,6 +182,8 @@ export default function TimetableEntryForm({
     setSelectedBuildingName('');
     setSelectedLocationId('up-campus');
     setFieldErrors({});
+    setShowDayDropdown(false);
+    setShowBuildingDropdown(false);
     onClose();
   };
 
@@ -188,11 +193,51 @@ export default function TimetableEntryForm({
       : { borderColor: colors.primary };
   };
 
+  const renderDayItem = ({ item }: { item: string }) => (
+    <TouchableOpacity
+      style={[
+        styles.dropdownItem,
+        {
+          backgroundColor: day === item ? colors.primary : colors.background,
+          borderBottomColor: colors.border,
+        }
+      ]}
+      onPress={() => handleDaySelect(item)}
+    >
+      <Text style={[
+        styles.dropdownItemText,
+        { color: day === item ? colors.background : colors.text }
+      ]}>
+        {item}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  const renderBuildingItem = ({ item }: { item: any }) => (
+    <TouchableOpacity
+      style={[
+        styles.dropdownItem,
+        {
+          backgroundColor: selectedBuildingId === item.id ? colors.primary : colors.background,
+          borderBottomColor: colors.border,
+        }
+      ]}
+      onPress={() => handleBuildingSelect(item)}
+    >
+      <Text style={[
+        styles.dropdownItemText,
+        { color: selectedBuildingId === item.id ? colors.background : colors.text }
+      ]}>
+        {item.name}
+      </Text>
+    </TouchableOpacity>
+  );
+
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.modalOverlay}>
         <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollContent}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>
               {editingEntry ? 'Edit Class' : 'Add New Class'}
             </Text>
@@ -215,17 +260,38 @@ export default function TimetableEntryForm({
               <Text style={[styles.fieldLabel, { color: colors.text }]}>
                 Day <Text style={styles.required}>*</Text>
               </Text>
-              <View style={[styles.pickerContainer, { backgroundColor: colors.card }, getFieldStyle('day')]}>
-                <Picker
-                  selectedValue={day}
-                  onValueChange={setDay}
-                  style={[styles.picker, { color: colors.text }]}
-                >
-                  {DAYS_OF_WEEK.map((dayOption) => (
-                    <Picker.Item key={dayOption} label={dayOption} value={dayOption} />
-                  ))}
-                </Picker>
-              </View>
+              <TouchableOpacity
+                style={[
+                  styles.dropdownButton,
+                  { backgroundColor: colors.card, borderColor: colors.primary },
+                  getFieldStyle('day')
+                ]}
+                onPress={() => setShowDayDropdown(!showDayDropdown)}
+              >
+                <Text style={[styles.dropdownButtonText, { color: colors.text }]}>
+                  {day}
+                </Text>
+                <Icon 
+                  name={showDayDropdown ? "chevron-up" : "chevron-down"} 
+                  size={20} 
+                  color={colors.text} 
+                />
+              </TouchableOpacity>
+              
+              {showDayDropdown && (
+                <View style={[
+                  styles.dropdown,
+                  { backgroundColor: colors.card, borderColor: colors.border }
+                ]}>
+                  <FlatList
+                    data={DAYS_OF_WEEK}
+                    renderItem={renderDayItem}
+                    keyExtractor={(item) => item}
+                    style={styles.dropdownList}
+                    showsVerticalScrollIndicator={true}
+                  />
+                </View>
+              )}
             </View>
 
             {/* Building Selector */}
@@ -233,23 +299,52 @@ export default function TimetableEntryForm({
               <Text style={[styles.fieldLabel, { color: colors.text }]}>
                 Building <Text style={styles.required}>*</Text>
               </Text>
-              <View style={[styles.pickerContainer, { backgroundColor: colors.card }, getFieldStyle('building')]}>
-                <Picker
-                  selectedValue={selectedBuildingId}
-                  onValueChange={handleBuildingSelect}
-                  style={[styles.picker, { color: colors.text }]}
-                  enabled={!poisLoading}
-                >
-                  <Picker.Item label="Select Building" value="" />
-                  {buildings.map((building) => (
-                    <Picker.Item 
-                      key={building.id} 
-                      label={building.name} 
-                      value={building.id} 
+              <TouchableOpacity
+                style={[
+                  styles.dropdownButton,
+                  { backgroundColor: colors.card, borderColor: colors.primary },
+                  getFieldStyle('building')
+                ]}
+                onPress={() => setShowBuildingDropdown(!showBuildingDropdown)}
+                disabled={poisLoading}
+              >
+                <Text style={[
+                  styles.dropdownButtonText, 
+                  { color: selectedBuildingName ? colors.text : colors.secondary }
+                ]}>
+                  {selectedBuildingName || 'Select Building'}
+                </Text>
+                <Icon 
+                  name={showBuildingDropdown ? "chevron-up" : "chevron-down"} 
+                  size={20} 
+                  color={colors.text} 
+                />
+              </TouchableOpacity>
+              
+              {showBuildingDropdown && (
+                <View style={[
+                  styles.dropdown,
+                  styles.buildingDropdown,
+                  { backgroundColor: colors.card, borderColor: colors.border }
+                ]}>
+                  {buildings.length > 0 ? (
+                    <FlatList
+                      data={buildings}
+                      renderItem={renderBuildingItem}
+                      keyExtractor={(item) => item.id}
+                      style={styles.dropdownList}
+                      showsVerticalScrollIndicator={true}
                     />
-                  ))}
-                </Picker>
-              </View>
+                  ) : (
+                    <View style={styles.emptyState}>
+                      <Text style={[styles.emptyStateText, { color: colors.secondary }]}>
+                        {poisLoading ? 'Loading buildings...' : 'No buildings found'}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
+              
               {poisLoading && (
                 <Text style={[styles.loadingText, { color: colors.secondary }]}>
                   Loading buildings...
@@ -340,21 +435,39 @@ export default function TimetableEntryForm({
                 )}
               </View>
             </View>
-
-            {/* Action Buttons */}
-            <View style={styles.modalActions}>
-              <AppSecondaryButton 
-                title="Cancel" 
-                onPress={handleClose}
-                style={[styles.actionButton, { backgroundColor: colors.background, borderColor: colors.primary }]}
-              />
-              <AppButton
-                title={editingEntry ? 'Update Class' : 'Add Class'}
-                onPress={handleSubmit}
-                style={[styles.actionButton, { backgroundColor: colors.primary }]}
-              />
-            </View>
           </ScrollView>
+
+          {/* Fixed Action Buttons Container */}
+          <View style={[styles.modalActions, { borderTopColor: colors.border }]}>
+            <TouchableOpacity
+              style={[
+                styles.actionButton,
+                styles.cancelButton,
+                { 
+                  backgroundColor: colors.background, 
+                  borderColor: colors.primary 
+                }
+              ]}
+              onPress={handleClose}
+            >
+              <Text style={[styles.actionButtonText, { color: colors.primary }]}>
+                Cancel
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[
+                styles.actionButton,
+                styles.primaryButton,
+                { backgroundColor: colors.primary }
+              ]}
+              onPress={handleSubmit}
+            >
+              <Text style={[styles.actionButtonText, { color: 'white' }]}>
+                {editingEntry ? 'Update Class' : 'Add Class'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -377,17 +490,21 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
   },
   modalContainer: {
-    width: '90%',
-    maxHeight: '80%',
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '85%',
     borderRadius: 16,
-    padding: 20,
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
+  },
+  scrollContent: {
+    padding: 20,
   },
   modalTitle: {
     fontSize: 20,
@@ -397,6 +514,7 @@ const styles = StyleSheet.create({
   },
   fieldContainer: {
     marginBottom: 16,
+    position: 'relative', // For dropdown positioning
   },
   fieldLabel: {
     fontSize: 14,
@@ -414,13 +532,57 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 16,
   },
-  pickerContainer: {
+  dropdownButton: {
     borderWidth: 1,
     borderRadius: 8,
-    overflow: 'hidden',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    minHeight: 48,
   },
-  picker: {
-    height: 50,
+  dropdownButtonText: {
+    fontSize: 16,
+    flex: 1,
+  },
+  dropdown: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    borderWidth: 1,
+    borderRadius: 8,
+    maxHeight: 150,
+    zIndex: 1000,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  buildingDropdown: {
+    maxHeight: 200, // Taller for buildings
+  },
+  dropdownList: {
+    flex: 1,
+  },
+  dropdownItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  dropdownItemText: {
+    fontSize: 16,
+  },
+  emptyState: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyStateText: {
+    fontSize: 14,
+    textAlign: 'center',
   },
   loadingText: {
     fontSize: 12,
@@ -441,15 +603,31 @@ const styles = StyleSheet.create({
   },
   modalActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderTopWidth: 1,
     gap: 12,
   },
   actionButton: {
     flex: 1,
     borderRadius: 8,
-    paddingVertical: 12,
+    paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 48,
+  },
+  cancelButton: {
+    borderWidth: 2,
+  },
+  primaryButton: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  actionButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

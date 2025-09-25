@@ -265,7 +265,7 @@ class TimetableBackgroundService {
           const notifId = await notifee.createTriggerNotification(
             {
               title: `Class in 10 minutes: ${entry.course}`,
-              body: `${entry.venue} starts at ${entry.startTime} — open the Map to start navigation!`,
+              body: `${entry.course} starts at ${entry.startTime} — open the Map to start navigation to ${entry.venue}`,
               android: {
                 channelId: 'default',
                 smallIcon: 'ic_launcher',
