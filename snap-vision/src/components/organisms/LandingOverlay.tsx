@@ -114,9 +114,9 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
             </Animated.Text>
           </View>
 
-          <Text style={[styles.tagline, { color: swappedAccentColor, fontFamily: 'ChicleRegular' }]}>
+          {/* <Text style={[styles.tagline, { color: swappedAccentColor, fontFamily: 'ChicleRegular' }]}>
             Wander Less, Discover More
-          </Text>
+          </Text> */}
 
           {/* <Text style={[styles.description, { color: swappedTextColor }]}>
             Snap Vision is an indoor and outdoor navigation system designed to help students and
@@ -141,7 +141,7 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
                 }}
               >
                 <LinearGradient
-                  colors={[colors.text, '#ffffff', '#69c6d0']}
+                  colors={[colors.text,  colors.secondary]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={{ flex: 1 }}
@@ -155,8 +155,8 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
               'Earn Badges and Shop Icons!',
               'Integrated Timetable Builder',
             ].map((feature, index) => (
-              <View key={index} style={[styles.featureBox, { backgroundColor: colors.secondary }]}>
-                <Text style={[styles.featureText, { color: bg }]}>{feature}</Text>
+              <View key={index} style={[styles.featureBox, { backgroundColor: colors.background }]}>
+                <Text style={[styles.featureText, { color: colors.primary }]}>{feature}</Text>
               </View>
             ))}
           </View>
@@ -167,7 +167,8 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
         </ScrollView>
 
         <View style={styles.getStartedRow} pointerEvents="none">
-          <Text style={[styles.getStartedText, { color: swappedAccentColor }]}>Tap to Get Started!</Text>
+          <Text style={[styles.getStartedText, { color: colors.text }]}>Hi, I'm Snaps, tap to get started!</Text>
+          {/* <Text style={[styles.getStartedText, { color: swappedAccentColor }]}>Tap to Get Started!</Text> */}
         </View>
       </View>
     </TouchableWithoutFeedback>
@@ -189,7 +190,7 @@ const styles = StyleSheet.create({
   mascotWrapper: {
     position: 'absolute',
     right: -40,
-    bottom: -40,
+    bottom: 0,
     width: 300,
     height: 300,
     zIndex: 20,
@@ -238,7 +239,7 @@ const styles = StyleSheet.create({
     width: '90%',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#69c6d0',
+    borderColor: '#90AFA8',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -252,9 +253,9 @@ const styles = StyleSheet.create({
   getStartedRow: {
     width: '80%',
     alignItems: 'center',
-    paddingRight: 160,
+    paddingRight: 180,
     marginBottom: 0,
-    left: 105,
+    left: 60,
     bottom: 145,
   },
   getStartedText: {
@@ -266,7 +267,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 0,
     
-    bottom: -140,
+    bottom: -120,
     right: 80, 
     textAlign: 'right',
     position: 'relative',

@@ -4,7 +4,7 @@ export const lightColors = {
   subtleText: '#666666',
   border: '#ddd',
   card: '#e4ddcfff', //#f0f0f0
-  primary: '#573825', //#824713
+  primary: '#824713', //#824713
   roleSecondary: '#B78459',
   statusActive: '#4CAF50',
   statusInactive: '#FF9800',

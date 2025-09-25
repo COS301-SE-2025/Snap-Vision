@@ -73,7 +73,7 @@ const MapActionsPanel = ({
           style={[
             styles.drawerBackground,
             {
-              backgroundColor: colors.secondary,
+              backgroundColor: colors.card,
               opacity: drawerAnimation,
             },
           ]}
