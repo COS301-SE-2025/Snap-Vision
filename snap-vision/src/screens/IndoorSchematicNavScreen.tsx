@@ -17,6 +17,7 @@ import { getQRCodeMappingByValue } from '../services/qrService';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import TTS from 'react-native-tts';
+import { useBadges } from '../context/BadgeContext';
 
 type ParamList = {
   IndoorSchematicNav: {
@@ -60,6 +61,7 @@ export default function IndoorSchematicNavScreen() {
   const { isDark } = useTheme();
   const { isAccessibilityModeEnabled } = useAccessibility();
   const colors = getThemeColors(isDark);
+  const { unlock } = useBadges();
 
   // Master data (ALL floors)
   const [allRooms, setAllRooms] = useState<RoomPOI[]>([]);
@@ -377,6 +379,14 @@ export default function IndoorSchematicNavScreen() {
       }
 
       //consolelog('QR mapping found:', JSON.stringify(qrMapping));
+
+      // Unlock the QR scan badge for successful scan
+      try {
+        await unlock('qr-scan');
+      } catch (badgeError) {
+        // Don't fail the whole operation if badge unlock fails
+        console.warn('Failed to unlock qr-scan badge:', badgeError);
+      }
 
       // Use the mapping as saved by createQRCodeMapping
       const {

@@ -8,6 +8,7 @@ interface Props {
   onEditFloorplans: () => void;
   onSettings?: () => void;
   onFloorplanEditor?: () => void;
+  onManageQRCodes?: () => void;
 }
 
 export default function AdminScreenContent({
@@ -16,6 +17,7 @@ export default function AdminScreenContent({
   onEditFloorplans,
   //onSettings,
   onFloorplanEditor,
+  onManageQRCodes,
 }: Props) {
   return (
     <View
@@ -62,6 +64,11 @@ export default function AdminScreenContent({
           title="Edit Floorplans"
           onPress={onEditFloorplans}
           testID="button-Edit-Floorplans"
+        />
+        <AppButton
+          title="QR Code Admin"
+          onPress={onManageQRCodes}
+          testID="button-QRCode-Admin"
         />
         {/* <AppButton title="Settings" onPress={onSettings} /> */}
       </View>
