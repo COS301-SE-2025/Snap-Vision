@@ -37,11 +37,35 @@ export default function IndoorNavigationInstructionsContent({
 
   const [steps, setSteps] = useState<NavigationStep[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
+  // TTS: Setup and speak current step
+  useEffect(() => {
+    // Set TTS defaults and add listeners (only once)
+    TTS.setDefaultLanguage('en-US');
+    TTS.setDefaultRate(0.5);
+    TTS.setDefaultPitch(1.0);
+    const onTtsError = (e: any) => console.warn('TTS error', e);
+    const onTtsStart = () => {};
+    const onTtsFinish = () => {};
+    TTS.addEventListener('tts-start', onTtsStart);
+    TTS.addEventListener('tts-finish', onTtsFinish);
+    TTS.addEventListener('tts-cancel', onTtsFinish);
+    TTS.addEventListener('tts-error', onTtsError);
+    return () => {
+      TTS.stop();
+      TTS.removeEventListener('tts-start', onTtsStart);
+      TTS.removeEventListener('tts-finish', onTtsFinish);
+      TTS.removeEventListener('tts-cancel', onTtsFinish);
+      TTS.removeEventListener('tts-error', onTtsError);
+    };
+  }, []);
+
   // Speak the current step's instruction when it changes
   useEffect(() => {
     if (steps.length && steps[currentStep]) {
       TTS.stop();
-      TTS.speak(steps[currentStep].instruction);
+      setTimeout(() => {
+        TTS.speak(steps[currentStep].instruction);
+      }, 250);
     }
   }, [currentStep, steps]);
   const [isLoading, setIsLoading] = useState(true);
@@ -129,7 +153,9 @@ export default function IndoorNavigationInstructionsContent({
       });
       setShowPopup(true);
       TTS.stop();
-      TTS.speak(`You have arrived at ${endRoomName}`);
+      setTimeout(() => {
+        TTS.speak(`You have arrived at ${endRoomName}`);
+      }, 250);
     } else {
       setCurrentStep(i + 1);
     }
