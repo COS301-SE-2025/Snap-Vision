@@ -39,6 +39,12 @@ class TimetableBackgroundService {
     return TimetableBackgroundService.instance;
   }
 
+  // Method that can be called to refresh notifications when timetable changes
+  async refreshNotifications() {
+    console.log('[TimetableService] Manually refreshing notifications');
+    return this.scheduleWeekNotifications();
+  }
+
   async start() {
     if (this.isRunning) return;
     
