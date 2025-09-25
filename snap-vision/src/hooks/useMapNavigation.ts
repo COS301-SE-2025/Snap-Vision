@@ -447,9 +447,9 @@ export const useMapNavigation = (
       let closestPointIndex = 0;
       let currentProgressIndex = Math.max(0, Math.floor((routeProgress / 100) * (lastRoute.current.length - 1)));
 
-      // Search in a range around current progress to prevent sudden jumps backward
-      const searchStart = Math.max(0, currentProgressIndex - 5);
-      const searchEnd = Math.min(lastRoute.current.length, currentProgressIndex + 15);
+      // Search in a wider range around current progress to better detect off-route situations
+      const searchStart = Math.max(0, currentProgressIndex - 10);
+      const searchEnd = Math.min(lastRoute.current.length, currentProgressIndex + 25);
 
       for (let i = searchStart; i < searchEnd; i++) {
         const routePoint = lastRoute.current[i];
@@ -477,8 +477,9 @@ export const useMapNavigation = (
         }
       }
 
-      // Fallback: if no point found in range, search entire route
-      if (minDist > 50) { // If still too far, search entire route
+      // Fallback: if no point found in range, search entire route with reduced threshold
+      if (minDist > 25) { // Reduced threshold from 50m to 25m for better detection
+        console.log(`🔍 Searching entire route - current min distance: ${minDist.toFixed(1)}m`);
         for (let i = 0; i < lastRoute.current.length; i++) {
           const routePoint = lastRoute.current[i];
           if (!Array.isArray(routePoint) || routePoint.length < 2) continue;
@@ -497,8 +498,9 @@ export const useMapNavigation = (
         }
       }
 
-      // Check for route deviation and automatic rerouting
-      if (minDist > 30 && !isRouteLoading) {
+      // Check for route deviation and automatic rerouting - reduced threshold for more responsive rerouting
+      if (minDist > 15 && !isRouteLoading) {
+        console.log(`🔄 Rerouting triggered - distance from route: ${minDist.toFixed(1)}m`);
         setStatus('Re-routing...');
         rerouteFromCurrentLocation();
         return; // Exit early to prevent further processing during reroute
