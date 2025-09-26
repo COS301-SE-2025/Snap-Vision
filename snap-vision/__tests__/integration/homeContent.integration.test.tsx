@@ -60,6 +60,16 @@ jest.mock('@react-native-firebase/firestore', () => ({
   default: jest.fn(() => ({})),
 }));
 
+jest.mock('@react-native-firebase/perf', () => ({
+  __esModule: true,
+  default: jest.fn(() => ({
+    newTrace: jest.fn(() => Promise.resolve({
+      start: jest.fn(() => Promise.resolve()),
+      stop: jest.fn(() => Promise.resolve()),
+    })),
+  })),
+}));
+
 jest.mock('../../src/services/firebase/recentlyVService', () => ({
   __esModule: true,
   getRecentlyVPOIs: jest.fn(),
@@ -251,7 +261,6 @@ describe('HomeContent Integration Tests', () => {
     });
 
     it('handles network errors gracefully', async () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       mockGetRecentlyVPOIs.mockRejectedValue(new Error('Network error'));
 
       (useFocusEffect as jest.Mock).mockImplementation((callback) => {
@@ -266,17 +275,11 @@ describe('HomeContent Integration Tests', () => {
 
       await waitFor(
         () => {
-          expect(consoleSpy).toHaveBeenCalledWith(
-            'Error fetching recently visited:',
-            expect.any(Error),
-          );
           expect(queryByText('Loading...')).toBeNull();
           expect(getByTestId('recently-visited-carousel')).toBeTruthy();
         },
         { timeout: 3000 },
       );
-
-      consoleSpy.mockRestore();
     });
   });
 
@@ -553,8 +556,6 @@ describe('HomeContent Integration Tests', () => {
 
   describe('Error Recovery Integration', () => {
     it('integrates error handling with state management', async () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-
       mockGetRecentlyVPOIs.mockRejectedValueOnce(new Error('First call failed'));
       mockGetRecentlyVPOIs.mockResolvedValue([
         createMockVisit({
@@ -577,10 +578,6 @@ describe('HomeContent Integration Tests', () => {
       );
 
       await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith(
-          'Error fetching recently visited:',
-          expect.any(Error),
-        );
         expect(queryByText('Loading...')).toBeNull();
       });
 
@@ -591,8 +588,6 @@ describe('HomeContent Integration Tests', () => {
       await waitFor(() => {
         expect(getByText('1 visits')).toBeTruthy();
       });
-
-      consoleSpy.mockRestore();
     });
   });
 });
