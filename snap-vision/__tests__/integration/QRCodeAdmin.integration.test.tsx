@@ -262,7 +262,7 @@ describe('QRCodeAdminContent Integration', () => {
     );
 
     expect(getByText('QR Code Management')).toBeTruthy();
-    expect(getByText('Select a Location')).toBeTruthy();
+    expect(getByText('Step 1: Select Location')).toBeTruthy();
   });
 
   it('shows building selector when location is selected', () => {
@@ -562,7 +562,7 @@ describe('QRCodeAdminContent Integration', () => {
       </ThemeProviderWrapper>,
     );
 
-    expect(getByText('Select a Location')).toBeTruthy();
+    expect(getByText('Step 1: Select Location')).toBeTruthy();
   });
 
   it('completes the full selection flow: location -> building -> floor', async () => {
@@ -578,7 +578,7 @@ describe('QRCodeAdminContent Integration', () => {
 
     // Verify the component recognizes the selection
     await waitFor(() => {
-      expect(queryByText('Select a Location')).toBeTruthy();
+      expect(queryByText('Step 1: Select Location')).toBeTruthy();
     });
   });
 
