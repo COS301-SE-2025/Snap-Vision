@@ -237,8 +237,6 @@ function MiniMapOverlay({
                 })}
               </View>
             )}
-
-            /* Current Location Marker with heading - positioned at current location */
             <View
               style={[
                 styles.currentLocationMarker,
@@ -251,7 +249,6 @@ function MiniMapOverlay({
             >
               <Text style={styles.currentLocationIcon}>📍</Text>
             </View>
-
             {/* Destination Marker - positioned at route end */}
             <View
               style={[
@@ -261,7 +258,6 @@ function MiniMapOverlay({
             >
               <Text style={styles.destinationIcon}>🎯</Text>
             </View>
-
             {/* Upcoming waypoints */}
             {upcomingPoints.slice(1, 4).map((point, index) => {
               const pos = coordToMiniMap(point[0], point[1]);
@@ -358,17 +354,11 @@ function SimpleARGuidance({
             }
 
             nextPoint = routeCoordinates[targetIndex];
-               
           } else {
             nextPoint = [destinationCoords.x, destinationCoords.y];
           }
-  
-          return calculateBearing(
-            currentLocation.y,
-            currentLocation.x,
-            nextPoint[1],
-            nextPoint[0],
-          );
+
+          return calculateBearing(currentLocation.y, currentLocation.x, nextPoint[1], nextPoint[0]);
         })()
       : 0;
 
@@ -540,12 +530,11 @@ function normalizeAngle(angle: number): number {
   return angle;
 }
 
-
 // Simplified Skia-based Arrow Component
 function CustomDirectionArrow({ direction, size = 160 }: { direction: string; size?: number }) {
   const theme = useTheme();
   const colors = theme.dark ? darkColors : lightColors;
-  
+
   // Arrow colors based on theme
   const primaryArrowColor = colors.text; // Blue: #2f6e83 (light) / #69c6d0 (dark)
   const secondaryArrowColor = colors.secondary; // Blue-green: #3E5650 (light) / #90AFA8 (dark)
@@ -607,11 +596,7 @@ function CustomDirectionArrow({ direction, size = 160 }: { direction: string; si
             strokeWidth={3}
           />
           {/* Arrow head at end of circle */}
-          <Path
-            path={createTurnAroundArrowHead(size)}
-            color={primaryArrowColor}
-            style="fill"
-          />
+          <Path path={createTurnAroundArrowHead(size)} color={primaryArrowColor} style="fill" />
         </Canvas>
       </View>
     );
@@ -619,44 +604,26 @@ function CustomDirectionArrow({ direction, size = 160 }: { direction: string; si
 
   // Standard directional arrow
   return (
-    <View 
-      style={{ 
-        width: size, 
-        height: size, 
-        justifyContent: 'center', 
+    <View
+      style={{
+        width: size,
+        height: size,
+        justifyContent: 'center',
         alignItems: 'center',
-        transform: [{ rotate: `${getRotation()}deg` }] 
+        transform: [{ rotate: `${getRotation()}deg` }],
       }}
     >
       <Canvas style={{ width: size, height: size }}>
         {/* Arrow shaft */}
-        <Path
-          path={createArrowShaft(size)}
-          color={primaryArrowColor}
-          style="fill"
-        />
-        
+        <Path path={createArrowShaft(size)} color={primaryArrowColor} style="fill" />
+
         {/* Arrow head */}
-        <Path
-          path={createArrowHead(size)}
-          color={primaryArrowColor}
-          style="fill"
-        />
-        
+        <Path path={createArrowHead(size)} color={primaryArrowColor} style="fill" />
+
         {/* Subtle outline for visibility */}
-        <Path
-          path={createArrowShaft(size)}
-          color={strokeColor}
-          style="stroke"
-          strokeWidth={4}
-        />
-        
-        <Path
-          path={createArrowHead(size)}
-          color={strokeColor}
-          style="stroke"
-          strokeWidth={4}
-        />
+        <Path path={createArrowShaft(size)} color={strokeColor} style="stroke" strokeWidth={4} />
+
+        <Path path={createArrowHead(size)} color={strokeColor} style="stroke" strokeWidth={4} />
       </Canvas>
     </View>
   );
@@ -668,11 +635,11 @@ function createArrowShaft(size: number): string {
   const shaftWidth = size * 0.15; // Made thicker for better visibility
   const shaftHeight = size * 0.42; // Slightly longer
   const startY = size * 0.43; // Adjusted start position
-  
-  return `M ${centerX - shaftWidth/2} ${startY} 
-          L ${centerX + shaftWidth/2} ${startY} 
-          L ${centerX + shaftWidth/2} ${startY + shaftHeight} 
-          L ${centerX - shaftWidth/2} ${startY + shaftHeight} 
+
+  return `M ${centerX - shaftWidth / 2} ${startY} 
+          L ${centerX + shaftWidth / 2} ${startY} 
+          L ${centerX + shaftWidth / 2} ${startY + shaftHeight} 
+          L ${centerX - shaftWidth / 2} ${startY + shaftHeight} 
           Z`;
 }
 
@@ -681,10 +648,10 @@ function createArrowHead(size: number): string {
   const headWidth = size * 0.35; // Made wider
   const headHeight = size * 0.32; // Slightly taller
   const tipY = size * 0.12; // Moved tip up slightly
-  
+
   return `M ${centerX} ${tipY} 
-          L ${centerX - headWidth/2} ${tipY + headHeight} 
-          L ${centerX + headWidth/2} ${tipY + headHeight} 
+          L ${centerX - headWidth / 2} ${tipY + headHeight} 
+          L ${centerX + headWidth / 2} ${tipY + headHeight} 
           Z`;
 }
 
@@ -692,7 +659,7 @@ function createTurnAroundPath(size: number): string {
   const centerX = size / 2;
   const centerY = size / 2;
   const radius = size * 0.3; // Increased radius for bigger circular arrow
-  
+
   // Create a 3/4 circle path
   return `M ${centerX + radius} ${centerY} 
           A ${radius} ${radius} 0 1 1 ${centerX - radius * 0.7} ${centerY - radius * 0.7}`;
@@ -702,11 +669,11 @@ function createTurnAroundArrowHead(size: number): string {
   const centerX = size / 2;
   const centerY = size / 2;
   const radius = size * 0.3; // Match the increased radius
-  
+
   const arrowX = centerX - radius * 0.7 - size * 0.04; // Shifted left by 3.5% of size
   const arrowY = centerY - radius * 0.7;
   const headSize = size * 0.1; // Increased head size
-  
+
   // Flipped arrow head to point at 270 degrees (to the left)
   // Creating a triangular arrow head pointing left (270 degrees)
   return `M ${arrowX - headSize} ${arrowY} 
@@ -1056,5 +1023,4 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
-
 });

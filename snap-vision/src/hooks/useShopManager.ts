@@ -239,17 +239,17 @@ interface UseShopManagerReturn {
   shopItems: ShopItem[];
   selectedTab: string;
   setSelectedTab: (tab: string) => void;
-  
+
   // State from contexts
   badgeState: ReturnType<typeof useBadges>['state'];
   setBadgeState: ReturnType<typeof useBadges>['setState'];
   equipIcon: ReturnType<typeof useUserIcons>['equipIcon'];
   isItemEquipped: ReturnType<typeof useUserIcons>['isItemEquipped'];
-  
+
   // Popup state
   popup: PopupState;
   setPopup: (popup: PopupState | ((prev: PopupState) => PopupState)) => void;
-  
+
   // Methods
   getFilteredItems: () => ShopItem[];
   handlePurchase: (item: ShopItem) => Promise<void>;
@@ -430,17 +430,17 @@ export const useShopManager = (): UseShopManagerReturn => {
     shopItems: SHOP_ITEMS,
     selectedTab,
     setSelectedTab,
-    
+
     // State from contexts
     badgeState,
     setBadgeState,
     equipIcon,
     isItemEquipped,
-    
+
     // Popup state
     popup,
     setPopup,
-    
+
     // Methods
     getFilteredItems,
     handlePurchase,

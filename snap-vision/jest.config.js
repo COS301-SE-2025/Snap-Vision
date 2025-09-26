@@ -15,7 +15,6 @@ module.exports = {
     '**/__tests__/**/*.test.js?(x)',
     '**/__tests__/**/*.test.ts?(x)',
     '<rootDir>/detox/tests/**/*.test.js',
-    '<rootDir>/detoxtesting/**/*.test.js',
   ],
   collectCoverage: true,
   collectCoverageFrom: [

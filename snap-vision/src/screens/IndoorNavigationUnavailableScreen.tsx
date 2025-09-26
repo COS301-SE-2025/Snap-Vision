@@ -41,8 +41,8 @@ export default function IndoorNavigationUnavailableScreen() {
 
       <View style={styles.content}>
         <View>
-          <Image 
-            source={require('../assets/images/mascot_unavailable.png')} 
+          <Image
+            source={require('../assets/images/mascot_unavailable.png')}
             style={styles.mascotImage}
             resizeMode="contain"
           />

@@ -129,8 +129,8 @@ const DestinationReachedPopup: React.FC<DestinationReachedPopupProps> = ({
           ]}
         >
           <View style={[styles.checkmarkCircle, { backgroundColor: colors.secondary }]}>
-            <Image 
-              source={require('../../assets/images/mascot_reached.png')} 
+            <Image
+              source={require('../../assets/images/mascot_reached.png')}
               style={styles.mascotImage}
               resizeMode="contain"
             />

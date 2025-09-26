@@ -2,6 +2,10 @@
 import { useState, useEffect } from 'react';
 import { User, UserFilters } from '../types/User';
 import firestore from '@react-native-firebase/firestore';
+import AuthorizationService from '../security/AuthorizationService';
+import InputValidator from '../security/InputValidator';
+
+const authService = AuthorizationService.getInstance();
 
 export const useUserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -12,8 +16,22 @@ export const useUserManagement = () => {
   });
   const [loading, setLoading] = useState(true);
   const [allLocations, setAllLocations] = useState<{ id: string; name: string }[]>([]);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Check if user has admin permissions
+    const checkPermissions = async () => {
+      const context = await authService.getCurrentUserContext();
+      if (!context || context.role !== 'admin') {
+        setAuthError('Admin access required');
+        setLoading(false);
+        return;
+      }
+      setAuthError(null);
+    };
+
+    checkPermissions();
+
     const unsubscribe = firestore()
       .collection('userInformation')
       .onSnapshot(
@@ -24,17 +42,18 @@ export const useUserManagement = () => {
             const d = doc.data();
             return {
               id: doc.id,
-              name: d.name || '',
-              email: d.email || '',
-              // handle editor role here too
+              name: InputValidator.validateText(d.name) || '',
+              email: InputValidator.validateEmail(d.email) || '',
               role: d.role === 'admin' ? 'Admin' : d.role === 'editor' ? 'Editor' : 'Viewer',
             };
           });
+
           setUsers(data);
           setLoading(false);
         },
         (error) => {
-          //consoleerror('Firestore error:', error);
+          console.error('Firestore error:', error);
+          setAuthError('Failed to load user data');
           setLoading(false);
         },
       );
@@ -93,41 +112,84 @@ export const useUserManagement = () => {
 
   const editUser = async (user: User, selectedLocation?: string) => {
     try {
-      const updateData: any = {};
+      // Validate inputs
+      const validUserId = InputValidator.validateUserId(user.id);
+      const validRole = InputValidator.validateRole(user.role.toLowerCase());
 
-      switch (user.role) {
-        case 'Admin':
-          updateData.role = 'admin';
+      if (!validUserId || !validRole) {
+        throw new Error('Invalid user data');
+      }
+
+      // Check authorization
+      const context = await authService.getCurrentUserContext();
+      if (!context || context.role !== 'admin') {
+        throw new Error('Admin access required');
+      }
+
+      // Validate location for editors
+      let validLocations: string[] = [];
+      if (validRole === 'editor') {
+        if (!selectedLocation) {
+          throw new Error('No location selected for editor');
+        }
+        const validLocationId = InputValidator.validateDocumentId(selectedLocation);
+        if (!validLocationId) {
+          throw new Error('Invalid location ID');
+        }
+        validLocations = [validLocationId];
+      }
+
+      const updateData: any = { role: validRole };
+
+      switch (validRole) {
+        case 'admin':
           updateData.adminLocations = firestore.FieldValue.delete();
           break;
 
-        case 'Viewer':
-          updateData.role = 'viewer';
-          updateData.adminLocations = firestore.FieldValue.delete();
-          break;
-
-        case 'Editor':
-          if (!selectedLocation) throw new Error('No location selected for editor');
-          updateData.role = 'editor';
-          updateData.adminLocations = [selectedLocation];
+        case 'editor':
+          updateData.adminLocations = validLocations;
           break;
 
         default:
-          updateData.role = 'user';
           updateData.adminLocations = firestore.FieldValue.delete();
       }
 
-      await firestore().collection('userInformation').doc(user.id).update(updateData);
+      await firestore().collection('userInformation').doc(validUserId).update(updateData);
+
+      // Clear auth cache for the updated user
+      authService.clearCache(validUserId);
     } catch (err) {
-      //consoleerror('Failed to update role:', err);
+      console.error('Failed to update role:', err);
+      throw err;
     }
   };
 
   const deleteUser = async (user: User) => {
     try {
-      await firestore().collection('userInformation').doc(user.id).delete();
+      // Validate input
+      const validUserId = InputValidator.validateUserId(user.id);
+      if (!validUserId) {
+        throw new Error('Invalid user ID');
+      }
+
+      // Check authorization
+      const context = await authService.getCurrentUserContext();
+      if (!context || context.role !== 'admin') {
+        throw new Error('Admin access required');
+      }
+
+      // Prevent self-deletion
+      if (context.userId === validUserId) {
+        throw new Error('Cannot delete your own account');
+      }
+
+      await firestore().collection('userInformation').doc(validUserId).delete();
+
+      // Clear auth cache
+      authService.clearCache(validUserId);
     } catch (err) {
-      //consoleerror('Failed to delete user:', err);
+      console.error('Failed to delete user:', err);
+      throw err;
     }
   };
 
@@ -135,6 +197,7 @@ export const useUserManagement = () => {
     users: filteredUsers,
     loading,
     filters,
+    authError,
     updateSearchQuery,
     updateRoleFilter,
     editUser,

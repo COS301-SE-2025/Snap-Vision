@@ -96,7 +96,7 @@ export default function TimetableEntryForm({
     date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 
   const handleBuildingSelect = (buildingId: string) => {
-    const building = buildings.find(b => b.id === buildingId);
+    const building = buildings.find((b) => b.id === buildingId);
     if (building) {
       setSelectedBuildingId(building.id);
       setSelectedBuildingName(building.name);
@@ -240,9 +240,7 @@ export default function TimetableEntryForm({
                 ]}
                 onPress={() => setDayDropdownVisible(true)}
               >
-                <Text style={[styles.floorDropdownText, { color: colors.text }]}>
-                  {day}
-                </Text>
+                <Text style={[styles.floorDropdownText, { color: colors.text }]}>{day}</Text>
                 <Icon name="chevron-down" size={20} color={colors.text} />
               </TouchableOpacity>
             </View>
@@ -261,15 +259,17 @@ export default function TimetableEntryForm({
                 onPress={() => setBuildingDropdownVisible(true)}
                 disabled={poisLoading || buildings.length === 0}
               >
-                <Text style={[
-                  styles.floorDropdownText, 
-                  { color: selectedBuildingName ? colors.text : colors.secondary }
-                ]}>
-                  {poisLoading ? "Loading buildings..." : (selectedBuildingName || "Select Building")}
+                <Text
+                  style={[
+                    styles.floorDropdownText,
+                    { color: selectedBuildingName ? colors.text : colors.secondary },
+                  ]}
+                >
+                  {poisLoading ? 'Loading buildings...' : selectedBuildingName || 'Select Building'}
                 </Text>
                 <Icon name="chevron-down" size={20} color={colors.text} />
               </TouchableOpacity>
-              
+
               {poisLoading && (
                 <Text style={[styles.loadingText, { color: colors.secondary }]}>
                   Loading buildings...
@@ -406,7 +406,12 @@ export default function TimetableEntryForm({
           activeOpacity={1}
           onPress={() => setDayDropdownVisible(false)}
         >
-          <View style={[styles.dropdownContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.dropdownContainer,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
             <Text style={[styles.dropdownTitle, { color: colors.text }]}>Select Day</Text>
             <FlatList
               data={DAYS_OF_WEEK}
@@ -415,19 +420,15 @@ export default function TimetableEntryForm({
                 <TouchableOpacity
                   style={[
                     styles.dropdownItem,
-                    day === item && { backgroundColor: colors.primary + '20' }
+                    day === item && { backgroundColor: colors.primary + '20' },
                   ]}
                   onPress={() => {
                     handleDaySelect(item);
                     setDayDropdownVisible(false);
                   }}
                 >
-                  <Text style={[styles.dropdownItemText, { color: colors.text }]}>
-                    {item}
-                  </Text>
-                  {day === item && (
-                    <Icon name="check" size={20} color={colors.primary} />
-                  )}
+                  <Text style={[styles.dropdownItemText, { color: colors.text }]}>{item}</Text>
+                  {day === item && <Icon name="check" size={20} color={colors.primary} />}
                 </TouchableOpacity>
               )}
             />
@@ -447,7 +448,12 @@ export default function TimetableEntryForm({
           activeOpacity={1}
           onPress={() => setBuildingDropdownVisible(false)}
         >
-          <View style={[styles.dropdownContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.dropdownContainer,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
             <Text style={[styles.dropdownTitle, { color: colors.text }]}>Select Building</Text>
             {buildings.length > 0 ? (
               <FlatList
@@ -457,7 +463,7 @@ export default function TimetableEntryForm({
                   <TouchableOpacity
                     style={[
                       styles.dropdownItem,
-                      selectedBuildingId === item.id && { backgroundColor: colors.primary + '20' }
+                      selectedBuildingId === item.id && { backgroundColor: colors.primary + '20' },
                     ]}
                     onPress={() => {
                       handleBuildingSelect(item.id);
@@ -527,7 +533,7 @@ const styles = StyleSheet.create({
   },
   fieldContainer: {
     marginBottom: 16,
-    position: 'relative', 
+    position: 'relative',
   },
   fieldLabel: {
     fontSize: 14,

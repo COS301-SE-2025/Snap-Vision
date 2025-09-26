@@ -60,12 +60,7 @@ const PathDeletionModal: React.FC<PathDeletionModalProps> = ({
   );
 
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="slide"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent={true} animationType="slide" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
           <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
@@ -97,7 +92,10 @@ const PathDeletionModal: React.FC<PathDeletionModalProps> = ({
           )}
 
           <TouchableOpacity
-            style={[styles.cancelButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+            style={[
+              styles.cancelButton,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
             onPress={onClose}
           >
             <Text style={[styles.cancelButtonText, { color: colors.text }]}>Cancel</Text>
