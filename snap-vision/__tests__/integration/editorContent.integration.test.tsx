@@ -93,13 +93,13 @@ describe('EditorContent Integration Tests', () => {
       const dashboardText = getByText('DASHBOARD');
 
       expect(editorText.props.style).toMatchObject({
-        fontSize: 56,
+        fontSize: 72,
         fontFamily: 'ChicleRegular',
         color: mockColors.primary,
       });
 
       expect(dashboardText.props.style).toMatchObject({
-        fontSize: 52,
+        fontSize: 72,
         fontFamily: 'ChicleRegular',
         color: mockColors.primary,
       });
