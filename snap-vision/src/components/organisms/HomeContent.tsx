@@ -1,6 +1,5 @@
-// src/components/organisms/HomeContent.tsx
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Image } from 'react-native';
 import HeaderWithIcons from '../molecules/HeaderWithIcons';
 import QrCard from '../molecules/QrCard';
 import AppButton from '../atoms/AppButton';
@@ -9,11 +8,11 @@ import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import RecentlyVisitedCarousel from '../molecules/RecentlyVisitedCarousel';
 import { useEffect, useState } from 'react';
 import { getRecentlyVPOIs, Visit } from '../../services/firebase/recentlyVService';
+import perf from '@react-native-firebase/perf';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 type RootStackParamList = {
@@ -30,31 +29,26 @@ export default function HomeContent() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchRecentlyVisited = React.useCallback(async () => {
-    try {
-      const userId = auth().currentUser?.uid;
-      if (!userId) return;
-
-      const visits = await getRecentlyVPOIs(userId);
-      setRecentlyVisited(visits);
-    } catch (error) {
-      console.error('Error fetching recently visited:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
-
   useFocusEffect(
     React.useCallback(() => {
-      fetchRecentlyVisited();
-    }, [fetchRecentlyVisited]),
-  );
+      const fetchRecentlyVisited = async () => {
+        const trace = await perf().newTrace('recently_visited_firestore_load');
+        await trace.start();
+        try {
+          const userId = auth().currentUser?.uid;
+          if (!userId) return;
 
-  const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    fetchRecentlyVisited();
-  }, [fetchRecentlyVisited]);
+          const visits = await getRecentlyVPOIs(userId);
+          setRecentlyVisited(visits);
+        } catch (error) {
+          //consoleerror('Error fetching recently visited:', error);
+        } finally {
+          setLoading(false);
+          await trace.stop();
+        }
+      };
+      fetchRecentlyVisited();
+    }, []),  );
 
   return (
     <ScrollView
@@ -65,20 +59,24 @@ export default function HomeContent() {
       bounces={true}
       alwaysBounceVertical={true}
       keyboardShouldPersistTaps="handled"
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          colors={[colors.primary]}
-          tintColor={colors.primary}
-          progressBackgroundColor={colors.card}
-        />
-      }
     >
       <HeaderWithIcons />
 
-      {/* First separator */}
-      <View style={[styles.separator, { borderBottomColor: colors.border }]} />
+      <View style={{ height: 20 }} />
+
+      {/* Mascot image */}
+      <View style={styles.mascotContainer}>
+        <Image
+          source={require('../../../assets/mascot_ponder.png')}
+          style={styles.mascotImage}
+          resizeMode="contain"
+        />
+      </View>
+
+      {/* First separator (slightly lowered) */}
+      <View style={{ marginTop: 20 }}>
+        <View style={[styles.separator, { borderBottomColor: colors.primary }]} />
+      </View>
 
       {/* Go to Maps + QR Section */}
       <View style={styles.actionBlock}>
@@ -100,7 +98,7 @@ export default function HomeContent() {
       </View>
 
       {/* Second separator */}
-      <View style={[styles.separator, { borderBottomColor: colors.border }]} />
+      <View style={[styles.separator, { borderBottomColor: colors.primary }]} />
 
       {/* Timetable Section */}
       <View style={styles.timetableSection}>
@@ -166,25 +164,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     marginHorizontal: 20,
     marginVertical: 20,
-  },
-  actionBlock: {
-    paddingHorizontal: 20,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'stretch',
-    gap: 16,
-  },
-  mapButtonWrapper: {
-    flex: 1.1,
-  },
-  mapButtonBox: {
-    justifyContent: 'center',
-    alignItems: 'stretch',
-  },
-  qrWrapper: {
-    flex: 1,
   },
   timetableSection: {
     paddingHorizontal: 20,
@@ -256,5 +235,36 @@ const styles = StyleSheet.create({
     width: 140,
     height: 160,
     borderRadius: 10,
+  },
+  actionBlock: {
+    marginTop: 20,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    alignItems: 'stretch',
+  },
+  mapButtonWrapper: {
+    flex: 1.1,
+    marginRight: 8,
+  },
+  mapButtonBox: {
+    justifyContent: 'center',
+    alignItems: 'stretch',
+  },
+  qrWrapper: {
+    flex: 1,
+    marginLeft: 8,
+  },
+  mascotContainer: {
+    alignItems: 'center',
+    marginTop: -25,
+    marginBottom: -51,
+    zIndex: 1,
+  },
+  mascotImage: {
+    width: 100,
+    height: 100,
   },
 });

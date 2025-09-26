@@ -1,4 +1,3 @@
-// src/screens/HomeScreen.tsx
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import MapHomeContent from '../components/organisms/HomeContent';
@@ -16,7 +15,7 @@ const HomeScreen = () => {
   if (loading) return null;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View testID="home-screen" style={[styles.container, { backgroundColor: colors.background }]}>
       {!hasSeenLanding && <LandingOverlay onDismiss={() => setHasSeenLanding(true)} />}
       {hasSeenLanding && <MapHomeContent />}
     </View>

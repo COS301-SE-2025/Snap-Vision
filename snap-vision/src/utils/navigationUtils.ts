@@ -135,7 +135,7 @@ export const calculateMultiFloorRoute = (
   pathPOIs: PathPOI[],
   opts?: { accessible?: boolean },
 ): NavigationStep[] => {
-  const graph = new NavigationGraph(roomPOIs, pathPOIs);
+  const graph = new NavigationGraph(roomPOIs, pathPOIs, opts);
   const roomPath = graph.findShortestPath(startRoomId, endRoomId);
   if (!roomPath) return [];
 
@@ -353,10 +353,12 @@ function addInterFloorEdges(
     }
   });
 
-  const STAIRS_BASE = 20;
-  const STAIRS_PER_FLOOR = 20;
-  const ELEV_BASE = 5;
-  const ELEV_PER_FLOOR = 5;
+  // When accessibility mode is enabled, elevators have a lower weight (preferred)
+  // When accessibility mode is disabled, stairs have a lower weight (preferred)
+  const STAIRS_BASE = options.accessible ? 20 : 5;
+  const STAIRS_PER_FLOOR = options.accessible ? 20 : 5;
+  const ELEV_BASE = options.accessible ? 5 : 20;
+  const ELEV_PER_FLOOR = options.accessible ? 5 : 20;
 
   connectorsByGroup.forEach((roomsInGroup, groupId) => {
     const sorted = roomsInGroup
@@ -406,11 +408,11 @@ function addInterFloorEdges(
 export class NavigationGraph {
   private nodes: Map<string, GraphNode> = new Map();
 
-  constructor(roomPOIs: RoomPOI[], pathPOIs: PathPOI[]) {
-    this.buildGraph(roomPOIs, pathPOIs);
+  constructor(roomPOIs: RoomPOI[], pathPOIs: PathPOI[], options?: { accessible?: boolean }) {
+    this.buildGraph(roomPOIs, pathPOIs, options);
   }
 
-  private buildGraph(roomPOIs: RoomPOI[], pathPOIs: PathPOI[]) {
+  private buildGraph(roomPOIs: RoomPOI[], pathPOIs: PathPOI[], options?: { accessible?: boolean }) {
     // Create nodes
     for (const room of roomPOIs) {
       this.nodes.set(room.id, {
@@ -468,7 +470,7 @@ export class NavigationGraph {
       });
     }
 
-    addInterFloorEdges(this.nodes, roomPOIs, { accessible: false });
+    addInterFloorEdges(this.nodes, roomPOIs, { accessible: options?.accessible || false });
   }
 
   findShortestPath(startRoomId: string, endRoomId: string): string[] | null {
@@ -562,8 +564,9 @@ export const calculateRoute = (
   endRoomId: string,
   roomPOIs: RoomPOI[],
   pathPOIs: PathPOI[],
+  opts?: { accessible?: boolean },
 ): NavigationStep[] => {
-  const graph = new NavigationGraph(roomPOIs, pathPOIs);
+  const graph = new NavigationGraph(roomPOIs, pathPOIs, opts);
   const roomPath = graph.findShortestPath(startRoomId, endRoomId);
   if (!roomPath) return [];
 

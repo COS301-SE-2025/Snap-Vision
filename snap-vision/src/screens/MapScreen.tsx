@@ -43,7 +43,7 @@ const MapScreen = () => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const { isHapticFeedbackEnabled } = useAccessibility();
-  const { setNavigationStartTime, unlock, incrementRoutes } = useBadges();
+  const { setNavigationStartTime, unlock, incrementRoutes, state } = useBadges();
 
   // navigation
   const route = useRoute();
@@ -490,7 +490,18 @@ const MapScreen = () => {
 
   const handleOpenIndoorNavigation = () => {
     if (selectedBuildingForIndoor) {
-      openIndoorNavigation(selectedBuildingForIndoor, setErrorPopupMessage, setShowErrorPopup);
+      openIndoorNavigation(
+        selectedBuildingForIndoor,
+        navigation,
+        setErrorPopupMessage,
+        setShowErrorPopup,
+      );
+    } else if (hookSelectedPOI) {
+      setSelectedBuildingForIndoor(hookSelectedPOI);
+      openIndoorNavigation(hookSelectedPOI, navigation, setErrorPopupMessage, setShowErrorPopup);
+    } else {
+      setErrorPopupMessage('Please select a building first');
+      setShowErrorPopup(true);
     }
   };
 
@@ -504,6 +515,11 @@ const MapScreen = () => {
 
   const handleOpenCrowdReportModal = () => {
     openCrowdReportModal(selectedFeature, destination, destinationCoords, pois, setHookSelectedPOI);
+  };
+
+  const handleSelectCrowdReportPOI = (poi: any) => {
+    // Only update the selected POI for crowd reporting, don't trigger navigation
+    setHookSelectedPOI(poi);
   };
 
   const handleOpenEditBuildingModal = (poi: any) => {
@@ -715,6 +731,26 @@ const MapScreen = () => {
     }
   }, [isMapReady, currentLocation, isRefreshingLocation, showLocationRefreshPopup]);
 
+  // Handle user icon updates when purchases change
+  useEffect(() => {
+    if (isMapReady && webViewRef.current) {
+      // Find the latest user icon purchase
+      const userIconPurchases =
+        state.purchases?.filter((purchase: any) => purchase.id?.startsWith('user-icon-')) || [];
+
+      if (userIconPurchases.length > 0) {
+        // Get the most recent user icon purchase
+        const latestIconPurchase = userIconPurchases[userIconPurchases.length - 1];
+        const iconName =
+          latestIconPurchase.icon || latestIconPurchase.id?.replace('user-icon-', '');
+
+        // Update the WebView with the new icon
+        const iconUpdateScript = `window.setUserIcon && window.setUserIcon('${iconName}');`;
+        webViewRef.current.injectJavaScript(iconUpdateScript);
+      }
+    }
+  }, [state.purchases, isMapReady]);
+
   return (
     <MapContent
       //theme
@@ -762,6 +798,7 @@ const MapScreen = () => {
       onDestinationChange={handleDestinationChange}
       onDestinationSearch={handleDestinationSearch}
       onSelectPOI={handleSelectPOI}
+      onSelectCrowdReportPOI={handleSelectCrowdReportPOI}
       // Bluetooth navigation
       onOpenBluetoothNavigation={handleOpenBluetoothNavigation}
       //admin

@@ -1,51 +1,20 @@
+
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  ActivityIndicator,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
-import SettingsHeader from '../components/molecules/SettingsHeader';
-import NavigationBar from '../components/molecules/NavigationBar';
-import DebugInfoBar from '../components/molecules/DebugInfoBar';
-import POIPopup from '../components/molecules/POIPopup';
-import POIInfoModal from '../components/molecules/POIInfoModal';
-import NavigationInstructionsBar from '../components/molecules/NavigationInstructionsBar';
-import DirectionsModal from '../components/organisms/DirectionsModal';
-import DestinationReachedPopup from '../components/molecules/DestinationReachedPopup';
-import IndoorSchematicMap from '../components/organisms/IndoorSchematicMap';
-import RoomsListOverlay from '../components/organisms/RoomsListOverlay';
-import { useRoomManager, RoomPOI } from '../hooks/useRoomManager';
-import { useFloorplanManager } from '../hooks/useFloorplanManager';
-import { useBeaconManager } from '../hooks/useBeaconManager';
-import { useNavigationManager } from '../hooks/useNavigationManager';
-
-type RootStackParamList = {
-  BluetoothIndoorNavigation: {
-    buildingId: string;
-    buildingName: string;
-    locationId: string;
-  };
-};
-type RouteP = RouteProp<RootStackParamList, 'BluetoothIndoorNavigation'>;
-type NavP = StackNavigationProp<RootStackParamList, 'BluetoothIndoorNavigation'>;
+import BluetoothIndoorNavigationContent from '../components/organisms/BluetoothIndoorNavigationContent';
 
 export default function BluetoothIndoorNavigationScreen() {
-  const navigation = useNavigation<NavP>();
-  const route = useRoute<RouteP>();
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const { buildingId, buildingName, locationId } = route.params;
 
   const [showRoomsList, setShowRoomsList] = useState(false);
   const [mapSize, setMapSize] = useState({ width: 0, height: 0 });
-
+  
   // POI popup state
   const [showPOIPopup, setShowPOIPopup] = useState(false);
   const [showPOIInfoModal, setShowPOIInfoModal] = useState(false);
@@ -90,7 +59,7 @@ export default function BluetoothIndoorNavigationScreen() {
   }, [beaconManager.currentPos, mapSize]);
 
   const handleRoomSelect = (roomId: string) => {
-    const room = roomManager.allRooms.find((r) => r.id === roomId);
+    const room = roomManager.allRooms.find(r => r.id === roomId);
     if (room) {
       setSelectedPOI(room);
       setShowPOIPopup(true);
@@ -102,12 +71,12 @@ export default function BluetoothIndoorNavigationScreen() {
     console.log('[SCREEN] handleNavigateHere called');
     console.log('[SCREEN] selectedPOI:', selectedPOI);
     console.log('[SCREEN] Navigation manager isNavigating:', navigationManager.isNavigating);
-
+    
     if (selectedPOI) {
       console.log('Starting navigation to:', selectedPOI.name);
       const success = await navigationManager.startNavigation(selectedPOI);
       console.log('[SCREEN] Navigation start result:', success);
-
+      
       if (success) {
         console.log('[SCREEN] Navigation started successfully, closing popup');
         setShowPOIPopup(false);
@@ -217,9 +186,10 @@ export default function BluetoothIndoorNavigationScreen() {
               }}
             >
               <Text style={{ color: colors.secondary, fontSize: 12 }}>
-                {beaconManager.isRunning
-                  ? 'Improving location accuracy...'
-                  : 'Waiting for beacon signals…'}
+                {beaconManager.isRunning 
+                  ? 'Improving location accuracy...' 
+                  : 'Waiting for beacon signals…'
+                }
               </Text>
             </View>
           )}
@@ -285,12 +255,4 @@ export default function BluetoothIndoorNavigationScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 16, fontSize: 16 },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 5,
-  },
 });

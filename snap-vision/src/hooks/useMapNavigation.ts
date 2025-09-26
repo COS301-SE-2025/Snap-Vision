@@ -6,6 +6,7 @@ import auth from '@react-native-firebase/auth';
 import Tts from 'react-native-tts';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { addRecentlyVisitedPOI, Visit } from '../services/firebase/recentlyVService';
+import Reactotron from 'reactotron-react-native';
 
 interface LocationState {
   latitude: number;
@@ -178,6 +179,18 @@ export const useMapNavigation = (
       return;
     }
 
+    // start performance requiremnet testing
+    const startTime = performance.now();
+    Reactotron.display({
+      name: 'Route Generation Started',
+      preview: `From: ${currentLocation.latitude}, ${currentLocation.longitude}`,
+      value: {
+        start: currentLocation,
+        destination: destCoords,
+        timestamp: startTime,
+      },
+    });
+
     setIsRouteLoading(true);
     setStatus('Calculating route...');
 
@@ -224,6 +237,23 @@ export const useMapNavigation = (
 
       // Reset progress
       setRouteProgress(0);
+
+      //end performance requirement testing
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+      const passed = duration < 300;
+
+      Reactotron.display({
+        name: 'Route Generation Complete',
+        preview: `${duration.toFixed(2)}ms ${passed ? 'PASS' : 'FAIL'}`,
+        value: {
+          duration: `${duration.toFixed(2)}ms`,
+          passedTest: passed,
+          requirement: '< 300ms',
+          totalDistance: `${totalDistance.toFixed(0)}m`,
+          status: 'SUCCESS',
+        },
+      });
     } catch (error) {
       //consoleerror('Route fetch error:', error);
       setError('Failed to fetch or draw route');
@@ -450,9 +480,9 @@ export const useMapNavigation = (
         Math.floor((routeProgress / 100) * (lastRoute.current.length - 1)),
       );
 
-      // Search in a range around current progress to prevent sudden jumps backward
-      const searchStart = Math.max(0, currentProgressIndex - 5);
-      const searchEnd = Math.min(lastRoute.current.length, currentProgressIndex + 15);
+      // Search in a wider range around current progress to better detect off-route situations
+      const searchStart = Math.max(0, currentProgressIndex - 10);
+      const searchEnd = Math.min(lastRoute.current.length, currentProgressIndex + 25);
 
       for (let i = searchStart; i < searchEnd; i++) {
         const routePoint = lastRoute.current[i];
@@ -480,9 +510,9 @@ export const useMapNavigation = (
         }
       }
 
-      // Fallback: if no point found in range, search entire route
-      if (minDist > 50) {
-        // If still too far, search entire route
+      // Fallback: if no point found in range, search entire route with reduced threshold
+      if (minDist > 25) {
+        // Reduced threshold from 50m to 25m for better detection
         for (let i = 0; i < lastRoute.current.length; i++) {
           const routePoint = lastRoute.current[i];
           if (!Array.isArray(routePoint) || routePoint.length < 2) continue;
@@ -501,8 +531,9 @@ export const useMapNavigation = (
         }
       }
 
-      // Check for route deviation and automatic rerouting
-      if (minDist > 30 && !isRouteLoading) {
+      // Check for route deviation and automatic rerouting - reduced threshold for more responsive rerouting
+      if (minDist > 15 && !isRouteLoading) {
+        console.log(`🔄 Rerouting triggered - distance from route: ${minDist.toFixed(1)}m`);
         setStatus('Re-routing...');
         rerouteFromCurrentLocation();
         return; // Exit early to prevent further processing during reroute

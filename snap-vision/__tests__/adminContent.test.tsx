@@ -105,7 +105,7 @@ describe('AdminContent', () => {
     const adminText = getByText('ADMIN');
     expect(adminText.props.style).toMatchObject({
       fontSize: 56,
-      fontFamily: 'PermanentMarkerRegular',
+      fontFamily: 'ChicleRegular',
       color: mockColors.primary,
       textAlign: 'center',
       marginBottom: 40,
@@ -119,7 +119,7 @@ describe('AdminContent', () => {
     const dashboardText = getByText('DASHBOARD');
     expect(dashboardText.props.style).toMatchObject({
       fontSize: 52,
-      fontFamily: 'PermanentMarkerRegular',
+      fontFamily: 'ChicleRegular',
       color: mockColors.primary,
       textAlign: 'center',
       marginBottom: 40,

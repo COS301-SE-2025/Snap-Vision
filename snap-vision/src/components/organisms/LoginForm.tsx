@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import AppInput from '../atoms/AppInput';
 import AppButton from '../atoms/AppButton';
 import RememberMe from '../molecules/RememberMe';
@@ -94,14 +94,25 @@ export default function LoginForm() {
         style={[
           styles.header,
           {
-            fontFamily: 'PermanentMarkerRegular',
+            fontFamily: 'ChicleRegular',
             color: colors.primary,
-            transform: [{ rotate: '-3deg' }],
+            // transform: [{ rotate: '-3deg' }],
+            textShadowColor: colors.secondary,
+            textShadowOffset: { width: 1, height: 1 },
+            textShadowRadius: 1,
           },
         ]}
       >
         LOGIN
       </Text>
+
+      <View style={styles.mascotWrapper}>
+        <Image
+          source={require('../../../assets/mascot_half_wave.png')}
+          style={styles.mascotImage}
+          resizeMode="contain"
+        />
+      </View>
 
       <Text style={[styles.label, { color: colors.secondary }]}>Email</Text>
       <AppInput
@@ -146,22 +157,16 @@ export default function LoginForm() {
       >
         Don’t have an account? <Text style={styles.signUpBold}>SIGN UP</Text>
       </Text>
-
-      <View style={styles.dividerRow}>
-        <View style={[styles.line, { backgroundColor: colors.secondary }]} />
-        <Text style={[styles.orText, { color: colors.secondary }]}>Login With</Text>
-        <View style={[styles.line, { backgroundColor: colors.secondary }]} />
-      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   header: {
-    fontSize: 72,
-    fontFamily: 'PermanentMarkerRegular',
+    fontSize: 82,
+    fontFamily: 'ChicleRegular',
     textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: 25,
   },
   label: {
     fontWeight: '600',
@@ -175,6 +180,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 15,
+    zIndex: 0,
   },
   error: {
     color: 'red',
@@ -207,5 +213,17 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     fontSize: 13,
     fontWeight: '600',
+  },
+  mascotWrapper: {
+    position: 'relative',
+    alignItems: 'flex-end',
+    marginTop: -20,
+    marginBottom: -53,
+    zIndex: 1,
+    paddingRight: 10,
+  },
+  mascotImage: {
+    width: 100,
+    height: 100,
   },
 });
