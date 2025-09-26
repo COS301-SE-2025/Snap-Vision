@@ -167,5 +167,55 @@ describe('Snap Vision Firestore Security Rules', () => {
     });
   });
 
+  describe('Role-Based Access Control', () => {
+    test('admin can write to RoomPOIs, PathPOIs, UPcampusPOIs', async () => {
+      const admin = testEnv.authenticatedContext('admin');
+      await assertSucceeds(setDoc(doc(admin.firestore(), 'RoomPOIs/room1'), { name: 'Room 1' }));
+      await assertSucceeds(setDoc(doc(admin.firestore(), 'PathPOIs/path1'), { name: 'Path 1' }));
+      await assertSucceeds(setDoc(doc(admin.firestore(), 'UPcampusPOIs/building1'), { name: 'Building 1' }));
+    });
+
+    test('user cannot write to RoomPOIs, PathPOIs, UPcampusPOIs', async () => {
+      const user = testEnv.authenticatedContext('user');
+      await assertFails(setDoc(doc(user.firestore(), 'RoomPOIs/room1'), { name: 'Room 1' }));
+      await assertFails(setDoc(doc(user.firestore(), 'PathPOIs/path1'), { name: 'Path 1' }));
+      await assertFails(setDoc(doc(user.firestore(), 'UPcampusPOIs/building1'), { name: 'Building 1' }));
+    });
+
+    test('editor can write to assigned location roomPOIs', async () => {
+      const editor = testEnv.authenticatedContext('editor');
+      await assertSucceeds(setDoc(doc(editor.firestore(), 'locations/up-campus/roomPOIs/room1'), { name: 'Room' }));
+      await assertFails(setDoc(doc(editor.firestore(), 'locations/other-campus/roomPOIs/room1'), { name: 'Room' }));
+    });
+  });
+
+  describe('Crowd Reports', () => {
+    beforeEach(async () => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), 'crowdReports/report1'), {
+          reportedBy: 'user',
+          status: 'open',
+        });
+      });
+    });
+
+    test('user can create crowdReport', async () => {
+      const user = testEnv.authenticatedContext('user');
+      await assertSucceeds(setDoc(doc(user.firestore(), 'crowdReports/report2'), { reportedBy: 'user', status: 'open' }));
+    });
+
+    test('user can update/delete their own report', async () => {
+      const user = testEnv.authenticatedContext('user');
+      await assertSucceeds(updateDoc(doc(user.firestore(), 'crowdReports/report1'), { status: 'closed' }));
+      await assertSucceeds(deleteDoc(doc(user.firestore(), 'crowdReports/report1')));
+    });
+
+    test('user cannot update/delete others report', async () => {
+      const other = testEnv.authenticatedContext('other');
+      await assertFails(updateDoc(doc(other.firestore(), 'crowdReports/report1'), { status: 'closed' }));
+      await assertFails(deleteDoc(doc(other.firestore(), 'crowdReports/report1')));
+    });
+  });
+
   
 });
