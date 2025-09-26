@@ -12,6 +12,7 @@ import firestore from '@react-native-firebase/firestore';
 import { useBadges } from '../../context/BadgeContext';
 import { useLanding } from '../../context/LandingContext';
 import StandardPopup from '../atoms/StandardPopup';
+import perf from '@react-native-firebase/perf';
 
 type RootStackParamList = {
   Login: undefined;
@@ -47,6 +48,8 @@ export default function RegisterForm() {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   const handleRegister = async () => {
+    const trace = await perf().newTrace('registration_latency');
+    await trace.start();
     const newErrors = { username: '', email: '', password: '', confirmPassword: '' };
     let hasError = false;
     setSuccessMessage('');
@@ -79,6 +82,7 @@ export default function RegisterForm() {
     if (hasError) {
       setErrors(newErrors);
       // Using inline error messages only, no popups
+      await trace.stop();
       return;
     }
 
@@ -141,6 +145,8 @@ export default function RegisterForm() {
         ...newErrors,
         email: msg,
       });
+    } finally {
+      await trace.stop();
     }
   };
 
