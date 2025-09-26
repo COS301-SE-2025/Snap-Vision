@@ -33,6 +33,7 @@
             <option value="$PROJECT_DIR$/../node_modules/@react-native-firebase/auth/android" />
             <option value="$PROJECT_DIR$/../node_modules/@react-native-firebase/firestore/android" />
             <option value="$PROJECT_DIR$/../node_modules/@react-native-firebase/messaging/android" />
+            <option value="$PROJECT_DIR$/../node_modules/@react-native-firebase/perf/android" />
             <option value="$PROJECT_DIR$/../node_modules/@react-native-firebase/storage/android" />
             <option value="$PROJECT_DIR$/../node_modules/@react-native-masked-view/masked-view/android" />
             <option value="$PROJECT_DIR$/../node_modules/@react-native-picker/picker/android" />

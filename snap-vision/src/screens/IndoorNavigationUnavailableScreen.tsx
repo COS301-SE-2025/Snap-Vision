@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme } from '../theme/ThemeContext';
@@ -40,8 +40,12 @@ export default function IndoorNavigationUnavailableScreen() {
       <SettingsHeader title="Indoor Navigation" />
 
       <View style={styles.content}>
-        <View style={styles.iconContainer}>
-          <MaterialCommunityIcons name="map-marker-off" size={80} color={colors.secondary} />
+        <View>
+          <Image 
+            source={require('../assets/images/mascot_unavailable.png')} 
+            style={styles.mascotImage}
+            resizeMode="contain"
+          />
         </View>
 
         <Text style={[styles.title, { color: colors.text }]}>Indoor Navigation Unavailable</Text>
@@ -91,6 +95,10 @@ const styles = StyleSheet.create({
   iconContainer: {
     marginBottom: 24,
     opacity: 0.7,
+  },
+  mascotImage: {
+    width: 170,
+    height: 170,
   },
   title: {
     fontSize: 24,

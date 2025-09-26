@@ -164,7 +164,7 @@ export default function RegisterForm() {
 
       <View style={styles.mascotWrapper}>
         <Image
-          source={require('../../../assets/mascot_half_wave.png')}
+          source={require('../../assets/images/mascot_half_wave.png')}
           style={styles.mascotImage}
           resizeMode="contain"
         />
