@@ -125,12 +125,23 @@ export const usePathManagement = ({
         true;
       `);
 
-      onSuccess('Path created successfully');
-    } catch (error) {
-      //consoleerror('Error saving path:', error);
-      onError('Failed to save path');
-    }
-  }, [selectedRooms, currentPath, buildingId, floorLabel, locationId, pathMarkers, onError, onSuccess]);
+        onSuccess('Path created successfully');
+      } catch (error) {
+        //consoleerror('Error saving path:', error);
+        onError('Failed to save path');
+      }
+    },
+    [
+      selectedRooms,
+      currentPath,
+      buildingId,
+      floorLabel,
+      locationId,
+      pathMarkers,
+      onError,
+      onSuccess,
+    ],
+  );
 
   const handleSelectPath = useCallback((pathId: string, webViewRef: any, colors: any) => {
     setSelectedPathId(pathId);
@@ -166,6 +177,30 @@ export const usePathManagement = ({
     [selectedPathId, locationId, pathMarkers, onError, onSuccess],
   );
 
+  const deletePathById = useCallback(
+    async (pathId: string, webViewRef: any) => {
+      try {
+        await firestore()
+          .collection(`locations/${locationId}/pathPOIs`)
+          .doc(pathId)
+          .delete();
+        setPathMarkers(pathMarkers.filter((p) => p.id !== pathId));
+        // Clear selection if we deleted the selected path
+        if (selectedPathId === pathId) {
+          setSelectedPathId(null);
+        }
+        webViewRef.current?.injectJavaScript(`
+        document.querySelectorAll('.path-line[data-path-id="${pathId}"]').forEach(p => p.remove());
+        true;
+      `);
+        onSuccess('Path deleted successfully');
+      } catch (error) {
+        onError('Failed to delete path');
+      }
+    },
+    [locationId, pathMarkers, selectedPathId, onError, onSuccess],
+  );
+
   return {
     // State
     pathMarkers,
@@ -180,6 +215,7 @@ export const usePathManagement = ({
     savePath,
     handleSelectPath,
     deleteSelectedPath,
+    deletePathById,
     setSelectedRooms,
     setCurrentPath,
   };

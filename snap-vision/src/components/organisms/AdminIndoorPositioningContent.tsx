@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   TextInput,
 } from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { WebView } from 'react-native-webview';
@@ -17,9 +16,7 @@ import { getThemeColors } from '../../theme';
 // Removed: WiFiFingerprintCollector
 import SettingsHeader from '../molecules/SettingsHeader';
 import StandardPopup from '../atoms/StandardPopup';
-import { LocationSelector } from '../molecules/LocationSelector';
-import BuildingSelector from '../molecules/BuildingSelector';
-import FloorSelector from '../molecules/FloorSelector';
+import { BeaconPositioningFlow } from './BeaconPositioningFlow';
 
 type Props = {
   buildingId?: string | null;
@@ -27,9 +24,6 @@ type Props = {
   onBack?: () => void;
 };
 
-type LocationItem = { id: string; name: string };
-type BuildingItem = { id: string; name: string };
-type FloorItem = { id: string; name: string };
 type Floorplan = {
   locationId: string;
   buildingId: string;
@@ -56,21 +50,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
 
   const [role, setRole] = useState<string | null>(null);
   const [adminLocations, setAdminLocations] = useState<string[]>([]);
-  const [locations, setLocations] = useState<LocationItem[]>([]);
-  const [buildings, setBuildings] = useState<BuildingItem[]>([]);
-  const [floors, setFloors] = useState<FloorItem[]>([]);
-  const [floorplans, setFloorplans] = useState<Floorplan[]>([]);
-  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
-  const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(
-    props.buildingId || null,
-  );
-  const [selectedFloorId, setSelectedFloorId] = useState<string | null>(null);
   const [selectedFloorplan, setSelectedFloorplan] = useState<Floorplan | null>(null);
-  const [selectedFloorplanId, setSelectedFloorplanId] = useState<string | null>(null);
-  const [selectedBuildingName, setSelectedBuildingName] = useState<string | null>(null);
-  const [buildingDropdownItems, setBuildingDropdownItems] = useState<
-    { label: string; value: string }[]
-  >([]);
   const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -81,8 +61,6 @@ export default function AdminIndoorPositioningContent(props: Props) {
   const [beaconMajor, setBeaconMajor] = useState('');
   const [beaconMinor, setBeaconMinor] = useState('');
   const [txPowerAt1m, setTxPowerAt1m] = useState('-59'); // sensible default
-  const [buildingDropdownOpen, setBuildingDropdownOpen] = useState(false);
-  const [floorDropdownOpen, setFloorDropdownOpen] = useState(false);
 
   // Popups
   const [showBeaconInfoPopup, setShowBeaconInfoPopup] = useState(false);
@@ -101,7 +79,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
-  // 1) Auth & RBAC
+  // Auth & RBAC
   useEffect(() => {
     const fetchUserInfo = async () => {
       const uid = auth().currentUser?.uid;
@@ -114,88 +92,11 @@ export default function AdminIndoorPositioningContent(props: Props) {
     fetchUserInfo();
   }, []);
 
-  // 2) Locations (respect editor RBAC)
-  useEffect(() => {
-    const fetchLocations = async () => {
-      const locSnap = await firestore().collection('locations').get();
-      const all = locSnap.docs.map((doc) => ({
-        id: doc.id,
-        name: (doc.data() as any).name || doc.id,
-      }));
-      const filtered =
-        role === 'editor' ? all.filter((loc) => adminLocations.includes(loc.id)) : all;
-      setLocations(filtered);
-
-      // If screen passed props, keep existing flow but let user pick location manually
-    };
-    if (role) fetchLocations();
-  }, [role, adminLocations]);
-
-  // 3) Buildings under location
-  useEffect(() => {
-    const fetchBuildings = async () => {
-      if (!selectedLocation) return;
-      const snap = await firestore().collection(`locations/${selectedLocation}/buildingPOIs`).get();
-      const list = snap.docs.map((doc) => ({
-        id: doc.id,
-        name: (doc.data() as any).name || doc.id,
-      }));
-      setBuildings(list);
-      setBuildingDropdownItems(list.map((b) => ({ label: b.name, value: b.id })));
-      if (!props.buildingId) {
-        setSelectedBuildingId(null);
-        setSelectedFloorplan(null);
-      }
-    };
-    if (selectedLocation) fetchBuildings();
-  }, [selectedLocation]);
-
-  // 4) Floorplans for a selected building
-  useEffect(() => {
-    const fetchFloorplans = async () => {
-      if (!selectedLocation || !selectedBuildingId) return;
-      const snap = await firestore()
-        .collection(`locations/${selectedLocation}/buildingPOIs/${selectedBuildingId}/floorplans`)
-        .get();
-      const list = snap.docs.map((doc) => {
-        const d = doc.data() as any;
-        return {
-          locationId: selectedLocation,
-          buildingId: selectedBuildingId,
-          floorLabel: d.floorLabel || doc.id,
-          downloadURL: d.downloadURL,
-          id: `${selectedBuildingId}_${d.floorLabel || doc.id}`,
-        } as Floorplan;
-      });
-      setFloorplans(list);
-
-      // Create floors array for the FloorSelector component
-      const floorsList = list.map((fp) => ({
-        id: fp.id,
-        name: fp.floorLabel,
-      }));
-      setFloors(floorsList);
-
-      // Auto-select by prop if provided
-      if (props.floorId) {
-        const match = list.find(
-          (fp) => fp.floorLabel === props.floorId || fp.id.endsWith(`_${props.floorId}`),
-        );
-        if (match) {
-          setSelectedFloorplan(match);
-          setSelectedFloorplanId(match.id);
-          setSelectedFloorId(match.id);
-        }
-      }
-    };
-    if (selectedBuildingId) fetchFloorplans();
-  }, [selectedBuildingId]);
-
-  // 5) Fetch placed beacons for the selected floor
+  // Fetch placed beacons for the selected floor
   const fetchBeacons = async () => {
-    if (!selectedLocation || !selectedBuildingId || !selectedFloorplan) return;
+    if (!selectedFloorplan) return;
     const col = firestore().collection(
-      `locations/${selectedLocation}/buildingPOIs/${selectedBuildingId}/floorplans/${selectedFloorplan.floorLabel}/beacons`,
+      `locations/${selectedFloorplan.locationId}/buildingPOIs/${selectedFloorplan.buildingId}/floorplans/${selectedFloorplan.floorLabel}/beacons`,
     );
     const snap = await col.get();
 
@@ -228,21 +129,9 @@ export default function AdminIndoorPositioningContent(props: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFloorplan]);
 
-  // Handler functions for selectors
-  const handleLocationSelect = (locationId: string) => {
-    setSelectedLocation(locationId);
-    setSelectedBuildingId(props.buildingId || null);
-    setSelectedBuildingName(null);
-    setSelectedFloorId(null);
-    setSelectedFloorplan(null);
-    setSelectedFloorplanId(null);
-    setCoords(null);
-  };
-
-  const handleFloorSelect = (floorId: string | null) => {
-    setSelectedFloorId(floorId);
-    const match = floorplans.find((fp) => fp.id === floorId);
-    setSelectedFloorplan(match || null);
+  // Handler for floorplan selection from BeaconPositioningFlow
+  const handleFloorplanSelect = (floorplan: Floorplan | null) => {
+    setSelectedFloorplan(floorplan);
     setCoords(null);
   };
 
@@ -266,13 +155,13 @@ export default function AdminIndoorPositioningContent(props: Props) {
     }
   };
 
-  // 7) Delete a beacon document
+  // Delete a beacon document
   const handleDeleteBeacon = async () => {
-    if (!beaconToDelete || !selectedLocation || !selectedBuildingId || !selectedFloorplan) return;
+    if (!beaconToDelete || !selectedFloorplan) return;
     try {
       await firestore()
         .collection(
-          `locations/${selectedLocation}/buildingPOIs/${selectedBuildingId}/floorplans/${selectedFloorplan.floorLabel}/beacons`,
+          `locations/${selectedFloorplan.locationId}/buildingPOIs/${selectedFloorplan.buildingId}/floorplans/${selectedFloorplan.floorLabel}/beacons`,
         )
         .doc(beaconToDelete.id)
         .delete();
@@ -479,9 +368,9 @@ export default function AdminIndoorPositioningContent(props: Props) {
     `;
   };
 
-  // 9) Save new beacon at selected coords
+  // Save new beacon at selected coords
   const saveBeacon = async () => {
-    if (!selectedLocation || !selectedBuildingId || !selectedFloorplan || !coords) {
+    if (!selectedFloorplan || !coords) {
       setErrorTitle('Missing selection');
       setErrorMessage('Please select Location, Building, Floor, and tap a spot on the floorplan.');
       setShowErrorPopup(true);
@@ -500,7 +389,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
     try {
       setIsLoading(true);
       const col = firestore().collection(
-        `locations/${selectedLocation}/buildingPOIs/${selectedBuildingId}/floorplans/${selectedFloorplan.floorLabel}/beacons`,
+        `locations/${selectedFloorplan.locationId}/buildingPOIs/${selectedFloorplan.buildingId}/floorplans/${selectedFloorplan.floorLabel}/beacons`,
       );
       await col.add({
         uuid: beaconUUID.trim(),
@@ -510,7 +399,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
         y: coords.y,
         txPowerAt1m: tx,
         label: beaconLabel.trim(),
-        buildingId: selectedBuildingId,
+        buildingId: selectedFloorplan.buildingId,
         floorId: selectedFloorplan.floorLabel,
         updatedAt: firestore.FieldValue.serverTimestamp(),
       });
@@ -541,39 +430,17 @@ export default function AdminIndoorPositioningContent(props: Props) {
       <SettingsHeader title="Indoor Positioning – Bluetooth Beacons" />
 
       <ScrollView style={styles.scroll}>
-        {/* Step 1: Location Selection */}
-        <LocationSelector
-          locations={locations}
-          selectedLocation={selectedLocation || ''}
-          onLocationSelect={handleLocationSelect}
+        {/* Location, Building, and Floor Selection Flow */}
+        <BeaconPositioningFlow
+          role={role}
+          adminLocations={adminLocations}
+          buildingId={props.buildingId}
+          floorId={props.floorId}
+          onFloorplanSelect={handleFloorplanSelect}
         />
 
-        {/* Step 2: Building Selection - Only show when location is selected */}
-        {selectedLocation && (
-          <BuildingSelector
-            buildings={buildings}
-            selectedBuildingId={selectedBuildingId}
-            setSelectedBuildingId={setSelectedBuildingId}
-            dropdownOpen={buildingDropdownOpen}
-            setDropdownOpen={setBuildingDropdownOpen}
-            title="Step 2: Select Building"
-          />
-        )}
-
-        {/* Step 3: Floor Selection - Only show when building is selected */}
-        {selectedLocation && selectedBuildingId && buildings.length > 0 && (
-          <FloorSelector
-            floors={floors}
-            selectedFloorId={selectedFloorId}
-            setSelectedFloorId={handleFloorSelect}
-            dropdownOpen={floorDropdownOpen}
-            setDropdownOpen={setFloorDropdownOpen}
-            title="Step 3: Select Floor"
-          />
-        )}
-
-        {/* Step 4: Beacon Management - Only show when floor is selected */}
-        {selectedLocation && selectedBuildingId && selectedFloorplan && (
+        {/* Floorplan View */}
+        {selectedFloorplan && (
           <View style={styles.section}>
             <Text style={[styles.label, { color: colors.primary }]}>
               Step 4: Tap existing beacons to view/delete, or tap empty space to place a new beacon
@@ -716,7 +583,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
           setShowBeaconInfoPopup(false);
           setSelectedBeaconInfo(null);
         }}
-        confirmText="Delete Beacon"
+        confirmText="Delete"
         cancelText="Close"
         showCancel={true}
       />

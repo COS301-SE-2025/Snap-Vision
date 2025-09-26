@@ -5,34 +5,9 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
-import SettingsHeader from '../components/molecules/SettingsHeader';
-import NavigationBar from '../components/molecules/NavigationBar';
-import DebugInfoBar from '../components/molecules/DebugInfoBar';
-import POIPopup from '../components/molecules/POIPopup';
-import POIInfoModal from '../components/molecules/POIInfoModal';
-import NavigationInstructionsBar from '../components/molecules/NavigationInstructionsBar';
-import DirectionsModal from '../components/organisms/DirectionsModal';
-import DestinationReachedPopup from '../components/molecules/DestinationReachedPopup';
-import IndoorSchematicMap from '../components/organisms/IndoorSchematicMap';
-import RoomsListOverlay from '../components/organisms/RoomsListOverlay';
-import { useRoomManager, RoomPOI } from '../hooks/useRoomManager';
-import { useFloorplanManager } from '../hooks/useFloorplanManager';
-import { useBeaconManager } from '../hooks/useBeaconManager';
-import { useNavigationManager } from '../hooks/useNavigationManager';
-
-type RootStackParamList = {
-  BluetoothIndoorNavigation: {
-    buildingId: string;
-    buildingName: string;
-    locationId: string;
-  };
-};
-type RouteP = RouteProp<RootStackParamList, 'BluetoothIndoorNavigation'>;
-type NavP = StackNavigationProp<RootStackParamList, 'BluetoothIndoorNavigation'>;
+import BluetoothIndoorNavigationContent from '../components/organisms/BluetoothIndoorNavigationContent';
 
 export default function BluetoothIndoorNavigationScreen() {
-  const navigation = useNavigation<NavP>();
-  const route = useRoute<RouteP>();
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const { buildingId, buildingName, locationId } = route.params;
@@ -280,12 +255,4 @@ export default function BluetoothIndoorNavigationScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 16, fontSize: 16 },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 5,
-  },
 });

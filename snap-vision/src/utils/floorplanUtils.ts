@@ -38,7 +38,6 @@ export const initializePreBundledFloorplans = async () => {
       const existing = await AsyncStorage.getItem(storageKey);
       if (!existing) {
         await AsyncStorage.setItem(storageKey, JSON.stringify(floorplanData));
-
       } else {
         // Update existing with isPrebundled flag if it doesn't have it
         const existingData = JSON.parse(existing);

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { POI } from './useMapPOI';
+import { useBadges } from '../context/BadgeContext';
 
 export interface CrowdReport {
   buildingId: string;
@@ -49,6 +50,9 @@ export const useCrowdReports = (
   setStatus: (status: string) => void,
   setError: (error: string | null) => void,
 ): UseCrowdReportsReturn => {
+  // Badge context
+  const { unlock } = useBadges();
+  
   // State
   const [showCrowdPopup, setShowCrowdPopup] = useState(false);
   const [selectedDensity, setSelectedDensity] = useState('moderate');
@@ -86,6 +90,14 @@ export const useCrowdReports = (
         setShowCrowdPopup(false);
         setStatus(`Crowd density reported for ${selectedPOI.name}`);
 
+        // Unlock the reported-crowd badge
+        try {
+          await unlock('reported-crowd');
+        } catch (badgeError) {
+          // Don't fail the whole operation if badge unlock fails
+          console.warn('Failed to unlock reported-crowd badge:', badgeError);
+        }
+
         // Refresh crowd reports to get the latest data
         await fetchRecentCrowdReports();
       } catch (error) {
@@ -93,7 +105,7 @@ export const useCrowdReports = (
         setError('Failed to submit crowd report');
       }
     },
-    [selectedDensity, isMapReady, webViewRef, setStatus, setError],
+    [selectedDensity, isMapReady, webViewRef, setStatus, setError, unlock],
   );
 
   // Fetch recent crowd reports from Firestore

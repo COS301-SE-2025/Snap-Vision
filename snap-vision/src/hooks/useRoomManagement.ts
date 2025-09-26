@@ -119,19 +119,33 @@ export const useRoomManagement = ({
         true;
       `);
 
-      resetRoomForm();
-      onSuccess(isEditing ? 'Room updated successfully' : 'Room created successfully');
-    } catch (error) {
-      //consoleerror('Error saving room POI:', error);
-      onError('Failed to save room POI');
-    }
-  }, [roomData, currentPoint, editingRoomId, isEditing, buildingId, floorLabel, locationId, roomMarkers, onError, onSuccess]);
+        resetRoomForm();
+        onSuccess(isEditing ? 'Room updated successfully' : 'Room created successfully');
+      } catch (error) {
+        //consoleerror('Error saving room POI:', error);
+        onError('Failed to save room POI');
+      }
+    },
+    [
+      roomData,
+      currentPoint,
+      editingRoomId,
+      isEditing,
+      buildingId,
+      floorLabel,
+      locationId,
+      roomMarkers,
+      onError,
+      onSuccess,
+    ],
+  );
 
-  const deleteRoomPOI = useCallback(async (webViewRef: any) => {
-    if (!editingRoomId) {
-      //consoleerror('No room selected for deletion');
-      return;
-    }
+  const deleteRoomPOI = useCallback(
+    async (webViewRef: any) => {
+      if (!editingRoomId) {
+        //consoleerror('No room selected for deletion');
+        return;
+      }
 
       try {
         await firestore()
@@ -149,13 +163,15 @@ export const useRoomManagement = ({
         true;
       `);
 
-      resetRoomForm();
-      onSuccess('Room deleted successfully');
-    } catch (error) {
-      //consoleerror('Error deleting room POI:', error);
-      onError('Failed to delete room POI');
-    }
-  }, [editingRoomId, locationId, roomMarkers, onError, onSuccess]);
+        resetRoomForm();
+        onSuccess('Room deleted successfully');
+      } catch (error) {
+        //consoleerror('Error deleting room POI:', error);
+        onError('Failed to delete room POI');
+      }
+    },
+    [editingRoomId, locationId, roomMarkers, onError, onSuccess],
+  );
 
   const startCreateRoom = useCallback((point: { x: number; y: number }) => {
     setCurrentPoint(point);

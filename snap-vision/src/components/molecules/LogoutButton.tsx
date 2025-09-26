@@ -26,14 +26,14 @@ export default function LogoutButton({ onLogout, isLoading = false }: LogoutButt
 
   return (
     <TouchableOpacity
-      style={[styles.button, { backgroundColor: colors.card }]}
+      style={[styles.button, { backgroundColor: colors.background, borderColor: colors.primary }]}
       onPress={handlePress}
       disabled={isLoading}
     >
       {isLoading ? (
         <ActivityIndicator color="#FFFFFF" size="small" />
       ) : (
-        <Text style={styles.buttonText}>Log Out</Text>
+        <Text style={[styles.buttonText, { color: colors.primary }]}>Log Out</Text>
       )}
     </TouchableOpacity>
   );
@@ -46,6 +46,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginBottom: 20,
+    borderWidth: 1,
   },
   buttonText: {
     fontWeight: '600',

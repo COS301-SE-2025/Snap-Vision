@@ -1,4 +1,3 @@
-//Snap-Vision\snap-vision\src\screens\NotificationSettingsScreen.tsx
 import React from 'react';
 import { ScrollView, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
 import NotificationSettingsContent from '../components/organisms/NotificationSettingsContent';

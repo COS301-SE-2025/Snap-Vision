@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Pressable } from 'react-native';
 import { WebView as WebViewType } from 'react-native-webview';
-import { useNavigation } from '@react-navigation/native';
 import MapWebView from './MapWebView';
 import AdminPOIModal from '../molecules/AdminPOIModal';
 import AdminActionsModal from '../molecules/AdminActionsModal';
 import StatusOverlay from '../atoms/StatusOverlay';
 import StandardPopup from '../atoms/StandardPopup';
+import DestinationReachedPopup from '../molecules/DestinationReachedPopup';
 import DestinationSearch from '../molecules/DestinationSearch';
 import MapActionsPanel from './MapActionsPanel';
 import NavigationPanel from './NavigationPanel';
@@ -16,7 +16,6 @@ import IndoorPickerModal from '../molecules/IndoorPickerModal';
 import IndoorNavigationButton from '../atoms/IndoorNavigationButton';
 import ARNavigationOverlay from './ARNavigationOverlay';
 import { useNotificationInstruction } from '../../hooks/useNotificationInstruction';
-import BluetoothNavigationButton from '../molecules/BluetoothNavigationButton';
 
 // Define the props interface for MapContent
 interface MapContentProps {
@@ -70,6 +69,7 @@ interface MapContentProps {
   onDestinationChange: (text: string) => void;
   onDestinationSearch: () => void;
   onSelectPOI: (poi: any) => void;
+  onSelectCrowdReportPOI: (poi: any) => void; // Add this new prop
 
   // Bluetooth navigation
   onOpenBluetoothNavigation: () => void;
@@ -147,6 +147,15 @@ interface MapContentProps {
   onSetShowLocationRefreshPopup: (show: boolean) => void;
   onHandleDestinationReachedConfirm: () => void;
   onRefreshMap: () => void;
+
+  // auto nav props
+  autoNavigationPopup: {
+    visible: boolean;
+    entry: any;
+    building: any;
+  };
+  onAutoNavigationConfirm: () => void;
+  onAutoNavigationDismiss: () => void;
 }
 
 const MapContent: React.FC<MapContentProps> = ({
@@ -200,6 +209,7 @@ const MapContent: React.FC<MapContentProps> = ({
   onDestinationChange,
   onDestinationSearch,
   onSelectPOI,
+  onSelectCrowdReportPOI,
 
   // Bluetooth navigation
   onOpenBluetoothNavigation,
@@ -277,21 +287,26 @@ const MapContent: React.FC<MapContentProps> = ({
   onSetShowLocationRefreshPopup,
   onHandleDestinationReachedConfirm,
   onRefreshMap,
+
+  //auto nav
+  autoNavigationPopup,
+  onAutoNavigationConfirm,
+  onAutoNavigationDismiss,
 }) => {
   useNotificationInstruction(isNavigating, steps[currentStep]?.instruction || '');
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Modals */}
-      <CrowdReportModal
-        visible={showCrowdPopup}
-        selectedDensity={selectedDensity}
-        selectedPOI={selectedPOI}
-        availablePOIs={pois}
-        onChangeDensity={onSetSelectedDensity}
-        onChangePOI={onSelectPOI}
-        onSubmit={onSubmitCrowdReport}
-        onCancel={onCloseCrowdReportModal}
-      />
+              <CrowdReportModal
+          visible={showCrowdPopup}
+          selectedDensity={selectedDensity}
+          selectedPOI={selectedPOI}
+          availablePOIs={pois}
+          onChangeDensity={onSetSelectedDensity}
+          onChangePOI={onSelectCrowdReportPOI}
+          onSubmit={onSubmitCrowdReport}
+          onCancel={onCloseCrowdReportModal}
+        />
 
       <AdminPOIModal
         visible={showAddPOIModal}
@@ -340,18 +355,6 @@ const MapContent: React.FC<MapContentProps> = ({
         isNavigating={isNavigating}
       />
 
-      <IndoorPickerModal
-        visible={showIndoorPicker}
-        indoorRooms={indoorRooms}
-        selectedStartRoom={selectedStartRoom}
-        selectedIndoorRoom={selectedIndoorRoom}
-        colors={colors}
-        onSelectStartRoom={onSetSelectedStartRoom}
-        onSelectIndoorRoom={onSetSelectedIndoorRoom}
-        onCancel={onCloseIndoorPicker}
-        onStart={onStartIndoorNavigation}
-      />
-
       {/* Search Bar - Only shown when not navigating */}
       {!isNavigating && (
         <>
@@ -362,9 +365,6 @@ const MapContent: React.FC<MapContentProps> = ({
             suggestions={poiSuggestions}
             onSelectSuggestion={onSelectPOI}
           />
-
-          {/* Bluetooth Navigation Button */}
-          <BluetoothNavigationButton onPress={onOpenBluetoothNavigation} />
         </>
       )}
 
@@ -401,18 +401,12 @@ const MapContent: React.FC<MapContentProps> = ({
         />
       )}
 
-      {/* Indoor Navigation Button */}
-      <IndoorNavigationButton
-        visible={!!selectedBuildingForIndoor}
-        colors={colors}
-        onPress={onOpenIndoorNavigation}
-      />
-
       {/* Map Actions Panel */}
       <MapActionsPanel
         currentLocation={!!currentLocation}
         onShare={onShareLocation}
         onReport={onOpenCrowdReportModal}
+        onOpenBluetoothNavigation={onOpenBluetoothNavigation}
         isAdmin={isAdmin}
         onAddPOI={onEnableAdminPOICreation}
         shareTooltip={showShareTooltip}
@@ -429,8 +423,9 @@ const MapContent: React.FC<MapContentProps> = ({
         <TouchableOpacity
           style={{
             position: 'absolute',
-            bottom: 160, // Above the MapActionsPanel
-            right: 20,
+            bottom: 30,
+            left: '50%',
+            transform: [{ translateX: -800 }], // Center horizontally (approximate half width)
             backgroundColor: colors.primary,
             paddingVertical: 12,
             paddingHorizontal: 16,
@@ -443,7 +438,7 @@ const MapContent: React.FC<MapContentProps> = ({
           disabled={isRefreshingLocation}
         >
           <Text style={{ color: 'white', fontWeight: 'bold', marginRight: 8 }}>
-            {isRefreshingLocation ? 'Finding Location...' : '📍 Find My Location'}
+            {isRefreshingLocation ? 'Finding Location...' : 'Find My Location'}
           </Text>
         </TouchableOpacity>
       )}
@@ -490,6 +485,22 @@ const MapContent: React.FC<MapContentProps> = ({
         </Pressable>
       )}
 
+      {/*  Auto Navigation Popup  */}
+      <StandardPopup
+        visible={autoNavigationPopup.visible}
+        title="Class Starting Soon!"
+        message={
+          autoNavigationPopup.entry && autoNavigationPopup.building
+            ? `Your ${autoNavigationPopup.entry.course} class starts at ${autoNavigationPopup.entry.startTime} at ${autoNavigationPopup.entry.venue}. Would you like to start navigation to ${autoNavigationPopup.building.name || autoNavigationPopup.building.title}?`
+            : ''
+        }
+        onConfirm={onAutoNavigationConfirm}
+        onCancel={onAutoNavigationDismiss}
+        confirmText="Navigate"
+        cancelText="Dismiss"
+        showCancel={true}
+      />
+
       {/* Status Overlay */}
       {error && <StatusOverlay status={error} />}
 
@@ -513,135 +524,20 @@ const MapContent: React.FC<MapContentProps> = ({
       ) : null}
 
       {/* Custom Location Error Popup */}
-      {showLocationRefreshPopup && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1003,
-            pointerEvents: 'box-none',
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: isDark ? '#2c2c2c' : 'white',
-              borderRadius: 16,
-              padding: 24,
-              marginHorizontal: 48,
-              maxWidth: 360,
-              width: '100%',
-              elevation: 8,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
-              pointerEvents: 'auto',
-            }}
-          >
-            {/* Close button */}
-            <TouchableOpacity
-              style={{
-                position: 'absolute',
-                top: 12,
-                right: 12,
-                padding: 8,
-                zIndex: 1,
-              }}
-              onPress={() => onSetShowLocationRefreshPopup(false)}
-            >
-              <Text
-                style={{
-                  color: isDark ? '#ccc' : '#666',
-                  fontSize: 20,
-                  fontWeight: 'bold',
-                }}
-              >
-                ×
-              </Text>
-            </TouchableOpacity>
-
-            {/* Title */}
-            <Text
-              style={{
-                color: isDark ? 'white' : colors.text,
-                fontSize: 18,
-                fontWeight: 'bold',
-                marginBottom: 12,
-                textAlign: 'center',
-                paddingRight: 32,
-              }}
-            >
-              Location Not Found
-            </Text>
-
-            {/* Message */}
-            <Text
-              style={{
-                color: isDark ? '#ccc' : colors.text,
-                fontSize: 14,
-                marginBottom: 20,
-                lineHeight: 20,
-                textAlign: 'center',
-              }}
-            >
-              Unable to find your location. This can happen indoors or in areas with poor GPS
-              signal.
-            </Text>
-
-            {/* Action buttons */}
-            <View style={{ flexDirection: 'column', gap: 12 }}>
-              <TouchableOpacity
-                style={{
-                  backgroundColor: colors.primary,
-                  paddingVertical: 14,
-                  paddingHorizontal: 24,
-                  borderRadius: 8,
-                }}
-                onPress={onRefreshLocation}
-              >
-                <Text
-                  style={{
-                    color: 'white',
-                    fontSize: 16,
-                    fontWeight: '600',
-                    textAlign: 'center',
-                  }}
-                >
-                  Retry Location
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={{
-                  backgroundColor: 'transparent',
-                  paddingVertical: 14,
-                  paddingHorizontal: 24,
-                  borderRadius: 8,
-                  borderWidth: 1,
-                  borderColor: colors.primary,
-                }}
-                onPress={onRefreshMap}
-              >
-                <Text
-                  style={{
-                    color: colors.primary,
-                    fontSize: 16,
-                    fontWeight: '600',
-                    textAlign: 'center',
-                  }}
-                >
-                  Refresh Map
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      )}
+      <StandardPopup
+        visible={showLocationRefreshPopup}
+        title="Location Not Found"
+        message="Unable to find your location. This can happen indoors or in areas with poor GPS signal."
+        onConfirm={() => {
+          onRefreshLocation();
+          onSetShowLocationRefreshPopup(false);
+        }}
+        onCancel={() => onSetShowLocationRefreshPopup(false)}
+        confirmText="Retry Location"
+        cancelText="Close"
+        showCancel={true}
+        verticalButtons={true}
+      />
 
       {/* Standard Popups */}
       <StandardPopup
@@ -671,12 +567,11 @@ const MapContent: React.FC<MapContentProps> = ({
         showCancel={true}
       />
 
-      <StandardPopup
+      <DestinationReachedPopup
         visible={showDestinationReachedPopup}
-        title="Destination Reached"
-        message="You have arrived at your destination!"
-        onConfirm={onHandleDestinationReachedConfirm}
-        showCancel={false}
+        destination={destination}
+        onClose={onHandleDestinationReachedConfirm}
+        themeColors={colors}
       />
     </View>
   );

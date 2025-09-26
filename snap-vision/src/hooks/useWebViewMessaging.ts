@@ -66,13 +66,23 @@ export const useWebViewMessaging = ({
             onSelectPath(data.pathId);
             break;
 
-        default:
+          default:
           //consolewarn('Unknown WebView message type:', data.type);
+        }
+      } catch (e) {
+        //consoleerror('Error parsing WebView message:', e);
       }
-    } catch (e) {
-      //consoleerror('Error parsing WebView message:', e);
-    }
-  }, [isPathMode, onCreateRoom, onEditRoom, onRoomsSelected, onWaypointAdded, onWaypointRemoved, onSelectPath]);
+    },
+    [
+      isPathMode,
+      onCreateRoom,
+      onEditRoom,
+      onRoomsSelected,
+      onWaypointAdded,
+      onWaypointRemoved,
+      onSelectPath,
+    ],
+  );
 
   return {
     handleMessage,

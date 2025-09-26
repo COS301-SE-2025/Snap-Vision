@@ -25,7 +25,14 @@ interface FloorplanEditorProps {
   roomCount: number;
   pathCount: number;
   selectedPathId: string | null;
-  onDeletePath: () => void;
+  paths: Array<{
+    id: string;
+    startRoomId: string;
+    endRoomId: string;
+    distance?: number;
+  }>;
+  roomMarkers: Array<{ id: string; name: string }>;
+  onDeletePath: (pathId: string) => void;
   onDone: () => void;
 
   // Shared
@@ -54,6 +61,8 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({
   roomCount,
   pathCount,
   selectedPathId,
+  paths,
+  roomMarkers,
   onDeletePath,
   onDone,
   colors,
@@ -90,6 +99,8 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({
         roomCount={roomCount}
         pathCount={pathCount}
         selectedPathId={selectedPathId}
+        paths={paths}
+        roomMarkers={roomMarkers}
         onDeletePath={onDeletePath}
         onDone={onDone}
         colors={colors}

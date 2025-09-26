@@ -733,7 +733,7 @@ export default function IndoorSchematicMap({
         cacheEnabled={true}
       />
 
-      {isLoading && (
+      {/* {isLoading && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#007AFF" />
           <Text style={styles.loadingText}>
@@ -742,7 +742,7 @@ export default function IndoorSchematicMap({
               : 'Loading floorplan...'}
           </Text>
         </View>
-      )}
+      )} */}
     </View>
   );
 }

@@ -49,7 +49,7 @@ export default function AccountDetails() {
               name: firestoreData.name || '',
               role: firestoreData.role || '',
             };
-          } 
+          }
         } catch (firestoreError) {
           //consoleerror('Error fetching from Firestore:', firestoreError);
         }

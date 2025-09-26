@@ -10,21 +10,16 @@ interface POIInfoModalProps {
   themeColors: any;
 }
 
-const POIInfoModal: React.FC<POIInfoModalProps> = ({
-  visible,
-  poi,
-  onClose,
-  themeColors,
-}) => {
+const POIInfoModal: React.FC<POIInfoModalProps> = ({ visible, poi, onClose, themeColors }) => {
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <View style={[styles.modal, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}>
+        <View
+          style={[
+            styles.modal,
+            { backgroundColor: themeColors.card, borderColor: themeColors.border },
+          ]}
+        >
           <View style={[styles.header, { borderBottomColor: themeColors.border }]}>
             <Text style={[styles.title, { color: themeColors.text }]}>
               {poi?.name || 'POI Information'}

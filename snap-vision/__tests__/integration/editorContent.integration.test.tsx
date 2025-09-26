@@ -6,17 +6,17 @@ import { useNavigation } from '@react-navigation/native';
 
 // Mock //consoleerror to suppress certain warnings
 const originalError = //consoleerror;
-beforeAll(() => {
-  //consoleerror = (...args) => {
-    if (typeof args[0] === 'string' && args[0].includes('was not wrapped in act')) {
-      return;
-    }
-    originalError.call(console, ...args);
-  };
-});
+  beforeAll(() => {
+    console.error = (...args) => {
+      if (typeof args[0] === 'string' && args[0].includes('was not wrapped in act')) {
+        return;
+      }
+      originalError.call(console, ...args);
+    };
+  });
 
 afterAll(() => {
-  //consoleerror = originalError;
+  console.error = originalError;
 });
 
 // Mock navigation
@@ -94,13 +94,13 @@ describe('EditorContent Integration Tests', () => {
 
       expect(editorText.props.style).toMatchObject({
         fontSize: 56,
-        fontFamily: 'PermanentMarkerRegular',
+        fontFamily: 'ChicleRegular',
         color: mockColors.primary,
       });
 
       expect(dashboardText.props.style).toMatchObject({
         fontSize: 52,
-        fontFamily: 'PermanentMarkerRegular',
+        fontFamily: 'ChicleRegular',
         color: mockColors.primary,
       });
 

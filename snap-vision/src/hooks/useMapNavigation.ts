@@ -6,6 +6,7 @@ import auth from '@react-native-firebase/auth';
 import Tts from 'react-native-tts';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { addRecentlyVisitedPOI, Visit } from '../services/firebase/recentlyVService';
+import Reactotron from 'reactotron-react-native';
 
 interface LocationState {
   latitude: number;
@@ -76,56 +77,58 @@ function getDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 // GPS smoothing function to reduce location jumping
 function smoothGPSLocation(
-  newLocation: {latitude: number, longitude: number}, 
-  history: Array<{lat: number, lon: number, timestamp: number}>,
-  lastSmoothed: {latitude: number, longitude: number} | null
-): {latitude: number, longitude: number} {
+  newLocation: { latitude: number; longitude: number },
+  history: Array<{ lat: number; lon: number; timestamp: number }>,
+  lastSmoothed: { latitude: number; longitude: number } | null,
+): { latitude: number; longitude: number } {
   const now = Date.now();
-  
+
   // Add to history
-  history.push({lat: newLocation.latitude, lon: newLocation.longitude, timestamp: now});
-  
+  history.push({ lat: newLocation.latitude, lon: newLocation.longitude, timestamp: now });
+
   // Keep only last 10 seconds of data
   const cutoff = now - 10000;
   while (history.length > 0 && history[0].timestamp < cutoff) {
     history.shift();
   }
-  
+
   // If we have previous smoothed location, check if new reading is reasonable
   if (lastSmoothed && history.length > 1) {
     const distanceFromPrevious = getDistanceMeters(
-      lastSmoothed.latitude, lastSmoothed.longitude,
-      newLocation.latitude, newLocation.longitude
+      lastSmoothed.latitude,
+      lastSmoothed.longitude,
+      newLocation.latitude,
+      newLocation.longitude,
     );
-    
+
     // If GPS jumped more than 50m, use weighted average with previous location
     if (distanceFromPrevious > 50) {
       return {
         latitude: lastSmoothed.latitude * 0.7 + newLocation.latitude * 0.3,
-        longitude: lastSmoothed.longitude * 0.7 + newLocation.longitude * 0.3
+        longitude: lastSmoothed.longitude * 0.7 + newLocation.longitude * 0.3,
       };
     }
   }
-  
+
   // Use weighted average of recent locations
   if (history.length >= 3) {
     let totalWeight = 0;
     let weightedLat = 0;
     let weightedLon = 0;
-    
+
     history.forEach((loc, index) => {
       const weight = index + 1; // More recent = higher weight
       weightedLat += loc.lat * weight;
       weightedLon += loc.lon * weight;
       totalWeight += weight;
     });
-    
+
     return {
       latitude: weightedLat / totalWeight,
-      longitude: weightedLon / totalWeight
+      longitude: weightedLon / totalWeight,
     };
   }
-  
+
   return newLocation;
 }
 
@@ -164,17 +167,29 @@ export const useMapNavigation = (
   const [isRouteLoading, setIsRouteLoading] = useState(false);
   const [destinationCoords, setDestinationCoords] = useState<[number, number] | null>(null);
 
-  // Navigation route reference  
+  // Navigation route reference
   const lastRoute = useRef<any[]>([]);
   const navigationWatchId = useRef<number | null>(null);
-  const locationHistory = useRef<Array<{lat: number, lon: number, timestamp: number}>>([]);
-  const lastSmoothedLocation = useRef<{latitude: number, longitude: number} | null>(null);
+  const locationHistory = useRef<Array<{ lat: number; lon: number; timestamp: number }>>([]);
+  const lastSmoothedLocation = useRef<{ latitude: number; longitude: number } | null>(null);
 
   const fetchRoute = async (destCoords: [number, number]) => {
     if (!currentLocation) {
       setError('Your location is not available yet');
       return;
     }
+
+    // start performance requiremnet testing
+    const startTime = performance.now();
+    Reactotron.display({
+      name: 'Route Generation Started',
+      preview: `From: ${currentLocation.latitude}, ${currentLocation.longitude}`,
+      value: {
+        start: currentLocation,
+        destination: destCoords,
+        timestamp: startTime,
+      },
+    });
 
     setIsRouteLoading(true);
     setStatus('Calculating route...');
@@ -222,6 +237,23 @@ export const useMapNavigation = (
 
       // Reset progress
       setRouteProgress(0);
+
+      //end performance requirement testing
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+      const passed = duration < 300;
+
+      Reactotron.display({
+        name: 'Route Generation Complete',
+        preview: `${duration.toFixed(2)}ms ${passed ? 'PASS' : 'FAIL'}`,
+        value: {
+          duration: `${duration.toFixed(2)}ms`,
+          passedTest: passed,
+          requirement: '< 300ms',
+          totalDistance: `${totalDistance.toFixed(0)}m`,
+          status: 'SUCCESS',
+        },
+      });
     } catch (error) {
       //consoleerror('Route fetch error:', error);
       setError('Failed to fetch or draw route');
@@ -413,14 +445,14 @@ export const useMapNavigation = (
       }
 
       // Apply GPS smoothing
-      const rawLocation = {latitude, longitude};
+      const rawLocation = { latitude, longitude };
       const smoothedLocation = smoothGPSLocation(
-        rawLocation, 
-        locationHistory.current, 
-        lastSmoothedLocation.current
+        rawLocation,
+        locationHistory.current,
+        lastSmoothedLocation.current,
       );
       lastSmoothedLocation.current = smoothedLocation;
-      
+
       // Use smoothed coordinates for all calculations
       const smoothedLat = smoothedLocation.latitude;
       const smoothedLon = smoothedLocation.longitude;
@@ -443,11 +475,14 @@ export const useMapNavigation = (
       // Find closest point on the route with improved logic to prevent backtracking
       let minDist = Infinity;
       let closestPointIndex = 0;
-      let currentProgressIndex = Math.max(0, Math.floor((routeProgress / 100) * (lastRoute.current.length - 1)));
+      let currentProgressIndex = Math.max(
+        0,
+        Math.floor((routeProgress / 100) * (lastRoute.current.length - 1)),
+      );
 
-      // Search in a range around current progress to prevent sudden jumps backward
-      const searchStart = Math.max(0, currentProgressIndex - 5);
-      const searchEnd = Math.min(lastRoute.current.length, currentProgressIndex + 15);
+      // Search in a wider range around current progress to better detect off-route situations
+      const searchStart = Math.max(0, currentProgressIndex - 10);
+      const searchEnd = Math.min(lastRoute.current.length, currentProgressIndex + 25);
 
       for (let i = searchStart; i < searchEnd; i++) {
         const routePoint = lastRoute.current[i];
@@ -475,8 +510,9 @@ export const useMapNavigation = (
         }
       }
 
-      // Fallback: if no point found in range, search entire route
-      if (minDist > 50) { // If still too far, search entire route
+      // Fallback: if no point found in range, search entire route with reduced threshold
+      if (minDist > 25) {
+        // Reduced threshold from 50m to 25m for better detection
         for (let i = 0; i < lastRoute.current.length; i++) {
           const routePoint = lastRoute.current[i];
           if (!Array.isArray(routePoint) || routePoint.length < 2) continue;
@@ -495,8 +531,9 @@ export const useMapNavigation = (
         }
       }
 
-      // Check for route deviation and automatic rerouting
-      if (minDist > 30 && !isRouteLoading) {
+      // Check for route deviation and automatic rerouting - reduced threshold for more responsive rerouting
+      if (minDist > 15 && !isRouteLoading) {
+        console.log(`🔄 Rerouting triggered - distance from route: ${minDist.toFixed(1)}m`);
         setStatus('Re-routing...');
         rerouteFromCurrentLocation();
         return; // Exit early to prevent further processing during reroute

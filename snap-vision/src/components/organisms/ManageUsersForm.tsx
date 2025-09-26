@@ -187,6 +187,7 @@ export default function ManageUsersForm({ navigation, currentUserId }: Props) {
                   setPopupMessage(`Are you sure you want to delete ${u.name}?`);
                   setPopupConfirm(() => () => {
                     deleteUser(u);
+                    setPopupVisible(false); // Close the popup after deleting user
                   });
                   setPopupCancelHandler(() => () => setPopupVisible(false));
                   setPopupShowCancel(true);

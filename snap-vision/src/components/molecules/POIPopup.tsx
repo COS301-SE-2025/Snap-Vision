@@ -6,7 +6,7 @@ import { RoomPOI } from '../../hooks/useRoomManager';
 interface POIPopupProps {
   visible: boolean;
   poi: RoomPOI | null;
-  position?: { x: number; y: number } | null; 
+  position?: { x: number; y: number } | null;
   onNavigate: () => void;
   onMoreInfo: () => void;
   onClose: () => void;
@@ -45,11 +45,7 @@ const POIPopup: React.FC<POIPopupProps> = ({
         </TouchableOpacity>
       </View>
 
-      {poi.type && (
-        <Text style={[styles.type, { color: themeColors.secondary }]}>
-          {poi.type}
-        </Text>
-      )}
+      {poi.type && <Text style={[styles.type, { color: themeColors.secondary }]}>{poi.type}</Text>}
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity
@@ -65,10 +61,14 @@ const POIPopup: React.FC<POIPopupProps> = ({
 
         {poi.description && (
           <TouchableOpacity
-            style={[styles.button, styles.secondaryButton, { 
-              borderColor: themeColors.border,
-              backgroundColor: themeColors.background 
-            }]}
+            style={[
+              styles.button,
+              styles.secondaryButton,
+              {
+                borderColor: themeColors.border,
+                backgroundColor: themeColors.background,
+              },
+            ]}
             onPress={onMoreInfo}
           >
             <MaterialIcons name="info-outline" size={18} color={themeColors.primary} />

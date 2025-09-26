@@ -7,6 +7,9 @@ import { getQRCodeMappingByValue } from '../../services/qrService';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import firestore from '@react-native-firebase/firestore';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
+import { useBadges } from '../../context/BadgeContext';
 
 interface Props {
   backgroundColor: string;
@@ -38,10 +41,13 @@ interface RoomPOI {
 }
 
 export default function QrCard({ backgroundColor, titleColor, subtitleColor }: Props) {
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
   const [scannerVisible, setScannerVisible] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const { unlock } = useBadges();
 
   // Popup states
   const [showErrorPopup, setShowErrorPopup] = useState(false);
@@ -72,6 +78,14 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
       }
 
       //consolelog('QR mapping found:', JSON.stringify(qrMapping));
+
+      // Unlock the QR scan badge for successful scan
+      try {
+        await unlock('qr-scan');
+      } catch (badgeError) {
+        // Don't fail the whole operation if badge unlock fails
+        console.warn('Failed to unlock qr-scan badge:', badgeError);
+      }
 
       // Use the mapping as saved by createQRCodeMapping
       const { locationId, buildingId, buildingName, roomId, floorId } = qrMapping;
@@ -256,13 +270,16 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
       />
 
       <TouchableOpacity
-        style={[styles.qrContainer, { backgroundColor }]}
+        style={[
+          styles.qrContainer,
+          { backgroundColor: colors.background, borderColor: colors.secondary },
+        ]}
         onPress={() => setScannerVisible(true)}
         disabled={processing}
       >
-        <Icon name="camera-outline" size={20} color="#f7d85c" />
+        <Icon name="camera-outline" size={20} color={colors.secondary} />
         <View style={{ marginLeft: 6 }}>
-          <Text style={[styles.qrTitle, { color: titleColor }]}>
+          <Text style={[styles.qrTitle, { color: colors.secondary }]}>
             {processing ? 'Processing…' : 'Scan a nearby QR code'}
           </Text>
           {error && <Text style={styles.errorText}>{error}</Text>}
