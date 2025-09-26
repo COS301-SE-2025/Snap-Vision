@@ -22,7 +22,7 @@ export async function collectWiFiFingerprint(fingerprint: FingerprintData): Prom
     const validLocationId = InputValidator.validateDocumentId(fingerprint.locationId);
     const validBuildingId = InputValidator.validateDocumentId(fingerprint.buildingId);
     const validFloorId = InputValidator.validateDocumentId(fingerprint.floorId);
-    
+
     if (!validLocationId || !validBuildingId || !validFloorId) {
       throw new Error('Invalid location, building, or floor ID');
     }
@@ -54,13 +54,13 @@ export async function collectWiFiFingerprint(fingerprint: FingerprintData): Prom
       coordinates: fingerprint.coordinates,
       description: InputValidator.validateText(fingerprint.description) || '',
       type: InputValidator.validateText(fingerprint.type) || 'manual',
-      buildingName: fingerprint.buildingName ? InputValidator.validateText(fingerprint.buildingName) : undefined,
+      buildingName: fingerprint.buildingName
+        ? InputValidator.validateText(fingerprint.buildingName)
+        : undefined,
     };
 
     // Save under: locations/{locationId}/wifiFingerprints
-    await firestore()
-      .collection(`locations/${validLocationId}/wifiFingerprints`)
-      .add(payload);
+    await firestore().collection(`locations/${validLocationId}/wifiFingerprints`).add(payload);
   } catch (error) {
     //consoleerror('Failed to collect WiFi fingerprint:', error);
     throw new Error('Failed to save WiFi fingerprint to database');
@@ -84,7 +84,7 @@ export async function deleteWiFiFingerprint({
     const validLocationId = InputValidator.validateDocumentId(locationId);
     const validBuildingId = InputValidator.validateDocumentId(buildingId);
     const validFloorId = InputValidator.validateDocumentId(floorId);
-    
+
     if (!validLocationId || !validBuildingId || !validFloorId) {
       throw new Error('Invalid location, building, or floor ID');
     }

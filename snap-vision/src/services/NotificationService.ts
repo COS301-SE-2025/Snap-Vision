@@ -49,7 +49,10 @@ export async function storeFCMToken(token: string): Promise<void> {
     throw new Error('Unauthorized: Cannot store FCM token');
   }
 
-  await firestore().collection('userFCMTokens').doc(user.uid).set({ token: validToken }, { merge: true });
+  await firestore()
+    .collection('userFCMTokens')
+    .doc(user.uid)
+    .set({ token: validToken }, { merge: true });
 }
 
 export async function setupFCM() {

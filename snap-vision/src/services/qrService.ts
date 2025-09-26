@@ -69,7 +69,7 @@ export const createQRCodeMapping = async (
     const validRoomId = InputValidator.validateDocumentId(roomId);
     const validFloorId = InputValidator.validateDocumentId(floorId);
     const validQRValue = InputValidator.validateText(qrValue);
-    
+
     if (!validLocationId || !validBuildingId || !validRoomId || !validFloorId || !validQRValue) {
       throw new Error('Invalid input parameters');
     }

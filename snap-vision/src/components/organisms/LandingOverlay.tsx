@@ -168,7 +168,7 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
 
         <View style={styles.getStartedRow} pointerEvents="none">
           <Text style={[styles.getStartedText, { color: colors.text }]}>
-            Hi, I'm Snaps, tap to get started!
+            Hi, I am Snaps, tap to get started!
           </Text>
           {/* <Text style={[styles.getStartedText, { color: swappedAccentColor }]}>Tap to Get Started!</Text> */}
         </View>

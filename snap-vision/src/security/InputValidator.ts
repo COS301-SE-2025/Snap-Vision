@@ -27,7 +27,7 @@ export class InputValidator {
     }
 
     const sanitized = id.trim();
-    
+
     // Firestore document ID validation
     if (sanitized.length === 0 || sanitized.length > 1500) {
       return null;
@@ -51,7 +51,7 @@ export class InputValidator {
 
     const sanitized = email.trim().toLowerCase();
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    
+
     if (!emailRegex.test(sanitized) || sanitized.length > 254) {
       return null;
     }
@@ -84,7 +84,7 @@ export class InputValidator {
    */
   static validateNumber(value: unknown, min?: number, max?: number): number | null {
     const num = Number(value);
-    
+
     if (isNaN(num) || !isFinite(num)) {
       return null;
     }
@@ -118,7 +118,7 @@ export class InputValidator {
 
     const sanitized = role.trim().toLowerCase();
     const validRoles = ['admin', 'editor', 'user'];
-    
+
     return validRoles.includes(sanitized) ? (sanitized as 'admin' | 'editor' | 'user') : null;
   }
 
@@ -173,7 +173,7 @@ export class InputValidator {
   static validatePagination(limit?: unknown, offset?: unknown) {
     const validLimit = this.validateNumber(limit, 1, 100) || 10;
     const validOffset = this.validateNumber(offset, 0) || 0;
-    
+
     return { limit: validLimit, offset: validOffset };
   }
 
@@ -186,7 +186,7 @@ export class InputValidator {
     }
 
     const sanitized = url.trim();
-    
+
     try {
       const urlObj = new URL(sanitized);
       // Only allow https and http protocols

@@ -15,7 +15,7 @@ export const uploadFloorplanImage = async (
   const validLocationId = InputValidator.validateDocumentId(locationId);
   const validBuildingId = InputValidator.validateDocumentId(buildingId);
   const validFloorLabel = InputValidator.validateText(floorLabel);
-  
+
   if (!validLocationId || !validBuildingId || !validFloorLabel || !fileUri) {
     throw new Error('Invalid input parameters');
   }

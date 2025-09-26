@@ -18,7 +18,7 @@ export const useBluetoothBuildings = (): UseBluetoothBuildingsReturn => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Get all locations
       const locationsSnapshot = await firestore().collection('locations').get();
 

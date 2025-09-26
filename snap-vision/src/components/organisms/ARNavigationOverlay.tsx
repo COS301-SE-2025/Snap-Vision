@@ -237,7 +237,6 @@ function MiniMapOverlay({
                 })}
               </View>
             )}
-            /* Current Location Marker with heading - positioned at current location */
             <View
               style={[
                 styles.currentLocationMarker,

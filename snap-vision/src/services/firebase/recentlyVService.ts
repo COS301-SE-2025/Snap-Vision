@@ -20,7 +20,7 @@ export async function getRecentlyVPOIs(userId?: string): Promise<Visit[]> {
   try {
     const currentUserId = userId || auth().currentUser?.uid;
     const validUserId = InputValidator.validateUserId(currentUserId);
-    
+
     if (!validUserId) {
       console.warn('Invalid user ID provided to getRecentlyVPOIs');
       return [];
@@ -48,11 +48,11 @@ export async function getRecentlyVPOIs(userId?: string): Promise<Visit[]> {
         const validPoiId = InputValidator.validateDocumentId(poi.poiId);
         const validName = InputValidator.validateText(poi.name);
         const validLocation = InputValidator.validateDocumentId(poi.location);
-        
+
         if (!validUserId || !validPoiId || !validName || !validLocation) {
           return null;
         }
-        
+
         return {
           userId: validUserId,
           poiId: validPoiId,
@@ -117,7 +117,7 @@ export async function addRecentlyVisitedPOI(visit: Omit<Visit, 'timestamp'>): Pr
       }
 
       pois.push(newVisit);
-      
+
       // Keep only the most recent 50 visits to prevent unbounded growth
       const sortedPois = pois
         .sort((a, b) => {

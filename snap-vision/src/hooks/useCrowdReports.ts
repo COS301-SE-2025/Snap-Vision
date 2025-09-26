@@ -80,8 +80,10 @@ export const useCrowdReports = (
         // Input validation
         const validBuildingId = InputValidator.validateDocumentId(selectedPOI.id);
         const validBuildingName = InputValidator.validateText(selectedPOI.name || '');
-        const validDensity = ['low', 'moderate', 'high', 'very-high'].includes(selectedDensity) ? selectedDensity : null;
-        
+        const validDensity = ['low', 'moderate', 'high', 'very-high'].includes(selectedDensity)
+          ? selectedDensity
+          : null;
+
         if (!validBuildingId || !validBuildingName || !validDensity) {
           throw new Error('Invalid report data');
         }

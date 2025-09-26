@@ -5,7 +5,6 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
-
 interface ConfettiPiece {
   id: number;
   x: Animated.Value;
@@ -45,7 +44,7 @@ const Confetti: React.FC<ConfettiProps> = (props) => {
       colors.secondary,
       colors.primary,
     ],
-    size = 15, 
+    size = 15,
     style,
     active = false,
     onComplete,
@@ -112,7 +111,7 @@ const Confetti: React.FC<ConfettiProps> = (props) => {
 
       // More dramatic rotation
       const rotateAnimation = Animated.timing(piece.rotate, {
-        toValue: Math.random() * 20 - 10, 
+        toValue: Math.random() * 20 - 10,
         duration: fallDuration,
         delay,
         easing: Easing.linear,

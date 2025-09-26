@@ -1,5 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  RefreshControl,
+  Image,
+} from 'react-native';
 import HeaderWithIcons from '../molecules/HeaderWithIcons';
 import QrCard from '../molecules/QrCard';
 import AppButton from '../atoms/AppButton';
@@ -165,7 +173,7 @@ export default function HomeContent() {
           </View>
         ) : (
           <View style={styles.carouselContainer}>
-            <RecentlyVisitedCarousel visits={recentlyVisited} onVisitPress={handleVisitPress}/>
+            <RecentlyVisitedCarousel visits={recentlyVisited} onVisitPress={handleVisitPress} />
           </View>
         )}
       </View>

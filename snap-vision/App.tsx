@@ -347,39 +347,39 @@ function AppInner() {
 
   return (
     <BadgeProvider>
-        <ThemeProvider>
-          <NavigationContainer ref={navigationRef}>
-            <BadgeUnlockNotifier />
-            <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="AuthResolver">
-              <Stack.Screen name="AuthResolver" component={AuthResolverScreen} />
-              <Stack.Screen name="Login" component={LoginScreen} />
-              <Stack.Screen name="Register" component={RegistrationScreen} />
-              <Stack.Screen name="Tabs" component={BottomTabs} />
-              <Stack.Screen name="AdminLoadFloorplans" component={AdminLoadFloorplansScreen} />
-              <Stack.Screen name="AdminFloorplanEditor" component={AdminFloorplanEditorScreen} />
-              <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
-              <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
-              <Stack.Screen name="AdminQRCodes" component={QRCodeAdminScreen} />
-              <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-              <Stack.Screen name="ShopScreen" component={ShopScreen} />
-              <Stack.Screen name="Timetable" component={TimetableScreen} />
+      <ThemeProvider>
+        <NavigationContainer ref={navigationRef}>
+          <BadgeUnlockNotifier />
+          <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="AuthResolver">
+            <Stack.Screen name="AuthResolver" component={AuthResolverScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Register" component={RegistrationScreen} />
+            <Stack.Screen name="Tabs" component={BottomTabs} />
+            <Stack.Screen name="AdminLoadFloorplans" component={AdminLoadFloorplansScreen} />
+            <Stack.Screen name="AdminFloorplanEditor" component={AdminFloorplanEditorScreen} />
+            <Stack.Screen name="AdminEditFloorplans" component={AdminEditFloorplansScreen} />
+            <Stack.Screen name="AdminManageUsers" component={ManageUsersScreen} />
+            <Stack.Screen name="AdminQRCodes" component={QRCodeAdminScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+            <Stack.Screen name="ShopScreen" component={ShopScreen} />
+            <Stack.Screen name="Timetable" component={TimetableScreen} />
             <Stack.Screen
-                name="BuildingSelection"
-                component={BuildingSelectionScreen}
-                options={{ title: 'Indoor Navigation' }}
-              />
-              <Stack.Screen
-                name="IndoorNavigationInterface"
-                component={IndoorNavigationInterfaceScreen}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="IndoorNavigationInstructions"
-                component={IndoorNavigationInstructionsScreen}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen name="IndoorSchematicNav" component={IndoorSchematicNavScreen} />
-              {/* <Stack.Screen
+              name="BuildingSelection"
+              component={BuildingSelectionScreen}
+              options={{ title: 'Indoor Navigation' }}
+            />
+            <Stack.Screen
+              name="IndoorNavigationInterface"
+              component={IndoorNavigationInterfaceScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="IndoorNavigationInstructions"
+              component={IndoorNavigationInstructionsScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen name="IndoorSchematicNav" component={IndoorSchematicNavScreen} />
+            {/* <Stack.Screen
                 name="ARIndoorNav"
                 component={ARIndoorNavScreen}
                 options={{ headerShown: false }}

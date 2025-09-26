@@ -47,7 +47,7 @@ export const useUserManagement = () => {
               role: d.role === 'admin' ? 'Admin' : d.role === 'editor' ? 'Editor' : 'Viewer',
             };
           });
-          
+
           setUsers(data);
           setLoading(false);
         },
@@ -115,7 +115,7 @@ export const useUserManagement = () => {
       // Validate inputs
       const validUserId = InputValidator.validateUserId(user.id);
       const validRole = InputValidator.validateRole(user.role.toLowerCase());
-      
+
       if (!validUserId || !validRole) {
         throw new Error('Invalid user data');
       }
@@ -155,7 +155,7 @@ export const useUserManagement = () => {
       }
 
       await firestore().collection('userInformation').doc(validUserId).update(updateData);
-      
+
       // Clear auth cache for the updated user
       authService.clearCache(validUserId);
     } catch (err) {
@@ -184,7 +184,7 @@ export const useUserManagement = () => {
       }
 
       await firestore().collection('userInformation').doc(validUserId).delete();
-      
+
       // Clear auth cache
       authService.clearCache(validUserId);
     } catch (err) {

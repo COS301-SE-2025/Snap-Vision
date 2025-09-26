@@ -35,10 +35,7 @@ export class AuthorizationService {
     }
 
     try {
-      const userDoc = await firestore()
-        .collection('userInformation')
-        .doc(currentUser.uid)
-        .get();
+      const userDoc = await firestore().collection('userInformation').doc(currentUser.uid).get();
 
       const userData = userDoc.data();
       const context: AuthorizationContext = {
@@ -275,7 +272,7 @@ export class AuthorizationService {
 
     // Remove potentially dangerous characters
     const sanitized = id.replace(/[^\w-]/g, '').trim();
-    
+
     // Validate length (Firestore document IDs are typically under 1500 chars)
     if (sanitized.length === 0 || sanitized.length > 200) {
       return null;
@@ -291,7 +288,7 @@ export class AuthorizationService {
     action: string,
     resourceType: string,
     resourceId: string,
-    userId?: string
+    userId?: string,
   ): void {
     console.warn('Authorization failed', {
       action,

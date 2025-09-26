@@ -24,10 +24,7 @@ export class SecureFirestoreService {
     }
 
     try {
-      const doc = await firestore()
-        .collection('userInformation')
-        .doc(validUserId)
-        .get();
+      const doc = await firestore().collection('userInformation').doc(validUserId).get();
 
       if (!doc.exists) {
         return null;
@@ -53,11 +50,11 @@ export class SecureFirestoreService {
   async updateUserRole(
     targetUserId: string,
     newRole: 'admin' | 'editor' | 'user',
-    adminLocations?: string[]
+    adminLocations?: string[],
   ) {
     const validUserId = InputValidator.validateUserId(targetUserId);
     const validRole = InputValidator.validateRole(newRole);
-    const validLocations = adminLocations 
+    const validLocations = adminLocations
       ? InputValidator.validateStringArray(adminLocations)
       : null;
 
@@ -71,7 +68,7 @@ export class SecureFirestoreService {
     }
 
     const updateData: any = { role: validRole };
-    
+
     if (validRole === 'editor') {
       if (!validLocations || validLocations.length === 0) {
         throw new Error('Editor role requires at least one location assignment');
@@ -82,11 +79,8 @@ export class SecureFirestoreService {
     }
 
     try {
-      await firestore()
-        .collection('userInformation')
-        .doc(validUserId)
-        .update(updateData);
-      
+      await firestore().collection('userInformation').doc(validUserId).update(updateData);
+
       // Clear cache for updated user
       this.authService.clearCache(validUserId);
     } catch (error) {
@@ -115,11 +109,8 @@ export class SecureFirestoreService {
     }
 
     try {
-      await firestore()
-        .collection('userInformation')
-        .doc(validUserId)
-        .delete();
-      
+      await firestore().collection('userInformation').doc(validUserId).delete();
+
       // Clear cache
       this.authService.clearCache(validUserId);
     } catch (error) {
@@ -186,10 +177,7 @@ export class SecureFirestoreService {
     }
 
     try {
-      const doc = await firestore()
-        .collection('recentlyVisited')
-        .doc(validUserId)
-        .get();
+      const doc = await firestore().collection('recentlyVisited').doc(validUserId).get();
 
       if (!doc.exists) {
         return [];
@@ -234,10 +222,7 @@ export class SecureFirestoreService {
     }
 
     try {
-      const doc = await firestore()
-        .collection('users')
-        .doc(validUserId)
-        .get();
+      const doc = await firestore().collection('users').doc(validUserId).get();
 
       if (!doc.exists) {
         return null;
@@ -266,7 +251,7 @@ export class SecureFirestoreService {
       description: string;
       roomId?: string;
       floorId?: string;
-    }
+    },
   ) {
     const validLocationId = InputValidator.validateDocumentId(locationId);
     const validBuildingId = InputValidator.validateDocumentId(buildingId);
@@ -310,7 +295,7 @@ export class SecureFirestoreService {
   async getAuthorizedCollectionRef(collectionPath: string) {
     // Parse the collection path to extract location info
     const pathParts = collectionPath.split('/');
-    
+
     if (pathParts.length >= 2 && pathParts[0] === 'locations') {
       const locationId = pathParts[1];
       if (!(await this.authService.canAccessLocation(locationId))) {

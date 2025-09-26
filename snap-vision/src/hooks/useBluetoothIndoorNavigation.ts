@@ -16,10 +16,10 @@ interface UseBluetoothIndoorNavigationReturn {
   floorplanManager: ReturnType<typeof useFloorplanManager>;
   beaconManager: ReturnType<typeof useBeaconManager>;
   navigationManager: ReturnType<typeof useNavigationManager>;
-  
+
   // Computed values
   dotPx: { left: number; top: number } | null;
-  
+
   // State
   showRoomsList: boolean;
   setShowRoomsList: (show: boolean) => void;
@@ -33,7 +33,7 @@ interface UseBluetoothIndoorNavigationReturn {
   setSelectedPOI: (poi: RoomPOI | null) => void;
   showDirectionsModal: boolean;
   setShowDirectionsModal: (show: boolean) => void;
-  
+
   // Event handlers
   handleRoomSelect: (roomId: string) => void;
   handleNavigateHere: () => Promise<void>;
@@ -154,10 +154,10 @@ export const useBluetoothIndoorNavigation = ({
     floorplanManager,
     beaconManager,
     navigationManager,
-    
+
     // Computed values
     dotPx,
-    
+
     // State
     showRoomsList,
     setShowRoomsList,
@@ -171,7 +171,7 @@ export const useBluetoothIndoorNavigation = ({
     setSelectedPOI,
     showDirectionsModal,
     setShowDirectionsModal,
-    
+
     // Event handlers
     handleRoomSelect,
     handleNavigateHere,
