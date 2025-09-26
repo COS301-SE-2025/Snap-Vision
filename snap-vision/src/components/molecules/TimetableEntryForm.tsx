@@ -44,8 +44,8 @@ export default function TimetableEntryForm({
   const [showEndPicker, setShowEndPicker] = useState(false);
 
   // Dropdown states
-  const [showDayDropdown, setShowDayDropdown] = useState(false);
-  const [showBuildingDropdown, setShowBuildingDropdown] = useState(false);
+  const [dayDropdownVisible, setDayDropdownVisible] = useState(false);
+  const [buildingDropdownVisible, setBuildingDropdownVisible] = useState(false);
 
   // Validation states
   const [showValidationPopup, setShowValidationPopup] = useState(false);
@@ -95,18 +95,19 @@ export default function TimetableEntryForm({
   const formatTime = (date: Date) =>
     date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 
-  const handleBuildingSelect = (building: any) => {
-    setSelectedBuildingId(building.id);
-    setSelectedBuildingName(building.name);
-    setSelectedLocationId(building.location || 'up-campus');
-    setShowBuildingDropdown(false);
-    // Clear building error when user selects a building
-    setFieldErrors((prev) => ({ ...prev, building: false }));
+  const handleBuildingSelect = (buildingId: string) => {
+    const building = buildings.find(b => b.id === buildingId);
+    if (building) {
+      setSelectedBuildingId(building.id);
+      setSelectedBuildingName(building.name);
+      setSelectedLocationId(building.location || 'up-campus');
+      // Clear building error when user selects a building
+      setFieldErrors((prev) => ({ ...prev, building: false }));
+    }
   };
 
   const handleDaySelect = (selectedDay: string) => {
     setDay(selectedDay);
-    setShowDayDropdown(false);
     setFieldErrors((prev) => ({ ...prev, day: false }));
   };
 
@@ -193,8 +194,6 @@ export default function TimetableEntryForm({
     setSelectedBuildingName('');
     setSelectedLocationId('up-campus');
     setFieldErrors({});
-    setShowDayDropdown(false);
-    setShowBuildingDropdown(false);
     onClose();
   };
 
@@ -204,46 +203,7 @@ export default function TimetableEntryForm({
       : { borderColor: colors.primary };
   };
 
-  const renderDayItem = ({ item }: { item: string }) => (
-    <TouchableOpacity
-      style={[
-        styles.dropdownItem,
-        {
-          backgroundColor: day === item ? colors.primary : colors.background,
-          borderBottomColor: colors.border,
-        },
-      ]}
-      onPress={() => handleDaySelect(item)}
-    >
-      <Text
-        style={[styles.dropdownItemText, { color: day === item ? colors.background : colors.text }]}
-      >
-        {item}
-      </Text>
-    </TouchableOpacity>
-  );
-
-  const renderBuildingItem = ({ item }: { item: any }) => (
-    <TouchableOpacity
-      style={[
-        styles.dropdownItem,
-        {
-          backgroundColor: selectedBuildingId === item.id ? colors.primary : colors.background,
-          borderBottomColor: colors.border,
-        },
-      ]}
-      onPress={() => handleBuildingSelect(item)}
-    >
-      <Text
-        style={[
-          styles.dropdownItemText,
-          { color: selectedBuildingId === item.id ? colors.background : colors.text },
-        ]}
-      >
-        {item.name}
-      </Text>
-    </TouchableOpacity>
-  );
+  // Render functions removed - using native Picker instead
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
@@ -274,36 +234,17 @@ export default function TimetableEntryForm({
               </Text>
               <TouchableOpacity
                 style={[
-                  styles.dropdownButton,
+                  styles.floorDropdown,
                   { backgroundColor: colors.card, borderColor: colors.primary },
                   getFieldStyle('day'),
                 ]}
-                onPress={() => setShowDayDropdown(!showDayDropdown)}
+                onPress={() => setDayDropdownVisible(true)}
               >
-                <Text style={[styles.dropdownButtonText, { color: colors.text }]}>{day}</Text>
-                <Icon
-                  name={showDayDropdown ? 'chevron-up' : 'chevron-down'}
-                  size={20}
-                  color={colors.text}
-                />
+                <Text style={[styles.floorDropdownText, { color: colors.text }]}>
+                  {day}
+                </Text>
+                <Icon name="chevron-down" size={20} color={colors.text} />
               </TouchableOpacity>
-
-              {showDayDropdown && (
-                <View
-                  style={[
-                    styles.dropdown,
-                    { backgroundColor: colors.card, borderColor: colors.border },
-                  ]}
-                >
-                  <FlatList
-                    data={DAYS_OF_WEEK}
-                    renderItem={renderDayItem}
-                    keyExtractor={(item) => item}
-                    style={styles.dropdownList}
-                    showsVerticalScrollIndicator={true}
-                  />
-                </View>
-              )}
             </View>
 
             {/* Building Selector */}
@@ -313,54 +254,22 @@ export default function TimetableEntryForm({
               </Text>
               <TouchableOpacity
                 style={[
-                  styles.dropdownButton,
+                  styles.floorDropdown,
                   { backgroundColor: colors.card, borderColor: colors.primary },
                   getFieldStyle('building'),
                 ]}
-                onPress={() => setShowBuildingDropdown(!showBuildingDropdown)}
-                disabled={poisLoading}
+                onPress={() => setBuildingDropdownVisible(true)}
+                disabled={poisLoading || buildings.length === 0}
               >
-                <Text
-                  style={[
-                    styles.dropdownButtonText,
-                    { color: selectedBuildingName ? colors.text : colors.secondary },
-                  ]}
-                >
-                  {selectedBuildingName || 'Select Building'}
+                <Text style={[
+                  styles.floorDropdownText, 
+                  { color: selectedBuildingName ? colors.text : colors.secondary }
+                ]}>
+                  {poisLoading ? "Loading buildings..." : (selectedBuildingName || "Select Building")}
                 </Text>
-                <Icon
-                  name={showBuildingDropdown ? 'chevron-up' : 'chevron-down'}
-                  size={20}
-                  color={colors.text}
-                />
+                <Icon name="chevron-down" size={20} color={colors.text} />
               </TouchableOpacity>
-
-              {showBuildingDropdown && (
-                <View
-                  style={[
-                    styles.dropdown,
-                    styles.buildingDropdown,
-                    { backgroundColor: colors.card, borderColor: colors.border },
-                  ]}
-                >
-                  {buildings.length > 0 ? (
-                    <FlatList
-                      data={buildings}
-                      renderItem={renderBuildingItem}
-                      keyExtractor={(item) => item.id}
-                      style={styles.dropdownList}
-                      showsVerticalScrollIndicator={true}
-                    />
-                  ) : (
-                    <View style={styles.emptyState}>
-                      <Text style={[styles.emptyStateText, { color: colors.secondary }]}>
-                        {poisLoading ? 'Loading buildings...' : 'No buildings found'}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              )}
-
+              
               {poisLoading && (
                 <Text style={[styles.loadingText, { color: colors.secondary }]}>
                   Loading buildings...
@@ -485,6 +394,96 @@ export default function TimetableEntryForm({
         </View>
       </View>
 
+      {/* Day Dropdown Modal */}
+      <Modal
+        visible={dayDropdownVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setDayDropdownVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setDayDropdownVisible(false)}
+        >
+          <View style={[styles.dropdownContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.dropdownTitle, { color: colors.text }]}>Select Day</Text>
+            <FlatList
+              data={DAYS_OF_WEEK}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.dropdownItem,
+                    day === item && { backgroundColor: colors.primary + '20' }
+                  ]}
+                  onPress={() => {
+                    handleDaySelect(item);
+                    setDayDropdownVisible(false);
+                  }}
+                >
+                  <Text style={[styles.dropdownItemText, { color: colors.text }]}>
+                    {item}
+                  </Text>
+                  {day === item && (
+                    <Icon name="check" size={20} color={colors.primary} />
+                  )}
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Building Dropdown Modal */}
+      <Modal
+        visible={buildingDropdownVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setBuildingDropdownVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setBuildingDropdownVisible(false)}
+        >
+          <View style={[styles.dropdownContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.dropdownTitle, { color: colors.text }]}>Select Building</Text>
+            {buildings.length > 0 ? (
+              <FlatList
+                data={buildings}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.dropdownItem,
+                      selectedBuildingId === item.id && { backgroundColor: colors.primary + '20' }
+                    ]}
+                    onPress={() => {
+                      handleBuildingSelect(item.id);
+                      setBuildingDropdownVisible(false);
+                    }}
+                  >
+                    <Text style={[styles.dropdownItemText, { color: colors.text }]}>
+                      {item.name}
+                    </Text>
+                    {selectedBuildingId === item.id && (
+                      <Icon name="check" size={20} color={colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                )}
+              />
+            ) : (
+              <View style={styles.emptyState}>
+                <Text style={[styles.emptyStateText, { color: colors.secondary }]}>
+                  {poisLoading ? 'Loading buildings...' : 'No buildings found'}
+                </Text>
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
       {/* Validation Error Popup */}
       <StandardPopup
         visible={showValidationPopup}
@@ -528,7 +527,7 @@ const styles = StyleSheet.create({
   },
   fieldContainer: {
     marginBottom: 16,
-    position: 'relative', // For dropdown positioning
+    position: 'relative', 
   },
   fieldLabel: {
     fontSize: 14,
@@ -546,57 +545,17 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 16,
   },
-  dropdownButton: {
+  pickerContainer: {
     borderWidth: 1,
     borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    backgroundColor: 'transparent',
+    overflow: 'hidden',
     minHeight: 48,
   },
-  dropdownButtonText: {
-    fontSize: 16,
-    flex: 1,
-  },
-  dropdown: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    borderWidth: 1,
-    borderRadius: 8,
-    maxHeight: 150,
-    zIndex: 1000,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
-  buildingDropdown: {
-    maxHeight: 200, // Taller for buildings
-  },
-  dropdownList: {
-    flex: 1,
-  },
-  dropdownItem: {
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  dropdownItemText: {
-    fontSize: 16,
-  },
-  emptyState: {
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyStateText: {
-    fontSize: 14,
-    textAlign: 'center',
+  picker: {
+    height: 58,
+    width: '100%',
+    backgroundColor: 'transparent',
   },
   loadingText: {
     fontSize: 12,
@@ -643,5 +602,60 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  // Dropdown styles
+  floorDropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
+  },
+  floorDropdownText: {
+    fontSize: 16,
+    flex: 1,
+  },
+  dropdownContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    margin: 20,
+    maxHeight: 400,
+    width: 200,
+    borderWidth: 1,
+    elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  dropdownTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    padding: 16,
+    borderBottomWidth: 1,
+    textAlign: 'center',
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    flex: 1,
+  },
+  emptyState: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  emptyStateText: {
+    fontSize: 16,
+    fontStyle: 'italic',
   },
 });
