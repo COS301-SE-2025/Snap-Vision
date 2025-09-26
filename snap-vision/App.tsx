@@ -48,6 +48,7 @@ import { navigationRef } from './src/navigation/RootNavigation';
 LogBox.ignoreLogs([
   'Text strings must be rendered within a <Text> component',
   'VirtualizedLists should never be nested inside plain ScrollViews with the same orientation',
+  'Open debugger to view warnings.',
 ]);
 if (__DEV__) {
   require('./ReactotronConfig');
