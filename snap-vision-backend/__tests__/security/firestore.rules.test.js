@@ -356,4 +356,52 @@ describe('Snap Vision Firestore Security Rules', () => {
     });
   });
   
+  describe('Location', () => {
+    test('authenticated user can read location', async () => {
+      const user = testEnv.authenticatedContext('user');
+      await assertSucceeds(getDoc(doc(user.firestore(), 'locations/up-campus')));
+    });
+  });
+  
+  describe('QR Codes', () => {
+    test('authenticated user can read qrCodes', async () => {
+      const user = testEnv.authenticatedContext('user');
+      await assertSucceeds(getDoc(doc(user.firestore(), 'locations/up-campus/qrCodes/qr1')));
+    });
+  
+    test('admin can write qrCodes', async () => {
+      const admin = testEnv.authenticatedContext('admin');
+      await assertSucceeds(setDoc(doc(admin.firestore(), 'locations/up-campus/qrCodes/qr1'), { code: '123' }));
+    });
+  
+    test('user cannot write qrCodes', async () => {
+      const user = testEnv.authenticatedContext('user');
+      await assertFails(setDoc(doc(user.firestore(), 'locations/up-campus/qrCodes/qr1'), { code: '123' }));
+    });
+  });
+  
+  describe('User Information', () => {
+  
+    test('user cannot create other userInformation', async () => {
+      const user = testEnv.authenticatedContext('user');
+      await assertFails(setDoc(doc(user.firestore(), 'userInformation/other'), { role: 'user' }));
+    });
+  
+    test('user can read their own userInformation', async () => {
+      const user = testEnv.authenticatedContext('user');
+      await assertSucceeds(getDoc(doc(user.firestore(), 'userInformation/user')));
+    });
+  
+    test('admin can update/delete any userInformation', async () => {
+      const admin = testEnv.authenticatedContext('admin');
+      await assertSucceeds(updateDoc(doc(admin.firestore(), 'userInformation/user'), { role: 'user-updated' }));
+      await assertSucceeds(deleteDoc(doc(admin.firestore(), 'userInformation/user')));
+    });
+  
+    test('user cannot update/delete other userInformation', async () => {
+      const user = testEnv.authenticatedContext('user');
+      await assertFails(updateDoc(doc(user.firestore(), 'userInformation/admin'), { role: 'admin-updated' }));
+      await assertFails(deleteDoc(doc(user.firestore(), 'userInformation/admin')));
+    });
+  });
 });
