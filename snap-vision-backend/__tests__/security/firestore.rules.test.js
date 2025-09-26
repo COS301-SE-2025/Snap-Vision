@@ -287,5 +287,73 @@ describe('Snap Vision Firestore Security Rules', () => {
       }));
     });
   });
-    
+    describe('Building POIs and Floorplans', () => {
+    test('authenticated user can read buildingPOIs and floorplans', async () => {
+      const user = testEnv.authenticatedContext('user');
+      await assertSucceeds(getDoc(doc(user.firestore(), 'locations/up-campus/buildingPOIs/building1')));
+      await assertSucceeds(getDoc(doc(user.firestore(), 'locations/up-campus/buildingPOIs/building1/floorplans/1')));
+    });
+  
+    test('editor can write buildingPOIs and floorplans for assigned location', async () => {
+      const editor = testEnv.authenticatedContext('editor');
+      await assertSucceeds(setDoc(doc(editor.firestore(), 'locations/up-campus/buildingPOIs/building1'), { name: 'B1' }));
+      await assertSucceeds(setDoc(doc(editor.firestore(), 'locations/up-campus/buildingPOIs/building1/floorplans/1'), { name: 'F1' }));
+    });
+  
+    test('editor cannot write buildingPOIs for unassigned location', async () => {
+      const editor = testEnv.authenticatedContext('editor');
+      await assertFails(setDoc(doc(editor.firestore(), 'locations/other-campus/buildingPOIs/building1'), { name: 'B1' }));
+    });
+  
+    test('editor can create/update/delete beacons for assigned location', async () => {
+      const editor = testEnv.authenticatedContext('editor');
+      await assertSucceeds(setDoc(doc(editor.firestore(), 'locations/up-campus/buildingPOIs/building1/floorplans/1/beacons/beacon1'), { id: 'beacon1' }));
+      await assertSucceeds(updateDoc(doc(editor.firestore(), 'locations/up-campus/buildingPOIs/building1/floorplans/1/beacons/beacon1'), { id: 'beacon1-updated' }));
+      await assertSucceeds(deleteDoc(doc(editor.firestore(), 'locations/up-campus/buildingPOIs/building1/floorplans/1/beacons/beacon1')));
+    });
+  
+    test('user can read beacons but cannot write', async () => {
+      const user = testEnv.authenticatedContext('user');
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), 'locations/up-campus/buildingPOIs/building1/floorplans/1/beacons/beacon1'), { id: 'beacon1' });
+      });
+      await assertSucceeds(getDoc(doc(user.firestore(), 'locations/up-campus/buildingPOIs/building1/floorplans/1/beacons/beacon1')));
+      await assertFails(setDoc(doc(user.firestore(), 'locations/up-campus/buildingPOIs/building1/floorplans/1/beacons/beacon1'), { id: 'fail' }));
+    });
+  });
+  
+  describe('Path POIs', () => {
+    test('authenticated user can read pathPOIs', async () => {
+      const user = testEnv.authenticatedContext('user');
+      await assertSucceeds(getDoc(doc(user.firestore(), 'locations/up-campus/pathPOIs/path1')));
+    });
+  
+    test('editor can write pathPOIs for assigned location', async () => {
+      const editor = testEnv.authenticatedContext('editor');
+      await assertSucceeds(setDoc(doc(editor.firestore(), 'locations/up-campus/pathPOIs/path1'), { name: 'Path' }));
+    });
+  
+    test('editor cannot write pathPOIs for unassigned location', async () => {
+      const editor = testEnv.authenticatedContext('editor');
+      await assertFails(setDoc(doc(editor.firestore(), 'locations/other-campus/pathPOIs/path1'), { name: 'Path' }));
+    });
+  });
+  
+  describe('Floorplan Metadata', () => {
+    test('authenticated user can read floorplanMetadata', async () => {
+      const user = testEnv.authenticatedContext('user');
+      await assertSucceeds(getDoc(doc(user.firestore(), 'floorplanMetadata/floorplan1')));
+    });
+  
+    test('admin can write floorplanMetadata', async () => {
+      const admin = testEnv.authenticatedContext('admin');
+      await assertSucceeds(setDoc(doc(admin.firestore(), 'floorplanMetadata/floorplan1'), { name: 'Meta' }));
+    });
+  
+    test('user cannot write floorplanMetadata', async () => {
+      const user = testEnv.authenticatedContext('user');
+      await assertFails(setDoc(doc(user.firestore(), 'floorplanMetadata/floorplan1'), { name: 'Meta' }));
+    });
+  });
+  
 });
