@@ -297,16 +297,16 @@ const MapContent: React.FC<MapContentProps> = ({
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Modals */}
-              <CrowdReportModal
-          visible={showCrowdPopup}
-          selectedDensity={selectedDensity}
-          selectedPOI={selectedPOI}
-          availablePOIs={pois}
-          onChangeDensity={onSetSelectedDensity}
-          onChangePOI={onSelectCrowdReportPOI}
-          onSubmit={onSubmitCrowdReport}
-          onCancel={onCloseCrowdReportModal}
-        />
+      <CrowdReportModal
+        visible={showCrowdPopup}
+        selectedDensity={selectedDensity}
+        selectedPOI={selectedPOI}
+        availablePOIs={pois}
+        onChangeDensity={onSetSelectedDensity}
+        onChangePOI={onSelectCrowdReportPOI}
+        onSubmit={onSubmitCrowdReport}
+        onCancel={onCloseCrowdReportModal}
+      />
 
       <AdminPOIModal
         visible={showAddPOIModal}

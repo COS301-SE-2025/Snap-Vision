@@ -30,7 +30,7 @@ const EditorScreen = () => {
 
   const handleManageQRCodes = () => {
     navigation.navigate('AdminQRCodes');
-  } 
+  };
 
   return (
     <AdminContent

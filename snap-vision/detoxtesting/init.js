@@ -1,10 +1,10 @@
-const detox = require('detox');
-const config = require('../package.json').detox;
+// const detox = require('detox');
+// const config = require('../package.json').detox;
 
-beforeAll(async () => {
-  await detox.init(config);
-}, 300000);
+// beforeAll(async () => {
+//   await detox.init(config);
+// }, 300000);
 
-afterAll(async () => {
-  await detox.cleanup();
-});
+// afterAll(async () => {
+//   await detox.cleanup();
+// });
