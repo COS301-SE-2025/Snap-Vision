@@ -21,6 +21,7 @@ import { useMapAdmin } from '../hooks/useMapAdmin';
 import { useCrowdReports } from '../hooks/useCrowdReports';
 import { useMapIndoor } from '../hooks/useMapIndoor';
 import { useWebViewCommunication } from '../hooks/useWebViewCommunication';
+import { POI } from '../hooks/useMapPOI';
 
 // utils
 import { requestCameraPermission } from '../utils/cameraPermissions';
@@ -28,6 +29,8 @@ import { requestCameraPermission } from '../utils/cameraPermissions';
 type MapScreenParams = {
   lat?: string;
   lng?: string;
+  poiId?: string; 
+  selectedPOI?: POI;
 };
 
 const MapScreen = () => {
@@ -40,7 +43,7 @@ const MapScreen = () => {
   // navigation
   const route = useRoute();
   const navigation = useNavigation<any>();
-  const params = route.params as MapScreenParams;
+ const params = route.params as MapScreenParams & { selectedPOI?: POI };
 
   // refs
   const webViewRef = useRef<WebViewType>(null);
@@ -550,6 +553,30 @@ const MapScreen = () => {
     }
   }, [state.purchases, isMapReady]);
 
+useEffect(() => {
+  if (params?.selectedPOI && isMapReady && currentLocation) {
+    if (!selectedFeature || selectedFeature.id !== params.selectedPOI.id) {
+      const selectedPOI = params.selectedPOI;
+
+      selectPOI(selectedPOI);
+      setHookSelectedPOI(selectedPOI);
+      setSelectedFeature(selectedPOI);
+      setDestination(selectedPOI.name);
+
+      if (selectedPOI.centroid) {
+        setDestinationCoords([
+          selectedPOI.centroid.longitude,
+          selectedPOI.centroid.latitude,
+        ]);
+        fetchRoute([
+          selectedPOI.centroid.longitude,
+          selectedPOI.centroid.latitude,
+        ]);
+        setShowDirectionsSheet(true);
+      }
+    }
+  }
+}, [params?.selectedPOI, isMapReady, currentLocation]);
   return (
     <MapContent
       //theme
