@@ -8,8 +8,12 @@ import {
   Animated,
   Easing,
   Dimensions,
+  Image,
 } from 'react-native';
 import Confetti from './Confetti';
+
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
 
 interface DestinationReachedPopupProps {
   visible: boolean;
@@ -31,6 +35,9 @@ const DestinationReachedPopup: React.FC<DestinationReachedPopupProps> = ({
     success: '#4CAF50',
   },
 }) => {
+  const { isDark } = useTheme();
+  const colors = getThemeColors(isDark);
+
   const [showConfetti, setShowConfetti] = useState(false);
   const popupScale = useRef(new Animated.Value(0)).current;
   const pulseValue = useRef(new Animated.Value(1)).current;
@@ -102,39 +109,43 @@ const DestinationReachedPopup: React.FC<DestinationReachedPopupProps> = ({
           active={showConfetti}
           count={100}
           onComplete={handleConfettiComplete}
-          colors={[
-            '#FF577F',
-            '#FF884B',
-            '#FFCF0D',
-            '#4361EE',
-            themeColors.success,
-            themeColors.primary,
-          ]}
+          // colors={[
+          //   '#FF577F',
+          //   '#FF884B',
+          //   '#FFCF0D',
+          //   '#4361EE',
+          //   themeColors.success,
+          //   themeColors.primary,
+          // ]}
         />
 
         <Animated.View
           style={[
             styles.popupContainer,
             {
-              backgroundColor: themeColors.background,
+              backgroundColor: colors.background,
               transform: [{ scale: popupScale }, { scale: pulseValue }],
             },
           ]}
         >
-          <View style={[styles.checkmarkCircle, { backgroundColor: themeColors.success }]}>
-            <Text style={styles.checkmark}>✓</Text>
+          <View style={[styles.checkmarkCircle, { backgroundColor: colors.secondary }]}>
+            <Image 
+              source={require('../../../assets/mascot_reached.png')} 
+              style={styles.mascotImage}
+              resizeMode="contain"
+            />
           </View>
 
-          <Text style={[styles.title, { color: themeColors.text }]}>You&apos;ve Arrived!</Text>
+          <Text style={[styles.title, { color: colors.text }]}>You&apos;ve Arrived!</Text>
 
-          <Text style={[styles.destination, { color: themeColors.text }]}>{destination}</Text>
+          <Text style={[styles.destination, { color: colors.text }]}>{destination}</Text>
 
-          <Text style={[styles.message, { color: themeColors.text }]}>
+          <Text style={[styles.message, { color: colors.text }]}>
             You have successfully reached your destination.
           </Text>
 
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: themeColors.primary }]}
+            style={[styles.button, { backgroundColor: colors.primary }]}
             onPress={onClose}
           >
             <Text style={styles.buttonText}>Great!</Text>
@@ -169,17 +180,16 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.2)', // Subtle border
   },
   checkmarkCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
   },
-  checkmark: {
-    fontSize: 40,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+  mascotImage: {
+    width: 100,
+    height: 100,
   },
   title: {
     fontSize: 28,
