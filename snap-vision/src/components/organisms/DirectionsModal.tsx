@@ -7,7 +7,7 @@ import { getThemeColors } from '../../theme';
 interface DirectionsModalProps {
   visible: boolean;
   onClose: () => void;
-  onStart: () => void; // New prop for start navigation
+  onStart: () => void; 
   destination: string;
   steps: any[];
   currentStep: number;

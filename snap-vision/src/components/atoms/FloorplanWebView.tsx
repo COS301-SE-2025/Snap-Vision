@@ -301,7 +301,11 @@ const FloorplanWebView = forwardRef<FloorplanWebViewRef, FloorplanWebViewProps>(
               const inverseScale = 1 / currentScale;
               waypoint.style.transform = \`translate(-50%, -50%) scale(\${inverseScale})\`;
               
-              waypoint.onclick = function() {
+              waypoint.onclick = function(e) {
+                // Prevent event bubbling
+                e.preventDefault();
+                e.stopPropagation();
+                
                 // Remove waypoint
                 const index = currentPath.findIndex(p => p.x === x && p.y === y);
                 if (index > -1) {
@@ -385,8 +389,29 @@ const FloorplanWebView = forwardRef<FloorplanWebViewRef, FloorplanWebViewProps>(
                 const deltaX = e.touches[0].clientX - lastX;
                 const deltaY = e.touches[0].clientY - lastY;
                 
-                currentOffsetX += deltaX;
-                currentOffsetY += deltaY;
+                // Calculate new position with constraints
+                const newOffsetX = currentOffsetX + deltaX;
+                const newOffsetY = currentOffsetY + deltaY;
+                
+                // Get container dimensions
+                const containerWidth = container.clientWidth;
+                const containerHeight = container.clientHeight;
+                
+                // Calculate the scaled image dimensions
+                const scaledWidth = containerWidth * currentScale;
+                const scaledHeight = containerHeight * currentScale;
+                
+                // Set boundaries to prevent image from moving completely out of view
+                // Allow some movement but keep at least 20% of the image visible
+                const minVisibleRatio = 0.3;
+                const maxOffsetX = containerWidth * (1 - minVisibleRatio);
+                const minOffsetX = -(scaledWidth - containerWidth * minVisibleRatio);
+                const maxOffsetY = containerHeight * (1 - minVisibleRatio);
+                const minOffsetY = -(scaledHeight - containerHeight * minVisibleRatio);
+                
+                // Apply constraints
+                currentOffsetX = Math.max(minOffsetX, Math.min(maxOffsetX, newOffsetX));
+                currentOffsetY = Math.max(minOffsetY, Math.min(maxOffsetY, newOffsetY));
                 
                 applyTransform();
                 
@@ -452,6 +477,12 @@ const FloorplanWebView = forwardRef<FloorplanWebViewRef, FloorplanWebViewProps>(
                 return;
               }
               
+              // Check if clicking on a waypoint to delete it
+              if (element && element.classList.contains('path-waypoint')) {
+                // Let the waypoint's click handler deal with deletion
+                return;
+              }
+              
               // Convert screen coordinates to image coordinates accounting for zoom and pan
               const rect = container.getBoundingClientRect();
               const imageRect = floorplan.getBoundingClientRect();
@@ -465,14 +496,15 @@ const FloorplanWebView = forwardRef<FloorplanWebViewRef, FloorplanWebViewProps>(
                 if (isPathMode && selectedRooms.length === 2) {
                   // Add waypoint in path mode
                   window.addWaypoint(imageX, imageY);
-                } else {
-                  // Regular room marker creation
+                } else if (!isPathMode) {
+                  // Only create POI markers when NOT in path mode
                   window.ReactNativeWebView.postMessage(JSON.stringify({
                     type: 'add_marker',
                     x: imageX,
                     y: imageY
                   }));
                 }
+                // If in path mode but no rooms selected, do nothing (prevent POI creation)
               }
             }
             

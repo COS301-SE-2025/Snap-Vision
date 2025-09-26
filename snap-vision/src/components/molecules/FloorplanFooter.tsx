@@ -54,15 +54,15 @@ const FloorplanFooter: React.FC<FloorplanFooterProps> = ({
               onPress={() => setShowDeleteModal(true)}
               style={[styles.actionButton, { backgroundColor: '#D32F2F' }]}
             >
-              <Text style={styles.actionButtonText}>Delete</Text>
+              <Text style={styles.actionButtonText}>Delete Paths</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity
+          {/* <TouchableOpacity
             onPress={onDone}
             style={[styles.actionButton, { backgroundColor: colors.primary }]}
           >
             <Text style={styles.actionButtonText}>Done</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
 
@@ -102,14 +102,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 8,
     flex: 1,
-    maxWidth: 120,
+    maxWidth: 150,
   },
   actionButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
   },
-  // Keep old styles for backward compatibility
   deleteButton: {
     paddingHorizontal: 20,
     paddingVertical: 12,

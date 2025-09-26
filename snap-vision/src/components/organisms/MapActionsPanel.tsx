@@ -38,8 +38,8 @@ const MapActionsPanel = ({
 }: Props) => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [drawerAnimation] = useState(new Animated.Value(0));
+  const [isDrawerOpen, setIsDrawerOpen] = useState(true);
+  const [drawerAnimation] = useState(new Animated.Value(1));
 
   if (!currentLocation) return null;
 
@@ -57,7 +57,7 @@ const MapActionsPanel = ({
 
   const drawerTranslateX = drawerAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [80, 0],
+    outputRange: [150, 0], // Increased from 80 to 150 to fully hide buttons
   });
 
   const arrowRotation = drawerAnimation.interpolate({
@@ -133,23 +133,22 @@ const MapActionsPanel = ({
           backgroundColor={colors.primary}
           tooltipText="Bluetooth Navigation"
         />
-
-        {/* Admin-only Add POI button */}
-        {isAdmin && onAddPOI && (
-          <>
-            <View style={styles.spacer} />
-            <ActionButtonWithTooltip
-              icon={<Icon name="business" size={30} color={colors.background} />}
-              onPress={onAddPOI}
-              onPressIn={() => {}}
-              onPressOut={() => {}}
-              showTooltip={false}
-              backgroundColor={colors.primary}
-              tooltipText="Add Building"
-            />
-          </>
-        )}
       </Animated.View>
+
+      {/* Admin-only Add POI button - positioned below the drawer */}
+      {isAdmin && onAddPOI && (
+        <View style={styles.adminButtonContainer}>
+          <ActionButtonWithTooltip
+            icon={<Icon name="business" size={30} color={colors.background} />}
+            onPress={onAddPOI}
+            onPressIn={() => {}}
+            onPressOut={() => {}}
+            showTooltip={false}
+            backgroundColor={colors.primary}
+            tooltipText="Add Building"
+          />
+        </View>
+      )}
     </View>
   );
 };
@@ -158,17 +157,18 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     top: '30%',
-    right: 0, // Position flush with screen edge
-    flexDirection: 'row-reverse', // Reverse to put toggle on the right
+    right: 0, 
+    flexDirection: 'row-reverse', 
     alignItems: 'center',
-    transform: [{ translateY: -25 }], // Center vertically (half of toggle button height)
+    transform: [{ translateY: -25 }],
+    
   },
   drawerBackground: {
     position: 'absolute',
-    top: -20, // Adjusted to cover all buttons
+    top: -20, 
     right: 0,
-    width: 100,
-    height: 320, // Increased to cover 3-4 buttons with spacing
+    width: 130,
+    height: 240, 
     borderTopLeftRadius: 15,
     borderBottomLeftRadius: 15,
     elevation: 2,
@@ -178,8 +178,8 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   drawerToggle: {
-    width: 20,
-    height: 50,
+    width: 30,
+    height: 30,
     borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
@@ -189,14 +189,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     zIndex: 1000,
+    marginRight: 10,
   },
   drawerContent: {
     flexDirection: 'column',
     alignItems: 'center',
-    marginLeft: 15, // Space between toggle and buttons
+    marginRight: 10,
+    marginLeft: 15,
   },
   spacer: {
     height: 15,
+  },
+  adminButtonContainer: {
+    position: 'absolute',
+    top: 250, 
+    right: 15, 
+    alignItems: 'center',
   },
 });
 
