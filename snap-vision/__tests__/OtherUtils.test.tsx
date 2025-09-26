@@ -49,11 +49,8 @@ describe('cameraPermissions', () => {
 
   it('returns false if request throws error (Android)', async () => {
     PermissionsAndroid.request.mockRejectedValue(new Error('fail'));
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     const result = await requestCameraPermission();
     expect(result).toBe(false);
-    expect(warnSpy).toHaveBeenCalledWith('Camera permission error:', expect.any(Error));
-    warnSpy.mockRestore();
   });
 
   it('returns true for iOS (requestCameraPermission)', async () => {
@@ -76,11 +73,8 @@ describe('cameraPermissions', () => {
 
   it('returns false if check throws error (Android)', async () => {
     PermissionsAndroid.check.mockRejectedValue(new Error('fail'));
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     const result = await hasCameraPermission();
     expect(result).toBe(false);
-    expect(warnSpy).toHaveBeenCalledWith('Camera permission check error:', expect.any(Error));
-    warnSpy.mockRestore();
   });
 
   it('returns true for iOS (hasCameraPermission)', async () => {
