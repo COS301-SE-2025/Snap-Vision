@@ -119,4 +119,53 @@ describe('Snap Vision Firestore Security Rules', () => {
       },
     });
   });
+
+  afterAll(async () => {
+    await testEnv.cleanup();
+  });
+
+  afterEach(async () => {
+    await testEnv.clearFirestore();
+  });
+
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'userInformation/admin'), {
+        role: 'admin',
+        adminLocations: ['up-campus'],
+      });
+      await setDoc(doc(context.firestore(), 'userInformation/editor'), {
+        role: 'editor',
+        adminLocations: ['up-campus'],
+      });
+      await setDoc(doc(context.firestore(), 'userInformation/user'), {
+        role: 'user',
+      });
+    });
+  });
+
+  describe('User Data Isolation', () => {
+    test('user can read/write their own users and recentlyVisited', async () => {
+      const user = testEnv.authenticatedContext('user');
+      await assertSucceeds(setDoc(doc(user.firestore(), 'users/user'), { points: 10 }));
+      await assertSucceeds(getDoc(doc(user.firestore(), 'users/user')));
+      await assertSucceeds(setDoc(doc(user.firestore(), 'recentlyVisited/user'), { last: 'poi1' }));
+      await assertSucceeds(getDoc(doc(user.firestore(), 'recentlyVisited/user')));
+    });
+
+    test('user cannot read/write other users data', async () => {
+      const user = testEnv.authenticatedContext('user');
+      await assertFails(getDoc(doc(user.firestore(), 'users/admin')));
+      await assertFails(setDoc(doc(user.firestore(), 'users/admin'), { points: 99 }));
+      await assertFails(getDoc(doc(user.firestore(), 'recentlyVisited/admin')));
+    });
+
+    test('unauthenticated cannot read/write any user data', async () => {
+      const unauthed = testEnv.unauthenticatedContext();
+      await assertFails(getDoc(doc(unauthed.firestore(), 'users/user')));
+      await assertFails(setDoc(doc(unauthed.firestore(), 'users/user'), { points: 1 }));
+    });
+  });
+
+  
 });
