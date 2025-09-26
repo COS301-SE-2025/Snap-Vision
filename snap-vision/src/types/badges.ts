@@ -16,7 +16,8 @@ export type BadgeId =
   | 'fast-finisher'
   | 'lecture-halls'
   | 'explore-buildings'
-  | 'points-master';
+  | 'points-master'
+  | 'switch-themes';
 
 // 2. Badge shape
 export interface Badge {
@@ -91,5 +92,10 @@ export const BADGES: Record<BadgeId, Badge> = {
     id: 'fast-finisher',
     title: 'Speed Runner',
     description: 'Reach a destination within 5 minutes of starting navigation',
+  },
+  'switch-themes': {
+    id: 'switch-themes',
+    title: 'Theme Switcher',
+    description: 'Toggle between light and dark modes',
   },
 };
