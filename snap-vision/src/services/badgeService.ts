@@ -1,14 +1,29 @@
 // src/services/badgeService.ts
 import firestore from '@react-native-firebase/firestore';
+import AuthorizationService from '../security/AuthorizationService';
+import InputValidator from '../security/InputValidator';
 
 const db = firestore();
+const authService = AuthorizationService.getInstance();
 
 export async function unlockBadgeForUser(userId: string, badgeId: string) {
+  const validUserId = InputValidator.validateUserId(userId);
+  const validBadgeId = InputValidator.validateDocumentId(badgeId);
+
+  if (!validUserId || !validBadgeId) {
+    throw new Error('Invalid user ID or badge ID');
+  }
+
+  // Authorization check
+  if (!(await authService.canAccessBadgeData(validUserId))) {
+    throw new Error('Unauthorized: Cannot access badge data');
+  }
+
   const POINT_INCREMENT = 50;
   const POINTS_MILESTONE = 150;
   const MILESTONE_BADGE = 'points-150';
 
-  const userRef = db.collection('users').doc(userId);
+  const userRef = db.collection('users').doc(validUserId);
 
   try {
     await db.runTransaction(async (transaction) => {
@@ -35,8 +50,8 @@ export async function unlockBadgeForUser(userId: string, badgeId: string) {
       const badges = data?.badges ? [...data.badges] : [];
       let points = data?.points || 0;
 
-      if (!badges.includes(badgeId)) {
-        badges.push(badgeId);
+      if (!badges.includes(validBadgeId)) {
+        badges.push(validBadgeId);
         points += POINT_INCREMENT;
       }
 
@@ -50,18 +65,35 @@ export async function unlockBadgeForUser(userId: string, badgeId: string) {
       });
     });
   } catch (error) {
-    //consoleerror(`Error unlocking badge ${badgeId} for user ${userId}:`, error);
+    console.error(`Error unlocking badge ${validBadgeId} for user ${validUserId}:`, error);
     throw error;
   }
 }
 
 export async function getUserBadgeData(userId: string) {
-  const userRef = db.collection('users').doc(userId);
+  const validUserId = InputValidator.validateUserId(userId);
+  if (!validUserId) {
+    throw new Error('Invalid user ID');
+  }
+
+  // Authorization check
+  if (!(await authService.canAccessBadgeData(validUserId))) {
+    throw new Error('Unauthorized: Cannot access badge data');
+  }
+
+  const userRef = db.collection('users').doc(validUserId);
   const userDoc = await userRef.get();
 
   if (!userDoc.exists) return null;
 
-  return userDoc.data();
+  const data = userDoc.data();
+  return {
+    badges: InputValidator.validateStringArray(data?.badges) || [],
+    routesCompleted: InputValidator.validateNumber(data?.routesCompleted, 0) || 0,
+    achievements: InputValidator.validateStringArray(data?.achievements) || [],
+    points: InputValidator.validateNumber(data?.points, 0) || 0,
+    checkIns: InputValidator.validateNumber(data?.checkIns, 0) || 0,
+  };
 }
 
 export async function purchaseItemForUser(userId: string, item: any) {
