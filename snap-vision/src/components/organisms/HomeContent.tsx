@@ -12,16 +12,28 @@ import RecentlyVisitedCarousel from '../molecules/RecentlyVisitedCarousel';
 import { useEffect, useState } from 'react';
 import { getRecentlyVPOIs, Visit } from '../../services/firebase/recentlyVService';
 import perf from '@react-native-firebase/perf';
+import { POI } from '../../hooks/useMapPOI';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
-type RootStackParamList = {
+type TabParamList = {
+  Home: undefined;
   Map: undefined;
-  // add other screens here if needed
+  Settings: undefined;
 };
+
+type MapStackParamList = {
+  MapScreen: { selectedPOI?: POI };
+};
+
+type NavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList, 'Map'>,
+  StackNavigationProp<MapStackParamList>
+>;
 
 export default function HomeContent() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+const navigation = useNavigation<NavigationProp>();
   const [recentlyVisited, setRecentlyVisited] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,6 +59,18 @@ export default function HomeContent() {
       fetchRecentlyVisited();
     }, []),
   );
+const handleVisitPress = (visit: Visit) => {
+  const poiToPass = {
+    id: visit.poiId,
+    name: visit.name,
+    centroid: visit.centroid,
+  } as POI;
+
+  navigation.navigate('Map', {
+    screen: 'MapMain',
+    params: { selectedPOI: poiToPass },
+  });
+};
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -100,7 +124,7 @@ export default function HomeContent() {
           <Text style={{ color: colors.secondary, textAlign: 'center' }}>Loading...</Text>
         </View>
       ) : (
-        <RecentlyVisitedCarousel visits={recentlyVisited} testID="recently-visited-carousel" />
+        <RecentlyVisitedCarousel visits={recentlyVisited} onVisitPress={handleVisitPress} />
       )}
     </View>
   );
