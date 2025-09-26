@@ -3,27 +3,17 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, Switch, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
-import { useBadges } from '../../context/BadgeContext';
 import { requestNotificationPermission } from '../../services/NotificationService';
+
 export default function NotificationSettings() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  const { unlock } = useBadges();
   const [pushEnabled, setPushEnabled] = useState(true);
-
-  useEffect(() => {
-    if (pushEnabled) {
-      unlock('enabled-notifications').catch(() => {
-        // ignore errors here
-      });
-    }
-  }, [pushEnabled, unlock]);
 
   const togglePushNotifications = async (value: boolean) => {
     setPushEnabled(value);
     if (value) {
       await requestNotificationPermission();
-      unlock('enabled-notifications').catch(() => {});
     }
   };
 
@@ -60,7 +50,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   switch: {
-    // Add a subtle shadow to the switch
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
