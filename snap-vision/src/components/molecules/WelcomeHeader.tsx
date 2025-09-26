@@ -65,7 +65,7 @@ export default function WelcomeHeader(_props: Props) {
       </View>
 
       <Image
-        source={require('../../../assets/mascot_success.png')}
+        source={require('../../assets/images/mascot_success.png')}
         style={styles.mascot}
         resizeMode="contain"
       />
