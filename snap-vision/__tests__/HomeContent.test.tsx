@@ -7,21 +7,21 @@ import auth from '@react-native-firebase/auth';
 import { getRecentlyVPOIs } from '../src/services/firebase/recentlyVService';
 
 const originalError = //consoleerror;
-beforeAll(() => {
-  //consoleerror = (...args) => {
-    if (
-      typeof args[0] === 'string' &&
-      (args[0].includes('was not wrapped in act') ||
-        args[0].includes('Error fetching recently visited'))
-    ) {
-      return;
-    }
-    originalError.call(console, ...args);
-  };
-});
+  beforeAll(() => {
+    console.error = (...args) => {
+      if (
+        typeof args[0] === 'string' &&
+        (args[0].includes('was not wrapped in act') ||
+          args[0].includes('Error fetching recently visited'))
+      ) {
+        return;
+      }
+      originalError.call(console, ...args);
+    };
+  });
 
 afterAll(() => {
-  //consoleerror = originalError;
+  console.error = originalError;
 });
 
 const mockNavigate = jest.fn();

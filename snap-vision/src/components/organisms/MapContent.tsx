@@ -147,6 +147,15 @@ interface MapContentProps {
   onSetShowLocationRefreshPopup: (show: boolean) => void;
   onHandleDestinationReachedConfirm: () => void;
   onRefreshMap: () => void;
+
+  // auto nav props
+  autoNavigationPopup: {
+    visible: boolean;
+    entry: any;
+    building: any;
+  };
+  onAutoNavigationConfirm: () => void;
+  onAutoNavigationDismiss: () => void;
 }
 
 const MapContent: React.FC<MapContentProps> = ({
@@ -278,6 +287,11 @@ const MapContent: React.FC<MapContentProps> = ({
   onSetShowLocationRefreshPopup,
   onHandleDestinationReachedConfirm,
   onRefreshMap,
+
+  //auto nav
+  autoNavigationPopup,
+  onAutoNavigationConfirm,
+  onAutoNavigationDismiss,
 }) => {
   useNotificationInstruction(isNavigating, steps[currentStep]?.instruction || '');
   return (
@@ -470,6 +484,22 @@ const MapContent: React.FC<MapContentProps> = ({
           </Text>
         </Pressable>
       )}
+
+      {/*  Auto Navigation Popup  */}
+      <StandardPopup
+        visible={autoNavigationPopup.visible}
+        title="Class Starting Soon!"
+        message={
+          autoNavigationPopup.entry && autoNavigationPopup.building
+            ? `Your ${autoNavigationPopup.entry.course} class starts at ${autoNavigationPopup.entry.startTime} at ${autoNavigationPopup.entry.venue}. Would you like to start navigation to ${autoNavigationPopup.building.name || autoNavigationPopup.building.title}?`
+            : ''
+        }
+        onConfirm={onAutoNavigationConfirm}
+        onCancel={onAutoNavigationDismiss}
+        confirmText="Navigate"
+        cancelText="Dismiss"
+        showCancel={true}
+      />
 
       {/* Status Overlay */}
       {error && <StatusOverlay status={error} />}
