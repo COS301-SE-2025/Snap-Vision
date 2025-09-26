@@ -1,28 +1,28 @@
 import React from 'react';
 import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
+import TimetableContent from '../components/organisms/TimetableContent';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
-import BluetoothBuildingsContent from '../components/organisms/BluetoothBuildingsContent';
 
-const BluetoothBuildingsScreen: React.FC = () => {
+const TimetableScreen = () => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <StatusBar
         backgroundColor={colors.background}
         barStyle={isDark ? 'light-content' : 'dark-content'}
       />
-      <BluetoothBuildingsContent />
+      <TimetableContent />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
   },
 });
 
-export default BluetoothBuildingsScreen;
+export default TimetableScreen;

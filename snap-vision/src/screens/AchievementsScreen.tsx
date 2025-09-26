@@ -1,4 +1,3 @@
-// src/screens/AchievementsScreen.tsx
 import React, { useEffect } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';

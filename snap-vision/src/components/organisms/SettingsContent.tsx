@@ -38,7 +38,7 @@ export default function SettingsContent({ isDark, navigation }: Props) {
       </View>
 
       <Image
-        source={require('../../../assets/mascot_settings.png')}
+        source={require('../../assets/images/mascot_settings.png')}
         style={styles.mascot}
         resizeMode="contain"
       />

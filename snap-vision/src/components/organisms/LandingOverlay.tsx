@@ -60,7 +60,7 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
       <View style={[styles.overlay, { backgroundColor: bg }]}>
         <View style={styles.mascotWrapper} pointerEvents="none">
           <Image
-            source={require('../../../assets/mascot_welcome.png')}
+            source={require('../../assets/images/mascot_welcome.png')}
             style={styles.mascotImage}
             accessibilityIgnoresInvertColors
           />

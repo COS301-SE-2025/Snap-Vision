@@ -1,120 +1,73 @@
-
-import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+} from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { useTheme } from '../theme/ThemeContext';
-import { getThemeColors } from '../theme';
-import BluetoothIndoorNavigationContent from '../components/organisms/BluetoothIndoorNavigationContent';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
+import { useBluetoothIndoorNavigation } from '../../hooks/useBluetoothIndoorNavigation';
+import SettingsHeader from '../molecules/SettingsHeader';
+import NavigationBar from '../molecules/NavigationBar';
+import DebugInfoBar from '../molecules/DebugInfoBar';
+import POIPopup from '../molecules/POIPopup';
+import POIInfoModal from '../molecules/POIInfoModal';
+import NavigationInstructionsBar from '../molecules/NavigationInstructionsBar';
+import DirectionsModal from '../organisms/DirectionsModal';
+import DestinationReachedPopup from '../molecules/DestinationReachedPopup';
+import IndoorSchematicMap from '../organisms/IndoorSchematicMap';
+import RoomsListOverlay from '../organisms/RoomsListOverlay';
 
-export default function BluetoothIndoorNavigationScreen() {
+type RootStackParamList = {
+  BluetoothIndoorNavigation: {
+    buildingId: string;
+    buildingName: string;
+    locationId: string;
+  };
+};
+type RouteP = RouteProp<RootStackParamList, 'BluetoothIndoorNavigation'>;
+type NavP = StackNavigationProp<RootStackParamList, 'BluetoothIndoorNavigation'>;
+
+const BluetoothIndoorNavigationContent: React.FC = () => {
+  const navigation = useNavigation<NavP>();
+  const route = useRoute<RouteP>();
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const { buildingId, buildingName, locationId } = route.params;
 
-  const [showRoomsList, setShowRoomsList] = useState(false);
-  const [mapSize, setMapSize] = useState({ width: 0, height: 0 });
-  
-  // POI popup state
-  const [showPOIPopup, setShowPOIPopup] = useState(false);
-  const [showPOIInfoModal, setShowPOIInfoModal] = useState(false);
-  const [selectedPOI, setSelectedPOI] = useState<RoomPOI | null>(null);
-
-  // Navigation state
-  const [showDirectionsModal, setShowDirectionsModal] = useState(false);
-
-  // Custom hooks for managing different aspects
-  const roomManager = useRoomManager({ locationId, buildingId });
-  const floorplanManager = useFloorplanManager({
-    locationId,
+  const {
+    roomManager,
+    floorplanManager,
+    beaconManager,
+    navigationManager,
+    showRoomsList,
+    setShowRoomsList,
+    mapSize,
+    setMapSize,
+    showPOIPopup,
+    showPOIInfoModal,
+    setShowPOIInfoModal,
+    selectedPOI,
+    showDirectionsModal,
+    setShowDirectionsModal,
+    handleRoomSelect,
+    handleNavigateHere,
+    handleMoreInfo,
+    handleClosePOIPopup,
+    handleShowRoomsList,
+    handleRoomListSelect,
+  } = useBluetoothIndoorNavigation({
     buildingId,
-    selectedFloorId: roomManager.selectedFloorId,
-  });
-  const beaconManager = useBeaconManager({
+    buildingName,
     locationId,
-    buildingId,
-    selectedFloorId: roomManager.selectedFloorId,
   });
-  const navigationManager = useNavigationManager({
-    locationId,
-    buildingId,
-    currentPosition: beaconManager.currentPos,
-    allRooms: roomManager.allRooms,
-  });
-
-  // Debug navigation manager state
-  console.log('[SCREEN] Navigation manager state:', {
-    isNavigating: navigationManager.isNavigating,
-    destination: navigationManager.destination?.name,
-    stepsCount: navigationManager.steps.length,
-    pathPOIsLoaded: navigationManager.pathPOIsLoaded,
-  });
-
-  const dotPx = useMemo(() => {
-    if (!beaconManager.currentPos || !mapSize.width || !mapSize.height) return null;
-    return {
-      left: beaconManager.currentPos.x * mapSize.width,
-      top: beaconManager.currentPos.y * mapSize.height,
-    };
-  }, [beaconManager.currentPos, mapSize]);
-
-  const handleRoomSelect = (roomId: string) => {
-    const room = roomManager.allRooms.find(r => r.id === roomId);
-    if (room) {
-      setSelectedPOI(room);
-      setShowPOIPopup(true);
-      // Don't set as selectedRoom to avoid destination color
-    }
-  };
-
-  const handleNavigateHere = async () => {
-    console.log('[SCREEN] handleNavigateHere called');
-    console.log('[SCREEN] selectedPOI:', selectedPOI);
-    console.log('[SCREEN] Navigation manager isNavigating:', navigationManager.isNavigating);
-    
-    if (selectedPOI) {
-      console.log('Starting navigation to:', selectedPOI.name);
-      const success = await navigationManager.startNavigation(selectedPOI);
-      console.log('[SCREEN] Navigation start result:', success);
-      
-      if (success) {
-        console.log('[SCREEN] Navigation started successfully, closing popup');
-        setShowPOIPopup(false);
-        // Optionally show directions modal
-        // setShowDirectionsModal(true);
-      } else {
-        console.warn('Failed to start navigation');
-        // Could show an error message here
-      }
-    } else {
-      console.warn('[SCREEN] No selectedPOI available');
-    }
-  };
-
-  const handleMoreInfo = () => {
-    setShowPOIPopup(false);
-    setShowPOIInfoModal(true);
-  };
-
-  const handleClosePOIPopup = () => {
-    setShowPOIPopup(false);
-    setSelectedPOI(null);
-  };
-
-  const handleShowRoomsList = () => {
-    setShowRoomsList(true);
-  };
-
-  const handleRoomListSelect = (room: any) => {
-    // Don't set as selectedRoom to avoid destination color
-    setSelectedPOI(room);
-    setShowPOIPopup(true);
-    setShowRoomsList(false); // Close the rooms list
-  };
 
   if (roomManager.loading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={styles.container}>
         <SettingsHeader title={`${buildingName} - Bluetooth Navigation`} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -122,12 +75,12 @@ export default function BluetoothIndoorNavigationScreen() {
             Loading building layout...
           </Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={styles.container}>
       <SettingsHeader title={`${buildingName} - Bluetooth Navigation`} />
 
       <NavigationBar
@@ -186,10 +139,9 @@ export default function BluetoothIndoorNavigationScreen() {
               }}
             >
               <Text style={{ color: colors.secondary, fontSize: 12 }}>
-                {beaconManager.isRunning 
-                  ? 'Improving location accuracy...' 
-                  : 'Waiting for beacon signals…'
-                }
+                {beaconManager.isRunning
+                  ? 'Improving location accuracy...'
+                  : 'Waiting for beacon signals…'}
               </Text>
             </View>
           )}
@@ -249,10 +201,20 @@ export default function BluetoothIndoorNavigationScreen() {
         onClose={() => setShowPOIInfoModal(false)}
         themeColors={colors}
       />
-    </SafeAreaView>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 16, fontSize: 16 },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 5,
+  },
 });
+
+export default BluetoothIndoorNavigationContent;

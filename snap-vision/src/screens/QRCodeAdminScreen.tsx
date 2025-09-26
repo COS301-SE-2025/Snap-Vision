@@ -1,4 +1,3 @@
-// src/screens/QRCodeAdminScreen.tsx
 import React from 'react';
 import { SafeAreaView } from 'react-native';
 import QRCodeAdminContent from '../components/organisms/QRCodeAdminContent';
