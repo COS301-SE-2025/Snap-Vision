@@ -4,26 +4,24 @@ const axios = require("axios");
 require("dotenv").config();
 
 const admin = require('firebase-admin');
+const { 
+  authenticateUser, 
+  requireAuth, 
+  createUserRateLimit, 
+  logRequest, 
+  validateInput 
+} = require('./middleware/auth');
 
-// Input sanitization utility
+// Input sanitization utility (kept for backward compatibility)
 const sanitizeInput = {
   // Remove potentially harmful characters and normalize input
   string: (input) => {
-    if (typeof input !== 'string') return '';
-    return input
-      .replace(/[<>\"'&]/g, '') // Remove XSS characters
-      .replace(/[\x00-\x1f\x7f-\x9f]/g, '') // Remove control characters
-      .trim()
-      .substring(0, 1000); // Limit length
+    return validateInput.string(input);
   },
   
   // Validate and sanitize coordinates
   coordinate: (input) => {
-    const num = parseFloat(input);
-    if (isNaN(num) || !isFinite(num)) return null;
-    // Basic coordinate bounds check
-    if (num < -180 || num > 180) return null;
-    return num;
+    return validateInput.coordinate(input);
   },
   
   // Validate mode parameter
@@ -68,6 +66,9 @@ const app = express();
 // Apply rate limiting
 app.use(limiter);
 app.use('/api/', apiLimiter);
+
+// Apply request logging
+app.use(logRequest);
 
 // Secure CORS configuration
 const corsOptions = {
@@ -115,6 +116,66 @@ app.use((req, res, next) => {
 
 app.get("/", (req, res) => {
   res.send("Snap Vision backend is running");
+});
+
+// Protected API endpoints with authentication
+const userRateLimit = createUserRateLimit(60000, 30); // 30 requests per minute per user
+
+// Example protected endpoint for user data
+app.get("/api/user/:userId", authenticateUser, requireAuth('read', 'user'), userRateLimit, async (req, res) => {
+  try {
+    const userId = validateInput.userId(req.params.userId);
+    if (!userId) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+
+    const userDoc = await admin.firestore()
+      .collection('userInformation')
+      .doc(userId)
+      .get();
+
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userData = userDoc.data();
+    res.json({
+      id: userDoc.id,
+      name: validateInput.string(userData.name),
+      email: userData.email,
+      role: userData.role || 'user'
+    });
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Example protected endpoint for location data
+app.get("/api/locations/:locationId", authenticateUser, requireAuth('read', 'location'), userRateLimit, async (req, res) => {
+  try {
+    const locationId = validateInput.string(req.params.locationId);
+    if (!locationId) {
+      return res.status(400).json({ error: 'Invalid location ID' });
+    }
+
+    const locationDoc = await admin.firestore()
+      .collection('locations')
+      .doc(locationId)
+      .get();
+
+    if (!locationDoc.exists) {
+      return res.status(404).json({ error: 'Location not found' });
+    }
+
+    res.json({
+      id: locationDoc.id,
+      ...locationDoc.data()
+    });
+  } catch (error) {
+    console.error('Error fetching location:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 app.get("/api/directions", async (req, res) => {
@@ -238,8 +299,8 @@ app.get("/api/directions", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 8080; // Firebase App Hosting typically uses 8080
-const server = app.listen(PORT, () =>
-  //consolelog(`Server running on port ${server.address().port}`),
-);
+const server = app.listen(PORT, () => {
+  console.log(`Server running on port ${server.address().port}`);
+});
 
 module.exports = server;
