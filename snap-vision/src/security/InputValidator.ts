@@ -176,6 +176,28 @@ export class InputValidator {
     
     return { limit: validLimit, offset: validOffset };
   }
+
+  /**
+   * Validate URL format
+   */
+  static validateUrl(url: unknown): string | null {
+    if (!url || typeof url !== 'string') {
+      return null;
+    }
+
+    const sanitized = url.trim();
+    
+    try {
+      const urlObj = new URL(sanitized);
+      // Only allow https and http protocols
+      if (!['http:', 'https:'].includes(urlObj.protocol)) {
+        return null;
+      }
+      return sanitized;
+    } catch {
+      return null;
+    }
+  }
 }
 
 export default InputValidator;

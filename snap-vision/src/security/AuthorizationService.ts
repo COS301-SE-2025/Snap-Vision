@@ -134,7 +134,7 @@ export class AuthorizationService {
         .doc(buildingId)
         .get();
 
-      return buildingDoc.exists;
+      return buildingDoc.exists();
     } catch {
       return false;
     }
@@ -168,7 +168,7 @@ export class AuthorizationService {
         .doc(qrCodeId)
         .get();
 
-      return qrDoc.exists;
+      return qrDoc.exists();
     } catch {
       return false;
     }
@@ -178,7 +178,9 @@ export class AuthorizationService {
    * Validate user can modify QR code resource
    */
   async canModifyQRCode(locationId: string, qrCodeId: string): Promise<boolean> {
-    return this.canModifyLocation(locationId) && this.canAccessQRCode(locationId, qrCodeId);
+    const canModify = await this.canModifyLocation(locationId);
+    const canAccess = await this.canAccessQRCode(locationId, qrCodeId);
+    return canModify && canAccess;
   }
 
   /**
@@ -200,6 +202,55 @@ export class AuthorizationService {
     if (!context) return false;
 
     // Users can only access their own badge data
+    return context.userId === targetUserId;
+  }
+
+  /**
+   * Validate user can access timetable data
+   */
+  async canAccessTimetable(targetUserId: string): Promise<boolean> {
+    const context = await this.getCurrentUserContext();
+    if (!context) return false;
+
+    // Users can only access their own timetable data
+    return context.userId === targetUserId;
+  }
+
+  /**
+   * Validate user can access crowd report data
+   */
+  async canAccessCrowdReports(): Promise<boolean> {
+    const context = await this.getCurrentUserContext();
+    return !!context; // Any authenticated user can access crowd reports
+  }
+
+  /**
+   * Validate user can create crowd reports
+   */
+  async canCreateCrowdReport(): Promise<boolean> {
+    const context = await this.getCurrentUserContext();
+    return !!context; // Any authenticated user can create crowd reports
+  }
+
+  /**
+   * Validate user can modify their own crowd report
+   */
+  async canModifyCrowdReport(reportId: string, reporterId: string): Promise<boolean> {
+    const context = await this.getCurrentUserContext();
+    if (!context) return false;
+
+    // Users can only modify their own reports or admins can modify any
+    return context.userId === reporterId || context.role === 'admin';
+  }
+
+  /**
+   * Validate user can access FCM tokens
+   */
+  async canAccessFCMToken(targetUserId: string): Promise<boolean> {
+    const context = await this.getCurrentUserContext();
+    if (!context) return false;
+
+    // Users can only access their own FCM tokens
     return context.userId === targetUserId;
   }
 
