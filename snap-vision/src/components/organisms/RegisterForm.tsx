@@ -237,30 +237,6 @@ export default function RegisterForm() {
       >
         Already have an account? <Text style={styles.signUpBold}>LOGIN</Text>
       </Text>
-
-      {/* <View style={styles.dividerRow}>
-        <View style={[styles.line, { backgroundColor: colors.secondary }]} />
-        <Text style={[styles.orText, { color: colors.secondary }]}>Register With</Text>
-        <View style={[styles.line, { backgroundColor: colors.secondary }]} />
-      </View>
-
-      {/* Error Popup */}
-      <StandardPopup
-        visible={showErrorPopup}
-        title="Registration Error"
-        message={errorPopupMessage}
-        onConfirm={() => setShowErrorPopup(false)}
-        confirmText="Close"
-      />
-
-      {/* Success Popup */}
-      <StandardPopup
-        visible={showSuccessPopup}
-        title="Registration Successful"
-        message="Your account has been created successfully!"
-        onConfirm={handleSuccessConfirm}
-        confirmText="Continue"
-      />
     </View>
   );
 }
