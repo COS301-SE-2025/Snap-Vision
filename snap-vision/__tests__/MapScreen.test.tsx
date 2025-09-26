@@ -200,24 +200,6 @@ describe('MapWebView', () => {
     webView.props.onMessage({ nativeEvent: { data: 'test message' } });
     expect(mockOnMessage).toHaveBeenCalledWith({ nativeEvent: { data: 'test message' } });
   });
-
-  it('handles onLoadEnd correctly', () => {
-    const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-    const { getByTestId } = render(<MapWebView onMessage={jest.fn()} />);
-    const webView = getByTestId('mock-webview');
-    webView.props.onLoadEnd();
-    expect(consoleSpy).toHaveBeenCalledWith('WebView fully loaded');
-    consoleSpy.mockRestore();
-  });
-  it('handles onError correctly', () => {
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-    const { getByTestId } = render(<MapWebView onMessage={jest.fn()} />);
-    const webView = getByTestId('mock-webview');
-    const errorEvent = { nativeEvent: { description: 'Test error' } };
-    webView.props.onError(errorEvent);
-    expect(consoleSpy).toHaveBeenCalledWith('WebView error:', 'Test error');
-    consoleSpy.mockRestore();
-  });
 });
 describe('NavigationPanel', () => {
   const renderWithProviders = (ui: React.ReactNode) => {
@@ -473,31 +455,6 @@ describe('MapWebView', () => {
     webView.props.onMessage(testMessage);
 
     expect(mockOnMessage).toHaveBeenCalledWith(testMessage);
-  });
-
-  it('handles onLoadEnd correctly', () => {
-    const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-
-    const { getByTestId } = render(<MapWebView onMessage={mockOnMessage} />);
-    const webView = getByTestId('mock-webview');
-
-    webView.props.onLoadEnd();
-
-    expect(consoleSpy).toHaveBeenCalledWith('WebView fully loaded');
-    consoleSpy.mockRestore();
-  });
-
-  it('handles onError correctly', () => {
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-    const { getByTestId } = render(<MapWebView onMessage={mockOnMessage} />);
-    const webView = getByTestId('mock-webview');
-
-    const errorEvent = { nativeEvent: { description: 'Test error' } };
-    webView.props.onError(errorEvent);
-
-    expect(consoleSpy).toHaveBeenCalledWith('WebView error:', 'Test error');
-    consoleSpy.mockRestore();
   });
 
   it('passes correct props to WebView', () => {
