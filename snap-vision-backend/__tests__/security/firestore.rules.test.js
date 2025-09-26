@@ -217,5 +217,75 @@ describe('Snap Vision Firestore Security Rules', () => {
     });
   });
 
-  
+  describe('AR Navigation Sessions', () => {
+    beforeEach(async () => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), 'arNavigationSessions/session1'), {
+          userId: 'user',
+        });
+      });
+    });
+
+    test('user can read/write their own AR session', async () => {
+      const user = testEnv.authenticatedContext('user');
+      await assertSucceeds(getDoc(doc(user.firestore(), 'arNavigationSessions/session1')));
+      await assertSucceeds(setDoc(doc(user.firestore(), 'arNavigationSessions/session1'), { userId: 'user' }));
+    });
+
+    test('user cannot read/write others AR session', async () => {
+      const other = testEnv.authenticatedContext('other');
+      await assertFails(getDoc(doc(other.firestore(), 'arNavigationSessions/session1')));
+      await assertFails(setDoc(doc(other.firestore(), 'arNavigationSessions/session1'), { userId: 'other' }));
+    });
+  });
+
+  describe('Timetables', () => {
+    beforeEach(async () => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), 'timetables/timetable1'), {
+          userId: 'user',
+          day: 'Monday',
+          startTime: '08:00',
+          endTime: '09:00',
+          course: 'Math',
+          venue: 'Room 1',
+        });
+      });
+    });
+
+    test('user can read their own timetable', async () => {
+      const user = testEnv.authenticatedContext('user');
+      await assertSucceeds(getDoc(doc(user.firestore(), 'timetables/timetable1')));
+    });
+
+    test('user cannot read others timetable', async () => {
+      const other = testEnv.authenticatedContext('other');
+      await assertFails(getDoc(doc(other.firestore(), 'timetables/timetable1')));
+    });
+
+    test('user can create timetable with correct fields', async () => {
+      const user = testEnv.authenticatedContext('user');
+      await assertSucceeds(setDoc(doc(user.firestore(), 'timetables/timetable2'), {
+        userId: 'user',
+        day: 'Tuesday',
+        startTime: '10:00',
+        endTime: '11:00',
+        course: 'Science',
+        venue: 'Room 2',
+      }));
+    });
+
+    test('user cannot create timetable for another user', async () => {
+      const user = testEnv.authenticatedContext('user');
+      await assertFails(setDoc(doc(user.firestore(), 'timetables/timetable3'), {
+        userId: 'other',
+        day: 'Wednesday',
+        startTime: '12:00',
+        endTime: '13:00',
+        course: 'History',
+        venue: 'Room 3',
+      }));
+    });
+  });
+    
 });
