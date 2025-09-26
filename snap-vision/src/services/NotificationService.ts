@@ -2,6 +2,10 @@ import messaging from '@react-native-firebase/messaging';
 import notifee from '@notifee/react-native';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
+import AuthorizationService from '../security/AuthorizationService';
+import InputValidator from '../security/InputValidator';
+
+const authService = AuthorizationService.getInstance();
 
 /**
  * Requests notification permission from the user.
@@ -30,9 +34,22 @@ export async function getFCMToken(): Promise<string | null> {
 }
 export async function storeFCMToken(token: string): Promise<void> {
   const user = auth().currentUser;
-  if (user && token) {
-    await firestore().collection('userFCMTokens').doc(user.uid).set({ token }, { merge: true });
+  if (!user) {
+    throw new Error('User not authenticated');
   }
+
+  // Input validation
+  const validToken = InputValidator.validateText(token);
+  if (!validToken) {
+    throw new Error('Invalid FCM token');
+  }
+
+  // Authorization check - users can only store their own tokens
+  if (!(await authService.canAccessFCMToken(user.uid))) {
+    throw new Error('Unauthorized: Cannot store FCM token');
+  }
+
+  await firestore().collection('userFCMTokens').doc(user.uid).set({ token: validToken }, { merge: true });
 }
 
 export async function setupFCM() {

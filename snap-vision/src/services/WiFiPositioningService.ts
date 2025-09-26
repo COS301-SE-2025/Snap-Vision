@@ -1,6 +1,10 @@
 import firestore from '@react-native-firebase/firestore';
 import { Platform } from 'react-native';
 import WifiManager from 'react-native-wifi-reborn';
+import AuthorizationService from '../security/AuthorizationService';
+import InputValidator from '../security/InputValidator';
+
+const authService = AuthorizationService.getInstance();
 
 interface FingerprintData {
   locationId: string;
@@ -14,6 +18,20 @@ interface FingerprintData {
 
 export async function collectWiFiFingerprint(fingerprint: FingerprintData): Promise<void> {
   try {
+    // Input validation
+    const validLocationId = InputValidator.validateDocumentId(fingerprint.locationId);
+    const validBuildingId = InputValidator.validateDocumentId(fingerprint.buildingId);
+    const validFloorId = InputValidator.validateDocumentId(fingerprint.floorId);
+    
+    if (!validLocationId || !validBuildingId || !validFloorId) {
+      throw new Error('Invalid location, building, or floor ID');
+    }
+
+    // Authorization check - need building modification access to collect fingerprints
+    if (!(await authService.canModifyBuilding(validLocationId, validBuildingId))) {
+      throw new Error('Unauthorized: Cannot collect WiFi fingerprints for this location');
+    }
+
     // Scan Wi-Fi networks
     const results = await WifiManager.reScanAndLoadWifiList();
 
@@ -30,12 +48,18 @@ export async function collectWiFiFingerprint(fingerprint: FingerprintData): Prom
     const payload = {
       timestamp: Date.now(),
       wifiSignals,
-      ...fingerprint,
+      locationId: validLocationId,
+      buildingId: validBuildingId,
+      floorId: validFloorId,
+      coordinates: fingerprint.coordinates,
+      description: InputValidator.validateText(fingerprint.description) || '',
+      type: InputValidator.validateText(fingerprint.type) || 'manual',
+      buildingName: fingerprint.buildingName ? InputValidator.validateText(fingerprint.buildingName) : undefined,
     };
 
     // Save under: locations/{locationId}/wifiFingerprints
     await firestore()
-      .collection(`locations/${fingerprint.locationId}/wifiFingerprints`)
+      .collection(`locations/${validLocationId}/wifiFingerprints`)
       .add(payload);
   } catch (error) {
     //consoleerror('Failed to collect WiFi fingerprint:', error);
@@ -56,10 +80,24 @@ export async function deleteWiFiFingerprint({
   coordinates: { x: number; y: number };
 }): Promise<void> {
   try {
+    // Input validation
+    const validLocationId = InputValidator.validateDocumentId(locationId);
+    const validBuildingId = InputValidator.validateDocumentId(buildingId);
+    const validFloorId = InputValidator.validateDocumentId(floorId);
+    
+    if (!validLocationId || !validBuildingId || !validFloorId) {
+      throw new Error('Invalid location, building, or floor ID');
+    }
+
+    // Authorization check - need building modification access to delete fingerprints
+    if (!(await authService.canModifyBuilding(validLocationId, validBuildingId))) {
+      throw new Error('Unauthorized: Cannot delete WiFi fingerprints for this location');
+    }
+
     const snapshot = await firestore()
-      .collection(`locations/${locationId}/wifiFingerprints`)
-      .where('buildingId', '==', buildingId)
-      .where('floorId', '==', floorId)
+      .collection(`locations/${validLocationId}/wifiFingerprints`)
+      .where('buildingId', '==', validBuildingId)
+      .where('floorId', '==', validFloorId)
       .get();
 
     const docsToDelete = snapshot.docs.filter((doc) => {

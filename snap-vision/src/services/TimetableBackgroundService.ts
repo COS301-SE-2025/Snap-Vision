@@ -8,6 +8,10 @@ import notifee, {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
+import AuthorizationService from '../security/AuthorizationService';
+import InputValidator from '../security/InputValidator';
+
+const authService = AuthorizationService.getInstance();
 
 interface TimetableEntry {
   id: string;
@@ -90,6 +94,11 @@ class TimetableBackgroundService {
       }
 
       console.log('[TimetableService] Fetching timetable entries for user:', user.uid);
+
+      // Authorization check - users can only access their own timetable
+      if (!(await authService.canAccessTimetable(user.uid))) {
+        throw new Error('Unauthorized access to timetable data');
+      }
 
       const snapshot = await firestore()
         .collection('timetables')
