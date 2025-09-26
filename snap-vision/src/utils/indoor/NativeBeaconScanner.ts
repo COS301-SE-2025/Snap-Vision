@@ -19,9 +19,39 @@ function toHex(bytes?: number[] | null, maxLen = 24): string {
 function mdToBytes(md: any): number[] | null {
   try {
     if (!md) return null;
-    if (Array.isArray(md.bytes)) return md.bytes as number[]; // Android shape
+    
+    // Handle direct array format
+    if (Array.isArray(md.bytes)) return md.bytes as number[];
+    
+    // Handle base64 string format
     const b64 = typeof md?.data === 'string' ? md.data : typeof md === 'string' ? md : null;
     if (b64) return Array.from(Buffer.from(b64, 'base64').values());
+    
+    // Handle nested object format with company IDs (e.g., {004c: {bytes: [...], data: "..."}})
+    if (typeof md === 'object' && md !== null) {
+      // Look for Apple's company ID (004c) first - most common for iBeacons
+      if (md['004c']) {
+        const appleData = md['004c'];
+        if (Array.isArray(appleData.bytes)) return appleData.bytes as number[];
+        if (typeof appleData.data === 'string') {
+          return Array.from(Buffer.from(appleData.data, 'base64').values());
+        }
+      }
+      
+      // Try any other company ID
+      for (const companyId of Object.keys(md)) {
+        const companyData = md[companyId];
+        if (companyData && typeof companyData === 'object') {
+          if (Array.isArray(companyData.bytes)) return companyData.bytes as number[];
+          if (typeof companyData.data === 'string') {
+            return Array.from(Buffer.from(companyData.data, 'base64').values());
+          }
+        }
+      }
+    }
+    
+    console.log('[mdToBytes] Unknown format:', JSON.stringify(md));
+    return null;
   } catch (e) {
     err('mdToBytes error:', e);
   }
@@ -30,7 +60,7 @@ function mdToBytes(md: any): number[] | null {
 
 // Parse iBeacon from manufacturer bytes: 0x02 0x15 [UUID16][major2][minor2][tx1]
 function parseIBeaconBytes(bytes: number[]) {
-  if (!bytes || bytes.length < 25) return null;
+  if (!bytes || bytes.length < 23) return null; // Reduced from 25 to 23
 
   // Find the header
   let idx = -1;
@@ -52,7 +82,7 @@ function parseIBeaconBytes(bytes: number[]) {
 
   const major = (bytes[start + 16] << 8) | bytes[start + 17];
   const minor = (bytes[start + 18] << 8) | bytes[start + 19];
-  let mp = bytes[start + 20];
+  let mp = start + 20 < bytes.length ? bytes[start + 20] : -59; // Handle missing measured power
   if (mp > 127) mp -= 256;
 
   return { uuid, major, minor, measuredPower: mp };
@@ -667,10 +697,19 @@ export class NativeBeaconScanner {
       log('Loaded whitelist:', Array.from(this.allowedKeys));
     } else {
       log('No whitelist provided - using default Minew beacon config for minors 1, 2, 3');
+      // Expected values
       const minors = [1, 2, 3];
       for (const m of minors) {
         this.allowedMM.add(`1|${m}`);
       }
+      
+      // Also add the actual values we're seeing in the logs (from iBeacon data)
+      // From the debug logs: C2:03:03:00:41:67 has [0,1,0,3] which is Major=1, Minor=3
+      // From the debug logs: C2:03:03:00:41:6B has [0,1,0,1] which is Major=1, Minor=1
+      this.allowedMM.add(`1|1`);  // Explicitly add what we expect to see
+      this.allowedMM.add(`1|2`);
+      this.allowedMM.add(`1|3`);
+      
       log('Default MM whitelist:', Array.from(this.allowedMM));
     }
 
