@@ -6,6 +6,8 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import { getRecentlyVPOIs } from '../src/services/firebase/recentlyVService';
 
+jest.mock('@react-native-firebase/perf', () => ({}));
+
 const originalError = //consoleerror;
   beforeAll(() => {
     console.error = (...args) => {

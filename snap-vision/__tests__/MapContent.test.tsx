@@ -3,6 +3,46 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import MapContent from '../src/components/organisms/MapContent';
 
+// Mock notifee
+jest.mock('@notifee/react-native', () => ({
+  createChannel: jest.fn(() => Promise.resolve()),
+  displayNotification: jest.fn(() => Promise.resolve()),
+  AndroidImportance: {
+    HIGH: 4,
+    DEFAULT: 3,
+    LOW: 2,
+    MIN: 1,
+    NONE: 0,
+  },
+}));
+
+// Mock useTheme
+jest.mock('../src/theme/ThemeContext', () => ({
+  useTheme: () => ({
+    colors: { background: '#fff', primary: '#000', card: '#eee', text: '#111' },
+    isDark: false,
+  }),
+}));
+
+// Mock DestinationReachedPopup
+jest.mock('../src/components/molecules/DestinationReachedPopup', () => {
+  const React = require('react');
+  const { Text, TouchableOpacity } = require('react-native');
+  return (props) => {
+    if (!props.visible) return null;
+    return (
+      <>
+        <Text>Destination Reached</Text>
+        <TouchableOpacity onPress={props.onConfirm}>
+          <Text>Confirm</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={props.onCancel}>
+          <Text>Cancel</Text>
+        </TouchableOpacity>
+      </>
+    );
+  };
+});
 // Mock all child components used in MapContent
 jest.mock('../src/components/organisms/MapWebView', () => {
   const React = require('react');
@@ -77,6 +117,8 @@ interface StandardPopupProps {
   onConfirm: () => void;
   onCancel?: () => void;
   showCancel?: boolean;
+  confirmText?: string;
+  cancelText?: string;
 }
 
 jest.mock('../src/components/atoms/StandardPopup', () => (props: StandardPopupProps) => {
@@ -88,11 +130,11 @@ jest.mock('../src/components/atoms/StandardPopup', () => (props: StandardPopupPr
       {props.title && <Text>{props.title}</Text>}
       {props.message && <Text>{props.message}</Text>}
       <TouchableOpacity onPress={props.onConfirm}>
-        <Text>Confirm</Text>
+        <Text>{props.confirmText || 'Confirm'}</Text>
       </TouchableOpacity>
       {props.showCancel && (
         <TouchableOpacity onPress={props.onCancel}>
-          <Text>Cancel</Text>
+          <Text>{props.cancelText || 'Cancel'}</Text>
         </TouchableOpacity>
       )}
     </>
@@ -235,7 +277,7 @@ jest.mock('../src/components/organisms/DirectionsModal', () => (props: Direction
 interface CrowdReportModalProps {
   visible: boolean;
   onChangeDensity: (density: string) => void;
-  onChangePOI: (poi: { name: string }) => void;
+  onSelectPOI: (poi: { name: string }) => void;
   onSubmit: () => void;
   onCancel: () => void;
 }
@@ -250,7 +292,7 @@ jest.mock('../src/components/molecules/CrowdReportModal', () => (props: CrowdRep
       <TouchableOpacity onPress={() => props.onChangeDensity('high')}>
         <Text>ChangeDensity</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => props.onChangePOI({ name: 'test poi' })}>
+      <TouchableOpacity onPress={() => props.onSelectPOI({ name: 'test poi' })}>
         <Text>ChangePOI</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => props.onSubmit()}>
@@ -264,8 +306,8 @@ jest.mock('../src/components/molecules/CrowdReportModal', () => (props: CrowdRep
 });
 interface IndoorPickerModalProps {
   visible: boolean;
-  onSelectStartRoom: (room: { name: string }) => void;
-  onSelectIndoorRoom: (room: { name: string }) => void;
+  onSetSelectedStartRoom: (room: { name: string }) => void;
+  onSetSelectedIndoorRoom: (room: { name: string }) => void;
   onCancel: () => void;
   onStart: () => void;
 }
@@ -279,10 +321,10 @@ jest.mock(
     return (
       <>
         <Text>IndoorPickerModal</Text>
-        <TouchableOpacity onPress={() => props.onSelectStartRoom({ name: 'start room' })}>
+        <TouchableOpacity onPress={() => props.onSetSelectedStartRoom({ name: 'start room' })}>
           <Text>SelectStartRoom</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => props.onSelectIndoorRoom({ name: 'indoor room' })}>
+        <TouchableOpacity onPress={() => props.onSetSelectedIndoorRoom({ name: 'indoor room' })}>
           <Text>SelectIndoorRoom</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => props.onCancel()}>
@@ -423,6 +465,11 @@ const baseProps = {
   onSetShowLocationRefreshPopup: jest.fn(),
   onHandleDestinationReachedConfirm: jest.fn(),
   onRefreshMap: jest.fn(),
+  onSelectCrowdReportPOI: jest.fn(),
+  onOpenBluetoothNavigation: jest.fn(),
+  autoNavigationPopup: { visible: false, entry: null, building: null },
+  onAutoNavigationConfirm: jest.fn(),
+  onAutoNavigationDismiss: jest.fn(),
 };
 
 describe('MapContent', () => {

@@ -1,6 +1,17 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
+import { View } from 'react-native';
 import ARNavigationOverlay from '../../src/components/organisms/ARNavigationOverlay';
+
+jest.mock('@shopify/react-native-skia', () => ({
+  Canvas: ({ children }: any) => <View testID="mock-canvas">{children}</View>,
+  Path: () => null,
+  Paint: () => ({}),
+  Skia: {
+    Point: () => ({}),
+    Rect: () => ({}),
+  },
+}));
 
 // Enhanced mocking for react-native-vision-camera
 jest.mock('react-native-vision-camera', () => ({
