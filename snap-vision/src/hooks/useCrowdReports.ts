@@ -52,7 +52,7 @@ export const useCrowdReports = (
 ): UseCrowdReportsReturn => {
   // Badge context
   const { unlock } = useBadges();
-  
+
   // State
   const [showCrowdPopup, setShowCrowdPopup] = useState(false);
   const [selectedDensity, setSelectedDensity] = useState('moderate');

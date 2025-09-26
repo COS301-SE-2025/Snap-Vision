@@ -1,5 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity, Modal, FlatList } from 'react-native';
+import {
+  View,
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  Modal,
+  FlatList,
+} from 'react-native';
 // import FloorSelector from '../components/molecules/FloorSelector';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -79,7 +87,7 @@ export default function IndoorSchematicNavScreen() {
   const [currentPos, setCurrentPos] = useState<{ x: number; y: number } | null>(userPos ?? null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
-  
+
   // Check if floorplans exist immediately when screen loads
   useEffect(() => {
     const checkFloorplansExist = async () => {
@@ -93,7 +101,7 @@ export default function IndoorSchematicNavScreen() {
           .collection('floorplans')
           .limit(1)
           .get();
-        
+
         if (floorplansSnap.empty) {
           // No floorplans exist, navigate to unavailable screen
           navigation.replace('IndoorNavigationUnavailable', {
@@ -111,7 +119,7 @@ export default function IndoorSchematicNavScreen() {
         });
       }
     };
-    
+
     checkFloorplansExist();
   }, [buildingId, buildingName, locationId, navigation]);
 
@@ -144,7 +152,7 @@ export default function IndoorSchematicNavScreen() {
     TTS.setDefaultLanguage('en-US');
     TTS.setDefaultRate(0.5);
     TTS.setDefaultPitch(1.0);
-    
+
     return () => {
       // Just stop TTS on cleanup - avoid removeEventListener issues
       TTS.stop();
@@ -592,15 +600,9 @@ export default function IndoorSchematicNavScreen() {
             accessible: isAccessibilityModeEnabled,
           },
         )
-      : NavUtils.calculateRoute(
-          startId, 
-          endId, 
-          allRooms as any, 
-          allPaths as any,
-          { 
-            accessible: isAccessibilityModeEnabled 
-          }
-        );
+      : NavUtils.calculateRoute(startId, endId, allRooms as any, allPaths as any, {
+          accessible: isAccessibilityModeEnabled,
+        });
 
     if (!routeSteps || !routeSteps.length) {
       setPopupTitle('No route');
@@ -651,7 +653,7 @@ export default function IndoorSchematicNavScreen() {
       const destinationName = destinationRoom?.name || 'Your Destination';
       setReachedDestination(destinationName);
       setShowDestinationReachedPopup(true);
-      
+
       // TTS: Announce arrival
       if (isTtsEnabled) {
         TTS.stop();
@@ -659,7 +661,7 @@ export default function IndoorSchematicNavScreen() {
           TTS.speak(`You have arrived at ${destinationName}`);
         }, 250);
       }
-      
+
       resetRoute();
       return;
     }
@@ -715,7 +717,10 @@ export default function IndoorSchematicNavScreen() {
       {/* Top bar: custom floor picker */}
       <View style={styles.topBar}>
         <TouchableOpacity
-          style={[styles.floorDropdown, { backgroundColor: colors.card, borderColor: colors.border }]}
+          style={[
+            styles.floorDropdown,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
           onPress={() => setFloorDropdownVisible(true)}
         >
           <Text style={[styles.floorDropdownText, { color: colors.text }]}>
@@ -737,7 +742,12 @@ export default function IndoorSchematicNavScreen() {
           activeOpacity={1}
           onPress={() => setFloorDropdownVisible(false)}
         >
-          <View style={[styles.dropdownContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.dropdownContainer,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
             <Text style={[styles.dropdownTitle, { color: colors.text }]}>Select Floor</Text>
             <FlatList
               data={floors}
@@ -746,16 +756,14 @@ export default function IndoorSchematicNavScreen() {
                 <TouchableOpacity
                   style={[
                     styles.dropdownItem,
-                    selectedFloorId === item && { backgroundColor: colors.primary + '20' }
+                    selectedFloorId === item && { backgroundColor: colors.primary + '20' },
                   ]}
                   onPress={() => {
                     setSelectedFloorId(item);
                     setFloorDropdownVisible(false);
                   }}
                 >
-                  <Text style={[styles.dropdownItemText, { color: colors.text }]}>
-                    {item}
-                  </Text>
+                  <Text style={[styles.dropdownItemText, { color: colors.text }]}>{item}</Text>
                   {selectedFloorId === item && (
                     <Icon name="checkmark" size={20} color={colors.primary} />
                   )}
@@ -879,17 +887,17 @@ export default function IndoorSchematicNavScreen() {
             }
           }}
           style={[
-            styles.fabTTS, 
-            { 
-              backgroundColor: isTtsEnabled ? colors.primary : colors.card, 
-              borderColor: colors.border 
-            }
+            styles.fabTTS,
+            {
+              backgroundColor: isTtsEnabled ? colors.primary : colors.card,
+              borderColor: colors.border,
+            },
           ]}
         >
-          <Icon 
-            name={isTtsEnabled ? "volume-high" : "volume-mute"} 
-            size={20} 
-            color={isTtsEnabled ? "#FFFFFF" : colors.text} 
+          <Icon
+            name={isTtsEnabled ? 'volume-high' : 'volume-mute'}
+            size={20}
+            color={isTtsEnabled ? '#FFFFFF' : colors.text}
           />
         </TouchableOpacity>
       )}

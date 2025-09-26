@@ -180,10 +180,7 @@ export const usePathManagement = ({
   const deletePathById = useCallback(
     async (pathId: string, webViewRef: any) => {
       try {
-        await firestore()
-          .collection(`locations/${locationId}/pathPOIs`)
-          .doc(pathId)
-          .delete();
+        await firestore().collection(`locations/${locationId}/pathPOIs`).doc(pathId).delete();
         setPathMarkers(pathMarkers.filter((p) => p.id !== pathId));
         // Clear selection if we deleted the selected path
         if (selectedPathId === pathId) {

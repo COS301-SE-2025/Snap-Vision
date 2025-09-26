@@ -4,6 +4,7 @@ import { View, Text, Switch, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useBadges } from '../../context/BadgeContext';
+import { requestNotificationPermission } from '../../services/NotificationService';
 export default function NotificationSettings() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
@@ -18,9 +19,10 @@ export default function NotificationSettings() {
     }
   }, [pushEnabled, unlock]);
 
-  const togglePushNotifications = (value: boolean) => {
+  const togglePushNotifications = async (value: boolean) => {
     setPushEnabled(value);
     if (value) {
+      await requestNotificationPermission();
       unlock('enabled-notifications').catch(() => {});
     }
   };
@@ -30,7 +32,8 @@ export default function NotificationSettings() {
       <View style={[styles.row, { borderBottomColor: colors.border || colors.border }]}>
         <Text style={[styles.label, { color: colors.text }]}>Push Notifications</Text>
         <Switch
-          value={true}
+          value={pushEnabled}
+          onValueChange={togglePushNotifications}
           trackColor={{ false: '#767577', true: colors.primary }}
           thumbColor={isDark ? '#f4f3f4' : '#ffffff'}
           ios_backgroundColor="#3e3e3e"

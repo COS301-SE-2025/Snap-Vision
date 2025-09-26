@@ -32,10 +32,10 @@ const FloorplanFooter: React.FC<FloorplanFooterProps> = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Enhance paths with room names for better display
-  const enhancedPaths = paths.map(path => ({
+  const enhancedPaths = paths.map((path) => ({
     ...path,
-    startRoomName: roomMarkers.find(room => room.id === path.startRoomId)?.name,
-    endRoomName: roomMarkers.find(room => room.id === path.endRoomId)?.name,
+    startRoomName: roomMarkers.find((room) => room.id === path.startRoomId)?.name,
+    endRoomName: roomMarkers.find((room) => room.id === path.endRoomId)?.name,
   }));
 
   return (
@@ -43,9 +43,11 @@ const FloorplanFooter: React.FC<FloorplanFooterProps> = ({
       <View style={[styles.footer, { borderTopColor: colors.border }]}>
         <Text style={[styles.footerText, { color: colors.text }]}>
           {roomCount} rooms • {pathCount} paths
-          {selectedPathId && <Text style={{ color: '#FF9800', marginLeft: 12 }}> Selected Path</Text>}
+          {selectedPathId && (
+            <Text style={{ color: '#FF9800', marginLeft: 12 }}> Selected Path</Text>
+          )}
         </Text>
-        
+
         <View style={styles.buttonContainer}>
           {pathCount > 0 && (
             <TouchableOpacity

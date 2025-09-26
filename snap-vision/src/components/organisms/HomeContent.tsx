@@ -33,7 +33,7 @@ type NavigationProp = CompositeNavigationProp<
 export default function HomeContent() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-const navigation = useNavigation<NavigationProp>();
+  const navigation = useNavigation<NavigationProp>();
   const [recentlyVisited, setRecentlyVisited] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -59,18 +59,18 @@ const navigation = useNavigation<NavigationProp>();
       fetchRecentlyVisited();
     }, []),
   );
-const handleVisitPress = (visit: Visit) => {
-  const poiToPass = {
-    id: visit.poiId,
-    name: visit.name,
-    centroid: visit.centroid,
-  } as POI;
+  const handleVisitPress = (visit: Visit) => {
+    const poiToPass = {
+      id: visit.poiId,
+      name: visit.name,
+      centroid: visit.centroid,
+    } as POI;
 
-  navigation.navigate('Map', {
-    screen: 'MapMain',
-    params: { selectedPOI: poiToPass },
-  });
-};
+    navigation.navigate('Map', {
+      screen: 'MapMain',
+      params: { selectedPOI: poiToPass },
+    });
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

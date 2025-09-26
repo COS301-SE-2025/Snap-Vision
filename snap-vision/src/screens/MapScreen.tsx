@@ -29,7 +29,7 @@ import { requestCameraPermission } from '../utils/cameraPermissions';
 type MapScreenParams = {
   lat?: string;
   lng?: string;
-  poiId?: string; 
+  poiId?: string;
   selectedPOI?: POI;
 };
 
@@ -43,7 +43,7 @@ const MapScreen = () => {
   // navigation
   const route = useRoute();
   const navigation = useNavigation<any>();
- const params = route.params as MapScreenParams & { selectedPOI?: POI };
+  const params = route.params as MapScreenParams & { selectedPOI?: POI };
 
   // refs
   const webViewRef = useRef<WebViewType>(null);
@@ -553,30 +553,24 @@ const MapScreen = () => {
     }
   }, [state.purchases, isMapReady]);
 
-useEffect(() => {
-  if (params?.selectedPOI && isMapReady && currentLocation) {
-    if (!selectedFeature || selectedFeature.id !== params.selectedPOI.id) {
-      const selectedPOI = params.selectedPOI;
+  useEffect(() => {
+    if (params?.selectedPOI && isMapReady && currentLocation) {
+      if (!selectedFeature || selectedFeature.id !== params.selectedPOI.id) {
+        const selectedPOI = params.selectedPOI;
 
-      selectPOI(selectedPOI);
-      setHookSelectedPOI(selectedPOI);
-      setSelectedFeature(selectedPOI);
-      setDestination(selectedPOI.name);
+        selectPOI(selectedPOI);
+        setHookSelectedPOI(selectedPOI);
+        setSelectedFeature(selectedPOI);
+        setDestination(selectedPOI.name);
 
-      if (selectedPOI.centroid) {
-        setDestinationCoords([
-          selectedPOI.centroid.longitude,
-          selectedPOI.centroid.latitude,
-        ]);
-        fetchRoute([
-          selectedPOI.centroid.longitude,
-          selectedPOI.centroid.latitude,
-        ]);
-        setShowDirectionsSheet(true);
+        if (selectedPOI.centroid) {
+          setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
+          fetchRoute([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
+          setShowDirectionsSheet(true);
+        }
       }
     }
-  }
-}, [params?.selectedPOI, isMapReady, currentLocation]);
+  }, [params?.selectedPOI, isMapReady, currentLocation]);
   return (
     <MapContent
       //theme
