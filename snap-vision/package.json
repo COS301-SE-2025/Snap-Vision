@@ -41,7 +41,7 @@
     "from": "^0.1.7",
     "notifee": "^0.0.1",
     "query-string": "^9.2.1",
-    "react": "^19.0.0",
+    "react": "19.0.0",
     "react-native": "0.79.2",
     "react-native-ble-manager": "^12.2.0",
     "react-native-ble-plx": "^3.5.0",
