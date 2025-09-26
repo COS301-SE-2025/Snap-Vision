@@ -1,4 +1,3 @@
-//Snap-Vision\snap-vision\src\components\molecules\NotificationSettings.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, Switch, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
@@ -60,7 +59,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   switch: {
-    // Add a subtle shadow to the switch
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
