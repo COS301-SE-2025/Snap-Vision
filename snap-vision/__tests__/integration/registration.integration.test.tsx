@@ -24,28 +24,7 @@ jest.mock('@react-native-firebase/firestore', () => () => ({
   }),
 }));
 
-// Mock StandardPopup component
-const mockStandardPopup = jest.fn();
-jest.mock('../../src/components/atoms/StandardPopup', () => {
-  return jest.fn(({ visible, title, message, onClose, showCloseButton }) => {
-    const { View, Text, TouchableOpacity } = require('react-native');
 
-    // Call the mock function to track calls
-    mockStandardPopup({ visible, title, message, onClose, showCloseButton });
-
-    // Return a proper React component
-    if (!visible) return null;
-    return (
-      <View testID="standard-popup">
-        <Text testID="popup-title">{title}</Text>
-        <Text testID="popup-message">{message}</Text>
-        <TouchableOpacity onPress={onClose} testID="popup-close">
-          <Text>Close</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  });
-});
 
 // Mock Navigation
 const mockNavigate = jest.fn();
@@ -169,7 +148,6 @@ describe('Registration Integration Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockStandardPopup.mockClear();
     mockCreateUserWithEmailAndPassword.mockReset();
     mockSet.mockReset();
     mockUnlock.mockReset();
@@ -191,16 +169,12 @@ describe('Registration Integration Tests', () => {
   });
 
   it('validates form inputs before submission', async () => {
-    const { getByTestId, getAllByTestId } = render(<RegisterForm />);
+    const { getByTestId, getAllByTestId, getByText } = render(<RegisterForm />);
     fireEvent.press(getByTestId('register-button'));
     await waitFor(() => {
-      expect(mockStandardPopup).toHaveBeenCalledWith({
-        visible: true,
-        title: 'Registration Error',
-        message: 'Please fill in all fields',
-        onClose: expect.any(Function),
-        showCloseButton: true,
-      });
+      expect(getByText('Username is required.')).toBeTruthy();
+      expect(getByText('Email is required.')).toBeTruthy();
+      expect(getByText('Password must be at least 8 characters, include a capital letter, number, and special character.')).toBeTruthy();
     });
 
     const inputs = getAllByTestId('input');
@@ -210,13 +184,7 @@ describe('Registration Integration Tests', () => {
     fireEvent.changeText(inputs[3], 'Password1!');
     fireEvent.press(getByTestId('register-button'));
     await waitFor(() => {
-      expect(mockStandardPopup).toHaveBeenCalledWith({
-        visible: true,
-        title: 'Registration Error',
-        message: 'Please enter a valid email address',
-        onClose: expect.any(Function),
-        showCloseButton: true,
-      });
+      expect(getByText('Invalid email format.')).toBeTruthy();
     });
 
     fireEvent.changeText(inputs[1], 'test@example.com');
@@ -224,33 +192,20 @@ describe('Registration Integration Tests', () => {
     fireEvent.changeText(inputs[3], 'short');
     fireEvent.press(getByTestId('register-button'));
     await waitFor(() => {
-      expect(mockStandardPopup).toHaveBeenCalledWith({
-        visible: true,
-        title: 'Registration Error',
-        message:
-          'Password must be at least 8 characters, include a capital letter, number, and special character.',
-        onClose: expect.any(Function),
-        showCloseButton: true,
-      });
+      expect(getByText('Password must be at least 8 characters, include a capital letter, number, and special character.')).toBeTruthy();
     });
 
     fireEvent.changeText(inputs[2], 'Password1!');
     fireEvent.changeText(inputs[3], 'Password2!');
     fireEvent.press(getByTestId('register-button'));
     await waitFor(() => {
-      expect(mockStandardPopup).toHaveBeenCalledWith({
-        visible: true,
-        title: 'Registration Error',
-        message: 'Passwords do not match',
-        onClose: expect.any(Function),
-        showCloseButton: true,
-      });
+      expect(getByText('Passwords do not match.')).toBeTruthy();
     });
   });
 
   it('shows error if email already in use', async () => {
     mockCreateUserWithEmailAndPassword.mockRejectedValueOnce({ code: 'auth/email-already-in-use' });
-    const { getByTestId, getAllByTestId } = render(<RegisterForm />);
+    const { getByTestId, getAllByTestId, getByText } = render(<RegisterForm />);
     const inputs = getAllByTestId('input');
     fireEvent.changeText(inputs[0], 'testuser');
     fireEvent.changeText(inputs[1], 'test@example.com');
@@ -258,19 +213,13 @@ describe('Registration Integration Tests', () => {
     fireEvent.changeText(inputs[3], 'Password1!');
     fireEvent.press(getByTestId('register-button'));
     await waitFor(() => {
-      expect(mockStandardPopup).toHaveBeenCalledWith({
-        visible: true,
-        title: 'Registration Error',
-        message: 'This email is already registered.',
-        onClose: expect.any(Function),
-        showCloseButton: true,
-      });
+      expect(getByText('This email is already registered.')).toBeTruthy();
     });
   });
 
   it('shows error for unknown registration error', async () => {
     mockCreateUserWithEmailAndPassword.mockRejectedValueOnce({ code: 'auth/unknown-error' });
-    const { getByTestId, getAllByTestId } = render(<RegisterForm />);
+    const { getByTestId, getAllByTestId, getByText } = render(<RegisterForm />);
     const inputs = getAllByTestId('input');
     fireEvent.changeText(inputs[0], 'testuser');
     fireEvent.changeText(inputs[1], 'test@example.com');
@@ -278,13 +227,7 @@ describe('Registration Integration Tests', () => {
     fireEvent.changeText(inputs[3], 'Password1!');
     fireEvent.press(getByTestId('register-button'));
     await waitFor(() => {
-      expect(mockStandardPopup).toHaveBeenCalledWith({
-        visible: true,
-        title: 'Registration Error',
-        message: 'Registration failed.',
-        onClose: expect.any(Function),
-        showCloseButton: true,
-      });
+      expect(getByText('Registration failed.')).toBeTruthy();
     });
   });
 
@@ -311,15 +254,8 @@ describe('Registration Integration Tests', () => {
         role: 'user',
       });
       expect(mockUnlock).toHaveBeenCalledWith('first-login');
-      expect(mockStandardPopup).toHaveBeenCalledWith({
-        visible: true,
-        title: 'Registration Successful',
-        message: 'Your account has been created successfully!',
-        onClose: expect.any(Function),
-        showCloseButton: true,
-      });
     });
-    expect(await findByText('Your account has been created successfully!')).toBeTruthy();
+    expect(await findByText('Account created!')).toBeTruthy();
   });
 
   // --- Additional tests for more coverage ---

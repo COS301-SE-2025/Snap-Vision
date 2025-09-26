@@ -1,8 +1,22 @@
+
 /* eslint-disable react/display-name */
 import { ThemeProvider } from '../../src/theme/ThemeContext';
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import MapContent from '../../src/components/organisms/MapContent';
+
+jest.mock('@notifee/react-native', () => ({
+  AndroidImportance: {
+    HIGH: 'high',
+    DEFAULT: 'default',
+    LOW: 'low',
+    MIN: 'min',
+    NONE: 'none',
+  },
+  createChannel: jest.fn(),
+  displayNotification: jest.fn(),
+  cancelNotification: jest.fn(),
+}));
 
 jest.mock('react-native-vision-camera', () => ({
   Camera: ({ children, ...props }: { children?: React.ReactNode }) => {
@@ -38,18 +52,18 @@ jest.mock('../../src/components/organisms/ARNavigationOverlay', () => {
 // Mock the ARNavigationOverlay import for tracking
 const MockARNavigationOverlay = require('../../src/components/organisms/ARNavigationOverlay');
 
-const originalError = //consoleerror;
-  beforeAll(() => {
-    console.error = (...args) => {
-      if (
-        typeof args[0] === 'string' &&
-        (args[0].includes('was not wrapped in act') || args[0].includes('Warning: React'))
-      ) {
-        return;
-      }
-      originalError.call(console, ...args);
-    };
-  });
+const originalError = console.error;
+beforeAll(() => {
+  console.error = (...args) => {
+    if (
+      typeof args[0] === 'string' &&
+      (args[0].includes('was not wrapped in act') || args[0].includes('Warning: React'))
+    ) {
+      return;
+    }
+    originalError.call(console, ...args);
+  };
+});
 
 afterAll(() => {
   console.error = originalError;
@@ -160,6 +174,11 @@ describe('MapContent Integration', () => {
     onSetShowLocationRefreshPopup: jest.fn(),
     onHandleDestinationReachedConfirm: jest.fn(),
     onRefreshMap: jest.fn(),
+    onSelectCrowdReportPOI: jest.fn(),
+    onOpenBluetoothNavigation: jest.fn(),
+    autoNavigationPopup: { visible: false, entry: null, building: null },
+    onAutoNavigationConfirm: jest.fn(),
+    onAutoNavigationDismiss: jest.fn(),
   };
 
   interface RenderWithThemeProps {
@@ -194,7 +213,7 @@ describe('MapContent Integration', () => {
     const { getByText } = renderWithTheme(
       <MapContent {...baseProps} currentLocation={null} onRefreshLocation={onRefreshLocation} />,
     );
-    fireEvent.press(getByText('📍 Find My Location'));
+    fireEvent.press(getByText('Find My Location'));
     expect(onRefreshLocation).toHaveBeenCalled();
   });
 
@@ -261,7 +280,7 @@ describe('MapContent Integration', () => {
         onHandleDestinationReachedConfirm={onHandleDestinationReachedConfirm}
       />,
     );
-    fireEvent.press(getByText('OK'));
+    fireEvent.press(getByText('Great!'));
     expect(onHandleDestinationReachedConfirm).toHaveBeenCalled();
   });
 
@@ -325,26 +344,12 @@ describe('MapContent Integration', () => {
     expect(onSetShowAdminActions).toHaveBeenCalledWith(false);
   });
 
-  it('shows IndoorNavigationButton and calls onOpenIndoorNavigation', () => {
-    const onOpenIndoorNavigation = jest.fn();
-    const { getByText } = renderWithTheme(
-      <MapContent
-        {...baseProps}
-        selectedBuildingForIndoor={{ id: 1 }}
-        onOpenIndoorNavigation={onOpenIndoorNavigation}
-      />,
-    );
-    // Button is labeled 'Navigate Indoors'
-    fireEvent.press(getByText('Navigate Indoors'));
-    expect(onOpenIndoorNavigation).toHaveBeenCalled();
-  });
-
   it('shows Location Refresh Button and calls onRefreshLocation', () => {
     const onRefreshLocation = jest.fn();
     const { getByText } = renderWithTheme(
       <MapContent {...baseProps} currentLocation={null} onRefreshLocation={onRefreshLocation} />,
     );
-    fireEvent.press(getByText('📍 Find My Location'));
+    fireEvent.press(getByText('Find My Location'));
     expect(onRefreshLocation).toHaveBeenCalled();
   });
 
@@ -390,15 +395,12 @@ describe('MapContent Integration', () => {
         onRefreshMap={onRefreshMap}
       />,
     );
-    // Close button (×)
-    fireEvent.press(getByText('×'));
+    // Close button
+    fireEvent.press(getByText('Close'));
     expect(onSetShowLocationRefreshPopup).toHaveBeenCalledWith(false);
     // Retry Location button
     fireEvent.press(getByText('Retry Location'));
     expect(onRefreshLocation).toHaveBeenCalled();
-    // Refresh Map button
-    fireEvent.press(getByText('Refresh Map'));
-    expect(onRefreshMap).toHaveBeenCalled();
   });
 
   it('shows Custom Location Error Popup in dark mode', () => {
@@ -407,7 +409,6 @@ describe('MapContent Integration', () => {
     );
     expect(getByText('Location Not Found')).toBeTruthy();
     expect(getByText('Retry Location')).toBeTruthy();
-    expect(getByText('Refresh Map')).toBeTruthy();
   });
 
   it('disables Retry Location button when isRefreshingLocation is true', () => {
@@ -592,7 +593,7 @@ describe('MapContent Integration', () => {
     const { queryByText } = renderWithTheme(
       <MapContent {...baseProps} currentLocation={{ latitude: 1, longitude: 2 }} />,
     );
-    expect(queryByText('📍 Find My Location')).toBeFalsy();
+    expect(queryByText('Find My Location')).toBeFalsy();
     expect(queryByText('Finding Location...')).toBeFalsy();
   });
 

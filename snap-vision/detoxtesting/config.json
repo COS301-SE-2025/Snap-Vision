@@ -1,5 +1,0 @@
-{
-  "testEnvironment": "detox/runners/jest/testEnvironment.js",
-  "setupFilesAfterEnv": ["./init.js"],
-  "reporters": []
-}

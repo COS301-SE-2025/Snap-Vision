@@ -27,8 +27,9 @@ describe('AdminContent', () => {
     colors: mockColors,
     onLoadFloorplans: jest.fn(),
     onEditFloorplans: jest.fn(),
-    onSettings: jest.fn(),
     onManageUsers: jest.fn(),
+    onIndoorPositioning: jest.fn(),
+    onManageQRCodes: jest.fn(),
   };
 
   beforeEach(() => {
@@ -104,12 +105,11 @@ describe('AdminContent', () => {
 
     const adminText = getByText('ADMIN');
     expect(adminText.props.style).toMatchObject({
-      fontSize: 56,
+      fontSize: 72,
       fontFamily: 'ChicleRegular',
       color: mockColors.primary,
       textAlign: 'center',
-      marginBottom: 40,
-      transform: [{ rotate: '-3deg' }],
+      marginBottom: 3,
     });
   });
 
@@ -118,12 +118,11 @@ describe('AdminContent', () => {
 
     const dashboardText = getByText('DASHBOARD');
     expect(dashboardText.props.style).toMatchObject({
-      fontSize: 52,
+      fontSize: 72,
       fontFamily: 'ChicleRegular',
       color: mockColors.primary,
       textAlign: 'center',
       marginBottom: 40,
-      transform: [{ rotate: '-3deg' }],
     });
   });
 

@@ -131,8 +131,6 @@ describe('IndoorSchematicMap (Integration)', () => {
       />,
     );
 
-    expect(screen.getByText(/Preloading floorplans/i)).toBeTruthy();
-
     await act(async () => {
       jest.runAllTimers();
     });

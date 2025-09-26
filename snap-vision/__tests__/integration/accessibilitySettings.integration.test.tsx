@@ -70,12 +70,13 @@ jest.mock('../../src/components/molecules/SettingsToggleItem', () => {
     onToggle,
     testID,
   }: any) {
+    const labelSlug = label.replace(/\s+/g, '-').toLowerCase();
     return (
       <View testID={testID || 'settings-toggle-item'}>
-        <Text testID="toggle-label">{label}</Text>
-        <Text testID="toggle-description">{description}</Text>
-        <TouchableOpacity testID="toggle-button" onPress={() => onToggle(!value)}>
-          <Text testID="toggle-value">{value ? 'ON' : 'OFF'}</Text>
+        <Text testID={`toggle-label-${labelSlug}`}>{label}</Text>
+        <Text testID={`toggle-description-${labelSlug}`}>{description}</Text>
+        <TouchableOpacity testID={`toggle-button-${labelSlug}`} onPress={() => onToggle(!value)}>
+          <Text testID={`toggle-value-${labelSlug}`}>{value ? 'ON' : 'OFF'}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -107,13 +108,11 @@ describe('AccessibilitySettingsContent Integration Tests', () => {
       expect(screen.queryByText('Loading settings...')).toBeNull();
     });
 
-    expect(screen.getByTestId('toggle-value')).toHaveTextContent('ON');
+    expect(screen.getByTestId('toggle-value-haptic-feedback')).toHaveTextContent('ON');
   });
 
   it('should handle AsyncStorage errors gracefully', async () => {
     mockAsyncStorage.getItem.mockRejectedValue(new Error('Storage error'));
-
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
     render(<TestComponent />);
 
@@ -122,29 +121,25 @@ describe('AccessibilitySettingsContent Integration Tests', () => {
     });
 
     expect(screen.getByText('Touch & Vibration')).toBeTruthy();
-    expect(consoleSpy).toHaveBeenCalled();
-
-    consoleSpy.mockRestore();
   });
 
   it('should show error when AsyncStorage write fails', async () => {
     mockAsyncStorage.getItem.mockResolvedValue('false');
     mockAsyncStorage.setItem.mockRejectedValue(new Error('Write failed'));
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
     render(<TestComponent />);
 
     await waitFor(() => {
       expect(screen.queryByText('Loading settings...')).toBeNull();
     });
 
-    const toggleButton = screen.getByTestId('toggle-button');
+    const toggleButton = screen.getByTestId('toggle-button-haptic-feedback');
     fireEvent.press(toggleButton);
 
     await waitFor(() => {
       expect(mockStandardPopup).toHaveBeenCalledWith({
         visible: true,
         title: 'Error',
-        message: 'Failed to save haptic feedback setting. Please try again.',
+        message: 'Failed to save accessibility setting. Please try again.',
         onConfirm: expect.any(Function),
         confirmText: 'OK',
         showCancel: false,

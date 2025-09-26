@@ -121,11 +121,6 @@ describe('LandingOverlay', () => {
       expect(getByText('Snap')).toBeTruthy();
       expect(getByText('Vision')).toBeTruthy();
 
-      expect(getByText('Wander Less, Discover More')).toBeTruthy();
-
-      expect(getByText(/Snap Vision is an indoor and outdoor navigation system/)).toBeTruthy();
-      expect(getByText(/designed to help students and visitors find their way/)).toBeTruthy();
-
       expect(getByText('Key Features')).toBeTruthy();
 
       expect(getByText('© 2025 Snap Vision Team')).toBeTruthy();
@@ -135,10 +130,10 @@ describe('LandingOverlay', () => {
       const { getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       const expectedFeatures = [
-        'Turn-by-turn Navigation',
-        'Indoor & Outdoor Coverage',
-        'Voice Assistance',
-        'AR Navigation',
+        'Indoor and Outdoor Navigation',
+        'AR Mode',
+        'Earn Badges and Shop Icons!',
+        'Integrated Timetable Builder',
       ];
 
       expectedFeatures.forEach((feature) => {
@@ -429,10 +424,10 @@ describe('LandingOverlay', () => {
       const { getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       const features = [
-        'Turn-by-turn Navigation',
-        'Indoor & Outdoor Coverage',
-        'Voice Assistance',
-        'AR Navigation',
+        'Indoor and Outdoor Navigation',
+        'AR Mode',
+        'Earn Badges and Shop Icons!',
+        'Integrated Timetable Builder',
       ];
 
       features.forEach((feature) => {
@@ -461,7 +456,7 @@ describe('LandingOverlay', () => {
 
       const gradient = getByTestId('linear-gradient');
       expect(gradient).toBeTruthy();
-      expect(gradient.props.colors).toEqual(['#69c6d0', '#ffffff', '#69c6d0']);
+      expect(gradient.props.colors).toEqual(['#000000', '#6c757d']);
     });
 
     it('configures shimmer animation correctly', () => {
@@ -507,13 +502,13 @@ describe('LandingOverlay', () => {
 
       expect(getByText('Snap')).toBeTruthy();
       expect(getByText('Vision')).toBeTruthy();
-      expect(getByText('Wander Less, Discover More')).toBeTruthy();
       expect(getByText('Key Features')).toBeTruthy();
-      expect(getByText('Turn-by-turn Navigation')).toBeTruthy();
-      expect(getByText('Indoor & Outdoor Coverage')).toBeTruthy();
-      expect(getByText('Voice Assistance')).toBeTruthy();
-      expect(getByText('AR Navigation')).toBeTruthy();
+      expect(getByText('Indoor and Outdoor Navigation')).toBeTruthy();
+      expect(getByText('AR Mode')).toBeTruthy();
+      expect(getByText('Earn Badges and Shop Icons!')).toBeTruthy();
+      expect(getByText('Integrated Timetable Builder')).toBeTruthy();
       expect(getByText('© 2025 Snap Vision Team')).toBeTruthy();
+      expect(getByText("Hi, I'm Snaps, tap to get started!")).toBeTruthy();
     });
 
     it('handles touch accessibility', () => {

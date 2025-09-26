@@ -28,20 +28,27 @@ const renderWithProviders = (component: React.ReactElement) => {
 };
 
 // Mock the hooks
-jest.mock('../../src/hooks/useBuildings', () => ({
-  useBuildings: () => ({
-    buildings: [
-      { id: 'building-1', name: 'Main Building', locationId: 'test-location-1', floors: 5 },
-      { id: 'building-2', name: 'Science Building', locationId: 'test-location-1', floors: 3 },
-    ],
+jest.mock('../../src/hooks/useUserRole', () => ({
+  useUserRole: () => ({
+    role: 'admin',
+    adminLocations: ['test-location-1', 'test-location-2'],
+    isLoading: false,
+  }),
+}));
+
+jest.mock('../../src/hooks/useAdminFloorplans', () => ({
+  useAdminFloorplans: () => ({
     locations: [
       { id: 'test-location-1', name: 'Test Campus' },
       { id: 'test-location-2', name: 'Another Campus' },
     ],
-    userRole: 'admin',
-    adminLocations: ['test-location-1', 'test-location-2'],
+    buildings: [
+      { id: 'building-1', name: 'Main Building' },
+      { id: 'building-2', name: 'Science Building' },
+    ],
     isLoading: false,
-    loadBuildings: jest.fn(),
+    fetchLocations: jest.fn(),
+    fetchBuildings: jest.fn(),
   }),
 }));
 
@@ -70,7 +77,7 @@ jest.mock('react-native-dropdown-picker', () => {
     open,
     setOpen,
     testID,
-  }) {
+  }: any) {
     return (
       <View testID={testID || 'dropdown-picker'}>
         <Text>{placeholder}</Text>
@@ -79,7 +86,7 @@ jest.mock('react-native-dropdown-picker', () => {
           <Text>Toggle</Text>
         </TouchableOpacity>
         {open &&
-          items.map((item) => (
+          items.map((item: any) => (
             <TouchableOpacity
               key={item.value}
               testID={`dropdown-item-${item.value}`}
@@ -104,43 +111,6 @@ jest.mock('react-native', () => {
     Alert: {
       alert: jest.fn(),
     },
-  };
-});
-
-jest.mock('react-native-dropdown-picker', () => {
-  const React = require('react');
-  const { View, Text, TouchableOpacity } = require('react-native');
-  return function MockDropDownPicker({
-    items,
-    value,
-    setValue,
-    placeholder,
-    open,
-    setOpen,
-    testID,
-  }) {
-    return (
-      <View testID={testID || 'dropdown-picker'}>
-        <Text>{placeholder}</Text>
-        <Text testID="selected-value">{value}</Text>
-        <TouchableOpacity onPress={() => setOpen(!open)} testID="toggle-dropdown">
-          <Text>Toggle</Text>
-        </TouchableOpacity>
-        {open &&
-          items.map((item) => (
-            <TouchableOpacity
-              key={item.value}
-              testID={`dropdown-item-${item.value}`}
-              onPress={() => {
-                setValue(() => item.value);
-                setOpen(false);
-              }}
-            >
-              <Text>{item.label}</Text>
-            </TouchableOpacity>
-          ))}
-      </View>
-    );
   };
 });
 
@@ -182,7 +152,7 @@ describe('AdminLoadFloorplans Integration Tests', () => {
 
       // Wait for building selector to appear
       await waitFor(() => {
-        expect(getByText('Select a building')).toBeTruthy();
+        expect(getByText('Step 2: Select Building')).toBeTruthy();
       });
 
       // Open the building dropdown (using your mock's toggle)
@@ -204,11 +174,11 @@ describe('AdminLoadFloorplans Integration Tests', () => {
       });
       fireEvent.press(getByText('Test Campus'));
       await waitFor(() => {
-        expect(getByText('Select a building')).toBeTruthy();
+        expect(getByText('Step 2: Select Building')).toBeTruthy();
       });
       fireEvent.press(getByTestId('toggle-dropdown'));
       fireEvent.press(getByTestId('dropdown-item-building-1'));
-      const floorInput = getByTestId('input-floor-label');
+      const floorInput = getByTestId('input-floor-number');
       fireEvent.changeText(floorInput, 'abc123');
       expect(floorInput.props.value).toBe('123');
     });
@@ -220,11 +190,11 @@ describe('AdminLoadFloorplans Integration Tests', () => {
       });
       fireEvent.press(getByText('Test Campus'));
       await waitFor(() => {
-        expect(getByText('Select a building')).toBeTruthy();
+        expect(getByText('Step 2: Select Building')).toBeTruthy();
       });
       fireEvent.press(getByTestId('toggle-dropdown'));
       fireEvent.press(getByTestId('dropdown-item-building-1'));
-      const floorInput = getByTestId('input-floor-label');
+      const floorInput = getByTestId('input-floor-number');
       fireEvent.changeText(floorInput, '5');
       expect(floorInput.props.value).toBe('5');
     });
@@ -238,11 +208,11 @@ describe('AdminLoadFloorplans Integration Tests', () => {
       });
       fireEvent.press(getByText('Test Campus'));
       await waitFor(() => {
-        expect(getByText('Select a building')).toBeTruthy();
+        expect(getByText('Step 2: Select Building')).toBeTruthy();
       });
       fireEvent.press(getByTestId('toggle-dropdown'));
       fireEvent.press(getByTestId('dropdown-item-building-1'));
-      const floorInput = getByTestId('input-floor-label');
+      const floorInput = getByTestId('input-floor-number');
       fireEvent.changeText(floorInput, '1');
       // Use the correct testID for the file selection button
       const selectButton = getByTestId('button-change-image');
@@ -258,11 +228,11 @@ describe('AdminLoadFloorplans Integration Tests', () => {
       });
       fireEvent.press(getByText('Test Campus'));
       await waitFor(() => {
-        expect(getByText('Select a building')).toBeTruthy();
+        expect(getByText('Step 2: Select Building')).toBeTruthy();
       });
       fireEvent.press(getByTestId('toggle-dropdown'));
       fireEvent.press(getByTestId('dropdown-item-building-1'));
-      const floorInput = getByTestId('input-floor-label');
+      const floorInput = getByTestId('input-floor-number');
       fireEvent.changeText(floorInput, '1');
       // Simulate file selection
       // If your mock sets fileUri automatically, this will work
