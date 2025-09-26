@@ -18,7 +18,7 @@ export default function SettingsContent({ isDark, navigation }: Props) {
     // { icon: 'star', label: 'Badges and Achievements', screen: 'Achievements' },
     { icon: 'human-wheelchair', label: 'Accessibility', screen: 'AccessibilitySettings' },
     //{ icon: 'lock', label: 'Privacy and Security', screen: 'PrivacySecurity' },
-    { icon: 'bell', label: 'Notifications', screen: 'NotificationSettings' },
+    //{ icon: 'bell', label: 'Notifications', screen: 'NotificationSettings' },
     { icon: 'cog', label: 'App Preferences', screen: 'AppPreferences' },
     { icon: 'information', label: 'Support', screen: 'Support' },
   ];
