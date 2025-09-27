@@ -71,8 +71,8 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
       const qrMapping = await getQRCodeMappingByValue(qrValue);
 
       if (!qrMapping) {
-        setError('Invalid QR code. Please try again.');
-        setErrorMessage('No mapping exists for this QR code.');
+        //setError('Invalid QR code. Please try again.');
+        setErrorMessage('No mapping exists for this QR code. Please try again.');
         setShowErrorPopup(true);
         return;
       }
