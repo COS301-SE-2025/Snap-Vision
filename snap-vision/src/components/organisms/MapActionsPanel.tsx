@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     top: -20,
     right: 0,
     width: 130,
-    height: 240, // decreased from 240 in absence of bluetooth button
+    height: 170, // decreased from 240 in absence of bluetooth button
     borderTopLeftRadius: 15,
     borderBottomLeftRadius: 15,
     elevation: 2,
