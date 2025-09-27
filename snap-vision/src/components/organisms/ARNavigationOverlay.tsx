@@ -153,7 +153,8 @@ function ARNavigationWarning({
   return (
     <View style={[
       styles.warningContainer,
-      isMinimized && styles.warningCollapsed
+      isMinimized && styles.warningCollapsed,
+      { backgroundColor: colors.warning }
     ]}>
       <TouchableOpacity 
         style={styles.warningHeader} 
@@ -161,11 +162,9 @@ function ARNavigationWarning({
         activeOpacity={0.7}
       >
         <Text style={styles.warningTitle}>
-          {isMinimized ? 'Please Note:' : 'Navigation Warning'}
+          {isMinimized ? '   ⚠' : 'Navigation Warning'}
         </Text>
-        <Text style={styles.warningToggle}>
-          {isMinimized ? '▲' : '▼'}
-        </Text>
+
       </TouchableOpacity>
       
       {!isMinimized && (
@@ -1083,8 +1082,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 70, // Same level as minimap
     left: 20, // Left side to avoid minimap overlap
-    width: 159, // Same width as minimap
-    backgroundColor: 'rgba(255, 152, 0, 0.9)', // Orange warning color
+    width: 160, // Same width as minimap when expanded
     borderRadius: 12,
     overflow: 'hidden',
     borderWidth: 2,
@@ -1097,6 +1095,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   warningCollapsed: {
+    width: 50, // Smaller width when minimized
     height: 'auto',
   },
   warningHeader: {
