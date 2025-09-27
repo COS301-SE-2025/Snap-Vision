@@ -7,6 +7,7 @@ import {
 } from '../services/badgeService';
 import { BADGES } from '../types/badges';
 import auth from '@react-native-firebase/auth';
+import perf from '@react-native-firebase/perf';
 
 type BadgeState = {
   unlocked: Set<BadgeId>;
@@ -70,6 +71,8 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
     if (!uid) return;
 
     const loadUserData = async () => {
+      const trace = await perf().newTrace('load_badge_data_perf');
+    await trace.start();
       setLoading(true);
       try {
         const snap = await getUserBadgeData(uid);
@@ -88,6 +91,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
         //consolewarn('Failed to load badge data:', e);
       } finally {
         setLoading(false);
+        await trace.stop();
       }
     };
 

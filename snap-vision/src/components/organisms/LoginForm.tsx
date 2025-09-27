@@ -12,6 +12,7 @@ import { useBadges } from '../../context/BadgeContext';
 import { useLanding } from '../../context/LandingContext';
 import Toast from 'react-native-toast-message';
 import { makeToastPayload } from '../../toastConfig';
+import perf from '@react-native-firebase/perf';
 
 export default function LoginForm() {
   const navigation = useNavigation<any>();
@@ -42,6 +43,8 @@ export default function LoginForm() {
       setErrors({ email: 'Please enter a valid email address.', password: '' });
       return;
     }
+    const trace = await perf().newTrace('login_latency');
+  await trace.start();
 
     try {
       await auth().signInWithEmailAndPassword(email, password);
@@ -80,6 +83,9 @@ export default function LoginForm() {
       const msg = errorMessages[error?.code] || 'Login failed.';
       setErrors({ email: '', password: msg });
     }
+    finally {
+    await trace.stop();
+  }
   };
 
   useEffect(() => {

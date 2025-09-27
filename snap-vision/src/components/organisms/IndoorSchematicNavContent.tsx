@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import perf from '@react-native-firebase/perf';
 import {
   View,
   ActivityIndicator,
@@ -287,6 +288,8 @@ export default function IndoorSchematicNavScreen() {
     let cancelled = false;
 
     async function fetchFloorplan() {
+      const trace = await perf().newTrace('indoor_floorplan_load_perf');
+      await trace.start();
       try {
         setFloorplanLoading(true);
         setFloorplanUrl(null);
@@ -339,6 +342,7 @@ export default function IndoorSchematicNavScreen() {
         if (!cancelled) setFloorplanUrl(null);
       } finally {
         if (!cancelled) setFloorplanLoading(false);
+        await trace.stop();
       }
     }
 
