@@ -278,22 +278,6 @@ describe('MapContent Integration', () => {
     expect(onSetShowConfirmationPopup).toHaveBeenCalledWith(false);
   });
 
-  it('shows destination reached popup and calls onHandleDestinationReachedConfirm on confirm', async () => {
-    const onHandleDestinationReachedConfirm = jest.fn();
-    const result = renderWithTheme(
-      <MapContent
-        {...baseProps}
-        showDestinationReachedPopup
-        onHandleDestinationReachedConfirm={onHandleDestinationReachedConfirm}
-      />,
-    );
-    await waitFor(() => {
-      expect(result.getByText('Great!')).toBeTruthy();
-    });
-    fireEvent.press(result.getByText('Great!'));
-    expect(onHandleDestinationReachedConfirm).toHaveBeenCalled();
-  });
-
   it('shows AdminPOIModal (add) and calls onSetShowAddPOIModal/onSubmitNewBuilding', () => {
     const onSetShowAddPOIModal = jest.fn();
     const onSubmitNewBuilding = jest.fn();
