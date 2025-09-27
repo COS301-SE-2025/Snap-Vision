@@ -137,6 +137,8 @@ describe('AchievementsForm', () => {
     isDark: false,
     theme: 'light' as const,
     toggleTheme: jest.fn(),
+    setTheme: jest.fn(),
+    isLoading: false,
   };
 
   const mockColors = {
@@ -285,11 +287,11 @@ describe('AchievementsForm', () => {
       );
 
       expect(mockUseTheme).toHaveBeenCalled();
-      expect(mockGetThemeColors).toHaveBeenCalledWith(false);
+      expect(mockGetThemeColors).toHaveBeenCalledWith('light');
     });
 
     it('applies dark theme colors correctly', () => {
-      const darkTheme = { ...mockTheme, isDark: true };
+      const darkTheme = { ...mockTheme, isDark: true, theme: 'dark' };
       const darkColors = {
         ...mockColors,
         background: '#1e1e1e',
@@ -297,7 +299,7 @@ describe('AchievementsForm', () => {
         primary: '#0A84FF',
       };
 
-      mockUseTheme.mockReturnValue(darkTheme);
+      mockUseTheme.mockReturnValue(darkTheme as any);
       mockGetThemeColors.mockReturnValue(darkColors);
 
       render(
@@ -306,7 +308,7 @@ describe('AchievementsForm', () => {
         </TestWrapper>,
       );
 
-      expect(mockGetThemeColors).toHaveBeenCalledWith(true);
+      expect(mockGetThemeColors).toHaveBeenCalledWith('dark');
     });
   });
 
@@ -442,7 +444,9 @@ describe('AchievementsForm', () => {
         isDark: false,
         theme: 'light',
         toggleTheme: jest.fn(),
-      });
+        setTheme: jest.fn(),
+        isLoading: false,
+      } as any);
 
       const { queryByText } = render(
         <TestWrapper>

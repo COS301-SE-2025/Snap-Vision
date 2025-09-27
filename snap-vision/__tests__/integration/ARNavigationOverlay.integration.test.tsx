@@ -209,7 +209,11 @@ describe('ARNavigationOverlay Component Integration', () => {
       };
 
       // This should trigger the fallback component paths
-      expect(() => render(<ARNavigationOverlay {...propsWithNullLocation} />)).not.toThrow();
+      expect(() => render(
+        <NavigationContainer>
+          <ARNavigationOverlay {...propsWithNullLocation} />
+        </NavigationContainer>
+      )).not.toThrow();
     });
 
     it('renders simple AR fallback with null destination', () => {
@@ -219,7 +223,11 @@ describe('ARNavigationOverlay Component Integration', () => {
       };
 
       // This should trigger the fallback component paths
-      expect(() => render(<ARNavigationOverlay {...propsWithNullDestination} />)).not.toThrow();
+      expect(() => render(
+        <NavigationContainer>
+          <ARNavigationOverlay {...propsWithNullDestination} />
+        </NavigationContainer>
+      )).not.toThrow();
     });
 
     it('handles fallback distance calculation and formatting', () => {

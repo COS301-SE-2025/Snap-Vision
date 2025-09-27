@@ -1,7 +1,9 @@
+
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import AccessibilitySettingsContent from '../../src/components/organisms/AccessibilitySettingsContent';
 import { AccessibilityProvider } from '../../src/context/AccessibilityContext';
+import { ThemeProvider } from '../../src/theme/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 //mock asyncStorage
@@ -42,6 +44,35 @@ jest.mock('../../src/theme', () => ({
     secondary: '#666666',
   })),
 }));
+
+jest.mock('../../src/theme/ThemeContext', () => {
+  const React = require('react');
+
+  let currentTheme = 'light';
+
+  const ThemeContext = React.createContext(null);
+
+  return {
+    ThemeProvider: ({ children }: any) => {
+      const contextValue = {
+        theme: currentTheme,
+        isDark: currentTheme === 'dark',
+        toggleTheme: jest.fn(),
+        setTheme: jest.fn(),
+        isLoading: false,
+      };
+
+      return React.createElement(ThemeContext.Provider, { value: contextValue }, children);
+    },
+    useTheme: () => ({
+      theme: currentTheme,
+      isDark: currentTheme === 'dark',
+      toggleTheme: jest.fn(),
+      setTheme: jest.fn(),
+      isLoading: false,
+    }),
+  };
+});
 
 jest.mock('../../src/components/molecules/SettingsHeader', () => {
   const React = require('react');
@@ -85,10 +116,18 @@ jest.mock('../../src/components/molecules/SettingsToggleItem', () => {
 
 const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
 
-const TestComponent = ({ isDark = false }: { isDark?: boolean }) => (
-  <AccessibilityProvider>
-    <AccessibilitySettingsContent isDark={isDark} />
-  </AccessibilityProvider>
+const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+  <ThemeProvider>
+    <AccessibilityProvider>
+      {children}
+    </AccessibilityProvider>
+  </ThemeProvider>
+);
+
+const TestComponent = () => (
+  <TestWrapper>
+    <AccessibilitySettingsContent />
+  </TestWrapper>
 );
 
 describe('AccessibilitySettingsContent Integration Tests', () => {
@@ -156,9 +195,9 @@ describe('AccessibilitySettingsContent Integration Tests', () => {
     mockAsyncStorage.getItem.mockResolvedValue('false');
 
     render(
-      <AccessibilityProvider>
-        <AccessibilitySettingsContent isDark={false} />
-      </AccessibilityProvider>,
+      <TestWrapper>
+        <AccessibilitySettingsContent />
+      </TestWrapper>,
     );
 
     await waitFor(() => {

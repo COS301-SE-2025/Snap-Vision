@@ -37,6 +37,8 @@ describe('DirectionsModal', () => {
     isDark: false,
     theme: 'light' as const,
     toggleTheme: jest.fn(),
+    setTheme: jest.fn(),
+    isLoading: false,
   };
 
   const mockColors = {
@@ -198,6 +200,8 @@ describe('DirectionsModal', () => {
         isDark: false,
         theme: 'light' as const,
         toggleTheme: jest.fn(),
+        setTheme: jest.fn(),
+        isLoading: false,
       };
 
       const lightColors = {
@@ -221,7 +225,7 @@ describe('DirectionsModal', () => {
       const { getByText } = render(<DirectionsModal {...mockProps} />);
 
       expect(mockUseTheme).toHaveBeenCalled();
-      expect(mockGetThemeColors).toHaveBeenCalledWith(false);
+      expect(mockGetThemeColors).toHaveBeenCalledWith('light');
       expect(getByText('Directions to Test Destination')).toBeTruthy();
     });
 
@@ -230,6 +234,8 @@ describe('DirectionsModal', () => {
         isDark: true,
         theme: 'dark' as const,
         toggleTheme: jest.fn(),
+        setTheme: jest.fn(),
+        isLoading: false,
       };
 
       const darkColors = {
@@ -253,7 +259,7 @@ describe('DirectionsModal', () => {
       const { getByText } = render(<DirectionsModal {...mockProps} />);
 
       expect(mockUseTheme).toHaveBeenCalled();
-      expect(mockGetThemeColors).toHaveBeenCalledWith(true);
+      expect(mockGetThemeColors).toHaveBeenCalledWith('dark');
       expect(getByText('Directions to Test Destination')).toBeTruthy();
     });
 
