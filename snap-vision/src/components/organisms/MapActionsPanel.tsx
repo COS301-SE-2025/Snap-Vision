@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   },
   adminButtonContainer: {
     position: 'absolute',
-    top: 250,
+    top: 170, // decreased from 250 in absence of bluetooth button
     right: 15,
     alignItems: 'center',
   },
