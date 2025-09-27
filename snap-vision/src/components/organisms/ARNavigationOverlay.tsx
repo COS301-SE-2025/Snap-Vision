@@ -37,7 +37,7 @@ export default function ARNavigationOverlay({
   const [deviceError, setDeviceError] = useState<string | null>(null);
   const [nextInstruction, setNextInstruction] = useState<string>('');
   const [isMiniMapCollapsed, setIsMiniMapCollapsed] = useState(false);
-  const [isWarningMinimized, setIsWarningMinimized] = useState(false);
+  const [isWarningMinimized, setIsWarningMinimized] = useState(true);
 
   useEffect(() => {
     if (!hasPermission) {
@@ -153,15 +153,18 @@ function ARNavigationWarning({
   return (
     <View style={[
       styles.warningContainer,
-      { backgroundColor: `rgba(255, 152, 0, ${isMinimized ? 0.8 : 0.9})` }
+      isMinimized && styles.warningCollapsed
     ]}>
       <TouchableOpacity 
-        style={styles.warningToggle} 
+        style={styles.warningHeader} 
         onPress={onToggleMinimize}
         activeOpacity={0.7}
       >
-        <Text style={styles.warningToggleText}>
-          {isMinimized ? '⚠' : '▼'}
+        <Text style={styles.warningTitle}>
+          {isMinimized ? '⚠' : 'Navigation Warning'}
+        </Text>
+        <Text style={styles.warningToggle}>
+          {isMinimized ? '▲' : '▼'}
         </Text>
       </TouchableOpacity>
       
@@ -1075,45 +1078,54 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  // Warning component styles
+  // Warning component styles (matching minimap styling)
   warningContainer: {
     position: 'absolute',
-    top: 80, // Below the turn-by-turn directions
-    left: 20,
-    right: 20,
-    borderRadius: 8,
-    zIndex: 3,
+    top: 70, // Same level as minimap
+    left: 20, // Left side to avoid minimap overlap
+    width: 160, // Same width as minimap
+    backgroundColor: 'rgba(255, 152, 0, 0.9)', // Orange warning color
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    zIndex: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
-    elevation: 5, // For Android shadow
+    elevation: 5,
+  },
+  warningCollapsed: {
+    height: 'auto',
+  },
+  warningHeader: {
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  warningTitle: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+    flex: 1,
   },
   warningToggle: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    borderTopRightRadius: 8,
-    borderBottomLeftRadius: 8,
-  },
-  warningToggleText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: 'bold',
   },
   warningContent: {
-    padding: 12,
-    paddingRight: 35, // Make space for toggle button
+    padding: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
   },
   warningText: {
     color: 'white',
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 10,
+    lineHeight: 14,
   },
   warningLabel: {
     fontWeight: 'bold',
