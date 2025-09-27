@@ -179,8 +179,8 @@ export const useMapNavigation = (
       return;
     }
 
-const trace = await perf().newTrace('route_fetch_latency');
-  await trace.start();
+    const trace = await perf().newTrace('route_fetch_latency');
+    await trace.start();
     setIsRouteLoading(true);
     setStatus('Calculating route...');
 
@@ -227,8 +227,6 @@ const trace = await perf().newTrace('route_fetch_latency');
 
       // Reset progress
       setRouteProgress(0);
-
-      
     } catch (error) {
       //consoleerror('Route fetch error:', error);
       setError('Failed to fetch or draw route');
@@ -301,13 +299,10 @@ const trace = await perf().newTrace('route_fetch_latency');
 
   // Destination reached function with haptic feedback
   const destinationReached = async () => {
-    
-    
     if (hasReachedDestination) {
       return;
     }
 
-    
     // Set the flag immediately to prevent re-entry
     setHasReachedDestination(true);
     setIsNavigating(false);
@@ -327,11 +322,11 @@ const trace = await perf().newTrace('route_fetch_latency');
       const userId = auth().currentUser?.uid;
       if (userId && selectedPOI) {
         const visit = {
-  userId,
-  poiId: selectedPOI.id,
-  name: selectedPOI.name,
-  location: selectedPOI.location,
-};
+          userId,
+          poiId: selectedPOI.id,
+          name: selectedPOI.name,
+          location: selectedPOI.location,
+        };
         await addRecentlyVisitedPOI(visit);
       }
     } catch (error) {
@@ -419,7 +414,6 @@ const trace = await perf().newTrace('route_fetch_latency');
   // Update the updateNavigationProgress function to check for destination arrival
   const updateNavigationProgress = useCallback(
     (latitude: number, longitude: number) => {
-      
       // Add safety checks at the beginning
       if (!lastRoute.current || lastRoute.current.length === 0 || hasReachedDestination) {
         return;
@@ -640,7 +634,7 @@ const trace = await perf().newTrace('route_fetch_latency');
       // Check destination arrival based on either:
       // 1. Progress is 100%
       // 2. Distance to destination is less than 8 meters
-      
+
       // Fix: Remove isNavigating requirement since it's not working properly but location tracking is active
       if ((newProgress >= 100 || distanceToEnd < 8) && !hasReachedDestination) {
         destinationReached();
@@ -661,7 +655,6 @@ const trace = await perf().newTrace('route_fetch_latency');
 
   // Navigation-specific tracking functions
   const startNavigationTracking = useCallback(async () => {
-    
     // Stop any existing tracking
     if (navigationWatchId.current) {
       Geolocation.clearWatch(navigationWatchId.current);

@@ -19,12 +19,12 @@ export default function BadgesSection({ unlockedIds }: { unlockedIds: BadgeId[] 
   const badges: Record<BadgeId, Badge> = state.badges;
   const badgeIds = Object.keys(badges) as BadgeId[];
 
-const renderItem = ({ item, index }: { item: BadgeId; index: number }) => (
+  const renderItem = ({ item, index }: { item: BadgeId; index: number }) => (
     <View
       style={{
         width: cardWidth,
-        marginLeft: index === 0 ? 0 : 8, 
-        marginRight: index === badgeIds.length - 1 ? 0 : 8, 
+        marginLeft: index === 0 ? 0 : 8,
+        marginRight: index === badgeIds.length - 1 ? 0 : 8,
       }}
     >
       <RewardCard
@@ -62,5 +62,5 @@ const renderItem = ({ item, index }: { item: BadgeId; index: number }) => (
 
 const styles = StyleSheet.create({
   section: { marginBottom: 24 },
-badgeContainer: { marginHorizontal: -20 },
+  badgeContainer: { marginHorizontal: -20 },
 });

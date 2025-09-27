@@ -16,7 +16,7 @@ export function useNotificationInstruction(isNavigating: boolean, currentInstruc
 
     if (isNavigating && currentInstruction) {
       appStateListener = AppState.addEventListener('change', (nextState) => {
-         if (nextState === 'background' && currentInstruction !== lastNotifiedInstruction.current) {
+        if (nextState === 'background' && currentInstruction !== lastNotifiedInstruction.current) {
           notifee.displayNotification({
             title: 'Navigation Update',
             body: currentInstruction,
@@ -27,7 +27,7 @@ export function useNotificationInstruction(isNavigating: boolean, currentInstruc
               pressAction: { id: 'default', launchActivity: 'default' },
             },
           });
-           lastNotifiedInstruction.current = currentInstruction;
+          lastNotifiedInstruction.current = currentInstruction;
         }
       });
     }
