@@ -103,7 +103,7 @@ const ShopContent: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <SettingsHeader title="Icon Shop" />
+      <SettingsHeader title="Shop" />
       <Text style={[styles.subtitle, { color: colors.text }]}>
         Customize your app with different themes and navigation icons!
       </Text>
