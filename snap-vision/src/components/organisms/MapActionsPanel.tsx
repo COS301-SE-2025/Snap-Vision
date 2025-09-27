@@ -157,18 +157,17 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     top: '30%',
-    right: 0, 
-    flexDirection: 'row-reverse', 
+    right: 0,
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     transform: [{ translateY: -25 }],
-    
   },
   drawerBackground: {
     position: 'absolute',
-    top: -20, 
+    top: -20,
     right: 0,
     width: 130,
-    height: 240, 
+    height: 240,
     borderTopLeftRadius: 15,
     borderBottomLeftRadius: 15,
     elevation: 2,
@@ -202,8 +201,8 @@ const styles = StyleSheet.create({
   },
   adminButtonContainer: {
     position: 'absolute',
-    top: 250, 
-    right: 15, 
+    top: 250,
+    right: 15,
     alignItems: 'center',
   },
 });

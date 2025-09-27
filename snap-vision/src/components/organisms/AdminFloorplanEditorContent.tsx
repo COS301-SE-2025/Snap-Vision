@@ -183,7 +183,7 @@ export default function AdminFloorplanEditorContent() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title={`Edit ${floorLabel} Floorplan`} />
-      
+
       <FloorplanEditor
         floorLabel={floorLabel}
         isPathMode={pathManagement.isPathMode}
@@ -200,7 +200,7 @@ export default function AdminFloorplanEditorContent() {
         paths={pathManagement.pathMarkers}
         roomMarkers={roomManagement.roomMarkers}
         onDeletePath={(pathId) => pathManagement.deletePathById(pathId, webViewRef)}
-        onDone={() => {}} 
+        onDone={() => {}}
         colors={colors}
         webViewRef={webViewRef}
       />

@@ -198,8 +198,6 @@ describe('AchievementsForm', () => {
     });
   });
 
-
-
   describe('Component Rendering', () => {
     it('displays progress data correctly', () => {
       const { getByText, queryByText } = render(
@@ -276,8 +274,6 @@ describe('AchievementsForm', () => {
         }
       }
     });
-
-
   });
 
   describe('Theme Integration', () => {
@@ -426,8 +422,6 @@ describe('AchievementsForm', () => {
     });
   });
 
-
-
   describe('Error Handling and Edge Cases', () => {
     it('handles missing badge context gracefully', () => {
       mockUseBadges.mockImplementation(() => {
@@ -484,7 +478,6 @@ describe('AchievementsForm', () => {
       expect(queryByText('Check-ins: 0')).toBeTruthy();
       expect(queryByTestId('badges-section')).toBeTruthy();
     });
-
   });
 
   describe('Purchases Section', () => {
@@ -509,8 +502,6 @@ describe('AchievementsForm', () => {
       expect(queryByText('Speed Boost')).toBeNull();
     });
   });
-
-
 
   describe('Action Buttons', () => {
     it('renders action buttons correctly', () => {

@@ -72,7 +72,7 @@ export const useCrowdReports = (
         return;
       }
       const trace = await perf().newTrace('crowd_report_submission_latency');
-    await trace.start();
+      await trace.start();
 
       try {
         // Authorization check
@@ -131,10 +131,9 @@ export const useCrowdReports = (
       } catch (error) {
         //consoleerror('Error saving crowd report:', error);
         setError('Failed to submit crowd report');
+      } finally {
+        await trace.stop();
       }
-      finally {
-      await trace.stop();
-    }
     },
     [selectedDensity, isMapReady, webViewRef, setStatus, setError, unlock],
   );

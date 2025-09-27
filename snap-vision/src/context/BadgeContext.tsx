@@ -72,7 +72,7 @@ export const BadgeProvider = ({ children }: { children: ReactNode }) => {
 
     const loadUserData = async () => {
       const trace = await perf().newTrace('load_badge_data_perf');
-    await trace.start();
+      await trace.start();
       setLoading(true);
       try {
         const snap = await getUserBadgeData(uid);

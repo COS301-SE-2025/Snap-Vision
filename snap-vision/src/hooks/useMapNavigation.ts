@@ -179,8 +179,8 @@ export const useMapNavigation = (
       return;
     }
 
-const trace = await perf().newTrace('route_fetch_latency');
-  await trace.start();
+    const trace = await perf().newTrace('route_fetch_latency');
+    await trace.start();
     setIsRouteLoading(true);
     setStatus('Calculating route...');
 
@@ -227,8 +227,6 @@ const trace = await perf().newTrace('route_fetch_latency');
 
       // Reset progress
       setRouteProgress(0);
-
-      
     } catch (error) {
       //consoleerror('Route fetch error:', error);
       setError('Failed to fetch or draw route');

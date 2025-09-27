@@ -1,4 +1,3 @@
-
 /* eslint-disable react/display-name */
 import { ThemeProvider } from '../../src/theme/ThemeContext';
 import React from 'react';

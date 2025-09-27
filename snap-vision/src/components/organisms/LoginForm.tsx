@@ -44,7 +44,7 @@ export default function LoginForm() {
       return;
     }
     const trace = await perf().newTrace('login_latency');
-  await trace.start();
+    await trace.start();
 
     try {
       await auth().signInWithEmailAndPassword(email, password);
@@ -82,10 +82,9 @@ export default function LoginForm() {
 
       const msg = errorMessages[error?.code] || 'Login failed.';
       setErrors({ email: '', password: msg });
+    } finally {
+      await trace.stop();
     }
-    finally {
-    await trace.stop();
-  }
   };
 
   useEffect(() => {
