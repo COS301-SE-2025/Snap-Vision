@@ -179,8 +179,8 @@ export const useMapNavigation = (
       return;
     }
 
-const trace = await perf().newTrace('route_fetch_latency');
-  await trace.start();
+    const trace = await perf().newTrace('route_fetch_latency');
+    await trace.start();
     setIsRouteLoading(true);
     setStatus('Calculating route...');
 
@@ -227,8 +227,6 @@ const trace = await perf().newTrace('route_fetch_latency');
 
       // Reset progress
       setRouteProgress(0);
-
-      
     } catch (error) {
       //consoleerror('Route fetch error:', error);
       setError('Failed to fetch or draw route');
@@ -301,7 +299,9 @@ const trace = await perf().newTrace('route_fetch_latency');
 
   // Destination reached function with haptic feedback
   const destinationReached = async () => {
-    if (!isNavigating || hasReachedDestination) return;
+    if (hasReachedDestination) {
+      return;
+    }
 
     // Set the flag immediately to prevent re-entry
     setHasReachedDestination(true);
@@ -321,12 +321,11 @@ const trace = await perf().newTrace('route_fetch_latency');
 
       const userId = auth().currentUser?.uid;
       if (userId && selectedPOI) {
-        const visit: Visit = {
+        const visit = {
           userId,
           poiId: selectedPOI.id,
           name: selectedPOI.name,
-          timestamp: firestore.Timestamp.now(),
-          centroid: selectedPOI.centroid,
+          location: selectedPOI.location,
         };
         await addRecentlyVisitedPOI(visit);
       }
@@ -509,14 +508,12 @@ const trace = await perf().newTrace('route_fetch_latency');
 
       // Check for route deviation and automatic rerouting - reduced threshold for more responsive rerouting
       if (minDist > 15 && !isRouteLoading) {
-        console.log(`🔄 Rerouting triggered - distance from route: ${minDist.toFixed(1)}m`);
         setStatus('Re-routing...');
         rerouteFromCurrentLocation();
         return; // Exit early to prevent further processing during reroute
       }
 
       // Calculate a more precise progress
-      // Consider not just the closest point, but also the percentage between points
       let progressValue;
 
       if (closestPointIndex < lastRoute.current.length - 1) {
@@ -636,8 +633,10 @@ const trace = await perf().newTrace('route_fetch_latency');
 
       // Check destination arrival based on either:
       // 1. Progress is 100%
-      // 2. Distance to destination is less than 3 meters
-      if ((newProgress >= 100 || distanceToEnd < 3) && isNavigating && !hasReachedDestination) {
+      // 2. Distance to destination is less than 8 meters
+
+      // Fix: Remove isNavigating requirement since it's not working properly but location tracking is active
+      if ((newProgress >= 100 || distanceToEnd < 8) && !hasReachedDestination) {
         destinationReached();
       }
     },
@@ -654,7 +653,7 @@ const trace = await perf().newTrace('route_fetch_latency');
     ],
   );
 
-  // Navigation-specific tracking functions (self-contained)
+  // Navigation-specific tracking functions
   const startNavigationTracking = useCallback(async () => {
     // Stop any existing tracking
     if (navigationWatchId.current) {
@@ -682,8 +681,8 @@ const trace = await perf().newTrace('route_fetch_latency');
           },
           {
             enableHighAccuracy: true,
-            distanceFilter: 2, // Update every 2 meters during navigation (more sensitive)
-            interval: 800, // Update every 0.8 seconds (faster updates)
+            distanceFilter: 2, // Update every 2 meters during navigation
+            interval: 800, // Update every 0.8 seconds
             timeout: 20000,
             maximumAge: 3000, // Use fresher GPS data
           },

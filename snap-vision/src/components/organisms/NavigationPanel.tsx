@@ -13,7 +13,7 @@ interface NavigationPanelProps {
   progress: number;
   distance: number | null;
   distanceWalked: number;
-  originalRouteDistance: number | null; 
+  originalRouteDistance: number | null;
   time: number | null;
   destination: string;
   isVoiceEnabled: boolean;

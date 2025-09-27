@@ -14,7 +14,7 @@ import AppButton from '../atoms/AppButton';
 import TimetableSection from './TimetableSection';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, CompositeNavigationProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import auth from '@react-native-firebase/auth';
 import RecentlyVisitedCarousel from '../molecules/RecentlyVisitedCarousel';
@@ -27,7 +27,7 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 type TabParamList = {
   Home: undefined;
-  Map: undefined;
+  Map: { selectedPOI?: POI };
   Timetable: undefined;
   Settings: undefined;
 };
@@ -74,13 +74,10 @@ export default function HomeContent() {
     const poiToPass = {
       id: visit.poiId,
       name: visit.name,
-      centroid: visit.centroid,
+      location: visit.location,
     } as POI;
 
-    navigation.navigate('Map', {
-      screen: 'MapMain',
-      params: { selectedPOI: poiToPass },
-    });
+    navigation.navigate('Map', { selectedPOI: poiToPass });
   };
 
   return (

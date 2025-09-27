@@ -50,8 +50,8 @@ export const useMapPOI = (
 
   // Fetch all POIs from Firestore
   const fetchPOIs = useCallback(async () => {
-  const trace = await perf().newTrace('pois_load_perf');
-    await trace.start();  
+    const trace = await perf().newTrace('pois_load_perf');
+    await trace.start();
     try {
       const locationsSnapshot = await firestore().collection('locations').get();
       const allPOIs: POI[] = [];
@@ -78,9 +78,8 @@ export const useMapPOI = (
       setPOIs(allPOIs);
     } catch (e) {
       setError('Failed to load buildings');
-    }
-    finally {
-      await trace.stop(); 
+    } finally {
+      await trace.stop();
     }
   }, [setError]);
 

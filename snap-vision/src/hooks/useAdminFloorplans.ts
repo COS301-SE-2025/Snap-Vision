@@ -36,7 +36,7 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
   const fetchBuildings = async (locationId: string) => {
     if (!locationId) return;
     const trace = await perf().newTrace('admin_load_buildings_perf');
-  await trace.start();
+    await trace.start();
 
     setIsLoading(true);
     try {
@@ -61,8 +61,8 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
 
   const fetchFloorplans = async (locationId: string, buildingId: string) => {
     if (!locationId || !buildingId) return;
-const trace = await perf().newTrace('admin_load_floorplans_perf');
-  await trace.start();
+    const trace = await perf().newTrace('admin_load_floorplans_perf');
+    await trace.start();
     setIsLoading(true);
     try {
       const snap = await firestore()

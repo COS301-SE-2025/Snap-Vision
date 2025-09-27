@@ -58,7 +58,14 @@ const MapScreen = () => {
 
   // basic state
   const [isMapReady, setIsMapReady] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [isNavigating, setIsNavigatingInternal] = useState(false);
+
+  const setIsNavigating = (value: boolean) => {
+    setIsNavigatingInternal(value);
+  };
+
+  React.useEffect(() => {}, [isNavigating]);
+
   const [showDirectionsSheet, setShowDirectionsSheet] = useState(false);
   const [showDestinationReachedPopup, setShowDestinationReachedPopup] = useState(false);
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
@@ -464,7 +471,11 @@ const MapScreen = () => {
     //consolelog('Current steps:', steps);
     //consolelog('CurrentStep:', currentStep);
     //consolelog('CurrentLocation:', currentLocation);
-    setIsNavigating(true);
+
+    // call the actual startNavigation function from useMapNavigation hook
+    // this handles location tracking, distance calculation, and destination detection
+    startNavigation();
+
     setShouldStartTTS(true);
     setCurrentStep(0);
   };

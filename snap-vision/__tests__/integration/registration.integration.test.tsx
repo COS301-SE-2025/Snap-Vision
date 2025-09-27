@@ -24,8 +24,6 @@ jest.mock('@react-native-firebase/firestore', () => () => ({
   }),
 }));
 
-
-
 // Mock Navigation
 const mockNavigate = jest.fn();
 const mockReplace = jest.fn();
@@ -174,7 +172,11 @@ describe('Registration Integration Tests', () => {
     await waitFor(() => {
       expect(getByText('Username is required.')).toBeTruthy();
       expect(getByText('Email is required.')).toBeTruthy();
-      expect(getByText('Password must be at least 8 characters, include a capital letter, number, and special character.')).toBeTruthy();
+      expect(
+        getByText(
+          'Password must be at least 8 characters, include a capital letter, number, and special character.',
+        ),
+      ).toBeTruthy();
     });
 
     const inputs = getAllByTestId('input');
@@ -192,7 +194,11 @@ describe('Registration Integration Tests', () => {
     fireEvent.changeText(inputs[3], 'short');
     fireEvent.press(getByTestId('register-button'));
     await waitFor(() => {
-      expect(getByText('Password must be at least 8 characters, include a capital letter, number, and special character.')).toBeTruthy();
+      expect(
+        getByText(
+          'Password must be at least 8 characters, include a capital letter, number, and special character.',
+        ),
+      ).toBeTruthy();
     });
 
     fireEvent.changeText(inputs[2], 'Password1!');

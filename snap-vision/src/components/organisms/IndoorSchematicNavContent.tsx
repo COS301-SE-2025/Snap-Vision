@@ -592,7 +592,7 @@ export default function IndoorSchematicNavScreen() {
       setSheetOpen(false);
     } else {
       // Show POI popup for any selected room when not in navigation mode
-      const selectedRoom = roomsOnSelectedFloor.find(room => room.id === roomId);
+      const selectedRoom = roomsOnSelectedFloor.find((room) => room.id === roomId);
       if (selectedRoom) {
         setSelectedPOI(selectedRoom);
         setPoiPopupVisible(true);
