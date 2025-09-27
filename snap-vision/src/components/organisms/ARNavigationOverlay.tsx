@@ -161,7 +161,7 @@ function ARNavigationWarning({
         activeOpacity={0.7}
       >
         <Text style={styles.warningTitle}>
-          {isMinimized ? '⚠' : 'Navigation Warning'}
+          {isMinimized ? 'Please Note:' : 'Navigation Warning'}
         </Text>
         <Text style={styles.warningToggle}>
           {isMinimized ? '▲' : '▼'}
@@ -1083,7 +1083,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 70, // Same level as minimap
     left: 20, // Left side to avoid minimap overlap
-    width: 160, // Same width as minimap
+    width: 159, // Same width as minimap
     backgroundColor: 'rgba(255, 152, 0, 0.9)', // Orange warning color
     borderRadius: 12,
     overflow: 'hidden',
