@@ -136,11 +136,11 @@ export class NativeBeaconScanner {
     string,
     { sum: number; count: number; avg: number; lastUpdate?: number }
   > = {};
-  private RSSI_WINDOW = 5; // Number of readings to average
+  private RSSI_WINDOW = 8; // Increased for more smoothing in larger venue
 
   // Ignore small movement: only update if estimated distance changes by > threshold (meters)
   private lastDistances: Record<string, number> = {};
-  private DISTANCE_THRESHOLD = 1.2; // meters
+  private DISTANCE_THRESHOLD = 0.5; // Reduced for less sensitivity to small changes
 
   // Minew native path
   private isMinew = Platform.OS === 'android' && !!(NativeModules as any).MinewScanner;
@@ -211,9 +211,9 @@ export class NativeBeaconScanner {
     avgObj.avg = avgObj.sum / avgObj.count;
     const smoothRssi = avgObj.avg;
 
-    //Distance estimation
+    //Distance estimation with damping for larger venue
     const tx = typeof measuredPower === 'number' ? measuredPower : -59;
-    const n = 2.0;
+    const n = 2.4; // Increased from 2.0 for gentler distance scaling
     const estDist = Math.pow(10, (tx - smoothRssi) / (10 * n));
 
     //Ignore small changes
@@ -394,6 +394,8 @@ export class NativeBeaconScanner {
           const adv = p?.advertising || {};
 
           // DEBUG: Log all peripheral data to see what's available
+          // Commented out for performance - uncomment if debugging needed
+          /*
           if (p.id || p.name) {
             console.log(`[BEACON SCAN DEBUG] Peripheral:`, {
               id: p.id,
@@ -425,6 +427,7 @@ export class NativeBeaconScanner {
               console.log(`[BEACON SCAN DEBUG] Parsed iBeacon:`, ib);
             }
           }
+          */
 
           // Filter out stale cached entries - only use recent discoveries
           // If RSSI is too weak, likely a stale cache entry
@@ -440,18 +443,23 @@ export class NativeBeaconScanner {
             measuredPower;
           let found = false;
 
+          // DEBUG: Beacon parsing - commented out for performance
+          // Uncomment if you need to debug beacon detection issues
+          /*
           console.log(
             `[BEACON PARSE DEBUG] Processing peripheral ${p.id}, md:`,
             md,
             'mdBytes:',
             mdBytes,
           );
+          */
 
           if (mdBytes) {
             const ib = parseIBeaconBytes(mdBytes);
+            // DEBUG: iBeacon parsing - commented out for performance
+            /*
             console.log(`[BEACON PARSE DEBUG] parseIBeaconBytes result:`, ib);
             if (ib) {
-              const mm = `${ib.major}|${ib.minor}`;
               console.log(
                 `[BEACON PARSE DEBUG] Checking allowedMM for ${mm}, allowedMM size:`,
                 this.allowedMM.size,
@@ -459,11 +467,6 @@ export class NativeBeaconScanner {
                 this.allowedMM.has(mm),
               );
               if (!this.allowedMM.size || this.allowedMM.has(mm)) {
-                uuid = ib.uuid.toLowerCase();
-                major = ib.major;
-                minor = ib.minor;
-                measuredPower = ib.measuredPower;
-                found = true;
                 console.log(
                   `[BEACON PARSE DEBUG] ✅ FOUND iBeacon: UUID=${uuid} Major=${major} Minor=${minor}`,
                 );
@@ -473,8 +476,19 @@ export class NativeBeaconScanner {
             } else {
               console.log(`[BEACON PARSE DEBUG] ❌ parseIBeaconBytes returned null`);
             }
+            */
+            if (ib) {
+              const mm = `${ib.major}|${ib.minor}`;
+              if (!this.allowedMM.size || this.allowedMM.has(mm)) {
+                uuid = ib.uuid.toLowerCase();
+                major = ib.major;
+                minor = ib.minor;
+                measuredPower = ib.measuredPower;
+                found = true;
+              }
+            }
           } else {
-            console.log(`[BEACON PARSE DEBUG] ❌ No manufacturer data bytes`);
+            // No manufacturer data bytes available
           }
           if (!found) {
             const sd = adv.serviceData;
@@ -573,7 +587,7 @@ export class NativeBeaconScanner {
             avgObj.lastUpdate = now;
 
             // Adaptive smoothing - more smoothing when signal is noisy, less when moving
-            const maxReadings = rssi > -60 ? 2 : 3; // Less smoothing for strong signals (closer beacons)
+            const maxReadings = rssi > -60 ? 5 : 8; // Much more smoothing for stable positioning
             if (avgObj.count > maxReadings) {
               avgObj.sum -= avgObj.sum / avgObj.count;
               avgObj.count = maxReadings;
@@ -592,8 +606,8 @@ export class NativeBeaconScanner {
               const delta = Math.abs(estDist - this.lastDistances[key]);
               const timeSinceLastUpdate = now - lastUpdate;
 
-              // More relaxed filtering if enough time has passed (user likely moving)
-              const threshold = timeSinceLastUpdate > 2000 ? 0.5 : 0.3; // Larger threshold for movement
+              // Much more restrictive filtering for stable positioning
+              const threshold = timeSinceLastUpdate > 3000 ? 0.4 : 0.15; // Smaller thresholds
 
               if (delta < threshold) {
                 shouldPush = false;
@@ -647,7 +661,7 @@ export class NativeBeaconScanner {
       } catch (e) {
         err('Probe error:', e);
       }
-    }, 300); // Reduced from 500ms to 300ms for even faster detection
+    }, 800); // Increased from 300ms to 800ms for more stable positioning
   }
 
   private detachBle() {
@@ -729,7 +743,7 @@ export class NativeBeaconScanner {
         } catch (e) {
           err('onBatch error:', e);
         }
-      }, 200); // was 400 - now every 200ms for instant updates
+      }, 500); // Increased from 200ms to 500ms for more stable positioning
     }
 
     // Always start BLE fallback (more reliable)
