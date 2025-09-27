@@ -76,6 +76,12 @@ jest.mock('@react-native-firebase/auth', () => {
   return api;
 });
 
+jest.mock('../src/security/AuthorizationService', () => ({
+  getInstance: () => ({
+    canAccessRecentlyVisited: jest.fn().mockResolvedValue(true),
+  }),
+}));
+
 function load() {
   jest.isolateModules(() => {
     mod = require('../src/services/firebase/recentlyVService');
@@ -125,14 +131,14 @@ describe('recentlyVService', () => {
   });
 
   it('getRecentlyVPOIs sorts by timestamp desc and limits to 10', async () => {
-    const u = 'u1';
+    const u = 'user12345678901234567890';
     const pois = Array.from({ length: 15 }).map((_, i) => ({
       id: `p${i}`,
       userId: u,
       poiId: `poi-${i}`,
       name: `Poi ${i}`,
       timestamp: tsObj(1000 + i),
-      centroid: { latitude: 0, longitude: 0 },
+      location: `loc-${i}`,
     }));
     getStore().set(path(u), { userId: u, pois });
     const out = await mod.getRecentlyVPOIs(u);
@@ -142,26 +148,27 @@ describe('recentlyVService', () => {
   });
 
   it('addRecentlyVisitedPOI sets new doc with first visit and server timestamp', async () => {
+    const u = 'user12345678901234567890';
     setNowQueue([5000]);
     await mod.addRecentlyVisitedPOI({
-      userId: 'u2',
+      userId: u,
       poiId: 'poi-1',
       name: 'A',
-      centroid: { latitude: 1, longitude: 2 },
+      location: 'loc1',
     });
-    const snap = getStore().get(path('u2'));
-    expect(snap.userId).toBe('u2');
+    const snap = getStore().get(path(u));
+    expect(snap.userId).toBe(u);
     expect(snap.pois).toHaveLength(1);
     expect(snap.pois[0]).toMatchObject({
       poiId: 'poi-1',
       name: 'A',
-      centroid: { latitude: 1, longitude: 2 },
+      location: 'loc1',
     });
     expect(snap.pois[0].timestamp.toMillis()).toBe(5000);
   });
 
   it('addRecentlyVisitedPOI prevents duplicates', async () => {
-    const u = 'u3';
+    const u = 'user12345678901234567890';
     getStore().set(path(u), {
       userId: u,
       pois: [
@@ -169,7 +176,7 @@ describe('recentlyVService', () => {
           userId: u,
           poiId: 'poi-1',
           name: 'A',
-          centroid: { latitude: 0, longitude: 0 },
+          location: 'loc1',
           timestamp: tsObj(1),
         },
       ],
@@ -178,7 +185,7 @@ describe('recentlyVService', () => {
       userId: u,
       poiId: 'poi-1',
       name: 'A',
-      centroid: { latitude: 0, longitude: 0 },
+      location: 'loc1',
     });
     const snap = getStore().get(path(u));
     expect(snap.pois).toHaveLength(1);
@@ -186,7 +193,7 @@ describe('recentlyVService', () => {
   });
 
   it('addRecentlyVisitedPOI updates existing doc with new visit', async () => {
-    const u = 'u4';
+    const u = 'user12345678901234567890';
     getStore().set(path(u), {
       userId: u,
       pois: [
@@ -194,7 +201,7 @@ describe('recentlyVService', () => {
           userId: u,
           poiId: 'x',
           name: 'X',
-          centroid: { latitude: 0, longitude: 0 },
+          location: 'locX',
           timestamp: tsObj(1),
         },
       ],
@@ -204,7 +211,7 @@ describe('recentlyVService', () => {
       userId: u,
       poiId: 'y',
       name: 'Y',
-      centroid: { latitude: 3, longitude: 4 },
+      location: 'locY',
     });
     const snap = getStore().get(path(u));
     expect(snap.pois).toHaveLength(2);
@@ -213,7 +220,7 @@ describe('recentlyVService', () => {
   });
 
   it('addRecentlyVisitedPOI propagates update error', async () => {
-    const u = 'u5';
+    const u = 'user12345678901234567890';
     getStore().set(path(u), { userId: u, pois: [] });
     const db = getDb();
     const origCollection = db.collection;
@@ -262,7 +269,7 @@ describe('recentlyVService', () => {
         userId: u,
         poiId: 'z',
         name: 'Z',
-        centroid: { latitude: 0, longitude: 0 },
+        location: 'locZ',
       }),
     ).rejects.toThrow('boom');
     expect(errSpy).toHaveBeenCalled();
@@ -282,7 +289,7 @@ describe('recentlyVService', () => {
         },
       }),
     });
-    const out = await mod.getRecentlyVPOIs('uX');
+    const out = await mod.getRecentlyVPOIs('user12345678901234567890');
     expect(out).toEqual([]);
     expect(errSpy).toHaveBeenCalled();
 

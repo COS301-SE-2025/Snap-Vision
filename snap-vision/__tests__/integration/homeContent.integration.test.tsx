@@ -448,9 +448,7 @@ describe('HomeContent Integration Tests', () => {
 
   describe('Loading State Integration', () => {
     it('integrates loading states with data fetching', async () => {
-      mockGetRecentlyVPOIs.mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve([]), 100)),
-      );
+      mockGetRecentlyVPOIs.mockResolvedValue([]);
 
       (useFocusEffect as jest.Mock).mockImplementation((callback) => {
         setTimeout(() => callback(), 0);

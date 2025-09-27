@@ -141,18 +141,18 @@ describe('RegisterForm', () => {
     expect(getByPlaceholderText('Confirm your password')).toBeTruthy();
   });
 
-  it('shows inline errors if fields are empty', () => {
+  it('shows inline errors if fields are empty', async () => {
     const { getByTestId, getByText } = setup();
     fireEvent.press(getByTestId('register-button'));
 
-    waitFor(() => {
+    await waitFor(() => {
       expect(getByText('Username is required.')).toBeTruthy();
       expect(getByText('Email is required.')).toBeTruthy();
       expect(getByText('Password must be at least 8 characters, include a capital letter, number, and special character.')).toBeTruthy();
     }, { timeout: 1000 });
   });
 
-  it('shows inline error for invalid email format', () => {
+  it('shows inline error for invalid email format', async () => {
     const { getByPlaceholderText, getByTestId, getByText } = setup();
 
     fireEvent.changeText(getByPlaceholderText('Enter your name'), 'John');
@@ -162,12 +162,12 @@ describe('RegisterForm', () => {
 
     fireEvent.press(getByTestId('register-button'));
 
-    waitFor(() => {
+    await waitFor(() => {
       expect(getByText('Please enter a valid email address.')).toBeTruthy();
     }, { timeout: 1000 });
   });
 
-  it('shows inline error for weak password', () => {
+  it('shows inline error for weak password', async () => {
     const { getByPlaceholderText, getByTestId, getByText } = setup();
 
     fireEvent.changeText(getByPlaceholderText('Enter your name'), 'John');
@@ -177,12 +177,12 @@ describe('RegisterForm', () => {
 
     fireEvent.press(getByTestId('register-button'));
 
-    waitFor(() => {
+    await waitFor(() => {
       expect(getByText(/Password must be at least 8 characters/)).toBeTruthy();
     }, { timeout: 1000 });
   });
 
-  it('shows inline error if passwords do not match', () => {
+  it('shows inline error if passwords do not match', async () => {
     const { getByPlaceholderText, getByTestId, getByText } = setup();
 
     fireEvent.changeText(getByPlaceholderText('Enter your name'), 'John');
@@ -192,7 +192,7 @@ describe('RegisterForm', () => {
 
     fireEvent.press(getByTestId('register-button'));
 
-    waitFor(() => {
+    await waitFor(() => {
       expect(getByText('Passwords do not match.')).toBeTruthy();
     }, { timeout: 1000 });
   });

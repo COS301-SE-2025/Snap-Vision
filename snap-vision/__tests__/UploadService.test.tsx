@@ -22,6 +22,12 @@ jest.mock('@react-native-firebase/auth', () => {
   return api;
 });
 
+jest.mock('../src/security/AuthorizationService', () => ({
+  getInstance: jest.fn(() => ({
+    canModifyBuilding: jest.fn().mockResolvedValue(true),
+  })),
+}));
+
 // Helper to access the auth mock
 const getAuthMock = () => require('@react-native-firebase/auth');
 
