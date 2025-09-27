@@ -16,8 +16,8 @@ import perf from '@react-native-firebase/perf';
 
 export default function LoginForm() {
   const navigation = useNavigation<any>();
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme } = useTheme();
+  const colors = getThemeColors(theme);
   const { coords, setCoords } = useDeepLink();
   const { unlock, state, uid, loading } = useBadges();
   const { setHasSeenLanding } = useLanding();
@@ -58,7 +58,7 @@ export default function LoginForm() {
         await unlock('first-login');
       }
 
-      Toast.show(makeToastPayload('Login Successful!', 'Welcome back!', {}, isDark));
+      Toast.show(makeToastPayload('Login Successful!', 'Welcome back!', {}, theme));
 
       setTimeout(() => {
         if (coords?.lat && coords?.lng) {

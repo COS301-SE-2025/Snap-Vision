@@ -17,8 +17,8 @@ import ProgressSection from '../molecules/ProgressSection';
 import BadgesSection from '../molecules/BadgeSection';
 
 export default function AchievementsForm() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme } = useTheme();
+  const colors = getThemeColors(theme);
   type NavigationProp = StackNavigationProp<RootStackParamList, 'Dashboard'>;
 
   const { state, clearJustUnlocked } = useBadges();

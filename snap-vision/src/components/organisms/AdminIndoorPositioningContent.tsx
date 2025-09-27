@@ -44,8 +44,8 @@ type BeaconDoc = {
 };
 
 export default function AdminIndoorPositioningContent(props: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { isDark, theme } = useTheme();
+  const colors = getThemeColors(theme);
   const webViewRef = useRef<WebView>(null);
 
   const [role, setRole] = useState<string | null>(null);
@@ -509,7 +509,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
                     onPress={saveBeacon}
                     style={[styles.btn, { backgroundColor: colors.primary }]}
                   >
-                    <Text style={{ color: '#fff', fontWeight: '600' }}>Save Beacon</Text>
+                    <Text style={{ color: colors.background, fontWeight: '600' }}>Save Beacon</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => {
@@ -537,7 +537,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
       </ScrollView>
 
       {isLoading && (
-        <View style={styles.loading}>
+        <View style={[styles.loading, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       )}
@@ -640,7 +640,6 @@ const styles = StyleSheet.create({
   },
   loading: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },

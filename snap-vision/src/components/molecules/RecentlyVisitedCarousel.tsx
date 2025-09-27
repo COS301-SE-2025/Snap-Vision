@@ -9,8 +9,8 @@ type Props = {
   onVisitPress?: (visit: Visit) => void;
 };
 const RecentlyVisitedCarousel = ({ visits, onVisitPress }: Props) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   if (visits.length === 0) {
     return (

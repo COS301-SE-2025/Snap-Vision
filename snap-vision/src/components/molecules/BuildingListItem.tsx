@@ -21,8 +21,8 @@ interface BuildingListItemProps {
 }
 
 export const BuildingListItem: React.FC<BuildingListItemProps> = ({ building, onPress }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <TouchableOpacity

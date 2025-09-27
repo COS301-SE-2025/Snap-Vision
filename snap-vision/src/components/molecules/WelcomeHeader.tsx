@@ -11,8 +11,8 @@ interface Props {
 }
 
 export default function WelcomeHeader(_props: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const [name, setName] = useState<string>('User');
 

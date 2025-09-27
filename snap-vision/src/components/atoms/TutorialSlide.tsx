@@ -20,8 +20,8 @@ interface TutorialSlideProps {
 const { width, height } = Dimensions.get('window');
 
 const TutorialSlide = ({ image, title, description }: TutorialSlideProps) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <ScrollView

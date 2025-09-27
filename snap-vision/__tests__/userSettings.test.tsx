@@ -286,7 +286,7 @@ describe('SupportContent Unit Tests', () => {
 describe('SettingsContent Unit Tests', () => {
   it('renders all settings items', () => {
     const navigation = { navigate: jest.fn() };
-    const { getByText } = render(<SettingsContent isDark={false} navigation={navigation} />);
+    const { getByText } = render(<SettingsContent navigation={navigation} />);
   expect(getByText('Account')).toBeTruthy();
   expect(getByText('Accessibility')).toBeTruthy();
   // Notifications is not rendered, so skip this assertion
@@ -296,7 +296,7 @@ describe('SettingsContent Unit Tests', () => {
 
   it('calls navigation.navigate with correct screen when item is pressed', () => {
     const navigation = { navigate: jest.fn() };
-    const { getByTestId } = render(<SettingsContent isDark={false} navigation={navigation} />);
+    const { getByTestId } = render(<SettingsContent navigation={navigation} />);
   fireEvent.press(getByTestId('settings-item-Account'));
   fireEvent.press(getByTestId('settings-item-Accessibility'));
   // Notifications is not rendered, so skip this fireEvent

@@ -9,8 +9,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useLanding } from '../../context/LandingContext';
 
 export default function HeaderWithIcons() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const navigation = useNavigation<any>();
   const { setHasSeenLanding } = useLanding();
 

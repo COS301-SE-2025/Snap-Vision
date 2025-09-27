@@ -40,8 +40,8 @@ export default function StandardPopup({
   showCloseButton = false,
   testID,
 }: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <Modal transparent visible={visible} animationType="fade" statusBarTranslucent>

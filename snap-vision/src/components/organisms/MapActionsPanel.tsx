@@ -36,8 +36,8 @@ const MapActionsPanel = ({
   onReportIn,
   onReportOut,
 }: Props) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const [drawerAnimation] = useState(new Animated.Value(1));
 

@@ -12,8 +12,8 @@ interface PurchasePopupProps {
 }
 
 export default function PurchasePopup({ itemTitle, cost, onClose }: PurchasePopupProps) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const [fadeAnim] = useState(new Animated.Value(0));
 
   useEffect(() => {

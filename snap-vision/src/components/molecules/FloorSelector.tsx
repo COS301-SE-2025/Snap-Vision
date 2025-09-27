@@ -26,8 +26,8 @@ const FloorSelector: React.FC<FloorSelectorProps> = ({
   setDropdownOpen,
   title = 'Select Floor',
 }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const dropdownItems = floors.map((f) => ({ label: `Floor ${f.name}`, value: f.id }));
 

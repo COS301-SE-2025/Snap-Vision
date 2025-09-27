@@ -26,8 +26,8 @@ const BuildingSelector: React.FC<BuildingSelectorProps> = ({
   setDropdownOpen,
   title = 'Select Building',
 }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const dropdownItems = buildings.map((b) => ({ label: b.name, value: b.id }));
 

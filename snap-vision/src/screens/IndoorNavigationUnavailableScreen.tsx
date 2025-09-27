@@ -21,8 +21,8 @@ type NavP = StackNavigationProp<RootStackParamList, 'IndoorNavigationUnavailable
 export default function IndoorNavigationUnavailableScreen() {
   const navigation = useNavigation<NavP>();
   const route = useRoute<RouteP>();
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const { buildingName } = route.params;
 

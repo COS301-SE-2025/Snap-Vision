@@ -41,8 +41,8 @@ interface RoomPOI {
 }
 
 export default function QrCard({ backgroundColor, titleColor, subtitleColor }: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const [scannerVisible, setScannerVisible] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);

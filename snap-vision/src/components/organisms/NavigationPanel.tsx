@@ -51,8 +51,8 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
   isMinimized = false,
   onToggleMinimize,
 }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   // Calculate completion percentage based on distance remaining
   const getCompletionPercentage = () => {

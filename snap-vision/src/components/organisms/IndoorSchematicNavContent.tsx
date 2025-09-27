@@ -69,9 +69,9 @@ export default function IndoorSchematicNavScreen() {
   const navigation = useNavigation<any>();
   const { buildingId, buildingName, locationId, floorId: initialFloorId, userPos } = route.params;
 
-  const { isDark } = useTheme();
+  const { theme, isDark } = useTheme();
   const { isAccessibilityModeEnabled } = useAccessibility();
-  const colors = getThemeColors(isDark);
+  const colors = getThemeColors(theme);
   const { unlock } = useBadges();
 
   // Master data (ALL floors)

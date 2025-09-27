@@ -12,8 +12,8 @@ interface Props {
 }
 
 export default function UserCard({ user, onEdit, onDelete }: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const roleColor = user.role === 'Admin' ? colors.secondary : colors.roleSecondary;
 

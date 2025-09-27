@@ -21,8 +21,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import TimetableBackgroundService from '../../services/TimetableBackgroundService';
 
 export default function TimetableContent() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const { entries, isLoading, error, addEntry, updateEntry, deleteEntry } = useTimetable();
 
@@ -336,7 +336,7 @@ export default function TimetableContent() {
         visible={showForm}
         onClose={handleCloseForm}
         onSubmit={handleSubmitEntry}
-        colors={colors}
+
         editingEntry={editingEntry}
       />
 

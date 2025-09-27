@@ -6,8 +6,8 @@ import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
 export default function AppPreferencesContent() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

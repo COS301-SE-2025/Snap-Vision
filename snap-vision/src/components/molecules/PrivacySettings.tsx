@@ -4,8 +4,8 @@ import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
 export default function PrivacySettings() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const [locationEnabled, setLocationEnabled] = useState(true);
   const [analyticsEnabled, setAnalyticsEnabled] = useState(true);

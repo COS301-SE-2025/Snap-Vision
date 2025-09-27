@@ -28,8 +28,8 @@ type BluetoothBuildingsNavigationProp = StackNavigationProp<
 
 const BluetoothBuildingsContent: React.FC = () => {
   const navigation = useNavigation<BluetoothBuildingsNavigationProp>();
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const { buildings, loading, error, refetch } = useBluetoothBuildings();
 
   // Building selection handler

@@ -9,8 +9,8 @@ import type { AdminStackParamList } from '../navigation/AdminNavigator';
 type AdminNavigationProp = NavigationProp<AdminStackParamList>;
 
 const AdminScreen = () => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const navigation = useNavigation<AdminNavigationProp>();
 
   const handleLoadFloorplans = () => {

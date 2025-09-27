@@ -6,8 +6,8 @@ import { getThemeColors } from '../theme';
 import ShopContent from '../components/organisms/ShopContent';
 
 const ShopScreen: React.FC = () => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>

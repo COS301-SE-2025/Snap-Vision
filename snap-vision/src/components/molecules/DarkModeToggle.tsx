@@ -5,8 +5,8 @@ import { getThemeColors } from '../../theme';
 import { useBadges } from '../../context/BadgeContext';
 
 export default function DarkModeToggle() {
-  const { isDark, toggleTheme } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark, toggleTheme } = useTheme();
+  const colors = getThemeColors(theme);
   const { unlock } = useBadges();
 
   const handleToggleTheme = () => {

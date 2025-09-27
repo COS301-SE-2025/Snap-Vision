@@ -15,8 +15,8 @@ import QRCodePreviewModal from './QRCodePreviewModal';
 import { useQRCodeAdmin } from '../../hooks/useQRCodeAdmin';
 
 export default function QRCodeAdminContent() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const {
     // Data state

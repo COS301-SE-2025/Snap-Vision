@@ -359,7 +359,7 @@ describe('SettingsContent Integration Tests', () => {
   });
 
   it('renders all settings items', () => {
-    const { getByText } = render(<SettingsContent isDark={false} navigation={navigation} />);
+    const { getByText } = render(<SettingsContent navigation={navigation} />);
   expect(getByText('Account')).toBeTruthy();
   expect(getByText('Accessibility')).toBeTruthy();
   // Notifications is not rendered, so skip this assertion
@@ -368,7 +368,7 @@ describe('SettingsContent Integration Tests', () => {
   });
 
   it('calls navigation.navigate with correct screen when each item is pressed', () => {
-    const { getByTestId } = render(<SettingsContent isDark={false} navigation={navigation} />);
+    const { getByTestId } = render(<SettingsContent navigation={navigation} />);
   fireEvent.press(getByTestId('settings-item-Account'));
   fireEvent.press(getByTestId('settings-item-Accessibility'));
   // Notifications is not rendered, so skip this fireEvent

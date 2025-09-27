@@ -5,8 +5,8 @@ import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
 export const Tooltip = ({ text }: { text: string }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <View style={[styles.tooltip, { backgroundColor: colors.card, borderColor: colors.border }]}>

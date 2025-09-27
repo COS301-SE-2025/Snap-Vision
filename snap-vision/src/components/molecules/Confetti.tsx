@@ -26,8 +26,8 @@ interface ConfettiProps {
 }
 
 const Confetti: React.FC<ConfettiProps> = (props) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const {
     count = 80, // Increased from 50 to 80

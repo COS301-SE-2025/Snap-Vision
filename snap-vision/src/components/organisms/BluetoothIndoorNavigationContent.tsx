@@ -38,8 +38,8 @@ type NavP = StackNavigationProp<RootStackParamList, 'BluetoothIndoorNavigation'>
 const BluetoothIndoorNavigationContent: React.FC = () => {
   const navigation = useNavigation<NavP>();
   const route = useRoute<RouteP>();
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const { buildingId, buildingName, locationId } = route.params;
 
   // Custom Floor Dropdown state

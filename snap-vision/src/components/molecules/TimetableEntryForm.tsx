@@ -16,12 +16,13 @@ import { TimetableEntry, DAYS_OF_WEEK } from '../../types/timetable.types';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { usePOIs } from '../../hooks/usePOIs';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
 
 interface TimetableEntryFormProps {
   visible: boolean;
   onClose: () => void;
   onSubmit: (entryData: Omit<TimetableEntry, 'id' | 'userId' | 'createdAt'>) => void;
-  colors: any;
   editingEntry?: TimetableEntry | null;
 }
 
@@ -29,9 +30,10 @@ export default function TimetableEntryForm({
   visible,
   onClose,
   onSubmit,
-  colors,
   editingEntry = null,
 }: TimetableEntryFormProps) {
+  const { theme } = useTheme();
+  const colors = getThemeColors(theme);
   const [course, setCourse] = useState('');
   const [day, setDay] = useState(DAYS_OF_WEEK[0]);
   const [startTime, setStartTime] = useState('');
@@ -314,6 +316,9 @@ export default function TimetableEntryForm({
                     mode="time"
                     is24Hour={true}
                     display="spinner"
+                    themeVariant={theme === 'light' ? 'light' : 'dark'}
+                    accentColor={colors.primary}
+                    textColor={colors.text}
                     onChange={(event, date) => {
                       setShowStartPicker(false);
                       if (date) {
@@ -348,6 +353,9 @@ export default function TimetableEntryForm({
                     mode="time"
                     is24Hour={true}
                     display="spinner"
+                    themeVariant={theme === 'light' ? 'light' : 'dark'}
+                    accentColor={colors.primary}
+                    textColor={colors.text}
                     onChange={(event, date) => {
                       setShowEndPicker(false);
                       if (date) {

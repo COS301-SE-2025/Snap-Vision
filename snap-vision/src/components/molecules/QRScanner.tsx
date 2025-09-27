@@ -28,8 +28,8 @@ const { width, height } = Dimensions.get('window');
 const FRAME_SIZE = Math.min(width, height) * 0.8;
 
 export default function QRScanner({ onScan, onClose }: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [locked, setLocked] = useState(false);

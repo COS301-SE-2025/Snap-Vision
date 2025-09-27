@@ -17,8 +17,8 @@ type EditorStackParamList = {
 type EditorNavigationProp = NavigationProp<EditorStackParamList>;
 
 const EditorScreen = () => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const navigation = useNavigation<EditorNavigationProp>();
 
   const handleLoadFloorplans = () => {

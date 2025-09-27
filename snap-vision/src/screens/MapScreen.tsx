@@ -43,8 +43,8 @@ type MapScreenParams = {
 
 const MapScreen = () => {
   // theme and context
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const { isHapticFeedbackEnabled } = useAccessibility();
   const { setNavigationStartTime, unlock, incrementRoutes, state } = useBadges();
 

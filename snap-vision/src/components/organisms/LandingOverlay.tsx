@@ -14,8 +14,8 @@ import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
 const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const bg = colors.background;
 
   const swappedTextColor = colors.primary;

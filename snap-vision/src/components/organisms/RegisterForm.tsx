@@ -23,8 +23,8 @@ type RootStackParamList = {
 
 export default function RegisterForm() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const { coords, setCoords } = useDeepLink();
   const { setHasSeenLanding } = useLanding();
 

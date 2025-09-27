@@ -18,8 +18,8 @@ const TextToSpeech: React.FC<TextToSpeechProps> = ({
   text,
   onSpeakingChange,
 }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   // Initialize TTS

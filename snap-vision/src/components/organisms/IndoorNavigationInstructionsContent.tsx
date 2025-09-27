@@ -32,8 +32,8 @@ export default function IndoorNavigationInstructionsContent({
   onNavigationComplete,
   onBack,
 }: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const [steps, setSteps] = useState<NavigationStep[]>([]);
   const [currentStep, setCurrentStep] = useState(0);

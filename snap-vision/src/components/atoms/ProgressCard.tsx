@@ -12,8 +12,8 @@ interface Props {
 }
 
 export default function ProgressCard({ title, value, backgroundColor, borderColor }: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const bgColor = colors.card;
   const bColor = colors.primary;
   return (

@@ -7,8 +7,8 @@ import { getThemeColors } from '../../theme';
 import { useNavigation } from '@react-navigation/native';
 
 export default function SupportContent() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const navigation = useNavigation<any>();
 
   const supportOptions = [

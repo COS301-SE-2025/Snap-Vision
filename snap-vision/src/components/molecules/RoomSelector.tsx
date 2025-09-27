@@ -28,8 +28,8 @@ const RoomSelector: React.FC<RoomSelectorProps> = ({
   onRoomSelect,
   title = 'Select Room',
 }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const filteredRooms = rooms.filter((r) =>
     r.name.toLowerCase().includes(searchQuery.trim().toLowerCase()),

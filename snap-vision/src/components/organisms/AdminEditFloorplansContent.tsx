@@ -23,8 +23,8 @@ type RootStackParamList = {
 
 export default function AdminEditFloorplansContent() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme } = useTheme();
+  const colors = getThemeColors(theme);
 
   const { role, adminLocations, isLoading: isLoadingUser } = useUserRole();
   const {
@@ -73,7 +73,7 @@ export default function AdminEditFloorplansContent() {
       <SettingsHeader title="Edit Floorplans" />
 
       {isLoading && (
-        <View style={styles.loadingOverlay}>
+        <View style={[styles.loadingOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
           <ActivityIndicator size="large" color={colors.primary} testID="ActivityIndicator" />
         </View>
       )}
@@ -120,7 +120,6 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,

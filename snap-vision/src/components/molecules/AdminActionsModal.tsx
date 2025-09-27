@@ -19,8 +19,8 @@ export const AdminActionsModal: React.FC<AdminActionsModalProps> = ({
   onDelete,
   onClose,
 }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme } = useTheme();
+  const colors = getThemeColors(theme);
   if (!visible || !adminActionPOI) return null;
 
   return (

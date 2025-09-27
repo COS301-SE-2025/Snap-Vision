@@ -7,8 +7,8 @@ import BadgeUnlockNotifier from '../components/organisms/BadgeUnlockNotifier';
 import AchievementsForm from '../components/organisms/AchievementsForm';
 
 export default function AchievementsScreen() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const { state, clearJustUnlocked } = useBadges();
 
   useEffect(() => {

@@ -42,8 +42,8 @@ type NavigationProp = CompositeNavigationProp<
 >;
 
 export default function HomeContent() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const navigation = useNavigation<NavigationProp>();
   const [recentlyVisited, setRecentlyVisited] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,7 +94,14 @@ export default function HomeContent() {
 
       <View style={{ height: 20 }} />
 
-      {/* Mascot image removed for test compatibility */}
+      {/* Mascot Ponder Image */}
+      <View style={styles.mascotContainer}>
+        <Image 
+          source={require('../../assets/images/mascot_ponder.png')} 
+          style={styles.mascotImage}
+          resizeMode="contain"
+        />
+      </View>
 
       {/* First separator (slightly lowered) */}
       <View style={{ marginTop: 20 }}>

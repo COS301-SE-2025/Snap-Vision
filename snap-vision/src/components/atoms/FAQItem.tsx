@@ -11,8 +11,8 @@ interface FAQItemProps {
 
 const FAQItem = ({ question, answer }: FAQItemProps) => {
   const [expanded, setExpanded] = useState(false);
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <View style={[styles.container, { borderBottomColor: colors.border || '#e1e1e1' }]}>

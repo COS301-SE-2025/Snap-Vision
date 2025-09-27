@@ -22,8 +22,8 @@ const DirectionsModal: React.FC<DirectionsModalProps> = ({
   steps,
   currentStep,
 }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
