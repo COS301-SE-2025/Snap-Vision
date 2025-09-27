@@ -4,8 +4,8 @@ import BleManager from 'react-native-ble-manager';
 import { Buffer } from 'buffer';
 
 const TAG = '[BeaconScanner]';
-const log = (...a: any[]) => //console.log(TAG, ...a);
-const err = (...a: any[]) => //console.error(TAG, ...a);
+const log = (...a: any[]) => console.log(TAG, ...a);
+const err = (...a: any[]) => console.error(TAG, ...a);
 
 //Helpers
 function toHex(bytes?: number[] | null, maxLen = 24): string {
@@ -497,14 +497,14 @@ export class NativeBeaconScanner {
             if (rssi > -80) {
               // Only log relatively strong signals
               //console.log(`[BEACON SCAN DEBUG] Strong peripheral but no beacon data:`, {
-                id: p.id,
-                name: p.name,
-                rssi: rssi,
-                hasManufacturerData: !!md,
-                manufacturerDataLength: mdBytes ? mdBytes.length : 0,
-                serviceDataKeys: sd ? Object.keys(sd) : [],
-                possibleMAC: p.id?.includes(':') ? p.id : null,
-              });
+              //   id: p.id,
+              //   name: p.name,
+              //   rssi: rssi,
+              //   hasManufacturerData: !!md,
+              //   manufacturerDataLength: mdBytes ? mdBytes.length : 0,
+              //   serviceDataKeys: sd ? Object.keys(sd) : [],
+              //   possibleMAC: p.id?.includes(':') ? p.id : null,
+              // });
             }
             if (sd && typeof sd === 'object') {
               for (const key of Object.keys(sd)) {
@@ -516,16 +516,16 @@ export class NativeBeaconScanner {
                 // Try direct iBeacon parsing from service data first (for c5e2 service)
                 if (key.toLowerCase() === 'c5e2' && b.length >= 20) {
                   //console.log(
-                    `[BEACON PARSE DEBUG] Trying direct iBeacon parse from c5e2 service data`,
-                  );
+                  //   `[BEACON PARSE DEBUG] Trying direct iBeacon parse from c5e2 service data`,
+                  // );
                   const directBeacon = parseDirectServiceIBeacon(b);
                   //console.log(`[BEACON PARSE DEBUG] Direct service parse result:`, directBeacon);
                   if (directBeacon) {
                     const mm = `${directBeacon.major}|${directBeacon.minor}`;
                     //console.log(
-                      `[BEACON PARSE DEBUG] Checking allowedMM for direct service ${mm}, allowedMM size:`,
-                      this.allowedMM.size,
-                    );
+                    //   `[BEACON PARSE DEBUG] Checking allowedMM for direct service ${mm}, allowedMM size:`,
+                    //   this.allowedMM.size,
+                    // );
                     if (!this.allowedMM.size || this.allowedMM.has(mm)) {
                       uuid = directBeacon.uuid.toLowerCase();
                       major = directBeacon.major;
@@ -533,13 +533,13 @@ export class NativeBeaconScanner {
                       measuredPower = directBeacon.measuredPower;
                       found = true;
                       //console.log(
-                        `[BEACON PARSE DEBUG] ✅ FOUND via direct service parse: UUID=${uuid} Major=${major} Minor=${minor}`,
-                      );
+                      //   `[BEACON PARSE DEBUG] ✅ FOUND via direct service parse: UUID=${uuid} Major=${major} Minor=${minor}`,
+                      // );
                       break;
                     } else {
                       //console.log(
-                        `[BEACON PARSE DEBUG] ❌ Direct service beacon rejected by allowedMM filter`,
-                      );
+                      //   `[BEACON PARSE DEBUG] ❌ Direct service beacon rejected by allowedMM filter`,
+                      // );
                     }
                   }
                 }
@@ -556,8 +556,8 @@ export class NativeBeaconScanner {
                     measuredPower = m.measuredPower;
                     found = true;
                     //console.log(
-                      `[BEACON PARSE DEBUG] ✅ FOUND via Minew service: UUID=${uuid} Major=${major} Minor=${minor}`,
-                    );
+                    //   `[BEACON PARSE DEBUG] ✅ FOUND via Minew service: UUID=${uuid} Major=${major} Minor=${minor}`,
+                    // );
                     break;
                   }
                 }

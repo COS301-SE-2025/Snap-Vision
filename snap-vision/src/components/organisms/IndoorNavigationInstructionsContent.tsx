@@ -43,7 +43,7 @@ export default function IndoorNavigationInstructionsContent({
     TTS.setDefaultLanguage('en-US');
     TTS.setDefaultRate(0.5);
     TTS.setDefaultPitch(1.0);
-    const onTtsError = (e: any) => //console.warn('TTS error', e);
+    const onTtsError = (e: any) => console.warn('TTS error', e);
     const onTtsStart = () => {};
     const onTtsFinish = () => {};
     TTS.addEventListener('tts-start', onTtsStart);

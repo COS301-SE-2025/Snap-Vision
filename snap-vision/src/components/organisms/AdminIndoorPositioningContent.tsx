@@ -117,8 +117,8 @@ export default function AdminIndoorPositioningContent(props: Props) {
     //console.log('🔷 Stored Beacons:');
     list.forEach((b, i) => {
       //console.log(
-        `  ${i + 1}. ${b.label || 'Beacon'} @ (${b.x.toFixed(3)}, ${b.y.toFixed(3)})  ${b.uuid}/${b.major}/${b.minor}`,
-      );
+      //   `  ${i + 1}. ${b.label || 'Beacon'} @ (${b.x.toFixed(3)}, ${b.y.toFixed(3)})  ${b.uuid}/${b.major}/${b.minor}`,
+      // );
     });
 
     setExistingBeacons(list);
@@ -416,7 +416,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
       setSuccessMessage('Beacon placed on this floor.');
       setShowSuccessPopup(true);
     } catch (e) {
-      //console.error(e);
+      // console.error(e);
       setErrorTitle('Error');
       setErrorMessage('Failed to save beacon.');
       setShowErrorPopup(true);

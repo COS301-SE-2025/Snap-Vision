@@ -259,27 +259,27 @@ class TimetableBackgroundService {
           const triggerTs = scheduledDate.getTime() - 10 * 60 * 1000; // 10 minutes before
 
           //console.log(
-            '[TimetableService] Entry:',
-            entry.course,
-            'at',
-            entry.startTime,
-            'on',
-            targetDayName,
-          );
+          //   '[TimetableService] Entry:',
+          //   entry.course,
+          //   'at',
+          //   entry.startTime,
+          //   'on',
+          //   targetDayName,
+          // );
           //console.log('[TimetableService] Class time:', scheduledDate.toLocaleString());
           //console.log(
-            '[TimetableService] Notification time:',
-            new Date(triggerTs).toLocaleString(),
-          );
+          //   '[TimetableService] Notification time:',
+          //   new Date(triggerTs).toLocaleString(),
+          // );
 
           // Skip if the notification time has already passed
           if (triggerTs <= now.getTime()) {
             //console.log(
-              '[TimetableService] Skipping past time for:',
-              entry.course,
-              'on',
-              targetDayName,
-            );
+            //   '[TimetableService] Skipping past time for:',
+            //   entry.course,
+            //   'on',
+            //   targetDayName,
+            // );
             continue;
           }
 
@@ -297,11 +297,11 @@ class TimetableBackgroundService {
           };
 
           //console.log(
-            '[TimetableService] Creating notification for:',
-            entry.course,
-            'trigger timestamp:',
-            triggerTs,
-          );
+          //   '[TimetableService] Creating notification for:',
+          //   entry.course,
+          //   'trigger timestamp:',
+          //   triggerTs,
+          // );
 
           const notifId = await notifee.createTriggerNotification(
             {
@@ -333,13 +333,13 @@ class TimetableBackgroundService {
           if (notifId) {
             mapping[entryKey] = notifId;
             //console.log(
-              '[TimetableService] Successfully scheduled notification',
-              entryKey,
-              'with ID',
-              notifId,
-              'for',
-              new Date(triggerTs).toLocaleString(),
-            );
+            //   '[TimetableService] Successfully scheduled notification',
+            //   entryKey,
+            //   'with ID',
+            //   notifId,
+            //   'for',
+            //   new Date(triggerTs).toLocaleString(),
+            // );
           } else {
             //console.log('[TimetableService] Failed to create notification for', entryKey);
           }
@@ -348,10 +348,10 @@ class TimetableBackgroundService {
 
       await AsyncStorage.setItem(this.SCHEDULED_KEY, JSON.stringify(mapping));
       //console.log(
-        '[TimetableService] Scheduled',
-        Object.keys(mapping).length,
-        'notifications for the week',
-      );
+      //   '[TimetableService] Scheduled',
+      //   Object.keys(mapping).length,
+      //   'notifications for the week',
+      // );
     } catch (error) {
       //console.error('[TimetableService] Error scheduling notifications:', error);
     }
