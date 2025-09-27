@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Pressable } from 'react-native';
+import { View, Text, TouchableOpacity, Pressable, ActivityIndicator } from 'react-native';
 import { WebView as WebViewType } from 'react-native-webview';
 import MapWebView from './MapWebView';
 import AdminPOIModal from '../molecules/AdminPOIModal';
@@ -371,6 +371,59 @@ const MapContent: React.FC<MapContentProps> = ({
       {/* Main Map View */}
       <View style={{ flex: 1 }}>
         <MapWebView ref={webViewRef} onMessage={onWebViewMessage} />
+        
+        {/* Initial loading overlay - shown when first loading and no location attempt made yet */}
+        {!currentLocation && !isRefreshingLocation && (
+          <View
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: 20,
+              right: 20,
+              transform: [{ translateY: -50 }],
+              alignItems: 'center',
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: colors.card,
+                paddingVertical: 20,
+                paddingHorizontal: 28,
+                borderRadius: 16,
+                elevation: 6,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 6,
+                alignItems: 'center',
+                minWidth: 200,
+              }}
+            >
+              <ActivityIndicator
+                size="large"
+                color={colors.primary}
+                style={{ marginBottom: 16 }}
+              />
+              <Text style={{ 
+                color: colors.text, 
+                fontWeight: '600', 
+                fontSize: 18,
+                textAlign: 'center',
+                marginBottom: 8 
+              }}>
+                Loading Map
+              </Text>
+              <Text style={{ 
+                color: colors.subtleText, 
+                fontSize: 14,
+                textAlign: 'center',
+                lineHeight: 20 
+              }}>
+                Initializing location services...
+              </Text>
+            </View>
+          </View>
+        )}
       </View>
 
       {/* Navigation Panel - Shown when destination is set */}
@@ -418,29 +471,67 @@ const MapContent: React.FC<MapContentProps> = ({
         color={colors.primary}
       />
 
-      {/* Location Refresh Button - shown when no location available */}
+      {/* Location Status - loading indicator or refresh button */}
       {!currentLocation && (
-        <TouchableOpacity
+        <View
           style={{
             position: 'absolute',
             bottom: 30,
-            left: '50%',
-            transform: [{ translateX: -800 }], // Center horizontally (approximate half width)
-            backgroundColor: colors.primary,
-            paddingVertical: 12,
-            paddingHorizontal: 16,
-            borderRadius: 8,
-            elevation: 4,
-            flexDirection: 'row',
+            left: 20,
+            right: 20,
             alignItems: 'center',
           }}
-          onPress={onRefreshLocation}
-          disabled={isRefreshingLocation}
         >
-          <Text style={{ color: 'white', fontWeight: 'bold', marginRight: 8 }}>
-            {isRefreshingLocation ? 'Finding Location...' : 'Find My Location'}
-          </Text>
-        </TouchableOpacity>
+          {isRefreshingLocation ? (
+            // Loading indicator when actively searching for location
+            <View
+              style={{
+                backgroundColor: colors.card,
+                paddingVertical: 16,
+                paddingHorizontal: 24,
+                borderRadius: 12,
+                elevation: 4,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.25,
+                shadowRadius: 4,
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}
+            >
+              <ActivityIndicator
+                size="small"
+                color={colors.primary}
+                style={{ marginRight: 12 }}
+              />
+              <Text style={{ color: colors.text, fontWeight: '600', fontSize: 16 }}>
+                Finding your location...
+              </Text>
+            </View>
+          ) : (
+            // Manual refresh button when location search failed or not started
+            <TouchableOpacity
+              style={{
+                backgroundColor: colors.primary,
+                paddingVertical: 12,
+                paddingHorizontal: 20,
+                borderRadius: 8,
+                elevation: 4,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.25,
+                shadowRadius: 4,
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}
+              onPress={onRefreshLocation}
+            >
+              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
+                Find My Location
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
       )}
 
       {/* AR Navigation Overlay */}

@@ -11,7 +11,7 @@ import { useBadges } from '../../context/BadgeContext';
 import { BADGES, BadgeId } from '../../types/badges';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../../navigation/types'; // Adjust path if needed
+import { RootStackParamList } from '../../navigation/types'; 
 import { createStackNavigator } from '@react-navigation/stack';
 import ProgressSection from '../molecules/ProgressSection';
 import BadgesSection from '../molecules/BadgeSection';

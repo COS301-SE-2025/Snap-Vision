@@ -73,11 +73,11 @@ export const BADGES: Record<BadgeId, Badge> = {
     title: 'Legend',
     description: 'Reach 200 destinations',
   },
-  'enabled-notifications': {
-    id: 'enabled-notifications',
-    title: 'Stay Connected',
-    description: 'Enable push notifications',
-  },
+  // 'enabled-notifications': {
+  //   id: 'enabled-notifications',
+  //   title: 'Stay Connected',
+  //   description: 'Enable push notifications',
+  // },
   'reported-crowd': {
     id: 'reported-crowd',
     title: 'Community Helper',

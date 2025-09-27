@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ShopItem } from '../screens/ShopScreen';
+import auth from '@react-native-firebase/auth';
+import { ShopItem } from '../hooks/useShopManager';
 
 interface UserIconState {
   selectedIcons: Record<string, string>; // tabType -> iconName mapping
@@ -41,19 +42,19 @@ export const UserIconProvider: React.FC<{ children: ReactNode }> = ({ children }
     equippedItems: [...DEFAULT_EQUIPPED_ITEMS],
   });
 
-  // Load saved icon preferences on startup
-  useEffect(() => {
-    const loadIconPreferences = async () => {
-      try {
-        const savedIcons = await AsyncStorage.getItem('@snap_vision_tab_icons');
-        const savedEquippedItems = await AsyncStorage.getItem('@snap_vision_equipped_items');
+  // Load saved icon preferences for current user
+  const loadUserIconPreferences = async () => {
+    try {
+      const storageKeys = getStorageKeys();
+      const savedIcons = await AsyncStorage.getItem(storageKeys.icons);
+      const savedEquippedItems = await AsyncStorage.getItem(storageKeys.equipped);
 
-        if (savedIcons) {
-          setState((prev) => ({
-            ...prev,
-            selectedIcons: { ...prev.selectedIcons, ...JSON.parse(savedIcons) },
-          }));
-        }
+      if (savedIcons) {
+        setState((prev) => ({
+          ...prev,
+          selectedIcons: { ...prev.selectedIcons, ...JSON.parse(savedIcons) },
+        }));
+      }
 
         if (savedEquippedItems) {
           setState((prev) => ({
@@ -66,8 +67,51 @@ export const UserIconProvider: React.FC<{ children: ReactNode }> = ({ children }
       }
     };
 
-    loadIconPreferences();
+  // Load saved icon preferences on startup
+  useEffect(() => {
+    loadUserIconPreferences();
   }, []);
+
+  // Clean up old storage format (migration helper)
+  const cleanupOldStorage = async () => {
+    try {
+      await AsyncStorage.removeItem('@snap_vision_tab_icons');
+      await AsyncStorage.removeItem('@snap_vision_equipped_items');
+    } catch (error) {
+      console.error('Failed to cleanup old storage:', error);
+    }
+  };
+
+  // Listen to auth state changes to reset icons on logout and load on login
+  useEffect(() => {
+    // Clean up old storage format on first load
+    cleanupOldStorage();
+
+    const unsubscribe = auth().onAuthStateChanged(async (user) => {
+      if (!user) {
+        // User logged out - reset to defaults
+        setState({
+          selectedIcons: { ...DEFAULT_ICONS },
+          equippedItems: [...DEFAULT_EQUIPPED_ITEMS],
+        });
+      } else {
+        // User logged in - load their specific icon preferences
+        await loadUserIconPreferences();
+      }
+    });
+
+    return unsubscribe;
+  }, []);
+
+  // Helper to get user-specific storage keys
+  const getStorageKeys = () => {
+    const user = auth().currentUser;
+    const userId = user?.uid || 'default';
+    return {
+      icons: `@snap_vision_tab_icons_${userId}`,
+      equipped: `@snap_vision_equipped_items_${userId}`,
+    };
+  };
 
   // Update icon for a specific tab
   const equipIcon = async (tabType: string, iconName: string, itemId: string) => {
@@ -84,12 +128,10 @@ export const UserIconProvider: React.FC<{ children: ReactNode }> = ({ children }
       );
       const updatedEquippedItems = [...otherItemsOfSameTypeFiltered, itemId];
 
-      // Save to storage
-      await AsyncStorage.setItem('@snap_vision_tab_icons', JSON.stringify(updatedIcons));
-      await AsyncStorage.setItem(
-        '@snap_vision_equipped_items',
-        JSON.stringify(updatedEquippedItems),
-      );
+      // Save to user-specific storage
+      const storageKeys = getStorageKeys();
+      await AsyncStorage.setItem(storageKeys.icons, JSON.stringify(updatedIcons));
+      await AsyncStorage.setItem(storageKeys.equipped, JSON.stringify(updatedEquippedItems));
 
       // Update state
       setState({

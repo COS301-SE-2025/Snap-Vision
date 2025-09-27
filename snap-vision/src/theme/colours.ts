@@ -72,3 +72,49 @@ export const forestColors = {
   warning: '#f59e0b',
   secondary: '#15803d',
 };
+
+// Dark variants
+export const pinkDarkColors = {
+  background: '#13060fff',
+  text: '#f472b6',
+  subtleText: '#d946ef',
+  border: '#7c2d12',
+  card: '#2d1b20',
+  primary: '#ec4899',
+  roleSecondary: '#be185d',
+  statusActive: '#10b981',
+  statusInactive: '#f59e0b',
+  danger: '#ef4444',
+  warning: '#f59e0b',
+  secondary: '#f9a8d4',
+};
+
+export const oceanDarkColors = {
+  background: '#070a12ff',
+  text: '#7dd3fc',
+  subtleText: '#38bdf8',
+  border: '#1e3a8a',
+  card: '#1e293b',
+  primary: '#0ea5e9',
+  roleSecondary: '#0369a1',
+  statusActive: '#10b981',
+  statusInactive: '#f59e0b',
+  danger: '#ef4444',
+  warning: '#f59e0b',
+  secondary: '#93c5fd',
+};
+
+export const forestDarkColors = {
+  background: '#081309ff',
+  text: '#86efac',
+  subtleText: '#4ade80',
+  border: '#166534',
+  card: '#1a2e1c',
+  primary: '#22c55e',
+  roleSecondary: '#15803d',
+  statusActive: '#10b981',
+  statusInactive: '#f59e0b',
+  danger: '#ef4444',
+  warning: '#f59e0b',
+  secondary: '#bbf7d0',
+};

@@ -1,4 +1,3 @@
-// src/components/molecules/WelcomeHeader.tsx
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import auth from '@react-native-firebase/auth';
@@ -103,6 +102,6 @@ const styles = StyleSheet.create({
     width: 94,
     height: 94,
     marginLeft: 18,
-    marginBottom: -40,
+    marginBottom: -30,
   },
 });

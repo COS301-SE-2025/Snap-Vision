@@ -12,8 +12,8 @@ interface BadgePopupProps {
 }
 
 export default function BadgePopup({ badgeId, onClose }: BadgePopupProps) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const [fadeAnim] = useState(new Animated.Value(0));
   const { state } = useBadges();
   const badge = state.badges[badgeId];

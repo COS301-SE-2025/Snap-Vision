@@ -6,7 +6,7 @@ import { useTheme } from '../theme/ThemeContext';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 
-import { ThemeName } from '../theme';
+import { ThemeName, BaseTheme } from '../theme';
 
 // Define the shape of shop items
 export interface ShopItem {
@@ -17,63 +17,54 @@ export interface ShopItem {
   cost: number;
   itemType: 'icon' | 'theme';
   tabType?: 'Home' | 'Map' | 'Achievements' | 'Settings'; // For icons
-  themeType?: ThemeName; // For themes
+  baseThemeType?: BaseTheme; // For themes - now using base themes
   equipped?: boolean;
 }
 
 const SHOP_ITEMS: ShopItem[] = [
-  // Theme items
+  // Theme items - now using base themes
   {
     id: 'theme-light',
-    title: 'Light Theme',
-    description: 'Classic light theme with warm colors',
+    title: 'Classic Theme',
+    description: 'Classic light/dark theme with warm colors',
     icon: 'sunny-outline',
     itemType: 'theme',
-    themeType: 'light',
+    baseThemeType: 'light',
     cost: 0, // Free (default)
     equipped: true,
   },
   {
-    id: 'theme-dark',
-    title: 'Dark Theme',
-    description: 'Dark theme for low-light environments',
-    icon: 'moon-outline',
-    itemType: 'theme',
-    themeType: 'dark',
-    cost: 0, // Free (default)
-  },
-  {
     id: 'theme-pink',
     title: 'Pink Theme',
-    description: 'Beautiful pink theme with soft colors',
+    description: 'Beautiful pink theme with light and dark modes',
     icon: 'heart-outline',
     itemType: 'theme',
-    themeType: 'pink',
-    cost: 5,
+    baseThemeType: 'pink',
+    cost: 20,
   },
   {
     id: 'theme-ocean',
     title: 'Ocean Theme',
-    description: 'Refreshing blue ocean-inspired theme',
+    description: 'Refreshing blue ocean theme with light and dark modes',
     icon: 'water-outline',
     itemType: 'theme',
-    themeType: 'ocean',
-    cost: 5,
+    baseThemeType: 'ocean',
+    cost: 20,
   },
   {
     id: 'theme-forest',
     title: 'Forest Theme',
-    description: 'Natural green forest theme',
+    description: 'Natural green forest theme with light and dark modes',
     icon: 'leaf-outline',
     itemType: 'theme',
-    themeType: 'forest',
-    cost: 5,
+    baseThemeType: 'forest',
+    cost: 20,
   },
 
   // Home tab icons
   {
     id: 'home-icon-home',
-    title: 'Standard Home',
+    title: 'Standard Home Icon',
     description: 'Classic home icon for the Home tab',
     icon: 'home-outline',
     itemType: 'icon',
@@ -83,54 +74,54 @@ const SHOP_ITEMS: ShopItem[] = [
   },
   {
     id: 'home-icon-home-heart',
-    title: 'Home Heart',
+    title: 'Home Heart Icon',
     description: 'A cozy home icon with a heart',
     icon: 'heart',
     itemType: 'icon',
     tabType: 'Home',
-    cost: 25,
+    cost: 10,
   },
   {
     id: 'home-icon-planet',
-    title: 'Planet Home',
+    title: 'Planet Home Icon',
     description: 'Earth icon for the Home tab',
     icon: 'planet',
     itemType: 'icon',
     tabType: 'Home',
-    cost: 25,
+    cost: 10,
   },
   {
     id: 'home-icon-home-filled',
-    title: 'Solid Home',
+    title: 'Solid Home Icon',
     description: 'A solid home icon for a bold look',
     icon: 'home',
     itemType: 'icon',
     tabType: 'Home',
-    cost: 50,
+    cost: 10,
   },
   {
     id: 'home-icon-apps',
-    title: 'Apps Grid',
+    title: 'Apps Grid Icon',
     description: 'A grid of apps for your home screen',
     icon: 'apps',
     itemType: 'icon',
     tabType: 'Home',
-    cost: 50,
+    cost: 10,
   },
   {
     id: 'home-icon-desktop',
-    title: 'Desktop',
+    title: 'Desktop Icon',
     description: 'A sleek desktop computer icon',
     icon: 'desktop',
     itemType: 'icon',
     tabType: 'Home',
-    cost: 100,
+    cost: 10,
   },
 
   // Map tab icons
   {
     id: 'map-icon-map',
-    title: 'Standard Map',
+    title: 'Standard Map Icon',
     description: 'Classic map icon for the Map tab',
     icon: 'map-outline',
     itemType: 'icon',
@@ -140,54 +131,54 @@ const SHOP_ITEMS: ShopItem[] = [
   },
   {
     id: 'map-icon-compass',
-    title: 'Compass',
+    title: 'Compass Icon',
     description: 'Navigate with a classic compass icon',
     icon: 'compass',
     itemType: 'icon',
     tabType: 'Map',
-    cost: 25,
+    cost: 10,
   },
   {
     id: 'map-icon-globe',
-    title: 'Globe',
+    title: 'Globe Icon',
     description: 'See the world with a globe icon',
     icon: 'globe',
     itemType: 'icon',
     tabType: 'Map',
-    cost: 25,
+    cost: 10,
   },
   {
     id: 'map-icon-navigate',
-    title: 'Navigate',
+    title: 'Navigate Icon',
     description: 'A navigation arrow for finding your way',
     icon: 'navigate',
     itemType: 'icon',
     tabType: 'Map',
-    cost: 50,
+    cost: 10,
   },
   {
     id: 'map-icon-location',
-    title: 'Location Pin',
+    title: 'Location Pin Icon',
     description: 'Mark your spot with a location pin',
     icon: 'location',
     itemType: 'icon',
     tabType: 'Map',
-    cost: 50,
+    cost: 10,
   },
   {
     id: 'map-icon-map-filled',
-    title: 'Solid Map',
+    title: 'Solid Map Icon',
     description: 'A solid map icon for clear navigation',
     icon: 'map',
     itemType: 'icon',
     tabType: 'Map',
-    cost: 100,
+    cost: 10,
   },
 
   // Achievements tab icons
   {
     id: 'achievements-icon-trophy',
-    title: 'Standard Trophy',
+    title: 'Standard Trophy Icon',
     description: 'Classic trophy icon for achievements',
     icon: 'trophy-outline',
     itemType: 'icon',
@@ -197,54 +188,54 @@ const SHOP_ITEMS: ShopItem[] = [
   },
   {
     id: 'achievements-icon-ribbon',
-    title: 'Ribbon',
+    title: 'Ribbon Icon',
     description: 'Award ribbon for your accomplishments',
     icon: 'ribbon',
     itemType: 'icon',
     tabType: 'Achievements',
-    cost: 25,
+    cost: 10,
   },
   {
     id: 'achievements-icon-medal',
-    title: 'Medal',
+    title: 'Medal Icon',
     description: 'Gold medal for achievements tab',
     icon: 'medal',
     itemType: 'icon',
     tabType: 'Achievements',
-    cost: 25,
+    cost: 10,
   },
   {
     id: 'achievements-icon-star',
-    title: 'Star',
+    title: 'Star Icon',
     description: 'A shining star for your achievements',
     icon: 'star',
     itemType: 'icon',
     tabType: 'Achievements',
-    cost: 50,
+    cost: 10,
   },
   {
     id: 'achievements-icon-trophy-filled',
-    title: 'Solid Trophy',
+    title: 'Solid Trophy Icon',
     description: 'A bold, solid trophy icon',
     icon: 'trophy',
     itemType: 'icon',
     tabType: 'Achievements',
-    cost: 50,
+    cost: 10,
   },
   {
     id: 'achievements-icon-sparkles',
-    title: 'Sparkles',
+    title: 'Sparkles Icon',
     description: 'Celebrate your achievements with sparkles',
     icon: 'sparkles',
     itemType: 'icon',
     tabType: 'Achievements',
-    cost: 100,
+    cost: 10,
   },
 
   // Settings tab icons
   {
     id: 'settings-icon-settings',
-    title: 'Standard Settings',
+    title: 'Standard Settings Icon',
     description: 'Classic gear icon for settings',
     icon: 'settings-outline',
     itemType: 'icon',
@@ -254,48 +245,48 @@ const SHOP_ITEMS: ShopItem[] = [
   },
   {
     id: 'settings-icon-options',
-    title: 'Options',
+    title: 'Options Icon',
     description: 'Options icon for the settings tab',
     icon: 'options',
     itemType: 'icon',
     tabType: 'Settings',
-    cost: 25,
+    cost: 10,
   },
   {
     id: 'settings-icon-cog',
-    title: 'Fancy Cog',
+    title: 'Fancy Cog Icon',
     description: 'Premium cog icon for the settings tab',
     icon: 'cog',
     itemType: 'icon',
     tabType: 'Settings',
-    cost: 25,
+    cost: 10,
   },
   {
     id: 'settings-icon-construct',
-    title: 'Tools',
+    title: 'Tools Icon',
     description: 'Construction tools for settings',
     icon: 'construct',
     itemType: 'icon',
     tabType: 'Settings',
-    cost: 50,
+    cost: 10,
   },
   {
     id: 'settings-icon-settings-filled',
-    title: 'Solid Settings',
+    title: 'Solid Settings Icon',
     description: 'A bold, solid settings gear icon',
     icon: 'settings',
     itemType: 'icon',
     tabType: 'Settings',
-    cost: 50,
+    cost: 10,
   },
   {
     id: 'settings-icon-build',
-    title: 'Build',
+    title: 'Build Icon',
     description: 'Wrench icon for adjusting your settings',
     icon: 'build',
     itemType: 'icon',
     tabType: 'Settings',
-    cost: 100,
+    cost: 10,
   },
 ];
 
@@ -334,13 +325,13 @@ interface UseShopManagerReturn {
   handlePurchase: (item: ShopItem) => Promise<void>;
   handleEquipItem: (item: ShopItem) => Promise<void>;
   isItemOwned: (item: ShopItem) => boolean;
-  isThemeEquipped: (themeName: ThemeName) => boolean;
+  isThemeEquipped: (baseThemeType: BaseTheme) => boolean;
 }
 
 export const useShopManager = (): UseShopManagerReturn => {
   const { state: badgeState, setState: setBadgeState } = useBadges();
   const { equipIcon, isItemEquipped } = useUserIcons();
-  const { theme, setTheme } = useTheme();
+  const { theme, baseTheme, setBaseTheme, setTheme } = useTheme();
   const [selectedTab, setSelectedTab] = useState<string>('Themes'); // Default to Themes to show new functionality
 
   // Popup state
@@ -436,8 +427,8 @@ export const useShopManager = (): UseShopManagerReturn => {
       if (item.tabType) {
         newPurchase.tabType = item.tabType;
       }
-      if (item.themeType) {
-        newPurchase.themeType = item.themeType;
+      if (item.baseThemeType) {
+        newPurchase.baseThemeType = item.baseThemeType;
       }
       const updatedPurchases = [...prevPurchases, newPurchase];
       // Update Firestore
@@ -483,9 +474,9 @@ export const useShopManager = (): UseShopManagerReturn => {
   // Function to equip an item (icon or theme)
   const handleEquipItem = async (item: ShopItem) => {
     try {
-      if (item.itemType === 'theme' && item.themeType) {
+      if (item.itemType === 'theme' && item.baseThemeType) {
         // Handle theme equipping
-        await setTheme(item.themeType);
+        await setBaseTheme(item.baseThemeType);
         setPopup({
           visible: true,
           title: 'Theme Applied',
@@ -525,9 +516,9 @@ export const useShopManager = (): UseShopManagerReturn => {
     }
   };
 
-  // Check if a theme is currently equipped
-  const isThemeEquipped = (themeName: ThemeName): boolean => {
-    return theme === themeName;
+  // Check if a base theme is currently equipped
+  const isThemeEquipped = (baseThemeType: BaseTheme): boolean => {
+    return baseTheme === baseThemeType;
   };
 
   // Filtered shop items based on selected tab
