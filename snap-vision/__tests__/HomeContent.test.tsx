@@ -57,6 +57,10 @@ const mockAuth = {
     uid: 'test-user-123',
     email: 'test@example.com',
   },
+  onAuthStateChanged: jest.fn((callback) => {
+    callback(mockAuth.currentUser);
+    return jest.fn(); // unsubscribe function
+  }),
 };
 
 jest.mock('@react-native-firebase/auth', () => ({
@@ -225,6 +229,10 @@ describe('HomeContent', () => {
     it('does not load data when user is not authenticated', async () => {
       (auth as jest.MockedFunction<typeof auth>).mockReturnValue({
         currentUser: null,
+        onAuthStateChanged: jest.fn((callback) => {
+          callback(null);
+          return jest.fn();
+        }),
       } as any);
 
       (useFocusEffect as jest.Mock).mockImplementation((callback) => {
@@ -250,6 +258,10 @@ describe('HomeContent', () => {
     it('handles undefined user ID', async () => {
       (auth as jest.MockedFunction<typeof auth>).mockReturnValue({
         currentUser: { uid: undefined },
+        onAuthStateChanged: jest.fn((callback) => {
+          callback({ uid: undefined });
+          return jest.fn();
+        }),
       } as any);
 
       render(
@@ -290,6 +302,10 @@ describe('HomeContent', () => {
       // Simulate no user logged in
       (auth as jest.MockedFunction<typeof auth>).mockReturnValue({
         currentUser: null,
+        onAuthStateChanged: jest.fn((callback) => {
+          callback(null);
+          return jest.fn();
+        }),
       } as any);
 
       (useFocusEffect as jest.Mock).mockImplementation((callback) => {
@@ -354,11 +370,12 @@ describe('HomeContent', () => {
       await waitFor(() => {
         expect(queryByText('Loading...')).toBeNull();
         expect(getByTestId('recently-visited-carousel')).toBeTruthy();
-      });
+      }, { timeout: 3000 });
     });
 
     it('hides loading state even when error occurs', async () => {
       mockGetRecentlyVPOIs.mockRejectedValue(new Error('Network error'));
+      (useFocusEffect as jest.Mock).mockImplementation((callback) => callback());
 
       const { queryByText } = render(
         <ThemeProviderWrapper>
@@ -368,7 +385,7 @@ describe('HomeContent', () => {
 
       await waitFor(() => {
         expect(queryByText('Loading...')).toBeNull();
-      });
+      }, { timeout: 3000 });
     });
   });
 

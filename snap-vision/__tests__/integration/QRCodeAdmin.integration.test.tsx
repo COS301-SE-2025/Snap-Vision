@@ -6,10 +6,23 @@ import * as qrService from '../../src/services/qrService';
 
 // Mock the Firebase modules
 jest.mock('@react-native-firebase/firestore', () => {
+  const mockTimestamp = {
+    seconds: 1234567890,
+    nanoseconds: 0,
+    toDate: jest.fn(() => new Date(1234567890000)),
+    toMillis: jest.fn(() => 1234567890000),
+    isEqual: jest.fn(() => false),
+    toJSON: jest.fn(() => ({ seconds: 1234567890, nanoseconds: 0 })),
+  };
+  const mockTimestampNow = jest.fn(() => mockTimestamp);
+
   const firestoreMock = {
     collection: jest.fn(),
     doc: jest.fn(),
     collectionGroup: jest.fn(),
+    Timestamp: {
+      now: mockTimestampNow,
+    },
   };
 
   const mockUserData = {
@@ -48,16 +61,24 @@ jest.mock('@react-native-firebase/firestore', () => {
   firestoreMock.collection.mockReturnValue(mockCollectionRef);
   firestoreMock.doc.mockReturnValue(mockDocRef);
   firestoreMock.collectionGroup.mockReturnValue(mockCollectionRef);
-
+  firestoreMock.Timestamp = {
+    now: mockTimestampNow,
+  };
   return jest.fn(() => firestoreMock);
 });
 
 jest.mock('@react-native-firebase/auth', () => {
-  return jest.fn(() => ({
+  const mockAuth = {
     currentUser: {
       uid: 'test-uid',
     },
-  }));
+    onAuthStateChanged: jest.fn((callback) => {
+      callback(mockAuth.currentUser);
+      return jest.fn(); // unsubscribe function
+    }),
+  };
+
+  return jest.fn(() => mockAuth);
 });
 
 jest.mock('@react-navigation/native', () => ({
@@ -155,7 +176,7 @@ const mockRooms = [
   },
 ];
 
-const mockQRCodes = [
+const mockQRCodes: any = [
   {
     id: 'qr1',
     roomId: 'rm1',
@@ -163,8 +184,18 @@ const mockQRCodes = [
     buildingId: 'bld1',
     buildingName: 'Engineering Building',
     floorId: 'flr1',
+    locationId: 'loc1',
     qrValue: 'qr:loc1:bld1:flr1:rm1:abc123',
     description: 'Entrance QR',
+    createdAt: {
+      seconds: 1234567890,
+      nanoseconds: 0,
+      toDate: jest.fn(() => new Date(1234567890000)),
+      toMillis: jest.fn(() => 1234567890000),
+      isEqual: jest.fn(() => false),
+      toJSON: jest.fn(() => ({ seconds: 1234567890, nanoseconds: 0 })),
+    },
+    createdBy: 'test-uid',
   },
 ];
 

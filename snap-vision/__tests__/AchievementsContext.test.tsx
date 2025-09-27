@@ -20,6 +20,10 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 // Mock all necessary native modules
 jest.mock('@react-native-firebase/auth', () => () => ({
   currentUser: { uid: 'test-uid' },
+  onAuthStateChanged: jest.fn((callback) => {
+    callback({ uid: 'test-uid' });
+    return jest.fn(); // unsubscribe function
+  }),
 }));
 jest.mock('@react-native-firebase/perf', () => ({
   __esModule: true,

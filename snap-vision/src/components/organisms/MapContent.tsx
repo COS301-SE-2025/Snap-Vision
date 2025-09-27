@@ -505,7 +505,7 @@ const MapContent: React.FC<MapContentProps> = ({
                 style={{ marginRight: 12 }}
               />
               <Text style={{ color: colors.text, fontWeight: '600', fontSize: 16 }}>
-                Finding your location...
+                Finding Location...
               </Text>
             </View>
           ) : (

@@ -32,6 +32,12 @@ const mockAuth = {
     uid: 'test-user-123',
     email: 'test@example.com',
   },
+  onAuthStateChanged: jest.fn((callback) => {
+    // Call the callback immediately with the current user
+    setTimeout(() => callback(mockAuth.currentUser), 0);
+    // Return unsubscribe function
+    return jest.fn();
+  }),
 };
 
 jest.mock('@react-native-firebase/auth', () => ({
@@ -271,6 +277,10 @@ describe('HomeContent Integration Tests', () => {
     it('handles null currentUser and executes early return (Line 36)', async () => {
       (auth as jest.MockedFunction<typeof auth>).mockReturnValue({
         currentUser: null,
+        onAuthStateChanged: jest.fn((callback) => {
+          setTimeout(() => callback(null), 0);
+          return jest.fn();
+        }),
       } as any);
 
       let focusCallback: () => void;
@@ -299,6 +309,10 @@ describe('HomeContent Integration Tests', () => {
     it('handles undefined uid and executes early return', async () => {
       (auth as jest.MockedFunction<typeof auth>).mockReturnValue({
         currentUser: { uid: undefined },
+        onAuthStateChanged: jest.fn((callback) => {
+          setTimeout(() => callback({ uid: undefined }), 0);
+          return jest.fn();
+        }),
       } as any);
 
       let focusCallback: () => void;
@@ -326,6 +340,10 @@ describe('HomeContent Integration Tests', () => {
     it('handles empty string uid and executes early return', async () => {
       (auth as jest.MockedFunction<typeof auth>).mockReturnValue({
         currentUser: { uid: '' },
+        onAuthStateChanged: jest.fn((callback) => {
+          setTimeout(() => callback({ uid: '' }), 0);
+          return jest.fn();
+        }),
       } as any);
 
       let focusCallback: () => void;
