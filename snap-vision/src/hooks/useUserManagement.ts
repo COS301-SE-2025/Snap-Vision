@@ -114,7 +114,9 @@ export const useUserManagement = () => {
     try {
       // Validate inputs
       const validUserId = InputValidator.validateUserId(user.id);
-      const validRole = InputValidator.validateRole(user.role.toLowerCase());
+      // Convert UI role to database role
+      const databaseRole = user.role === 'Viewer' ? 'user' : user.role.toLowerCase();
+      const validRole = InputValidator.validateRole(databaseRole);
 
       if (!validUserId || !validRole) {
         throw new Error('Invalid user data');
@@ -148,6 +150,10 @@ export const useUserManagement = () => {
 
         case 'editor':
           updateData.adminLocations = validLocations;
+          break;
+
+        case 'user': 
+          updateData.adminLocations = firestore.FieldValue.delete();
           break;
 
         default:
