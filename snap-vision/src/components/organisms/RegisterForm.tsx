@@ -47,6 +47,14 @@ export default function RegisterForm() {
   // Success message state
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
+  // Popup states
+  const [showError, setShowError] = useState(false);
+  const [errorTitle, setErrorTitle] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successTitle, setSuccessTitle] = useState('');
+  const [successMessageState, setSuccessMessageState] = useState('');
+
   const handleRegister = async () => {
     const trace = await perf().newTrace('registration_latency');
     await trace.start();
@@ -63,7 +71,7 @@ export default function RegisterForm() {
       newErrors.email = 'Email is required.';
       hasError = true;
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = 'Invalid email format.';
+      newErrors.email = 'Please enter a valid email address.';
       hasError = true;
     }
 
@@ -119,7 +127,9 @@ export default function RegisterForm() {
 
       setHasSeenLanding(false); // triggers Landing screen on registration
       unlock('first-login');
-      setShowSuccessMessage(true);
+      setSuccessTitle('Registration Successful');
+      setSuccessMessageState('Your account has been created successfully!');
+      setShowSuccess(true);
       setSuccessMessage('Account created!');
       // Navigate after success
       setTimeout(() => {
@@ -140,11 +150,9 @@ export default function RegisterForm() {
         'auth/weak-password': 'Password is too weak.',
       };
       const msg = errorMessages[error?.code] || 'Registration failed.';
-      // Using inline error messages only
-      setErrors({
-        ...newErrors,
-        email: msg,
-      });
+      setErrorTitle('Registration Error');
+      setErrorMessage(msg);
+      setShowError(true);
     } finally {
       await trace.stop();
     }

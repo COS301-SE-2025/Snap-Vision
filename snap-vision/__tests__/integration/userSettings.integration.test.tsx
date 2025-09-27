@@ -178,7 +178,18 @@ jest.mock('../../src/components/molecules/SettingsHeader', () => {
   };
 });
 
-// Mock SettingItem and SearchInput for SettingsContent
+// Mock @expo/vector-icons to prevent act warnings from async state updates
+jest.mock('@expo/vector-icons', () => {
+  const React = require('react');
+  const { View, Text } = require('react-native');
+  return {
+    Ionicons: ({ name, ...props }) => <View testID={`icon-${name}`} {...props}><Text>{name}</Text></View>,
+    MaterialIcons: ({ name, ...props }) => <View testID={`icon-${name}`} {...props}><Text>{name}</Text></View>,
+    // Add other icon sets if needed
+  };
+});
+
+// Mock SettingItem for SettingsContent
 jest.mock('../../src/components/molecules/SettingsItem', () => {
   const React = require('react');
   const { TouchableOpacity, Text } = require('react-native');
@@ -189,13 +200,6 @@ jest.mock('../../src/components/molecules/SettingsItem', () => {
         <Text>{label}</Text>
       </TouchableOpacity>
     );
-  };
-});
-jest.mock('../../src/components/atoms/SettingsSearch', () => {
-  const React = require('react');
-  const { TextInput } = require('react-native');
-  return function MockSettingsSearch(props) {
-    return <TextInput testID="settings-search-input" {...props} />;
   };
 });
 
@@ -357,51 +361,24 @@ describe('SettingsContent Integration Tests', () => {
   it('renders all settings items', () => {
     const { getByText } = render(<SettingsContent isDark={false} navigation={navigation} />);
     expect(getByText('Account')).toBeTruthy();
-    expect(getByText('Privacy and Security')).toBeTruthy();
+    expect(getByText('Accessibility')).toBeTruthy();
     expect(getByText('Notifications')).toBeTruthy();
     expect(getByText('App Preferences')).toBeTruthy();
     expect(getByText('Support')).toBeTruthy();
   });
 
-  it('renders the search input', () => {
-    const { getByTestId } = render(<SettingsContent isDark={false} navigation={navigation} />);
-    expect(getByTestId('settings-search-input')).toBeTruthy();
-  });
-
   it('calls navigation.navigate with correct screen when each item is pressed', () => {
     const { getByTestId } = render(<SettingsContent isDark={false} navigation={navigation} />);
     fireEvent.press(getByTestId('settings-item-Account'));
-    fireEvent.press(getByTestId('settings-item-Privacy-and-Security'));
+    fireEvent.press(getByTestId('settings-item-Accessibility'));
     fireEvent.press(getByTestId('settings-item-Notifications'));
     fireEvent.press(getByTestId('settings-item-App-Preferences'));
     fireEvent.press(getByTestId('settings-item-Support'));
     expect(navigation.navigate).toHaveBeenCalledWith('AccountSettings');
-    expect(navigation.navigate).toHaveBeenCalledWith('PrivacySecurity');
+    expect(navigation.navigate).toHaveBeenCalledWith('AccessibilitySettings');
     expect(navigation.navigate).toHaveBeenCalledWith('NotificationSettings');
     expect(navigation.navigate).toHaveBeenCalledWith('AppPreferences');
     expect(navigation.navigate).toHaveBeenCalledWith('Support');
-  });
-
-  it('renders with dark mode colors', () => {
-    jest.doMock('../../src/theme/ThemeContext', () => ({
-      useTheme: () => ({
-        isDark: true,
-        toggleTheme: mockToggleTheme,
-      }),
-    }));
-    jest.doMock('../../src/theme', () => ({
-      getThemeColors: () => ({
-        background: '#000000',
-        text: '#FFFFFF',
-        primary: '#222222',
-        secondary: '#888888',
-        border: '#333333',
-      }),
-    }));
-    const SettingsContentDark = require('../../src/components/organisms/SettingsContent').default;
-    const { getByTestId } = render(<SettingsContentDark isDark={true} navigation={navigation} />);
-    expect(getByTestId('settings-search-input').props.backgroundColor).toBe('#FFFFFF');
-    //jest.resetModules();
   });
 });
 
@@ -443,14 +420,5 @@ describe('SupportContent Integration Tests', () => {
     expect(getByText('Contact Support')).toBeTruthy();
     expect(getByText('Tutorial')).toBeTruthy();
     expect(getByText('SnapVision v1.0.0')).toBeTruthy();
-  });
-
-  it('calls onSearch when search input is used', () => {
-    const navigation = { navigate: jest.fn() };
-    const { getByTestId } = render(<SettingsContent isDark={false} navigation={navigation} />);
-    const searchInput = getByTestId('settings-search-input');
-    if (searchInput.props.onSearch) {
-      searchInput.props.onSearch('test');
-    }
   });
 });

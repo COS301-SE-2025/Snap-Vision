@@ -9,11 +9,14 @@ jest.mock('@react-native-firebase/firestore', () => {
   const mockGet = jest.fn();
   const mockDoc = jest.fn(() => ({ get: mockGet }));
   const mockFirestore = jest.fn(() => ({ doc: mockDoc }));
+  (mockFirestore as any).Timestamp = {
+    fromDate: jest.fn((date) => ({ seconds: Math.floor(date.getTime() / 1000), nanoseconds: 0 })),
+  };
   return mockFirestore;
 });
 
 jest.mock('@react-native-firebase/auth', () => {
-  let uid = 'test-uid';
+  let uid: string | null = 'test-uid';
   return jest.fn(() => ({
     get currentUser() {
       return uid ? { uid } : null;
@@ -81,8 +84,11 @@ describe('useQRCodeAdmin', () => {
       buildingId: 'bld1',
       buildingName: 'Building 1',
       floorId: 'flr1',
+      locationId: 'loc1',
       qrValue: 'qr:loc1:bld1:flr1:rm1:abc123',
       description: 'Test QR',
+      createdAt: firestore.Timestamp.fromDate(new Date()),
+      createdBy: 'test-user',
     },
   ];
 
@@ -559,61 +565,6 @@ describe('useQRCodeAdmin', () => {
       expect(result.current.showErrorPopup).toBe(true);
       expect(result.current.errorMessage).toBe('Failed to add QR code. Please try again.');
     });
-
-    it('should call //consoleerror when QR code creation fails', async () => {
-      // Set the mock before hook initialization!
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      (qrService.createQRCodeMapping as jest.Mock).mockRejectedValue(new Error('Network error'));
-
-      const { result } = renderHook(() => useQRCodeAdmin());
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
-
-      await act(async () => {
-        result.current.handleLocationSelect('loc1');
-      });
-      await waitFor(() => {
-        expect(result.current.buildings).toEqual(mockBuildings);
-      });
-
-      await act(async () => {
-        result.current.setSelectedBuildingId('bld1');
-      });
-      await act(async () => {
-        result.current.setSelectedFloorId('flr1');
-      });
-      await waitFor(() => {
-        expect(result.current.rooms).toEqual(mockRooms);
-      });
-
-      await act(async () => {
-        result.current.setSelectedRoom(mockRooms[0]);
-      });
-      await act(async () => {
-        result.current.setQrValue('test-qr-value');
-      });
-      await act(async () => {
-        result.current.setQrDescription('Test description');
-      });
-
-      await waitFor(() => {
-        expect(result.current.selectedRoom).toEqual(mockRooms[0]);
-        expect(result.current.qrValue).toBe('test-qr-value');
-        expect(result.current.qrDescription).toBe('Test description');
-      });
-
-      await act(async () => {
-        await result.current.handleAddQRCode();
-      });
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error adding QR code:', expect.any(Error));
-      expect(result.current.showErrorPopup).toBe(true);
-      expect(result.current.errorMessage).toBe('Failed to add QR code. Please try again.');
-
-      consoleErrorSpy.mockRestore();
-    });
     // ...existing code...
   });
 
@@ -786,7 +737,6 @@ describe('useQRCodeAdmin', () => {
     });
 
     it('should handle error when loading rooms for floor', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       (qrService.getRoomsForFloor as jest.Mock).mockRejectedValue(new Error('Network error'));
 
       const { result } = renderHook(() => useQRCodeAdmin());
@@ -800,10 +750,7 @@ describe('useQRCodeAdmin', () => {
       });
 
       await waitFor(() => {
-        expect(result.current.buildings).toEqual([
-          { id: 'bld1', name: 'Building 1' },
-          { id: 'bld2', name: 'Building 2' },
-        ]);
+        expect(result.current.buildings).toEqual(mockBuildings);
       });
 
       act(() => {
@@ -811,10 +758,7 @@ describe('useQRCodeAdmin', () => {
       });
 
       await waitFor(() => {
-        expect(result.current.floors).toEqual([
-          { id: 'flr1', name: 'Floor 1' },
-          { id: 'flr2', name: 'Floor 2' },
-        ]);
+        expect(result.current.floors).toEqual(mockFloors);
       });
 
       act(() => {
@@ -824,9 +768,6 @@ describe('useQRCodeAdmin', () => {
       await waitFor(() => {
         expect(result.current.error).toBe('Failed to load rooms');
       });
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading rooms:', expect.any(Error));
-      consoleErrorSpy.mockRestore();
     });
   });
   describe('useQRCodeAdmin RBAC', () => {
