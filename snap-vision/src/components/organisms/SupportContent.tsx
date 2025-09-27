@@ -30,6 +30,12 @@ export default function SupportContent() {
       description: 'View the tutorial to learn how to use SnapVision',
       onPress: () => navigation.navigate('Tutorial'),
     },
+    {
+      title: 'User Manual',
+      icon: 'book-open-variant',
+      description: 'Access the complete user manual.',
+      onPress: () => navigation.navigate('UserManual'),
+    },
   ];
 
   return (
