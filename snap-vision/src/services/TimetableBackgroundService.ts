@@ -63,6 +63,9 @@ class TimetableBackgroundService {
     // Schedule notifications for the next 7 days
     await this.scheduleWeekNotifications();
 
+    // Clean up expired popups on start
+    await this.cleanupExpiredPopups();
+
     // Handle app state changes using the new subscription pattern
     this.appStateSubscription = AppState.addEventListener('change', this.handleAppStateChange);
   }
@@ -82,8 +85,27 @@ class TimetableBackgroundService {
     if (nextAppState === 'active') {
       // Re-schedule when app becomes active
       this.scheduleWeekNotifications();
+      this.cleanupExpiredPopups();
     }
   };
+
+  // Clean up expired popups
+  async cleanupExpiredPopups() {
+    try {
+      const popupData = await AsyncStorage.getItem('pendingClassPopup');
+      if (popupData) {
+        const classData = JSON.parse(popupData);
+        const now = Date.now();
+        
+        if (classData.expiresAt && now > classData.expiresAt) {
+          console.log('[TimetableService] Cleaning up expired popup for:', classData.course);
+          await AsyncStorage.removeItem('pendingClassPopup');
+        }
+      }
+    } catch (error) {
+      console.error('[TimetableService] Error cleaning up expired popups:', error);
+    }
+  }
 
   private async getTimetableEntries(): Promise<TimetableEntry[]> {
     try {

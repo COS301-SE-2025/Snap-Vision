@@ -557,6 +557,15 @@ const MapScreen = () => {
           const popupData = await AsyncStorage.getItem('pendingClassPopup');
           if (popupData) {
             const classData = JSON.parse(popupData);
+
+            // Check if the popup has expired (class start time has passed)
+            const now = Date.now();
+            if (classData.expiresAt && now > classData.expiresAt) {
+              console.log('[MapScreen] Class popup expired, removing from storage');
+              await AsyncStorage.removeItem('pendingClassPopup');
+              return;
+            }
+
             await AsyncStorage.removeItem('pendingClassPopup');
 
             console.log('[MapScreen] Found pending class popup:', classData);
@@ -587,6 +596,19 @@ const MapScreen = () => {
       };
 
       const processClassPopup = (classData: any) => {
+        // Check if class time has passed before showing popup
+        if (classData.startTime) {
+          const now = new Date();
+          const classStartTime = new Date();
+          const [hours, minutes] = classData.startTime.split(':').map(Number);
+          classStartTime.setHours(hours, minutes, 0, 0);
+          
+          if (now > classStartTime) {
+            console.log('[MapScreen] Class time has passed, not showing popup');
+            return;
+          }
+        }
+        
         // Find the building for this class
         let building = null;
 

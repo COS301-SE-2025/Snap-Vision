@@ -81,6 +81,16 @@ function AppInner() {
           if (action === 'open_class_popup') {
             console.log('[App] Handling class popup action');
 
+            const now = new Date();
+            const classStartTime = new Date();
+            const [hours, minutes] = String(data.startTime).split(':').map(Number);
+            classStartTime.setHours(hours, minutes, 0, 0);
+
+            if (now > classStartTime) {
+              console.log('[App] Class time has passed, not showing popup');
+              return;
+            }
+
             // Store the class data for the popup
             await AsyncStorage.setItem(
               'pendingClassPopup',
@@ -93,6 +103,7 @@ function AppInner() {
                 lat: data.lat,
                 lng: data.lng,
                 entryKey: entryKey,
+                expiresAt: classStartTime.getTime(),
               }),
             );
 
