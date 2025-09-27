@@ -223,14 +223,14 @@ const logRequest = (req, res, next) => {
     // Log security-relevant events
     if (statusCode === 401 || statusCode === 403) {
       //console.warn('Security event:', {
-        method,
-        path,
-        ip,
-        userId,
-        statusCode,
-        duration,
-        timestamp: new Date().toISOString()
-      });
+    //     method,
+    //     path,
+    //     ip,
+    //     userId,
+    //     statusCode,
+    //     duration,
+    //     timestamp: new Date().toISOString()
+    //   });
     }
   });
   

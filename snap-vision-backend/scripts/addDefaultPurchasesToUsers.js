@@ -36,4 +36,4 @@ async function addDefaultPurchasesToUsers() {
   //console.log('Default purchases added to users who were missing them.');
 }
 
-addDefaultPurchasesToUsers().catch(//console.error);
+addDefaultPurchasesToUsers().catch(console.error);
