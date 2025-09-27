@@ -1048,7 +1048,7 @@ const styles = StyleSheet.create({
   },
   qrScanButton: {
     position: 'absolute',
-    top: 70,
+    top: 90,
     right: 20,
     flexDirection: 'row',
     alignItems: 'center',
