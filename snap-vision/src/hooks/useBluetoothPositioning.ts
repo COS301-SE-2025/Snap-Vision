@@ -289,48 +289,48 @@ export function useBluetoothPositioning(opts: Options) {
   }, [anchorPoints]);
 
   // CALIBRATION: Validate beacon coordinate setup  
-  useEffect(() => {
-    if (anchorPoints.length >= 3) {
-      //console.log(BT, 'BEACON SETUP VALIDATION:');
+  // useEffect(() => {
+  //   if (anchorPoints.length >= 3) {
+  //     //console.log(BT, 'BEACON SETUP VALIDATION:');
       
-      // Check for coordinate stability
-      const coordinateHistory = new Map<string, {x: number, y: number}>();
+  //     // Check for coordinate stability
+  //     const coordinateHistory = new Map<string, {x: number, y: number}>();
       
-      anchorPoints.forEach((pt, i) => {
-        const beaconInfo = beaconsMeta.find(b => b.x === pt.x && b.y === pt.y);
-        const label = beaconInfo?.label || `Beacon ${i+1}`;
-        const mm = beaconInfo ? `${beaconInfo.major}|${beaconInfo.minor}` : 'unknown';
-        //console.log(BT, `  ${label} (${mm}): coordinates (${pt.x.toFixed(3)}, ${pt.y.toFixed(3)})`);
+  //     anchorPoints.forEach((pt, i) => {
+  //       const beaconInfo = beaconsMeta.find(b => b.x === pt.x && b.y === pt.y);
+  //       const label = beaconInfo?.label || `Beacon ${i+1}`;
+  //       const mm = beaconInfo ? `${beaconInfo.major}|${beaconInfo.minor}` : 'unknown';
+  //       //console.log(BT, `  ${label} (${mm}): coordinates (${pt.x.toFixed(3)}, ${pt.y.toFixed(3)})`);
         
-        // Store coordinate for stability check
-        if (beaconInfo) {
-          const key = `${beaconInfo.major}|${beaconInfo.minor}`;
-          const stored = coordinateHistory.get(key);
-          if (stored && (Math.abs(stored.x - pt.x) > 0.1 || Math.abs(stored.y - pt.y) > 0.1)) {
-            //console.log(BT, `  🚨 COORDINATE INSTABILITY DETECTED for ${mm}!`);
-            //console.log(BT, `     Previous: (${stored.x.toFixed(3)}, ${stored.y.toFixed(3)})`);
-            //console.log(BT, `     Current:  (${pt.x.toFixed(3)}, ${pt.y.toFixed(3)})`);
-            //console.log(BT, `     This will cause positioning errors - fix database coordinates!`);
-          }
-          coordinateHistory.set(key, {x: pt.x, y: pt.y});
-        }
-      });
+  //       // Store coordinate for stability check
+  //       if (beaconInfo) {
+  //         const key = `${beaconInfo.major}|${beaconInfo.minor}`;
+  //         const stored = coordinateHistory.get(key);
+  //         if (stored && (Math.abs(stored.x - pt.x) > 0.1 || Math.abs(stored.y - pt.y) > 0.1)) {
+  //           //console.log(BT, `  🚨 COORDINATE INSTABILITY DETECTED for ${mm}!`);
+  //           //console.log(BT, `     Previous: (${stored.x.toFixed(3)}, ${stored.y.toFixed(3)})`);
+  //           //console.log(BT, `     Current:  (${pt.x.toFixed(3)}, ${pt.y.toFixed(3)})`);
+  //           //console.log(BT, `     This will cause positioning errors - fix database coordinates!`);
+  //         }
+  //         coordinateHistory.set(key, {x: pt.x, y: pt.y});
+  //       }
+  //     });
       
-      // Check beacon spacing
-      const spacing = meanAnchorSpacing;
-      //console.log(BT, `  Mean beacon spacing: ${spacing.toFixed(3)} units`);
-      if (spacing < 0.3) //console.log(BT, '  ⚠️ Beacons may be too close together for accurate positioning');
-      if (spacing > 0.7) //console.log(BT, '  ⚠️ Beacons may be too far apart, consider adding more beacons');
+  //     // Check beacon spacing
+  //     const spacing = meanAnchorSpacing;
+  //     //console.log(BT, `  Mean beacon spacing: ${spacing.toFixed(3)} units`);
+  //     if (spacing < 0.3) //console.log(BT, '  ⚠️ Beacons may be too close together for accurate positioning');
+  //     if (spacing > 0.7) //console.log(BT, '  ⚠️ Beacons may be too far apart, consider adding more beacons');
       
-      // Check if beacons form a good triangle
-      if (anchorPoints.length === 3) {
-        const [a, b, c] = anchorPoints;
-        const area = Math.abs((b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y)) / 2;
-        //console.log(BT, `  Triangle area: ${area.toFixed(4)} (>0.1 is good for positioning)`);
-        if (area < 0.1) //console.log(BT, '  ⚠️ Beacons are too close to a straight line - move one beacon');
-      }
-    }
-  }, [anchorPoints, beaconsMeta, meanAnchorSpacing]);
+  //     // Check if beacons form a good triangle
+  //     if (anchorPoints.length === 3) {
+  //       const [a, b, c] = anchorPoints;
+  //       const area = Math.abs((b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y)) / 2;
+  //       //console.log(BT, `  Triangle area: ${area.toFixed(4)} (>0.1 is good for positioning)`);
+  //       if (area < 0.1) console.log(BT, '  ⚠️ Beacons are too close to a straight line - move one beacon');
+  //     }
+  //   }
+  // }, [anchorPoints, beaconsMeta, meanAnchorSpacing]);
 
   const kExact = (u: string, M: number, m: number) => `${String(u || '').toLowerCase()}|${M}|${m}`;
 
@@ -396,9 +396,9 @@ export function useBluetoothPositioning(opts: Options) {
       const k = targetUnits / med;
       const kClamped = Math.max(0.05, Math.min(k, 0.6)); // More conservative range
       //console.log(
-        BT,
-        `Auto rangeScale: meters->units ≈ ${kClamped.toFixed(3)} (median d=${med.toFixed(2)}m, target=${targetUnits.toFixed(3)}u)`,
-      );
+      //   BT,
+      //   `Auto rangeScale: meters->units ≈ ${kClamped.toFixed(3)} (median d=${med.toFixed(2)}m, target=${targetUnits.toFixed(3)}u)`,
+      // );
       return kClamped;
     },
     [rangeScale, meanAnchorSpacing],

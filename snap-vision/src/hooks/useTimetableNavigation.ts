@@ -37,12 +37,12 @@ export const useTimetableNavigation = ({
   const findBuildingForEntry = useCallback(
     (entry: TimetableEntry) => {
       //console.log('[TimetableNav] Finding building for entry:', {
-        course: entry.course,
-        venue: entry.venue,
-        buildingId: entry.buildingId,
-        buildingName: entry.buildingName,
-        totalPOIs: pois?.length || 0,
-      });
+      //   course: entry.course,
+      //   venue: entry.venue,
+      //   buildingId: entry.buildingId,
+      //   buildingName: entry.buildingName,
+      //   totalPOIs: pois?.length || 0,
+      // });
 
       if (!pois || pois.length === 0) {
         //console.log('[TimetableNav] No POIs available');
@@ -67,9 +67,9 @@ export const useTimetableNavigation = ({
         );
         if (buildingByName && buildingByName.centroid) {
           //console.log(
-            '[TimetableNav] Found building by name:',
-            buildingByName.name || buildingByName.id,
-          );
+          //   '[TimetableNav] Found building by name:',
+          //   buildingByName.name || buildingByName.id,
+          // );
           return buildingByName;
         }
       }
@@ -85,9 +85,9 @@ export const useTimetableNavigation = ({
 
       if (buildingByVenue && buildingByVenue.centroid) {
         //console.log(
-          '[TimetableNav] Found building by venue:',
-          buildingByVenue.name || buildingByVenue.id,
-        );
+        //   '[TimetableNav] Found building by venue:',
+        //   buildingByVenue.name || buildingByVenue.id,
+        // );
         return buildingByVenue;
       }
 
@@ -144,10 +144,10 @@ export const useTimetableNavigation = ({
           await TimetableBackgroundService.getInstance().isNotificationOpened(entryKey);
         if (notificationOpened) {
           //console.log(
-            '[TimetableNav] Notification already opened for',
-            entryKey,
-            '– skipping in-app popup',
-          );
+          //   '[TimetableNav] Notification already opened for',
+          //   entryKey,
+          //   '– skipping in-app popup',
+          // );
           lastTriggeredRef.current = entryKey;
           continue;
         }

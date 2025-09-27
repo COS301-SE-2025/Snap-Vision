@@ -80,11 +80,11 @@ export const useBluetoothIndoorNavigation = ({
 
   // Debug navigation manager state
   //console.log('[HOOK] Navigation manager state:', {
-    isNavigating: navigationManager.isNavigating,
-    destination: navigationManager.destination?.name,
-    stepsCount: navigationManager.steps.length,
-    pathPOIsLoaded: navigationManager.pathPOIsLoaded,
-  });
+  //   isNavigating: navigationManager.isNavigating,
+  //   destination: navigationManager.destination?.name,
+  //   stepsCount: navigationManager.steps.length,
+  //   pathPOIsLoaded: navigationManager.pathPOIsLoaded,
+  // });
 
   const dotPx = useMemo(() => {
     if (!beaconManager.currentPos || !mapSize.width || !mapSize.height) return null;

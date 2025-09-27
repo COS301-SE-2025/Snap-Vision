@@ -85,12 +85,12 @@ export function useBeaconManager({
           //console.log(BT, 'EXPECTED beacons (from DB):');
           norm.forEach((b) => {
             //console.log(
-              BT,
-              `  ${b.label ?? '(unlabeled)'}: UUID=${b.uuid}, M=${b.major}, m=${b.minor}, tx=${b.txPowerAt1m ?? 'n/a'}, x=${b.x}, y=${b.y}`,
-            );
+            //   BT,
+            //   `  ${b.label ?? '(unlabeled)'}: UUID=${b.uuid}, M=${b.major}, m=${b.minor}, tx=${b.txPowerAt1m ?? 'n/a'}, x=${b.x}, y=${b.y}`,
+            // );
           });
         },
-        (e) => //console.warn(BT, 'Beacon subscribe error', e),
+        (e) => console.warn(BT, 'Beacon subscribe error', e),
       );
     return () => unsub();
   }, [locationId, buildingId, selectedFloorId]);
@@ -167,10 +167,10 @@ export function useBeaconManager({
     //console.log(BT, 'DB Beacons count:', floorBeacons.length);
     if (floorBeacons.length > 0) {
       //console.log(
-        BT,
-        'Beacon allowedList will be:',
-        floorBeacons.map((b) => `${b.major}|${b.minor}`),
-      );
+      //   BT,
+      //   'Beacon allowedList will be:',
+      //   floorBeacons.map((b) => `${b.major}|${b.minor}`),
+      // );
     }
   }, [floorBeacons.length]);
 
@@ -178,9 +178,9 @@ export function useBeaconManager({
     //console.log(BT, 'AllowedList updated, size:', allowedList.length);
     allowedList.forEach((item, idx) => {
       //console.log(
-        BT,
-        `  Allow[${idx}]: UUID=${item.uuid}, Major=${item.major}, Minor=${item.minor}`,
-      );
+      //   BT,
+      //   `  Allow[${idx}]: UUID=${item.uuid}, Major=${item.major}, Minor=${item.minor}`,
+      // );
     });
   }, [allowedList]);
 
@@ -189,9 +189,9 @@ export function useBeaconManager({
       //console.log(BT, 'DETECTED beacons from scanner:', beacons.length);
       beacons.slice(0, 10).forEach((b, index) => {
         //console.log(
-          BT,
-          `  Detected ${index + 1}: UUID=${b.uuid}, Major=${b.major}, Minor=${b.minor}, RSSI=${b.rssi}`,
-        );
+        //   BT,
+        //   `  Detected ${index + 1}: UUID=${b.uuid}, Major=${b.major}, Minor=${b.minor}, RSSI=${b.rssi}`,
+        // );
       });
 
       const expectedMatches = beacons.filter((b) => b.major === 1 && [1, 2, 3].includes(b.minor));
@@ -214,16 +214,16 @@ export function useBeaconManager({
       //console.log(BT, 'Database beacons (expected):');
       floorBeacons.forEach((db) => {
         //console.log(
-          BT,
-          `  DB: ${db.label} - UUID="${db.uuid}" Major=${db.major} Minor=${db.minor} x=${db.x} y=${db.y}`,
-        );
+        //   BT,
+        //   `  DB: ${db.label} - UUID="${db.uuid}" Major=${db.major} Minor=${db.minor} x=${db.x} y=${db.y}`,
+        // );
       });
       //console.log(BT, 'Detected beacons (from scanner):');
       beacons.slice(0, 5).forEach((det) => {
         //console.log(
-          BT,
-          `  DETECTED: UUID="${det.uuid}" Major=${det.major} Minor=${det.minor} RSSI=${det.rssi}`,
-        );
+        //   BT,
+        //   `  DETECTED: UUID="${det.uuid}" Major=${det.major} Minor=${det.minor} RSSI=${det.rssi}`,
+        // );
 
         const exactMatch = floorBeacons.find(
           (db) => db.uuid === det.uuid && db.major === det.major && db.minor === det.minor,
@@ -234,14 +234,14 @@ export function useBeaconManager({
 
         if (exactMatch) {
           //console.log(
-            BT,
-            `    EXACT MATCH with ${exactMatch.label} (x=${exactMatch.x}, y=${exactMatch.y})`,
-          );
+          //   BT,
+          //   `    EXACT MATCH with ${exactMatch.label} (x=${exactMatch.x}, y=${exactMatch.y})`,
+          // );
         } else if (majorMinorMatch) {
           //console.log(
-            BT,
-            `    MAJOR/MINOR MATCH with ${majorMinorMatch.label} (UUID differs, x=${majorMinorMatch.x}, y=${majorMinorMatch.y})`,
-          );
+          //   BT,
+          //   `    MAJOR/MINOR MATCH with ${majorMinorMatch.label} (UUID differs, x=${majorMinorMatch.x}, y=${majorMinorMatch.y})`,
+          // );
         } else {
           //console.log(BT, `    NO MATCH found`);
         }
@@ -251,9 +251,9 @@ export function useBeaconManager({
         (b) => typeof b.x === 'number' && typeof b.y === 'number',
       );
       //console.log(
-        BT,
-        `Beacons with coordinates: ${beaconsWithCoords.length}/3 needed for positioning`,
-      );
+      //   BT,
+      //   `Beacons with coordinates: ${beaconsWithCoords.length}/3 needed for positioning`,
+      // );
       if (beaconsWithCoords.length < 3) {
         //console.log(BT, 'Need at least 3 beacons with x,y coordinates for trilateration');
         beaconsWithCoords.forEach((b) => {
@@ -265,12 +265,12 @@ export function useBeaconManager({
 
   useEffect(() => {
     //console.log(
-      BT,
-      'Live position:',
-      currentPos ? { x: +currentPos.x.toFixed(3), y: +currentPos.y.toFixed(3) } : '—',
-      'visible=',
-      visible,
-    );
+    //   BT,
+    //   'Live position:',
+    //   currentPos ? { x: +currentPos.x.toFixed(3), y: +currentPos.y.toFixed(3) } : '—',
+    //   'visible=',
+    //   visible,
+    // );
   }, [currentPos, visible]);
 
   return {

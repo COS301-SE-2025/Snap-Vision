@@ -141,8 +141,8 @@ export function useNavigationManager({
       }
 
       //console.log(
-        `[NAV] Starting navigation from ${startRoom.name} (${startRoom.id}) to ${destination.name} (${destination.id})`,
-      );
+      //   `[NAV] Starting navigation from ${startRoom.name} (${startRoom.id}) to ${destination.name} (${destination.id})`,
+      // );
 
       try {
         // Calculate route using existing navigation utils
@@ -217,11 +217,11 @@ export function useNavigationManager({
         //console.log(`[NAV] Route calculated with ${steps.length} steps`);
         //console.log('[NAV] Navigation state updated, isNavigating should be true');
         //console.log('[NAV] Current navigation state after update:', {
-          isNavigating: true,
-          destination: destination.name,
-          currentStep: 0,
-          stepsLength: steps.length,
-        });
+        //   isNavigating: true,
+        //   destination: destination.name,
+        //   currentStep: 0,
+        //   stepsLength: steps.length,
+        // });
         return true;
       } catch (error) {
         //console.error('[NAV] Error calculating route:', error);
@@ -319,11 +319,11 @@ export function useNavigationManager({
 
       //console.log('[NAV] Distance to current step:', distanceToCurrentStep.toFixed(4));
       //console.log(
-        '[NAV] Distance to next step:',
-        distanceToNextStep.toFixed(4),
-        'threshold:',
-        STEP_THRESHOLD,
-      );
+      //   '[NAV] Distance to next step:',
+      //   distanceToNextStep.toFixed(4),
+      //   'threshold:',
+      //   STEP_THRESHOLD,
+      // );
 
       // Advance if we're close to the next step OR if we've passed the current step
       const shouldAdvance =
