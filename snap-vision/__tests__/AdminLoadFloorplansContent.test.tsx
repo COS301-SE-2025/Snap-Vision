@@ -163,21 +163,6 @@ jest.mock('../src/components/molecules/BuildingSelector', () => {
 });
 
 // Mock hooks
-const mockUseBuildings = {
-  buildings: [
-    { id: 'b1', name: 'Building 1' },
-    { id: 'b2', name: 'Building 2' },
-  ],
-  locations: [
-    { id: 'loc1', name: 'Location 1' },
-    { id: 'loc2', name: 'Location 2' },
-  ],
-  userRole: 'admin',
-  adminLocations: ['loc1', 'loc2'],
-  isLoading: false,
-  loadBuildings: jest.fn(),
-};
-
 type UploadedDataType = {
   buildingId: string;
   floorLabel: string;
@@ -205,12 +190,33 @@ const mockUseFloorplanUpload: {
   setError: jest.fn(),
 };
 
-jest.mock('../src/hooks/useBuildings', () => ({
-  useBuildings: () => mockUseBuildings,
-}));
-
 jest.mock('../src/hooks/useFloorplanUpload', () => ({
   useFloorplanUpload: () => mockUseFloorplanUpload,
+}));
+
+jest.mock('../src/hooks/useUserRole', () => ({
+  useUserRole: () => ({
+    role: 'admin',
+    adminLocations: ['loc1', 'loc2'],
+    isLoading: false,
+  }),
+}));
+
+const mockFetchBuildings = jest.fn();
+
+jest.mock('../src/hooks/useAdminFloorplans', () => ({
+  useAdminFloorplans: () => ({
+    locations: [
+      { id: 'loc1', name: 'Location 1' },
+      { id: 'loc2', name: 'Location 2' },
+    ],
+    buildings: [
+      { id: 'b1', name: 'Building 1' },
+      { id: 'b2', name: 'Building 2' },
+    ],
+    fetchLocations: jest.fn(),
+    fetchBuildings: mockFetchBuildings,
+  }),
 }));
 
 const mockNavigate = jest.fn();
@@ -243,14 +249,14 @@ describe('AdminLoadFloorplansContent', () => {
   it('selects location and loads buildings', () => {
     const { getByTestId } = render(<AdminLoadFloorplansContent />);
     fireEvent.press(getByTestId('location-loc1'));
-    expect(mockUseBuildings.loadBuildings).toHaveBeenCalledWith('loc1');
+    expect(mockFetchBuildings).toHaveBeenCalledWith('loc1');
   });
 
   it('selects building and shows floor label input', () => {
     const { getByTestId, getByText } = render(<AdminLoadFloorplansContent />);
     fireEvent.press(getByTestId('location-loc1'));
     fireEvent.press(getByTestId('building-b1'));
-    expect(getByText('Step 2: Floor Information')).toBeTruthy();
+    expect(getByText('Step 3: Enter Floor Number')).toBeTruthy();
   });
 
   it('enters floor label and shows file selection', () => {
@@ -261,7 +267,7 @@ describe('AdminLoadFloorplansContent', () => {
     const input = getByPlaceholderText('Enter floor number (e.g., 1, 2, 3...)');
     fireEvent.changeText(input, '2');
 
-    expect(getByText('Step 3: Select Floorplan File')).toBeTruthy();
+    expect(getByText('Upload Floorplan for Building 1 - Floor 2')).toBeTruthy();
   });
 
   it('calls handleUpload with correct arguments and shows success popup on upload', async () => {
@@ -277,7 +283,7 @@ describe('AdminLoadFloorplansContent', () => {
     // Select building
     fireEvent.press(getByTestId('building-b1'));
     // Enter floor label
-    fireEvent.changeText(getByTestId('input-floor-label'), '2');
+    fireEvent.changeText(getByTestId('input-floor-number'), '2');
     // Simulate file already picked (mock above)
     // Press upload button
     fireEvent.press(getByTestId('button-upload-floorplan'));
@@ -310,7 +316,7 @@ describe('AdminLoadFloorplansContent', () => {
     // Select building
     fireEvent.press(getByTestId('building-b1'));
     // Enter floor label
-    fireEvent.changeText(getByTestId('input-floor-label'), '2');
+    fireEvent.changeText(getByTestId('input-floor-number'), '2');
     // Press upload button
     fireEvent.press(getByTestId('button-upload-floorplan'));
 
@@ -347,7 +353,7 @@ describe('AdminLoadFloorplansContent', () => {
     // Select building
     fireEvent.press(getByTestId('building-b1'));
     // Enter floor label
-    fireEvent.changeText(getByTestId('input-floor-label'), '2');
+    fireEvent.changeText(getByTestId('input-floor-number'), '2');
     // Press upload button
     fireEvent.press(getByTestId('button-upload-floorplan'));
 
@@ -391,7 +397,7 @@ describe('AdminLoadFloorplansContent', () => {
     // Select building
     fireEvent.press(getByTestId('building-b1'));
     // Enter floor label
-    fireEvent.changeText(getByTestId('input-floor-label'), '2');
+    fireEvent.changeText(getByTestId('input-floor-number'), '2');
     // Press upload button
     fireEvent.press(getByTestId('button-upload-floorplan'));
 

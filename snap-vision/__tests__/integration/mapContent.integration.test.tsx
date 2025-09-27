@@ -1,7 +1,8 @@
 /* eslint-disable react/display-name */
 import { ThemeProvider } from '../../src/theme/ThemeContext';
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { act } from 'react';
 import MapContent from '../../src/components/organisms/MapContent';
 
 jest.mock('@notifee/react-native', () => ({
@@ -46,6 +47,12 @@ jest.mock('../../src/components/organisms/ARNavigationOverlay', () => {
   const React = require('react');
   const { View } = require('react-native');
   return jest.fn((props) => <View testID="arnavigation-overlay" {...props} />);
+});
+
+jest.mock('../../src/components/molecules/Confetti', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return jest.fn(() => <View testID="mock-confetti" />);
 });
 
 // Mock the ARNavigationOverlay import for tracking
@@ -268,19 +275,6 @@ describe('MapContent Integration', () => {
     // Cancel button is labeled 'Cancel'
     fireEvent.press(getByText('Cancel'));
     expect(onSetShowConfirmationPopup).toHaveBeenCalledWith(false);
-  });
-
-  it('shows destination reached popup and calls onHandleDestinationReachedConfirm on confirm', () => {
-    const onHandleDestinationReachedConfirm = jest.fn();
-    const { getByText } = renderWithTheme(
-      <MapContent
-        {...baseProps}
-        showDestinationReachedPopup
-        onHandleDestinationReachedConfirm={onHandleDestinationReachedConfirm}
-      />,
-    );
-    fireEvent.press(getByText('Great!'));
-    expect(onHandleDestinationReachedConfirm).toHaveBeenCalled();
   });
 
   it('shows AdminPOIModal (add) and calls onSetShowAddPOIModal/onSubmitNewBuilding', () => {

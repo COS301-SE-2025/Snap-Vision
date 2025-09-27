@@ -3,11 +3,33 @@ import { render } from '@testing-library/react-native';
 import AchievementsContent from '../src/components/organisms/AchievementsContent';
 import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
 
+// Mock AsyncStorage
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn(() => Promise.resolve(null)),
+  setItem: jest.fn(() => Promise.resolve()),
+  removeItem: jest.fn(() => Promise.resolve()),
+  clear: jest.fn(() => Promise.resolve()),
+  getAllKeys: jest.fn(() => Promise.resolve([])),
+  multiGet: jest.fn(() => Promise.resolve([])),
+  multiSet: jest.fn(() => Promise.resolve()),
+  multiRemove: jest.fn(() => Promise.resolve()),
+  multiMerge: jest.fn(() => Promise.resolve()),
+  mergeItem: jest.fn(() => Promise.resolve()),
+}));
+
 // Mock all necessary native modules
 jest.mock('@react-native-firebase/auth', () => () => ({
   currentUser: { uid: 'test-uid' },
 }));
-
+jest.mock('@react-native-firebase/perf', () => ({
+  __esModule: true,
+  default: jest.fn(() => ({
+    newTrace: jest.fn(() => ({
+      start: jest.fn(),
+      stop: jest.fn(),
+    })),
+  })),
+}));
 // Mock vector icons
 jest.mock('react-native-vector-icons/Ionicons', () => 'Icon');
 jest.mock('@expo/vector-icons/Ionicons', () => 'Icon');

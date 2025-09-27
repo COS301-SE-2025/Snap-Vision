@@ -57,6 +57,20 @@ jest.mock('@react-native-firebase/firestore', () => {
   };
 });
 
+// Mocks for dependencies
+jest.mock('../src/security/InputValidator', () => ({
+  validateUserId: jest.fn((id: string) => id),
+  validateDocumentId: jest.fn((id: string) => id),
+  validateStringArray: jest.fn((arr: any) => arr),
+  validateNumber: jest.fn((val: any) => val),
+}));
+
+jest.mock('../src/security/AuthorizationService', () => ({
+  getInstance: jest.fn(() => ({
+    canAccessBadgeData: jest.fn(() => true),
+  })),
+}));
+
 // Import after mock is set up
 import firestore from '@react-native-firebase/firestore';
 import {
@@ -79,22 +93,23 @@ describe('badgeService unit', () => {
     store.clear();
   });
 
-  it('unlockBadgeForUser creates new user with badge and points 50', async () => {
-    await unlockBadgeForUser('u1', 'b1');
-    const d = await getUserBadgeData('u1');
-    expect(d.badges).toEqual(['b1']);
-    expect(d.points).toBe(50);
-    expect(d.checkIns).toBe(0);
-    expect(d.routesCompleted).toBe(0);
-  });
+    it('unlockBadgeForUser creates new user with badge and points 50', async () => {
+      await unlockBadgeForUser('userone', 'badgeone');
+      const d = await getUserBadgeData('userone');
+      expect(d && d.badges).toEqual(['badgeone']);
+      expect(d && d.points).toBe(50);
+      expect(d && d.checkIns).toBe(0);
+      expect(d && d.routesCompleted).toBe(0);
+    });
 
   it('unlockBadgeForUser adds badge and milestone when reaching 150', async () => {
-    store.set('users/u2', { badges: ['x'], points: 100, checkIns: 0, routesCompleted: 0 });
-    await unlockBadgeForUser('u2', 'y');
-    await unlockBadgeForUser('u2', 'z');
-    const d = await getUserBadgeData('u2');
-    expect(d.points).toBe(200);
-    expect(d.badges).toEqual(expect.arrayContaining(['y', 'z', 'points-150', 'x']));
+    store.set('users/usertwo', { badges: ['x'], points: 100, checkIns: 0, routesCompleted: 0 });
+    await unlockBadgeForUser('usertwo', 'y');
+    await unlockBadgeForUser('usertwo', 'z');
+    const d = await getUserBadgeData('usertwo');
+    expect(d && d.points).toBe(200);
+    // Milestone badge should be 'points-150' per implementation
+    expect(d && d.badges).toEqual(expect.arrayContaining(['y', 'z', 'points-150', 'x']));
   });
 
   //   it('unlockBadgeForUser does not duplicate badge or add points twice', async () => {
@@ -106,7 +121,8 @@ describe('badgeService unit', () => {
   //   })
 
   it('getUserBadgeData returns null when not exists', async () => {
-    const d = await getUserBadgeData('none');
+    // Use a valid but non-existent user ID
+    const d = await getUserBadgeData('userdoesnotexist');
     expect(d).toBeNull();
   });
 
@@ -161,7 +177,8 @@ describe('badgeService unit', () => {
     const originalRunTransaction = (firestore() as any).runTransaction;
     (firestore() as any).runTransaction = mockRunTransaction;
 
-    await expect(unlockBadgeForUser('u8', 'b')).rejects.toThrow('tx');
+    // Use valid user and badge IDs to pass validation and trigger the transaction error
+    await expect(unlockBadgeForUser('usereight', 'badgebb')).rejects.toThrow('tx');
 
     // Restore original
     (firestore() as any).runTransaction = originalRunTransaction;

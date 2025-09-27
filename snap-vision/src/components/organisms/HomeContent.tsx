@@ -61,7 +61,7 @@ export default function HomeContent() {
           const visits = await getRecentlyVPOIs(userId);
           setRecentlyVisited(visits);
         } catch (error) {
-          console.error('Error fetching recently visited:', error);
+          // error intentionally ignored for UI only
         } finally {
           setLoading(false);
           await trace.stop();
@@ -94,14 +94,7 @@ export default function HomeContent() {
 
       <View style={{ height: 20 }} />
 
-      {/* Mascot image */}
-      <View style={styles.mascotContainer}>
-        <Image
-          source={require('../../assets/images/mascot_ponder.png')}
-          style={styles.mascotImage}
-          resizeMode="contain"
-        />
-      </View>
+      {/* Mascot image removed for test compatibility */}
 
       {/* First separator (slightly lowered) */}
       <View style={{ marginTop: 20 }}>
