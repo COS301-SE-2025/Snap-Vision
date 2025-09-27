@@ -37,6 +37,7 @@ export default function ARNavigationOverlay({
   const [deviceError, setDeviceError] = useState<string | null>(null);
   const [nextInstruction, setNextInstruction] = useState<string>('');
   const [isMiniMapCollapsed, setIsMiniMapCollapsed] = useState(false);
+  const [isWarningMinimized, setIsWarningMinimized] = useState(false);
 
   useEffect(() => {
     if (!hasPermission) {
@@ -84,6 +85,12 @@ export default function ARNavigationOverlay({
             nextInstruction={nextInstruction}
           />
         </View>
+        
+        {/* AR Navigation Warning for fallback view */}
+        <ARNavigationWarning
+          isMinimized={isWarningMinimized}
+          onToggleMinimize={() => setIsWarningMinimized(!isWarningMinimized)}
+        />
       </View>
     );
   }
@@ -110,6 +117,12 @@ export default function ARNavigationOverlay({
         currentRouteIndex={currentRouteIndex}
       />
 
+      {/* AR Navigation Warning */}
+      <ARNavigationWarning
+        isMinimized={isWarningMinimized}
+        onToggleMinimize={() => setIsWarningMinimized(!isWarningMinimized)}
+      />
+
       {/* Mini Map Overlay */}
       {showMiniMap && currentLocation && destinationCoords && routeCoordinates.length > 0 && (
         <MiniMapOverlay
@@ -121,6 +134,44 @@ export default function ARNavigationOverlay({
           isCollapsed={isMiniMapCollapsed}
           onToggleCollapse={() => setIsMiniMapCollapsed(!isMiniMapCollapsed)}
         />
+      )}
+    </View>
+  );
+}
+
+// AR Navigation Warning Component
+function ARNavigationWarning({
+  isMinimized,
+  onToggleMinimize,
+}: {
+  isMinimized: boolean;
+  onToggleMinimize: () => void;
+}) {
+  const theme = useTheme();
+  const colors = theme.dark ? darkColors : lightColors;
+
+  return (
+    <View style={[
+      styles.warningContainer,
+      { backgroundColor: `rgba(255, 152, 0, ${isMinimized ? 0.8 : 0.9})` }
+    ]}>
+      <TouchableOpacity 
+        style={styles.warningToggle} 
+        onPress={onToggleMinimize}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.warningToggleText}>
+          {isMinimized ? '⚠' : '▼'}
+        </Text>
+      </TouchableOpacity>
+      
+      {!isMinimized && (
+        <View style={styles.warningContent}>
+          <Text style={styles.warningText}>
+            <Text style={styles.warningLabel}>NOTE: </Text>
+            AR navigation can be inaccurate due to GPS imprecision and sensor limitations. Use as a general guide only.
+          </Text>
+        </View>
       )}
     </View>
   );
@@ -1022,5 +1073,50 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     borderRadius: 8,
     alignItems: 'center',
+  },
+
+  // Warning component styles
+  warningContainer: {
+    position: 'absolute',
+    top: 80, // Below the turn-by-turn directions
+    left: 20,
+    right: 20,
+    borderRadius: 8,
+    zIndex: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5, // For Android shadow
+  },
+  warningToggle: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    borderTopRightRadius: 8,
+    borderBottomLeftRadius: 8,
+  },
+  warningToggleText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  warningContent: {
+    padding: 12,
+    paddingRight: 35, // Make space for toggle button
+  },
+  warningText: {
+    color: 'white',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  warningLabel: {
+    fontWeight: 'bold',
+    color: '#FFD700', // Gold color for emphasis
   },
 });
