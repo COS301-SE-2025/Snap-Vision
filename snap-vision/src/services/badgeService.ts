@@ -58,7 +58,7 @@ export async function unlockBadgeForUser(userId: string, badgeId: string) {
       }
     });
   } catch (error) {
-    console.error(`Error unlocking badge ${validBadgeId} for user ${validUserId}:`, error);
+    //console.error(`Error unlocking badge ${validBadgeId} for user ${validUserId}:`, error);
     throw error;
   }
 }

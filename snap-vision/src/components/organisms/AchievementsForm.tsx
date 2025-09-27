@@ -37,8 +37,8 @@ export default function AchievementsForm() {
   //   { id: '3', title: 'Parks', icon: 'leaf', color: colors.secondary },
   // ];
 
-  // const handleCategoryPress = (title: string) => console.log(`${title} category pressed`);
-  // const handleActionPress = (a: string) => console.log(`${a} button pressed`);
+  // const handleCategoryPress = (title: string) => //console.log(`${title} category pressed`);
+  // const handleActionPress = (a: string) => //console.log(`${a} button pressed`);
 
   return (
     <ScrollView

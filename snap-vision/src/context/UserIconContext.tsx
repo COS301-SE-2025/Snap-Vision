@@ -62,7 +62,7 @@ export const UserIconProvider: React.FC<{ children: ReactNode }> = ({ children }
           }));
         }
       } catch (error) {
-        console.error('Failed to load icon preferences:', error);
+        //console.error('Failed to load icon preferences:', error);
       }
     };
 
@@ -97,7 +97,7 @@ export const UserIconProvider: React.FC<{ children: ReactNode }> = ({ children }
         equippedItems: updatedEquippedItems,
       });
     } catch (error) {
-      console.error('Failed to equip icon:', error);
+      //console.error('Failed to equip icon:', error);
     }
   };
 

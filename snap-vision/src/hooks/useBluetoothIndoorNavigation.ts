@@ -79,7 +79,7 @@ export const useBluetoothIndoorNavigation = ({
   });
 
   // Debug navigation manager state
-  console.log('[HOOK] Navigation manager state:', {
+  //console.log('[HOOK] Navigation manager state:', {
     isNavigating: navigationManager.isNavigating,
     destination: navigationManager.destination?.name,
     stepsCount: navigationManager.steps.length,
@@ -104,26 +104,26 @@ export const useBluetoothIndoorNavigation = ({
   };
 
   const handleNavigateHere = async () => {
-    console.log('[HOOK] handleNavigateHere called');
-    console.log('[HOOK] selectedPOI:', selectedPOI);
-    console.log('[HOOK] Navigation manager isNavigating:', navigationManager.isNavigating);
+    //console.log('[HOOK] handleNavigateHere called');
+    //console.log('[HOOK] selectedPOI:', selectedPOI);
+    //console.log('[HOOK] Navigation manager isNavigating:', navigationManager.isNavigating);
 
     if (selectedPOI) {
-      console.log('Starting navigation to:', selectedPOI.name);
+      //console.log('Starting navigation to:', selectedPOI.name);
       const success = await navigationManager.startNavigation(selectedPOI);
-      console.log('[HOOK] Navigation start result:', success);
+      //console.log('[HOOK] Navigation start result:', success);
 
       if (success) {
-        console.log('[HOOK] Navigation started successfully, closing popup');
+        //console.log('[HOOK] Navigation started successfully, closing popup');
         setShowPOIPopup(false);
         // Optionally show directions modal
         // setShowDirectionsModal(true);
       } else {
-        console.warn('Failed to start navigation');
+        //console.warn('Failed to start navigation');
         // Could show an error message here
       }
     } else {
-      console.warn('[HOOK] No selectedPOI available');
+      //console.warn('[HOOK] No selectedPOI available');
     }
   };
 

@@ -39,7 +39,7 @@ export class SecureFirestoreService {
         adminLocations: InputValidator.validateStringArray(data?.adminLocations) || [],
       };
     } catch (error) {
-      console.error('Error fetching user info:', error);
+      //console.error('Error fetching user info:', error);
       throw new Error('Failed to fetch user information');
     }
   }
@@ -84,7 +84,7 @@ export class SecureFirestoreService {
       // Clear cache for updated user
       this.authService.clearCache(validUserId);
     } catch (error) {
-      console.error('Error updating user role:', error);
+      //console.error('Error updating user role:', error);
       throw new Error('Failed to update user role');
     }
   }
@@ -114,7 +114,7 @@ export class SecureFirestoreService {
       // Clear cache
       this.authService.clearCache(validUserId);
     } catch (error) {
-      console.error('Error deleting user:', error);
+      //console.error('Error deleting user:', error);
       throw new Error('Failed to delete user');
     }
   }
@@ -152,7 +152,7 @@ export class SecureFirestoreService {
         floors: InputValidator.validateNumber(data?.floors, 1, 100) || 1,
       };
     } catch (error) {
-      console.error('Error fetching building:', error);
+      //console.error('Error fetching building:', error);
       throw new Error('Failed to fetch building information');
     }
   }
@@ -203,7 +203,7 @@ export class SecureFirestoreService {
         })
         .slice(0, 10);
     } catch (error) {
-      console.error('Error fetching recently visited POIs:', error);
+      //console.error('Error fetching recently visited POIs:', error);
       throw new Error('Failed to fetch recently visited POIs');
     }
   }
@@ -235,7 +235,7 @@ export class SecureFirestoreService {
         achievements: InputValidator.validateStringArray(data?.achievements) || [],
       };
     } catch (error) {
-      console.error('Error fetching badge data:', error);
+      //console.error('Error fetching badge data:', error);
       throw new Error('Failed to fetch badge data');
     }
   }
@@ -284,7 +284,7 @@ export class SecureFirestoreService {
 
       return { id: docRef.id, ...qrCodeData };
     } catch (error) {
-      console.error('Error creating QR code mapping:', error);
+      //console.error('Error creating QR code mapping:', error);
       throw new Error('Failed to create QR code mapping');
     }
   }

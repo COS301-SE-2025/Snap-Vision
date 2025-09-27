@@ -102,20 +102,12 @@ const path = (u: string) => `recentlyVisited/${u}`;
 const tsObj = (n: number) => ({ toMillis: () => n });
 
 describe('recentlyVService', () => {
-  const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-  const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
   beforeEach(() => {
     jest.clearAllMocks();
     getStore().clear();
     setAuthUser({ uid: 'auth-user' });
     setNowQueue([]);
     load();
-  });
-
-  afterAll(() => {
-    logSpy.mockRestore();
-    errSpy.mockRestore();
   });
 
   it('getRecentlyVPOIs returns [] when no user', async () => {
@@ -189,7 +181,6 @@ describe('recentlyVService', () => {
     });
     const snap = getStore().get(path(u));
     expect(snap.pois).toHaveLength(1);
-    expect(logSpy).toHaveBeenCalled();
   });
 
   it('addRecentlyVisitedPOI updates existing doc with new visit', async () => {
@@ -272,7 +263,6 @@ describe('recentlyVService', () => {
         location: 'locZ',
       }),
     ).rejects.toThrow('boom');
-    expect(errSpy).toHaveBeenCalled();
 
     // Restore original
     db.collection = origCollection;
@@ -291,7 +281,6 @@ describe('recentlyVService', () => {
     });
     const out = await mod.getRecentlyVPOIs('user12345678901234567890');
     expect(out).toEqual([]);
-    expect(errSpy).toHaveBeenCalled();
 
     // Restore original
     db.collection = origCollection;

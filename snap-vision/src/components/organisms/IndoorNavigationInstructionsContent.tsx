@@ -43,7 +43,7 @@ export default function IndoorNavigationInstructionsContent({
     TTS.setDefaultLanguage('en-US');
     TTS.setDefaultRate(0.5);
     TTS.setDefaultPitch(1.0);
-    const onTtsError = (e: any) => console.warn('TTS error', e);
+    const onTtsError = (e: any) => //console.warn('TTS error', e);
     const onTtsStart = () => {};
     const onTtsFinish = () => {};
     TTS.addEventListener('tts-start', onTtsStart);
@@ -133,7 +133,7 @@ export default function IndoorNavigationInstructionsContent({
         const detailed = generateDetailedDirections(routeSteps);
         setSteps(detailed);
       } catch (e) {
-        //consoleerror(e);
+        ////consoleerror(e);
         setError('Failed to generate navigation route');
       } finally {
         setIsLoading(false);

@@ -16,19 +16,19 @@ jest.mock('@react-native-firebase/perf', () => ({
   })),
 }));
 
-const originalError = //consoleerror;
-  beforeAll(() => {
-    console.error = (...args) => {
-      if (
-        typeof args[0] === 'string' &&
-        (args[0].includes('was not wrapped in act') ||
-          args[0].includes('Error fetching recently visited'))
-      ) {
-        return;
-      }
-      originalError.call(console, ...args);
-    };
-  });
+const originalError = console.error;
+beforeAll(() => {
+  console.error = (...args) => {
+    if (
+      typeof args[0] === 'string' &&
+      (args[0].includes('was not wrapped in act') ||
+        args[0].includes('Error fetching recently visited'))
+    ) {
+      return;
+    }
+    originalError.call(console, ...args);
+  };
+});
 
 afterAll(() => {
   console.error = originalError;
@@ -358,7 +358,6 @@ describe('HomeContent', () => {
     });
 
     it('hides loading state even when error occurs', async () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       mockGetRecentlyVPOIs.mockRejectedValue(new Error('Network error'));
 
       const { queryByText } = render(
@@ -370,8 +369,6 @@ describe('HomeContent', () => {
       await waitFor(() => {
         expect(queryByText('Loading...')).toBeNull();
       });
-
-      consoleSpy.mockRestore();
     });
   });
 

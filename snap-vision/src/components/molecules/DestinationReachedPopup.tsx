@@ -85,14 +85,14 @@ const DestinationReachedPopup: React.FC<DestinationReachedPopupProps> = ({
   };
 
   const handleConfettiComplete = () => {
-    ////consolelog('Confetti animation completed');
+    //////consolelog('Confetti animation completed');
   };
 
   // Debug logging for visibility issues
   useEffect(() => {
-    //consolelog('Popup visibility changed:', visible);
+    ////consolelog('Popup visibility changed:', visible);
     if (visible) {
-      //consolelog('Showing popup with confetti animation');
+      ////consolelog('Showing popup with confetti animation');
     }
   }, [visible]);
 

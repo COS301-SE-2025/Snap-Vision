@@ -146,7 +146,7 @@ app.get("/api/user/:userId", authenticateUser, requireAuth('read', 'user'), user
       role: userData.role || 'user'
     });
   } catch (error) {
-    console.error('Error fetching user:', error);
+    //console.error('Error fetching user:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -173,7 +173,7 @@ app.get("/api/locations/:locationId", authenticateUser, requireAuth('read', 'loc
       ...locationDoc.data()
     });
   } catch (error) {
-    console.error('Error fetching location:', error);
+    //console.error('Error fetching location:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -238,7 +238,7 @@ app.get("/api/directions", async (req, res) => {
     // Validate API key exists
     const apiKey = process.env.ORS_API_KEY;
     if (!apiKey) {
-      console.error('ORS_API_KEY not configured');
+      //console.error('ORS_API_KEY not configured');
       return res.status(500).json({ 
         error: "Service configuration error",
         details: "External routing service not properly configured"
@@ -271,7 +271,7 @@ app.get("/api/directions", async (req, res) => {
 
     res.json(response.data);
   } catch (error) {
-    console.error("ORS error:", error?.response?.data || error.message);
+    //console.error("ORS error:", error?.response?.data || error.message);
     
     // Don't expose internal error details to client
     if (error.code === 'ECONNABORTED') {
@@ -300,7 +300,7 @@ app.get("/api/directions", async (req, res) => {
 
 const PORT = process.env.PORT || 8080; // Firebase App Hosting typically uses 8080
 const server = app.listen(PORT, () => {
-  console.log(`Server running on port ${server.address().port}`);
+  //console.log(`Server running on port ${server.address().port}`);
 });
 
 module.exports = server;

@@ -4,20 +4,7 @@ import AdminScreenContent from '../../src/components/organisms/EditorContent';
 import { ThemeProviderWrapper } from '../test-utils/ThemeProviderWrapper';
 import { useNavigation } from '@react-navigation/native';
 
-// Mock //consoleerror to suppress certain warnings
-const originalError = //consoleerror;
-  beforeAll(() => {
-    console.error = (...args) => {
-      if (typeof args[0] === 'string' && args[0].includes('was not wrapped in act')) {
-        return;
-      }
-      originalError.call(console, ...args);
-    };
-  });
 
-afterAll(() => {
-  console.error = originalError;
-});
 
 // Mock navigation
 const mockNavigate = jest.fn();

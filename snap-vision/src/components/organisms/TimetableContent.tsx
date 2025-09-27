@@ -42,7 +42,7 @@ export default function TimetableContent() {
           setAutoNavigationEnabled(JSON.parse(stored));
         }
       } catch (error) {
-        console.error('Error loading auto navigation preference:', error);
+        //console.error('Error loading auto navigation preference:', error);
       }
     };
 
@@ -57,7 +57,7 @@ export default function TimetableContent() {
       // Refresh notifications when auto-navigation setting changes
       try {
         await TimetableBackgroundService.getInstance().refreshNotifications();
-        console.log('[TimetableContent] Refreshed notifications after toggling auto-navigation');
+        //console.log('[TimetableContent] Refreshed notifications after toggling auto-navigation');
 
         if (Platform.OS === 'android') {
           ToastAndroid.show(
@@ -66,10 +66,10 @@ export default function TimetableContent() {
           );
         }
       } catch (refreshError) {
-        console.error('[TimetableContent] Failed to refresh notifications:', refreshError);
+        //console.error('[TimetableContent] Failed to refresh notifications:', refreshError);
       }
     } catch (error) {
-      console.error('Error saving auto navigation preference:', error);
+      //console.error('Error saving auto navigation preference:', error);
     }
   };
 
@@ -85,13 +85,13 @@ export default function TimetableContent() {
   );
 
   const handleAddEntry = () => {
-    console.log('Add entry button pressed'); // Debug log
+    //console.log('Add entry button pressed'); // Debug log
     setEditingEntry(null);
     setShowForm(true);
   };
 
   const handleEditEntry = (entry: TimetableEntry) => {
-    console.log('Edit entry:', entry); // Debug log
+    //console.log('Edit entry:', entry); // Debug log
     setEditingEntry(entry);
     setShowForm(true);
   };
@@ -109,14 +109,14 @@ export default function TimetableContent() {
       // Refresh notifications after deleting an entry
       try {
         await TimetableBackgroundService.getInstance().refreshNotifications();
-        console.log('[TimetableContent] Refreshed notifications after entry deletion');
+        //console.log('[TimetableContent] Refreshed notifications after entry deletion');
 
         // Show a toast notification
         if (Platform.OS === 'android') {
           ToastAndroid.show('Entry deleted and notifications refreshed', ToastAndroid.SHORT);
         }
       } catch (refreshError) {
-        console.error('[TimetableContent] Failed to refresh notifications:', refreshError);
+        //console.error('[TimetableContent] Failed to refresh notifications:', refreshError);
       }
     }
     setShowDeleteConfirm(false);
@@ -135,20 +135,20 @@ export default function TimetableContent() {
       // Refresh notifications after adding/editing an entry
       try {
         await TimetableBackgroundService.getInstance().refreshNotifications();
-        console.log('[TimetableContent] Refreshed notifications after timetable update');
+        //console.log('[TimetableContent] Refreshed notifications after timetable update');
 
         // Show a toast notification
         if (Platform.OS === 'android') {
           ToastAndroid.show('Timetable updated and notifications refreshed', ToastAndroid.SHORT);
         }
       } catch (refreshError) {
-        console.error('[TimetableContent] Failed to refresh notifications:', refreshError);
+        //console.error('[TimetableContent] Failed to refresh notifications:', refreshError);
       }
 
       setShowForm(false);
       setEditingEntry(null);
     } catch (error) {
-      console.error('Error submitting entry:', error);
+      //console.error('Error submitting entry:', error);
     }
   };
 

@@ -35,7 +35,7 @@ export const useTimetable = () => {
       setEntries(timetableEntries);
       setError(null);
     } catch (err) {
-      console.error('Error loading timetable:', err);
+      //console.error('Error loading timetable:', err);
       setError('Failed to load timetable');
     } finally {
       setIsLoading(false);
@@ -82,7 +82,7 @@ export const useTimetable = () => {
 
       return { success: true };
     } catch (err) {
-      console.error('Error adding timetable entry:', err);
+      //console.error('Error adding timetable entry:', err);
       setError('Failed to add class');
       return { success: false, error: 'Failed to add class' };
     }
@@ -120,7 +120,7 @@ export const useTimetable = () => {
 
       return { success: true };
     } catch (err) {
-      console.error('Error updating timetable entry:', err);
+      //console.error('Error updating timetable entry:', err);
       setError('Failed to update class');
       return { success: false, error: 'Failed to update class' };
     }
@@ -136,7 +136,7 @@ export const useTimetable = () => {
       setEntries((prev) => prev.filter((entry) => entry.id !== entryId));
       return { success: true };
     } catch (err) {
-      console.error('Error deleting timetable entry:', err);
+      //console.error('Error deleting timetable entry:', err);
       setError('Failed to delete class');
       return { success: false, error: 'Failed to delete class' };
     }

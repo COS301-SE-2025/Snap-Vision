@@ -31,7 +31,7 @@ export function useRoomManager({ locationId, buildingId }: UseRoomManagerParams)
     (async () => {
       try {
         setLoading(true);
-        console.log(BT, 'Loading rooms for building:', buildingId);
+        //console.log(BT, 'Loading rooms for building:', buildingId);
 
         const roomSnap = await firestore()
           .collection('locations')
@@ -47,9 +47,9 @@ export function useRoomManager({ locationId, buildingId }: UseRoomManagerParams)
         setFloors(floorSet);
         if (floorSet.length > 0) setSelectedFloorId(floorSet[0]);
 
-        console.log(BT, 'Rooms loaded:', roomsData.length, 'Floors:', floorSet);
+        //console.log(BT, 'Rooms loaded:', roomsData.length, 'Floors:', floorSet);
       } catch (e) {
-        console.error(BT, 'Rooms load error:', e);
+        //console.error(BT, 'Rooms load error:', e);
       } finally {
         setLoading(false);
       }
@@ -66,7 +66,7 @@ export function useRoomManager({ locationId, buildingId }: UseRoomManagerParams)
     const room = allRooms.find((r) => r.id === roomId);
     if (room) {
       setSelectedRoom(room);
-      console.log(BT, 'Room selected:', room.name);
+      //console.log(BT, 'Room selected:', room.name);
     }
   };
 

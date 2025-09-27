@@ -180,7 +180,7 @@ export const useQRCodeAdmin = (): UseQRCodeAdminReturn => {
         setRole(data?.role || 'user');
         setAdminLocations(data?.adminLocations || []);
       } catch (e) {
-        //consoleerror(e);
+        ////consoleerror(e);
         setRole('user');
         setAdminLocations([]);
       }
@@ -208,7 +208,7 @@ export const useQRCodeAdmin = (): UseQRCodeAdminReturn => {
         setQrCodes([]);
         setError(null);
       } catch (e) {
-        //consoleerror('Error loading locations:', e);
+        ////consoleerror('Error loading locations:', e);
         setError('Failed to load locations');
       } finally {
         setIsLoading(false);
@@ -233,7 +233,7 @@ export const useQRCodeAdmin = (): UseQRCodeAdminReturn => {
         setQrCodes([]);
         setError(null);
       } catch (e) {
-        //consoleerror('Error loading buildings:', e);
+        ////consoleerror('Error loading buildings:', e);
         setError('Failed to load buildings');
       } finally {
         setIsLoading(false);
@@ -249,7 +249,7 @@ export const useQRCodeAdmin = (): UseQRCodeAdminReturn => {
       try {
         setIsLoading(true);
         const floorsData = await getFloorsForBuilding(selectedLocationId, selectedBuildingId);
-        //consolelog('[QRCodeAdmin] floors count:', floorsData.length, floorsData);
+        ////consolelog('[QRCodeAdmin] floors count:', floorsData.length, floorsData);
         setFloors(floorsData);
         setSelectedFloorId(null);
         setRooms([]);
@@ -257,7 +257,7 @@ export const useQRCodeAdmin = (): UseQRCodeAdminReturn => {
         setQrCodes(codes);
         setError(null);
       } catch (e) {
-        //consoleerror('Error loading floors/QR codes:', e);
+        ////consoleerror('Error loading floors/QR codes:', e);
         setError('Failed to load floors / QR codes');
       } finally {
         setIsLoading(false);
@@ -276,7 +276,7 @@ export const useQRCodeAdmin = (): UseQRCodeAdminReturn => {
         setSelectedRoom(null);
         setError(null);
       } catch (e) {
-        //consoleerror('Error loading rooms:', e);
+        ////consoleerror('Error loading rooms:', e);
         setError('Failed to load rooms');
       }
     };
@@ -329,7 +329,7 @@ export const useQRCodeAdmin = (): UseQRCodeAdminReturn => {
       setSuccessMessage('QR code added successfully.');
       setShowSuccessPopup(true);
     } catch (e) {
-      //consoleerror('Error adding QR code:', e);
+      ////consoleerror('Error adding QR code:', e);
       setErrorMessage('Failed to add QR code. Please try again.');
       setShowErrorPopup(true);
     }
@@ -362,7 +362,7 @@ export const useQRCodeAdmin = (): UseQRCodeAdminReturn => {
           setSuccessMessage('QR code removed successfully.');
           setShowSuccessPopup(true);
         } catch (e) {
-          //consoleerror('Error deleting QR code:', e);
+          ////consoleerror('Error deleting QR code:', e);
           setErrorMessage('Failed to delete QR code. Please try again.');
           setShowErrorPopup(true);
         }

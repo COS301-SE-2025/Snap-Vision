@@ -372,7 +372,7 @@ export const useShopManager = (): UseShopManagerReturn => {
           }));
         }
       } catch (err) {
-        console.error('Failed to fetch user shop data:', err);
+        //console.error('Failed to fetch user shop data:', err);
       }
     };
     fetchUserData();
@@ -466,7 +466,7 @@ export const useShopManager = (): UseShopManagerReturn => {
         onCancel: () => setPopup((p) => ({ ...p, visible: false })),
       });
     } catch (err) {
-      console.error('Purchase error:', err);
+      //console.error('Purchase error:', err);
       setPopup({
         visible: true,
         title: 'Error',
@@ -511,7 +511,7 @@ export const useShopManager = (): UseShopManagerReturn => {
         });
       }
     } catch (error) {
-      console.error('Failed to equip item:', error);
+      //console.error('Failed to equip item:', error);
       setPopup({
         visible: true,
         title: 'Error',

@@ -6,23 +6,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import { getRecentlyVPOIs } from '../../src/services/firebase/recentlyVService';
 
-const originalError = //consoleerror;
-  beforeAll(() => {
-    console.error = (...args) => {
-      if (
-        typeof args[0] === 'string' &&
-        (args[0].includes('was not wrapped in act') ||
-          args[0].includes('Error fetching recently visited'))
-      ) {
-        return;
-      }
-      originalError.call(console, ...args);
-    };
-  });
 
-afterAll(() => {
-  console.error = originalError;
-});
 
 //mock navigation
 const mockNavigate = jest.fn();
@@ -475,7 +459,6 @@ describe('HomeContent Integration Tests', () => {
     });
 
     it('hides loading state even when errors occur', async () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       mockGetRecentlyVPOIs.mockRejectedValue(new Error('Network error'));
 
       (useFocusEffect as jest.Mock).mockImplementation((callback) => {
@@ -491,8 +474,6 @@ describe('HomeContent Integration Tests', () => {
       await waitFor(() => {
         expect(queryByText('Loading...')).toBeNull();
       });
-
-      consoleSpy.mockRestore();
     });
   });
 

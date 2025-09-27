@@ -114,9 +114,9 @@ export default function AdminIndoorPositioningContent(props: Props) {
       };
     });
 
-    console.log('🔷 Stored Beacons:');
+    //console.log('🔷 Stored Beacons:');
     list.forEach((b, i) => {
-      console.log(
+      //console.log(
         `  ${i + 1}. ${b.label || 'Beacon'} @ (${b.x.toFixed(3)}, ${b.y.toFixed(3)})  ${b.uuid}/${b.major}/${b.minor}`,
       );
     });
@@ -151,7 +151,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
         }
       }
     } catch (err) {
-      //consoleerror('Invalid message from WebView', err);
+      ////consoleerror('Invalid message from WebView', err);
     }
   };
 
@@ -170,7 +170,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
       setShowDeleteConfirmation(false);
       setBeaconToDelete(null);
     } catch (error) {
-      console.error('Error deleting beacon:', error);
+      //console.error('Error deleting beacon:', error);
       setErrorTitle('Error');
       setErrorMessage('Failed to delete beacon. Please try again.');
       setShowErrorPopup(true);
@@ -416,7 +416,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
       setSuccessMessage('Beacon placed on this floor.');
       setShowSuccessPopup(true);
     } catch (e) {
-      console.error(e);
+      //console.error(e);
       setErrorTitle('Error');
       setErrorMessage('Failed to save beacon.');
       setShowErrorPopup(true);

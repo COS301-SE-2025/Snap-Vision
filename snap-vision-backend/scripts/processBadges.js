@@ -7,7 +7,7 @@ let serviceAccount;
 try {
   serviceAccount = require(serviceAccountPath);
 } catch (error) {
-  console.error(`Failed to load service account key from ${serviceAccountPath}. Please ensure the file exists.`);
+  //console.error(`Failed to load service account key from ${serviceAccountPath}. Please ensure the file exists.`);
   process.exit(1);
 }
 
@@ -90,11 +90,11 @@ async function seedBadges() {
     for (const badgeId in badges) {
       const badge = badges[badgeId];
       await db.collection("badges").doc(badgeId).set(badge);
-      console.log(`Seeded badge: ${badgeId}`);
+      //console.log(`Seeded badge: ${badgeId}`);
     }
-    console.log("All badges seeded successfully.");
+    //console.log("All badges seeded successfully.");
   } catch (error) {
-    console.error("Error seeding badges:", error);
+    //console.error("Error seeding badges:", error);
   }
 }
 

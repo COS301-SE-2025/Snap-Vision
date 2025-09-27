@@ -63,7 +63,7 @@ async function fetchUserData() {
     const currentUser = auth().currentUser;
 
     if (!currentUser) {
-      //consolelog('No user is currently logged in');
+      ////consolelog('No user is currently logged in');
       return null;
     }
 
@@ -95,7 +95,7 @@ async function fetchUserData() {
 
     return userInfo;
   } catch (error) {
-    //consoleerror('Error fetching user data:', error);
+    ////consoleerror('Error fetching user data:', error);
     return null;
   }
 }

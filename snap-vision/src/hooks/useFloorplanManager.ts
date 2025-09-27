@@ -49,7 +49,7 @@ export function useFloorplanManager({
             try {
               url = await storage().ref(data.storagePath).getDownloadURL();
             } catch (e) {
-              console.warn(BT, 'getDownloadURL failed', e);
+              //console.warn(BT, 'getDownloadURL failed', e);
             }
           }
         }
@@ -64,14 +64,14 @@ export function useFloorplanManager({
               ) || list.items[0];
             if (match) url = await match.getDownloadURL();
           } catch (e) {
-            console.warn(BT, 'Storage fallback failed', e);
+            //console.warn(BT, 'Storage fallback failed', e);
           }
         }
 
         if (!cancelled) setFloorplanUrl(url ?? null);
-        console.log(BT, 'Floorplan URL for floor', selectedFloorId, '=>', url ? 'OK' : 'MISSING');
+        //console.log(BT, 'Floorplan URL for floor', selectedFloorId, '=>', url ? 'OK' : 'MISSING');
       } catch (e) {
-        console.warn(BT, 'Floorplan fetch failed', e);
+        //console.warn(BT, 'Floorplan fetch failed', e);
         if (!cancelled) setFloorplanUrl(null);
       } finally {
         if (!cancelled) setFloorplanLoading(false);
