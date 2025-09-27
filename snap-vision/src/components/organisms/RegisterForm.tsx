@@ -46,6 +46,14 @@ export default function RegisterForm() {
   // Success message state
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
+  // Popup states
+  const [showError, setShowError] = useState(false);
+  const [errorTitle, setErrorTitle] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successTitle, setSuccessTitle] = useState('');
+  const [successMessageState, setSuccessMessageState] = useState('');
+
   const handleRegister = async () => {
     const newErrors = { username: '', email: '', password: '', confirmPassword: '' };
     let hasError = false;
@@ -60,7 +68,7 @@ export default function RegisterForm() {
       newErrors.email = 'Email is required.';
       hasError = true;
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = 'Invalid email format.';
+      newErrors.email = 'Please enter a valid email address.';
       hasError = true;
     }
 
@@ -78,7 +86,6 @@ export default function RegisterForm() {
 
     if (hasError) {
       setErrors(newErrors);
-      // Using inline error messages only, no popups
       return;
     }
 
@@ -115,7 +122,9 @@ export default function RegisterForm() {
 
       setHasSeenLanding(false); // triggers Landing screen on registration
       unlock('first-login');
-      setShowSuccessMessage(true);
+      setSuccessTitle('Registration Successful');
+      setSuccessMessageState('Your account has been created successfully!');
+      setShowSuccess(true);
       setSuccessMessage('Account created!');
       // Navigate after success
       setTimeout(() => {
@@ -136,11 +145,9 @@ export default function RegisterForm() {
         'auth/weak-password': 'Password is too weak.',
       };
       const msg = errorMessages[error?.code] || 'Registration failed.';
-      // Using inline error messages only
-      setErrors({
-        ...newErrors,
-        email: msg,
-      });
+      setErrorTitle('Registration Error');
+      setErrorMessage(msg);
+      setShowError(true);
     }
   };
 
@@ -237,6 +244,22 @@ export default function RegisterForm() {
       >
         Already have an account? <Text style={styles.signUpBold}>LOGIN</Text>
       </Text>
+
+      <StandardPopup
+        visible={showError}
+        title={errorTitle}
+        message={errorMessage}
+        onClose={() => setShowError(false)}
+        showCloseButton={true}
+      />
+
+      <StandardPopup
+        visible={showSuccess}
+        title={successTitle}
+        message={successMessageState}
+        onClose={() => setShowSuccess(false)}
+        showCloseButton={true}
+      />
     </View>
   );
 }

@@ -184,7 +184,7 @@ describe('Registration Integration Tests', () => {
     fireEvent.changeText(inputs[3], 'Password1!');
     fireEvent.press(getByTestId('register-button'));
     await waitFor(() => {
-      expect(getByText('Invalid email format.')).toBeTruthy();
+      expect(getByText('Please enter a valid email address.')).toBeTruthy();
     });
 
     fireEvent.changeText(inputs[1], 'test@example.com');
