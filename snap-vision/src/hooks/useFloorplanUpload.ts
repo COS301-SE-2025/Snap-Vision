@@ -37,7 +37,7 @@ export const useFloorplanUpload = () => {
       }
       return { success: false };
     } catch (err) {
-      //consoleerror('Error picking image:', err);
+      ////consoleerror('Error picking image:', err);
       setError('Failed to select image');
       return { success: false, error: 'Failed to select image' };
     }
@@ -101,7 +101,7 @@ export const useFloorplanUpload = () => {
 
       return { success: true, data: uploadData };
     } catch (err) {
-      //consoleerror('Error uploading floorplan:', err);
+      ////consoleerror('Error uploading floorplan:', err);
       setError('Failed to upload floorplan');
       setIsLoading(false);
       return { success: false, error: 'Failed to upload floorplan' };

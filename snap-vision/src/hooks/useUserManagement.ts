@@ -52,7 +52,7 @@ export const useUserManagement = () => {
           setLoading(false);
         },
         (error) => {
-          console.error('Firestore error:', error);
+          //console.error('Firestore error:', error);
           setAuthError('Failed to load user data');
           setLoading(false);
         },
@@ -95,7 +95,7 @@ export const useUserManagement = () => {
         }));
         setAllLocations(locations);
       } catch (error) {
-        //consoleerror('Failed to fetch locations:', error);
+        ////consoleerror('Failed to fetch locations:', error);
       }
     };
 
@@ -159,7 +159,7 @@ export const useUserManagement = () => {
       // Clear auth cache for the updated user
       authService.clearCache(validUserId);
     } catch (err) {
-      console.error('Failed to update role:', err);
+      //console.error('Failed to update role:', err);
       throw err;
     }
   };
@@ -188,7 +188,7 @@ export const useUserManagement = () => {
       // Clear auth cache
       authService.clearCache(validUserId);
     } catch (err) {
-      console.error('Failed to delete user:', err);
+      //console.error('Failed to delete user:', err);
       throw err;
     }
   };

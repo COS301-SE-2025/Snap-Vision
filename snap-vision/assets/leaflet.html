@@ -188,7 +188,7 @@
 
       // Function to update user location
       window.updateUserLocation = function (lat, lon, centerMap = false, zoomLevel = null) {
-        //consolelog('🗺️ updateUserLocation called:', {
+        ////consolelog('🗺️ updateUserLocation called:', {
         //  lat,
         //  lon,
         //  centerMap,
@@ -197,31 +197,31 @@
         //});
         const coords = [lat, lon];
         if (!map || !map._loaded) {
-          //consolelog('❌ Map not loaded yet, cannot update user location');
+          ////consolelog('❌ Map not loaded yet, cannot update user location');
           return; // Check if map is fully loaded
         }
 
         try {
           if (centerMap) {
             if (zoomLevel !== null) {
-              //consolelog('🎯 Centering map with zoom level:', zoomLevel);
+              ////consolelog('🎯 Centering map with zoom level:', zoomLevel);
               map.setView(coords, zoomLevel);
             } else {
-              //consolelog('🎯 Centering map with default zoom');
+              ////consolelog('🎯 Centering map with default zoom');
               map.setView(coords, 16);
             }
           }
 
           if (userMarker) {
-            //consolelog('📍 Updating existing user marker position');
+            ////consolelog('📍 Updating existing user marker position');
             userMarker.setLatLng(coords);
           } else {
-            console.log('📍 Creating new user marker');
+            //console.log('📍 Creating new user marker');
             userMarker = L.marker(coords).addTo(map).bindPopup('You are here!').openPopup();
           }
-          //consolelog('✅ User location updated successfully');
+          ////consolelog('✅ User location updated successfully');
         } catch (error) {
-          //consoleerror('❌ Error updating user location:', error);
+          ////consoleerror('❌ Error updating user location:', error);
         }
       };
 
@@ -255,7 +255,7 @@
         // Exit if no map
         if (!map) return;
 
-        //consolelog('Attempting to remove POI marker with ID:', poiId);
+        ////consolelog('Attempting to remove POI marker with ID:', poiId);
 
         // Find the marker by ID
         let markerToRemove = null;
@@ -272,7 +272,7 @@
 
         // Remove the marker if found
         if (markerToRemove) {
-          //consolelog('Found marker to remove at index:', markerIndex);
+          ////consolelog('Found marker to remove at index:', markerIndex);
           if (map.hasLayer(markerToRemove)) {
             map.removeLayer(markerToRemove);
           }
@@ -283,7 +283,7 @@
           return true;
         }
 
-        //consolelog('Marker not found for removal');
+        ////consolelog('Marker not found for removal');
         return false;
       };
 
@@ -368,7 +368,7 @@
 
       // Function specifically for navigation
       window.navigateToPOI = function (poiId) {
-        //consolelog('Navigating to POI with ID:', poiId);
+        ////consolelog('Navigating to POI with ID:', poiId);
         const selectedMarker = poiMarkers.find(
           (marker) => marker.poiData && marker.poiData.id === poiId,
         );
@@ -412,7 +412,7 @@
 
       // Function specifically for admin actions
       window.showAdminActions = function (poiId) {
-        //consolelog('Showing admin actions for POI with ID:', poiId);
+        ////consolelog('Showing admin actions for POI with ID:', poiId);
         const selectedMarker = poiMarkers.find(
           (marker) => marker.poiData && marker.poiData.id === poiId,
         );
@@ -492,7 +492,7 @@
             showAllPOIMarkers();
           }
         } catch (error) {
-          //consoleerror('Error displaying POIs:', error);
+          ////consoleerror('Error displaying POIs:', error);
         }
       };
 
@@ -538,7 +538,7 @@
       };
 
       window.selectPOI = function (poiId) {
-        //consolelog('Selecting POI with ID:', poiId);
+        ////consolelog('Selecting POI with ID:', poiId);
         const selectedMarker = poiMarkers.find(
           (marker) => marker.poiData && marker.poiData.id === poiId,
         );
@@ -666,7 +666,7 @@
             .addTo(map)
             .bindPopup('🏁 End');
         } catch (error) {
-          //consoleerror('Error drawing route:', error);
+          ////consoleerror('Error drawing route:', error);
         }
 
         const bounds = window.routeLayer.getBounds();
@@ -700,7 +700,7 @@
             opacity: 0.8,
           }).addTo(map);
         } catch (error) {
-          //consoleerror('Error updating route progress:', error);
+          ////consoleerror('Error updating route progress:', error);
         }
       };
 

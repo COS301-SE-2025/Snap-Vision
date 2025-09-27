@@ -31,8 +31,8 @@ const ShopContent: React.FC = () => {
 
     // Check if this item is currently equipped
     let isEquipped = false;
-    if (item.itemType === 'theme' && item.themeType) {
-      isEquipped = isThemeEquipped(item.themeType);
+    if (item.itemType === 'theme' && item.baseThemeType) {
+      isEquipped = isThemeEquipped(item.baseThemeType);
     } else if (item.itemType === 'icon') {
       isEquipped = isItemEquipped(item.id);
     }

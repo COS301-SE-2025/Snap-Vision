@@ -365,7 +365,7 @@ describe('NavigationPanel', () => {
         fireEvent.press(getByTestId('voice-toggle')); // Fallback to test ID if available
       } catch (error) {
         // Skip this assertion for now as the voice toggle might not have accessible text
-        //consolewarn('Voice toggle element not found with expected text or testID');
+        ////consolewarn('Voice toggle element not found with expected text or testID');
       }
     }
     // The onToggleVoice callback should still be testable if we can find the element

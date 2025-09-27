@@ -41,7 +41,7 @@ export async function getFCMToken(): Promise<string | null> {
     const token = await messaging().getToken();
     return token;
   } catch (e) {
-    console.warn('Failed to get FCM token:', e);
+    //console.warn('Failed to get FCM token:', e);
     return null;
   }
 }
@@ -72,7 +72,7 @@ export async function setupFCM() {
   const permissionGranted = await requestNotificationPermission();
   if (permissionGranted) {
     const token = await getFCMToken();
-    console.log('FCM Token:', token);
+    //console.log('FCM Token:', token);
     if (token) {
       await storeFCMToken(token);
     }

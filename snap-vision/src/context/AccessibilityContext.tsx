@@ -60,7 +60,7 @@ export const AccessibilityProvider = ({ children }: { children: React.ReactNode 
       await AsyncStorage.setItem(STORAGE_KEYS.HAPTIC_FEEDBACK, JSON.stringify(enabled));
       setSettings((prev) => ({ ...prev, isHapticFeedbackEnabled: enabled }));
     } catch (error) {
-      //consoleerror('Failed to save haptic feedback setting:', error);
+      ////consoleerror('Failed to save haptic feedback setting:', error);
       throw error;
     }
   };

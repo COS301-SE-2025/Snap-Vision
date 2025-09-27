@@ -50,7 +50,7 @@ function mdToBytes(md: any): number[] | null {
       }
     }
     
-    console.log('[mdToBytes] Unknown format:', JSON.stringify(md));
+    //console.log('[mdToBytes] Unknown format:', JSON.stringify(md));
     return null;
   } catch (e) {
     err('mdToBytes error:', e);
@@ -397,7 +397,7 @@ export class NativeBeaconScanner {
           // Commented out for performance - uncomment if debugging needed
           /*
           if (p.id || p.name) {
-            console.log(`[BEACON SCAN DEBUG] Peripheral:`, {
+            //console.log(`[BEACON SCAN DEBUG] Peripheral:`, {
               id: p.id,
               name: p.name,
               rssi: rssi,
@@ -415,16 +415,16 @@ export class NativeBeaconScanner {
 
             // DEBUG: Try to parse the manufacturer data manually
             const md = adv.manufacturerData ?? adv.kCBAdvDataManufacturerData ?? null;
-            console.log(`[BEACON SCAN DEBUG] Raw manufacturer data:`, md);
+            //console.log(`[BEACON SCAN DEBUG] Raw manufacturer data:`, md);
             const mdBytes = mdToBytes(md);
-            console.log(`[BEACON SCAN DEBUG] Converted to bytes:`, mdBytes);
+            //console.log(`[BEACON SCAN DEBUG] Converted to bytes:`, mdBytes);
             if (mdBytes) {
-              console.log(
+              //console.log(
                 `[BEACON SCAN DEBUG] Bytes as hex:`,
                 mdBytes.map((b) => b.toString(16).padStart(2, '0')).join(' '),
               );
               const ib = parseIBeaconBytes(mdBytes);
-              console.log(`[BEACON SCAN DEBUG] Parsed iBeacon:`, ib);
+              //console.log(`[BEACON SCAN DEBUG] Parsed iBeacon:`, ib);
             }
           }
           */
@@ -446,7 +446,7 @@ export class NativeBeaconScanner {
           // DEBUG: Beacon parsing - commented out for performance
           // Uncomment if you need to debug beacon detection issues
           /*
-          console.log(
+          //console.log(
             `[BEACON PARSE DEBUG] Processing peripheral ${p.id}, md:`,
             md,
             'mdBytes:',
@@ -458,23 +458,23 @@ export class NativeBeaconScanner {
             const ib = parseIBeaconBytes(mdBytes);
             // DEBUG: iBeacon parsing - commented out for performance
             /*
-            console.log(`[BEACON PARSE DEBUG] parseIBeaconBytes result:`, ib);
+            //console.log(`[BEACON PARSE DEBUG] parseIBeaconBytes result:`, ib);
             if (ib) {
-              console.log(
+              //console.log(
                 `[BEACON PARSE DEBUG] Checking allowedMM for ${mm}, allowedMM size:`,
                 this.allowedMM.size,
                 'has:',
                 this.allowedMM.has(mm),
               );
               if (!this.allowedMM.size || this.allowedMM.has(mm)) {
-                console.log(
+                //console.log(
                   `[BEACON PARSE DEBUG] ✅ FOUND iBeacon: UUID=${uuid} Major=${major} Minor=${minor}`,
                 );
               } else {
-                console.log(`[BEACON PARSE DEBUG] ❌ iBeacon rejected by allowedMM filter`);
+                //console.log(`[BEACON PARSE DEBUG] ❌ iBeacon rejected by allowedMM filter`);
               }
             } else {
-              console.log(`[BEACON PARSE DEBUG] ❌ parseIBeaconBytes returned null`);
+              //console.log(`[BEACON PARSE DEBUG] ❌ parseIBeaconBytes returned null`);
             }
             */
             if (ib) {
@@ -496,57 +496,57 @@ export class NativeBeaconScanner {
             // DEBUG: Log peripherals that couldn't be parsed as beacons
             if (rssi > -80) {
               // Only log relatively strong signals
-              console.log(`[BEACON SCAN DEBUG] Strong peripheral but no beacon data:`, {
-                id: p.id,
-                name: p.name,
-                rssi: rssi,
-                hasManufacturerData: !!md,
-                manufacturerDataLength: mdBytes ? mdBytes.length : 0,
-                serviceDataKeys: sd ? Object.keys(sd) : [],
-                possibleMAC: p.id?.includes(':') ? p.id : null,
-              });
+              //console.log(`[BEACON SCAN DEBUG] Strong peripheral but no beacon data:`, {
+              //   id: p.id,
+              //   name: p.name,
+              //   rssi: rssi,
+              //   hasManufacturerData: !!md,
+              //   manufacturerDataLength: mdBytes ? mdBytes.length : 0,
+              //   serviceDataKeys: sd ? Object.keys(sd) : [],
+              //   possibleMAC: p.id?.includes(':') ? p.id : null,
+              // });
             }
             if (sd && typeof sd === 'object') {
               for (const key of Object.keys(sd)) {
-                console.log(`[BEACON PARSE DEBUG] Service key ${key}:`, sd[key]);
+                //console.log(`[BEACON PARSE DEBUG] Service key ${key}:`, sd[key]);
                 const b = mdToBytes(sd[key]);
-                console.log(`[BEACON PARSE DEBUG] Service data bytes for ${key}:`, b);
+                //console.log(`[BEACON PARSE DEBUG] Service data bytes for ${key}:`, b);
                 if (!b) continue;
 
                 // Try direct iBeacon parsing from service data first (for c5e2 service)
                 if (key.toLowerCase() === 'c5e2' && b.length >= 20) {
-                  console.log(
-                    `[BEACON PARSE DEBUG] Trying direct iBeacon parse from c5e2 service data`,
-                  );
+                  //console.log(
+                  //   `[BEACON PARSE DEBUG] Trying direct iBeacon parse from c5e2 service data`,
+                  // );
                   const directBeacon = parseDirectServiceIBeacon(b);
-                  console.log(`[BEACON PARSE DEBUG] Direct service parse result:`, directBeacon);
+                  //console.log(`[BEACON PARSE DEBUG] Direct service parse result:`, directBeacon);
                   if (directBeacon) {
                     const mm = `${directBeacon.major}|${directBeacon.minor}`;
-                    console.log(
-                      `[BEACON PARSE DEBUG] Checking allowedMM for direct service ${mm}, allowedMM size:`,
-                      this.allowedMM.size,
-                    );
+                    //console.log(
+                    //   `[BEACON PARSE DEBUG] Checking allowedMM for direct service ${mm}, allowedMM size:`,
+                    //   this.allowedMM.size,
+                    // );
                     if (!this.allowedMM.size || this.allowedMM.has(mm)) {
                       uuid = directBeacon.uuid.toLowerCase();
                       major = directBeacon.major;
                       minor = directBeacon.minor;
                       measuredPower = directBeacon.measuredPower;
                       found = true;
-                      console.log(
-                        `[BEACON PARSE DEBUG] ✅ FOUND via direct service parse: UUID=${uuid} Major=${major} Minor=${minor}`,
-                      );
+                      //console.log(
+                      //   `[BEACON PARSE DEBUG] ✅ FOUND via direct service parse: UUID=${uuid} Major=${major} Minor=${minor}`,
+                      // );
                       break;
                     } else {
-                      console.log(
-                        `[BEACON PARSE DEBUG] ❌ Direct service beacon rejected by allowedMM filter`,
-                      );
+                      //console.log(
+                      //   `[BEACON PARSE DEBUG] ❌ Direct service beacon rejected by allowedMM filter`,
+                      // );
                     }
                   }
                 }
 
                 // Fall back to standard Minew service frame
                 const m = parseMinewServiceFrame(b, key);
-                console.log(`[BEACON PARSE DEBUG] Minew parse result:`, m);
+                //console.log(`[BEACON PARSE DEBUG] Minew parse result:`, m);
                 if (m) {
                   const mm = `${m.major}|${m.minor}`;
                   if (!this.allowedMM.size || this.allowedMM.has(mm)) {
@@ -555,9 +555,9 @@ export class NativeBeaconScanner {
                     minor = m.minor;
                     measuredPower = m.measuredPower;
                     found = true;
-                    console.log(
-                      `[BEACON PARSE DEBUG] ✅ FOUND via Minew service: UUID=${uuid} Major=${major} Minor=${minor}`,
-                    );
+                    //console.log(
+                    //   `[BEACON PARSE DEBUG] ✅ FOUND via Minew service: UUID=${uuid} Major=${major} Minor=${minor}`,
+                    // );
                     break;
                   }
                 }

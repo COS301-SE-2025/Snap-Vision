@@ -101,10 +101,10 @@ describe('badgeService integration', () => {
     expect(d.points).toBe(150);
     expect(d.badges).toEqual(expect.arrayContaining(['b1', 'b2', 'b3', 'points-150']));
 
-    d = await purchaseItemForUser('u', { id: 'itemA', name: 'A', cost: 40 }) as any;
+    d = await purchaseItemForUser('u', { id: 'itemA', title: 'A', cost: 40 }) as any;
     expect(d.points).toBe(110);
     expect(d.purchases).toHaveLength(1);
-    expect(d.purchases[0]).toMatchObject({ id: 'itemA', name: 'A', cost: 40, boughtAt: serverTs });
+    expect(d.purchases[0]).toMatchObject({ id: 'itemA', title: 'A', cost: 40, boughtAt: serverTs });
 
     d = await completeChallengeForUser('u', 'c1') as any;
     expect(d.points).toBe(130);

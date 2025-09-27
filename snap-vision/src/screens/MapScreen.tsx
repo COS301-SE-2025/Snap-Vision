@@ -210,7 +210,7 @@ const MapScreen = () => {
     const { entry, building } = autoNavigationPopup;
 
     if (building && building.centroid) {
-      console.log('[MapScreen] User confirmed auto-navigation, setting up route...');
+      //console.log('[MapScreen] User confirmed auto-navigation, setting up route...');
 
       // Clear any existing route first
       webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
@@ -235,7 +235,7 @@ const MapScreen = () => {
   };
 
   const handleAutoNavigationDismiss = () => {
-    console.log('[MapScreen] User dismissed auto-navigation');
+    //console.log('[MapScreen] User dismissed auto-navigation');
 
     // Just close the popup - no navigation setup was done
     setAutoNavigationPopup({ visible: false, entry: null, building: null });
@@ -466,11 +466,11 @@ const MapScreen = () => {
   };
 
   const handleStartNavigation = () => {
-    //consolelog('[DirectionsModal] Start pressed');
-    //consolelog('Current destination:', destination);
-    //consolelog('Current steps:', steps);
-    //consolelog('CurrentStep:', currentStep);
-    //consolelog('CurrentLocation:', currentLocation);
+    ////consolelog('[DirectionsModal] Start pressed');
+    ////consolelog('Current destination:', destination);
+    ////consolelog('Current steps:', steps);
+    ////consolelog('CurrentStep:', currentStep);
+    ////consolelog('CurrentLocation:', currentLocation);
 
     // call the actual startNavigation function from useMapNavigation hook
     // this handles location tracking, distance calculation, and destination detection
@@ -563,14 +563,14 @@ const MapScreen = () => {
     useCallback(() => {
       const checkForNotificationPopup = async () => {
         try {
-          console.log('[MapScreen] Checking for pending class popup...');
+          //console.log('[MapScreen] Checking for pending class popup...');
 
           const popupData = await AsyncStorage.getItem('pendingClassPopup');
           if (popupData) {
             const classData = JSON.parse(popupData);
             await AsyncStorage.removeItem('pendingClassPopup');
 
-            console.log('[MapScreen] Found pending class popup:', classData);
+            //console.log('[MapScreen] Found pending class popup:', classData);
 
             // Wait a bit for POIs to load if they haven't yet
             let retries = 0;
@@ -578,14 +578,14 @@ const MapScreen = () => {
 
             const waitForPOIs = () => {
               if (pois && pois.length > 0) {
-                console.log('[MapScreen] POIs loaded, processing popup');
+                //console.log('[MapScreen] POIs loaded, processing popup');
                 processClassPopup(classData);
               } else if (retries < maxRetries) {
                 retries++;
-                console.log('[MapScreen] Waiting for POIs to load, retry', retries);
+                //console.log('[MapScreen] Waiting for POIs to load, retry', retries);
                 setTimeout(waitForPOIs, 500);
               } else {
-                console.log('[MapScreen] POIs not loaded, using coordinates fallback');
+                //console.log('[MapScreen] POIs not loaded, using coordinates fallback');
                 processClassPopup(classData);
               }
             };
@@ -593,7 +593,7 @@ const MapScreen = () => {
             waitForPOIs();
           }
         } catch (error) {
-          console.error('[MapScreen] Error checking notification popup:', error);
+          //console.error('[MapScreen] Error checking notification popup:', error);
         }
       };
 
@@ -629,7 +629,7 @@ const MapScreen = () => {
         }
 
         if (building && building.centroid) {
-          console.log('[MapScreen] Triggering auto navigation popup for:', classData.course);
+          //console.log('[MapScreen] Triggering auto navigation popup for:', classData.course);
 
           // Create a mock entry for the popup
           const mockEntry = {
@@ -648,7 +648,7 @@ const MapScreen = () => {
             building: building,
           });
         } else {
-          console.log('[MapScreen] Could not find building for notification popup');
+          //console.log('[MapScreen] Could not find building for notification popup');
         }
       };
 
@@ -675,7 +675,7 @@ const MapScreen = () => {
               Tts.speak(instruction);
             }, 500);
           } catch (e) {
-            //consoleerror('TTS Error:', e);
+            ////consoleerror('TTS Error:', e);
             setError('Voice guidance is not available.');
           }
         }

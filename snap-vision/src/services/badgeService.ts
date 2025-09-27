@@ -58,7 +58,7 @@ export async function unlockBadgeForUser(userId: string, badgeId: string) {
       }
     });
   } catch (error) {
-    console.error(`Error unlocking badge ${validBadgeId} for user ${validUserId}:`, error);
+    //console.error(`Error unlocking badge ${validBadgeId} for user ${validUserId}:`, error);
     throw error;
   }
 }
@@ -109,10 +109,28 @@ export async function purchaseItemForUser(userId: string, item: any) {
     const updatedPoints = currentPoints - item.cost;
     const previousPurchases = userData?.purchases || [];
 
-    const newPurchase = {
-      ...item,
+    const newPurchase: any = {
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      icon: item.icon,
+      cost: item.cost,
       boughtAt: firestore.FieldValue.serverTimestamp(),
     };
+
+    // Only add optional fields if they are defined to avoid Firestore undefined errors
+    if (item.itemType !== undefined) {
+      newPurchase.itemType = item.itemType;
+    }
+    if (item.tabType !== undefined) {
+      newPurchase.tabType = item.tabType;
+    }
+    if (item.baseThemeType !== undefined) {
+      newPurchase.baseThemeType = item.baseThemeType;
+    }
+    if (item.equipped !== undefined) {
+      newPurchase.equipped = item.equipped;
+    }
 
     transaction.update(userRef, {
       points: updatedPoints,

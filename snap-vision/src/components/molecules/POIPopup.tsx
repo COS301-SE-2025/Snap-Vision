@@ -51,7 +51,7 @@ const POIPopup: React.FC<POIPopupProps> = ({
         <TouchableOpacity
           style={[styles.button, styles.primaryButton, { backgroundColor: themeColors.primary }]}
           onPress={() => {
-            console.log('[POI_POPUP] Navigate Here button pressed');
+            //console.log('[POI_POPUP] Navigate Here button pressed');
             onNavigate();
           }}
         >

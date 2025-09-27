@@ -51,12 +51,12 @@ export default function AccountDetails() {
             };
           }
         } catch (firestoreError) {
-          //consoleerror('Error fetching from Firestore:', firestoreError);
+          ////consoleerror('Error fetching from Firestore:', firestoreError);
         }
 
         setUserData(userInfo);
       } catch (error) {
-        //consoleerror('Error fetching user data:', error);
+        ////consoleerror('Error fetching user data:', error);
       } finally {
         setLoading(false);
       }

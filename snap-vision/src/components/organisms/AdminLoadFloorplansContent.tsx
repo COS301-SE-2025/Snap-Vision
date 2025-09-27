@@ -80,7 +80,7 @@ export default function AdminLoadFloorplansContent() {
         setShowErrorPopup(true);
       }
     } catch (err: any) {
-      console.error('Upload error:', err);
+      //console.error('Upload error:', err);
       setError(err?.message || 'Unknown error occurred during upload');
       setShowErrorPopup(true);
     }

@@ -48,7 +48,7 @@ export const initializePreBundledFloorplans = async () => {
       }
     }
   } catch (error) {
-    //consoleerror('Failed to initialize pre-bundled floorplans:', error);
+    ////consoleerror('Failed to initialize pre-bundled floorplans:', error);
   }
 };
 
@@ -80,7 +80,7 @@ export const getAllFloorplans = async () => {
 
     return Array.from(uniqueFloorplans.values());
   } catch (error) {
-    //consoleerror('Failed to get floorplans:', error);
+    ////consoleerror('Failed to get floorplans:', error);
     return [];
   }
 };
@@ -114,18 +114,18 @@ export const clearDuplicateFloorplans = async () => {
     // Remove duplicates (keep the first one)
     for (const [uniqueKey, items] of grouped.entries()) {
       if (items.length > 1) {
-        //consolelog(`Found ${items.length} duplicates for ${uniqueKey}, removing extras`);
+        ////consolelog(`Found ${items.length} duplicates for ${uniqueKey}, removing extras`);
 
         // Keep the first item, remove the rest
         for (let i = 1; i < items.length; i++) {
           await AsyncStorage.removeItem(items[i].key);
-          //consolelog(`Removed duplicate: ${items[i].key}`);
+          ////consolelog(`Removed duplicate: ${items[i].key}`);
         }
       }
     }
 
-    //consolelog('Duplicate cleanup completed');
+    ////consolelog('Duplicate cleanup completed');
   } catch (error) {
-    //consoleerror('Failed to clear duplicate floorplans:', error);
+    ////consoleerror('Failed to clear duplicate floorplans:', error);
   }
 };

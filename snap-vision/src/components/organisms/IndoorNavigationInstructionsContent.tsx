@@ -133,7 +133,7 @@ export default function IndoorNavigationInstructionsContent({
         const detailed = generateDetailedDirections(routeSteps);
         setSteps(detailed);
       } catch (e) {
-        //consoleerror(e);
+        ////consoleerror(e);
         setError('Failed to generate navigation route');
       } finally {
         setIsLoading(false);

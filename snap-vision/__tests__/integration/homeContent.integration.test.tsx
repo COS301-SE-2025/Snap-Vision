@@ -6,23 +6,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import { getRecentlyVPOIs } from '../../src/services/firebase/recentlyVService';
 
-const originalError = //consoleerror;
-  beforeAll(() => {
-    console.error = (...args) => {
-      if (
-        typeof args[0] === 'string' &&
-        (args[0].includes('was not wrapped in act') ||
-          args[0].includes('Error fetching recently visited'))
-      ) {
-        return;
-      }
-      originalError.call(console, ...args);
-    };
-  });
 
-afterAll(() => {
-  console.error = originalError;
-});
 
 //mock navigation
 const mockNavigate = jest.fn();
@@ -48,6 +32,12 @@ const mockAuth = {
     uid: 'test-user-123',
     email: 'test@example.com',
   },
+  onAuthStateChanged: jest.fn((callback) => {
+    // Call the callback immediately with the current user
+    setTimeout(() => callback(mockAuth.currentUser), 0);
+    // Return unsubscribe function
+    return jest.fn();
+  }),
 };
 
 jest.mock('@react-native-firebase/auth', () => ({
@@ -287,6 +277,10 @@ describe('HomeContent Integration Tests', () => {
     it('handles null currentUser and executes early return (Line 36)', async () => {
       (auth as jest.MockedFunction<typeof auth>).mockReturnValue({
         currentUser: null,
+        onAuthStateChanged: jest.fn((callback) => {
+          setTimeout(() => callback(null), 0);
+          return jest.fn();
+        }),
       } as any);
 
       let focusCallback: () => void;
@@ -315,6 +309,10 @@ describe('HomeContent Integration Tests', () => {
     it('handles undefined uid and executes early return', async () => {
       (auth as jest.MockedFunction<typeof auth>).mockReturnValue({
         currentUser: { uid: undefined },
+        onAuthStateChanged: jest.fn((callback) => {
+          setTimeout(() => callback({ uid: undefined }), 0);
+          return jest.fn();
+        }),
       } as any);
 
       let focusCallback: () => void;
@@ -342,6 +340,10 @@ describe('HomeContent Integration Tests', () => {
     it('handles empty string uid and executes early return', async () => {
       (auth as jest.MockedFunction<typeof auth>).mockReturnValue({
         currentUser: { uid: '' },
+        onAuthStateChanged: jest.fn((callback) => {
+          setTimeout(() => callback({ uid: '' }), 0);
+          return jest.fn();
+        }),
       } as any);
 
       let focusCallback: () => void;
@@ -475,7 +477,6 @@ describe('HomeContent Integration Tests', () => {
     });
 
     it('hides loading state even when errors occur', async () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       mockGetRecentlyVPOIs.mockRejectedValue(new Error('Network error'));
 
       (useFocusEffect as jest.Mock).mockImplementation((callback) => {
@@ -491,8 +492,6 @@ describe('HomeContent Integration Tests', () => {
       await waitFor(() => {
         expect(queryByText('Loading...')).toBeNull();
       });
-
-      consoleSpy.mockRestore();
     });
   });
 

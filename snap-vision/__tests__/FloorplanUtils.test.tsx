@@ -180,36 +180,23 @@ describe('floorplanUtils', () => {
     const error = new Error('AsyncStorage failure');
     (AsyncStorage.getAllKeys as jest.Mock).mockRejectedValue(error);
 
-    // Spy on //consoleerror
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
     const result = await getAllFloorplans();
 
     expect(result).toEqual([]);
-
-    errorSpy.mockRestore();
   });
 
   it('logs error if AsyncStorage throws', async () => {
     const error = new Error('AsyncStorage failure');
     (AsyncStorage.getItem as jest.Mock).mockRejectedValue(error);
 
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
     await initializePreBundledFloorplans();
-
-    errorSpy.mockRestore();
   });
 
   it('logs error if AsyncStorage throws', async () => {
     const error = new Error('AsyncStorage failure');
     (AsyncStorage.getAllKeys as jest.Mock).mockRejectedValue(error);
 
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
     await clearDuplicateFloorplans();
-
-    errorSpy.mockRestore();
   });
 
   it('does not update floorplan if already prebundled', async () => {

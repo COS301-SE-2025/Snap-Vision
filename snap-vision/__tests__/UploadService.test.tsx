@@ -40,18 +40,12 @@ function load() {
 }
 
 describe('uploadFloorplanImage', () => {
-  const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-
   beforeEach(() => {
     jest.clearAllMocks();
     mockPutFile.mockResolvedValue(undefined);
     mockGetDownloadURL.mockResolvedValue('https://cdn.example.com/f.jpg');
     // Reset user to default
     getAuthMock().__setUser({ uid: 'u-123' });
-  });
-
-  afterAll(() => {
-    logSpy.mockRestore();
   });
 
   it('uploads to expected storage path and returns download URL', async () => {

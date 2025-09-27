@@ -45,7 +45,7 @@ const TextToSpeech: React.FC<TextToSpeechProps> = ({
           onSpeakingChange?.(false);
         });
       } catch (error) {
-        //consoleerror('TTS initialization failed:', error);
+        ////consoleerror('TTS initialization failed:', error);
       }
     };
 
@@ -78,7 +78,7 @@ const TextToSpeech: React.FC<TextToSpeechProps> = ({
         .replace(/\byd\b/g, 'yards');
       Tts.speak(cleanText);
     } catch (error) {
-      //consoleerror('TTS speak error:', error);
+      ////consoleerror('TTS speak error:', error);
     }
   };
 

@@ -128,13 +128,13 @@ describe('badgeService unit', () => {
 
   it('purchaseItemForUser success updates points and purchases', async () => {
     store.set('users/u4', { points: 200, purchases: [] });
-    const updated = await purchaseItemForUser('u4', { id: 'item1', cost: 60, name: 'N' });
+    const updated = await purchaseItemForUser('u4', { id: 'item1', cost: 60, title: 'N' });
     expect(updated.points).toBe(140);
     expect(updated.purchases).toHaveLength(1);
     expect(updated.purchases[0]).toMatchObject({
       id: 'item1',
       cost: 60,
-      name: 'N',
+      title: 'N',
       boughtAt: serverTs,
     });
   });

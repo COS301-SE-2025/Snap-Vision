@@ -228,7 +228,7 @@ export const useMapNavigation = (
       // Reset progress
       setRouteProgress(0);
     } catch (error) {
-      //consoleerror('Route fetch error:', error);
+      ////consoleerror('Route fetch error:', error);
       setError('Failed to fetch or draw route');
     } finally {
       setIsRouteLoading(false);
@@ -330,7 +330,7 @@ export const useMapNavigation = (
         await addRecentlyVisitedPOI(visit);
       }
     } catch (error) {
-      //consoleerror('Failed to record visit:', error);
+      ////consoleerror('Failed to record visit:', error);
     }
 
     setStatus('You have reached your destination!');
@@ -404,7 +404,7 @@ export const useMapNavigation = (
 
       setStatus(`Route updated! ${walkedFormatted} progress preserved`);
     } catch (error) {
-      //consoleerror('Route fetch error:', error);
+      ////consoleerror('Route fetch error:', error);
       setError('Failed to fetch or draw route');
     } finally {
       setIsRouteLoading(false);
@@ -464,7 +464,7 @@ export const useMapNavigation = (
 
         // Add safety check for each route point
         if (!Array.isArray(routePoint) || routePoint.length < 2) {
-          //consolewarn('Invalid route point at index', i, routePoint);
+          ////consolewarn('Invalid route point at index', i, routePoint);
           continue;
         }
 

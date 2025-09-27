@@ -26,7 +26,7 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
 
       setLocations(filteredLocations);
     } catch (err) {
-      //consoleerror(err);
+      ////consoleerror(err);
       setError('Failed to load locations');
     } finally {
       setIsLoading(false);
@@ -51,7 +51,7 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
 
       setBuildings(buildingList);
     } catch (err) {
-      //consoleerror(err);
+      ////consoleerror(err);
       setError('Failed to load buildings');
     } finally {
       setIsLoading(false);
@@ -82,10 +82,10 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
         };
       });
 
-      //consolelog('Floorplans loaded:', newFloorplans);
+      ////consolelog('Floorplans loaded:', newFloorplans);
       setFloorplans(newFloorplans);
     } catch (err) {
-      //consoleerror(err);
+      ////consoleerror(err);
       setError('Failed to load floorplans');
     } finally {
       setIsLoading(false);
@@ -123,7 +123,7 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
 
       return { success: true };
     } catch (err) {
-      //consoleerror(err);
+      ////consoleerror(err);
       setError('Failed to delete floorplan');
       return { success: false, error: 'Failed to delete floorplan' };
     } finally {

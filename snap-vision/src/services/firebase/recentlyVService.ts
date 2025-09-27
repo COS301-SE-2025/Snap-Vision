@@ -22,13 +22,13 @@ export async function getRecentlyVPOIs(userId?: string): Promise<Visit[]> {
     const validUserId = InputValidator.validateUserId(currentUserId);
 
     if (!validUserId) {
-      console.warn('Invalid user ID provided to getRecentlyVPOIs');
+      //console.warn('Invalid user ID provided to getRecentlyVPOIs');
       return [];
     }
 
     // Authorization check
     if (!(await authService.canAccessRecentlyVisited(validUserId))) {
-      console.warn('Unauthorized access attempt to recently visited data');
+      //console.warn('Unauthorized access attempt to recently visited data');
       return [];
     }
 
@@ -72,7 +72,7 @@ export async function getRecentlyVPOIs(userId?: string): Promise<Visit[]> {
 
     return validatedPois.slice(0, 10);
   } catch (error) {
-    console.error('Error fetching recently visited POIs:', error);
+    //console.error('Error fetching recently visited POIs:', error);
     return [];
   }
 }
@@ -112,7 +112,7 @@ export async function addRecentlyVisitedPOI(visit: Omit<Visit, 'timestamp'>): Pr
       // Prevent duplicate POIs
       const alreadyExists = pois.some((poi) => poi.poiId === validPoiId);
       if (alreadyExists) {
-        console.log(`POI ${validPoiId} already exists for user ${validUserId}`);
+        //console.log(`POI ${validPoiId} already exists for user ${validUserId}`);
         return;
       }
 
@@ -135,9 +135,9 @@ export async function addRecentlyVisitedPOI(visit: Omit<Visit, 'timestamp'>): Pr
       });
     }
 
-    console.log(`Added POI ${validPoiId} to recently visited for user ${validUserId}`);
+    //console.log(`Added POI ${validPoiId} to recently visited for user ${validUserId}`);
   } catch (error) {
-    console.error('Error adding recently visited POI:', error);
+    //console.error('Error adding recently visited POI:', error);
     throw error;
   }
 }

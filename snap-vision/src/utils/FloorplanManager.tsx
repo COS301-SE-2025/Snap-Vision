@@ -43,7 +43,7 @@ export function useFloorplanPreloader(
           return true;
         })
         .catch((error) => {
-          //consoleerror(`Failed to preload floorplan: ${url}`, error);
+          ////consoleerror(`Failed to preload floorplan: ${url}`, error);
           loadedCount++;
           onProgress?.(loadedCount, floorplanUrls.length);
           return false;
@@ -52,7 +52,7 @@ export function useFloorplanPreloader(
 
     // Wait for all prefetch operations to complete
     Promise.all(prefetchPromises).then(() => {
-      //consolelog('All available floorplans preloaded');
+      ////consolelog('All available floorplans preloaded');
     });
   }, [floorplanUrls, onProgress]);
 
@@ -90,7 +90,7 @@ export function preloadFloorplans(urls: string[]): Promise<void> {
             return true;
           })
           .catch((error) => {
-            //consoleerror(`Failed to preload floorplan: ${url}`, error);
+            ////consoleerror(`Failed to preload floorplan: ${url}`, error);
             return false;
           }),
       ),

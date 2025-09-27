@@ -30,22 +30,22 @@ export const useBuildings = () => {
   const loadBuildingsWithNavigation = async () => {
     try {
       setIsLoading(true);
-      //consolelog('[useBuildings] Starting to load buildings...');
+      ////consolelog('[useBuildings] Starting to load buildings...');
 
       // Check authentication
       const currentUser = auth().currentUser;
-      //consolelog('[useBuildings] Current user:', currentUser?.uid || 'Not authenticated');
+      ////consolelog('[useBuildings] Current user:', currentUser?.uid || 'Not authenticated');
 
       const locationSnapshot = await firestore().collection('locations').get();
       const locationIds = locationSnapshot.docs.map((doc) => doc.id);
-      //consolelog('[useBuildings] Found location IDs:', locationIds);
+      ////consolelog('[useBuildings] Found location IDs:', locationIds);
 
       // Extract location data for LocationSelector
       const locationData: Location[] = locationSnapshot.docs.map((doc) => ({
         id: doc.id,
         name: doc.data().name || doc.id,
       }));
-      //consolelog('[useBuildings] Location data:', locationData);
+      ////consolelog('[useBuildings] Location data:', locationData);
       setLocations(locationData);
 
       const allBuildings: Building[] = [];
@@ -133,14 +133,14 @@ export const useBuildings = () => {
       );
 
       const navigableBuildings = buildingsWithNavigation.filter((b) => b.hasNavigation);
-      //consolelog('[useBuildings] Final navigable buildings:', navigableBuildings.length);
+      ////consolelog('[useBuildings] Final navigable buildings:', navigableBuildings.length);
       setBuildings(navigableBuildings);
     } catch (error) {
-      //consoleerror('Error loading buildings:', error);
+      ////consoleerror('Error loading buildings:', error);
       setBuildings([]); // Clear buildings on error to avoid stale data
     } finally {
       setIsLoading(false);
-      //consolelog('[useBuildings] Loading completed');
+      ////consolelog('[useBuildings] Loading completed');
     }
   };
 

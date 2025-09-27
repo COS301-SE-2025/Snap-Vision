@@ -50,14 +50,12 @@ class TimetableBackgroundService {
 
   // Method that can be called to refresh notifications when timetable changes
   async refreshNotifications() {
-    console.log('[TimetableService] Manually refreshing notifications');
     return this.scheduleWeekNotifications();
   }
 
   async start() {
     if (this.isRunning) return;
 
-    console.log('[TimetableService] Starting background service');
     this.isRunning = true;
 
     // Schedule notifications for the next 7 days
@@ -68,7 +66,7 @@ class TimetableBackgroundService {
   }
 
   stop() {
-    console.log('[TimetableService] Stopping background service');
+    //console.log('[TimetableService] Stopping background service');
     this.isRunning = false;
 
     // Remove the app state listener using the subscription
@@ -89,11 +87,11 @@ class TimetableBackgroundService {
     try {
       const user = auth().currentUser;
       if (!user) {
-        console.log('[TimetableService] No authenticated user');
+        //console.log('[TimetableService] No authenticated user');
         return [];
       }
 
-      console.log('[TimetableService] Fetching timetable entries for user:', user.uid);
+      //console.log('[TimetableService] Fetching timetable entries for user:', user.uid);
 
       // Authorization check - users can only access their own timetable
       if (!(await authService.canAccessTimetable(user.uid))) {
@@ -106,7 +104,7 @@ class TimetableBackgroundService {
         .get();
 
       if (snapshot.empty) {
-        console.log('[TimetableService] No timetable entries found for user');
+        //console.log('[TimetableService] No timetable entries found for user');
         return [];
       }
 
@@ -118,10 +116,10 @@ class TimetableBackgroundService {
           }) as TimetableEntry,
       );
 
-      console.log('[TimetableService] Found', entries.length, 'timetable entries');
+      //console.log('[TimetableService] Found', entries.length, 'timetable entries');
       return entries;
     } catch (error: any) {
-      console.error('[TimetableService] Error fetching timetable:', error.code, error.message);
+      //console.error('[TimetableService] Error fetching timetable:', error.code, error.message);
       return [];
     }
   }
@@ -130,11 +128,11 @@ class TimetableBackgroundService {
     try {
       const user = auth().currentUser;
       if (!user) {
-        console.log('[TimetableService] No authenticated user for POIs');
+        //console.log('[TimetableService] No authenticated user for POIs');
         return [];
       }
 
-      console.log('[TimetableService] Fetching POIs for authenticated user');
+      //console.log('[TimetableService] Fetching POIs for authenticated user');
 
       const locationsSnapshot = await firestore().collection('locations').get();
       const allPOIs: POI[] = [];
@@ -158,19 +156,14 @@ class TimetableBackgroundService {
             }
           });
         } catch (locationError) {
-          console.warn(
-            '[TimetableService] Error fetching POIs for location',
-            locationId,
-            ':',
-            locationError,
-          );
+          // Error fetching POIs for location
         }
       }
 
-      console.log('[TimetableService] Successfully fetched', allPOIs.length, 'POIs');
+      //console.log('[TimetableService] Successfully fetched', allPOIs.length, 'POIs');
       return allPOIs;
     } catch (error: any) {
-      console.error('[TimetableService] Error fetching POIs:', error.code, error.message);
+      //console.error('[TimetableService] Error fetching POIs:', error.code, error.message);
       return [];
     }
   }
@@ -221,7 +214,7 @@ class TimetableBackgroundService {
       // Check if auto navigation is enabled
       const autoNavEnabled = await AsyncStorage.getItem('autoNavigationEnabled');
       if (autoNavEnabled === 'false') {
-        console.log('[TimetableService] Auto navigation disabled');
+        //console.log('[TimetableService] Auto navigation disabled');
         return;
       }
 
@@ -239,18 +232,18 @@ class TimetableBackgroundService {
       const mapping: Record<string, string> = {};
       const now = new Date();
 
-      console.log('[TimetableService] Current time:', now.toLocaleString());
-      console.log('[TimetableService] Scheduling notifications for next 7 days');
+      //console.log('[TimetableService] Current time:', now.toLocaleString());
+      //console.log('[TimetableService] Scheduling notifications for next 7 days');
 
       // Schedule for the next 7 days
       for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
         const targetDate = new Date(now.getTime() + dayOffset * 24 * 60 * 60 * 1000);
         const targetDayName = this.getDayName(targetDate.getDay());
 
-        console.log('[TimetableService] Processing day:', targetDayName, targetDate.toDateString());
+        //console.log('[TimetableService] Processing day:', targetDayName, targetDate.toDateString());
 
         const dayEntries = entries.filter((entry) => entry.day === targetDayName);
-        console.log('[TimetableService] Found', dayEntries.length, 'entries for', targetDayName);
+        //console.log('[TimetableService] Found', dayEntries.length, 'entries for', targetDayName);
 
         for (const entry of dayEntries) {
           // Calculate notification time: 10 minutes before class
@@ -265,34 +258,34 @@ class TimetableBackgroundService {
           );
           const triggerTs = scheduledDate.getTime() - 10 * 60 * 1000; // 10 minutes before
 
-          console.log(
-            '[TimetableService] Entry:',
-            entry.course,
-            'at',
-            entry.startTime,
-            'on',
-            targetDayName,
-          );
-          console.log('[TimetableService] Class time:', scheduledDate.toLocaleString());
-          console.log(
-            '[TimetableService] Notification time:',
-            new Date(triggerTs).toLocaleString(),
-          );
+          //console.log(
+          //   '[TimetableService] Entry:',
+          //   entry.course,
+          //   'at',
+          //   entry.startTime,
+          //   'on',
+          //   targetDayName,
+          // );
+          //console.log('[TimetableService] Class time:', scheduledDate.toLocaleString());
+          //console.log(
+          //   '[TimetableService] Notification time:',
+          //   new Date(triggerTs).toLocaleString(),
+          // );
 
           // Skip if the notification time has already passed
           if (triggerTs <= now.getTime()) {
-            console.log(
-              '[TimetableService] Skipping past time for:',
-              entry.course,
-              'on',
-              targetDayName,
-            );
+            //console.log(
+            //   '[TimetableService] Skipping past time for:',
+            //   entry.course,
+            //   'on',
+            //   targetDayName,
+            // );
             continue;
           }
 
           const building = this.findBuildingForEntry(entry, pois);
           if (!building || !building.centroid) {
-            console.log('[TimetableService] No building found for entry:', entry.course);
+            //console.log('[TimetableService] No building found for entry:', entry.course);
             continue;
           }
 
@@ -303,12 +296,12 @@ class TimetableBackgroundService {
             timestamp: triggerTs,
           };
 
-          console.log(
-            '[TimetableService] Creating notification for:',
-            entry.course,
-            'trigger timestamp:',
-            triggerTs,
-          );
+          //console.log(
+          //   '[TimetableService] Creating notification for:',
+          //   entry.course,
+          //   'trigger timestamp:',
+          //   triggerTs,
+          // );
 
           const notifId = await notifee.createTriggerNotification(
             {
@@ -339,37 +332,37 @@ class TimetableBackgroundService {
 
           if (notifId) {
             mapping[entryKey] = notifId;
-            console.log(
-              '[TimetableService] Successfully scheduled notification',
-              entryKey,
-              'with ID',
-              notifId,
-              'for',
-              new Date(triggerTs).toLocaleString(),
-            );
+            //console.log(
+            //   '[TimetableService] Successfully scheduled notification',
+            //   entryKey,
+            //   'with ID',
+            //   notifId,
+            //   'for',
+            //   new Date(triggerTs).toLocaleString(),
+            // );
           } else {
-            console.log('[TimetableService] Failed to create notification for', entryKey);
+            //console.log('[TimetableService] Failed to create notification for', entryKey);
           }
         }
       }
 
       await AsyncStorage.setItem(this.SCHEDULED_KEY, JSON.stringify(mapping));
-      console.log(
-        '[TimetableService] Scheduled',
-        Object.keys(mapping).length,
-        'notifications for the week',
-      );
+      //console.log(
+      //   '[TimetableService] Scheduled',
+      //   Object.keys(mapping).length,
+      //   'notifications for the week',
+      // );
     } catch (error) {
-      console.error('[TimetableService] Error scheduling notifications:', error);
+      //console.error('[TimetableService] Error scheduling notifications:', error);
     }
   }
 
   async markNotificationOpened(entryKey: string) {
     try {
       await AsyncStorage.setItem(this.OPENED_KEY, entryKey);
-      console.log('[TimetableService] Marked notification as opened:', entryKey);
+      //console.log('[TimetableService] Marked notification as opened:', entryKey);
     } catch (error) {
-      console.error('[TimetableService] Error marking notification as opened:', error);
+      //console.error('[TimetableService] Error marking notification as opened:', error);
     }
   }
 
@@ -410,10 +403,10 @@ class TimetableBackgroundService {
         testTrigger,
       );
 
-      console.log('[TimetableService] Test notification scheduled with ID:', notifId);
+      //console.log('[TimetableService] Test notification scheduled with ID:', notifId);
       return notifId;
     } catch (error) {
-      console.error('[TimetableService] Error scheduling test notification:', error);
+      //console.error('[TimetableService] Error scheduling test notification:', error);
       return null;
     }
   }

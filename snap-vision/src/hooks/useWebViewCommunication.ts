@@ -234,7 +234,7 @@ export const useWebViewCommunication = (
   // Main WebView message handler
   const handleWebViewMessage = useCallback(
     async (event: any) => {
-      //consolelog('[WebView message]', event.nativeEvent.data);
+      ////consolelog('[WebView message]', event.nativeEvent.data);
 
       try {
         const data = event.nativeEvent.data;
@@ -305,10 +305,10 @@ export const useWebViewCommunication = (
             break;
 
           default:
-          // //consolelog('Unknown message type from WebView:', parsed.type);
+          // ////consolelog('Unknown message type from WebView:', parsed.type);
         }
       } catch (e) {
-        // //consolelog('WebView message error:', event.nativeEvent.data);
+        // ////consolelog('WebView message error:', event.nativeEvent.data);
       }
     },
     [

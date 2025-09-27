@@ -7,15 +7,11 @@ const mockAuthService = {
   canModifyQRCode: jest.fn(),
 };
 
-jest.mock('../../src/security/AuthorizationService', () => ({
-  default: class {
-    static getInstance() {
-      return mockAuthService;
-    }
+jest.mock('../../src/security/AuthorizationService', {
+  default: {
+    getInstance: () => mockAuthService,
   },
-}));
-
-import AuthorizationService from '../../src/security/AuthorizationService';
+});
 
 import {
   createQRCodeMapping,

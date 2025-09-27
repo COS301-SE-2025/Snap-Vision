@@ -224,7 +224,7 @@ export const calculateMultiFloorRoute = (
           } else if (turnType === 'left') {
             instruction = `Turn left towards ${nextRoom.name}`;
             type = 'turn';
-            //consolelog('hi tony');
+            ////consolelog('hi tony');
           } else if (turnType === 'right') {
             instruction = `Turn right towards ${nextRoom.name}`;
             type = 'turn';
@@ -427,7 +427,7 @@ export class NavigationGraph {
       const startId = path.startRoomId ?? path.fromRoomId;
       const endId = path.endRoomId ?? path.toRoomId;
       if (!startId || !endId) {
-        //consolewarn('Path missing endpoints:', path.id, { startId, endId });
+        ////consolewarn('Path missing endpoints:', path.id, { startId, endId });
         continue;
       }
 

@@ -11,7 +11,7 @@ import { useBadges } from '../../context/BadgeContext';
 import { BADGES, BadgeId } from '../../types/badges';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../../navigation/types'; // Adjust path if needed
+import { RootStackParamList } from '../../navigation/types'; 
 import { createStackNavigator } from '@react-navigation/stack';
 import ProgressSection from '../molecules/ProgressSection';
 import BadgesSection from '../molecules/BadgeSection';
@@ -37,8 +37,8 @@ export default function AchievementsForm() {
   //   { id: '3', title: 'Parks', icon: 'leaf', color: colors.secondary },
   // ];
 
-  // const handleCategoryPress = (title: string) => console.log(`${title} category pressed`);
-  // const handleActionPress = (a: string) => console.log(`${a} button pressed`);
+  // const handleCategoryPress = (title: string) => //console.log(`${title} category pressed`);
+  // const handleActionPress = (a: string) => //console.log(`${a} button pressed`);
 
   return (
     <ScrollView

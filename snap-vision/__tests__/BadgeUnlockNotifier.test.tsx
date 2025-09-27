@@ -6,6 +6,10 @@ import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
 // Mock all necessary modules
 jest.mock('@react-native-firebase/auth', () => () => ({
   currentUser: { uid: 'test-uid' },
+  onAuthStateChanged: jest.fn((callback) => {
+    callback({ uid: 'test-uid' });
+    return jest.fn();
+  }),
 }));
 
 jest.mock('react-native-vector-icons/Ionicons', () => 'Icon');

@@ -62,7 +62,7 @@ export default function QRScanner({ onScan, onClose }: Props) {
           }
         }
       } catch (e) {
-        //consoleerror('Permission error', e);
+        ////consoleerror('Permission error', e);
         setHasPermission(false);
       }
     };
@@ -77,9 +77,9 @@ export default function QRScanner({ onScan, onClose }: Props) {
   const device = useCameraDevice('back');
 
   useEffect(() => {
-    //consolelog('Camera device:', device ? 'Available' : 'Not available');
+    ////consolelog('Camera device:', device ? 'Available' : 'Not available');
     if (device) {
-      //consolelog('Formats available:', device.formats?.length ?? 0);
+      ////consolelog('Formats available:', device.formats?.length ?? 0);
     }
   }, [device]);
 
@@ -118,7 +118,7 @@ export default function QRScanner({ onScan, onClose }: Props) {
         // Dedupe: ignore the same value within a short TTL window
         const lastTs = seenMapRef.current.get(hit.value) ?? 0;
         if (now() - lastTs < DEDUPE_TTL_MS) {
-          //consolelog('Duplicate within TTL, ignoring:', hit.value);
+          ////consolelog('Duplicate within TTL, ignoring:', hit.value);
           return;
         }
         seenMapRef.current.set(hit.value, now());
@@ -133,7 +133,7 @@ export default function QRScanner({ onScan, onClose }: Props) {
         setLastValue(hit.value);
         onScan(hit.value);
       } catch (err) {
-        //consoleerror('handleBarcodeDetected error:', err);
+        ////consoleerror('handleBarcodeDetected error:', err);
       }
     },
     [locked, onScan],
@@ -195,7 +195,7 @@ export default function QRScanner({ onScan, onClose }: Props) {
         await maybeFocus({ x: locationX / width, y: locationY / height });
       }
     } catch (error) {
-      //consolelog('Focus error:', error);
+      ////consolelog('Focus error:', error);
     }
   };
 
