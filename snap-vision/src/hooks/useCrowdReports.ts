@@ -5,6 +5,7 @@ import { POI } from './useMapPOI';
 import { useBadges } from '../context/BadgeContext';
 import AuthorizationService from '../security/AuthorizationService';
 import InputValidator from '../security/InputValidator';
+import perf from '@react-native-firebase/perf';
 
 const authService = AuthorizationService.getInstance();
 
@@ -70,6 +71,8 @@ export const useCrowdReports = (
         setError('Please select a building and density level');
         return;
       }
+      const trace = await perf().newTrace('crowd_report_submission_latency');
+    await trace.start();
 
       try {
         // Authorization check
@@ -129,6 +132,9 @@ export const useCrowdReports = (
         //consoleerror('Error saving crowd report:', error);
         setError('Failed to submit crowd report');
       }
+      finally {
+      await trace.stop();
+    }
     },
     [selectedDensity, isMapReady, webViewRef, setStatus, setError, unlock],
   );

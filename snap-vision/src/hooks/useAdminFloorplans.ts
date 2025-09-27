@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import firestore from '@react-native-firebase/firestore';
 import { FloorplanMeta, Location, Building } from '../types/floorplan.types';
+import perf from '@react-native-firebase/perf';
 
 export const useAdminFloorplans = (role: string | null, adminLocations: string[]) => {
   const [locations, setLocations] = useState<Location[]>([]);
@@ -34,6 +35,8 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
 
   const fetchBuildings = async (locationId: string) => {
     if (!locationId) return;
+    const trace = await perf().newTrace('admin_load_buildings_perf');
+  await trace.start();
 
     setIsLoading(true);
     try {
@@ -52,12 +55,14 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
       setError('Failed to load buildings');
     } finally {
       setIsLoading(false);
+      await trace.stop();
     }
   };
 
   const fetchFloorplans = async (locationId: string, buildingId: string) => {
     if (!locationId || !buildingId) return;
-
+const trace = await perf().newTrace('admin_load_floorplans_perf');
+  await trace.start();
     setIsLoading(true);
     try {
       const snap = await firestore()
@@ -84,6 +89,7 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
       setError('Failed to load floorplans');
     } finally {
       setIsLoading(false);
+      await trace.stop();
     }
   };
 

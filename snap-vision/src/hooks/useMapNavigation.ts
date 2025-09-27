@@ -6,7 +6,7 @@ import auth from '@react-native-firebase/auth';
 import Tts from 'react-native-tts';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { addRecentlyVisitedPOI, Visit } from '../services/firebase/recentlyVService';
-import Reactotron from 'reactotron-react-native';
+import perf from '@react-native-firebase/perf';
 
 interface LocationState {
   latitude: number;
@@ -179,18 +179,8 @@ export const useMapNavigation = (
       return;
     }
 
-    // start performance requiremnet testing
-    const startTime = performance.now();
-    Reactotron.display({
-      name: 'Route Generation Started',
-      preview: `From: ${currentLocation.latitude}, ${currentLocation.longitude}`,
-      value: {
-        start: currentLocation,
-        destination: destCoords,
-        timestamp: startTime,
-      },
-    });
-
+const trace = await perf().newTrace('route_fetch_latency');
+  await trace.start();
     setIsRouteLoading(true);
     setStatus('Calculating route...');
 
@@ -238,27 +228,13 @@ export const useMapNavigation = (
       // Reset progress
       setRouteProgress(0);
 
-      //end performance requirement testing
-      const endTime = performance.now();
-      const duration = endTime - startTime;
-      const passed = duration < 300;
-
-      Reactotron.display({
-        name: 'Route Generation Complete',
-        preview: `${duration.toFixed(2)}ms ${passed ? 'PASS' : 'FAIL'}`,
-        value: {
-          duration: `${duration.toFixed(2)}ms`,
-          passedTest: passed,
-          requirement: '< 300ms',
-          totalDistance: `${totalDistance.toFixed(0)}m`,
-          status: 'SUCCESS',
-        },
-      });
+      
     } catch (error) {
       //consoleerror('Route fetch error:', error);
       setError('Failed to fetch or draw route');
     } finally {
       setIsRouteLoading(false);
+      await trace.stop();
     }
   };
 
