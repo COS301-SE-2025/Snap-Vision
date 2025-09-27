@@ -356,7 +356,31 @@ const STATIC_HTML = `
       } else if (e.touches.length === 1 && isDragging) {
         const deltaX = e.touches[0].clientX - lastX;
         const deltaY = e.touches[0].clientY - lastY;
-        currentOffsetX += deltaX; currentOffsetY += deltaY;
+        
+        // Calculate new position with constraints
+        const newOffsetX = currentOffsetX + deltaX;
+        const newOffsetY = currentOffsetY + deltaY;
+        
+        // Get container dimensions
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+        
+        // Calculate the scaled image dimensions
+        const scaledWidth = containerWidth * currentScale;
+        const scaledHeight = containerHeight * currentScale;
+        
+        // Set boundaries to prevent image from moving completely out of view
+        // Allow some movement but keep at least 20% of the image visible
+        const minVisibleRatio = 0.3;
+        const maxOffsetX = containerWidth * (1 - minVisibleRatio);
+        const minOffsetX = -(scaledWidth - containerWidth * minVisibleRatio);
+        const maxOffsetY = containerHeight * (1 - minVisibleRatio);
+        const minOffsetY = -(scaledHeight - containerHeight * minVisibleRatio);
+        
+        // Apply constraints
+        currentOffsetX = Math.max(minOffsetX, Math.min(maxOffsetX, newOffsetX));
+        currentOffsetY = Math.max(minOffsetY, Math.min(maxOffsetY, newOffsetY));
+        
         applyTransform();
         lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
         e.preventDefault();
@@ -615,7 +639,7 @@ export default function IndoorSchematicMap({
     // Only show loading on first load or when not preloaded
     const isCurrentFloorplanPreloaded = floorplanUrl ? isPreloaded(floorplanUrl) : true;
     const initialLoad = !webViewReady;
-    const floorplanNeedsLoading = !floorplanLoaded && floorplanUrl && !isCurrentFloorplanPreloaded;
+    const floorplanNeedsLoading = !floorplanLoaded && !!floorplanUrl && !isCurrentFloorplanPreloaded;
 
     setIsLoading(initialLoad || floorplanNeedsLoading);
   }, [webViewReady, floorplanLoaded, floorplanUrl, isPreloaded]);

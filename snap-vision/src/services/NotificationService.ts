@@ -2,12 +2,29 @@ import messaging from '@react-native-firebase/messaging';
 import notifee from '@notifee/react-native';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
+import { Platform, PermissionsAndroid } from 'react-native';
+import AuthorizationService from '../security/AuthorizationService';
+import InputValidator from '../security/InputValidator';
+
+const authService = AuthorizationService.getInstance();
 
 /**
  * Requests notification permission from the user.
  * @returns {Promise<boolean>} true if permission granted, false otherwise
  */
 export async function requestNotificationPermission(): Promise<boolean> {
+  // For Android 13+ (API 33+), request POST_NOTIFICATIONS permission first
+  if (Platform.OS === 'android' && Platform.Version >= 33) {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+    );
+
+    if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+      return false;
+    }
+  }
+
+  // Request Firebase messaging permission
   const authStatus = await messaging().requestPermission();
   return (
     authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
@@ -30,9 +47,25 @@ export async function getFCMToken(): Promise<string | null> {
 }
 export async function storeFCMToken(token: string): Promise<void> {
   const user = auth().currentUser;
-  if (user && token) {
-    await firestore().collection('userFCMTokens').doc(user.uid).set({ token }, { merge: true });
+  if (!user) {
+    throw new Error('User not authenticated');
   }
+
+  // Input validation
+  const validToken = InputValidator.validateText(token);
+  if (!validToken) {
+    throw new Error('Invalid FCM token');
+  }
+
+  // Authorization check - users can only store their own tokens
+  if (!(await authService.canAccessFCMToken(user.uid))) {
+    throw new Error('Unauthorized: Cannot store FCM token');
+  }
+
+  await firestore()
+    .collection('userFCMTokens')
+    .doc(user.uid)
+    .set({ token: validToken }, { merge: true });
 }
 
 export async function setupFCM() {

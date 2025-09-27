@@ -1,17 +1,13 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Modal, FlatList } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useBluetoothIndoorNavigation } from '../../hooks/useBluetoothIndoorNavigation';
 import SettingsHeader from '../molecules/SettingsHeader';
-import NavigationBar from '../molecules/NavigationBar';
+import Icon from 'react-native-vector-icons/Ionicons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import DebugInfoBar from '../molecules/DebugInfoBar';
 import POIPopup from '../molecules/POIPopup';
 import POIInfoModal from '../molecules/POIInfoModal';
@@ -37,6 +33,9 @@ const BluetoothIndoorNavigationContent: React.FC = () => {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const { buildingId, buildingName, locationId } = route.params;
+
+  // Custom Floor Dropdown state
+  const [floorDropdownVisible, setFloorDropdownVisible] = useState(false);
 
   const {
     roomManager,
@@ -83,14 +82,73 @@ const BluetoothIndoorNavigationContent: React.FC = () => {
     <View style={styles.container}>
       <SettingsHeader title={`${buildingName} - Bluetooth Navigation`} />
 
-      <NavigationBar
-        floors={roomManager.floors}
-        selectedFloorId={roomManager.selectedFloorId}
-        onFloorChange={roomManager.setSelectedFloorId}
-        roomCount={roomManager.roomsOnSelectedFloor.length}
-        onShowRoomsList={handleShowRoomsList}
-        themeColors={colors}
-      />
+      {/* Top bar: custom floor picker and rooms button */}
+      <View style={styles.topBar}>
+        <TouchableOpacity
+          style={[
+            styles.floorDropdown,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+          onPress={() => setFloorDropdownVisible(true)}
+        >
+          <Text style={[styles.floorDropdownText, { color: colors.text }]}>
+            Floor: {roomManager.selectedFloorId}
+          </Text>
+          <Icon name="chevron-down" size={20} color={colors.text} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.roomsButton, { backgroundColor: colors.primary }]}
+          onPress={handleShowRoomsList}
+        >
+          <MaterialIcons name="list" size={16} color="white" />
+          <Text style={styles.roomsButtonText}>Rooms ({roomManager.roomsOnSelectedFloor.length})</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Custom Floor Dropdown Modal */}
+      <Modal
+        visible={floorDropdownVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setFloorDropdownVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setFloorDropdownVisible(false)}
+        >
+          <View
+            style={[
+              styles.dropdownContainer,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
+            <Text style={[styles.dropdownTitle, { color: colors.text }]}>Select Floor</Text>
+            <FlatList
+              data={roomManager.floors}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.dropdownItem,
+                    roomManager.selectedFloorId === item && { backgroundColor: colors.primary + '20' },
+                  ]}
+                  onPress={() => {
+                    roomManager.setSelectedFloorId(item);
+                    setFloorDropdownVisible(false);
+                  }}
+                >
+                  <Text style={[styles.dropdownItemText, { color: colors.text }]}>{item}</Text>
+                  {roomManager.selectedFloorId === item && (
+                    <Icon name="checkmark" size={20} color={colors.primary} />
+                  )}
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       <DebugInfoBar
         isRunning={beaconManager.isRunning}
@@ -116,13 +174,13 @@ const BluetoothIndoorNavigationContent: React.FC = () => {
         >
           <IndoorSchematicMap
             rooms={roomManager.roomsOnSelectedFloor}
-            startId={undefined} // Don't highlight any POI with destination color
-            endId={navigationManager.destination?.id} // Highlight destination when navigating
+            startId={undefined} 
+            endId={navigationManager.destination?.id} 
             routePolyline={navigationManager.routePolyline}
             completedPolyline={navigationManager.completedPolyline}
             onSelectRoom={handleRoomSelect}
             themeColors={colors}
-            currentPos={beaconManager.currentPos}
+            currentPos={beaconManager.currentPos || undefined}
             floorplanUrl={floorplanManager.floorplanUrl || undefined}
           />
           {!beaconManager.visible && (
@@ -214,6 +272,77 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 5,
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  floorDropdown: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginRight: 12,
+  },
+  floorDropdownText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  roomsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+  },
+  roomsButtonText: { 
+    color: 'white', 
+    fontSize: 12, 
+    fontWeight: '500', 
+    marginLeft: 4 
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownContainer: {
+    width: '80%',
+    maxHeight: '50%',
+    borderRadius: 12,
+    borderWidth: 1,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  dropdownTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 

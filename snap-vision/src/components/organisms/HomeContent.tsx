@@ -1,5 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  RefreshControl,
+  Image,
+} from 'react-native';
 import HeaderWithIcons from '../molecules/HeaderWithIcons';
 import QrCard from '../molecules/QrCard';
 import AppButton from '../atoms/AppButton';
@@ -14,17 +22,29 @@ import { useEffect, useState } from 'react';
 import { getRecentlyVPOIs, Visit } from '../../services/firebase/recentlyVService';
 import perf from '@react-native-firebase/perf';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { POI } from '../../hooks/useMapPOI';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
-type RootStackParamList = {
+type TabParamList = {
+  Home: undefined;
   Map: undefined;
   Timetable: undefined;
-  // add other screens here if needed
+  Settings: undefined;
 };
+
+type MapStackParamList = {
+  MapScreen: { selectedPOI?: POI };
+};
+
+type NavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList, 'Map'>,
+  StackNavigationProp<MapStackParamList>
+>;
 
 export default function HomeContent() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
-  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<NavigationProp>();
   const [recentlyVisited, setRecentlyVisited] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -48,7 +68,20 @@ export default function HomeContent() {
         }
       };
       fetchRecentlyVisited();
-    }, []),  );
+    }, []),
+  );
+  const handleVisitPress = (visit: Visit) => {
+    const poiToPass = {
+      id: visit.poiId,
+      name: visit.name,
+      centroid: visit.centroid,
+    } as POI;
+
+    navigation.navigate('Map', {
+      screen: 'MapMain',
+      params: { selectedPOI: poiToPass },
+    });
+  };
 
   return (
     <ScrollView
@@ -133,7 +166,7 @@ export default function HomeContent() {
           </View>
         ) : (
           <View style={styles.carouselContainer}>
-            <RecentlyVisitedCarousel visits={recentlyVisited} />
+            <RecentlyVisitedCarousel visits={recentlyVisited} onVisitPress={handleVisitPress} />
           </View>
         )}
       </View>

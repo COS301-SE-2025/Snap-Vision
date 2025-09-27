@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import TextToSpeech from '../molecules/TextToSpeech';
 
 interface NavigationPanelProps {
   isNavigating: boolean;
@@ -13,8 +12,8 @@ interface NavigationPanelProps {
   onCancelRoute: () => void;
   progress: number;
   distance: number | null;
-  distanceWalked: number; // New: Distance walked from start (never decreases)
-  originalRouteDistance: number | null; // New: Original route distance for completion tracking
+  distanceWalked: number;
+  originalRouteDistance: number | null; 
   time: number | null;
   destination: string;
   isVoiceEnabled: boolean;
@@ -453,7 +452,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  // New Single Row Priority Styles
   singleRowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -503,7 +501,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
-  // Remove unused styles
   navButton: {
     paddingHorizontal: 16,
     paddingVertical: 10,

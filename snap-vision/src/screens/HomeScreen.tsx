@@ -15,7 +15,7 @@ const HomeScreen = () => {
   if (loading) return null;
 
   return (
-    <View testID="home-screen" style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {!hasSeenLanding && <LandingOverlay onDismiss={() => setHasSeenLanding(true)} />}
       {hasSeenLanding && <MapHomeContent />}
     </View>

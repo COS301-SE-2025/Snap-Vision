@@ -15,7 +15,7 @@ export default function PrivacySecurityContent({ navigation }: Props) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <SettingsHeader title="Privacy & Security" navigation={navigation} />
+      <SettingsHeader title="Privacy Policy" navigation={navigation} />
       <PrivacySettings />
     </View>
   );

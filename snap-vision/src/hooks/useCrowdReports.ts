@@ -3,6 +3,11 @@ import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { POI } from './useMapPOI';
 import { useBadges } from '../context/BadgeContext';
+import AuthorizationService from '../security/AuthorizationService';
+import InputValidator from '../security/InputValidator';
+import perf from '@react-native-firebase/perf';
+
+const authService = AuthorizationService.getInstance();
 
 export interface CrowdReport {
   buildingId: string;
@@ -52,7 +57,7 @@ export const useCrowdReports = (
 ): UseCrowdReportsReturn => {
   // Badge context
   const { unlock } = useBadges();
-  
+
   // State
   const [showCrowdPopup, setShowCrowdPopup] = useState(false);
   const [selectedDensity, setSelectedDensity] = useState('moderate');
@@ -66,17 +71,40 @@ export const useCrowdReports = (
         setError('Please select a building and density level');
         return;
       }
+      const trace = await perf().newTrace('crowd_report_submission_latency');
+    await trace.start();
 
       try {
+        // Authorization check
+        if (!(await authService.canCreateCrowdReport())) {
+          throw new Error('Unauthorized: Cannot create crowd reports');
+        }
+
+        // Input validation
+        const validBuildingId = InputValidator.validateDocumentId(selectedPOI.id);
+        const validBuildingName = InputValidator.validateText(selectedPOI.name || '');
+        const validDensity = ['low', 'moderate', 'high', 'very-high'].includes(selectedDensity)
+          ? selectedDensity
+          : null;
+
+        if (!validBuildingId || !validBuildingName || !validDensity) {
+          throw new Error('Invalid report data');
+        }
+
+        const currentUser = auth().currentUser;
+        if (!currentUser) {
+          throw new Error('User not authenticated');
+        }
+
         // Save report to Firestore
         await firestore()
           .collection('crowdReports')
           .add({
-            buildingId: selectedPOI.id,
-            buildingName: selectedPOI.name,
-            density: selectedDensity,
+            buildingId: validBuildingId,
+            buildingName: validBuildingName,
+            density: validDensity,
             timestamp: firestore.FieldValue.serverTimestamp(),
-            reportedBy: auth().currentUser?.uid || 'anonymous',
+            reportedBy: currentUser.uid,
             centroid: selectedPOI.centroid,
             expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
           });
@@ -104,6 +132,9 @@ export const useCrowdReports = (
         //consoleerror('Error saving crowd report:', error);
         setError('Failed to submit crowd report');
       }
+      finally {
+      await trace.stop();
+    }
     },
     [selectedDensity, isMapReady, webViewRef, setStatus, setError, unlock],
   );
@@ -111,6 +142,11 @@ export const useCrowdReports = (
   // Fetch recent crowd reports from Firestore
   const fetchRecentCrowdReports = useCallback(async () => {
     try {
+      // Authorization check
+      if (!(await authService.canAccessCrowdReports())) {
+        throw new Error('Unauthorized: Cannot access crowd reports');
+      }
+
       const oneHourAgo = new Date();
       oneHourAgo.setHours(oneHourAgo.getHours() - 1);
 

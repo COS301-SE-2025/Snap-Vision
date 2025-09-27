@@ -1,6 +1,7 @@
-import { useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import { WebView as WebViewType } from 'react-native-webview';
 import { POI } from './useMapPOI';
+import perf from '@react-native-firebase/perf';
 
 export interface UseWebViewCommunicationReturn {
   // Main message handler
@@ -87,6 +88,7 @@ export const useWebViewCommunication = (
   setShowErrorPopup: (show: boolean) => void,
   setShowDirectionsSheet: (show: boolean) => void,
 ): UseWebViewCommunicationReturn => {
+  const mapReadyTraceRef = useRef<any>(null);
   // JavaScript injection utility
   const injectJavaScript = useCallback(
     (code: string) => {
@@ -97,6 +99,20 @@ export const useWebViewCommunication = (
     [webViewRef, isMapReady],
   );
 
+  useEffect(() => {
+    if (!isMapReady) {
+      // Start the trace directly
+      const trace = perf().newTrace('webview_map_ready_perf');
+    mapReadyTraceRef.current = trace;
+    trace.start();
+    }
+    return () => {
+      if (mapReadyTraceRef.current) {
+        mapReadyTraceRef.current.stop();
+        mapReadyTraceRef.current = null;
+      }
+    };
+  }, [isMapReady]);
   // Clear route from map
   const clearRoute = useCallback(() => {
     injectJavaScript('window.clearRoute && window.clearRoute();');
@@ -227,6 +243,10 @@ export const useWebViewCommunication = (
         if (data === 'MAP_READY') {
           setStatus('Map loaded');
           setIsMapReady(true);
+          if (mapReadyTraceRef.current) {
+          await mapReadyTraceRef.current.stop();
+          mapReadyTraceRef.current = null;
+        }
 
           // If we already have a location, send it to the map immediately
           if (currentLocation) {

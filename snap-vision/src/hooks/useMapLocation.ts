@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Platform, PermissionsAndroid } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
+import perf from '@react-native-firebase/perf';
 
 interface LocationState {
   latitude: number;
@@ -75,6 +76,8 @@ export const useMapLocation = (
   };
 
   const requestLocation = async () => {
+    const trace = await perf().newTrace('location_acquisition_latency');
+  await trace.start();
     try {
       setStatus('Getting your location...');
       setError(null);
@@ -99,6 +102,7 @@ export const useMapLocation = (
           sendLocationToWebView(latitude, longitude, true, true);
           setStatus('Location found');
           setError(null);
+          trace.stop();
         },
         (err) => {
           setError(`Failed to get location: ${err.message}`);
@@ -113,6 +117,7 @@ export const useMapLocation = (
     } catch (err) {
       setError('Failed to request location permissions');
       setStatus('Location setup failed');
+      await trace.stop();
     }
   };
 

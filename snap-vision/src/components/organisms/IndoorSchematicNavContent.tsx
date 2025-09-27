@@ -1,5 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity, Modal, FlatList } from 'react-native';
+import perf from '@react-native-firebase/perf';
+import {
+  View,
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  Modal,
+  FlatList,
+} from 'react-native';
 // import FloorSelector from '../components/molecules/FloorSelector';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -17,7 +26,9 @@ import { getQRCodeMappingByValue } from '../../services/qrService';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import TTS from 'react-native-tts';
-import {useBadges} from '../../context/BadgeContext';
+import { useBadges } from '../../context/BadgeContext';
+import POIPopup from '../molecules/POIPopup';
+import POIInfoModal from '../molecules/POIInfoModal';
 
 type ParamList = {
   IndoorSchematicNav: {
@@ -79,7 +90,7 @@ export default function IndoorSchematicNavScreen() {
   const [currentPos, setCurrentPos] = useState<{ x: number; y: number } | null>(userPos ?? null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
-  
+
   // Check if floorplans exist immediately when screen loads
   useEffect(() => {
     const checkFloorplansExist = async () => {
@@ -93,7 +104,7 @@ export default function IndoorSchematicNavScreen() {
           .collection('floorplans')
           .limit(1)
           .get();
-        
+
         if (floorplansSnap.empty) {
           // No floorplans exist, navigate to unavailable screen
           navigation.replace('IndoorNavigationUnavailable', {
@@ -111,7 +122,7 @@ export default function IndoorSchematicNavScreen() {
         });
       }
     };
-    
+
     checkFloorplansExist();
   }, [buildingId, buildingName, locationId, navigation]);
 
@@ -138,13 +149,19 @@ export default function IndoorSchematicNavScreen() {
   const [floorplanUrl, setFloorplanUrl] = useState<string | null>(null);
   const [floorplanLoading, setFloorplanLoading] = useState<boolean>(false);
 
+  // POI popup state
+  const [selectedPOI, setSelectedPOI] = useState<RoomPOI | null>(null);
+  const [poiPopupVisible, setPoiPopupVisible] = useState(false);
+  const [poiInfoModalVisible, setPoiInfoModalVisible] = useState(false);
+  const [navigationMode, setNavigationMode] = useState(false);
+
   // TTS: Setup and configuration
   useEffect(() => {
     // Set TTS defaults (only once)
     TTS.setDefaultLanguage('en-US');
     TTS.setDefaultRate(0.5);
     TTS.setDefaultPitch(1.0);
-    
+
     return () => {
       // Just stop TTS on cleanup - avoid removeEventListener issues
       TTS.stop();
@@ -271,6 +288,8 @@ export default function IndoorSchematicNavScreen() {
     let cancelled = false;
 
     async function fetchFloorplan() {
+      const trace = await perf().newTrace('indoor_floorplan_load_perf');
+      await trace.start();
       try {
         setFloorplanLoading(true);
         setFloorplanUrl(null);
@@ -323,6 +342,7 @@ export default function IndoorSchematicNavScreen() {
         if (!cancelled) setFloorplanUrl(null);
       } finally {
         if (!cancelled) setFloorplanLoading(false);
+        await trace.stop();
       }
     }
 
@@ -549,32 +569,68 @@ export default function IndoorSchematicNavScreen() {
     setSteps([]);
     setCurrentStep(0);
     setSheetOpen(false);
+    setNavigationMode(false);
     // keep currentPos
   };
 
   const onSelectRoom = (roomId: string) => {
-    // You can select on current floor; to select on another floor, switch floors and tap there
-    if (!startId) {
+    // If in navigation mode (after user clicked "Navigate Here"), handle start selection only
+    if (navigationMode) {
+      if (!startId) {
+        // Set as start room - destination is already set from "Navigate Here"
+        setStartId(roomId);
+        // Don't reset endId since it's already set as destination
+        setSteps([]);
+        setCurrentStep(0);
+        setSheetOpen(false);
+        return;
+      }
+      // If start is already set and user taps another room, reset start to the new room
       setStartId(roomId);
-      setEndId(null);
       setSteps([]);
       setCurrentStep(0);
       setSheetOpen(false);
-      return;
+    } else {
+      // Show POI popup for any selected room when not in navigation mode
+      const selectedRoom = roomsOnSelectedFloor.find(room => room.id === roomId);
+      if (selectedRoom) {
+        setSelectedPOI(selectedRoom);
+        setPoiPopupVisible(true);
+      }
     }
-    if (startId && !endId && roomId !== startId) {
-      setEndId(roomId);
-      return;
-    }
-    // Reset from tapped
-    setStartId(roomId);
-    setEndId(null);
-    setSteps([]);
-    setCurrentStep(0);
-    setSheetOpen(false);
   };
 
   const nextInstructionEnd = steps[currentStep]?.coordinates;
+
+  // POI popup handlers
+  const handleNavigateHere = () => {
+    if (selectedPOI) {
+      setEndId(selectedPOI.id);
+      setNavigationMode(true);
+      setPoiPopupVisible(false);
+      setSelectedPOI(null);
+      // Reset start to ensure user picks a start room
+      setStartId(null);
+      setSteps([]);
+      setCurrentStep(0);
+      setSheetOpen(false);
+    }
+  };
+
+  const handleMoreInfo = () => {
+    setPoiPopupVisible(false);
+    setPoiInfoModalVisible(true);
+  };
+
+  const handleClosePOIPopup = () => {
+    setPoiPopupVisible(false);
+    setSelectedPOI(null);
+  };
+
+  const handleClosePOIInfoModal = () => {
+    setPoiInfoModalVisible(false);
+    setSelectedPOI(null);
+  };
 
   // Compute route (multi-floor if available)
   useEffect(() => {
@@ -592,15 +648,9 @@ export default function IndoorSchematicNavScreen() {
             accessible: isAccessibilityModeEnabled,
           },
         )
-      : NavUtils.calculateRoute(
-          startId, 
-          endId, 
-          allRooms as any, 
-          allPaths as any,
-          { 
-            accessible: isAccessibilityModeEnabled 
-          }
-        );
+      : NavUtils.calculateRoute(startId, endId, allRooms as any, allPaths as any, {
+          accessible: isAccessibilityModeEnabled,
+        });
 
     if (!routeSteps || !routeSteps.length) {
       setPopupTitle('No route');
@@ -651,7 +701,7 @@ export default function IndoorSchematicNavScreen() {
       const destinationName = destinationRoom?.name || 'Your Destination';
       setReachedDestination(destinationName);
       setShowDestinationReachedPopup(true);
-      
+
       // TTS: Announce arrival
       if (isTtsEnabled) {
         TTS.stop();
@@ -659,7 +709,7 @@ export default function IndoorSchematicNavScreen() {
           TTS.speak(`You have arrived at ${destinationName}`);
         }, 250);
       }
-      
+
       resetRoute();
       return;
     }
@@ -688,14 +738,16 @@ export default function IndoorSchematicNavScreen() {
   }, [steps, currentStep, selectedFloorId]);
 
   // Determine what prompt to show based on state
-  const prompt = !startId
-    ? 'Choose your start room'
-    : !endId
-      ? 'Choose your destination'
-      : `${Math.max(0, steps.length - currentStep)} steps left`;
+  const prompt = !navigationMode
+    ? 'Tap any POI to explore'
+    : !startId
+      ? 'Choose your start room'
+      : !endId
+        ? 'Choose your destination'
+        : `${Math.max(0, steps.length - currentStep)} steps left`;
 
   // Override prompt if userPos was set from QR code
-  const effectivePrompt = userPos && startId ? 'Choose your destination' : prompt;
+  const effectivePrompt = userPos && startId && navigationMode ? 'Choose your destination' : prompt;
 
   if (loading) {
     return (
@@ -715,7 +767,10 @@ export default function IndoorSchematicNavScreen() {
       {/* Top bar: custom floor picker */}
       <View style={styles.topBar}>
         <TouchableOpacity
-          style={[styles.floorDropdown, { backgroundColor: colors.card, borderColor: colors.border }]}
+          style={[
+            styles.floorDropdown,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
           onPress={() => setFloorDropdownVisible(true)}
         >
           <Text style={[styles.floorDropdownText, { color: colors.text }]}>
@@ -737,7 +792,12 @@ export default function IndoorSchematicNavScreen() {
           activeOpacity={1}
           onPress={() => setFloorDropdownVisible(false)}
         >
-          <View style={[styles.dropdownContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.dropdownContainer,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
             <Text style={[styles.dropdownTitle, { color: colors.text }]}>Select Floor</Text>
             <FlatList
               data={floors}
@@ -746,16 +806,14 @@ export default function IndoorSchematicNavScreen() {
                 <TouchableOpacity
                   style={[
                     styles.dropdownItem,
-                    selectedFloorId === item && { backgroundColor: colors.primary + '20' }
+                    selectedFloorId === item && { backgroundColor: colors.primary + '20' },
                   ]}
                   onPress={() => {
                     setSelectedFloorId(item);
                     setFloorDropdownVisible(false);
                   }}
                 >
-                  <Text style={[styles.dropdownItemText, { color: colors.text }]}>
-                    {item}
-                  </Text>
+                  <Text style={[styles.dropdownItemText, { color: colors.text }]}>{item}</Text>
                   {selectedFloorId === item && (
                     <Icon name="checkmark" size={20} color={colors.primary} />
                   )}
@@ -879,17 +937,17 @@ export default function IndoorSchematicNavScreen() {
             }
           }}
           style={[
-            styles.fabTTS, 
-            { 
-              backgroundColor: isTtsEnabled ? colors.primary : colors.card, 
-              borderColor: colors.border 
-            }
+            styles.fabTTS,
+            {
+              backgroundColor: isTtsEnabled ? colors.primary : colors.card,
+              borderColor: colors.border,
+            },
           ]}
         >
-          <Icon 
-            name={isTtsEnabled ? "volume-high" : "volume-mute"} 
-            size={20} 
-            color={isTtsEnabled ? "#FFFFFF" : colors.text} 
+          <Icon
+            name={isTtsEnabled ? 'volume-high' : 'volume-mute'}
+            size={20}
+            color={isTtsEnabled ? '#FFFFFF' : colors.text}
           />
         </TouchableOpacity>
       )}
@@ -934,6 +992,24 @@ export default function IndoorSchematicNavScreen() {
           success: '#4CAF50',
         }}
       />
+
+      {/* POI Popup */}
+      <POIPopup
+        visible={poiPopupVisible}
+        poi={selectedPOI}
+        onNavigate={handleNavigateHere}
+        onMoreInfo={handleMoreInfo}
+        onClose={handleClosePOIPopup}
+        themeColors={colors}
+      />
+
+      {/* POI Info Modal */}
+      <POIInfoModal
+        visible={poiInfoModalVisible}
+        poi={selectedPOI}
+        onClose={handleClosePOIInfoModal}
+        themeColors={colors}
+      />
     </View>
   );
 }
@@ -972,7 +1048,7 @@ const styles = StyleSheet.create({
   },
   qrScanButton: {
     position: 'absolute',
-    bottom: 80,
+    top: 95,
     right: 20,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1004,6 +1080,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     paddingHorizontal: 12,
     paddingVertical: 8,
+    width: 150,
   },
 
   promptBar: {
@@ -1017,8 +1094,8 @@ const styles = StyleSheet.create({
 
   fab: {
     position: 'absolute',
-    right: 16,
-    top: 94,
+    right: 20,
+    top: 140,
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderRadius: 24,
@@ -1038,8 +1115,8 @@ const styles = StyleSheet.create({
 
   fabTTS: {
     position: 'absolute',
-    right: 16,
-    top: 194,
+    right: 20,
+    top: 210,
     width: 48,
     height: 48,
     borderRadius: 24,
@@ -1077,7 +1154,6 @@ const styles = StyleSheet.create({
     marginTop: -2,
   },
 
-  // Custom Floor Dropdown Styles
   floorDropdown: {
     flex: 1,
     flexDirection: 'row',

@@ -65,11 +65,7 @@ export default function AdminScreenContent({
           onPress={onEditFloorplans}
           testID="button-Edit-Floorplans"
         />
-        <AppButton
-          title="QR Code Admin"
-          onPress={onManageQRCodes}
-          testID="button-QRCode-Admin"
-        />
+        <AppButton title="QR Code Admin" onPress={onManageQRCodes} testID="button-QRCode-Admin" />
         {/* <AppButton title="Settings" onPress={onSettings} /> */}
       </View>
     </View>

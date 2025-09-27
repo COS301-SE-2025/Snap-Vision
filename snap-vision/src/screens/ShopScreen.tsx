@@ -11,9 +11,9 @@ const ShopScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      <StatusBar 
-        backgroundColor={colors.background} 
-        barStyle={isDark ? 'light-content' : 'dark-content'} 
+      <StatusBar
+        backgroundColor={colors.background}
+        barStyle={isDark ? 'light-content' : 'dark-content'}
       />
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <ShopContent />

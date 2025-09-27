@@ -1,5 +1,9 @@
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
+import AuthorizationService from '../security/AuthorizationService';
+import InputValidator from '../security/InputValidator';
+
+const authService = AuthorizationService.getInstance();
 
 export interface QRCodeMapping {
   id: string;
@@ -59,6 +63,22 @@ export const createQRCodeMapping = async (
     const userId = auth().currentUser?.uid;
     if (!userId) throw new Error('User not authenticated');
 
+    // Input validation
+    const validLocationId = InputValidator.validateDocumentId(locationId);
+    const validBuildingId = InputValidator.validateDocumentId(buildingId);
+    const validRoomId = InputValidator.validateDocumentId(roomId);
+    const validFloorId = InputValidator.validateDocumentId(floorId);
+    const validQRValue = InputValidator.validateText(qrValue);
+
+    if (!validLocationId || !validBuildingId || !validRoomId || !validFloorId || !validQRValue) {
+      throw new Error('Invalid input parameters');
+    }
+
+    // Authorization check - only admins and location editors can create QR codes
+    if (!(await authService.canModifyLocation(validLocationId))) {
+      throw new Error('Unauthorized: Cannot modify QR codes for this location');
+    }
+
     const qrRef = firestore().collection('locations').doc(locationId).collection('qrCodes').doc();
 
     const qrData: QRCodeMapping = {
@@ -90,6 +110,18 @@ export const createQRCodeMapping = async (
  */
 export const getQRCodeMappingByValue = async (qrValue: string): Promise<QRCodeMapping | null> => {
   try {
+    // Authentication check
+    const context = await authService.getCurrentUserContext();
+    if (!context) {
+      throw new Error('User not authenticated');
+    }
+
+    // Input validation
+    const validQRValue = InputValidator.validateText(qrValue);
+    if (!validQRValue) {
+      throw new Error('Invalid QR code value');
+    }
+
     const locationsSnapshot = await firestore().collection('locations').get();
 
     for (const locationDoc of locationsSnapshot.docs) {
@@ -104,7 +136,8 @@ export const getQRCodeMappingByValue = async (qrValue: string): Promise<QRCodeMa
 
       if (!qrSnapshot.empty) {
         const doc = qrSnapshot.docs[0];
-        return { id: doc.id, ...(doc.data() as QRCodeMapping) };
+        const data = doc.data() as QRCodeMapping;
+        return { ...data, id: doc.id };
       }
     }
 
@@ -118,6 +151,12 @@ export const getQRCodeMappingByValue = async (qrValue: string): Promise<QRCodeMa
 /** Get all locations for dropdown selection */
 export const getLocations = async (): Promise<LocationLite[]> => {
   try {
+    // Authentication check
+    const context = await authService.getCurrentUserContext();
+    if (!context) {
+      throw new Error('User not authenticated');
+    }
+
     const snapshot = await firestore().collection('locations').get();
     return snapshot.docs.map((doc) => ({
       id: doc.id,
@@ -132,9 +171,20 @@ export const getLocations = async (): Promise<LocationLite[]> => {
 /** Get all buildings for a location */
 export const getBuildingsForLocation = async (locationId: string): Promise<BuildingLite[]> => {
   try {
+    // Input validation
+    const validLocationId = InputValidator.validateDocumentId(locationId);
+    if (!validLocationId) {
+      throw new Error('Invalid location ID');
+    }
+
+    // Authorization check
+    if (!(await authService.canAccessLocation(validLocationId))) {
+      throw new Error('Unauthorized access to location buildings');
+    }
+
     const buildingsSnapshot = await firestore()
       .collection('locations')
-      .doc(locationId)
+      .doc(validLocationId)
       .collection('buildingPOIs')
       .get();
 
@@ -158,11 +208,24 @@ export const getFloorsForBuilding = async (
   buildingId: string,
 ): Promise<FloorLite[]> => {
   try {
+    // Input validation
+    const validLocationId = InputValidator.validateDocumentId(locationId);
+    const validBuildingId = InputValidator.validateDocumentId(buildingId);
+
+    if (!validLocationId || !validBuildingId) {
+      throw new Error('Invalid location or building ID');
+    }
+
+    // Authorization check
+    if (!(await authService.canAccessBuilding(validLocationId, validBuildingId))) {
+      throw new Error('Unauthorized access to building floors');
+    }
+
     const col = firestore()
       .collection('locations')
-      .doc(locationId)
+      .doc(validLocationId)
       .collection('buildingPOIs')
-      .doc(buildingId)
+      .doc(validBuildingId)
       .collection('floorplans');
 
     // Prefer order by floorLabel if present; fall back to unsorted get
@@ -192,12 +255,26 @@ export const getRoomsForFloor = async (
   floorId: string,
 ): Promise<RoomLite[]> => {
   try {
+    // Input validation
+    const validLocationId = InputValidator.validateDocumentId(locationId);
+    const validBuildingId = InputValidator.validateDocumentId(buildingId);
+    const validFloorId = InputValidator.validateDocumentId(floorId);
+
+    if (!validLocationId || !validBuildingId || !validFloorId) {
+      throw new Error('Invalid location, building, or floor ID');
+    }
+
+    // Authorization check
+    if (!(await authService.canAccessBuilding(validLocationId, validBuildingId))) {
+      throw new Error('Unauthorized access to building rooms');
+    }
+
     // First, fetch all rooms for the location & building (index-friendly)
     const roomsSnapshot = await firestore()
       .collection('locations')
-      .doc(locationId)
+      .doc(validLocationId)
       .collection('roomPOIs')
-      .where('buildingId', '==', buildingId)
+      .where('buildingId', '==', validBuildingId)
       .get();
 
     // Then filter by any floor field that matches the chosen floorId
@@ -235,11 +312,24 @@ export const getQRCodesForBuilding = async (
   buildingId: string,
 ): Promise<QRCodeMapping[]> => {
   try {
+    // Input validation
+    const validLocationId = InputValidator.validateDocumentId(locationId);
+    const validBuildingId = InputValidator.validateDocumentId(buildingId);
+
+    if (!validLocationId || !validBuildingId) {
+      throw new Error('Invalid location or building ID');
+    }
+
+    // Authorization check - need to access building to get its QR codes
+    if (!(await authService.canAccessBuilding(validLocationId, validBuildingId))) {
+      throw new Error('Unauthorized access to building QR codes');
+    }
+
     const snapshot = await firestore()
       .collection('locations')
-      .doc(locationId)
+      .doc(validLocationId)
       .collection('qrCodes')
-      .where('buildingId', '==', buildingId)
+      .where('buildingId', '==', validBuildingId)
       .orderBy('createdAt', 'desc')
       .get();
 
@@ -256,11 +346,24 @@ export const deleteQRCodeMapping = async (
   qrCodeId: string,
 ): Promise<boolean> => {
   try {
+    // Input validation
+    const validLocationId = InputValidator.validateDocumentId(locationId);
+    const validQRCodeId = InputValidator.validateDocumentId(qrCodeId);
+
+    if (!validLocationId || !validQRCodeId) {
+      throw new Error('Invalid location or QR code ID');
+    }
+
+    // Authorization check - only editors and admins can delete QR codes
+    if (!(await authService.canModifyQRCode(validLocationId, validQRCodeId))) {
+      throw new Error('Unauthorized: Cannot delete QR codes for this location');
+    }
+
     await firestore()
       .collection('locations')
-      .doc(locationId)
+      .doc(validLocationId)
       .collection('qrCodes')
-      .doc(qrCodeId)
+      .doc(validQRCodeId)
       .delete();
     return true;
   } catch (error) {
@@ -276,12 +379,37 @@ export const updateQRCodeMapping = async (
   updates: Partial<QRCodeMapping>,
 ): Promise<boolean> => {
   try {
+    // Input validation
+    const validLocationId = InputValidator.validateDocumentId(locationId);
+    const validQRCodeId = InputValidator.validateDocumentId(qrCodeId);
+
+    if (!validLocationId || !validQRCodeId) {
+      throw new Error('Invalid location or QR code ID');
+    }
+
+    // Authorization check - only editors and admins can update QR codes
+    if (!(await authService.canModifyQRCode(validLocationId, validQRCodeId))) {
+      throw new Error('Unauthorized: Cannot update QR codes for this location');
+    }
+
+    // Validate update data
+    const sanitizedUpdates: Partial<QRCodeMapping> = {};
+    if (updates.description !== undefined) {
+      const validDescription = InputValidator.validateText(updates.description);
+      if (validDescription) sanitizedUpdates.description = validDescription;
+    }
+    if (updates.qrValue !== undefined) {
+      const validQRValue = InputValidator.validateText(updates.qrValue);
+      if (!validQRValue) throw new Error('Invalid QR code value');
+      sanitizedUpdates.qrValue = validQRValue;
+    }
+
     await firestore()
       .collection('locations')
-      .doc(locationId)
+      .doc(validLocationId)
       .collection('qrCodes')
-      .doc(qrCodeId)
-      .update(updates);
+      .doc(validQRCodeId)
+      .update(sanitizedUpdates);
     return true;
   } catch (error) {
     //consoleerror('Error updating QR code mapping:', error);
