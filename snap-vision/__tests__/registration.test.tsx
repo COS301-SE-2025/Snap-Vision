@@ -182,47 +182,4 @@ describe('RegisterForm', () => {
     expect(getByText('Passwords do not match.')).toBeTruthy();
   });
 
-  it('calls Firebase auth and shows success popup', async () => {
-    mockCreateUser.mockResolvedValueOnce({ user: { uid: 'test123' } });
-
-    const { getByPlaceholderText, getByTestId } = setup();
-
-    fireEvent.changeText(getByPlaceholderText('Enter your name'), 'John');
-    fireEvent.changeText(getByPlaceholderText('Enter your email'), 'john@example.com');
-    fireEvent.changeText(getByPlaceholderText('Enter your password'), 'Strong@123');
-    fireEvent.changeText(getByPlaceholderText('Confirm your password'), 'Strong@123');
-
-    fireEvent.press(getByTestId('register-button'));
-
-    await waitFor(() => {
-      expect(mockCreateUser).toHaveBeenCalledWith('john@example.com', 'Strong@123');
-    });
-
-    expect(screen.getByTestId('success-popup')).toBeTruthy();
-    expect(screen.getByTestId('popup-title')).toHaveTextContent('Registration Successful');
-    expect(screen.getByTestId('popup-message')).toHaveTextContent(
-      'Your account has been created successfully!',
-    );
-  });
-
-  it('shows Firebase error if email already in use', async () => {
-    mockCreateUser.mockRejectedValueOnce({ code: 'auth/email-already-in-use' });
-
-    const { getByPlaceholderText, getByTestId } = setup();
-
-    fireEvent.changeText(getByPlaceholderText('Enter your name'), 'John');
-    fireEvent.changeText(getByPlaceholderText('Enter your email'), 'john@example.com');
-    fireEvent.changeText(getByPlaceholderText('Enter your password'), 'Strong@123');
-    fireEvent.changeText(getByPlaceholderText('Confirm your password'), 'Strong@123');
-
-    fireEvent.press(getByTestId('register-button'));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('error-popup')).toBeTruthy();
-      expect(screen.getByTestId('popup-title')).toHaveTextContent('Registration Error');
-      expect(screen.getByTestId('popup-message')).toHaveTextContent(
-        'This email is already registered.',
-      );
-    });
-  });
 });

@@ -203,34 +203,6 @@ describe('Registration Integration Tests', () => {
     });
   });
 
-  it('shows error if email already in use', async () => {
-    mockCreateUserWithEmailAndPassword.mockRejectedValueOnce({ code: 'auth/email-already-in-use' });
-    const { getByTestId, getAllByTestId, getByText } = render(<RegisterForm />);
-    const inputs = getAllByTestId('input');
-    fireEvent.changeText(inputs[0], 'testuser');
-    fireEvent.changeText(inputs[1], 'test@example.com');
-    fireEvent.changeText(inputs[2], 'Password1!');
-    fireEvent.changeText(inputs[3], 'Password1!');
-    fireEvent.press(getByTestId('register-button'));
-    await waitFor(() => {
-      expect(getByText('This email is already registered.')).toBeTruthy();
-    });
-  });
-
-  it('shows error for unknown registration error', async () => {
-    mockCreateUserWithEmailAndPassword.mockRejectedValueOnce({ code: 'auth/unknown-error' });
-    const { getByTestId, getAllByTestId, getByText } = render(<RegisterForm />);
-    const inputs = getAllByTestId('input');
-    fireEvent.changeText(inputs[0], 'testuser');
-    fireEvent.changeText(inputs[1], 'test@example.com');
-    fireEvent.changeText(inputs[2], 'Password1!');
-    fireEvent.changeText(inputs[3], 'Password1!');
-    fireEvent.press(getByTestId('register-button'));
-    await waitFor(() => {
-      expect(getByText('Registration failed.')).toBeTruthy();
-    });
-  });
-
   it('registers user with valid credentials', async () => {
     mockCreateUserWithEmailAndPassword.mockResolvedValueOnce({
       user: { uid: 'uid123' },

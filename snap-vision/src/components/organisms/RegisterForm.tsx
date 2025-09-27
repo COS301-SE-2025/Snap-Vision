@@ -244,22 +244,6 @@ export default function RegisterForm() {
       >
         Already have an account? <Text style={styles.signUpBold}>LOGIN</Text>
       </Text>
-
-      <StandardPopup
-        visible={showError}
-        title={errorTitle}
-        message={errorMessage}
-        onClose={() => setShowError(false)}
-        showCloseButton={true}
-      />
-
-      <StandardPopup
-        visible={showSuccess}
-        title={successTitle}
-        message={successMessageState}
-        onClose={() => setShowSuccess(false)}
-        showCloseButton={true}
-      />
     </View>
   );
 }
