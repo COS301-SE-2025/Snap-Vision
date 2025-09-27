@@ -326,13 +326,12 @@ const trace = await perf().newTrace('route_fetch_latency');
 
       const userId = auth().currentUser?.uid;
       if (userId && selectedPOI) {
-        const visit: Visit = {
-          userId,
-          poiId: selectedPOI.id,
-          name: selectedPOI.name,
-          timestamp: firestore.Timestamp.now(),
-          centroid: selectedPOI.centroid,
-        };
+        const visit = {
+  userId,
+  poiId: selectedPOI.id,
+  name: selectedPOI.name,
+  location: selectedPOI.location,
+};
         await addRecentlyVisitedPOI(visit);
       }
     } catch (error) {

@@ -28,7 +28,7 @@ const RecentlyVisitedCarousel = ({ visits, onVisitPress }: Props) => {
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.listContainer}
       data={visits}
-      keyExtractor={(item, index) => item.id || item.poiId || index.toString()}
+      keyExtractor={(item, index) => item.poiId || index.toString()}
       renderItem={({ item }) => (
         <TouchableOpacity
           style={[
