@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import firestore from '@react-native-firebase/firestore';
+import CacheService from '../services/CacheService';
 
 const BT = '[BT]';
+const cacheService = CacheService.getInstance();
 
 export type RoomPOI = {
   id: string;
@@ -26,13 +28,43 @@ export function useRoomManager({ locationId, buildingId }: UseRoomManagerParams)
   const [loading, setLoading] = useState(true);
   const [selectedRoom, setSelectedRoom] = useState<RoomPOI | null>(null);
 
-  // Load rooms and floors
+  // Cache configuration
+  const ROOMS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+  // Load rooms and floors with caching
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
         console.log(BT, 'Loading rooms for building:', buildingId);
 
+        const cacheKey = `rooms:${locationId}:${buildingId}`;
+
+        // Check cache first
+        const cachedRooms = await cacheService.get<RoomPOI[]>(cacheKey, {
+          ttl: ROOMS_CACHE_TTL,
+          userSpecific: false,
+        });
+
+        if (cachedRooms) {
+          console.log(BT, `Loaded ${cachedRooms.length} rooms from cache`);
+          setAllRooms(cachedRooms);
+          
+          // Extract floors from cached data
+          const uniqueFloors = Array.from(new Set(
+            cachedRooms.map((room) => room.floorId).filter(Boolean)
+          )).sort();
+          setFloors(uniqueFloors);
+          
+          if (uniqueFloors.length > 0 && !selectedFloorId) {
+            setSelectedFloorId(uniqueFloors[0]);
+          }
+          
+          setLoading(false);
+          return;
+        }
+
+        // Fetch from Firestore
         const roomSnap = await firestore()
           .collection('locations')
           .doc(locationId)
@@ -41,44 +73,87 @@ export function useRoomManager({ locationId, buildingId }: UseRoomManagerParams)
           .get();
 
         const roomsData = roomSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as RoomPOI[];
+        console.log(BT, `Loaded ${roomsData.length} rooms from Firestore`);
+        
         setAllRooms(roomsData);
 
-        const floorSet = Array.from(new Set(roomsData.map((r) => r.floorId))).sort();
-        setFloors(floorSet);
-        if (floorSet.length > 0) setSelectedFloorId(floorSet[0]);
+        // Extract unique floor IDs
+        const uniqueFloors = Array.from(
+          new Set(roomsData.map((room) => room.floorId).filter(Boolean))
+        ).sort();
+        console.log(BT, 'Available floors:', uniqueFloors);
+        
+        setFloors(uniqueFloors);
 
-        console.log(BT, 'Rooms loaded:', roomsData.length, 'Floors:', floorSet);
-      } catch (e) {
-        console.error(BT, 'Rooms load error:', e);
+        // Auto-select first floor if none selected
+        if (uniqueFloors.length > 0 && !selectedFloorId) {
+          setSelectedFloorId(uniqueFloors[0]);
+        }
+
+        // Cache the rooms data
+        await cacheService.set(cacheKey, roomsData, {
+          ttl: ROOMS_CACHE_TTL,
+          userSpecific: false,
+        });
+
+      } catch (error) {
+        console.error(BT, 'Error loading rooms:', error);
       } finally {
         setLoading(false);
       }
     })();
-  }, [buildingId, locationId]);
+  }, [locationId, buildingId, selectedFloorId]);
 
   // Get rooms for selected floor
-  const roomsOnSelectedFloor = useMemo(
-    () => allRooms.filter((r) => r.floorId === selectedFloorId),
-    [allRooms, selectedFloorId],
-  );
+  const roomsForSelectedFloor = useMemo(() => {
+    if (!selectedFloorId) return allRooms;
+    return allRooms.filter((room) => room.floorId === selectedFloorId);
+  }, [allRooms, selectedFloorId]);
 
-  const handleRoomSelect = (roomId: string) => {
-    const room = allRooms.find((r) => r.id === roomId);
-    if (room) {
-      setSelectedRoom(room);
-      console.log(BT, 'Room selected:', room.name);
+  // Refresh rooms data (bypass cache)
+  const refreshRooms = async () => {
+    const cacheKey = `rooms:${locationId}:${buildingId}`;
+    await cacheService.remove(cacheKey);
+    
+    // Trigger reload by updating a dependency
+    setLoading(true);
+    try {
+      const roomSnap = await firestore()
+        .collection('locations')
+        .doc(locationId)
+        .collection('roomPOIs')
+        .where('buildingId', '==', buildingId)
+        .get();
+
+      const roomsData = roomSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as RoomPOI[];
+      setAllRooms(roomsData);
+
+      // Update cache
+      await cacheService.set(cacheKey, roomsData, {
+        ttl: ROOMS_CACHE_TTL,
+        userSpecific: false,
+      });
+
+      console.log(BT, `Refreshed ${roomsData.length} rooms`);
+    } catch (error) {
+      console.error(BT, 'Error refreshing rooms:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return {
+    // Data
     allRooms,
+    roomsForSelectedFloor,
     floors,
     selectedFloorId,
-    setSelectedFloorId,
-    loading,
     selectedRoom,
+    loading,
+
+    // Actions
+    setSelectedFloorId,
     setSelectedRoom,
-    roomsOnSelectedFloor,
-    handleRoomSelect,
+    refreshRooms,
   };
 }

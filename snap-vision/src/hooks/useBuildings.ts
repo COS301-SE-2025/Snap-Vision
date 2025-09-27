@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
+import CacheService from '../services/CacheService';
+
+const cacheService = CacheService.getInstance();
 
 interface Building {
   id: string;
@@ -18,6 +21,10 @@ interface Location {
   name: string;
 }
 
+// Cache TTL configurations
+const BUILDINGS_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const LOCATIONS_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+
 export const useBuildings = () => {
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -30,28 +37,77 @@ export const useBuildings = () => {
   const loadBuildingsWithNavigation = async () => {
     try {
       setIsLoading(true);
-      //consolelog('[useBuildings] Starting to load buildings...');
+      console.log('🔍 [BUILDINGS CACHE] Starting to load buildings...');
 
       // Check authentication
       const currentUser = auth().currentUser;
-      //consolelog('[useBuildings] Current user:', currentUser?.uid || 'Not authenticated');
+      if (!currentUser) {
+        console.log('❌ [BUILDINGS] No authenticated user');
+        setIsLoading(false);
+        return;
+      }
 
-      const locationSnapshot = await firestore().collection('locations').get();
-      const locationIds = locationSnapshot.docs.map((doc) => doc.id);
-      //consolelog('[useBuildings] Found location IDs:', locationIds);
+      // Check cache for locations
+      const locationsCacheKey = 'buildings_locations_data';
+      console.log('🔍 [BUILDINGS CACHE] Checking cache for locations...');
+      
+      let locationData: Location[] | null = await cacheService.get<Location[]>(locationsCacheKey, {
+        ttl: LOCATIONS_CACHE_TTL,
+        userSpecific: false,
+      });
 
-      // Extract location data for LocationSelector
-      const locationData: Location[] = locationSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        name: doc.data().name || doc.id,
-      }));
-      //consolelog('[useBuildings] Location data:', locationData);
-      setLocations(locationData);
+      let locationIds: string[] = [];
 
+      if (locationData) {
+        console.log(`✅ [BUILDINGS CACHE] Found ${locationData.length} locations in cache`);
+        setLocations(locationData);
+        locationIds = locationData.map(l => l.id);
+      } else {
+        console.log('🔥 [BUILDINGS FIRESTORE] Fetching locations from Firestore...');
+        // Fetch locations from Firestore
+        const locationSnapshot = await firestore().collection('locations').get();
+        locationIds = locationSnapshot.docs.map((doc) => doc.id);
+        
+        locationData = locationSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data().name || doc.id,
+        }));
+        
+        setLocations(locationData);
+        
+        // Cache locations
+        await cacheService.set(locationsCacheKey, locationData, {
+          ttl: LOCATIONS_CACHE_TTL,
+          userSpecific: false,
+        });
+        console.log(`💿 [BUILDINGS CACHE] Cached ${locationData.length} locations`);
+      }
+
+      // Check cache for buildings
+      const buildingsCacheKey = `buildings_with_nav:${locationIds.join(',')}`;
+      console.log(`🔍 [BUILDINGS CACHE] Checking cache for buildings with key: ${buildingsCacheKey.substring(0, 50)}...`);
+      
+      const cachedBuildings = await cacheService.get<Building[]>(buildingsCacheKey, {
+        ttl: BUILDINGS_CACHE_TTL,
+        userSpecific: false,
+      });
+
+      if (cachedBuildings) {
+        console.log(`✅ [BUILDINGS CACHE] Found ${cachedBuildings.length} buildings in cache`);
+        setBuildings(cachedBuildings);
+        setIsLoading(false);
+        return;
+      }
+
+      console.log('🔥 [BUILDINGS FIRESTORE] Fetching buildings from Firestore...');
+      // Fetch buildings from Firestore
       const allBuildings: Building[] = [];
       const buildingsFromRooms = new Map<string, Building>();
 
       for (const locationId of locationIds) {
+        console.log(`📊 [BUILDINGS] Processing location: ${locationId}`);
+        
+        // Fetch buildingPOIs
         const buildingPOIsSnap = await firestore()
           .collection('locations')
           .doc(locationId)
@@ -71,6 +127,7 @@ export const useBuildings = () => {
           });
         });
 
+        // Fetch buildings from roomPOIs
         const roomPOIsSnap = await firestore()
           .collection('locations')
           .doc(locationId)
@@ -95,7 +152,7 @@ export const useBuildings = () => {
         });
       }
 
-      // Add room-only buildings if they don’t exist in buildingPOIs
+      // Add room-only buildings if they don't exist in buildingPOIs
       buildingsFromRooms.forEach((roomBuilding, buildingId) => {
         const exists = allBuildings.some((b) => b.id === buildingId || b.name === buildingId);
         if (!exists) {
@@ -103,6 +160,9 @@ export const useBuildings = () => {
         }
       });
 
+      console.log(`📊 [BUILDINGS] Checking navigation for ${allBuildings.length} buildings...`);
+      
+      // Check navigation availability for buildings
       const buildingsWithNavigation = await Promise.all(
         allBuildings.map(async (building) => {
           if (building.source === 'roomPOIs') {
@@ -133,16 +193,45 @@ export const useBuildings = () => {
       );
 
       const navigableBuildings = buildingsWithNavigation.filter((b) => b.hasNavigation);
-      //consolelog('[useBuildings] Final navigable buildings:', navigableBuildings.length);
+      console.log(`📊 [BUILDINGS] Found ${navigableBuildings.length} navigable buildings`);
+      
       setBuildings(navigableBuildings);
+      
+      // Cache the buildings
+      await cacheService.set(buildingsCacheKey, navigableBuildings, {
+        ttl: BUILDINGS_CACHE_TTL,
+        userSpecific: false,
+      });
+      console.log(`💿 [BUILDINGS CACHE] Cached ${navigableBuildings.length} buildings`);
+
     } catch (error) {
-      //consoleerror('Error loading buildings:', error);
-      setBuildings([]); // Clear buildings on error to avoid stale data
+      console.error('Error loading buildings:', error);
     } finally {
       setIsLoading(false);
-      //consolelog('[useBuildings] Loading completed');
     }
   };
 
-  return { buildings, locations, isLoading };
+  const refreshBuildings = async () => {
+    console.log('🔄 [BUILDINGS] Refreshing buildings (bypassing cache)...');
+    
+    // Clear relevant caches
+    await cacheService.remove('buildings_locations_data');
+    const locationIds = locations.map(l => l.id);
+    if (locationIds.length > 0) {
+      const buildingsCacheKey = `buildings_with_nav:${locationIds.join(',')}`;
+      await cacheService.remove(buildingsCacheKey);
+    }
+    
+    // Reload
+    await loadBuildingsWithNavigation();
+  };
+
+  return {
+    buildings,
+    locations,
+    isLoading,
+    refreshBuildings,
+    // Expose the main loading function for manual refresh
+    loadBuildings: loadBuildingsWithNavigation,
+  };
 };
