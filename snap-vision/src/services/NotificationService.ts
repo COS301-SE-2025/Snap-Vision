@@ -2,6 +2,7 @@ import messaging from '@react-native-firebase/messaging';
 import notifee from '@notifee/react-native';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
+import { Platform, PermissionsAndroid } from 'react-native';
 import AuthorizationService from '../security/AuthorizationService';
 import InputValidator from '../security/InputValidator';
 
@@ -12,6 +13,18 @@ const authService = AuthorizationService.getInstance();
  * @returns {Promise<boolean>} true if permission granted, false otherwise
  */
 export async function requestNotificationPermission(): Promise<boolean> {
+  // For Android 13+ (API 33+), request POST_NOTIFICATIONS permission first
+  if (Platform.OS === 'android' && Platform.Version >= 33) {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+    );
+
+    if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+      return false;
+    }
+  }
+
+  // Request Firebase messaging permission
   const authStatus = await messaging().requestPermission();
   return (
     authStatus === messaging.AuthorizationStatus.AUTHORIZED ||

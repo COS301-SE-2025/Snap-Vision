@@ -5,6 +5,7 @@ import FloorplanWebView, { FloorplanWebViewRef } from '../atoms/FloorplanWebView
 import FloorplanEditor from '../organisms/FloorplanEditor';
 import RoomDetailsModal from '../molecules/RoomDetailsModal';
 import StandardPopup from '../atoms/StandardPopup';
+import SettingsHeader from '../molecules/SettingsHeader';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
@@ -181,6 +182,8 @@ export default function AdminFloorplanEditorContent() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <SettingsHeader title={`Edit ${floorLabel} Floorplan`} />
+      
       <FloorplanEditor
         floorLabel={floorLabel}
         isPathMode={pathManagement.isPathMode}
@@ -197,7 +200,7 @@ export default function AdminFloorplanEditorContent() {
         paths={pathManagement.pathMarkers}
         roomMarkers={roomManagement.roomMarkers}
         onDeletePath={(pathId) => pathManagement.deletePathById(pathId, webViewRef)}
-        onDone={() => navigation.goBack()}
+        onDone={() => {}} 
         colors={colors}
         webViewRef={webViewRef}
       />

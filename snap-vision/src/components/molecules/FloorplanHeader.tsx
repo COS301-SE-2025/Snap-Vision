@@ -14,6 +14,7 @@ interface FloorplanHeaderProps {
     border: string;
     primary: string;
     card: string;
+    secondary: string;
   };
 }
 
@@ -28,10 +29,12 @@ const FloorplanHeader: React.FC<FloorplanHeaderProps> = ({
 }) => {
   return (
     <View style={[styles.header, { borderBottomColor: colors.border }]}>
-      <Text style={[styles.headerTitle, { color: colors.text }]}>Add Room POIs - {floorLabel}</Text>
-      <Text style={[styles.headerSubtitle, { color: colors.text }]}>
+      <Text style={[styles.headerTitle, { color: colors.primary }]}>Add Room POIs - {floorLabel}</Text>
+      <Text style={[styles.headerSubtitle, { color: colors.secondary, fontWeight: 'bold' }]}>
         {isPathMode
-          ? `Path Mode: Select 2 rooms, then tap to add waypoints. Selected: ${selectedRooms.length}/2`
+          ? `Path Mode: Select 2 rooms, then tap to add waypoints. 
+
+Tip: Use minimal waypoints for best results. Double tap a waypoint to remove it. Selected: ${selectedRooms.length}/2`
           : 'Tap on the floorplan to add rooms or tap existing markers to edit'}
       </Text>
 

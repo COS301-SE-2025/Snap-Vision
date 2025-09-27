@@ -20,6 +20,7 @@ export default function SettingsContent({ isDark, navigation }: Props) {
     //{ icon: 'lock', label: 'Privacy and Security', screen: 'PrivacySecurity' },
     //{ icon: 'bell', label: 'Notifications', screen: 'NotificationSettings' },
     { icon: 'cog', label: 'App Preferences', screen: 'AppPreferences' },
+    { icon: 'lock', label: 'Privacy Policy', screen: 'PrivacySecurity' },
     { icon: 'information', label: 'Support', screen: 'Support' },
   ];
 
@@ -61,7 +62,7 @@ const styles = StyleSheet.create({
   mascot: {
     position: 'absolute',
     right: 12,
-    bottom: -320,
+    bottom: -280,
     width: 180,
     height: 180,
     opacity: 0.9,
