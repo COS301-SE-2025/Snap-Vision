@@ -97,6 +97,13 @@ jest.mock('@react-native-firebase/firestore', () => () => ({
   })),
 }));
 
+jest.mock('@react-native-firebase/perf', () => jest.fn(() => ({
+  newTrace: jest.fn(() => ({
+    start: jest.fn().mockResolvedValue(undefined),
+    stop: jest.fn().mockResolvedValue(undefined),
+  })),
+})));
+
 jest.mock('@react-navigation/native', () => {
   const actualNav = jest.requireActual('@react-navigation/native');
   return {
@@ -138,9 +145,11 @@ describe('RegisterForm', () => {
     const { getByTestId, getByText } = setup();
     fireEvent.press(getByTestId('register-button'));
 
-    expect(getByText('Username is required.')).toBeTruthy();
-    expect(getByText('Email is required.')).toBeTruthy();
-    expect(getByText('Password must be at least 8 characters, include a capital letter, number, and special character.')).toBeTruthy();
+    waitFor(() => {
+      expect(getByText('Username is required.')).toBeTruthy();
+      expect(getByText('Email is required.')).toBeTruthy();
+      expect(getByText('Password must be at least 8 characters, include a capital letter, number, and special character.')).toBeTruthy();
+    }, { timeout: 1000 });
   });
 
   it('shows inline error for invalid email format', () => {
@@ -153,7 +162,9 @@ describe('RegisterForm', () => {
 
     fireEvent.press(getByTestId('register-button'));
 
-    expect(getByText('Please enter a valid email address.')).toBeTruthy();
+    waitFor(() => {
+      expect(getByText('Please enter a valid email address.')).toBeTruthy();
+    }, { timeout: 1000 });
   });
 
   it('shows inline error for weak password', () => {
@@ -166,7 +177,9 @@ describe('RegisterForm', () => {
 
     fireEvent.press(getByTestId('register-button'));
 
-    expect(getByText(/Password must be at least 8 characters/)).toBeTruthy();
+    waitFor(() => {
+      expect(getByText(/Password must be at least 8 characters/)).toBeTruthy();
+    }, { timeout: 1000 });
   });
 
   it('shows inline error if passwords do not match', () => {
@@ -179,7 +192,9 @@ describe('RegisterForm', () => {
 
     fireEvent.press(getByTestId('register-button'));
 
-    expect(getByText('Passwords do not match.')).toBeTruthy();
+    waitFor(() => {
+      expect(getByText('Passwords do not match.')).toBeTruthy();
+    }, { timeout: 1000 });
   });
 
 });

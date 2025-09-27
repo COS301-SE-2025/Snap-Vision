@@ -182,6 +182,7 @@ describe('recentlyVService', () => {
     });
     const snap = getStore().get(path(u));
     expect(snap.pois).toHaveLength(1);
+    expect(logSpy).toHaveBeenCalled();
   });
 
   it('addRecentlyVisitedPOI updates existing doc with new visit', async () => {
@@ -264,6 +265,7 @@ describe('recentlyVService', () => {
         centroid: { latitude: 0, longitude: 0 },
       }),
     ).rejects.toThrow('boom');
+    expect(errSpy).toHaveBeenCalled();
 
     // Restore original
     db.collection = origCollection;
@@ -282,6 +284,7 @@ describe('recentlyVService', () => {
     });
     const out = await mod.getRecentlyVPOIs('uX');
     expect(out).toEqual([]);
+    expect(errSpy).toHaveBeenCalled();
 
     // Restore original
     db.collection = origCollection;
