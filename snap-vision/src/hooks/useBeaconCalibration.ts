@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { BeaconScanner, IBeaconReading, IBeaconKey } from '../utils/indoor/BeaconScanner';
+import type { BeaconScanner, IBeaconReading, IBeaconKey } from '../types/BeaconScanner';
 
 export function useBeaconCalibration(scanner: BeaconScanner) {
   const [active, setActive] = useState(false);
@@ -90,8 +90,6 @@ export function useBeaconCalibration(scanner: BeaconScanner) {
 
         // Auto-stop after duration
         if (elapsed >= durationRef.current) {
-          // Auto-stopping calibration after elapsed time
-          // Clear the timer first to prevent multiple calls
           clearTimers();
           setActive(false);
           try {

@@ -1,4 +1,3 @@
-// src/security/SecureFirestoreService.ts
 import firestore from '@react-native-firebase/firestore';
 import AuthorizationService from './AuthorizationService';
 import InputValidator from './InputValidator';

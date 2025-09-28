@@ -1,4 +1,3 @@
-// molecules/BadgesSection.tsx
 import React from 'react';
 import { FlatList, View, StyleSheet, Dimensions } from 'react-native';
 import RewardCard from '../molecules/RewardCard';

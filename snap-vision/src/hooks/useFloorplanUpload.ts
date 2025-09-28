@@ -24,57 +24,59 @@ export const useFloorplanUpload = () => {
   const handlePickDocument = async () => {
     try {
       //console.log(' [UPLOAD] Starting image picker...');
-      
-      return new Promise<{ success: boolean; uri?: string; name?: string; error?: string }>((resolve) => {
-        const options = {
-          mediaType: 'photo' as MediaType,
-          includeBase64: false,
-          maxHeight: 2000,
-          maxWidth: 2000,
-          quality: 0.8,
-          selectionLimit: 1,
-        };
 
-        launchImageLibrary(options, (response: ImagePickerResponse) => {
-          if (response.didCancel) {
-            //console.log(' [UPLOAD] User cancelled image picker');
-            resolve({ success: false, error: 'Selection cancelled' });
-            return;
-          }
+      return new Promise<{ success: boolean; uri?: string; name?: string; error?: string }>(
+        (resolve) => {
+          const options = {
+            mediaType: 'photo' as MediaType,
+            includeBase64: false,
+            maxHeight: 2000,
+            maxWidth: 2000,
+            quality: 0.8,
+            selectionLimit: 1,
+          };
 
-          if (response.errorMessage) {
-            console.error(' [UPLOAD] ImagePicker error:', response.errorMessage);
-            const errorMessage = 'Failed to select image';
-            setError(errorMessage);
-            resolve({ success: false, error: errorMessage });
-            return;
-          }
+          launchImageLibrary(options, (response: ImagePickerResponse) => {
+            if (response.didCancel) {
+              //console.log(' [UPLOAD] User cancelled image picker');
+              resolve({ success: false, error: 'Selection cancelled' });
+              return;
+            }
 
-          if (response.assets && response.assets.length > 0) {
-            const asset = response.assets[0];
-            const uri = asset.uri;
-            const name = asset.fileName || `floorplan_${Date.now()}.jpg`;
-
-            if (!uri) {
-              const errorMessage = 'No image URI received';
+            if (response.errorMessage) {
+              console.error(' [UPLOAD] ImagePicker error:', response.errorMessage);
+              const errorMessage = 'Failed to select image';
               setError(errorMessage);
               resolve({ success: false, error: errorMessage });
               return;
             }
 
-            setFileUri(uri);
-            setFileName(name);
-            setError('');
-            //console.log(` [UPLOAD] Selected image: ${name}`);
-            
-            resolve({ success: true, uri, name });
-          } else {
-            const errorMessage = 'No image selected';
-            setError(errorMessage);
-            resolve({ success: false, error: errorMessage });
-          }
-        });
-      });
+            if (response.assets && response.assets.length > 0) {
+              const asset = response.assets[0];
+              const uri = asset.uri;
+              const name = asset.fileName || `floorplan_${Date.now()}.jpg`;
+
+              if (!uri) {
+                const errorMessage = 'No image URI received';
+                setError(errorMessage);
+                resolve({ success: false, error: errorMessage });
+                return;
+              }
+
+              setFileUri(uri);
+              setFileName(name);
+              setError('');
+              //console.log(` [UPLOAD] Selected image: ${name}`);
+
+              resolve({ success: true, uri, name });
+            } else {
+              const errorMessage = 'No image selected';
+              setError(errorMessage);
+              resolve({ success: false, error: errorMessage });
+            }
+          });
+        },
+      );
     } catch (err: any) {
       const errorMessage = 'Failed to open image picker';
       setError(errorMessage);
@@ -151,12 +153,12 @@ export const useFloorplanUpload = () => {
       await cacheService.remove(`admin_floorplans:${selectedLocation}:${buildingId}`);
       await cacheService.remove(`admin_buildings:${selectedLocation}`);
       await cacheService.remove('admin_locations', true);
-      
+
       // Also invalidate editor-specific caches
       await cacheService.remove(`floors:${selectedLocation}:${buildingId}`);
       await cacheService.remove(`rooms:${selectedLocation}:${buildingId}`);
       await cacheService.remove(`floorplan_url:${selectedLocation}:${buildingId}:${floorLabel}`);
-      
+
       // Invalidate any building-specific caches
       await cacheService.remove(`buildings:${selectedLocation}`);
 

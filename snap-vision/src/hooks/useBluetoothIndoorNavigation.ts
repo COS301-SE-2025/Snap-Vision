@@ -99,7 +99,6 @@ export const useBluetoothIndoorNavigation = ({
     if (room) {
       setSelectedPOI(room);
       setShowPOIPopup(true);
-      // Don't set as selectedRoom to avoid destination color
     }
   };
 

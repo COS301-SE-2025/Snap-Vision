@@ -1,7 +1,5 @@
-// SettingsContent.tsx
 import React from 'react';
 import { View, StyleSheet, Image } from 'react-native';
-import SearchInput from '../atoms/SettingsSearch';
 import SettingItem from '../molecules/SettingsItem';
 import { getThemeColors } from '../../theme';
 import { useTheme } from '../../theme/ThemeContext';

@@ -1,4 +1,3 @@
-// SettingItem.tsx
 import React from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import IconText from '../atoms/IconText';

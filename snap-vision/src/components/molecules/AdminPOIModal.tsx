@@ -9,7 +9,6 @@ import {
   FlatList,
   StyleSheet,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { AdminPOI } from '../../hooks/useMapAdmin';
 import { useTheme } from '../../theme/ThemeContext';

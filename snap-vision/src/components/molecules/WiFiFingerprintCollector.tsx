@@ -1,4 +1,3 @@
-// Updated WiFiFingerprintCollector.tsx with delete support
 import React, { useState } from 'react';
 import { View, Button, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import {

@@ -167,7 +167,6 @@ export default function IndoorSchematicNavScreen() {
     TTS.setDefaultPitch(1.0);
 
     return () => {
-      // Just stop TTS on cleanup - avoid removeEventListener issues
       TTS.stop();
     };
   }, []);
@@ -291,29 +290,29 @@ export default function IndoorSchematicNavScreen() {
   useEffect(() => {
     let cancelled = false;
 
-        async function fetchFloorplan() {
+    async function fetchFloorplan() {
       const trace = await perf().newTrace('indoor_floorplan_load_perf');
       await trace.start();
       try {
         setFloorplanLoading(true);
         setFloorplanUrl(null);
-    
+
         // Check cache first for all floorplans
         const cacheKey = `floorplans:${locationId}:${buildingId}`;
         const cachedFloorplans = await cacheService.get<{ [key: string]: string }>(cacheKey, {
           ttl: FLOORPLANS_CACHE_TTL,
           userSpecific: false,
         });
-    
+
         let url: string | null = null;
-    
+
         if (cachedFloorplans && cachedFloorplans[selectedFloorId]) {
           // Found in cache
           url = cachedFloorplans[selectedFloorId];
           //console.log(`[FLOORPLAN CACHE] Found URL for floor ${selectedFloorId} in cache`);
         } else {
           //console.log(`[FLOORPLAN] Fetching all floorplans for ${locationId}/${buildingId} from Firestore...`);
-          
+
           const fpSnap = await firestore()
             .collection('locations')
             .doc(locationId)
@@ -321,15 +320,15 @@ export default function IndoorSchematicNavScreen() {
             .doc(buildingId)
             .collection('floorplans')
             .get();
-    
+
           const floorplanMap: { [key: string]: string } = {};
-    
+
           for (const doc of fpSnap.docs) {
-            if (cancelled) break; 
+            if (cancelled) break;
             const data: any = doc.data();
             const floorId = data.floorId || doc.id;
             let floorUrl = data?.imageUrl || data?.url || data?.downloadURL || null;
-    
+
             // If no direct URL, try resolving storagePath
             if (!floorUrl && data?.storagePath) {
               try {
@@ -339,14 +338,14 @@ export default function IndoorSchematicNavScreen() {
                 //console.warn(`[FLOORPLAN] getDownloadURL failed for floor ${floorId}, storagePath: ${data.storagePath}`, e);
               }
             }
-    
+
             if (floorUrl) {
               floorplanMap[floorId] = floorUrl;
             } else {
               //console.warn(`[FLOORPLAN] No URL found for floor ${floorId}`);
             }
           }
-    
+
           // Cache the map if we have data
           if (Object.keys(floorplanMap).length > 0) {
             await cacheService.set(cacheKey, floorplanMap, {
@@ -355,7 +354,7 @@ export default function IndoorSchematicNavScreen() {
             });
             //console.log(`[FLOORPLAN] Cached floorplan map for ${locationId}/${buildingId}`);
           }
-    
+
           // Get URL for selected floor
           url = floorplanMap[selectedFloorId] || null;
           if (url) {
@@ -364,16 +363,16 @@ export default function IndoorSchematicNavScreen() {
             //console.warn(`[FLOORPLAN] No URL found for selected floor ${selectedFloorId}`);
           }
         }
-    
-        
+
         if (!url) {
           //console.log(`[FLOORPLAN] Attempting storage fallback for floor ${selectedFloorId}`);
           try {
             const baseRef = storage().ref(`floorplans/${locationId}/${buildingId}`);
             const list = await baseRef.listAll();
-            const match = list.items.find((it) =>
-              it.name.toLowerCase().includes(String(selectedFloorId).toLowerCase())
-            ) || list.items[0];
+            const match =
+              list.items.find((it) =>
+                it.name.toLowerCase().includes(String(selectedFloorId).toLowerCase()),
+              ) || list.items[0];
             if (match) {
               url = await match.getDownloadURL();
               //console.log(`[FLOORPLAN] Fallback URL found: ${url}`);
@@ -384,7 +383,7 @@ export default function IndoorSchematicNavScreen() {
             //console.warn('[FLOORPLAN] Storage folder fallback failed', e);
           }
         }
-    
+
         if (!cancelled) {
           setFloorplanUrl(url ?? null);
         }
@@ -412,10 +411,9 @@ export default function IndoorSchematicNavScreen() {
     [allRooms, selectedFloorId],
   );
 
-  // Add a guaranteed fallback coordinate that will work for all buildings/floors
   const fallbackCoordinates = { x: 500, y: 500 };
 
-  // Handle QR code scan results - using the same logic as QrCard.tsx
+  // Handle QR code scan results
   const handleQRScan = async (qrValue: string) => {
     try {
       // Close the scanner
@@ -485,7 +483,7 @@ export default function IndoorSchematicNavScreen() {
             buildingId: qrBuildingId,
             buildingName: qrBuildingName || 'Building',
             floorId: qrFloorId,
-            userPos: fallbackCoordinates, // Add fallback coordinates
+            userPos: fallbackCoordinates,
           });
         }, 1500);
         return;
@@ -510,7 +508,6 @@ export default function IndoorSchematicNavScreen() {
         ////consolelog('Fetching room data for:', qrRoomId, 'in location:', qrLocationId);
         const roomDoc = await roomRef.get();
 
-        // In newer Firebase versions, exists is a property or function
         let docExists = false;
         if (typeof roomDoc.exists === 'function') {
           docExists = roomDoc.exists();
@@ -663,7 +660,6 @@ export default function IndoorSchematicNavScreen() {
       setNavigationMode(true);
       setPoiPopupVisible(false);
       setSelectedPOI(null);
-      // Reset start to ensure user picks a start room
       setStartId(null);
       setSteps([]);
       setCurrentStep(0);
@@ -750,7 +746,6 @@ export default function IndoorSchematicNavScreen() {
       }
     }
     if (currentStep >= steps.length - 1) {
-      // Use custom destination reached popup with confetti instead of standard popup
       const destinationRoom = allRooms.find((room) => room.id === endId);
       const destinationName = destinationRoom?.name || 'Your Destination';
       setReachedDestination(destinationName);

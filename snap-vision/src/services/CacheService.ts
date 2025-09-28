@@ -52,7 +52,7 @@ export class CacheService {
   async get<T>(key: string, options: CacheOptions = {}): Promise<T | null> {
     const cacheKey = await this.generateCacheKey(key, options.userSpecific);
     //console.log("checking cache");
-    
+
     // Check memory cache first
     const memoryEntry = this.memoryCache.get(cacheKey);
     if (memoryEntry && memoryEntry.expiresAt > Date.now()) {
@@ -91,7 +91,7 @@ export class CacheService {
     const now = Date.now();
 
     //console.log("cache set");
-    
+
     const context = await this.authService.getCurrentUserContext();
     const entry: CacheEntry<T> = {
       data,
@@ -117,9 +117,9 @@ export class CacheService {
    */
   async remove(key: string, userSpecific: boolean = false): Promise<void> {
     const cacheKey = await this.generateCacheKey(key, userSpecific);
-    
+
     this.memoryCache.delete(cacheKey);
-    
+
     try {
       await AsyncStorage.removeItem(cacheKey);
     } catch (error) {
@@ -135,7 +135,7 @@ export class CacheService {
     if (!context) return;
 
     const userId = context.userId;
-    
+
     // Clear memory cache
     for (const [key, entry] of this.memoryCache.entries()) {
       if (entry.userId === userId) {
@@ -146,7 +146,7 @@ export class CacheService {
     // Clear AsyncStorage cache
     try {
       const keys = await AsyncStorage.getAllKeys();
-      const userKeys = keys.filter(key => key.includes(`:${userId}:`));
+      const userKeys = keys.filter((key) => key.includes(`:${userId}:`));
       await AsyncStorage.multiRemove(userKeys);
     } catch (error) {
       console.warn('Cache clear error:', error);
@@ -183,7 +183,7 @@ export class CacheService {
     if (this.memoryCache.size > this.MAX_MEMORY_ENTRIES) {
       const entries = Array.from(this.memoryCache.entries());
       entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
-      
+
       const toRemove = entries.slice(0, entries.length - this.MAX_MEMORY_ENTRIES);
       toRemove.forEach(([key]) => this.memoryCache.delete(key));
     }

@@ -11,10 +11,10 @@ const cacheService = CacheService.getInstance();
 const CACHE_TTL = {
   LOCATIONS: 15 * 60 * 1000, // 15 minutes
   BUILDINGS: 10 * 60 * 1000, // 10 minutes
-  FLOORS: 10 * 60 * 1000,    // 10 minutes
-  ROOMS: 5 * 60 * 1000,      // 5 minutes
-  PATHS: 5 * 60 * 1000,      // 5 minutes
-  QR_CODES: 5 * 60 * 1000,   // 5 minutes
+  FLOORS: 10 * 60 * 1000, // 10 minutes
+  ROOMS: 5 * 60 * 1000, // 5 minutes
+  PATHS: 5 * 60 * 1000, // 5 minutes
+  QR_CODES: 5 * 60 * 1000, // 5 minutes
 };
 
 export interface QRCodeMapping {
@@ -111,7 +111,7 @@ export const createQRCodeMapping = async (
 
     // Invalidate related caches
     await cacheService.remove(`qr_codes:${locationId}:${buildingId}`, true);
-    
+
     return qrData;
   } catch (error) {
     ////consoleerror('Error creating QR code mapping:', error);
@@ -135,20 +135,20 @@ export const getQRCodeMappingByValue = async (qrValue: string): Promise<QRCodeMa
     }
 
     const cacheKey = `qr_mapping:${validQRValue}`;
-    
+
     // Check cache first
     const cached = await cacheService.get<QRCodeMapping>(cacheKey, {
       ttl: CACHE_TTL.QR_CODES,
       userSpecific: false,
     });
-    
+
     if (cached) {
       return cached;
     }
 
     // Fetch from Firestore
     const locationsSnapshot = await firestore().collection('locations').get();
-    
+
     for (const locationDoc of locationsSnapshot.docs) {
       const locationId = locationDoc.id;
       const qrSnapshot = await firestore()
@@ -162,13 +162,13 @@ export const getQRCodeMappingByValue = async (qrValue: string): Promise<QRCodeMa
       if (!qrSnapshot.empty) {
         const doc = qrSnapshot.docs[0];
         const data = { ...doc.data(), id: doc.id } as QRCodeMapping;
-        
+
         // Cache the result
         await cacheService.set(cacheKey, data, {
           ttl: CACHE_TTL.QR_CODES,
           userSpecific: false,
         });
-        
+
         return data;
       }
     }
@@ -191,13 +191,13 @@ export const getLocations = async (): Promise<LocationLite[]> => {
     }
 
     const cacheKey = 'locations';
-    
+
     // Check cache first
     const cached = await cacheService.get<LocationLite[]>(cacheKey, {
       ttl: CACHE_TTL.LOCATIONS,
       userSpecific: true,
     });
-    
+
     if (cached) {
       return cached;
     }
@@ -208,13 +208,13 @@ export const getLocations = async (): Promise<LocationLite[]> => {
       id: doc.id,
       name: (doc.data() as any).name ?? doc.id,
     }));
-    
+
     // Cache the result
     await cacheService.set(cacheKey, locations, {
       ttl: CACHE_TTL.LOCATIONS,
       userSpecific: true,
     });
-    
+
     return locations;
   } catch (error) {
     ////consoleerror('Error getting locations:', error);
@@ -237,13 +237,13 @@ export const getBuildingsForLocation = async (locationId: string): Promise<Build
     }
 
     const cacheKey = `buildings:${locationId}`;
-    
+
     // Check cache first
     const cached = await cacheService.get<BuildingLite[]>(cacheKey, {
       ttl: CACHE_TTL.BUILDINGS,
       userSpecific: false,
     });
-    
+
     if (cached) {
       return cached;
     }
@@ -259,13 +259,13 @@ export const getBuildingsForLocation = async (locationId: string): Promise<Build
       id: doc.id,
       name: (doc.data() as any).name ?? doc.id,
     }));
-    
+
     // Cache the result
     await cacheService.set(cacheKey, buildings, {
       ttl: CACHE_TTL.BUILDINGS,
       userSpecific: false,
     });
-    
+
     return buildings;
   } catch (error) {
     ////consoleerror('Error getting buildings for location:', error);
@@ -293,13 +293,13 @@ export const getFloorsForBuilding = async (
     }
 
     const cacheKey = `floors:${locationId}:${buildingId}`;
-    
+
     // Check cache first
     const cached = await cacheService.get<FloorLite[]>(cacheKey, {
       ttl: CACHE_TTL.FLOORS,
       userSpecific: false,
     });
-    
+
     if (cached) {
       return cached;
     }
@@ -330,7 +330,7 @@ export const getFloorsForBuilding = async (
       ttl: CACHE_TTL.FLOORS,
       userSpecific: false,
     });
-    
+
     return floors;
   } catch (error) {
     ////consoleerror('Error getting floors for building:', error);
@@ -360,13 +360,13 @@ export const getRoomsForFloor = async (
     }
 
     const cacheKey = `rooms:${locationId}:${buildingId}:${floorId}`;
-    
+
     // Check cache first
     const cached = await cacheService.get<RoomLite[]>(cacheKey, {
       ttl: CACHE_TTL.ROOMS,
       userSpecific: false,
     });
-    
+
     if (cached) {
       return cached;
     }
@@ -401,7 +401,7 @@ export const getRoomsForFloor = async (
       ttl: CACHE_TTL.ROOMS,
       userSpecific: false,
     });
-    
+
     return rooms;
   } catch (error) {
     ////consoleerror('Error getting rooms for floor:', error);
@@ -429,13 +429,13 @@ export const getQRCodesForBuilding = async (
     }
 
     const cacheKey = `qr_codes:${locationId}:${buildingId}`;
-    
+
     // Check cache first
     const cached = await cacheService.get<QRCodeMapping[]>(cacheKey, {
       ttl: CACHE_TTL.QR_CODES,
       userSpecific: true,
     });
-    
+
     if (cached) {
       return cached;
     }
@@ -458,7 +458,7 @@ export const getQRCodesForBuilding = async (
       ttl: CACHE_TTL.QR_CODES,
       userSpecific: true,
     });
-    
+
     return qrCodes;
   } catch (error) {
     ////consoleerror('Error getting QR codes for building:', error);
@@ -498,13 +498,13 @@ export const deleteQRCodeMapping = async (
     }
 
     const qrData = qrDoc.data() as QRCodeMapping;
-    
+
     await qrDoc.ref.delete();
 
     // Invalidate related caches
     await cacheService.remove(`qr_codes:${locationId}:${qrData.buildingId}`, true);
     await cacheService.remove(`qr_mapping:${qrData.qrValue}`, false);
-    
+
     return true;
   } catch (error) {
     ////consoleerror('Error deleting QR code mapping:', error);
@@ -544,9 +544,9 @@ export const updateQRCodeMapping = async (
     }
 
     const currentData = qrDoc.data() as QRCodeMapping;
-    
+
     await qrRef.update(updates);
-    
+
     const updatedData = { ...currentData, ...updates };
 
     // Invalidate related caches
@@ -555,7 +555,7 @@ export const updateQRCodeMapping = async (
       await cacheService.remove(`qr_mapping:${currentData.qrValue}`, false);
       await cacheService.remove(`qr_mapping:${updates.qrValue}`, false);
     }
-    
+
     return updatedData;
   } catch (error) {
     ////consoleerror('Error updating QR code mapping:', error);

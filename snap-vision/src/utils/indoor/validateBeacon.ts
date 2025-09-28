@@ -1,4 +1,3 @@
-// indoor/validateBeacon.ts
 export type BeaconInput = {
   uuid: string;
   major: string | number;

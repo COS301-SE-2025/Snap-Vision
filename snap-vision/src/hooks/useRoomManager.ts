@@ -49,17 +49,17 @@ export function useRoomManager({ locationId, buildingId }: UseRoomManagerParams)
         if (cachedRooms) {
           //console.log(BT, `Loaded ${cachedRooms.length} rooms from cache`);
           setAllRooms(cachedRooms);
-          
+
           // Extract floors from cached data
-          const uniqueFloors = Array.from(new Set(
-            cachedRooms.map((room) => room.floorId).filter(Boolean)
-          )).sort();
+          const uniqueFloors = Array.from(
+            new Set(cachedRooms.map((room) => room.floorId).filter(Boolean)),
+          ).sort();
           setFloors(uniqueFloors);
-          
+
           if (uniqueFloors.length > 0 && !selectedFloorId) {
             setSelectedFloorId(uniqueFloors[0]);
           }
-          
+
           setLoading(false);
           return;
         }
@@ -74,15 +74,15 @@ export function useRoomManager({ locationId, buildingId }: UseRoomManagerParams)
 
         const roomsData = roomSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as RoomPOI[];
         //console.log(BT, `Loaded ${roomsData.length} rooms from Firestore`);
-        
+
         setAllRooms(roomsData);
 
         // Extract unique floor IDs
         const uniqueFloors = Array.from(
-          new Set(roomsData.map((room) => room.floorId).filter(Boolean))
+          new Set(roomsData.map((room) => room.floorId).filter(Boolean)),
         ).sort();
         //console.log(BT, 'Available floors:', uniqueFloors);
-        
+
         setFloors(uniqueFloors);
 
         // Auto-select first floor if none selected
@@ -95,7 +95,6 @@ export function useRoomManager({ locationId, buildingId }: UseRoomManagerParams)
           ttl: ROOMS_CACHE_TTL,
           userSpecific: false,
         });
-
       } catch (error) {
         console.error(BT, 'Error loading rooms:', error);
       } finally {
@@ -114,7 +113,7 @@ export function useRoomManager({ locationId, buildingId }: UseRoomManagerParams)
   const refreshRooms = async () => {
     const cacheKey = `rooms:${locationId}:${buildingId}`;
     await cacheService.remove(cacheKey);
-    
+
     // Trigger reload by updating a dependency
     setLoading(true);
     try {

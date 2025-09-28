@@ -1,4 +1,3 @@
-//snap-vision\src\theme\ThemeContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';

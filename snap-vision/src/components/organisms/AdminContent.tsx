@@ -1,4 +1,3 @@
-//C:\Users\bahiy\snapvision\Snap-Vision\snap-vision\src\components\organisms\AdminContent.tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import AppButton from '../atoms/AppButton';

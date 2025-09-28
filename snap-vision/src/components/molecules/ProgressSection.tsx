@@ -1,4 +1,3 @@
-// molecules/ProgressSection.tsx
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import ProgressCard from '../atoms/ProgressCard';

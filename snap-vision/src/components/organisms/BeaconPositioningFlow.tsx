@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { LocationSelector } from '../molecules/LocationSelector';
 import BuildingSelector from '../molecules/BuildingSelector';
 import FloorSelector from '../molecules/FloorSelector';
@@ -127,7 +127,6 @@ export const BeaconPositioningFlow: React.FC<BeaconPositioningFlowProps> = ({
   // Handlers
   const handleLocationSelect = (locationId: string) => {
     setSelectedLocation(locationId);
-    // Reset building and floor selections when location changes
     setSelectedBuildingId(null);
     setSelectedFloorplan(null);
     onFloorplanSelect(null);

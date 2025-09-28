@@ -1,4 +1,3 @@
-//C:\Users\bahiy\snapvision\Snap-Vision\snap-vision\src\screens\AdminScreen.tsx
 import React from 'react';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';

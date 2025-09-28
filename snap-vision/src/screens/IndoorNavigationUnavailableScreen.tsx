@@ -31,7 +31,7 @@ export default function IndoorNavigationUnavailableScreen() {
   };
 
   const handleReturnToMap = () => {
-    // Navigate back to the main tabs (which should include the map)
+    // Navigate back to the main tabs
     navigation.navigate('Tabs' as any);
   };
 

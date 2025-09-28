@@ -1,4 +1,3 @@
-// src/services/badgeService.ts
 import firestore from '@react-native-firebase/firestore';
 import { Badge } from '../types/badges';
 import AuthorizationService from '../security/AuthorizationService';
@@ -215,7 +214,7 @@ export async function getBadges(): Promise<Record<string, Badge>> {
   snapshot.forEach((doc) => {
     const data = doc.data();
     badges[doc.id] = {
-      id: doc.id as any, // Assuming doc.id matches BadgeId
+      id: doc.id as any,
       title: data.title,
       description: data.description,
     };

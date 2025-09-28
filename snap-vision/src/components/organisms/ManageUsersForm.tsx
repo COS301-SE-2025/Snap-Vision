@@ -8,7 +8,6 @@ import {
   Modal,
   TouchableOpacity,
   FlatList,
-  Button,
 } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
@@ -405,7 +404,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 18,
     marginBottom: 12,
-    textAlign: 'center', // <-- add this to center text horizontally
+    textAlign: 'center',
   },
 
   roleOption: {
@@ -427,7 +426,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 12, // space between buttons, works with React Native 0.71+
+    gap: 12,
     marginVertical: 12,
   },
   modalButton: {
