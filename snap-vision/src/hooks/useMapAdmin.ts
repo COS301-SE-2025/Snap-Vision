@@ -77,6 +77,7 @@ export const useMapAdmin = (
   showErrorPopup: (message: string) => void,
   showSuccessPopup: (message: string) => void,
   showConfirmationPopup: (data: { title: string; message: string; onConfirm: () => void }) => void,
+  webViewRef?: React.RefObject<any>,
 ): UseMapAdminReturn => {
   // Admin State
   const [isAdmin, setIsAdmin] = useState(false);
@@ -164,7 +165,7 @@ export const useMapAdmin = (
         try {
           await deleteBuilding(poi);
           onConfirmCallback();
-          onCloseModal?.();  
+          setShowAdminActions(false); 
         } catch (error) {
           console.error('Error in delete confirmation:', error);
         }
@@ -243,7 +244,7 @@ export const useMapAdmin = (
     }
 
     if (!editingPOI || !editingPOI.id || !editingPOI.location) {
-      ////consoleerror('No valid POI ID or location found:', editingPOI);
+      console.error('No valid POI ID or location found:', editingPOI);
       setError('Invalid building data');
       return;
     }
@@ -262,10 +263,12 @@ export const useMapAdmin = (
       setNewFloors('');
       setStatus('Building updated!');
 
+      // Ensure POIs are refreshed
       await refreshPOIs();
+      
       showSuccessPopup('Building information updated successfully.');
     } catch (error) {
-      ////consoleerror('Error updating building:', error);
+      console.error('Error updating building:', error);
       setError('Failed to update building');
     }
   }, [
@@ -280,20 +283,33 @@ export const useMapAdmin = (
   ]);
 
   // Delete building
-  const deleteBuilding = useCallback(
-    async (poi: AdminPOI) => {
-      try {
-        await firestore().doc(`locations/${poi.location}/buildingPOIs/${poi.id}`).delete();
-
-        setStatus(`Building "${poi.name}" deleted`);
-        await refreshPOIs();
-      } catch (error) {
-        ////consoleerror('Error deleting building:', error);
-        showErrorPopup('Failed to delete building');
+const deleteBuilding = useCallback(
+  async (poi: AdminPOI) => {
+    try {
+      await firestore().doc(`locations/${poi.location}/buildingPOIs/${poi.id}`).delete();
+      
+      setStatus(`Building "${poi.name}" deleted`);
+      
+      // First remove the specific POI from the map
+      if (webViewRef?.current) {
+        webViewRef.current.injectJavaScript(`
+          window.removePOIById && window.removePOIById('${poi.id}');
+          true;
+        `);
       }
-    },
-    [setStatus, refreshPOIs, showErrorPopup],
-  );
+      
+      // Refresh POIs data and wait for it to complete
+      await refreshPOIs();
+      
+      // Show success message
+      showSuccessPopup(`Building "${poi.name}" has been deleted successfully.`);
+    } catch (error) {
+      console.error('Error deleting building:', error);
+      showErrorPopup('Failed to delete building');
+    }
+  },
+  [setStatus, refreshPOIs, showErrorPopup, showSuccessPopup, webViewRef],
+);
 
   // Inject admin handlers into WebView
   const injectAdminHandlers = useCallback(
