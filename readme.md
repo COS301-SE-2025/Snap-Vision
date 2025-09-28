@@ -52,7 +52,7 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 </div>
 ---
 <div align="center">
-<a href="https://github.com/COS301-SE-2025/Snap-Vision/releases/download/v2.0/app-release.apk"><button>Download APK</button></a>
+<a href="https://github.com/COS301-SE-2025/Snap-Vision/releases/download/v2.0/snap-vision.apk"><button>Download APK</button></a>
 </div>
 
 <div align="center">
@@ -81,7 +81,7 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 | Demo 1 | [Slides 1](https://drive.google.com/file/d/1e_UbI8kLICTHZ9I2SDv51N_GJ24E8VHI/view?usp=drive_link) | [Docs 1](https://drive.google.com/file/d/1PjbgsJOFsjdsjYa_vm__W2UnuMKIfOYw/view?usp=drive_link) | [Video 1](https://drive.google.com/file/d/1rTIKg24IbTOZThUpLjTd6B59khP-cZaL/view?usp=drive_link) |
 | Demo 2 | [Slides 2](https://drive.google.com/file/d/1YEE-ge010J0ZCaks0T8ggVH2uF7fEHC8/view?usp=drive_link) | [Docs 2](https://drive.google.com/drive/folders/1paIiMCL94TNsxWsi4ypYfgUZSIqwxIns?usp=drive_link) | [Video 2](https://drive.google.com/file/d/1p8kSaRAugtSsM8uUkssOBTTXFzVAtIey/view?usp=drive_link) |
 | Demo 3 | [Slides 3](https://drive.google.com/file/d/1Wye-mflSMjL4sFv2WY0GXM5HZVb3kPbo/view?usp=sharing) | [Docs 3](https://drive.google.com/drive/folders/1MNeGPrEBpp5LMoOav7cew51myI6ndEDu?usp=sharing) | [Video 3](https://drive.google.com/file/d/1ckHsvY1-KsHNIP-jYk25CsysI22DOYQr/view?usp=drive_link) |
-| Demo 4 | [Slides 4](Presentation%20Demo%204.pdf) | [Docs 4](docs) | [Video 4](docs\Demo%20Video%204.mp4) |
+| Demo 4 | [Slides 4](docs/Presentation%20Demo%204.pdf) | [Docs 4](docs) | [Video 4](docs/Demo%20Video%204.mp4) |
 ---
 <div align="center">
 
@@ -134,19 +134,19 @@ Hey there, Saalihah here! I'm a CS student who loves solving problems, delving i
 
 ## Target Platforms
 
-- Android 10+ 
-- Optional future support for iOS 14+
+Android 10+ 
+Optional future support for iOS 14+
 
 ---
 
 ## Technologies Used
 
-- React Native
-- Express.js
-- Firebase (Auth, Firestore, Hosting)  
-- Custom AR
-- OpenStreetMap LeafLet & MapTiler  
-- QR Code Positioning
+React Native
+Express.js
+Firebase (Auth, Firestore, Hosting)  
+Custom AR
+OpenStreetMap LeafLet & MapTiler  
+QR Code Positioning
 
 ---
 
@@ -156,11 +156,11 @@ Hey there, Saalihah here! I'm a CS student who loves solving problems, delving i
 
 We follow the **Gitflow branching model**:
 
-- `main` – production-ready  
-- `dev` – ongoing development  
-- `feature/*` – new features  
-- `fix/*` – emergency bug fixes
-- `test/*` - unit and integration testing
+`main` – production-ready  
+`dev` – ongoing development  
+`feature/*` – new features  
+`fix/*` – emergency bug fixes
+`test/*` - unit and integration testing
 
 ---
 </div>
