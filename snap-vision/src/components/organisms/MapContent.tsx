@@ -647,7 +647,10 @@ const MapContent: React.FC<MapContentProps> = ({
         visible={showConfirmationPopup}
         title={confirmationPopupData?.title || ''}
         message={confirmationPopupData?.message || ''}
-        onConfirm={confirmationPopupData?.onConfirm}
+        onConfirm={() => {
+          confirmationPopupData?.onConfirm?.();
+          onSetShowConfirmationPopup(false); // Make sure this is called
+        }}
         onCancel={() => onSetShowConfirmationPopup(false)}
         confirmText="Delete"
         cancelText="Cancel"
