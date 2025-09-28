@@ -21,8 +21,11 @@ const mockCacheService = {
 };
 
 const mockInputValidator = {
-  validateDocumentId: jest.fn((id: string) => id), // return input as valid
-  validateText: jest.fn((text: string) => text), // return input as valid
+  validateDocumentId: jest.fn((id: string) => id), // return input as valid by default
+  validateText: jest.fn((text: string) => text), // return input as valid by default
+} as {
+  validateDocumentId: jest.MockedFunction<(id: unknown) => string | null>;
+  validateText: jest.MockedFunction<(text: unknown, maxLength?: number) => string | null>;
 };
 
 (AuthorizationService.getInstance as jest.Mock).mockReturnValue(mockAuthService);
@@ -221,6 +224,27 @@ describe('createQRCodeMapping', () => {
       qrService.createQRCodeMapping('l', 'ln', 'b', 'bn', 'f', 'r', 'rn', 'QR'),
     ).rejects.toThrow('User not authenticated');
   });
+
+  it('throws when input validation fails - invalid locationId', async () => {
+    mockInputValidator.validateDocumentId.mockReturnValueOnce(null); // First call fails
+    await expect(
+      qrService.createQRCodeMapping('', 'ln', 'b', 'bn', 'f', 'r', 'rn', 'QR'),
+    ).rejects.toThrow('Invalid input parameters');
+  });
+
+  it('throws when input validation fails - invalid QR value', async () => {
+    mockInputValidator.validateText.mockReturnValueOnce(null); // QR value validation fails
+    await expect(
+      qrService.createQRCodeMapping('l', 'ln', 'b', 'bn', 'f', 'r', 'rn', ''),
+    ).rejects.toThrow('Invalid input parameters');
+  });
+
+  it('throws when user cannot modify location', async () => {
+    mockAuthService.canModifyLocation.mockResolvedValueOnce(false);
+    await expect(
+      qrService.createQRCodeMapping('l', 'ln', 'b', 'bn', 'f', 'r', 'rn', 'QR'),
+    ).rejects.toThrow('Unauthorized: Cannot modify QR codes for this location');
+  });
 });
 
 describe('getQRCodeMappingByValue', () => {
@@ -249,6 +273,29 @@ describe('getQRCodeMappingByValue', () => {
     const found = await qrService.getQRCodeMappingByValue('NOPE');
     expect(found).toBeNull();
   });
+
+  it('throws when user not authenticated', async () => {
+    mockAuthService.getCurrentUserContext.mockResolvedValueOnce(null);
+    await expect(qrService.getQRCodeMappingByValue('QR123')).rejects.toThrow(
+      'User not authenticated'
+    );
+  });
+
+  it('throws when QR value validation fails', async () => {
+    mockInputValidator.validateText.mockReturnValueOnce(null);
+    await expect(qrService.getQRCodeMappingByValue('')).rejects.toThrow(
+      'Invalid QR code value'
+    );
+  });
+
+  it('returns cached result when available', async () => {
+    const cachedResult = { id: 'cached-qr', qrValue: 'CACHED' };
+    mockCacheService.get.mockResolvedValueOnce(cachedResult);
+
+    const found = await qrService.getQRCodeMappingByValue('CACHED');
+    expect(found).toEqual(cachedResult);
+    expect(mockGet).not.toHaveBeenCalled(); // Should not query Firestore
+  });
 });
 
 describe('getLocations', () => {
@@ -265,6 +312,20 @@ describe('getLocations', () => {
       { id: 'L2', name: 'L2' },
     ]);
   });
+
+  it('throws when user not authenticated', async () => {
+    mockAuthService.getCurrentUserContext.mockResolvedValueOnce(null);
+    await expect(qrService.getLocations()).rejects.toThrow('User not authenticated');
+  });
+
+  it('returns cached result when available', async () => {
+    const cachedLocations = [{ id: 'cached-loc', name: 'Cached Location' }];
+    mockCacheService.get.mockResolvedValueOnce(cachedLocations);
+
+    const result = await qrService.getLocations();
+    expect(result).toEqual(cachedLocations);
+    expect(mockGet).not.toHaveBeenCalled(); // Should not query Firestore
+  });
 });
 
 describe('getBuildingsForLocation', () => {
@@ -280,6 +341,29 @@ describe('getBuildingsForLocation', () => {
       { id: 'B1', name: 'A Block' },
       { id: 'B2', name: 'B2' },
     ]);
+  });
+
+  it('throws when location ID validation fails', async () => {
+    mockInputValidator.validateDocumentId.mockReturnValueOnce(null);
+    await expect(qrService.getBuildingsForLocation('')).rejects.toThrow(
+      'Invalid location ID'
+    );
+  });
+
+  it('throws when user cannot access location', async () => {
+    mockAuthService.canAccessLocation.mockResolvedValueOnce(false);
+    await expect(qrService.getBuildingsForLocation('loc1')).rejects.toThrow(
+      'Unauthorized access to location buildings'
+    );
+  });
+
+  it('returns cached result when available', async () => {
+    const cachedBuildings = [{ id: 'cached-building', name: 'Cached Building' }];
+    mockCacheService.get.mockResolvedValueOnce(cachedBuildings);
+
+    const result = await qrService.getBuildingsForLocation('loc1');
+    expect(result).toEqual(cachedBuildings);
+    expect(mockGet).not.toHaveBeenCalled(); // Should not query Firestore
   });
 });
 
@@ -364,6 +448,37 @@ describe('getFloorsForBuilding', () => {
       { id: 'fx', name: 'Label X' },
       { id: 'fy', name: 'fy' },
     ]);
+  });
+
+  it('throws when location ID validation fails', async () => {
+    mockInputValidator.validateDocumentId.mockReturnValueOnce(null); // First call fails
+    await expect(qrService.getFloorsForBuilding('', 'b')).rejects.toThrow(
+      'Invalid location or building ID'
+    );
+  });
+
+  it('throws when building ID validation fails', async () => {
+    mockInputValidator.validateDocumentId
+      .mockReturnValueOnce('loc') // First call succeeds
+      .mockReturnValueOnce(null); // Second call fails
+    await expect(qrService.getFloorsForBuilding('loc', '')).rejects.toThrow(
+      'Invalid location or building ID'
+    );
+  });
+
+  it('throws when user cannot access building', async () => {
+    mockAuthService.canAccessBuilding.mockResolvedValueOnce(false);
+    await expect(qrService.getFloorsForBuilding('loc', 'b')).rejects.toThrow(
+      'Unauthorized access to building floors'
+    );
+  });
+
+  it('returns cached result when available', async () => {
+    const cachedFloors = [{ id: 'cached-floor', name: 'Cached Floor' }];
+    mockCacheService.get.mockResolvedValueOnce(cachedFloors);
+
+    const result = await qrService.getFloorsForBuilding('loc', 'b');
+    expect(result).toEqual(cachedFloors);
   });
 });
 
