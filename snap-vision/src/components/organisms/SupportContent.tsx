@@ -5,6 +5,7 @@ import SettingsHeader from '../molecules/SettingsHeader';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useNavigation } from '@react-navigation/native';
+import { Linking } from 'react-native';
 
 export default function SupportContent() {
   const { theme, isDark } = useTheme();
@@ -33,11 +34,8 @@ export default function SupportContent() {
     {
       title: 'User Manual',
       icon: 'book-open-variant',
-      description: 'Access the complete user manual.',
-      onPress: () =>
-        navigation.navigate('UserManual', {
-          url: 'https://github.com/COS301-SE-2025/Snap-Vision/blob/725d18d1c648d08c4ba082f6471c74b6c93e74ca/docs/User%20Manual%20Document%20-%20V4.pdf',
-        }),
+      description: 'Download the complete user manual.',
+      onPress: () => Linking.openURL('https://raw.githubusercontent.com/COS301-SE-2025/Snap-Vision/main/docs/User%20Manual%20Document%20-%20V4.pdf'),
     },
   ];
 
