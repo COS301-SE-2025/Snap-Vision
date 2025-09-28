@@ -156,22 +156,23 @@ export const useMapAdmin = (
 
   // Confirm delete building with popup
   const confirmDeleteBuilding = useCallback(
-    (poi: AdminPOI, onConfirmCallback: () => void) => {
-      showConfirmationPopup({
-        title: 'Delete Building',
-        message: `Are you sure you want to delete "${poi.name}"?`,
-        onConfirm: async () => {
-          try {
-            await deleteBuilding(poi);
-            onConfirmCallback();
-          } catch (error) {
-            ////consoleerror('Error in delete confirmation:', error);
-          }
-        },
-      });
-    },
-    [showConfirmationPopup],
-  );
+  (poi: AdminPOI, onConfirmCallback: () => void, onCloseModal?: () => void) => {
+    showConfirmationPopup({
+      title: 'Delete Building',
+      message: `Are you sure you want to delete "${poi.name}"?`,
+      onConfirm: async () => {
+        try {
+          await deleteBuilding(poi);
+          onConfirmCallback();
+          onCloseModal?.();  
+        } catch (error) {
+          console.error('Error in delete confirmation:', error);
+        }
+      },
+    });
+  },
+  [showConfirmationPopup],
+);
 
   // Submit new building
   const submitNewBuilding = useCallback(async () => {
@@ -360,13 +361,13 @@ export const useMapAdmin = (
           return true;
 
         case 'DELETE_POI':
-          const poiToDelete = pois.find((p) => p.id === parsed.poiId);
-          if (poiToDelete) {
-            confirmDeleteBuilding(poiToDelete, () => {
-              webViewRef.current?.injectJavaScript('map.closePopup();');
-            });
-          }
-          return true;
+  const poiToDelete = pois.find((p) => p.id === parsed.poiId);
+  if (poiToDelete) {
+    confirmDeleteBuilding(poiToDelete, () => {
+      webViewRef.current?.injectJavaScript('map.closePopup();');
+    }, () => setShowAdminActions(false));
+  }
+  return true;
 
         case 'ADMIN_POI_SELECTED': {
           const adminPOI = pois.find((p) => p.id === parsed.poi.id);
