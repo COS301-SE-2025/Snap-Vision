@@ -37,13 +37,13 @@ export function useFloorplanManager({
 
         const cacheKey = `floorplan_url:${locationId}:${buildingId}:${selectedFloorId}`;
         //console.log(` [FLOORPLAN CACHE] Checking cache for ${cacheKey}`);
-        
+
         // Check cache first
         const cached = await cacheService.get<string>(cacheKey, {
           ttl: FLOORPLAN_URL_CACHE_TTL,
           userSpecific: false,
         });
-        
+
         if (cached && !cancelled) {
           //console.log(` [FLOORPLAN CACHE] Found URL in cache`);
           setFloorplanUrl(cached);
@@ -52,7 +52,7 @@ export function useFloorplanManager({
         }
 
         //console.log(` [FLOORPLAN] Fetching from Firestore for ${locationId}/${buildingId}/${selectedFloorId}...`);
-        
+
         const fpSnap = await firestore()
           .collection('locations')
           .doc(locationId)
@@ -100,7 +100,7 @@ export function useFloorplanManager({
 
         if (!cancelled) {
           setFloorplanUrl(url ?? null);
-          
+
           // Cache the result if we found a URL
           if (url) {
             await cacheService.set(cacheKey, url, {

@@ -83,7 +83,9 @@ export const useCrowdReports = (
         // Input validation
         const validBuildingId = InputValidator.validateDocumentId(selectedPOI.id);
         const validBuildingName = InputValidator.validateText(selectedPOI.name || '');
-        const validDensity = ['empty', 'light', 'moderate', 'crowded', 'overcrowded'].includes(selectedDensity)
+        const validDensity = ['empty', 'light', 'moderate', 'crowded', 'overcrowded'].includes(
+          selectedDensity,
+        )
           ? selectedDensity
           : null;
 

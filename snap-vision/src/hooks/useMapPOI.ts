@@ -57,63 +57,63 @@ export const useMapPOI = (
   const CACHE_KEY = 'map_pois';
 
   // Fetch all POIs from Firestore with caching
-const fetchPOIs = useCallback(async () => {
-  try {
-    const locationsSnapshot = await firestore().collection('locations').get();
-    const allPOIs: POI[] = [];
+  const fetchPOIs = useCallback(async () => {
+    try {
+      const locationsSnapshot = await firestore().collection('locations').get();
+      const allPOIs: POI[] = [];
 
-    for (const locationDoc of locationsSnapshot.docs) {
-      const locationId = locationDoc.id;
-      //console.log(`Fetching POIs from: locations/${locationId}/buildingPOIs`);
+      for (const locationDoc of locationsSnapshot.docs) {
+        const locationId = locationDoc.id;
+        //console.log(`Fetching POIs from: locations/${locationId}/buildingPOIs`);
 
-      const buildingPOIsSnapshot = await firestore()
-        .collection(`locations/${locationId}/buildingPOIs`)
-        .get();
+        const buildingPOIsSnapshot = await firestore()
+          .collection(`locations/${locationId}/buildingPOIs`)
+          .get();
 
-      buildingPOIsSnapshot.forEach((doc) => {
-        const data = doc.data();
-        if (data?.centroid?.latitude && data?.centroid?.longitude) {
-          allPOIs.push({
-            ...data,
-            id: doc.id,
-            location: locationId,
-          } as POI);
-        }
-      });
-    }
+        buildingPOIsSnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data?.centroid?.latitude && data?.centroid?.longitude) {
+            allPOIs.push({
+              ...data,
+              id: doc.id,
+              location: locationId,
+            } as POI);
+          }
+        });
+      }
 
-    //console.log('Total POIs fetched:', allPOIs.length);
-    setPOIs(allPOIs);
-    
-    // Immediately update WebView with fresh data if ready
-    if (isMapReady && webViewRef.current) {
-      const poisWithHiddenLabels = allPOIs.map((poi) => ({
-        ...poi,
-        showLabel: false,
-      }));
-      
-      // Clear existing POIs first
-      webViewRef.current.injectJavaScript(`
+      //console.log('Total POIs fetched:', allPOIs.length);
+      setPOIs(allPOIs);
+
+      // Immediately update WebView with fresh data if ready
+      if (isMapReady && webViewRef.current) {
+        const poisWithHiddenLabels = allPOIs.map((poi) => ({
+          ...poi,
+          showLabel: false,
+        }));
+
+        // Clear existing POIs first
+        webViewRef.current.injectJavaScript(`
         window.clearAllPOIMarkers && window.clearAllPOIMarkers();
         true;
       `);
-      
-      // Then display fresh POIs
-      setTimeout(() => {
-        if (webViewRef.current) {
-          const jsPOICode = `
+
+        // Then display fresh POIs
+        setTimeout(() => {
+          if (webViewRef.current) {
+            const jsPOICode = `
             window.poiData = ${JSON.stringify(poisWithHiddenLabels)};
             window.displayPOIs && window.displayPOIs(${JSON.stringify(poisWithHiddenLabels)});
           `;
-          webViewRef.current.injectJavaScript(jsPOICode);
-        }
-      }, 100);
+            webViewRef.current.injectJavaScript(jsPOICode);
+          }
+        }, 100);
+      }
+    } catch (e) {
+      //console.error('Failed to fetch POIs:', e);
+      setError('Failed to load buildings');
     }
-  } catch (e) {
-    //console.error('Failed to fetch POIs:', e);
-    setError('Failed to load buildings');
-  }
-}, [isMapReady, webViewRef, setError]);
+  }, [isMapReady, webViewRef, setError]);
 
   // Force refresh POIs (bypass cache)
   const refreshPOIs = useCallback(async () => {
@@ -129,9 +129,7 @@ const fetchPOIs = useCallback(async () => {
         return;
       }
 
-      const filtered = pois.filter((poi) =>
-        poi.name.toLowerCase().includes(query.toLowerCase()),
-      );
+      const filtered = pois.filter((poi) => poi.name.toLowerCase().includes(query.toLowerCase()));
       setPOISuggestions(filtered.slice(0, 10)); // Limit to 10 suggestions
     },
     [pois],

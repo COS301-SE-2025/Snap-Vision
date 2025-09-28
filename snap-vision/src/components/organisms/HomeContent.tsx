@@ -71,8 +71,8 @@ export default function HomeContent() {
     }, []),
   );
   const handleVisitPress = (visit: Visit) => {
-  navigation.navigate('Map', { selectedPOIId: visit.poiId });
-};
+    navigation.navigate('Map', { selectedPOIId: visit.poiId });
+  };
 
   return (
     <ScrollView

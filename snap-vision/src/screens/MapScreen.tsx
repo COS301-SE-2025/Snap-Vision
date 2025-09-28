@@ -616,13 +616,13 @@ const MapScreen = () => {
           const classStartTime = new Date();
           const [hours, minutes] = classData.startTime.split(':').map(Number);
           classStartTime.setHours(hours, minutes, 0, 0);
-          
+
           if (now > classStartTime) {
             //console.log('[MapScreen] Class time has passed, not showing popup');
             return;
           }
         }
-        
+
         // Find the building for this class
         let building = null;
 
@@ -759,22 +759,38 @@ const MapScreen = () => {
 
   // Handle deep link coordinates from DeepLinkContext (for location sharing)
   useEffect(() => {
-    if (deepLinkCoords && deepLinkCoords.lat && deepLinkCoords.lng && currentLocation && isMapReady) {
+    if (
+      deepLinkCoords &&
+      deepLinkCoords.lat &&
+      deepLinkCoords.lng &&
+      currentLocation &&
+      isMapReady
+    ) {
       const lat = parseFloat(deepLinkCoords.lat);
       const lng = parseFloat(deepLinkCoords.lng);
-      
+
       console.log('[MapScreen] Handling deep link coordinates:', { lat, lng });
-      
+
       setDestination("Friend's Location");
       setDestinationCoords([lng, lat]);
       fetchRoute([lng, lat]);
       setStatus('Navigating to shared location');
       setShowDirectionsSheet(true);
-      
+
       // Clear the deep link coords after handling
       setDeepLinkCoords(null);
     }
-  }, [deepLinkCoords, currentLocation, isMapReady, fetchRoute, setDestination, setDestinationCoords, setDeepLinkCoords, setStatus, setShowDirectionsSheet]);
+  }, [
+    deepLinkCoords,
+    currentLocation,
+    isMapReady,
+    fetchRoute,
+    setDestination,
+    setDestinationCoords,
+    setDeepLinkCoords,
+    setStatus,
+    setShowDirectionsSheet,
+  ]);
 
   // location availability check
   useEffect(() => {
@@ -810,19 +826,32 @@ const MapScreen = () => {
   }, [state.purchases, isMapReady]);
 
   useEffect(() => {
-  if (params?.selectedPOIId && isMapReady && currentLocation && pois.length > 0) {
-    const poi = pois.find(p => p.id === params.selectedPOIId);
-    if (poi && (!selectedFeature || selectedFeature.id !== poi.id)) {
-      selectPOI(poi);
-      setHookSelectedPOI(poi);
-      setSelectedFeature(poi);
-      setDestination(poi.name);
-      setDestinationCoords([poi.centroid.longitude, poi.centroid.latitude]);
-      fetchRoute([poi.centroid.longitude, poi.centroid.latitude]);
-      setShowDirectionsSheet(true);
+    if (params?.selectedPOIId && isMapReady && currentLocation && pois.length > 0) {
+      const poi = pois.find((p) => p.id === params.selectedPOIId);
+      if (poi && (!selectedFeature || selectedFeature.id !== poi.id)) {
+        selectPOI(poi);
+        setHookSelectedPOI(poi);
+        setSelectedFeature(poi);
+        setDestination(poi.name);
+        setDestinationCoords([poi.centroid.longitude, poi.centroid.latitude]);
+        fetchRoute([poi.centroid.longitude, poi.centroid.latitude]);
+        setShowDirectionsSheet(true);
+      }
     }
-  }
-}, [params?.selectedPOIId, isMapReady, currentLocation, pois, selectedFeature, selectPOI, setHookSelectedPOI, setSelectedFeature, setDestination, setDestinationCoords, fetchRoute, setShowDirectionsSheet]);
+  }, [
+    params?.selectedPOIId,
+    isMapReady,
+    currentLocation,
+    pois,
+    selectedFeature,
+    selectPOI,
+    setHookSelectedPOI,
+    setSelectedFeature,
+    setDestination,
+    setDestinationCoords,
+    fetchRoute,
+    setShowDirectionsSheet,
+  ]);
   return (
     <MapContent
       //theme

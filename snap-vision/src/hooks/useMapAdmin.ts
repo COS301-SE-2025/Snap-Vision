@@ -157,23 +157,23 @@ export const useMapAdmin = (
 
   // Confirm delete building with popup
   const confirmDeleteBuilding = useCallback(
-  (poi: AdminPOI, onConfirmCallback: () => void, onCloseModal?: () => void) => {
-    showConfirmationPopup({
-      title: 'Delete Building',
-      message: `Are you sure you want to delete "${poi.name}"?`,
-      onConfirm: async () => {
-        try {
-          await deleteBuilding(poi);
-          onConfirmCallback();
-          setShowAdminActions(false); 
-        } catch (error) {
-          console.error('Error in delete confirmation:', error);
-        }
-      },
-    });
-  },
-  [showConfirmationPopup],
-);
+    (poi: AdminPOI, onConfirmCallback: () => void, onCloseModal?: () => void) => {
+      showConfirmationPopup({
+        title: 'Delete Building',
+        message: `Are you sure you want to delete "${poi.name}"?`,
+        onConfirm: async () => {
+          try {
+            await deleteBuilding(poi);
+            onConfirmCallback();
+            setShowAdminActions(false);
+          } catch (error) {
+            console.error('Error in delete confirmation:', error);
+          }
+        },
+      });
+    },
+    [showConfirmationPopup],
+  );
 
   // Submit new building
   const submitNewBuilding = useCallback(async () => {
@@ -265,7 +265,7 @@ export const useMapAdmin = (
 
       // Ensure POIs are refreshed
       await refreshPOIs();
-      
+
       showSuccessPopup('Building information updated successfully.');
     } catch (error) {
       console.error('Error updating building:', error);
@@ -283,33 +283,33 @@ export const useMapAdmin = (
   ]);
 
   // Delete building
-const deleteBuilding = useCallback(
-  async (poi: AdminPOI) => {
-    try {
-      await firestore().doc(`locations/${poi.location}/buildingPOIs/${poi.id}`).delete();
-      
-      setStatus(`Building "${poi.name}" deleted`);
-      
-      // First remove the specific POI from the map
-      if (webViewRef?.current) {
-        webViewRef.current.injectJavaScript(`
+  const deleteBuilding = useCallback(
+    async (poi: AdminPOI) => {
+      try {
+        await firestore().doc(`locations/${poi.location}/buildingPOIs/${poi.id}`).delete();
+
+        setStatus(`Building "${poi.name}" deleted`);
+
+        // First remove the specific POI from the map
+        if (webViewRef?.current) {
+          webViewRef.current.injectJavaScript(`
           window.removePOIById && window.removePOIById('${poi.id}');
           true;
         `);
+        }
+
+        // Refresh POIs data and wait for it to complete
+        await refreshPOIs();
+
+        // Show success message
+        showSuccessPopup(`Building "${poi.name}" has been deleted successfully.`);
+      } catch (error) {
+        console.error('Error deleting building:', error);
+        showErrorPopup('Failed to delete building');
       }
-      
-      // Refresh POIs data and wait for it to complete
-      await refreshPOIs();
-      
-      // Show success message
-      showSuccessPopup(`Building "${poi.name}" has been deleted successfully.`);
-    } catch (error) {
-      console.error('Error deleting building:', error);
-      showErrorPopup('Failed to delete building');
-    }
-  },
-  [setStatus, refreshPOIs, showErrorPopup, showSuccessPopup, webViewRef],
-);
+    },
+    [setStatus, refreshPOIs, showErrorPopup, showSuccessPopup, webViewRef],
+  );
 
   // Inject admin handlers into WebView
   const injectAdminHandlers = useCallback(
@@ -377,13 +377,17 @@ const deleteBuilding = useCallback(
           return true;
 
         case 'DELETE_POI':
-  const poiToDelete = pois.find((p) => p.id === parsed.poiId);
-  if (poiToDelete) {
-    confirmDeleteBuilding(poiToDelete, () => {
-      webViewRef.current?.injectJavaScript('map.closePopup();');
-    }, () => setShowAdminActions(false));
-  }
-  return true;
+          const poiToDelete = pois.find((p) => p.id === parsed.poiId);
+          if (poiToDelete) {
+            confirmDeleteBuilding(
+              poiToDelete,
+              () => {
+                webViewRef.current?.injectJavaScript('map.closePopup();');
+              },
+              () => setShowAdminActions(false),
+            );
+          }
+          return true;
 
         case 'ADMIN_POI_SELECTED': {
           const adminPOI = pois.find((p) => p.id === parsed.poi.id);

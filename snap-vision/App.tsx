@@ -298,11 +298,11 @@ function AppInner() {
     const handleDeepLink = (event: { url: string }) => {
       const url = event.url;
       console.log('[App] Deep link received:', url);
-      
+
       // Handle both https:// and snapvision:// schemes
       if (url.includes('/location') || url.includes('snapvision://location')) {
         let query = '';
-        
+
         if (url.includes('snapvision://location')) {
           // Handle custom scheme: snapvision://location?lat=...&lng=...
           const [, queryPart = ''] = url.split('?');
@@ -312,7 +312,7 @@ function AppInner() {
           const [, queryPart = ''] = url.split('?');
           query = queryPart;
         }
-        
+
         const params = queryString.parse(query);
         console.log('[App] Location deep link params:', params);
         setPendingDeepLink({ lat: params.lat as string, lng: params.lng as string });
@@ -331,15 +331,15 @@ function AppInner() {
 
   useEffect(() => {
     if (!pendingDeepLink) return;
-    
+
     console.log('[App] Setting deep link coords:', pendingDeepLink);
-    
+
     // Check if user is logged in
     const currentUser = auth().currentUser;
     if (currentUser) {
       // User is logged in, set coordinates immediately
       setCoords({ lat: pendingDeepLink.lat, lng: pendingDeepLink.lng });
-      
+
       // Navigate to MapScreen
       console.log('[App] Navigating to MapScreen for deep link');
       if (navigationRef.current) {
@@ -363,7 +363,7 @@ function AppInner() {
       // User not logged in, store for after login
       AsyncStorage.setItem('pendingDeepLinkAfterLogin', JSON.stringify(pendingDeepLink));
     }
-    
+
     setPendingDeepLink(null);
   }, [pendingDeepLink, setCoords]);
 
@@ -377,13 +377,13 @@ function AppInner() {
           if (storedDeepLink) {
             const coords = JSON.parse(storedDeepLink);
             console.log('[App] Processing stored deep link after login:', coords);
-            
+
             // Remove the stored deep link
             await AsyncStorage.removeItem('pendingDeepLinkAfterLogin');
-            
+
             // Set the coordinates to trigger navigation
             setCoords({ lat: coords.lat, lng: coords.lng });
-            
+
             const navigateToMap = () => {
               console.log('[App] Navigating to MapScreen for stored deep link after login');
               if (navigationRef.current && isNavigationReady) {
@@ -429,7 +429,7 @@ function AppInner() {
                 setTimeout(checkReady, 500);
               }
             };
-            
+
             // Small delay to ensure auth flow is complete
             setTimeout(navigateToMap, 1000);
           }
@@ -484,7 +484,7 @@ function AppInner() {
   return (
     <BadgeProvider>
       <ThemeProvider>
-        <NavigationContainer 
+        <NavigationContainer
           ref={navigationRef}
           onReady={() => {
             console.log('[App] Navigation is ready');
