@@ -39,7 +39,7 @@ type MapScreenParams = {
   venue?: string;
   startTime?: string;
   poiId?: string;
-  selectedPOI?: POI;
+  selectedPOIId?: string;
 };
 
 const MapScreen = () => {
@@ -809,23 +809,19 @@ const MapScreen = () => {
   }, [state.purchases, isMapReady]);
 
   useEffect(() => {
-    if (params?.selectedPOI && isMapReady && currentLocation) {
-      if (!selectedFeature || selectedFeature.id !== params.selectedPOI.id) {
-        const selectedPOI = params.selectedPOI;
-
-        selectPOI(selectedPOI);
-        setHookSelectedPOI(selectedPOI);
-        setSelectedFeature(selectedPOI);
-        setDestination(selectedPOI.name);
-
-        if (selectedPOI.centroid) {
-          setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
-          fetchRoute([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
-          setShowDirectionsSheet(true);
-        }
-      }
+  if (params?.selectedPOIId && isMapReady && currentLocation && pois.length > 0) {
+    const poi = pois.find(p => p.id === params.selectedPOIId);
+    if (poi && (!selectedFeature || selectedFeature.id !== poi.id)) {
+      selectPOI(poi);
+      setHookSelectedPOI(poi);
+      setSelectedFeature(poi);
+      setDestination(poi.name);
+      setDestinationCoords([poi.centroid.longitude, poi.centroid.latitude]);
+      fetchRoute([poi.centroid.longitude, poi.centroid.latitude]);
+      setShowDirectionsSheet(true);
     }
-  }, [params?.selectedPOI, isMapReady, currentLocation]);
+  }
+}, [params?.selectedPOIId, isMapReady, currentLocation, pois, selectedFeature, selectPOI, setHookSelectedPOI, setSelectedFeature, setDestination, setDestinationCoords, fetchRoute, setShowDirectionsSheet]);
   return (
     <MapContent
       //theme
