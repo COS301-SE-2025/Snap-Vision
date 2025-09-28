@@ -13,11 +13,11 @@ jest.mock('@react-native-firebase/firestore', () => {
   const mockWhere = jest.fn();
   const mockCollection = jest.fn();
   const mockDoc = jest.fn();
-  
+
   const mockFirestore = jest.fn(() => ({
     collection: mockCollection,
   }));
-  
+
   return {
     __esModule: true,
     default: mockFirestore,
@@ -60,7 +60,9 @@ const mockAuth = auth as jest.MockedFunction<typeof auth>;
 const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
 const mockNotifee = notifee as jest.Mocked<typeof notifee>;
 const mockAppState = AppState as jest.Mocked<typeof AppState>;
-const mockAuthorizationService = AuthorizationService as jest.MockedClass<typeof AuthorizationService>;
+const mockAuthorizationService = AuthorizationService as jest.MockedClass<
+  typeof AuthorizationService
+>;
 const mockInputValidator = InputValidator as jest.Mocked<typeof InputValidator>;
 
 describe('TimetableBackgroundService', () => {
@@ -117,7 +119,7 @@ describe('TimetableBackgroundService', () => {
       get: mockGet,
       orderBy: mockOrderBy,
     });
-    
+
     mockOrderBy.mockReturnValue({
       where: mockWhere,
       get: mockGet,
@@ -186,7 +188,7 @@ describe('TimetableBackgroundService', () => {
 
       await service.start(); // start once
       expect(mockAppState.addEventListener).toHaveBeenCalledTimes(1);
-      
+
       await service.start(); // try again - should not call addEventListener again
       expect(mockAppState.addEventListener).toHaveBeenCalledTimes(1);
     });
@@ -235,7 +237,7 @@ describe('TimetableBackgroundService', () => {
           empty: true,
         }),
       };
-      
+
       mockWhere.mockReturnValue(mockWhereResult);
 
       const entries = await (service as any).getTimetableEntries();
@@ -391,229 +393,236 @@ describe('TimetableBackgroundService', () => {
       expect(result).toBeNull();
     });
 
-  describe('getDayName', () => {
-    it('returns correct day names', () => {
-      expect((service as any).getDayName(0)).toBe('Sunday');
-      expect((service as any).getDayName(1)).toBe('Monday');
-      expect((service as any).getDayName(2)).toBe('Tuesday');
-      expect((service as any).getDayName(3)).toBe('Wednesday');
-      expect((service as any).getDayName(4)).toBe('Thursday');
-      expect((service as any).getDayName(5)).toBe('Friday');
-      expect((service as any).getDayName(6)).toBe('Saturday');
-    });
-  });
-
-  describe('scheduleWeekNotifications', () => {
-    beforeEach(() => {
-      // Reset Date mock before each test
-      jest.restoreAllMocks();
-    });
-
-    it('schedules notifications for the week', async () => {
-      // Create a spy on getTimetableEntries and getPOIs to return our data
-      const mockEntries = [
-        {
-          id: 'entry-1',
-          course: 'Math',
-          venue: 'Room 101',
-          startTime: '10:00',
-          day: 'Monday',
-          buildingId: 'bldg-1',
-          userId: 'user-123',
-        },
-      ];
-
-      const mockPOIs = [
-        {
-          id: 'bldg-1',
-          name: 'Building A',
-          centroid: { latitude: 1.0, longitude: 2.0 },
-        },
-      ];
-
-      // Spy on the private methods
-      jest.spyOn(service as any, 'getTimetableEntries').mockResolvedValue(mockEntries);
-      jest.spyOn(service as any, 'getPOIs').mockResolvedValue(mockPOIs);
-
-      mockAsyncStorage.getItem
-        .mockResolvedValueOnce('true') // auto nav enabled
-        .mockResolvedValueOnce(null); // no previous scheduled
-
-      mockNotifee.createTriggerNotification.mockResolvedValue('notif-1');
-
-      await service.scheduleWeekNotifications();
-
-      expect(mockNotifee.createTriggerNotification).toHaveBeenCalled();
-      expect(mockAsyncStorage.setItem).toHaveBeenCalledWith('scheduledAutoNav', expect.any(String));
-    });
-
-    it('skips if auto navigation disabled', async () => {
-      mockAsyncStorage.getItem.mockResolvedValue('false');
-
-      await service.scheduleWeekNotifications();
-
-      expect(mockNotifee.createTriggerNotification).not.toHaveBeenCalled();
-    });
-
-    it('skips entries without matching buildings', async () => {
-      const mockEntries = [
-        {
-          id: 'entry-1',
-          course: 'Math',
-          venue: 'Room 101',
-          startTime: '10:00',
-          day: 'Monday',
-          buildingId: 'unknown-building',
-          userId: 'user-123',
-        },
-      ];
-
-      jest.spyOn(service as any, 'getTimetableEntries').mockResolvedValue(mockEntries);
-      jest.spyOn(service as any, 'getPOIs').mockResolvedValue([]);
-      
-      mockAsyncStorage.getItem
-        .mockResolvedValueOnce('true') // auto nav enabled
-        .mockResolvedValueOnce(null); // no previous scheduled
-
-      await service.scheduleWeekNotifications();
-
-      expect(mockNotifee.createTriggerNotification).not.toHaveBeenCalled();
-    });
-
-    it('skips past notifications', async () => {
-      // Mock a past time
-      const pastDate = new Date('2024-01-08 12:00:00'); // Monday noon
-      jest.spyOn(global, 'Date').mockImplementation(() => pastDate as any);
-      Object.defineProperty(global.Date, 'now', {
-        value: jest.fn(() => pastDate.getTime()),
-        writable: true
+    describe('getDayName', () => {
+      it('returns correct day names', () => {
+        expect((service as any).getDayName(0)).toBe('Sunday');
+        expect((service as any).getDayName(1)).toBe('Monday');
+        expect((service as any).getDayName(2)).toBe('Tuesday');
+        expect((service as any).getDayName(3)).toBe('Wednesday');
+        expect((service as any).getDayName(4)).toBe('Thursday');
+        expect((service as any).getDayName(5)).toBe('Friday');
+        expect((service as any).getDayName(6)).toBe('Saturday');
       });
-      
-      const mockEntries = [
-        {
-          id: 'entry-1',
+    });
+
+    describe('scheduleWeekNotifications', () => {
+      beforeEach(() => {
+        // Reset Date mock before each test
+        jest.restoreAllMocks();
+      });
+
+      it('schedules notifications for the week', async () => {
+        // Create a spy on getTimetableEntries and getPOIs to return our data
+        const mockEntries = [
+          {
+            id: 'entry-1',
+            course: 'Math',
+            venue: 'Room 101',
+            startTime: '10:00',
+            day: 'Monday',
+            buildingId: 'bldg-1',
+            userId: 'user-123',
+          },
+        ];
+
+        const mockPOIs = [
+          {
+            id: 'bldg-1',
+            name: 'Building A',
+            centroid: { latitude: 1.0, longitude: 2.0 },
+          },
+        ];
+
+        // Spy on the private methods
+        jest.spyOn(service as any, 'getTimetableEntries').mockResolvedValue(mockEntries);
+        jest.spyOn(service as any, 'getPOIs').mockResolvedValue(mockPOIs);
+
+        mockAsyncStorage.getItem
+          .mockResolvedValueOnce('true') // auto nav enabled
+          .mockResolvedValueOnce(null); // no previous scheduled
+
+        mockNotifee.createTriggerNotification.mockResolvedValue('notif-1');
+
+        await service.scheduleWeekNotifications();
+
+        expect(mockNotifee.createTriggerNotification).toHaveBeenCalled();
+        expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
+          'scheduledAutoNav',
+          expect.any(String),
+        );
+      });
+
+      it('skips if auto navigation disabled', async () => {
+        mockAsyncStorage.getItem.mockResolvedValue('false');
+
+        await service.scheduleWeekNotifications();
+
+        expect(mockNotifee.createTriggerNotification).not.toHaveBeenCalled();
+      });
+
+      it('skips entries without matching buildings', async () => {
+        const mockEntries = [
+          {
+            id: 'entry-1',
+            course: 'Math',
+            venue: 'Room 101',
+            startTime: '10:00',
+            day: 'Monday',
+            buildingId: 'unknown-building',
+            userId: 'user-123',
+          },
+        ];
+
+        jest.spyOn(service as any, 'getTimetableEntries').mockResolvedValue(mockEntries);
+        jest.spyOn(service as any, 'getPOIs').mockResolvedValue([]);
+
+        mockAsyncStorage.getItem
+          .mockResolvedValueOnce('true') // auto nav enabled
+          .mockResolvedValueOnce(null); // no previous scheduled
+
+        await service.scheduleWeekNotifications();
+
+        expect(mockNotifee.createTriggerNotification).not.toHaveBeenCalled();
+      });
+
+      it('skips past notifications', async () => {
+        // Mock a past time
+        const pastDate = new Date('2024-01-08 12:00:00'); // Monday noon
+        jest.spyOn(global, 'Date').mockImplementation(() => pastDate as any);
+        Object.defineProperty(global.Date, 'now', {
+          value: jest.fn(() => pastDate.getTime()),
+          writable: true,
+        });
+
+        const mockEntries = [
+          {
+            id: 'entry-1',
+            course: 'Math',
+            venue: 'Room 101',
+            startTime: '09:00', // 9 AM is in the past (current time is noon)
+            day: 'Monday',
+            buildingId: 'bldg-1',
+            userId: 'user-123',
+          },
+        ];
+
+        const mockPOIs = [
+          {
+            id: 'bldg-1',
+            name: 'Building A',
+            centroid: { latitude: 1.0, longitude: 2.0 },
+          },
+        ];
+
+        jest.spyOn(service as any, 'getTimetableEntries').mockResolvedValue(mockEntries);
+        jest.spyOn(service as any, 'getPOIs').mockResolvedValue(mockPOIs);
+
+        mockAsyncStorage.getItem
+          .mockResolvedValueOnce('true') // auto nav enabled
+          .mockResolvedValueOnce(null); // no previous scheduled
+
+        await service.scheduleWeekNotifications();
+
+        expect(mockNotifee.createTriggerNotification).not.toHaveBeenCalled();
+
+        jest.restoreAllMocks();
+      });
+
+      it('handles errors gracefully', async () => {
+        mockAsyncStorage.getItem.mockRejectedValue(new Error('Storage error'));
+
+        await expect(service.scheduleWeekNotifications()).resolves.not.toThrow();
+      });
+    });
+
+    describe('cleanupExpiredPopups', () => {
+      it('removes expired popup data', async () => {
+        const expiredPopupData = {
           course: 'Math',
-          venue: 'Room 101',
-          startTime: '09:00', // 9 AM is in the past (current time is noon)
-          day: 'Monday',
-          buildingId: 'bldg-1',
-          userId: 'user-123',
-        },
-      ];
+          expiresAt: Date.now() - 1000, // expired 1 second ago
+        };
 
-      const mockPOIs = [
-        {
-          id: 'bldg-1',
-          name: 'Building A',
-          centroid: { latitude: 1.0, longitude: 2.0 },
-        },
-      ];
+        mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify(expiredPopupData));
 
-      jest.spyOn(service as any, 'getTimetableEntries').mockResolvedValue(mockEntries);
-      jest.spyOn(service as any, 'getPOIs').mockResolvedValue(mockPOIs);
-      
-      mockAsyncStorage.getItem
-        .mockResolvedValueOnce('true') // auto nav enabled
-        .mockResolvedValueOnce(null); // no previous scheduled
+        await service.cleanupExpiredPopups();
 
-      await service.scheduleWeekNotifications();
+        expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith('pendingClassPopup');
+      });
 
-      expect(mockNotifee.createTriggerNotification).not.toHaveBeenCalled();
-      
-      jest.restoreAllMocks();
+      it('keeps non-expired popup data', async () => {
+        const validPopupData = {
+          course: 'Math',
+          expiresAt: Date.now() + 10000, // expires in 10 seconds
+        };
+
+        mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify(validPopupData));
+
+        await service.cleanupExpiredPopups();
+
+        expect(mockAsyncStorage.removeItem).not.toHaveBeenCalled();
+      });
+
+      it('handles no popup data', async () => {
+        mockAsyncStorage.getItem.mockResolvedValue(null);
+
+        await service.cleanupExpiredPopups();
+
+        expect(mockAsyncStorage.removeItem).not.toHaveBeenCalled();
+      });
+
+      it('handles storage errors gracefully', async () => {
+        mockAsyncStorage.getItem.mockRejectedValue(new Error('Storage error'));
+
+        await expect(service.cleanupExpiredPopups()).resolves.not.toThrow();
+      });
     });
 
-    it('handles errors gracefully', async () => {
-      mockAsyncStorage.getItem.mockRejectedValue(new Error('Storage error'));
+    describe('refreshNotifications', () => {
+      it('calls scheduleWeekNotifications', async () => {
+        const spy = jest.spyOn(service, 'scheduleWeekNotifications').mockResolvedValue();
 
-      await expect(service.scheduleWeekNotifications()).resolves.not.toThrow();
-    });
-  });
+        await service.refreshNotifications();
 
-  describe('cleanupExpiredPopups', () => {
-    it('removes expired popup data', async () => {
-      const expiredPopupData = {
-        course: 'Math',
-        expiresAt: Date.now() - 1000, // expired 1 second ago
-      };
-      
-      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify(expiredPopupData));
-
-      await service.cleanupExpiredPopups();
-
-      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith('pendingClassPopup');
+        expect(spy).toHaveBeenCalled();
+        spy.mockRestore();
+      });
     });
 
-    it('keeps non-expired popup data', async () => {
-      const validPopupData = {
-        course: 'Math',
-        expiresAt: Date.now() + 10000, // expires in 10 seconds
-      };
-      
-      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify(validPopupData));
+    describe('handleAppStateChange', () => {
+      it('reschedules notifications when app becomes active', async () => {
+        const scheduleWeekSpy = jest
+          .spyOn(service, 'scheduleWeekNotifications')
+          .mockResolvedValue();
+        const cleanupSpy = jest.spyOn(service, 'cleanupExpiredPopups').mockResolvedValue();
 
-      await service.cleanupExpiredPopups();
+        // Simulate app state change to active
+        const handleAppStateChange = (service as any).handleAppStateChange;
+        await handleAppStateChange('active');
 
-      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalled();
+        expect(scheduleWeekSpy).toHaveBeenCalled();
+        expect(cleanupSpy).toHaveBeenCalled();
+
+        scheduleWeekSpy.mockRestore();
+        cleanupSpy.mockRestore();
+      });
+
+      it('does not reschedule when app state is not active', async () => {
+        const scheduleWeekSpy = jest
+          .spyOn(service, 'scheduleWeekNotifications')
+          .mockResolvedValue();
+        const cleanupSpy = jest.spyOn(service, 'cleanupExpiredPopups').mockResolvedValue();
+
+        // Simulate app state change to background
+        const handleAppStateChange = (service as any).handleAppStateChange;
+        await handleAppStateChange('background');
+
+        expect(scheduleWeekSpy).not.toHaveBeenCalled();
+        expect(cleanupSpy).not.toHaveBeenCalled();
+
+        scheduleWeekSpy.mockRestore();
+        cleanupSpy.mockRestore();
+      });
     });
-
-    it('handles no popup data', async () => {
-      mockAsyncStorage.getItem.mockResolvedValue(null);
-
-      await service.cleanupExpiredPopups();
-
-      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalled();
-    });
-
-    it('handles storage errors gracefully', async () => {
-      mockAsyncStorage.getItem.mockRejectedValue(new Error('Storage error'));
-
-      await expect(service.cleanupExpiredPopups()).resolves.not.toThrow();
-    });
-  });
-
-  describe('refreshNotifications', () => {
-    it('calls scheduleWeekNotifications', async () => {
-      const spy = jest.spyOn(service, 'scheduleWeekNotifications').mockResolvedValue();
-
-      await service.refreshNotifications();
-
-      expect(spy).toHaveBeenCalled();
-      spy.mockRestore();
-    });
-  });
-
-  describe('handleAppStateChange', () => {
-    it('reschedules notifications when app becomes active', async () => {
-      const scheduleWeekSpy = jest.spyOn(service, 'scheduleWeekNotifications').mockResolvedValue();
-      const cleanupSpy = jest.spyOn(service, 'cleanupExpiredPopups').mockResolvedValue();
-
-      // Simulate app state change to active
-      const handleAppStateChange = (service as any).handleAppStateChange;
-      await handleAppStateChange('active');
-
-      expect(scheduleWeekSpy).toHaveBeenCalled();
-      expect(cleanupSpy).toHaveBeenCalled();
-      
-      scheduleWeekSpy.mockRestore();
-      cleanupSpy.mockRestore();
-    });
-
-    it('does not reschedule when app state is not active', async () => {
-      const scheduleWeekSpy = jest.spyOn(service, 'scheduleWeekNotifications').mockResolvedValue();
-      const cleanupSpy = jest.spyOn(service, 'cleanupExpiredPopups').mockResolvedValue();
-
-      // Simulate app state change to background
-      const handleAppStateChange = (service as any).handleAppStateChange;
-      await handleAppStateChange('background');
-
-      expect(scheduleWeekSpy).not.toHaveBeenCalled();
-      expect(cleanupSpy).not.toHaveBeenCalled();
-      
-      scheduleWeekSpy.mockRestore();
-      cleanupSpy.mockRestore();
-    });
-  });
     it('marks notification as opened', async () => {
       await service.markNotificationOpened('entry-key');
 
