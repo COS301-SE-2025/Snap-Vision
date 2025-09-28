@@ -57,8 +57,12 @@ export default function StandardPopup({
           ]}
           testID={testID}
         >
-          <Text style={[styles.title, { color: colors.primary }]} testID="popup-title">{title}</Text>
-          <Text style={[styles.message, { color: colors.text }]} testID="popup-message">{message}</Text>
+          <Text style={[styles.title, { color: colors.primary }]} testID="popup-title">
+            {title}
+          </Text>
+          <Text style={[styles.message, { color: colors.text }]} testID="popup-message">
+            {message}
+          </Text>
 
           <View style={[verticalButtons ? styles.buttonColumn : styles.buttonRow]}>
             {showCancel && (
@@ -87,7 +91,7 @@ export default function StandardPopup({
                   onClose();
                 }
               }}
-              testID={showCloseButton ? "popup-close-button" : undefined}
+              testID={showCloseButton ? 'popup-close-button' : undefined}
             >
               <Text style={[styles.buttonTextFilled, { color: colors.background }]}>
                 {confirmText}

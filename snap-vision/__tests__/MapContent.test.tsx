@@ -518,7 +518,9 @@ describe('MapContent', () => {
   });
 
   it('shows CrowdReportModal when showCrowdPopup is true', () => {
-    const { getByText } = render(<MapContent {...baseProps} showCrowdPopup onSelectPOI={() => {}} />);
+    const { getByText } = render(
+      <MapContent {...baseProps} showCrowdPopup onSelectPOI={() => {}} />,
+    );
     expect(getByText('CrowdReportModal')).toBeTruthy();
   });
 
@@ -721,7 +723,6 @@ describe('MapContent', () => {
     // The mock StandardPopup does not render 'Refresh Map', so skip this assertion
   });
 
-
   // Standard popup tests
   it('calls onSetShowErrorPopup(false) when error popup confirm is pressed', () => {
     const onSetShowErrorPopup = jest.fn();
@@ -899,7 +900,12 @@ describe('MapContent', () => {
   it('handles CrowdReportModal density change', () => {
     const onSetSelectedDensity = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showCrowdPopup onSetSelectedDensity={onSetSelectedDensity} onSelectPOI={() => {}} />,
+      <MapContent
+        {...baseProps}
+        showCrowdPopup
+        onSetSelectedDensity={onSetSelectedDensity}
+        onSelectPOI={() => {}}
+      />,
     );
     fireEvent.press(getByText('ChangeDensity'));
     expect(onSetSelectedDensity).toHaveBeenCalledWith('high');
@@ -908,7 +914,12 @@ describe('MapContent', () => {
   it('handles CrowdReportModal submit', () => {
     const onSubmitCrowdReport = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showCrowdPopup onSubmitCrowdReport={onSubmitCrowdReport} onSelectPOI={() => {}} />,
+      <MapContent
+        {...baseProps}
+        showCrowdPopup
+        onSubmitCrowdReport={onSubmitCrowdReport}
+        onSelectPOI={() => {}}
+      />,
     );
     fireEvent.press(getByText('SubmitCrowd'));
     expect(onSubmitCrowdReport).toHaveBeenCalled();
@@ -917,7 +928,12 @@ describe('MapContent', () => {
   it('handles CrowdReportModal cancel', () => {
     const onCloseCrowdReportModal = jest.fn();
     const { getByText } = render(
-      <MapContent {...baseProps} showCrowdPopup onCloseCrowdReportModal={onCloseCrowdReportModal} onSelectPOI={() => {}} />,
+      <MapContent
+        {...baseProps}
+        showCrowdPopup
+        onCloseCrowdReportModal={onCloseCrowdReportModal}
+        onSelectPOI={() => {}}
+      />,
     );
     fireEvent.press(getByText('CancelCrowd'));
     expect(onCloseCrowdReportModal).toHaveBeenCalled();
@@ -1276,7 +1292,13 @@ describe('MapContent', () => {
 
   it('renders with crowd reporting features', () => {
     const { getByText } = render(
-      <MapContent {...baseProps} showCrowdPopup selectedDensity="medium" showReportTooltip onSelectPOI={() => {}} />,
+      <MapContent
+        {...baseProps}
+        showCrowdPopup
+        selectedDensity="medium"
+        showReportTooltip
+        onSelectPOI={() => {}}
+      />,
     );
     expect(getByText('CrowdReportModal')).toBeTruthy();
     expect(getByText('UserPanel')).toBeTruthy();

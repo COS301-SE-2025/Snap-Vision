@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import LandingOverlay from '../../src/components/organisms/LandingOverlay';
@@ -135,7 +134,7 @@ describe('LandingOverlay Integration Tests', () => {
       const { getByText, getByTestId } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(mockUseTheme).toHaveBeenCalled();
-  expect(mockGetThemeColors).toHaveBeenCalledWith('light');
+      expect(mockGetThemeColors).toHaveBeenCalledWith('light');
 
       expect(getByText('Snap')).toBeTruthy();
       expect(getByText('Vision')).toBeTruthy();
@@ -206,7 +205,7 @@ describe('LandingOverlay Integration Tests', () => {
       const { rerender, getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(getByText('Snap')).toBeTruthy();
-  expect(mockGetThemeColors).toHaveBeenCalledWith('light');
+      expect(mockGetThemeColors).toHaveBeenCalledWith('light');
 
       mockUseTheme.mockReturnValue(darkTheme);
       mockGetThemeColors.mockReturnValue(darkColors);
@@ -214,7 +213,7 @@ describe('LandingOverlay Integration Tests', () => {
       rerender(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(getByText('Snap')).toBeTruthy();
-  expect(mockGetThemeColors).toHaveBeenCalledWith('dark');
+      expect(mockGetThemeColors).toHaveBeenCalledWith('dark');
 
       expect(getByText('Vision')).toBeTruthy();
     });

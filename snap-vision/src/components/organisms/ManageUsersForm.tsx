@@ -285,7 +285,8 @@ export default function ManageUsersForm({ navigation, currentUserId }: Props) {
                       {
                         backgroundColor:
                           selectedLocationId === item.id ? colors.primary : colors.card,
-                        borderColor: selectedLocationId === item.id ? colors.primary : colors.border,
+                        borderColor:
+                          selectedLocationId === item.id ? colors.primary : colors.border,
                         borderWidth: 1,
                       },
                     ]}

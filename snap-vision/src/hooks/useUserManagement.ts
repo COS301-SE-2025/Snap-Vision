@@ -152,7 +152,7 @@ export const useUserManagement = () => {
           updateData.adminLocations = validLocations;
           break;
 
-        case 'user': 
+        case 'user':
           updateData.adminLocations = firestore.FieldValue.delete();
           break;
 

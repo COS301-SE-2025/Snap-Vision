@@ -1,7 +1,24 @@
 //snap-vision\src\theme\index.ts
-import { lightColors, darkColors, pinkColors, oceanColors, forestColors, pinkDarkColors, oceanDarkColors, forestDarkColors } from './colours';
+import {
+  lightColors,
+  darkColors,
+  pinkColors,
+  oceanColors,
+  forestColors,
+  pinkDarkColors,
+  oceanDarkColors,
+  forestDarkColors,
+} from './colours';
 
-export type ThemeName = 'light' | 'dark' | 'pink' | 'ocean' | 'forest' | 'pinkDark' | 'oceanDark' | 'forestDark';
+export type ThemeName =
+  | 'light'
+  | 'dark'
+  | 'pink'
+  | 'ocean'
+  | 'forest'
+  | 'pinkDark'
+  | 'oceanDark'
+  | 'forestDark';
 export type BaseTheme = 'light' | 'pink' | 'ocean' | 'forest';
 
 export const themeOptions = {
@@ -36,14 +53,19 @@ export const getBaseTheme = (themeName: ThemeName): BaseTheme => {
 };
 
 export const isDarkTheme = (themeName: ThemeName): boolean => {
-  return themeName === 'dark' || themeName === 'pinkDark' || themeName === 'oceanDark' || themeName === 'forestDark';
+  return (
+    themeName === 'dark' ||
+    themeName === 'pinkDark' ||
+    themeName === 'oceanDark' ||
+    themeName === 'forestDark'
+  );
 };
 
 export const getThemeVariant = (baseTheme: BaseTheme, isDark: boolean): ThemeName => {
   if (baseTheme === 'light') {
     return isDark ? 'dark' : 'light';
   }
-  return isDark ? `${baseTheme}Dark` as ThemeName : baseTheme;
+  return isDark ? (`${baseTheme}Dark` as ThemeName) : baseTheme;
 };
 
 export const getThemeColors = (themeName: ThemeName) => {

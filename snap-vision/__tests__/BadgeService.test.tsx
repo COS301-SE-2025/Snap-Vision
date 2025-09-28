@@ -93,14 +93,14 @@ describe('badgeService unit', () => {
     store.clear();
   });
 
-    it('unlockBadgeForUser creates new user with badge and points 50', async () => {
-      await unlockBadgeForUser('userone', 'badgeone');
-      const d = await getUserBadgeData('userone');
-      expect(d && d.badges).toEqual(['badgeone']);
-      expect(d && d.points).toBe(50);
-      expect(d && d.checkIns).toBe(0);
-      expect(d && d.routesCompleted).toBe(0);
-    });
+  it('unlockBadgeForUser creates new user with badge and points 50', async () => {
+    await unlockBadgeForUser('userone', 'badgeone');
+    const d = await getUserBadgeData('userone');
+    expect(d && d.badges).toEqual(['badgeone']);
+    expect(d && d.points).toBe(50);
+    expect(d && d.checkIns).toBe(0);
+    expect(d && d.routesCompleted).toBe(0);
+  });
 
   it('unlockBadgeForUser adds badge and milestone when reaching 150', async () => {
     store.set('users/usertwo', { badges: ['x'], points: 100, checkIns: 0, routesCompleted: 0 });

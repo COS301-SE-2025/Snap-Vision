@@ -186,9 +186,9 @@ describe('createQRCodeMapping', () => {
   it('throws when unauthenticated', async () => {
     setAuthUser(null);
     mockAuthService.getCurrentUserContext.mockResolvedValue(null);
-    await expect(qrService.createQRCodeMapping('l', 'ln', 'b', 'bn', 'f', 'r', 'rn', 'QR')).rejects.toThrow(
-      'User not authenticated',
-    );
+    await expect(
+      qrService.createQRCodeMapping('l', 'ln', 'b', 'bn', 'f', 'r', 'rn', 'QR'),
+    ).rejects.toThrow('User not authenticated');
   });
 });
 
@@ -344,7 +344,9 @@ describe('delete / update', () => {
   });
 
   it('updateQRCodeMapping returns true', async () => {
-    await expect(qrService.updateQRCodeMapping('loc', 'qr1', { description: 'x' })).resolves.toBe(true);
+    await expect(qrService.updateQRCodeMapping('loc', 'qr1', { description: 'x' })).resolves.toBe(
+      true,
+    );
     expect(mockUpdate).toHaveBeenCalledWith({ description: 'x' });
   });
 

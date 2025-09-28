@@ -142,7 +142,9 @@ describe('floorplanUtils', () => {
       .mockResolvedValueOnce(JSON.stringify({ buildingId: 'Tishana Home', floorLabel: 'Floor_1' }));
 
     await clearDuplicateFloorplans();
-    expect(AsyncStorage.removeItem as jest.Mock).toHaveBeenCalledWith('floorplan_Tishana Home_Floor_1_dup');
+    expect(AsyncStorage.removeItem as jest.Mock).toHaveBeenCalledWith(
+      'floorplan_Tishana Home_Floor_1_dup',
+    );
   });
 
   it('updates existing floorplan with isPrebundled flag if missing', async () => {

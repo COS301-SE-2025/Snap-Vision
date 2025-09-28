@@ -148,7 +148,10 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
         <View style={styles.modalButtons}>
           {/* Show delete button when editing */}
           {isEditing && (
-            <TouchableOpacity onPress={onDelete} style={[styles.deleteButton, { backgroundColor: colors.danger }]}>
+            <TouchableOpacity
+              onPress={onDelete}
+              style={[styles.deleteButton, { backgroundColor: colors.danger }]}
+            >
               <Text style={{ color: colors.background }}>Delete</Text>
             </TouchableOpacity>
           )}

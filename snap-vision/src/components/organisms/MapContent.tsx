@@ -371,7 +371,7 @@ const MapContent: React.FC<MapContentProps> = ({
       {/* Main Map View */}
       <View style={{ flex: 1 }}>
         <MapWebView ref={webViewRef} onMessage={onWebViewMessage} />
-        
+
         {/* Initial loading overlay - shown when first loading and no location attempt made yet */}
         {!currentLocation && !isRefreshingLocation && (
           <View
@@ -399,26 +399,26 @@ const MapContent: React.FC<MapContentProps> = ({
                 minWidth: 200,
               }}
             >
-              <ActivityIndicator
-                size="large"
-                color={colors.primary}
-                style={{ marginBottom: 16 }}
-              />
-              <Text style={{ 
-                color: colors.text, 
-                fontWeight: '600', 
-                fontSize: 18,
-                textAlign: 'center',
-                marginBottom: 8 
-              }}>
+              <ActivityIndicator size="large" color={colors.primary} style={{ marginBottom: 16 }} />
+              <Text
+                style={{
+                  color: colors.text,
+                  fontWeight: '600',
+                  fontSize: 18,
+                  textAlign: 'center',
+                  marginBottom: 8,
+                }}
+              >
                 Loading Map
               </Text>
-              <Text style={{ 
-                color: colors.subtleText, 
-                fontSize: 14,
-                textAlign: 'center',
-                lineHeight: 20 
-              }}>
+              <Text
+                style={{
+                  color: colors.subtleText,
+                  fontSize: 14,
+                  textAlign: 'center',
+                  lineHeight: 20,
+                }}
+              >
                 Initializing location services...
               </Text>
             </View>
@@ -499,11 +499,7 @@ const MapContent: React.FC<MapContentProps> = ({
                 alignItems: 'center',
               }}
             >
-              <ActivityIndicator
-                size="small"
-                color={colors.primary}
-                style={{ marginRight: 12 }}
-              />
+              <ActivityIndicator size="small" color={colors.primary} style={{ marginRight: 12 }} />
               <Text style={{ color: colors.text, fontWeight: '600', fontSize: 16 }}>
                 Finding Location...
               </Text>

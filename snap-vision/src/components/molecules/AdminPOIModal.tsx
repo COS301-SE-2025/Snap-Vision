@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, Pressable, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
+import {
+  Modal,
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+} from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { AdminPOI } from '../../hooks/useMapAdmin';
@@ -78,7 +87,7 @@ export const AdminPOIModal: React.FC<AdminPOIModalProps> = ({
                 onPress={() => setLocationDropdownVisible(true)}
               >
                 <Text style={[styles.locationDropdownText, { color: colors.text }]}>
-                  {selectedLocation || "Select a location"}
+                  {selectedLocation || 'Select a location'}
                 </Text>
                 <Icon name="chevron-down" size={20} color={colors.text} />
               </TouchableOpacity>
@@ -147,7 +156,9 @@ export const AdminPOIModal: React.FC<AdminPOIModalProps> = ({
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             <Pressable onPress={onClose}>
-              <Text style={{ color: colors.subtleText, paddingVertical: 10, paddingHorizontal: 20 }}>
+              <Text
+                style={{ color: colors.subtleText, paddingVertical: 10, paddingHorizontal: 20 }}
+              >
                 Cancel
               </Text>
             </Pressable>

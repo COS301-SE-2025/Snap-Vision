@@ -367,10 +367,13 @@ describe('HomeContent', () => {
         </ThemeProviderWrapper>,
       );
 
-      await waitFor(() => {
-        expect(queryByText('Loading...')).toBeNull();
-        expect(getByTestId('recently-visited-carousel')).toBeTruthy();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(queryByText('Loading...')).toBeNull();
+          expect(getByTestId('recently-visited-carousel')).toBeTruthy();
+        },
+        { timeout: 3000 },
+      );
     });
 
     it('hides loading state even when error occurs', async () => {
@@ -383,9 +386,12 @@ describe('HomeContent', () => {
         </ThemeProviderWrapper>,
       );
 
-      await waitFor(() => {
-        expect(queryByText('Loading...')).toBeNull();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(queryByText('Loading...')).toBeNull();
+        },
+        { timeout: 3000 },
+      );
     });
   });
 
