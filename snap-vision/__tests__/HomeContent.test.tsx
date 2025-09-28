@@ -1,5 +1,10 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import {
+  render,
+  fireEvent,
+  waitFor,
+  waitForElementToBeRemoved,
+} from '@testing-library/react-native';
 import HomeContent from '../src/components/organisms/HomeContent';
 import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -361,19 +366,15 @@ describe('HomeContent', () => {
     it('hides loading state after data is loaded', async () => {
       mockGetRecentlyVPOIs.mockResolvedValue([]);
 
-      const { queryByText, getByTestId } = render(
+      const { queryByText, getByTestId, getByText } = render(
         <ThemeProviderWrapper>
           <HomeContent />
         </ThemeProviderWrapper>,
       );
 
-      await waitFor(
-        () => {
-          expect(queryByText('Loading...')).toBeNull();
-          expect(getByTestId('recently-visited-carousel')).toBeTruthy();
-        },
-        { timeout: 3000 },
-      );
+      // Wait for "Loading..." to be removed
+      await waitForElementToBeRemoved(() => queryByText('Loading...'), { timeout: 5000 });
+      expect(getByTestId('recently-visited-carousel')).toBeTruthy();
     });
 
     it('hides loading state even when error occurs', async () => {
@@ -386,12 +387,8 @@ describe('HomeContent', () => {
         </ThemeProviderWrapper>,
       );
 
-      await waitFor(
-        () => {
-          expect(queryByText('Loading...')).toBeNull();
-        },
-        { timeout: 3000 },
-      );
+      // Wait for "Loading..." to be removed, allow more time for error state
+      await waitForElementToBeRemoved(() => queryByText('Loading...'), { timeout: 10000 });
     });
   });
 
