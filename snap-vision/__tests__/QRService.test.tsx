@@ -15,13 +15,6 @@ const mockAuthService = {
   canModifyQRCode: jest.fn(),
 };
 
-const mockCacheService = {
-  get: jest.fn(),
-  set: jest.fn(),
-  remove: jest.fn(),
-  getInstance: jest.fn(),
-};
-
 const mockInputValidator = {
   validateDocumentId: jest.fn((id: string) => id), // return input as valid by default
   validateText: jest.fn((text: string) => text), // return input as valid by default
@@ -35,14 +28,6 @@ const mockCacheService = {
   set: jest.fn(),
   remove: jest.fn(),
   getInstance: jest.fn(),
-};
-
-const mockInputValidator = {
-  validateDocumentId: jest.fn((id: string) => id), // return input as valid by default
-  validateText: jest.fn((text: string) => text), // return input as valid by default
-} as {
-  validateDocumentId: jest.MockedFunction<(id: unknown) => string | null>;
-  validateText: jest.MockedFunction<(text: unknown, maxLength?: number) => string | null>;
 };
 
 (AuthorizationService.getInstance as jest.Mock).mockReturnValue(mockAuthService);
