@@ -50,7 +50,6 @@ module.exports = {
     '!src/utils/cacheUtils.ts',
     '!src/utils/helpers.ts',
     '!src/utils/pathUtils.ts',
-
   ],
   coverageDirectory: 'coverage',
 };
