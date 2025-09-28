@@ -318,20 +318,6 @@ function MiniMapOverlay({
               );
             })}
           </View>
-
-          <View style={styles.miniMapFooter}>
-            <Text style={styles.miniMapDistance}>
-              {Math.round(
-                calculateDistance(
-                  currentLocation.y,
-                  currentLocation.x,
-                  destinationCoords.y,
-                  destinationCoords.x,
-                ),
-              )}
-              m remaining
-            </Text>
-          </View>
         </>
       )}
     </View>
