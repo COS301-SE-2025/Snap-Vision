@@ -291,7 +291,7 @@ function AppInner() {
     checkPendingNavigation();
   }, [setCoords]);
 
-  // Handle deep link - keep existing code
+  // Handle deep link
   useEffect(() => {
     const handleDeepLink = (event: { url: string }) => {
       const url = event.url;
