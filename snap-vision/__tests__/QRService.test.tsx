@@ -587,7 +587,6 @@ describe('getRoomsForFloor', () => {
         name: 'Room 2',
         buildingId: 'b',
         buildingName: 'b',
-        buildingName: 'b',
         floorId: 'F2',
         floorLabel: 'F2',
       },
