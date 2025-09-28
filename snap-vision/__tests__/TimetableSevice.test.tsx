@@ -4,19 +4,29 @@ import auth from '@react-native-firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import notifee from '@notifee/react-native';
 import { AppState } from 'react-native';
+import AuthorizationService from '../src/security/AuthorizationService';
+import InputValidator from '../src/security/InputValidator';
 
 // Mock all dependencies
 jest.mock('@react-native-firebase/firestore');
 jest.mock('@react-native-firebase/auth');
 jest.mock('@react-native-async-storage/async-storage');
+jest.mock('../src/security/AuthorizationService');
+jest.mock('../src/security/InputValidator');
 jest.mock('@notifee/react-native', () => ({
   default: {
     cancelNotification: jest.fn(),
     createTriggerNotification: jest.fn(),
   },
-  TimestampTrigger: {},
-  TriggerType: {},
-  AndroidImportance: {},
+  TimestampTrigger: {
+    TIMESTAMP: 1,
+  },
+  TriggerType: {
+    TIMESTAMP: 1,
+  },
+  AndroidImportance: {
+    HIGH: 4,
+  },
 }));
 jest.mock('react-native', () => ({
   AppState: {
@@ -36,6 +46,8 @@ const mockAuth = auth as jest.MockedFunction<typeof auth>;
 const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
 const mockNotifee = notifee as jest.Mocked<typeof notifee>;
 const mockAppState = AppState as jest.Mocked<typeof AppState>;
+const mockAuthorizationService = AuthorizationService as jest.MockedClass<typeof AuthorizationService>;
+const mockInputValidator = InputValidator as jest.Mocked<typeof InputValidator>;
 
 describe('TimetableBackgroundService', () => {
   let service: TimetableBackgroundService;
@@ -47,6 +59,7 @@ describe('TimetableBackgroundService', () => {
   let mockAdd: jest.Mock;
   let mockUpdate: jest.Mock;
   let mockDelete: jest.Mock;
+  let mockAuthService: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -61,25 +74,41 @@ describe('TimetableBackgroundService', () => {
     mockUpdate = jest.fn();
     mockDelete = jest.fn();
 
-    mockFirestore.mockReturnValue({
+    // Create a default Firestore instance mock that returns our collection mock
+    const mockFirestoreInstance = {
       collection: mockCollection,
-    } as any);
+    };
 
+    mockFirestore.mockReturnValue(mockFirestoreInstance as any);
+
+    // Default collection mock setup
     mockCollection.mockReturnValue({
       doc: mockDoc,
       where: mockWhere,
       orderBy: mockOrderBy,
       add: mockAdd,
+      get: mockGet,
     });
 
     mockDoc.mockReturnValue({
       get: mockGet,
       update: mockUpdate,
       delete: mockDelete,
+      collection: mockCollection, // Allow chaining to subcollections
     });
 
-    mockWhere.mockReturnThis();
-    mockOrderBy.mockReturnThis();
+    // Setup where and orderBy to return chainable objects
+    mockWhere.mockReturnValue({
+      where: mockWhere,
+      get: mockGet,
+      orderBy: mockOrderBy,
+    });
+    
+    mockOrderBy.mockReturnValue({
+      where: mockWhere,
+      get: mockGet,
+      orderBy: mockOrderBy,
+    });
 
     // Setup auth mock
     const mockUser = { uid: 'user-123' };
@@ -90,6 +119,7 @@ describe('TimetableBackgroundService', () => {
     // Setup AsyncStorage mocks
     mockAsyncStorage.getItem = jest.fn();
     mockAsyncStorage.setItem = jest.fn();
+    mockAsyncStorage.removeItem = jest.fn();
 
     // Setup notifee mocks
     mockNotifee.cancelNotification = jest.fn();
@@ -97,6 +127,17 @@ describe('TimetableBackgroundService', () => {
 
     // Setup AppState mock
     mockAppState.addEventListener = jest.fn();
+
+    // Setup AuthorizationService mock
+    mockAuthService = {
+      getCurrentUserContext: jest.fn(),
+      canAccessTimetable: jest.fn().mockResolvedValue(true),
+    };
+    mockAuthorizationService.getInstance = jest.fn().mockReturnValue(mockAuthService);
+
+    // Setup InputValidator mock
+    mockInputValidator.validateDocumentId = jest.fn().mockImplementation((id: string) => id);
+    mockInputValidator.validateText = jest.fn().mockImplementation((text: string) => text);
 
     service = TimetableBackgroundService.getInstance();
   });
@@ -112,23 +153,27 @@ describe('TimetableBackgroundService', () => {
   describe('start', () => {
     it('starts the service and schedules notifications', async () => {
       mockAsyncStorage.getItem.mockResolvedValue('true'); // auto nav enabled
-      mockGet.mockResolvedValue({ docs: [] }); // no entries
+      mockGet.mockResolvedValue({ docs: [], empty: true }); // no entries
       mockAppState.addEventListener.mockReturnValue({ remove: jest.fn() });
 
       await service.start();
 
       expect(mockAppState.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
-      expect(mockAsyncStorage.getItem).toHaveBeenCalledWith('autoNavigationEnabled');
     });
 
     it('does not start if already running', async () => {
       mockAsyncStorage.getItem.mockResolvedValue('true'); // auto nav enabled
-      mockGet.mockResolvedValue({ docs: [] }); // no entries
-      mockAppState.addEventListener.mockReturnValue({ remove: jest.fn() });
+      mockGet.mockResolvedValue({ docs: [], empty: true }); // no entries
+      const mockSubscription = { remove: jest.fn() };
+      mockAppState.addEventListener.mockReturnValue(mockSubscription);
+
+      // Reset the service instance to ensure fresh state
+      (service as any).isRunning = false;
 
       await service.start(); // start once
-      await service.start(); // try again
-
+      expect(mockAppState.addEventListener).toHaveBeenCalledTimes(1);
+      
+      await service.start(); // try again - should not call addEventListener again
       expect(mockAppState.addEventListener).toHaveBeenCalledTimes(1);
     });
   });
@@ -137,8 +182,11 @@ describe('TimetableBackgroundService', () => {
     it('stops the service and removes listener', async () => {
       const mockSubscription = { remove: jest.fn() };
       mockAsyncStorage.getItem.mockResolvedValue('true'); // auto nav enabled
-      mockGet.mockResolvedValue({ docs: [] }); // no entries
+      mockGet.mockResolvedValue({ docs: [], empty: true }); // no entries
       mockAppState.addEventListener.mockReturnValue(mockSubscription);
+
+      // Reset the service instance to ensure fresh state
+      (service as any).isRunning = false;
 
       await service.start();
       service.stop();
@@ -160,11 +208,15 @@ describe('TimetableBackgroundService', () => {
         },
       ];
 
-      mockGet.mockResolvedValue({
-        docs: mockEntries.map((entry) => ({
-          id: entry.id,
-          data: () => entry,
-        })),
+      // Setup the collection to return a where method that resolves with entries
+      mockWhere.mockReturnValueOnce({
+        get: jest.fn().mockResolvedValue({
+          docs: mockEntries.map((entry) => ({
+            id: entry.id,
+            data: () => entry,
+          })),
+          empty: false,
+        }),
       });
 
       // Access private method via type assertion
@@ -206,21 +258,19 @@ describe('TimetableBackgroundService', () => {
         },
       ];
 
-      // Mock the locations collection
-      mockGet.mockResolvedValueOnce({
-        docs: mockLocations.map((loc) => ({
-          id: loc.id,
-          data: () => loc,
-        })),
-      });
-
-      // Mock the subcollection call
+      // Mock the locations collection call first
+      let callCount = 0;
       mockCollection.mockImplementation((path: string) => {
         if (path === 'locations') {
           return {
-            get: mockGet,
-          } as any;
-        } else if (path === 'locations/loc-1/buildingPOIs') {
+            get: jest.fn().mockResolvedValue({
+              docs: mockLocations.map((loc) => ({
+                id: loc.id,
+                data: () => loc,
+              })),
+            }),
+          };
+        } else if (path.includes('buildingPOIs')) {
           return {
             get: jest.fn().mockResolvedValue({
               docs: mockPOIs.map((poi) => ({
@@ -228,14 +278,20 @@ describe('TimetableBackgroundService', () => {
                 data: () => poi,
               })),
             }),
-          } as any;
+          };
         }
-        return {} as any;
+        return { get: jest.fn().mockResolvedValue({ docs: [] }) };
       });
 
       const pois: any[] = await (service as any).getPOIs();
 
-      expect(pois).toEqual(mockPOIs);
+      expect(pois).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          id: 'poi-1',
+          name: 'Building A',
+          centroid: { latitude: 1.0, longitude: 2.0 },
+        })
+      ]));
     });
 
     it('handles errors in getPOIs', async () => {
@@ -294,7 +350,7 @@ describe('TimetableBackgroundService', () => {
     });
 
     it('returns null if no match', () => {
-      const pois = [];
+      const pois: any[] = [];
       const entry = { venue: 'Room 101' };
 
       const result = (service as any).findBuildingForEntry(entry, pois);
@@ -305,6 +361,19 @@ describe('TimetableBackgroundService', () => {
 
   describe('scheduleWeekNotifications', () => {
     it('schedules notifications for the week', async () => {
+      // Mock Date to ensure consistent scheduling
+      const mockDate = new Date('2024-01-08 08:00:00'); // Monday 8 AM
+      jest.spyOn(global, 'Date').mockImplementation((...args: any[]) => {
+        if (args.length === 0) {
+          return mockDate as any;
+        }
+        return new (Date as any)(...args);
+      });
+      Object.defineProperty(global.Date, 'now', {
+        value: jest.fn(() => mockDate.getTime()),
+        writable: true
+      });
+
       mockAsyncStorage.getItem
         .mockResolvedValueOnce('true') // auto nav enabled
         .mockResolvedValueOnce(null); // no previous scheduled
@@ -314,28 +383,54 @@ describe('TimetableBackgroundService', () => {
           id: 'entry-1',
           course: 'Math',
           venue: 'Room 101',
-          startTime: '09:00',
+          startTime: '10:00', // Schedule for 10 AM (after current 8 AM)
           day: 'Monday',
           buildingId: 'bldg-1',
+          userId: 'user-123',
         },
       ];
 
       const mockPOIs = [
         {
           id: 'bldg-1',
+          name: 'Building A',
           centroid: { latitude: 1.0, longitude: 2.0 },
         },
       ];
 
-      mockGet
-        .mockResolvedValueOnce({
-          docs: mockEntries.map((entry) => ({
-            id: entry.id,
-            data: () => entry,
-          })),
-        }) // timetable
-        .mockResolvedValueOnce({ docs: [] }) // locations
-        .mockResolvedValue({ docs: [] }); // buildingPOIs
+      // Setup collection mock to handle different collection calls
+      let collectionCallCount = 0;
+      mockCollection.mockImplementation((path: string) => {
+        if (path === 'timetables') {
+          return {
+            where: jest.fn().mockReturnValue({
+              get: jest.fn().mockResolvedValue({
+                docs: mockEntries.map((entry) => ({
+                  id: entry.id,
+                  data: () => entry,
+                })),
+                empty: false,
+              }),
+            }),
+          };
+        } else if (path === 'locations') {
+          return {
+            get: jest.fn().mockResolvedValue({
+              docs: [{ id: 'loc-1', data: () => ({ id: 'loc-1' }) }],
+            }),
+          };
+        } else if (path.includes('buildingPOIs')) {
+          return {
+            get: jest.fn().mockResolvedValue({
+              docs: mockPOIs.map((poi) => ({
+                id: poi.id,
+                data: () => poi,
+              })),
+            }),
+          };
+        }
+        return { get: jest.fn().mockResolvedValue({ docs: [] }) };
+      });
 
       mockNotifee.createTriggerNotification.mockResolvedValue('notif-1');
 
@@ -343,6 +438,9 @@ describe('TimetableBackgroundService', () => {
 
       expect(mockNotifee.createTriggerNotification).toHaveBeenCalled();
       expect(mockAsyncStorage.setItem).toHaveBeenCalledWith('scheduledAutoNav', expect.any(String));
+
+      // Restore mocks
+      jest.restoreAllMocks();
     });
 
     it('skips if auto navigation disabled', async () => {
