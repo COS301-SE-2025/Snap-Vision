@@ -329,6 +329,7 @@ export default function IndoorSchematicNavScreen() {
             const data: any = doc.data();
             const floorId = data.floorId || doc.id;
             let floorUrl = data?.imageUrl || data?.url || data?.downloadURL || null;
+          }  
 
           // If only a storagePath is stored, resolve it
           const storagePath: string | undefined = data?.storagePath;
