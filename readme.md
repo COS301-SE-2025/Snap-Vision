@@ -65,7 +65,7 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 
 | Links |
 |-------|
-| [User Manual](docs\User%20Manual%20Document%20-%20V4.pdf) |
+| [User Manual](docs/User%20Manual%20Document%20-%20V4.pdf) |
 | [Coding Standards Document](docs\Coding%20Standards%20Document%20-%20V4.pdf) |
 | [Testing Policy Document](docs\Testing%20Policy%20Document%20-%20V4.pdf) |
 | [Software Requirements Specification](docs\Software%20\Requirements%20Document%20-%20V4.pdf) |
