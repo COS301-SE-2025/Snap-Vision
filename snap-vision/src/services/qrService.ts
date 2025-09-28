@@ -64,7 +64,7 @@ export const createQRCodeMapping = async (
   locationName: string,
   buildingId: string,
   buildingName: string,
-  floorId: string, // MUST be the floorplan doc ID
+  floorId: string,
   roomId: string,
   roomName: string,
   qrValue: string,
