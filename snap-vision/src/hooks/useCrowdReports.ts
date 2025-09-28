@@ -12,7 +12,7 @@ const authService = AuthorizationService.getInstance();
 export interface CrowdReport {
   buildingId: string;
   buildingName: string;
-  density: 'low' | 'moderate' | 'high' | 'very-high';
+  density: 'empty' | 'light' | 'moderate' | 'crowded' | 'overcrowded';
   timestamp: any;
   reportedBy: string;
   centroid: {
@@ -83,7 +83,7 @@ export const useCrowdReports = (
         // Input validation
         const validBuildingId = InputValidator.validateDocumentId(selectedPOI.id);
         const validBuildingName = InputValidator.validateText(selectedPOI.name || '');
-        const validDensity = ['low', 'moderate', 'high', 'very-high'].includes(selectedDensity)
+        const validDensity = ['empty', 'light', 'moderate', 'crowded', 'overcrowded'].includes(selectedDensity)
           ? selectedDensity
           : null;
 
