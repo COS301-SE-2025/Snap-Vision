@@ -160,7 +160,7 @@ export const useFloorplanUpload = () => {
       // Invalidate any building-specific caches
       await cacheService.remove(`buildings:${selectedLocation}`);
 
-      return { success: true, data: uploadData };
+      return { success: true, data: uploadedData };
     } catch (err) {
       ////consoleerror('Error uploading floorplan:', err);
       setError('Failed to upload floorplan');
