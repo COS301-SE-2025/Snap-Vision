@@ -51,12 +51,12 @@ export class CacheService {
    */
   async get<T>(key: string, options: CacheOptions = {}): Promise<T | null> {
     const cacheKey = await this.generateCacheKey(key, options.userSpecific);
-    console.log("checking cache");
+    //console.log("checking cache");
     
     // Check memory cache first
     const memoryEntry = this.memoryCache.get(cacheKey);
     if (memoryEntry && memoryEntry.expiresAt > Date.now()) {
-      console.log("from cache");
+      //console.log("from cache");
       return memoryEntry.data as T;
     }
 
@@ -90,7 +90,7 @@ export class CacheService {
     const cacheKey = await this.generateCacheKey(key, options.userSpecific);
     const now = Date.now();
 
-    console.log("cache set");
+    //console.log("cache set");
     
     const context = await this.authService.getCurrentUserContext();
     const entry: CacheEntry<T> = {

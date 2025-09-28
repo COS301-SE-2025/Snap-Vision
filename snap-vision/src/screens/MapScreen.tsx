@@ -572,7 +572,7 @@ const MapScreen = () => {
             // Check if the popup has expired (class start time has passed)
             const now = Date.now();
             if (classData.expiresAt && now > classData.expiresAt) {
-              console.log('[MapScreen] Class popup expired, removing from storage');
+              //console.log('[MapScreen] Class popup expired, removing from storage');
               await AsyncStorage.removeItem('pendingClassPopup');
               return;
             }
@@ -615,7 +615,7 @@ const MapScreen = () => {
           classStartTime.setHours(hours, minutes, 0, 0);
           
           if (now > classStartTime) {
-            console.log('[MapScreen] Class time has passed, not showing popup');
+            //console.log('[MapScreen] Class time has passed, not showing popup');
             return;
           }
         }

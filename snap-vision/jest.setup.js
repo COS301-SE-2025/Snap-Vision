@@ -33,7 +33,7 @@ jest.mock('@react-native-firebase/firestore', () => {
       doc: jest.fn(() => ({
         set: jest.fn(),
         get: jest.fn(() => ({
-          exists: jest.fn(() => true), // ✅ Changed to function
+          exists: jest.fn(() => true), //  Changed to function
           data: jest.fn(() => ({
             pois: [
               {

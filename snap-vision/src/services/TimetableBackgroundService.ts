@@ -96,7 +96,7 @@ class TimetableBackgroundService {
         const now = Date.now();
         
         if (classData.expiresAt && now > classData.expiresAt) {
-          console.log('[TimetableService] Cleaning up expired popup for:', classData.course);
+          //console.log('[TimetableService] Cleaning up expired popup for:', classData.course);
           await AsyncStorage.removeItem('pendingClassPopup');
         }
       }
