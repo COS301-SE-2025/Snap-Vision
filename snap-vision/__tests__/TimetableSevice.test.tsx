@@ -210,38 +210,6 @@ describe('TimetableBackgroundService', () => {
   });
 
   describe('getTimetableEntries', () => {
-    // it('fetches user timetable entries successfully', async () => {
-    //   const mockEntries = [
-    //     {
-    //       id: 'entry-1',
-    //       course: 'Math',
-    //       venue: 'Room 101',
-    //       startTime: '09:00',
-    //       day: 'Monday',
-    //       userId: 'user-123',
-    //     },
-    //   ];
-
-    //   // Mock the where chain to return entries
-    //   const mockWhereResult = {
-    //     get: jest.fn().mockResolvedValue({
-    //       docs: mockEntries.map((entry) => ({
-    //         id: entry.id,
-    //         data: () => entry,
-    //       })),
-    //       empty: false,
-    //     }),
-    //   };
-      
-    //   mockWhere.mockReturnValue(mockWhereResult);
-
-    //   // Access private method
-    //   const entries = await (service as any).getTimetableEntries();
-
-    //   expect(entries).toHaveLength(1);
-    //   expect(entries[0]).toEqual(expect.objectContaining(mockEntries[0]));
-    // });
-
     it('returns empty array when no user', async () => {
       mockAuth.mockReturnValue({
         currentUser: null,
@@ -415,21 +383,6 @@ describe('TimetableBackgroundService', () => {
       expect(result).toEqual(pois[0]);
     });
 
-    // it('returns null if building has no centroid', () => {
-    //   const pois = [
-    //     {
-    //       id: 'bldg-1',
-    //       name: 'Building A',
-    //       // no centroid
-    //     },
-    //   ];
-    //   const entry = { buildingId: 'bldg-1' };
-
-    //   const result = (service as any).findBuildingForEntry(entry, pois);
-
-    //   expect(result).toBeNull();
-    // });
-
     it('returns null if no pois provided', () => {
       const entry = { venue: 'Room 101' };
 
@@ -501,22 +454,6 @@ describe('TimetableBackgroundService', () => {
 
       expect(mockNotifee.createTriggerNotification).not.toHaveBeenCalled();
     });
-
-    // it('cancels previous notifications before scheduling new ones', async () => {
-    //   const previousScheduled = { 'key1': 'notif-1', 'key2': 'notif-2' };
-      
-    //   mockAsyncStorage.getItem
-    //     .mockResolvedValueOnce('true') // auto nav enabled
-    //     .mockResolvedValueOnce(JSON.stringify(previousScheduled)); // previous scheduled
-      
-    //   jest.spyOn(service as any, 'getTimetableEntries').mockResolvedValue([]);
-    //   jest.spyOn(service as any, 'getPOIs').mockResolvedValue([]);
-
-    //   await service.scheduleWeekNotifications();
-
-    //   expect(mockNotifee.cancelNotification).toHaveBeenCalledWith('notif-1');
-    //   expect(mockNotifee.cancelNotification).toHaveBeenCalledWith('notif-2');
-    // });
 
     it('skips entries without matching buildings', async () => {
       const mockEntries = [
