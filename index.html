@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Snap Vision – AR Navigation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <style>
+    :root{
+      --bg: #0f1320;
+      --bg-soft: #141a2a;
+      --card: #161d2f;
+      --text: #e8eefc;
+      --muted: #b7c0d9;
+      --accent: #5cc8ff;
+      --accent-2: #90AFA8;
+      --accent-3: #B78459;
+      --border: rgba(255,255,255,.08);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --maxw: 1100px;
+    }
+    @media (prefers-color-scheme: light) {
+      :root{
+        --bg: #f6f7fb;
+        --bg-soft: #ffffff;
+        --card: #ffffff;
+        --text: #0e1a2a;
+        --muted: #51607a;
+        --border: rgba(0,0,0,.06);
+        --shadow: 0 10px 30px rgba(0,0,0,.08);
+      }
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      color:var(--text);
+      background: radial-gradient(1200px 800px at 20% -10%, rgba(92,200,255,.15), transparent 55%),
+                  radial-gradient(1000px 600px at 120% -20%, rgba(183,132,89,.12), transparent 55%),
+                  var(--bg);
+      line-height:1.5;
+    }
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    img{max-width:100%; display:block}
+    .wrap{max-width:var(--maxw); margin:0 auto; padding:24px}
+    .section{margin:36px 0}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      box-shadow:var(--shadow);
+      border-radius:var(--radius);
+      padding:24px;
+    }
+
+    /* HERO */
+    .hero{
+      margin-top:32px;
+      text-align:center;
+      padding:32px 20px;
+      background: var(--bg-soft);
+      border:1px solid var(--border);
+      border-radius:28px;
+      box-shadow: var(--shadow);
+    }
+    .brand{
+      display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;
+    }
+    .brand h1{
+      font-weight:800; margin:0; letter-spacing:.3px;
+      color: var(--accent);
+      font-size: clamp(28px, 3.8vw, 44px);
+      line-height:1.1;
+    }
+    .tag{color:var(--muted); margin-top:6px; font-size:clamp(14px, 1.8vw, 18px)}
+    .logo{width:min(800px, 80vw); margin:8px auto 2px}
+
+    .cta-row{
+      margin-top:22px; display:flex; gap:14px; justify-content:center; flex-wrap:wrap;
+    }
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      padding:12px 16px; border:1px solid var(--border);
+      border-radius:14px; background:rgba(255,255,255,.03);
+      color:var(--text); text-decoration:none; font-weight:600;
+      transition: transform .06s ease, background .2s ease, border-color .2s ease;
+    }
+    .btn:hover{ transform: translateY(-1px); border-color: rgba(92,200,255,.45) }
+    .btn.primary{
+      background: var(--accent);
+      color:#0e1a2a; border-color: transparent;
+    }
+    .btn.primary:hover{ filter: brightness(1.03) }
+
+    /* BADGES */
+    .badges.card{padding:18px}
+    .badges-grid{
+      display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      align-items:center;
+    }
+    .badges-grid a{display:block; border-radius:12px; overflow:hidden; border:1px solid var(--border)}
+    .badges-grid img{width:100%; height:24px; object-fit:cover; background:#fff}
+
+    /* SECTIONS */
+    h2{
+      margin:0 0 8px; font-size: clamp(20px, 2.4vw, 26px);
+      letter-spacing:.2px;
+    }
+    p{margin:0 0 10px}
+    .center{text-align:center}
+    .divider{height:1px; background:var(--border); margin:24px 0}
+
+    /* TABLES */
+    .table.card{padding:0}
+    table{width:100%; border-collapse:collapse; overflow:hidden; border-radius: var(--radius)}
+    thead th{
+      text-align:left; padding:14px 16px; background:rgba(255,255,255,.03);
+      border-bottom:1px solid var(--border); font-weight:700;
+    }
+    tbody td{padding:12px 16px; border-top:1px solid var(--border)}
+    tbody tr:hover{background:rgba(255,255,255,.03)}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: .95em}
+
+    /* DETAILS (Team) */
+    details{border:1px solid var(--border); border-radius:var(--radius); padding:8px 0; background:var(--card)}
+    summary{
+      cursor:pointer; list-style:none; padding:14px 20px; font-weight:700;
+    }
+    summary::-webkit-details-marker{display:none}
+    .team{
+      display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:14px; padding: 0 14px 16px;
+    }
+    .team .member{
+      border:1px solid var(--border); border-radius:14px; padding:16px; background:rgba(255,255,255,.01);
+    }
+    .member h3{margin:0 0 6px; font-size:18px}
+    .member p{margin:0 0 10px; color:var(--muted)}
+    .pill-row{display:flex; gap:8px; flex-wrap:wrap}
+    .pill{
+      border:1px solid var(--border); padding:8px 12px; border-radius:999px; font-weight:600; text-decoration:none
+    }
+
+    /* STAKEHOLDERS */
+    .stakeholder-img{
+      width:min(420px, 85%); margin: 0 auto; border-radius: 16px; border:1px solid var(--border); overflow:hidden;
+      background: #fff;
+    }
+
+    /* FOOTER */
+    footer{opacity:.8; font-size:13px; text-align:center; margin:26px 0}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+
+    <!-- HERO -->
+    <section class="hero">
+      <img class="logo" src="docs/img/Snap%20Vision%20t2.png" alt="Snap Vision Logo" />
+      <div class="brand">
+        <h1>BLT’S – Snap Vision</h1>
+      </div>
+      <div class="tag">AR Navigation for Indoor &amp; Outdoor Spaces</div>
+
+      <div class="cta-row">
+        <a class="btn primary" href="https://github.com/COS301-SE-2025/Snap-Vision/releases/download/v2.0/app-release.apk">Download APK</a>
+        <a class="btn" href="https://github.com/orgs/COS301-SE-2025/projects/153">Project Board</a>
+        <a class="btn" href="#docs">Documentation</a>
+      </div>
+    </section>
+
+    <!-- BADGES -->
+    <!-- <section class="section badges card">
+      <div class="badges-grid">
+        <a href="https://img.shields.io/badge/requirement-complete-brightgreen">
+          <img src="https://img.shields.io/badge/requirement-complete-brightgreen" alt="Requirements">
+        </a>
+        <a href="https://img.shields.io/codecov/c/github/COS301-SE-2025/Snap-Vision">
+          <img src="https://img.shields.io/codecov/c/github/COS301-SE-2025/Snap-Vision" alt="Coverage">
+        </a>
+        <a href="https://img.shields.io/github/last-commit/COS301-SE-2025/Snap-Vision">
+          <img src="https://img.shields.io/github/last-commit/COS301-SE-2025/Snap-Vision" alt="Last Commit">
+        </a>
+        <a href="https://github.com/COS301-SE-2025/Snap-Vision/issues">
+          <img src="https://img.shields.io/github/issues/COS301-SE-2025/Snap-Vision" alt="Open Issues">
+        </a>
+        <a href="https://img.shields.io/github/issues-closed/COS301-SE-2025/Snap-Vision">
+          <img src="https://img.shields.io/github/issues-closed/COS301-SE-2025/Snap-Vision" alt="Closed Issues">
+        </a>
+        <a href="https://github.com/COS301-SE-2025/Snap-Vision/pulls">
+          <img src="https://img.shields.io/github/issues-pr/COS301-SE-2025/Snap-Vision" alt="Open PRs">
+        </a>
+        <a href="https://github.com/COS301-SE-2025/Snap-Vision/pulls?q=is%3Apr+is%3Aclosed">
+          <img src="https://img.shields.io/github/issues-pr-closed/COS301-SE-2025/Snap-Vision" alt="Closed PRs">
+        </a>
+        <a href="https://github.com/COS301-SE-2025/Snap-Vision/actions/workflows/ci.yml?branch=dev">
+          <img src="https://img.shields.io/github/actions/workflow/status/COS301-SE-2025/Snap-Vision/ci.yml?branch=dev" alt="Build Status (dev)">
+        </a>
+        <a href="https://img.shields.io/github/languages/top/COS301-SE-2025/Snap-Vision">
+          <img src="https://img.shields.io/github/languages/top/COS301-SE-2025/Snap-Vision" alt="Top Language">
+        </a>
+        <a href="https://img.shields.io/github/languages/count/COS301-SE-2025/Snap-Vision">
+          <img src="https://img.shields.io/github/languages/count/COS301-SE-2025/Snap-Vision" alt="Language Count">
+        </a>
+      </div>
+    </section> -->
+
+    <!-- ABOUT -->
+    <section class="section card center">
+      <h2>About Snap Vision</h2>
+      <p>Snap Vision is a mobile application designed to help users navigate complex indoor and outdoor environments such as university campuses and malls using AR-powered visual guidance.</p>
+      <p>The app uses a combination of GPS, QR Codes, and AR overlays to provide seamless real-time wayfinding.</p>
+      <p>This project was developed by Team <strong>BLT’S</strong> for the COS301 Capstone Module at the University of Pretoria.</p>
+      <div class="cta-row" style="margin-top:10px">
+        <a class="btn primary" href="https://github.com/COS301-SE-2025/Snap-Vision/releases/download/v1.0/app-release.apk">Download APK</a>
+      </div>
+    </section>
+
+    <!-- DEMO 4 DOCS -->
+    <section id="docs" class="section">
+      <h2 class="center">Demo 4 Documentation</h2>
+      <div class="table card">
+        <table>
+          <thead>
+            <tr><th>Links</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><a href="docs\User%20Manual%20Document%20-%20V4.pdf">User Manual</a></td></tr>
+            <tr><td><a href="docs\Coding%20Standards%20Document%20-%20V4.pdf">Coding Standards Document</a></td></tr>
+            <tr><td><a href="docs\Testing%20Policy%20Document%20-%20V4.pdf">Testing Policy Document</a></td></tr>
+            <tr><td><a href="docs\Software%20\Requirements%20Document%20-%20V4.pdf">Software Requirements Specification</a></td></tr>
+            <tr><td><a href="docs\Architectural%20Requirements%20Document%20-%20V4.pdf">Architectural Requirements Document</a></td></tr>
+            <tr><td><a href="docs\Technical%20installation%20Manual%20-%20V4.pdf">Technical Installation Manual</a></td></tr>
+            <tr><td><a href="docs\Deployment%20Model%20-%20V4.pdf">Deployment Model</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ALL DOC LINKS -->
+    <section class="section">
+      <h2 class="center">All Documentation Links</h2>
+      <div class="table card">
+        <table>
+          <thead>
+            <tr>
+              <th class="mono">Demo</th>
+              <th>Demo Slides</th>
+              <th>Documentation</th>
+              <th>Demo Video</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Demo 1</td>
+              <td><a href="https://drive.google.com/file/d/1e_UbI8kLICTHZ9I2SDv51N_GJ24E8VHI/view?usp=drive_link">Slides 1</a></td>
+              <td><a href="https://drive.google.com/file/d/1PjbgsJOFsjdsjYa_vm__W2UnuMKIfOYw/view?usp=drive_link">Docs 1</a></td>
+              <td><a href="https://drive.google.com/file/d/1rTIKg24IbTOZThUpLjTd6B59khP-cZaL/view?usp=drive_link">Video 1</a></td>
+            </tr>
+            <tr>
+              <td>Demo 2</td>
+              <td><a href="https://drive.google.com/file/d/1YEE-ge010J0ZCaks0T8ggVH2uF7fEHC8/view?usp=drive_link">Slides 2</a></td>
+              <td><a href="https://drive.google.com/drive/folders/1paIiMCL94TNsxWsi4ypYfgUZSIqwxIns?usp=drive_link">Docs 2</a></td>
+              <td><a href="https://drive.google.com/file/d/1p8kSaRAugtSsM8uUkssOBTTXFzVAtIey/view?usp=drive_link">Video 2</a></td>
+            </tr>
+            <tr>
+              <td>Demo 3</td>
+              <td><a href="https://drive.google.com/file/d/1Wye-mflSMjL4sFv2WY0GXM5HZVb3kPbo/view?usp=sharing">Slides 3</a></td>
+              <td><a href="https://drive.google.com/drive/folders/1MNeGPrEBpp5LMoOav7cew51myI6ndEDu?usp=sharing">Docs 3</a></td>
+              <td><a href="https://drive.google.com/file/d/1ckHsvY1-KsHNIP-jYk25CsysI22DOYQr/view?usp=drive_link">Video 3</a></td>
+            </tr>
+            <tr>
+              <td>Demo 4</td>
+              <td><a href="Presentation%20Demo%204.pdf">Slides 4</a></td>
+              <td><a href="docs">Docs 4</a></td>
+              <td><a href="docs\Demo%20Video%204.mp4">Video 4</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PROJECT BOARD -->
+    <section class="section card center">
+      <h2>Project Board</h2>
+      <div class="cta-row" style="margin-top:10px">
+        <a class="btn" href="https://github.com/orgs/COS301-SE-2025/projects/153">Open Project Board →</a>
+      </div>
+    </section>
+
+    <!-- MEET THE TEAM -->
+    <section class="section">
+      <details open>
+        <summary><strong>Meet the Team</strong></summary>
+        <div class="team">
+          <div class="member">
+            <h3>Bahiya Hoosen</h3>
+            <p>Code-loving, chaos-wrangling CS student who turns logic into creativity and bugs into personal vendettas.</p>
+            <div class="pill-row">
+              <a class="pill" href="https://www.linkedin.com/in/bahiya-hoosen-104291254/">LinkedIn</a>
+              <a class="pill" href="https://github.com/bahiya666">GitHub</a>
+            </div>
+          </div>
+          <div class="member">
+            <h3>Lekisha Chetty</h3>
+            <p>Curious IKS student who loves cracking complex problems and writing code that (usually) behaves itself.</p>
+            <div class="pill-row">
+              <a class="pill" href="https://github.com/lekishachetty">GitHub</a>
+            </div>
+          </div>
+          <div class="member">
+            <h3>Tishana Reddy</h3>
+            <p>Third-year CS student mixing creativity with code—often shouting “it works!” at the screen.</p>
+            <div class="pill-row">
+              <a class="pill" href="https://www.linkedin.com/in/tishana-reddy-91ba8b23a/">LinkedIn</a>
+              <a class="pill" href="https://github.com/tishreddy">GitHub</a>
+            </div>
+          </div>
+          <div class="member">
+            <h3>Thuwayba Dawood</h3>
+            <p>Believer in critical thinking, creative problem solving and attention to detail across multiple languages.</p>
+            <div class="pill-row">
+              <a class="pill" href="https://www.linkedin.com/in/thuwayba-dawood-b99b862b6/">LinkedIn</a>
+              <a class="pill" href="https://github.com/Thuwayba15">GitHub</a>
+            </div>
+          </div>
+          <div class="member">
+            <h3>Saalihah Sacoor</h3>
+            <p>CS student who loves solving problems—and occasionally wondering why the code works when it shouldn't.</p>
+            <div class="pill-row">
+              <a class="pill" href="https://www.linkedin.com/in/saalihah-sacoor-ba4bb52a6">LinkedIn</a>
+              <a class="pill" href="https://github.com/s-sacoor8">GitHub</a>
+            </div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- PLATFORMS & TECH -->
+    <section class="section card">
+      <h2>Target Platforms</h2>
+      <ul>
+        <li>Android 10+</li>
+        <li>Optional future support for iOS 14+</li>
+      </ul>
+      <div class="divider"></div>
+      <h2>Technologies Used</h2>
+      <ul>
+        <li>React Native</li>
+        <li>Express.js</li>
+        <li>Firebase (Auth, Firestore, Hosting)</li>
+        <li>Custom AR</li>
+        <li>OpenStreetMap (Leaflet) &amp; MapTiler</li>
+        <li>QR Code Positioning</li>
+      </ul>
+    </section>
+
+    <!-- GIT STRUCTURE -->
+    <section class="section card">
+      <h2>Git Structure</h2>
+      <p><strong>Branching Strategy</strong> – Gitflow model:</p>
+      <ul class="mono">
+        <li><code>main</code> – production-ready</li>
+        <li><code>dev</code> – ongoing development</li>
+        <li><code>feature/*</code> – new features</li>
+        <li><code>fix/*</code> – emergency bug fixes</li>
+        <li><code>test/*</code> – unit &amp; integration testing</li>
+      </ul>
+    </section>
+
+    <!-- STAKEHOLDERS -->
+    <section class="section card center">
+      <h2>Stakeholders</h2>
+      <div class="stakeholder-img">
+        <img src="docs/img/naked-insurance.png" alt="Stakeholders" />
+      </div>
+    </section>
+
+    <footer>© Team BLT’S · Snap Vision · COS301 Capstone · University of Pretoria</footer>
+  </main>
+</body>
+</html>
