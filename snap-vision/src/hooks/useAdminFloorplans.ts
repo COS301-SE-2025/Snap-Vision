@@ -26,7 +26,7 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
       setError(null);
       
       const cacheKey = 'admin_locations';
-      console.log('🔍 [ADMIN CACHE] Checking cache for locations...');
+      //console.log(' [ADMIN CACHE] Checking cache for locations...');
       
       // Check cache first
       const cached = await cacheService.get<Location[]>(cacheKey, {
@@ -35,13 +35,13 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
       });
       
       if (cached) {
-        console.log(`✅ [ADMIN CACHE] Found ${cached.length} locations in cache`);
+        //console.log(` [ADMIN CACHE] Found ${cached.length} locations in cache`);
         setLocations(cached);
         setIsLoading(false);
         return;
       }
       
-      console.log('🔥 [ADMIN FIRESTORE] Fetching locations from Firestore...');
+      //console.log(' [ADMIN FIRESTORE] Fetching locations from Firestore...');
       const locSnap = await firestore().collection('locations').get();
       const allLocations = locSnap.docs.map((doc) => ({
         id: doc.id,
@@ -60,7 +60,7 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
         ttl: CACHE_TTL.LOCATIONS,
         userSpecific: true,
       });
-      console.log(`💿 [ADMIN CACHE] Cached ${filteredLocations.length} locations`);
+      //console.log(` [ADMIN CACHE] Cached ${filteredLocations.length} locations`);
       
     } catch (err) {
       ////consoleerror(err);
@@ -78,7 +78,7 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
       setError(null);
       
       const cacheKey = `admin_buildings:${locationId}`;
-      console.log(`🔍 [ADMIN CACHE] Checking cache for buildings in location ${locationId}...`);
+      //console.log(` [ADMIN CACHE] Checking cache for buildings in location ${locationId}...`);
       
       // Check cache first
       const cached = await cacheService.get<Building[]>(cacheKey, {
@@ -87,13 +87,13 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
       });
       
       if (cached) {
-        console.log(`✅ [ADMIN CACHE] Found ${cached.length} buildings in cache`);
+        //console.log(` [ADMIN CACHE] Found ${cached.length} buildings in cache`);
         setBuildings(cached);
         setIsLoading(false);
         return;
       }
       
-      console.log(`🔥 [ADMIN FIRESTORE] Fetching buildings for location ${locationId} from Firestore...`);
+      //console.log(` [ADMIN FIRESTORE] Fetching buildings for location ${locationId} from Firestore...`);
       const trace = await perf().newTrace('admin_load_buildings_perf');
       await trace.start();
 
@@ -113,7 +113,7 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
         ttl: CACHE_TTL.BUILDINGS,
         userSpecific: false,
       });
-      console.log(`💿 [ADMIN CACHE] Cached ${buildingList.length} buildings`);
+      //console.log(` [ADMIN CACHE] Cached ${buildingList.length} buildings`);
       
       await trace.stop();
     } catch (err) {
@@ -132,7 +132,7 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
       setError(null);
       
       const cacheKey = `admin_floorplans:${locationId}:${buildingId}`;
-      console.log(`🔍 [ADMIN CACHE] Checking cache for floorplans in ${locationId}/${buildingId}...`);
+      //console.log(` [ADMIN CACHE] Checking cache for floorplans in ${locationId}/${buildingId}...`);
       
       // Check cache first
       const cached = await cacheService.get<FloorplanMeta[]>(cacheKey, {
@@ -141,13 +141,13 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
       });
       
       if (cached) {
-        console.log(`✅ [ADMIN CACHE] Found ${cached.length} floorplans in cache`);
+        //console.log(` [ADMIN CACHE] Found ${cached.length} floorplans in cache`);
         setFloorplans(cached);
         setIsLoading(false);
         return;
       }
       
-      console.log(`🔥 [ADMIN FIRESTORE] Fetching floorplans for ${locationId}/${buildingId} from Firestore...`);
+      //console.log(` [ADMIN FIRESTORE] Fetching floorplans for ${locationId}/${buildingId} from Firestore...`);
       const trace = await perf().newTrace('admin_load_floorplans_perf');
       await trace.start();
       
@@ -176,7 +176,7 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
         ttl: CACHE_TTL.FLOORPLANS,
         userSpecific: false,
       });
-      console.log(`💿 [ADMIN CACHE] Cached ${newFloorplans.length} floorplans`);
+      //console.log(` [ADMIN CACHE] Cached ${newFloorplans.length} floorplans`);
       
       await trace.stop();
     } catch (err) {
@@ -216,7 +216,7 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
       setFloorplans((prev) => prev.filter((fp) => fp.id !== floorplan.id));
 
       // Invalidate related caches
-      console.log('🗑️ [ADMIN CACHE] Invalidating caches after floorplan deletion...');
+      //console.log(' [ADMIN CACHE] Invalidating caches after floorplan deletion...');
       await cacheService.remove(`admin_floorplans:${locationId}:${buildingId}`);
       await cacheService.remove(`rooms:${locationId}:${buildingId}`);
       await cacheService.remove(`paths:${locationId}:${buildingId}`);

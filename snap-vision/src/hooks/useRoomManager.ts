@@ -36,7 +36,7 @@ export function useRoomManager({ locationId, buildingId }: UseRoomManagerParams)
     (async () => {
       try {
         setLoading(true);
-        //console.log(BT, 'Loading rooms for building:', buildingId);
+        ////console.log(BT, 'Loading rooms for building:', buildingId);
 
         const cacheKey = `rooms:${locationId}:${buildingId}`;
 
@@ -47,7 +47,7 @@ export function useRoomManager({ locationId, buildingId }: UseRoomManagerParams)
         });
 
         if (cachedRooms) {
-          console.log(BT, `Loaded ${cachedRooms.length} rooms from cache`);
+          //console.log(BT, `Loaded ${cachedRooms.length} rooms from cache`);
           setAllRooms(cachedRooms);
           
           // Extract floors from cached data
@@ -73,7 +73,7 @@ export function useRoomManager({ locationId, buildingId }: UseRoomManagerParams)
           .get();
 
         const roomsData = roomSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as RoomPOI[];
-        console.log(BT, `Loaded ${roomsData.length} rooms from Firestore`);
+        //console.log(BT, `Loaded ${roomsData.length} rooms from Firestore`);
         
         setAllRooms(roomsData);
 
@@ -81,7 +81,7 @@ export function useRoomManager({ locationId, buildingId }: UseRoomManagerParams)
         const uniqueFloors = Array.from(
           new Set(roomsData.map((room) => room.floorId).filter(Boolean))
         ).sort();
-        console.log(BT, 'Available floors:', uniqueFloors);
+        //console.log(BT, 'Available floors:', uniqueFloors);
         
         setFloors(uniqueFloors);
 
@@ -134,7 +134,7 @@ export function useRoomManager({ locationId, buildingId }: UseRoomManagerParams)
         userSpecific: false,
       });
 
-      console.log(BT, `Refreshed ${roomsData.length} rooms`);
+      //console.log(BT, `Refreshed ${roomsData.length} rooms`);
     } catch (error) {
       console.error(BT, 'Error refreshing rooms:', error);
     } finally {

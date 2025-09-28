@@ -310,10 +310,10 @@ export default function IndoorSchematicNavScreen() {
         if (cachedFloorplans && cachedFloorplans[selectedFloorId]) {
           // Found in cache
           url = cachedFloorplans[selectedFloorId];
-          console.log(`✅ [FLOORPLAN CACHE] Found URL for floor ${selectedFloorId} in cache`);
+          //console.log(` [FLOORPLAN CACHE] Found URL for floor ${selectedFloorId} in cache`);
         } else {
           // Not in cache, fetch from Firestore and cache all floorplans
-          console.log(`🔥 [FLOORPLAN] Fetching all floorplans for ${locationId}/${buildingId} from Firestore...`);
+          //console.log(` [FLOORPLAN] Fetching all floorplans for ${locationId}/${buildingId} from Firestore...`);
           
           const fpSnap = await firestore()
             .collection('locations')

@@ -23,7 +23,7 @@ export const useFloorplanUpload = () => {
 
   const handlePickDocument = async () => {
     try {
-      console.log('📁 [UPLOAD] Starting image picker...');
+      //console.log(' [UPLOAD] Starting image picker...');
       
       return new Promise<{ success: boolean; uri?: string; name?: string; error?: string }>((resolve) => {
         const options = {
@@ -37,13 +37,13 @@ export const useFloorplanUpload = () => {
 
         launchImageLibrary(options, (response: ImagePickerResponse) => {
           if (response.didCancel) {
-            console.log('📁 [UPLOAD] User cancelled image picker');
+            //console.log(' [UPLOAD] User cancelled image picker');
             resolve({ success: false, error: 'Selection cancelled' });
             return;
           }
 
           if (response.errorMessage) {
-            console.error('❌ [UPLOAD] ImagePicker error:', response.errorMessage);
+            console.error(' [UPLOAD] ImagePicker error:', response.errorMessage);
             const errorMessage = 'Failed to select image';
             setError(errorMessage);
             resolve({ success: false, error: errorMessage });
@@ -65,7 +65,7 @@ export const useFloorplanUpload = () => {
             setFileUri(uri);
             setFileName(name);
             setError('');
-            console.log(`✅ [UPLOAD] Selected image: ${name}`);
+            //console.log(` [UPLOAD] Selected image: ${name}`);
             
             resolve({ success: true, uri, name });
           } else {
@@ -78,7 +78,7 @@ export const useFloorplanUpload = () => {
     } catch (err: any) {
       const errorMessage = 'Failed to open image picker';
       setError(errorMessage);
-      console.error('❌ [UPLOAD] Image picker error:', err);
+      console.error(' [UPLOAD] Image picker error:', err);
       return { success: false, error: errorMessage };
     }
   };
@@ -90,7 +90,7 @@ export const useFloorplanUpload = () => {
     userRole?: string,
     adminLocations?: string[],
   ) => {
-    console.log(`📤 [UPLOAD] Starting upload for ${selectedBuilding?.name} - Floor ${floorLabel}`);
+    //console.log(` [UPLOAD] Starting upload for ${selectedBuilding?.name} - Floor ${floorLabel}`);
     setError('');
 
     // Validation checks
@@ -121,7 +121,7 @@ export const useFloorplanUpload = () => {
 
     try {
       setIsLoading(true);
-      console.log('☁️ [UPLOAD] Uploading to Firebase Storage...');
+      //console.log(' [UPLOAD] Uploading to Firebase Storage...');
 
       const buildingId = selectedBuilding.id;
       const fileName = `${buildingId}_floor_${floorLabel}_${Date.now()}.jpg`;
@@ -130,10 +130,10 @@ export const useFloorplanUpload = () => {
       // Upload the file
       await ref.putFile(fileUri);
       const downloadURL = await ref.getDownloadURL();
-      console.log('✅ [UPLOAD] File uploaded to storage');
+      //console.log(' [UPLOAD] File uploaded to storage');
 
       // Save metadata to Firestore
-      console.log('💾 [UPLOAD] Saving metadata to Firestore...');
+      //console.log(' [UPLOAD] Saving metadata to Firestore...');
       await saveFloorplanMetadata(selectedLocation, buildingId, floorLabel, downloadURL);
 
       const uploadResult: UploadedData = {
@@ -144,10 +144,10 @@ export const useFloorplanUpload = () => {
       };
 
       setUploadedData(uploadResult);
-      console.log('✅ [UPLOAD] Upload completed successfully');
+      //console.log(' [UPLOAD] Upload completed successfully');
 
       // Invalidate related caches after successful upload
-      console.log('🗑️ [UPLOAD] Invalidating related caches...');
+      //console.log(' [UPLOAD] Invalidating related caches...');
       await cacheService.remove(`admin_floorplans:${selectedLocation}:${buildingId}`);
       await cacheService.remove(`admin_buildings:${selectedLocation}`);
       await cacheService.remove('admin_locations', true);
