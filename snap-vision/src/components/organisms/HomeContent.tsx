@@ -27,7 +27,7 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 type TabParamList = {
   Home: undefined;
-  Map: { selectedPOI?: POI };
+  Map: { selectedPOIId?: string };
   Timetable: undefined;
   Settings: undefined;
 };
@@ -71,14 +71,8 @@ export default function HomeContent() {
     }, []),
   );
   const handleVisitPress = (visit: Visit) => {
-    const poiToPass = {
-      id: visit.poiId,
-      name: visit.name,
-      location: visit.location,
-    } as POI;
-
-    navigation.navigate('Map', { selectedPOI: poiToPass });
-  };
+  navigation.navigate('Map', { selectedPOIId: visit.poiId });
+};
 
   return (
     <ScrollView
