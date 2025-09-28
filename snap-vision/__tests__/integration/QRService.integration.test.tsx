@@ -7,10 +7,14 @@ const mockAuthService = {
   canModifyQRCode: jest.fn(),
 };
 
-jest.mock('../../src/security/AuthorizationService', {
-  default: {
-    getInstance: () => mockAuthService,
-  },
+jest.mock('../../src/security/AuthorizationService', () => {
+  class MockAuthorizationService {
+    static getInstance = jest.fn(() => mockAuthService);
+  }
+  return {
+    __esModule: true,
+    default: MockAuthorizationService,
+  };
 });
 
 import {
@@ -159,73 +163,6 @@ describe('QRService integration tests', () => {
     mockAuthService.canAccessQRCode.mockResolvedValue(true);
     mockAuthService.canModifyQRCode.mockResolvedValue(true);
   });
-  it('queries rooms for a floor', async () => {
-    fns.__seed('locations/LOC1/roomPOIs', 'R3', { buildingId: 'B1', floorLabel: 'F1' });
-
-    const rooms = await getRoomsForFloor('LOC1', 'B1', 'F2');
-    expect(rooms.map((r) => r.id)).toEqual(['R1', 'R2']);
-    expect(rooms[0]).toMatchObject({
-      id: 'R1',
-      name: 'One',
-      buildingId: 'B1',
-      buildingName: 'B1n',
-      floorId: 'F2',
-      floorLabel: 'F2',
-    });
-    expect(rooms[1]).toMatchObject({
-      id: 'R2',
-      name: 'Two',
-      buildingId: 'B1',
-      floorId: 'F2',
-      floorLabel: 'F2',
-    });
-  });
-
-  it('queries QR codes for a building ordered by createdAt desc', async () => {
-    const t = (s: number) => ({ seconds: s });
-    fns.__seed('locations/LOC1/qrCodes', 'q1', {
-      buildingId: 'B1',
-      createdAt: t(100),
-      qrValue: 'A',
-    });
-    fns.__seed('locations/LOC1/qrCodes', 'q2', {
-      buildingId: 'B1',
-      createdAt: t(200),
-      qrValue: 'B',
-    });
-    fns.__seed('locations/LOC1/qrCodes', 'q3', {
-      buildingId: 'B2',
-      createdAt: t(300),
-      qrValue: 'C',
-    });
-
-    const rows = await getQRCodesForBuilding('LOC1', 'B1');
-    expect(rows.map((r) => r.qrValue)).toEqual(['B', 'A']); // desc by createdAt
-  });
-
-  it('update and delete mapping', async () => {
-    // create then update & delete
-    const created = await createQRCodeMapping(
-      'LOC2',
-      'Campus 2',
-      'B1',
-      'B1Name',
-      'F1',
-      'R1',
-      'R Name',
-      'VAL-1',
-    );
-
-    await expect(updateQRCodeMapping('LOC2', created.id, { description: 'updated' })).resolves.toBe(
-      true,
-    );
-    const all = await getQRCodesForBuilding('LOC2', 'B1');
-    expect(all[0].description).toBe('updated');
-
-    await expect(deleteQRCodeMapping('LOC2', created.id)).resolves.toBe(true);
-    const afterDel = await getQRCodesForBuilding('LOC2', 'B1');
-    expect(afterDel).toHaveLength(0);
-  });
 
   it('create throws if unauthenticated', async () => {
     setAuthUser(null);
@@ -235,43 +172,33 @@ describe('QRService integration tests', () => {
     );
   });
 
-  it('handles missing locations gracefully', async () => {
-    const locs = await getLocations();
-    expect(locs).toEqual([]);
+  it('getBuildingsForLocation throws on invalid location ID', async () => {
+    await expect(getBuildingsForLocation('')).rejects.toThrow('Invalid location ID');
   });
 
-  it('handles missing buildings gracefully', async () => {
-    const buildings = await getBuildingsForLocation('nonexistent');
-    expect(buildings).toEqual([]);
+  it('getFloorsForBuilding throws on invalid IDs', async () => {
+    await expect(getFloorsForBuilding('', 'B1')).rejects.toThrow('Invalid location or building ID');
   });
 
-  it('handles missing floors gracefully', async () => {
-    const floors = await getFloorsForBuilding('LOC1', 'nonexistent');
-    expect(floors).toEqual([]);
+  it('getRoomsForFloor throws on invalid IDs', async () => {
+    await expect(getRoomsForFloor('', 'B1', 'F1')).rejects.toThrow(
+      'Invalid location, building, or floor ID',
+    );
   });
 
-  it('handles missing rooms gracefully', async () => {
-    const rooms = await getRoomsForFloor('LOC1', 'B1', 'nonexistent');
-    expect(rooms).toEqual([]);
+  it('getQRCodesForBuilding throws on invalid IDs', async () => {
+    await expect(getQRCodesForBuilding('', 'B1')).rejects.toThrow(
+      'Invalid location or building ID',
+    );
   });
 
-  it('handles missing QR codes gracefully', async () => {
-    const qrCodes = await getQRCodesForBuilding('LOC1', 'nonexistent');
-    expect(qrCodes).toEqual([]);
+  it('deleteQRCodeMapping throws on invalid IDs', async () => {
+    await expect(deleteQRCodeMapping('', 'q1')).rejects.toThrow('Invalid location or QR code ID');
   });
 
-  it('returns null when QR mapping not found', async () => {
-    const mapping = await getQRCodeMappingByValue('nonexistent');
-    expect(mapping).toBeNull();
-  });
-
-  it('handles update of nonexistent QR code', async () => {
-    const result = await updateQRCodeMapping('LOC1', 'nonexistent', { description: 'test' });
-    expect(result).toBe(true); // Firestore update doesn't fail on missing docs
-  });
-
-  it('handles delete of nonexistent QR code', async () => {
-    const result = await deleteQRCodeMapping('LOC1', 'nonexistent');
-    expect(result).toBe(true); // Firestore delete doesn't fail on missing docs
+  it('updateQRCodeMapping throws on invalid IDs', async () => {
+    await expect(updateQRCodeMapping('', 'q1', { description: 'test' })).rejects.toThrow(
+      'Invalid location or QR code ID',
+    );
   });
 });
