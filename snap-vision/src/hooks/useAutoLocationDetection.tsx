@@ -23,11 +23,8 @@ export function useAutoLocationDetection() {
         setIsDetecting(true);
         setDetectionError(null);
 
-        console.log('Starting WiFi scan for location detection...');
-
         // Scan current WiFi
         const currentSignals = await scanForWiFiNetworks();
-        console.log('Current WiFi signals:', currentSignals.length);
 
         if (currentSignals.length === 0) {
           throw new Error('No WiFi networks detected. Please enable WiFi.');
@@ -35,10 +32,6 @@ export function useAutoLocationDetection() {
 
         // Get all locations
         const locationsSnapshot = await firestore().collection('locations').get();
-        console.log(
-          'Found locations:',
-          locationsSnapshot.docs.map((doc) => doc.id),
-        );
 
         let bestMatch: DetectedLocation | null = null;
         let highestConfidence = 0;
@@ -46,7 +39,6 @@ export function useAutoLocationDetection() {
         // Check each location
         for (const locationDoc of locationsSnapshot.docs) {
           const locationId = locationDoc.id;
-          console.log(`Checking location: ${locationId}`);
 
           try {
             // Get all WiFi fingerprints for this location
@@ -54,19 +46,15 @@ export function useAutoLocationDetection() {
               .collection(`locations/${locationId}/wifiFingerprints`)
               .get();
 
-            console.log(`Found ${fingerprintsSnapshot.docs.length} fingerprints in ${locationId}`);
-
             // Compare with each fingerprint
             for (const fpDoc of fingerprintsSnapshot.docs) {
               const fpData = fpDoc.data();
 
               if (!fpData.wifiSignals || !Array.isArray(fpData.wifiSignals)) {
-                console.warn(`Invalid fingerprint data in ${fpDoc.id}`);
                 continue;
               }
 
               const confidence = calculateSignalSimilarity(currentSignals, fpData.wifiSignals);
-              console.log(`Fingerprint ${fpDoc.id} confidence: ${(confidence * 100).toFixed(1)}%`);
 
               if (confidence > highestConfidence && confidence > 0.3) {
                 // 30% threshold
@@ -78,30 +66,22 @@ export function useAutoLocationDetection() {
                   buildingName: fpData.buildingName || fpData.buildingId || 'Unknown Building',
                   confidence,
                 };
-                console.log(
-                  `New best match: ${bestMatch.buildingName} (${(confidence * 100).toFixed(1)}%)`,
-                );
               }
             }
           } catch (locationError) {
-            console.error(`Error checking location ${locationId}:`, locationError);
+            ////console.error(`Error checking location ${locationId}:`, locationError);
           }
         }
 
         if (isMounted) {
           if (bestMatch) {
             setDetectedLocation(bestMatch);
-            console.log(
-              `✅ Location detected: ${bestMatch.buildingName} (${(bestMatch.confidence * 100).toFixed(1)}% confidence)`,
-            );
           } else {
             setDetectionError('No matching location found. You may be in an unmapped area.');
-            console.log('❌ No location match found');
           }
           setIsDetecting(false);
         }
       } catch (error: any) {
-        console.error('Location detection error:', error);
         if (isMounted) {
           setDetectionError(error.message || 'Failed to detect location');
           setIsDetecting(false);

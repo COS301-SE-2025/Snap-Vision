@@ -10,8 +10,8 @@ interface Props {
 }
 
 export default function TopBar({ title, onBackPress }: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

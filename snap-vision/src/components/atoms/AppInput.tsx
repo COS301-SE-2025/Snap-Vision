@@ -19,8 +19,8 @@ type AppInputProps = TextInputProps & {
 };
 
 export default function AppInput({ style, rightIcon, onRightIconPress, ...props }: AppInputProps) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <View style={[styles.container, { borderColor: colors.primary }, style]}>

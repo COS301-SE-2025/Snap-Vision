@@ -1,4 +1,3 @@
-// src/components/organisms/BadgeUnlockNotifier.tsx
 import React, { useEffect, useState } from 'react';
 import BadgePopup from '../molecules/BadgePopup';
 import { useBadges } from '../../context/BadgeContext';

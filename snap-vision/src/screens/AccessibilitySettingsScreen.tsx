@@ -13,12 +13,12 @@ type AccessibilitySettingsScreenProps = {
 export default function AccessibilitySettingsScreen({
   navigation,
 }: AccessibilitySettingsScreenProps) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <AccessibilitySettingsContent isDark={isDark} />
+      <AccessibilitySettingsContent />
     </SafeAreaView>
   );
 }

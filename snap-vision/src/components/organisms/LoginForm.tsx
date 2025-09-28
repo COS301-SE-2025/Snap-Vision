@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import AppInput from '../atoms/AppInput';
 import AppButton from '../atoms/AppButton';
 import RememberMe from '../molecules/RememberMe';
@@ -11,11 +11,13 @@ import { useDeepLink } from '../../DeepLinkContext';
 import { useBadges } from '../../context/BadgeContext';
 import { useLanding } from '../../context/LandingContext';
 import Toast from 'react-native-toast-message';
+import { makeToastPayload } from '../../toastConfig';
+import perf from '@react-native-firebase/perf';
 
 export default function LoginForm() {
   const navigation = useNavigation<any>();
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme } = useTheme();
+  const colors = getThemeColors(theme);
   const { coords, setCoords } = useDeepLink();
   const { unlock, state, uid, loading } = useBadges();
   const { setHasSeenLanding } = useLanding();
@@ -41,6 +43,8 @@ export default function LoginForm() {
       setErrors({ email: 'Please enter a valid email address.', password: '' });
       return;
     }
+    const trace = await perf().newTrace('login_latency');
+    await trace.start();
 
     try {
       await auth().signInWithEmailAndPassword(email, password);
@@ -54,17 +58,7 @@ export default function LoginForm() {
         await unlock('first-login');
       }
 
-      Toast.show({
-        type: 'default',
-        text1: 'Login Successful!',
-        text2: 'Welcome back!',
-        props: {
-          backgroundColor: colors.card,
-          borderColor: colors.primary,
-          textColor: colors.primary,
-          iconColor: colors.secondary,
-        },
-      });
+      Toast.show(makeToastPayload('Login Successful!', 'Welcome back!', {}, theme));
 
       setTimeout(() => {
         if (coords?.lat && coords?.lng) {
@@ -88,6 +82,8 @@ export default function LoginForm() {
 
       const msg = errorMessages[error?.code] || 'Login failed.';
       setErrors({ email: '', password: msg });
+    } finally {
+      await trace.stop();
     }
   };
 
@@ -103,14 +99,25 @@ export default function LoginForm() {
         style={[
           styles.header,
           {
-            fontFamily: 'PermanentMarkerRegular',
+            fontFamily: 'ChicleRegular',
             color: colors.primary,
-            transform: [{ rotate: '-3deg' }],
+            // transform: [{ rotate: '-3deg' }],
+            textShadowColor: colors.secondary,
+            textShadowOffset: { width: 1, height: 1 },
+            textShadowRadius: 1,
           },
         ]}
       >
         LOGIN
       </Text>
+
+      <View style={styles.mascotWrapper}>
+        <Image
+          source={require('../../assets/images/mascot_half_wave.png')}
+          style={styles.mascotImage}
+          resizeMode="contain"
+        />
+      </View>
 
       <Text style={[styles.label, { color: colors.secondary }]}>Email</Text>
       <AppInput
@@ -155,22 +162,16 @@ export default function LoginForm() {
       >
         Don’t have an account? <Text style={styles.signUpBold}>SIGN UP</Text>
       </Text>
-
-      <View style={styles.dividerRow}>
-        <View style={[styles.line, { backgroundColor: colors.secondary }]} />
-        <Text style={[styles.orText, { color: colors.secondary }]}>Login With</Text>
-        <View style={[styles.line, { backgroundColor: colors.secondary }]} />
-      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   header: {
-    fontSize: 72,
-    fontFamily: 'PermanentMarkerRegular',
+    fontSize: 82,
+    fontFamily: 'ChicleRegular',
     textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: 25,
   },
   label: {
     fontWeight: '600',
@@ -184,6 +185,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 15,
+    zIndex: 0,
   },
   error: {
     color: 'red',
@@ -216,5 +218,17 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     fontSize: 13,
     fontWeight: '600',
+  },
+  mascotWrapper: {
+    position: 'relative',
+    alignItems: 'flex-end',
+    marginTop: -20,
+    marginBottom: -53,
+    zIndex: 1,
+    paddingRight: 10,
+  },
+  mascotImage: {
+    width: 100,
+    height: 100,
   },
 });

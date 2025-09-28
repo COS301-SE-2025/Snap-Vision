@@ -1,5 +1,3 @@
-// src/components/atoms/IndoorPositionDot.tsx
-
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 

@@ -77,6 +77,7 @@ export const useMapAdmin = (
   showErrorPopup: (message: string) => void,
   showSuccessPopup: (message: string) => void,
   showConfirmationPopup: (data: { title: string; message: string; onConfirm: () => void }) => void,
+  webViewRef?: React.RefObject<any>,
 ): UseMapAdminReturn => {
   // Admin State
   const [isAdmin, setIsAdmin] = useState(false);
@@ -117,7 +118,7 @@ export const useMapAdmin = (
           setAdminLocations(editorLocations);
         }
       } catch (error) {
-        console.error('Error fetching user role:', error);
+        ////consoleerror('Error fetching user role:', error);
         setError('Failed to check admin permissions');
       }
     };
@@ -133,7 +134,7 @@ export const useMapAdmin = (
         const snapshot = await firestore().collection('locations').get();
         setAvailableLocations(snapshot.docs.map((doc) => doc.id));
       } catch (error) {
-        console.error('Error fetching locations:', error);
+        ////consoleerror('Error fetching locations:', error);
         setError('Failed to fetch locations');
       }
     };
@@ -156,7 +157,7 @@ export const useMapAdmin = (
 
   // Confirm delete building with popup
   const confirmDeleteBuilding = useCallback(
-    (poi: AdminPOI, onConfirmCallback: () => void) => {
+    (poi: AdminPOI, onConfirmCallback: () => void, onCloseModal?: () => void) => {
       showConfirmationPopup({
         title: 'Delete Building',
         message: `Are you sure you want to delete "${poi.name}"?`,
@@ -164,6 +165,7 @@ export const useMapAdmin = (
           try {
             await deleteBuilding(poi);
             onConfirmCallback();
+            setShowAdminActions(false);
           } catch (error) {
             console.error('Error in delete confirmation:', error);
           }
@@ -215,7 +217,7 @@ export const useMapAdmin = (
 
       await refreshPOIs();
     } catch (error) {
-      console.error('Error adding building:', error);
+      ////consoleerror('Error adding building:', error);
       setError('Failed to add building');
     }
   }, [
@@ -261,7 +263,9 @@ export const useMapAdmin = (
       setNewFloors('');
       setStatus('Building updated!');
 
+      // Ensure POIs are refreshed
       await refreshPOIs();
+
       showSuccessPopup('Building information updated successfully.');
     } catch (error) {
       console.error('Error updating building:', error);
@@ -285,13 +289,26 @@ export const useMapAdmin = (
         await firestore().doc(`locations/${poi.location}/buildingPOIs/${poi.id}`).delete();
 
         setStatus(`Building "${poi.name}" deleted`);
+
+        // First remove the specific POI from the map
+        if (webViewRef?.current) {
+          webViewRef.current.injectJavaScript(`
+          window.removePOIById && window.removePOIById('${poi.id}');
+          true;
+        `);
+        }
+
+        // Refresh POIs data and wait for it to complete
         await refreshPOIs();
+
+        // Show success message
+        showSuccessPopup(`Building "${poi.name}" has been deleted successfully.`);
       } catch (error) {
         console.error('Error deleting building:', error);
         showErrorPopup('Failed to delete building');
       }
     },
-    [setStatus, refreshPOIs, showErrorPopup],
+    [setStatus, refreshPOIs, showErrorPopup, showSuccessPopup, webViewRef],
   );
 
   // Inject admin handlers into WebView
@@ -362,9 +379,13 @@ export const useMapAdmin = (
         case 'DELETE_POI':
           const poiToDelete = pois.find((p) => p.id === parsed.poiId);
           if (poiToDelete) {
-            confirmDeleteBuilding(poiToDelete, () => {
-              webViewRef.current?.injectJavaScript('map.closePopup();');
-            });
+            confirmDeleteBuilding(
+              poiToDelete,
+              () => {
+                webViewRef.current?.injectJavaScript('map.closePopup();');
+              },
+              () => setShowAdminActions(false),
+            );
           }
           return true;
 
@@ -372,9 +393,9 @@ export const useMapAdmin = (
           const adminPOI = pois.find((p) => p.id === parsed.poi.id);
           if (!adminPOI) return true;
 
-          console.log('userRole:', userRole);
-          console.log('adminLocations:', adminLocations);
-          console.log('adminPOI.location:', adminPOI.location);
+          ////consolelog('userRole:', userRole);
+          ////consolelog('adminLocations:', adminLocations);
+          ////consolelog('adminPOI.location:', adminPOI.location);
 
           const canEdit = validateAdminPermission(adminPOI);
 

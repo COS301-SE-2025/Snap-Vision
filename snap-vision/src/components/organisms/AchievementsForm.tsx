@@ -1,31 +1,24 @@
-// src/components/forms/AchievementsForm.tsx
 import React, { useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import WelcomeHeader from '../molecules/WelcomeHeader';
-import ChallengeItem from '../molecules/ChallengeItem';
-import ProgressCard from '../atoms/ProgressCard';
-import RewardCard from '../molecules/RewardCard';
 import ActionButton from '../molecules/ActionButton';
 import { useBadges } from '../../context/BadgeContext';
 import { BADGES, BadgeId } from '../../types/badges';
-import { Challenge } from '../../types/achievements';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../../navigation/types'; // Adjust path if needed
-import { createStackNavigator } from '@react-navigation/stack';
+import { RootStackParamList } from '../../navigation/types';
 import ProgressSection from '../molecules/ProgressSection';
 import BadgesSection from '../molecules/BadgeSection';
 
 export default function AchievementsForm() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme } = useTheme();
+  const colors = getThemeColors(theme);
   type NavigationProp = StackNavigationProp<RootStackParamList, 'Dashboard'>;
 
-  const { state, clearJustUnlocked, getChallenges } = useBadges();
+  const { state, clearJustUnlocked } = useBadges();
   const unlockedArray = Array.from(state.unlocked);
-  const currentChallenges = getChallenges();
   const navigation = useNavigation<NavigationProp>();
 
   useEffect(() => {
@@ -40,9 +33,8 @@ export default function AchievementsForm() {
   //   { id: '3', title: 'Parks', icon: 'leaf', color: colors.secondary },
   // ];
 
-  // const handleCategoryPress = (title: string) => console.log(`${title} category pressed`);
-  const handleChallengePress = (c: Challenge) => console.log(`Challenge ${c.title} pressed`);
-  // const handleActionPress = (a: string) => console.log(`${a} button pressed`);
+  // const handleCategoryPress = (title: string) => //console.log(`${title} category pressed`);
+  // const handleActionPress = (a: string) => //console.log(`${a} button pressed`);
 
   return (
     <ScrollView
@@ -94,22 +86,6 @@ export default function AchievementsForm() {
         </View>
       </View> */}
 
-      {/* Dynamic Challenges */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.primary }]}>Current Challenges</Text>
-        <Text style={[styles.sectionSubtitle, { color: colors.text }]}>
-          Complete these to earn points!
-        </Text>
-
-        {currentChallenges.map((challenge) => (
-          <ChallengeItem
-            key={challenge.id}
-            challenge={challenge}
-            onPress={() => handleChallengePress(challenge)}
-          />
-        ))}
-      </View>
-
       {/* Action Buttons */}
       <View style={styles.actionButtons}>
         {/* <ActionButton title="View Badges"   variant="outline" borderColor={colors.text} textColor={colors.text} onPress={() => handleActionPress('View Badges')} />
@@ -118,7 +94,7 @@ export default function AchievementsForm() {
           title="SHOP"
           variant="primary"
           backgroundColor={colors.primary}
-          textColor="#fff"
+          textColor={colors.background}
           onPress={() => navigation.navigate('ShopScreen')}
         />
       </View>

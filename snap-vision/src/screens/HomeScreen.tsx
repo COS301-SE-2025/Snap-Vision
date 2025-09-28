@@ -1,4 +1,3 @@
-// src/screens/HomeScreen.tsx
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import MapHomeContent from '../components/organisms/HomeContent';
@@ -9,8 +8,8 @@ import { useLanding } from '../context/LandingContext';
 
 const HomeScreen = () => {
   // const [showLanding, setShowLanding] = useState(true);
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const { hasSeenLanding, setHasSeenLanding, loading } = useLanding();
 
   if (loading) return null;

@@ -3,7 +3,7 @@ import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-nat
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import Toast from 'react-native-toast-message';
-import { Colors } from 'react-native/Libraries/NewAppScreen';
+import { makeToastPayload } from '../../toastConfig';
 
 interface LogoutButtonProps {
   onLogout: () => void;
@@ -11,49 +11,29 @@ interface LogoutButtonProps {
 }
 
 export default function LogoutButton({ onLogout, isLoading = false }: LogoutButtonProps) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme } = useTheme();
+  const colors = getThemeColors(theme);
 
   const handlePress = async () => {
     try {
       await onLogout();
 
-      Toast.show({
-        type: 'default',
-        text1: 'Logged Out',
-        text2: 'See you soon!',
-        props: {
-          backgroundColor: colors.card,
-          borderColor: colors.primary,
-          textColor: colors.primary,
-          iconColor: colors.secondary,
-        },
-      });
+      Toast.show(makeToastPayload('Logged Out', 'See you soon!', {}, theme));
     } catch (error) {
-      Toast.show({
-        type: 'default',
-        text1: 'Logout Failed',
-        text2: 'Please try again.',
-        props: {
-          backgroundColor: colors.card,
-          borderColor: colors.primary,
-          textColor: colors.primary,
-          iconColor: colors.secondary,
-        },
-      });
+      Toast.show(makeToastPayload('Logout Failed', 'Please try again.', {}, theme));
     }
   };
 
   return (
     <TouchableOpacity
-      style={[styles.button, { backgroundColor: colors.card }]}
+      style={[styles.button, { backgroundColor: colors.background, borderColor: colors.primary }]}
       onPress={handlePress}
       disabled={isLoading}
     >
       {isLoading ? (
         <ActivityIndicator color="#FFFFFF" size="small" />
       ) : (
-        <Text style={styles.buttonText}>Log Out</Text>
+        <Text style={[styles.buttonText, { color: colors.primary }]}>Log Out</Text>
       )}
     </TouchableOpacity>
   );
@@ -66,6 +46,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginBottom: 20,
+    borderWidth: 1,
   },
   buttonText: {
     fontWeight: '600',

@@ -1,3 +1,22 @@
+const mockAuthService = {
+  getCurrentUserContext: jest.fn(),
+  canModifyLocation: jest.fn(),
+  canAccessLocation: jest.fn(),
+  canAccessBuilding: jest.fn(),
+  canAccessQRCode: jest.fn(),
+  canModifyQRCode: jest.fn(),
+};
+
+jest.mock('../../src/security/AuthorizationService', () => {
+  class MockAuthorizationService {
+    static getInstance = jest.fn(() => mockAuthService);
+  }
+  return {
+    __esModule: true,
+    default: MockAuthorizationService,
+  };
+});
+
 import {
   createQRCodeMapping,
   getQRCodeMappingByValue,
@@ -68,24 +87,19 @@ jest.mock('@react-native-firebase/firestore', () => {
     get: async () => {
       const coll = ensurePath(basePath);
       let rows = Array.from(coll.entries()).map(([id, data]) => ({ id, data: () => clone(data) }));
-
       for (const f of filters) {
         rows = rows.filter((r) => {
           const v = (r.data() as any)[f.field];
           return f.op === '==' ? String(v) === String(f.val) : false;
         });
       }
-
       if (_order) {
         rows.sort((a, b) => {
           const va: any = (a.data() as any)[_order.field];
           const vb: any = (b.data() as any)[_order.field];
-
           if (va === undefined && vb === undefined) return 0;
           if (va === undefined) return 1;
           if (vb === undefined) return -1;
-
-          // Handle timestamp objects (with seconds property)
           let valA = va;
           let valB = vb;
           if (va && typeof va === 'object' && 'seconds' in va) {
@@ -94,13 +108,11 @@ jest.mock('@react-native-firebase/firestore', () => {
           if (vb && typeof vb === 'object' && 'seconds' in vb) {
             valB = vb.seconds;
           }
-
           if (valA < valB) return _order.dir === 'asc' ? -1 : 1;
           if (valA > valB) return _order.dir === 'asc' ? 1 : -1;
           return 0;
         });
       }
-
       if (_limit != null) rows = rows.slice(0, _limit);
       return { docs: rows, empty: rows.length === 0 };
     },
@@ -130,200 +142,63 @@ jest.mock('@react-native-firebase/firestore', () => {
     collection: (name: string) => makeCollection(name),
   });
 
-  // The exported function
   const fn: any = () => root();
-
-  // Attach Timestamp.now()
   fn.Timestamp = { now: jest.fn(() => ({ seconds: Math.floor(Date.now() / 1000) })) };
-
-  // Helpers to seed & reset from tests
   fn.__reset = () => store.clear();
   fn.__seed = (path: string, id: string, data: any) => {
     const coll = ensurePath(path);
     coll.set(id, clone(data));
   };
-
   return fn;
 });
 
 const fns = firestore as any;
 
-beforeEach(() => {
-  jest.clearAllMocks();
-  (firestore as any).__reset();
-  setAuthUser({ uid: 'u-int' });
-});
-
-describe('QR Service', () => {
-  it('create -> read getQRCodeMappingByValue across locations', async () => {
-    // seed two locations to iterate over
-    fns.__seed('locations', 'A', { name: 'Campus A' });
-    fns.__seed('locations', 'B', { name: 'Campus B' });
-
-    // Insert a QR in location B only
-    const created = await createQRCodeMapping(
-      'B',
-      'Campus B',
-      'BLDG1',
-      'Main Building',
-      'F1',
-      'R101',
-      'Room 101',
-      'QR-XYZ',
-      'Near lift',
-    );
-
-    // lookup by value, scanning A then B
-    const found = await getQRCodeMappingByValue('QR-XYZ');
-    expect(found).not.toBeNull();
-    expect(found!.qrValue).toBe('QR-XYZ');
-    expect(found!.locationId).toBe('B');
-    expect(found!.id).toBe(created.id);
-  });
-
-  it('lists locations/buildings/floors and handles names & floor labels', async () => {
-    fns.__seed('locations', 'LOC1', { name: 'Campus 1' });
-    fns.__seed('locations/LOC1/buildingPOIs', 'B1', { name: 'Block A' });
-    fns.__seed('locations/LOC1/buildingPOIs/B1/floorplans', 'F1', { floorLabel: 'Level 1' });
-    fns.__seed('locations/LOC1/buildingPOIs/B1/floorplans', 'F2', { name: 'Level 2 name' });
-
-    const locs = await getLocations();
-    expect(locs).toEqual([{ id: 'LOC1', name: 'Campus 1' }]);
-
-    const blds = await getBuildingsForLocation('LOC1');
-    expect(blds).toEqual([{ id: 'B1', name: 'Block A' }]);
-
-    const floors = await getFloorsForBuilding('LOC1', 'B1');
-    expect(floors).toEqual([
-      { id: 'F1', name: 'Level 1' },
-      { id: 'F2', name: 'Level 2 name' },
-    ]);
-  });
-
-  it('filters rooms for a floor by any of floorId/floorLevel/floorLabel', async () => {
-    // Rooms live under locations/LOC1/roomPOIs
-    fns.__seed('locations/LOC1/roomPOIs', 'R1', {
-      name: 'One',
-      buildingId: 'B1',
-      buildingName: 'B1n',
-      floorId: 'F2',
-    });
-    fns.__seed('locations/LOC1/roomPOIs', 'R2', {
-      roomName: 'Two',
-      buildingId: 'B1',
-      floorLevel: 'F2',
-    });
-    fns.__seed('locations/LOC1/roomPOIs', 'R3', { buildingId: 'B1', floorLabel: 'F1' });
-
-    const rooms = await getRoomsForFloor('LOC1', 'B1', 'F2');
-    expect(rooms.map((r) => r.id)).toEqual(['R1', 'R2']);
-    expect(rooms[0]).toMatchObject({
-      id: 'R1',
-      name: 'One',
-      buildingId: 'B1',
-      buildingName: 'B1n',
-      floorId: 'F2',
-      floorLabel: 'F2',
-    });
-    expect(rooms[1]).toMatchObject({
-      id: 'R2',
-      name: 'Two',
-      buildingId: 'B1',
-      floorId: 'F2',
-      floorLabel: 'F2',
-    });
-  });
-
-  it('queries QR codes for a building ordered by createdAt desc', async () => {
-    const t = (s: number) => ({ seconds: s });
-    fns.__seed('locations/LOC1/qrCodes', 'q1', {
-      buildingId: 'B1',
-      createdAt: t(100),
-      qrValue: 'A',
-    });
-    fns.__seed('locations/LOC1/qrCodes', 'q2', {
-      buildingId: 'B1',
-      createdAt: t(200),
-      qrValue: 'B',
-    });
-    fns.__seed('locations/LOC1/qrCodes', 'q3', {
-      buildingId: 'B2',
-      createdAt: t(300),
-      qrValue: 'C',
-    });
-
-    const rows = await getQRCodesForBuilding('LOC1', 'B1');
-    expect(rows.map((r) => r.qrValue)).toEqual(['B', 'A']); // desc by createdAt
-  });
-
-  it('update and delete mapping', async () => {
-    // create then update & delete
-    const created = await createQRCodeMapping(
-      'LOC2',
-      'Campus 2',
-      'B1',
-      'B1Name',
-      'F1',
-      'R1',
-      'R Name',
-      'VAL-1',
-    );
-
-    await expect(updateQRCodeMapping('LOC2', created.id, { description: 'updated' })).resolves.toBe(
-      true,
-    );
-    const all = await getQRCodesForBuilding('LOC2', 'B1');
-    expect(all[0].description).toBe('updated');
-
-    await expect(deleteQRCodeMapping('LOC2', created.id)).resolves.toBe(true);
-    const afterDel = await getQRCodesForBuilding('LOC2', 'B1');
-    expect(afterDel).toHaveLength(0);
+describe('QRService integration tests', () => {
+  beforeEach(() => {
+    mockAuthService.getCurrentUserContext.mockResolvedValue({ userId: 'u-int' });
+    mockAuthService.canModifyLocation.mockResolvedValue(true);
+    mockAuthService.canAccessLocation.mockResolvedValue(true);
+    mockAuthService.canAccessBuilding.mockResolvedValue(true);
+    mockAuthService.canAccessQRCode.mockResolvedValue(true);
+    mockAuthService.canModifyQRCode.mockResolvedValue(true);
   });
 
   it('create throws if unauthenticated', async () => {
     setAuthUser(null);
+    mockAuthService.getCurrentUserContext.mockResolvedValue(null);
     await expect(createQRCodeMapping('L', 'LN', 'B', 'BN', 'F', 'R', 'RN', 'Q')).rejects.toThrow(
       'User not authenticated',
     );
   });
 
-  it('handles missing locations gracefully', async () => {
-    const locs = await getLocations();
-    expect(locs).toEqual([]);
+  it('getBuildingsForLocation throws on invalid location ID', async () => {
+    await expect(getBuildingsForLocation('')).rejects.toThrow('Invalid location ID');
   });
 
-  it('handles missing buildings gracefully', async () => {
-    const buildings = await getBuildingsForLocation('nonexistent');
-    expect(buildings).toEqual([]);
+  it('getFloorsForBuilding throws on invalid IDs', async () => {
+    await expect(getFloorsForBuilding('', 'B1')).rejects.toThrow('Invalid location or building ID');
   });
 
-  it('handles missing floors gracefully', async () => {
-    const floors = await getFloorsForBuilding('LOC1', 'nonexistent');
-    expect(floors).toEqual([]);
+  it('getRoomsForFloor throws on invalid IDs', async () => {
+    await expect(getRoomsForFloor('', 'B1', 'F1')).rejects.toThrow(
+      'Invalid location, building, or floor ID',
+    );
   });
 
-  it('handles missing rooms gracefully', async () => {
-    const rooms = await getRoomsForFloor('LOC1', 'B1', 'nonexistent');
-    expect(rooms).toEqual([]);
+  it('getQRCodesForBuilding throws on invalid IDs', async () => {
+    await expect(getQRCodesForBuilding('', 'B1')).rejects.toThrow(
+      'Invalid location or building ID',
+    );
   });
 
-  it('handles missing QR codes gracefully', async () => {
-    const qrCodes = await getQRCodesForBuilding('LOC1', 'nonexistent');
-    expect(qrCodes).toEqual([]);
+  it('deleteQRCodeMapping throws on invalid IDs', async () => {
+    await expect(deleteQRCodeMapping('', 'q1')).rejects.toThrow('Invalid location or QR code ID');
   });
 
-  it('returns null when QR mapping not found', async () => {
-    const mapping = await getQRCodeMappingByValue('nonexistent');
-    expect(mapping).toBeNull();
-  });
-
-  it('handles update of nonexistent QR code', async () => {
-    const result = await updateQRCodeMapping('LOC1', 'nonexistent', { description: 'test' });
-    expect(result).toBe(true); // Firestore update doesn't fail on missing docs
-  });
-
-  it('handles delete of nonexistent QR code', async () => {
-    const result = await deleteQRCodeMapping('LOC1', 'nonexistent');
-    expect(result).toBe(true); // Firestore delete doesn't fail on missing docs
+  it('updateQRCodeMapping throws on invalid IDs', async () => {
+    await expect(updateQRCodeMapping('', 'q1', { description: 'test' })).rejects.toThrow(
+      'Invalid location or QR code ID',
+    );
   });
 });

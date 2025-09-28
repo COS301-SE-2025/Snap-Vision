@@ -1,4 +1,3 @@
-//Snap-Vision\snap-vision\src\components\organisms\EditorContent.tsximport React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import AppButton from '../atoms/AppButton';
 
@@ -8,6 +7,7 @@ interface Props {
   onEditFloorplans: () => void;
   onSettings?: () => void;
   onFloorplanEditor?: () => void;
+  onManageQRCodes?: () => void;
 }
 
 export default function AdminScreenContent({
@@ -16,6 +16,7 @@ export default function AdminScreenContent({
   onEditFloorplans,
   //onSettings,
   onFloorplanEditor,
+  onManageQRCodes,
 }: Props) {
   return (
     <View
@@ -24,27 +25,33 @@ export default function AdminScreenContent({
     >
       <Text
         style={{
-          fontSize: 56,
-          fontFamily: 'PermanentMarkerRegular',
+          fontSize: 72,
+          fontFamily: 'ChicleRegular',
           color: colors.primary,
           textAlign: 'center',
-          marginBottom: 40,
-          transform: [{ rotate: '-3deg' }],
+          marginBottom: 3,
+          // transform: [{ rotate: '-3deg' }],
+          textShadowColor: colors.secondary,
+          textShadowOffset: { width: 1, height: 1 },
+          textShadowRadius: 1,
         }}
       >
-        Editor
+        {' Editor '}
       </Text>
       <Text
         style={{
-          fontSize: 52,
-          fontFamily: 'PermanentMarkerRegular',
+          fontSize: 72,
+          fontFamily: 'ChicleRegular',
           color: colors.primary,
           textAlign: 'center',
           marginBottom: 40,
-          transform: [{ rotate: '-3deg' }],
+          // transform: [{ rotate: '-3deg' }],
+          textShadowColor: colors.secondary,
+          textShadowOffset: { width: 1, height: 1 },
+          textShadowRadius: 1,
         }}
       >
-        DASHBOARD
+        {' DASHBOARD '}
       </Text>
       <View style={styles.buttonContainer} testID="button-container">
         <AppButton
@@ -57,6 +64,7 @@ export default function AdminScreenContent({
           onPress={onEditFloorplans}
           testID="button-Edit-Floorplans"
         />
+        <AppButton title="QR Code Admin" onPress={onManageQRCodes} testID="button-QRCode-Admin" />
         {/* <AppButton title="Settings" onPress={onSettings} /> */}
       </View>
     </View>

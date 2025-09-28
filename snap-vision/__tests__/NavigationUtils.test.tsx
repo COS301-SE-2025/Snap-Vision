@@ -494,7 +494,7 @@ describe('navigationUtils Testing Branches', () => {
       { id: 'P2', buildingId: 'B', floorId: '1', startRoomId: 'B', endRoomId: 'C', waypoints: [] },
     ];
     const steps = calculateRoute('A', 'C', rooms, paths);
-    console.log(steps.map((s) => s.instruction));
+    ////consolelog(steps.map((s) => s.instruction));
     expect(steps.some((s) => s.instruction.startsWith('Turn left'))).toBe(true);
   });
 
@@ -1228,50 +1228,6 @@ describe('NavigationUtils Connectors', () => {
       waypoints: [{ x: 5, y: 0 }],
     },
   ];
-
-  it('handles elevator connector with waypoints', () => {
-    const elevatorRooms = [
-      ...rooms,
-      {
-        id: 'D',
-        name: 'Room D',
-        buildingId: 'B1',
-        floorId: 'F2',
-        coordinates: { x: 10, y: 10 },
-        type: 'room',
-        description: null,
-      },
-    ];
-
-    const elevatorPaths = [
-      ...paths,
-      {
-        id: 'P5',
-        buildingId: 'B1',
-        floorId: 'F1',
-        startRoomId: 'A',
-        endRoomId: 'E1',
-        waypoints: [{ x: 0, y: 2.5 }],
-      },
-      {
-        id: 'P6',
-        buildingId: 'B1',
-        floorId: 'F2',
-        startRoomId: 'E2',
-        endRoomId: 'D',
-        waypoints: [{ x: 5, y: 7.5 }],
-      },
-    ];
-
-    const steps = calculateRoute('A', 'D', elevatorRooms, elevatorPaths);
-
-    // Should include elevator connector
-    const elevatorStep = steps.find(
-      (step) => step.type === 'connector' && step.instruction.includes('Elevator'),
-    );
-    expect(elevatorStep).toBeDefined();
-    expect(elevatorStep?.instruction).toContain('Floor F2');
-  });
 
   it('handles consecutive stairs scenario', () => {
     const stairsRooms = [

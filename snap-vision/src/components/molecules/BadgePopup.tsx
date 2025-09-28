@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { BadgeId, BADGES } from '../../types/badges';
+import { BadgeId } from '../../types/badges';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
+import { useBadges } from '../../context/BadgeContext';
 
 interface BadgePopupProps {
   badgeId: BadgeId;
@@ -11,9 +12,11 @@ interface BadgePopupProps {
 }
 
 export default function BadgePopup({ badgeId, onClose }: BadgePopupProps) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const [fadeAnim] = useState(new Animated.Value(0));
+  const { state } = useBadges();
+  const badge = state.badges[badgeId];
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -33,7 +36,7 @@ export default function BadgePopup({ badgeId, onClose }: BadgePopupProps) {
     return () => clearTimeout(timer);
   }, [fadeAnim, onClose]);
 
-  const badge = BADGES[badgeId];
+  if (!badge) return null;
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>

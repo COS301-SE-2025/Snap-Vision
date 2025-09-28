@@ -1,12 +1,11 @@
-// atoms/SectionHeader.tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
 export default function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <View style={styles.header}>

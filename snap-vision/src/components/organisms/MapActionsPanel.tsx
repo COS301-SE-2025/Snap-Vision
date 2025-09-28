@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import ActionButtonWithTooltip from '../molecules/ActionButtonWithTooltip';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../theme/ThemeContext';
@@ -9,8 +9,9 @@ interface Props {
   currentLocation: boolean;
   onShare: () => void;
   onReport: () => void;
-  onAddPOI?: () => void; // New prop for adding POIs
-  isAdmin?: boolean; // New prop to check if user is admin
+  onAddPOI?: () => void;
+  onOpenBluetoothNavigation: () => void;
+  isAdmin?: boolean;
   shareTooltip: boolean;
   reportTooltip: boolean;
   onShareIn: () => void;
@@ -25,6 +26,7 @@ const MapActionsPanel = ({
   onShare,
   onReport,
   onAddPOI,
+  //onOpenBluetoothNavigation,
   isAdmin,
   shareTooltip,
   reportTooltip,
@@ -33,41 +35,110 @@ const MapActionsPanel = ({
   onReportIn,
   onReportOut,
 }: Props) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(true);
+  const [drawerAnimation] = useState(new Animated.Value(1));
 
   if (!currentLocation) return null;
 
+  const toggleDrawer = () => {
+    const toValue = isDrawerOpen ? 0 : 1;
+
+    Animated.timing(drawerAnimation, {
+      toValue,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+    setIsDrawerOpen(!isDrawerOpen);
+  };
+
+  const drawerTranslateX = drawerAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [150, 0],
+  });
+
+  const arrowRotation = drawerAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg'],
+  });
+
   return (
     <View style={styles.container}>
-      <ActionButtonWithTooltip
-        icon={<Icon name="share-social" size={30} color="white" />}
-        onPress={onShare}
-        onPressIn={onShareIn}
-        onPressOut={onShareOut}
-        showTooltip={shareTooltip}
-        backgroundColor={colors.primary}
-        tooltipText="Share Location"
-      />
+      {/* Drawer Background */}
+      {isDrawerOpen && (
+        <Animated.View
+          style={[
+            styles.drawerBackground,
+            {
+              backgroundColor: colors.card,
+              opacity: drawerAnimation,
+            },
+          ]}
+        />
+      )}
 
-      <View style={styles.spacer} />
+      {/* Drawer Toggle Arrow */}
+      <TouchableOpacity
+        style={[styles.drawerToggle, { backgroundColor: colors.primary }]}
+        onPress={toggleDrawer}
+        activeOpacity={0.8}
+      >
+        <Animated.View style={{ transform: [{ rotate: arrowRotation }] }}>
+          <Icon name="chevron-back" size={24} color={colors.background} />
+        </Animated.View>
+      </TouchableOpacity>
 
-      <ActionButtonWithTooltip
-        icon={<Icon name="people" size={30} color="white" />}
-        onPress={onReport}
-        onPressIn={onReportIn}
-        onPressOut={onReportOut}
-        showTooltip={reportTooltip}
-        backgroundColor={colors.primary}
-        tooltipText="Report Crowds"
-      />
+      {/* Action Buttons Drawer */}
+      <Animated.View
+        style={[
+          styles.drawerContent,
+          {
+            transform: [{ translateX: drawerTranslateX }],
+          },
+        ]}
+      >
+        <ActionButtonWithTooltip
+          icon={<Icon name="share-social" size={30} color={colors.background} />}
+          onPress={onShare}
+          onPressIn={onShareIn}
+          onPressOut={onShareOut}
+          showTooltip={shareTooltip}
+          backgroundColor={colors.primary}
+          tooltipText="Share Location"
+        />
 
-      {/* Admin-only Add POI button */}
+        <View style={styles.spacer} />
+
+        <ActionButtonWithTooltip
+          icon={<Icon name="people" size={30} color={colors.background} />}
+          onPress={onReport}
+          onPressIn={onReportIn}
+          onPressOut={onReportOut}
+          showTooltip={reportTooltip}
+          backgroundColor={colors.primary}
+          tooltipText="Report Crowds"
+        />
+
+        <View style={styles.spacer} />
+
+        {/* <ActionButtonWithTooltip
+          icon={<MaterialIcons name="bluetooth" size={30} color={colors.background} />}
+          onPress={onOpenBluetoothNavigation}
+          onPressIn={() => {}}
+          onPressOut={() => {}}
+          showTooltip={false}
+          backgroundColor={colors.primary}
+          tooltipText="Bluetooth Navigation"
+        /> */}
+      </Animated.View>
+
+      {/* Admin-only Add POI button - positioned below the drawer */}
       {isAdmin && onAddPOI && (
-        <>
-          <View style={styles.spacer} />
+        <View style={styles.adminButtonContainer}>
           <ActionButtonWithTooltip
-            icon={<Icon name="business" size={30} color="white" />}
+            icon={<Icon name="business" size={30} color={colors.background} />}
             onPress={onAddPOI}
             onPressIn={() => {}}
             onPressOut={() => {}}
@@ -75,7 +146,7 @@ const MapActionsPanel = ({
             backgroundColor={colors.primary}
             tooltipText="Add Building"
           />
-        </>
+        </View>
       )}
     </View>
   );
@@ -84,12 +155,54 @@ const MapActionsPanel = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 170,
-    right: 20,
+    top: '30%',
+    right: 0,
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    transform: [{ translateY: -25 }],
+  },
+  drawerBackground: {
+    position: 'absolute',
+    top: -20,
+    right: 0,
+    width: 130,
+    height: 170,
+    borderTopLeftRadius: 15,
+    borderBottomLeftRadius: 15,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  drawerToggle: {
+    width: 30,
+    height: 30,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    zIndex: 1000,
+    marginRight: 10,
+  },
+  drawerContent: {
     flexDirection: 'column',
+    alignItems: 'center',
+    marginRight: 10,
+    marginLeft: 15,
   },
   spacer: {
     height: 15,
+  },
+  adminButtonContainer: {
+    position: 'absolute',
+    top: 170,
+    right: 15,
+    alignItems: 'center',
   },
 });
 

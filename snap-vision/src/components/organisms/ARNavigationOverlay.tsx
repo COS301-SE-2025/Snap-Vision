@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Dimensions, Text, TouchableOpacity } from 'react-native';
 import { Camera, useCameraDevices, useCameraPermission } from 'react-native-vision-camera';
+import { Canvas, Path, Paint, Skia } from '@shopify/react-native-skia';
+import { useTheme } from '@react-navigation/native';
+import { lightColors, darkColors } from '../../theme/colours';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -34,6 +37,7 @@ export default function ARNavigationOverlay({
   const [deviceError, setDeviceError] = useState<string | null>(null);
   const [nextInstruction, setNextInstruction] = useState<string>('');
   const [isMiniMapCollapsed, setIsMiniMapCollapsed] = useState(false);
+  const [isWarningMinimized, setIsWarningMinimized] = useState(true);
 
   useEffect(() => {
     if (!hasPermission) {
@@ -81,6 +85,12 @@ export default function ARNavigationOverlay({
             nextInstruction={nextInstruction}
           />
         </View>
+
+        {/* AR Navigation Warning for fallback view */}
+        <ARNavigationWarning
+          isMinimized={isWarningMinimized}
+          onToggleMinimize={() => setIsWarningMinimized(!isWarningMinimized)}
+        />
       </View>
     );
   }
@@ -107,6 +117,12 @@ export default function ARNavigationOverlay({
         currentRouteIndex={currentRouteIndex}
       />
 
+      {/* AR Navigation Warning */}
+      <ARNavigationWarning
+        isMinimized={isWarningMinimized}
+        onToggleMinimize={() => setIsWarningMinimized(!isWarningMinimized)}
+      />
+
       {/* Mini Map Overlay */}
       {showMiniMap && currentLocation && destinationCoords && routeCoordinates.length > 0 && (
         <MiniMapOverlay
@@ -118,6 +134,42 @@ export default function ARNavigationOverlay({
           isCollapsed={isMiniMapCollapsed}
           onToggleCollapse={() => setIsMiniMapCollapsed(!isMiniMapCollapsed)}
         />
+      )}
+    </View>
+  );
+}
+
+// AR Navigation Warning Component
+function ARNavigationWarning({
+  isMinimized,
+  onToggleMinimize,
+}: {
+  isMinimized: boolean;
+  onToggleMinimize: () => void;
+}) {
+  const theme = useTheme();
+  const colors = theme.dark ? darkColors : lightColors;
+
+  return (
+    <View
+      style={[
+        styles.warningContainer,
+        isMinimized && styles.warningCollapsed,
+        { backgroundColor: colors.warning },
+      ]}
+    >
+      <TouchableOpacity style={styles.warningHeader} onPress={onToggleMinimize} activeOpacity={0.7}>
+        <Text style={styles.warningTitle}>{isMinimized ? '   ⚠' : 'Navigation Warning'}</Text>
+      </TouchableOpacity>
+
+      {!isMinimized && (
+        <View style={styles.warningContent}>
+          <Text style={styles.warningText}>
+            <Text style={styles.warningLabel}>NOTE: </Text>
+            AR navigation can be inaccurate due to GPS imprecision and sensor limitations. Use as a
+            general guide only.
+          </Text>
+        </View>
       )}
     </View>
   );
@@ -222,10 +274,11 @@ function MiniMapOverlay({
                         styles.routeSegment,
                         {
                           left: start.x,
-                          top: start.y - 1, // Center the line vertically
+                          top: start.y - 1,
                           width: length,
                           transform: [{ rotate: `${angle}deg` }],
-                          opacity: index < currentRouteIndex ? 0.3 : 1, // Dim completed segments
+                          backgroundColor: index < currentRouteIndex ? '#4CAF50' : '#2196F3', // Green for completed, blue for remaining
+                          opacity: index < currentRouteIndex ? 0.8 : 1,
                         },
                       ]}
                     />
@@ -233,21 +286,18 @@ function MiniMapOverlay({
                 })}
               </View>
             )}
-
-            {/* Current Location Marker with heading - positioned at route start */}
             <View
               style={[
                 styles.currentLocationMarker,
                 {
-                  left: routeStartPos.x - 8,
-                  top: routeStartPos.y - 8,
+                  left: currentPos.x - 8,
+                  top: currentPos.y - 8,
                   transform: [{ rotate: `${deviceHeading}deg` }],
                 },
               ]}
             >
-              <Text style={styles.currentLocationIcon}>📍</Text>
+              <Text style={styles.currentLocationIcon}></Text>
             </View>
-
             {/* Destination Marker - positioned at route end */}
             <View
               style={[
@@ -255,9 +305,8 @@ function MiniMapOverlay({
                 { left: routeEndPos.x - 6, top: routeEndPos.y - 6 },
               ]}
             >
-              <Text style={styles.destinationIcon}>🎯</Text>
+              <Text style={styles.destinationIcon}></Text>
             </View>
-
             {/* Upcoming waypoints */}
             {upcomingPoints.slice(1, 4).map((point, index) => {
               const pos = coordToMiniMap(point[0], point[1]);
@@ -268,20 +317,6 @@ function MiniMapOverlay({
                 />
               );
             })}
-          </View>
-
-          <View style={styles.miniMapFooter}>
-            <Text style={styles.miniMapDistance}>
-              {Math.round(
-                calculateDistance(
-                  currentLocation.y,
-                  currentLocation.x,
-                  destinationCoords.y,
-                  destinationCoords.x,
-                ),
-              )}
-              m remaining
-            </Text>
           </View>
         </>
       )}
@@ -309,36 +344,56 @@ function SimpleARGuidance({
   const [bearingHistory, setBearingHistory] = useState<number[]>([]);
   const [smoothedBearing, setSmoothedBearing] = useState<number | null>(null);
 
-  // Calculate raw bearing firs
+  // Replace the target point calculation in SimpleARGuidance
   const rawBearing =
     currentLocation && destinationCoords
       ? (() => {
-          // routeCoordinates are in [longitude, latitude] format from the routing API
           let nextPoint: [number, number];
 
           if (routeCoordinates.length > 0) {
-            // Find the next point ahead in the route
-            const lookAheadDistance = 1; // Reduced look ahead for more accurate direction
-            const nextIndex = Math.min(
-              currentRouteIndex + lookAheadDistance,
-              routeCoordinates.length - 1,
-            );
-            nextPoint = routeCoordinates[nextIndex];
+            //Prevent backward jumps
+            const safeBaseIndex = Math.max(0, currentRouteIndex);
+
+            // First, try to find a good forward point
+            let targetIndex = safeBaseIndex;
+            let bestDistance = Infinity;
+
+            // Search only FORWARD in the route (prevent going backward)
+            for (
+              let i = safeBaseIndex;
+              i < Math.min(safeBaseIndex + 8, routeCoordinates.length);
+              i++
+            ) {
+              const point = routeCoordinates[i];
+              const distanceToPoint = calculateDistance(
+                currentLocation.y,
+                currentLocation.x,
+                point[1],
+                point[0],
+              );
+
+              // Prefer points 15-40 meters ahead
+              if (
+                distanceToPoint >= 15 &&
+                distanceToPoint <= 40 &&
+                distanceToPoint < bestDistance
+              ) {
+                targetIndex = i;
+                bestDistance = distanceToPoint;
+              }
+            }
+
+            // Fallback: if no good point found, just look ahead by 3-5 points
+            if (targetIndex === safeBaseIndex) {
+              targetIndex = Math.min(safeBaseIndex + 3, routeCoordinates.length - 1);
+            }
+
+            nextPoint = routeCoordinates[targetIndex];
           } else {
-            // Fallback to destination if no route
             nextPoint = [destinationCoords.x, destinationCoords.y];
           }
 
-          // Ensure coordinates are in the right order
-          // currentLocation: { x: longitude, y: latitude }
-          // nextPoint: [longitude, latitude]
-          // calculateBearing expects (lat1, lon1, lat2, lon2)
-          return calculateBearing(
-            currentLocation.y, // current latitude
-            currentLocation.x, // current longitude
-            nextPoint[1], // target latitude
-            nextPoint[0], // target longitude
-          );
+          return calculateBearing(currentLocation.y, currentLocation.x, nextPoint[1], nextPoint[0]);
         })()
       : 0;
 
@@ -347,19 +402,29 @@ function SimpleARGuidance({
     if (!currentLocation || !destinationCoords) return;
 
     setBearingHistory((prev) => {
-      const newHistory = [...prev, rawBearing].slice(-5); // Keep last 5 readings
+      const newHistory = [...prev, rawBearing].slice(-8); // Keep last 8 readings for better smoothing
 
-      // Calculate weighted average (more weight to recent readings)
-      let weightedSum = 0;
+      // Calculate weighted average with circular angle handling
+      let sinSum = 0;
+      let cosSum = 0;
       let totalWeight = 0;
+
       newHistory.forEach((bearing, index) => {
-        const weight = index + 1; // More recent = higher weight
-        weightedSum += bearing * weight;
+        const weight = Math.pow(index + 1, 1.5); // Exponential weight favoring recent readings
+        const radians = bearing * (Math.PI / 180);
+
+        sinSum += Math.sin(radians) * weight;
+        cosSum += Math.cos(radians) * weight;
         totalWeight += weight;
       });
 
-      const smoothed = weightedSum / totalWeight;
-      setSmoothedBearing(smoothed);
+      // Convert back to degrees
+      const avgSin = sinSum / totalWeight;
+      const avgCos = cosSum / totalWeight;
+      const smoothedRadians = Math.atan2(avgSin, avgCos);
+      const smoothed = smoothedRadians * (180 / Math.PI);
+
+      setSmoothedBearing(normalizeAngle(smoothed));
 
       return newHistory;
     });
@@ -373,29 +438,29 @@ function SimpleARGuidance({
   const normalizedDeviceHeading = ((deviceHeading % 360) + 360) % 360;
   const relativeBearing = normalizeAngle(bearing - normalizedDeviceHeading);
 
-  //direction logic with relaxed tolerances - 35 degrees for straight
+  //direction logic with relaxed tolerances - 45 degrees for straight
   const getDirectionInstruction = () => {
     const absRelativeBearing = Math.abs(relativeBearing);
 
-    if (absRelativeBearing < 35) return 'Continue Straight'; // Set to 35 but can increase to about 45
-    if (relativeBearing >= 35 && relativeBearing < 80) return 'Turn Right';
-    if (relativeBearing >= 80 && relativeBearing < 120) return 'Sharp Right';
-    if (relativeBearing >= 120) return 'Turn Around';
-    if (relativeBearing <= -35 && relativeBearing > -80) return 'Turn Left';
-    if (relativeBearing <= -80 && relativeBearing > -120) return 'Sharp Left';
-    if (relativeBearing <= -120) return 'Turn Around';
+    if (absRelativeBearing < 45) return 'Continue Straight'; // Increased tolerance for straight
+    if (relativeBearing >= 45 && relativeBearing < 100) return 'Turn Right';
+    if (relativeBearing >= 100 && relativeBearing < 140) return 'Sharp Right';
+    if (relativeBearing >= 140) return 'Turn Around';
+    if (relativeBearing <= -45 && relativeBearing > -100) return 'Turn Left';
+    if (relativeBearing <= -100 && relativeBearing > -140) return 'Sharp Left';
+    if (relativeBearing <= -140) return 'Turn Around';
     return 'Continue';
   };
 
   // More precise direction logic with relaxed tolerances
   const getDirectionType = () => {
-    if (Math.abs(relativeBearing) < 35) return 'up';
-    if (relativeBearing >= 35 && relativeBearing < 80) return 'up-right';
-    if (relativeBearing >= 80 && relativeBearing < 120) return 'right';
-    if (relativeBearing >= 120) return 'turn-around';
-    if (relativeBearing <= -35 && relativeBearing > -80) return 'up-left';
-    if (relativeBearing <= -80 && relativeBearing > -120) return 'left';
-    if (relativeBearing <= -120) return 'turn-around';
+    if (Math.abs(relativeBearing) < 45) return 'up'; // Increased tolerance
+    if (relativeBearing >= 45 && relativeBearing < 100) return 'up-right';
+    if (relativeBearing >= 100 && relativeBearing < 140) return 'right';
+    if (relativeBearing >= 140) return 'turn-around';
+    if (relativeBearing <= -45 && relativeBearing > -100) return 'up-left';
+    if (relativeBearing <= -100 && relativeBearing > -140) return 'left';
+    if (relativeBearing <= -140) return 'turn-around';
     return 'up';
   };
 
@@ -403,19 +468,9 @@ function SimpleARGuidance({
     <>
       {/* AR Navigation with Arrow and Direction */}
       <View style={styles.mainGuidanceContainer}>
-        {/* Direction Circle with Arrow */}
-        <View
-          style={[
-            styles.directionCircle,
-            {
-              backgroundColor:
-                Math.abs(relativeBearing) < 35
-                  ? 'rgba(76, 175, 80, 0.8)'
-                  : 'rgba(244, 67, 54, 0.8)',
-            },
-          ]}
-        >
-          <CustomDirectionArrow direction={getDirectionType()} size={60} />
+        {/* Simple Arrow without Circle */}
+        <View style={styles.arrowContainer}>
+          <CustomDirectionArrow direction={getDirectionType()} size={160} />
         </View>
 
         {/* Direction Text */}
@@ -439,7 +494,6 @@ function SimpleARFallback({
 }) {
   if (!currentLocation || !destinationCoords) return null;
 
-  // FIXED: Use correct coordinate order for GPS coordinates
   const bearing = calculateBearing(
     currentLocation.y, // latitude
     currentLocation.x, // longitude
@@ -447,7 +501,6 @@ function SimpleARFallback({
     destinationCoords.x, // destination longitude
   );
 
-  // NO OFFSETS - Pure raw readings from react-native-compass-heading library
   const normalizedHeading = ((deviceHeading % 360) + 360) % 360;
   const relativeBearing = normalizeAngle(bearing - normalizedHeading);
   const distance = calculateDistance(
@@ -504,70 +557,160 @@ function calculateBearing(lat1: number, lon1: number, lat2: number, lon2: number
   return bearing;
 }
 
-// Custom Arrow Component for more impressive direction display
-function CustomDirectionArrow({ direction, size = 50 }: { direction: string; size?: number }) {
-  const getArrowStyle = () => {
-    const baseStyle = {
-      width: size,
-      height: size,
-      justifyContent: 'center' as const,
-      alignItems: 'center' as const,
-    };
-
-    switch (direction) {
-      case 'up':
-        return { ...baseStyle, transform: [{ rotate: '0deg' }] };
-      case 'up-right':
-        return { ...baseStyle, transform: [{ rotate: '45deg' }] };
-      case 'right':
-        return { ...baseStyle, transform: [{ rotate: '90deg' }] };
-      case 'down-right':
-        return { ...baseStyle, transform: [{ rotate: '135deg' }] };
-      case 'down':
-        return { ...baseStyle, transform: [{ rotate: '180deg' }] };
-      case 'down-left':
-        return { ...baseStyle, transform: [{ rotate: '225deg' }] };
-      case 'left':
-        return { ...baseStyle, transform: [{ rotate: '270deg' }] };
-      case 'up-left':
-        return { ...baseStyle, transform: [{ rotate: '315deg' }] };
-      case 'turn-around':
-        return { ...baseStyle, transform: [{ rotate: '0deg' }] };
-      default:
-        return { ...baseStyle, transform: [{ rotate: '0deg' }] };
-    }
-  };
-
-  if (direction === 'turn-around') {
-    return (
-      <View style={getArrowStyle()}>
-        <View style={styles.turnAroundContainer}>
-          <View style={styles.turnAroundCircle}>
-            <Text style={styles.turnAroundText}>↻</Text>
-          </View>
-        </View>
-      </View>
-    );
-  }
-
-  return (
-    <View style={getArrowStyle()}>
-      <View style={styles.customArrowContainer}>
-        {/* Arrow Head */}
-        <View style={styles.arrowHead} />
-        {/* Arrow Body */}
-        <View style={styles.arrowBody} />
-        {/* Arrow Glow Effect */}
-        <View style={styles.arrowGlow} />
-      </View>
-    </View>
-  );
-}
-
 function normalizeAngle(angle: number): number {
   while (angle > 180) angle -= 360;
   while (angle < -180) angle += 360;
   return angle;
+}
+
+// Simplified Skia-based Arrow Component
+function CustomDirectionArrow({ direction, size = 160 }: { direction: string; size?: number }) {
+  const theme = useTheme();
+  const colors = theme.dark ? darkColors : lightColors;
+
+  // Arrow colors based on theme
+  const primaryArrowColor = colors.text; // Blue: #2f6e83 (light) / #69c6d0 (dark)
+  const secondaryArrowColor = colors.secondary; // Blue-green: #3E5650 (light) / #90AFA8 (dark)
+  const strokeColor = theme.dark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)';
+
+  const getRotation = () => {
+    switch (direction) {
+      case 'up':
+        return 0;
+      case 'up-right':
+        return 45;
+      case 'right':
+        return 90;
+      case 'down-right':
+        return 135;
+      case 'down':
+        return 180;
+      case 'down-left':
+        return 225;
+      case 'left':
+        return 270;
+      case 'up-left':
+        return 315;
+      case 'turn-around':
+        return 0;
+      default:
+        return 0;
+    }
+  };
+
+  // Special case for turn around - circular arrow
+  if (direction === 'turn-around') {
+    return (
+      <View style={{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }}>
+        <Canvas style={{ width: size, height: size }}>
+          {/* Subtle outline for circular path (drawn first) */}
+          <Path
+            path={createTurnAroundPath(size)}
+            color={strokeColor}
+            style="stroke"
+            strokeWidth={size * 0.12}
+            strokeCap="round"
+            strokeJoin="round"
+          />
+          {/* Main circular path */}
+          <Path
+            path={createTurnAroundPath(size)}
+            color={primaryArrowColor}
+            style="stroke"
+            strokeWidth={size * 0.08}
+            strokeCap="round"
+            strokeJoin="round"
+          />
+          {/* Arrow head outline (drawn first) */}
+          <Path
+            path={createTurnAroundArrowHead(size)}
+            color={strokeColor}
+            style="stroke"
+            strokeWidth={3}
+          />
+          {/* Arrow head at end of circle */}
+          <Path path={createTurnAroundArrowHead(size)} color={primaryArrowColor} style="fill" />
+        </Canvas>
+      </View>
+    );
+  }
+
+  // Standard directional arrow
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        justifyContent: 'center',
+        alignItems: 'center',
+        transform: [{ rotate: `${getRotation()}deg` }],
+      }}
+    >
+      <Canvas style={{ width: size, height: size }}>
+        {/* Arrow shaft */}
+        <Path path={createArrowShaft(size)} color={primaryArrowColor} style="fill" />
+
+        {/* Arrow head */}
+        <Path path={createArrowHead(size)} color={primaryArrowColor} style="fill" />
+
+        {/* Subtle outline for visibility */}
+        <Path path={createArrowShaft(size)} color={strokeColor} style="stroke" strokeWidth={4} />
+
+        <Path path={createArrowHead(size)} color={strokeColor} style="stroke" strokeWidth={4} />
+      </Canvas>
+    </View>
+  );
+}
+
+// Helper functions to create Skia paths
+function createArrowShaft(size: number): string {
+  const centerX = size / 2;
+  const shaftWidth = size * 0.15;
+  const shaftHeight = size * 0.42;
+  const startY = size * 0.43;
+
+  return `M ${centerX - shaftWidth / 2} ${startY} 
+          L ${centerX + shaftWidth / 2} ${startY} 
+          L ${centerX + shaftWidth / 2} ${startY + shaftHeight} 
+          L ${centerX - shaftWidth / 2} ${startY + shaftHeight} 
+          Z`;
+}
+
+function createArrowHead(size: number): string {
+  const centerX = size / 2;
+  const headWidth = size * 0.35;
+  const headHeight = size * 0.32;
+  const tipY = size * 0.12;
+
+  return `M ${centerX} ${tipY} 
+          L ${centerX - headWidth / 2} ${tipY + headHeight} 
+          L ${centerX + headWidth / 2} ${tipY + headHeight} 
+          Z`;
+}
+
+function createTurnAroundPath(size: number): string {
+  const centerX = size / 2;
+  const centerY = size / 2;
+  const radius = size * 0.3;
+
+  // Create a 3/4 circle path
+  return `M ${centerX + radius} ${centerY} 
+          A ${radius} ${radius} 0 1 1 ${centerX - radius * 0.7} ${centerY - radius * 0.7}`;
+}
+
+function createTurnAroundArrowHead(size: number): string {
+  const centerX = size / 2;
+  const centerY = size / 2;
+  const radius = size * 0.3;
+
+  const arrowX = centerX - radius * 0.7 - size * 0.04;
+  const arrowY = centerY - radius * 0.7;
+  const headSize = size * 0.1;
+
+  return `M ${arrowX - headSize} ${arrowY} 
+          L ${arrowX + headSize} ${arrowY - headSize} 
+          L ${arrowX + headSize} ${arrowY + headSize} 
+          Z`;
 }
 
 const styles = StyleSheet.create({
@@ -597,7 +740,7 @@ const styles = StyleSheet.create({
   // Main AR Guidance
   mainGuidanceContainer: {
     position: 'absolute',
-    top: screenHeight * 0.375, // Moved down slightly from 0.35 for better positioning
+    top: screenHeight * 0.375,
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -628,15 +771,22 @@ const styles = StyleSheet.create({
     fontSize: 50,
     color: 'white',
   },
+  arrowContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
   directionText: {
     fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
-    marginTop: 15,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     paddingHorizontal: 20,
     paddingVertical: 8,
     borderRadius: 20,
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   distanceText: {
     fontSize: 18,
@@ -670,7 +820,7 @@ const styles = StyleSheet.create({
   // Instruction Bar
   instructionBar: {
     position: 'absolute',
-    top: 20, // Aligned with turn-by-turn directions in MapScreen
+    top: 20,
     left: 20,
     right: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -794,7 +944,7 @@ const styles = StyleSheet.create({
   // Mini Map Styles
   miniMapContainer: {
     position: 'absolute',
-    top: 70, // distanc from top of screen
+    top: 70,
     right: 20,
     width: 160,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -841,6 +991,11 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  miniMapProgress: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 9,
+    marginTop: 2,
   },
   routePath: {
     position: 'absolute',
@@ -890,61 +1045,65 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
   },
 
-  // Custom Arrow Styles
-  customArrowContainer: {
-    position: 'relative',
+  // Debug styles
+  debugContainer: {
+    marginTop: 10,
+    padding: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+
+  warningContainer: {
+    position: 'absolute',
+    top: 70,
+    left: 20,
+    width: 160,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    zIndex: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  warningCollapsed: {
     width: 50,
-    height: 50,
-    justifyContent: 'center',
+    height: 'auto',
+  },
+  warningHeader: {
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
-  arrowHead: {
-    position: 'absolute',
-    width: 0,
-    height: 0,
-    borderLeftWidth: 12,
-    borderRightWidth: 12,
-    borderBottomWidth: 20,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: '#FFFFFF',
-    top: 5,
-  },
-  arrowBody: {
-    position: 'absolute',
-    width: 8,
-    height: 25,
-    backgroundColor: '#FFFFFF',
-    top: 22,
-    borderRadius: 2,
-  },
-  arrowGlow: {
-    position: 'absolute',
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    top: -2,
-    left: -2,
-    zIndex: -1,
-  },
-  turnAroundContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  turnAroundCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255, 193, 7, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-  },
-  turnAroundText: {
-    fontSize: 24,
-    color: '#FFFFFF',
+  warningTitle: {
+    color: 'white',
+    fontSize: 10,
     fontWeight: 'bold',
+    flex: 1,
+  },
+  warningToggle: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  warningContent: {
+    padding: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  warningText: {
+    color: 'white',
+    fontSize: 10,
+    lineHeight: 14,
+  },
+  warningLabel: {
+    fontWeight: 'bold',
+    color: '#FFD700',
   },
 });

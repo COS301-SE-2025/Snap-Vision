@@ -2,11 +2,17 @@ import { useState, useEffect, useCallback } from 'react';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { POI } from './useMapPOI';
+import { useBadges } from '../context/BadgeContext';
+import AuthorizationService from '../security/AuthorizationService';
+import InputValidator from '../security/InputValidator';
+import perf from '@react-native-firebase/perf';
+
+const authService = AuthorizationService.getInstance();
 
 export interface CrowdReport {
   buildingId: string;
   buildingName: string;
-  density: 'low' | 'moderate' | 'high' | 'very-high';
+  density: 'empty' | 'light' | 'moderate' | 'crowded' | 'overcrowded';
   timestamp: any;
   reportedBy: string;
   centroid: {
@@ -49,6 +55,9 @@ export const useCrowdReports = (
   setStatus: (status: string) => void,
   setError: (error: string | null) => void,
 ): UseCrowdReportsReturn => {
+  // Badge context
+  const { unlock } = useBadges();
+
   // State
   const [showCrowdPopup, setShowCrowdPopup] = useState(false);
   const [selectedDensity, setSelectedDensity] = useState('moderate');
@@ -62,17 +71,42 @@ export const useCrowdReports = (
         setError('Please select a building and density level');
         return;
       }
+      const trace = await perf().newTrace('crowd_report_submission_latency');
+      await trace.start();
 
       try {
+        // Authorization check
+        if (!(await authService.canCreateCrowdReport())) {
+          throw new Error('Unauthorized: Cannot create crowd reports');
+        }
+
+        // Input validation
+        const validBuildingId = InputValidator.validateDocumentId(selectedPOI.id);
+        const validBuildingName = InputValidator.validateText(selectedPOI.name || '');
+        const validDensity = ['empty', 'light', 'moderate', 'crowded', 'overcrowded'].includes(
+          selectedDensity,
+        )
+          ? selectedDensity
+          : null;
+
+        if (!validBuildingId || !validBuildingName || !validDensity) {
+          throw new Error('Invalid report data');
+        }
+
+        const currentUser = auth().currentUser;
+        if (!currentUser) {
+          throw new Error('User not authenticated');
+        }
+
         // Save report to Firestore
         await firestore()
           .collection('crowdReports')
           .add({
-            buildingId: selectedPOI.id,
-            buildingName: selectedPOI.name,
-            density: selectedDensity,
+            buildingId: validBuildingId,
+            buildingName: validBuildingName,
+            density: validDensity,
             timestamp: firestore.FieldValue.serverTimestamp(),
-            reportedBy: auth().currentUser?.uid || 'anonymous',
+            reportedBy: currentUser.uid,
             centroid: selectedPOI.centroid,
             expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
           });
@@ -86,19 +120,34 @@ export const useCrowdReports = (
         setShowCrowdPopup(false);
         setStatus(`Crowd density reported for ${selectedPOI.name}`);
 
+        // Unlock the reported-crowd badge
+        try {
+          await unlock('reported-crowd');
+        } catch (badgeError) {
+          // Don't fail the whole operation if badge unlock fails
+          //console.warn('Failed to unlock reported-crowd badge:', badgeError);
+        }
+
         // Refresh crowd reports to get the latest data
         await fetchRecentCrowdReports();
       } catch (error) {
-        console.error('Error saving crowd report:', error);
+        ////consoleerror('Error saving crowd report:', error);
         setError('Failed to submit crowd report');
+      } finally {
+        await trace.stop();
       }
     },
-    [selectedDensity, isMapReady, webViewRef, setStatus, setError],
+    [selectedDensity, isMapReady, webViewRef, setStatus, setError, unlock],
   );
 
   // Fetch recent crowd reports from Firestore
   const fetchRecentCrowdReports = useCallback(async () => {
     try {
+      // Authorization check
+      if (!(await authService.canAccessCrowdReports())) {
+        throw new Error('Unauthorized: Cannot access crowd reports');
+      }
+
       const oneHourAgo = new Date();
       oneHourAgo.setHours(oneHourAgo.getHours() - 1);
 
@@ -130,7 +179,7 @@ export const useCrowdReports = (
         });
       }
     } catch (error) {
-      console.error('Error fetching crowd reports:', error);
+      ////consoleerror('Error fetching crowd reports:', error);
       // More informative error handling
       if (
         typeof error === 'object' &&

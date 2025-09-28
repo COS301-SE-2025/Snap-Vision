@@ -1,12 +1,10 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from '../screens/HomeScreen';
-import MapScreen from '../screens/MapScreen';
 import AchievementsScreen from '../screens/AchievementsScreen';
 import SettingsNavigator from './SettingsNavigator';
 import AdminNavigator from './AdminNavigator';
-import BuildingSelectionScreen from '../screens/BuildingSelectionScreen';
-import LiveTrackingScreen from '../screens/LiveTrackingScreen';
+import MapNavigator from './MapNavigator';
 import TabBarIcon from '../components/molecules/TabBarIcon';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
@@ -16,8 +14,8 @@ import EditorScreen from '../screens/EditorScreen';
 const Tab = createBottomTabNavigator();
 
 export default function BottomTabs() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const { role, loading } = useUser();
 
   if (loading) return null;
@@ -29,7 +27,7 @@ export default function BottomTabs() {
         tabBarIcon: ({ color, size }) => (
           <TabBarIcon routeName={route.name} color={color} size={size} />
         ),
-        tabBarActiveTintColor: colors.primary, // active tab icon + label
+        tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: isDark ? '#888' : '#888',
         tabBarStyle: {
           backgroundColor: colors.background,
@@ -39,7 +37,7 @@ export default function BottomTabs() {
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Map" component={MapScreen} />
+      <Tab.Screen name="Map" component={MapNavigator} />
       {/* <Tab.Screen
         name="Indoor"
         component={BuildingSelectionScreen}

@@ -1,4 +1,3 @@
-//Snap-Vision\snap-vision\src\components\organisms\NotificationSettingsContent.tsx
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import SettingsHeader from '../molecules/SettingsHeader';
@@ -7,8 +6,8 @@ import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
 export default function NotificationSettingsContent() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

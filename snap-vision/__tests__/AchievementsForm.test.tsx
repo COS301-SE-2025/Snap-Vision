@@ -5,7 +5,6 @@ import { useTheme } from '../src/theme/ThemeContext';
 import { getThemeColors } from '../src/theme';
 import { useBadges } from '../src/context/BadgeContext';
 import { BADGES, BadgeId } from '../src/types/badges';
-import { Challenge } from '../src/types/achievements';
 import { useNavigation } from '@react-navigation/native';
 
 jest.mock('@react-navigation/native', () => ({
@@ -56,17 +55,6 @@ jest.mock('../src/components/molecules/WelcomeHeader', () => {
   const { Text } = require('react-native');
   return function WelcomeHeader({ userName = 'User' }: { userName?: string }) {
     return <Text testID="welcome-header">Welcome {userName}</Text>;
-  };
-});
-
-jest.mock('../src/components/molecules/ChallengeItem', () => {
-  const { TouchableOpacity, Text } = require('react-native');
-  return function ChallengeItem({ challenge, onPress }: any) {
-    return (
-      <TouchableOpacity testID={`challenge-${challenge.id}`} onPress={() => onPress(challenge)}>
-        <Text>{challenge.title}</Text>
-      </TouchableOpacity>
-    );
   };
 });
 
@@ -149,6 +137,8 @@ describe('AchievementsForm', () => {
     isDark: false,
     theme: 'light' as const,
     toggleTheme: jest.fn(),
+    setTheme: jest.fn(),
+    isLoading: false,
   };
 
   const mockColors = {
@@ -167,6 +157,7 @@ describe('AchievementsForm', () => {
   };
 
   const mockBadgeState = {
+    badges: BADGES,
     points: 150,
     unlocked: new Set<BadgeId>(['first-navigation', 'speed-demon'] as unknown as BadgeId[]),
     justUnlocked: [] as BadgeId[],
@@ -180,31 +171,10 @@ describe('AchievementsForm', () => {
         purchasedAt: new Date().toISOString(),
       },
     ],
-    completedChallenges: new Set(['challenge-1']),
   };
-
-  const mockChallenges: Challenge[] = [
-    {
-      id: 'challenge-1',
-      title: 'Navigate 5 Times',
-      description: 'Complete 5 navigation tasks',
-      isCompleted: false,
-      icon: 'navigation',
-      type: 'current',
-    },
-    {
-      id: 'challenge-2',
-      title: 'Visit Campus Center',
-      description: 'Check in at the campus center',
-      isCompleted: false,
-      icon: 'location',
-      type: 'current',
-    },
-  ];
 
   const mockBadgeActions = {
     clearJustUnlocked: jest.fn(),
-    getChallenges: jest.fn(() => mockChallenges),
     unlockBadge: jest.fn(),
     addPoints: jest.fn(),
     incrementCheckIns: jest.fn(),
@@ -214,10 +184,8 @@ describe('AchievementsForm', () => {
     setNavigationStartTime: jest.fn(),
     setNavigationEndTime: jest.fn(),
     addPurchase: jest.fn(),
-    markChallengeComplete: jest.fn(),
     resetBadges: jest.fn(),
     maybeUnlockFastFinisher: jest.fn(),
-    completeChallenge: jest.fn(),
     loading: false,
     uid: 'test-user-123',
   };
@@ -232,38 +200,6 @@ describe('AchievementsForm', () => {
     });
   });
 
-  describe('Debug Component Structure', () => {
-    it('logs the component structure for debugging', () => {
-      const { debug, getByTestId } = render(
-        <TestWrapper>
-          <AchievementsForm />
-        </TestWrapper>,
-      );
-    });
-    it('does not log anything when justUnlocked is empty', () => {
-      const mockEmptyJustUnlockedState = {
-        ...mockBadgeState,
-        justUnlocked: [] as BadgeId[],
-      };
-
-      mockUseBadges.mockReturnValue({
-        state: mockEmptyJustUnlockedState,
-        ...mockBadgeActions,
-      });
-
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-
-      render(
-        <TestWrapper>
-          <AchievementsForm />
-        </TestWrapper>,
-      );
-
-      expect(consoleSpy).not.toHaveBeenCalled();
-      consoleSpy.mockRestore();
-    });
-  });
-
   describe('Component Rendering', () => {
     it('displays progress data correctly', () => {
       const { getByText, queryByText } = render(
@@ -275,7 +211,7 @@ describe('AchievementsForm', () => {
       try {
         expect(getByText('Points: 150')).toBeTruthy();
       } catch (error) {
-        console.log('Points: 150 not found, checking for alternative formats');
+        ////consolelog('Points: 150 not found, checking for alternative formats');
         const pointsText = queryByText(/150/) || queryByText(/Points/);
         if (pointsText) {
           expect(pointsText).toBeTruthy();
@@ -285,7 +221,7 @@ describe('AchievementsForm', () => {
       try {
         expect(getByText('Badges: 2')).toBeTruthy();
       } catch (error) {
-        console.log('Badges: 2 not found, checking for alternative formats');
+        ////consolelog('Badges: 2 not found, checking for alternative formats');
         const badgesText = queryByText(/Badges/) || queryByText(/2/);
         if (badgesText) {
           expect(badgesText).toBeTruthy();
@@ -295,7 +231,7 @@ describe('AchievementsForm', () => {
       try {
         expect(getByText('Check-ins: 5')).toBeTruthy();
       } catch (error) {
-        console.log('Check-ins: 5 not found, checking for alternative formats');
+        ////consolelog('Check-ins: 5 not found, checking for alternative formats');
         const checkInsText = queryByText(/Check-ins/) || queryByText(/5/);
         if (checkInsText) {
           expect(checkInsText).toBeTruthy();
@@ -313,7 +249,7 @@ describe('AchievementsForm', () => {
       try {
         expect(getByText('Unlocked Badges: 2')).toBeTruthy();
       } catch (error) {
-        console.log('Unlocked Badges: 2 not found, checking for alternative');
+        ////consolelog('Unlocked Badges: 2 not found, checking for alternative');
         const unlockedText = queryByText(/Unlocked/) || queryByText(/2/);
         if (unlockedText) {
           expect(unlockedText).toBeTruthy();
@@ -323,7 +259,7 @@ describe('AchievementsForm', () => {
       try {
         expect(getByTestId('badge-first-navigation')).toBeTruthy();
       } catch (error) {
-        console.log('badge-first-navigation not found, checking for alternative');
+        ////consolelog('badge-first-navigation not found, checking for alternative');
         const badgeElement = queryByTestId('first-navigation') || queryByText('first-navigation');
         if (badgeElement) {
           expect(badgeElement).toBeTruthy();
@@ -333,51 +269,11 @@ describe('AchievementsForm', () => {
       try {
         expect(getByTestId('badge-speed-demon')).toBeTruthy();
       } catch (error) {
-        console.log('badge-speed-demon not found, checking for alternative');
+        ////consolelog('badge-speed-demon not found, checking for alternative');
         const badgeElement = queryByTestId('speed-demon') || queryByText('speed-demon');
         if (badgeElement) {
           expect(badgeElement).toBeTruthy();
         }
-      }
-    });
-
-    it('displays current challenges correctly', () => {
-      const { getByTestId, getByText, queryByTestId, queryByText } = render(
-        <TestWrapper>
-          <AchievementsForm />
-        </TestWrapper>,
-      );
-
-      try {
-        expect(getByTestId('challenge-challenge-1')).toBeTruthy();
-      } catch (error) {
-        console.log('challenge-challenge-1 not found, checking for alternative');
-        const challengeElement = queryByTestId('challenge-1') || queryByText('Navigate 5 Times');
-        if (challengeElement) {
-          expect(challengeElement).toBeTruthy();
-        }
-      }
-
-      try {
-        expect(getByTestId('challenge-challenge-2')).toBeTruthy();
-      } catch (error) {
-        console.log('challenge-challenge-2 not found, checking for alternative');
-        const challengeElement = queryByTestId('challenge-2') || queryByText('Visit Campus Center');
-        if (challengeElement) {
-          expect(challengeElement).toBeTruthy();
-        }
-      }
-
-      try {
-        expect(getByText('Navigate 5 Times')).toBeTruthy();
-      } catch (error) {
-        console.log('Navigate 5 Times text not found');
-      }
-
-      try {
-        expect(getByText('Visit Campus Center')).toBeTruthy();
-      } catch (error) {
-        console.log('Visit Campus Center text not found');
       }
     });
   });
@@ -391,11 +287,11 @@ describe('AchievementsForm', () => {
       );
 
       expect(mockUseTheme).toHaveBeenCalled();
-      expect(mockGetThemeColors).toHaveBeenCalledWith(false);
+      expect(mockGetThemeColors).toHaveBeenCalledWith('light');
     });
 
     it('applies dark theme colors correctly', () => {
-      const darkTheme = { ...mockTheme, isDark: true };
+      const darkTheme = { ...mockTheme, isDark: true, theme: 'dark' };
       const darkColors = {
         ...mockColors,
         background: '#1e1e1e',
@@ -403,7 +299,7 @@ describe('AchievementsForm', () => {
         primary: '#0A84FF',
       };
 
-      mockUseTheme.mockReturnValue(darkTheme);
+      mockUseTheme.mockReturnValue(darkTheme as any);
       mockGetThemeColors.mockReturnValue(darkColors);
 
       render(
@@ -412,7 +308,7 @@ describe('AchievementsForm', () => {
         </TestWrapper>,
       );
 
-      expect(mockGetThemeColors).toHaveBeenCalledWith(true);
+      expect(mockGetThemeColors).toHaveBeenCalledWith('dark');
     });
   });
 
@@ -425,14 +321,12 @@ describe('AchievementsForm', () => {
       );
 
       expect(mockUseBadges).toHaveBeenCalled();
-      expect(mockBadgeActions.getChallenges).toHaveBeenCalled();
     });
 
     it('handles empty unlocked badges', () => {
       const emptyBadgeState = {
         ...mockBadgeState,
         unlocked: new Set<BadgeId>(),
-        completedChallenges: new Set<string>(),
       };
 
       mockUseBadges.mockReturnValue({
@@ -463,7 +357,14 @@ describe('AchievementsForm', () => {
       };
 
       mockUseBadges.mockReturnValue({
-        state: manyBadgesState,
+        state: {
+          ...mockBadgeState,
+          unlocked: new Set<BadgeId>([
+            'first-navigation',
+            'speed-demon',
+            'explorer',
+          ] as unknown as BadgeId[]),
+        },
         ...mockBadgeActions,
       });
 
@@ -485,7 +386,10 @@ describe('AchievementsForm', () => {
       };
 
       mockUseBadges.mockReturnValue({
-        state: mockJustUnlockedState,
+        state: {
+          ...mockBadgeState,
+          justUnlocked: ['first-navigation', 'speed-demon'] as unknown as BadgeId[],
+        },
         ...mockBadgeActions,
       });
 
@@ -503,7 +407,10 @@ describe('AchievementsForm', () => {
       };
 
       mockUseBadges.mockReturnValue({
-        state: emptyState,
+        state: {
+          ...mockBadgeState,
+          justUnlocked: [] as BadgeId[],
+        },
         ...mockBadgeActions,
       });
 
@@ -514,46 +421,6 @@ describe('AchievementsForm', () => {
       );
 
       expect(mockUseBadges).toHaveBeenCalled();
-    });
-  });
-
-  describe('Challenge Interactions', () => {
-    it('handles challenge press correctly', () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-
-      const { queryByTestId } = render(
-        <TestWrapper>
-          <AchievementsForm />
-        </TestWrapper>,
-      );
-
-      const challengeElement =
-        queryByTestId('challenge-challenge-1') || queryByTestId('challenge-1');
-
-      if (challengeElement) {
-        fireEvent.press(challengeElement);
-        expect(consoleSpy).toHaveBeenCalledWith('Challenge Navigate 5 Times pressed');
-      } else {
-        console.log('Challenge element not found, skipping press test');
-      }
-
-      consoleSpy.mockRestore();
-    });
-
-    it('handles empty challenges list', () => {
-      mockBadgeActions.getChallenges.mockReturnValue([]);
-
-      const { queryByText, queryByTestId } = render(
-        <TestWrapper>
-          <AchievementsForm />
-        </TestWrapper>,
-      );
-
-      const challengesText = queryByText('Current Challenges') || queryByText(/Challenges/);
-      expect(challengesText || true).toBeTruthy();
-
-      expect(queryByTestId('challenge-challenge-1')).toBeNull();
-      expect(queryByTestId('challenge-challenge-2')).toBeNull();
     });
   });
 
@@ -577,7 +444,9 @@ describe('AchievementsForm', () => {
         isDark: false,
         theme: 'light',
         toggleTheme: jest.fn(),
-      });
+        setTheme: jest.fn(),
+        isLoading: false,
+      } as any);
 
       const { queryByText } = render(
         <TestWrapper>
@@ -591,13 +460,13 @@ describe('AchievementsForm', () => {
     it('renders correctly with no data', () => {
       mockUseBadges.mockReturnValue({
         state: {
+          badges: BADGES,
           points: 0,
           unlocked: new Set<BadgeId>(),
           justUnlocked: [],
           checkIns: 0,
           routesCompleted: 0,
           purchases: [],
-          completedChallenges: new Set<string>(),
         },
         ...mockBadgeActions,
       });
@@ -612,23 +481,6 @@ describe('AchievementsForm', () => {
       expect(queryByText('Badges: 0')).toBeTruthy();
       expect(queryByText('Check-ins: 0')).toBeTruthy();
       expect(queryByTestId('badges-section')).toBeTruthy();
-    });
-
-    it('handles challenge press with missing data', () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-
-      mockBadgeActions.getChallenges.mockReturnValue([]);
-
-      const { queryByTestId } = render(
-        <TestWrapper>
-          <AchievementsForm />
-        </TestWrapper>,
-      );
-
-      const challengeElement = queryByTestId('challenge-challenge-1');
-      expect(challengeElement).toBeNull();
-
-      consoleSpy.mockRestore();
     });
   });
 
@@ -652,23 +504,6 @@ describe('AchievementsForm', () => {
 
       expect(queryByText('Navigation Boost')).toBeNull();
       expect(queryByText('Speed Boost')).toBeNull();
-    });
-  });
-
-  describe('Dynamic Challenges Section', () => {
-    it('handles empty challenges gracefully', () => {
-      mockBadgeActions.getChallenges.mockReturnValue([]);
-
-      const { queryByText, queryByTestId } = render(
-        <TestWrapper>
-          <AchievementsForm />
-        </TestWrapper>,
-      );
-
-      expect(queryByText('Current Challenges')).toBeTruthy();
-      expect(queryByText('Complete these to earn points!')).toBeTruthy();
-      expect(queryByTestId('challenge-challenge-1')).toBeNull();
-      expect(queryByTestId('challenge-challenge-2')).toBeNull();
     });
   });
 

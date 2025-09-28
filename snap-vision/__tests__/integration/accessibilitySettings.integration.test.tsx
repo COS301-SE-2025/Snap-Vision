@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import AccessibilitySettingsContent from '../../src/components/organisms/AccessibilitySettingsContent';
 import { AccessibilityProvider } from '../../src/context/AccessibilityContext';
+import { ThemeProvider } from '../../src/theme/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 //mock asyncStorage
@@ -43,6 +44,35 @@ jest.mock('../../src/theme', () => ({
   })),
 }));
 
+jest.mock('../../src/theme/ThemeContext', () => {
+  const React = require('react');
+
+  let currentTheme = 'light';
+
+  const ThemeContext = React.createContext(null);
+
+  return {
+    ThemeProvider: ({ children }: any) => {
+      const contextValue = {
+        theme: currentTheme,
+        isDark: currentTheme === 'dark',
+        toggleTheme: jest.fn(),
+        setTheme: jest.fn(),
+        isLoading: false,
+      };
+
+      return React.createElement(ThemeContext.Provider, { value: contextValue }, children);
+    },
+    useTheme: () => ({
+      theme: currentTheme,
+      isDark: currentTheme === 'dark',
+      toggleTheme: jest.fn(),
+      setTheme: jest.fn(),
+      isLoading: false,
+    }),
+  };
+});
+
 jest.mock('../../src/components/molecules/SettingsHeader', () => {
   const React = require('react');
   const { View, Text } = require('react-native');
@@ -70,12 +100,13 @@ jest.mock('../../src/components/molecules/SettingsToggleItem', () => {
     onToggle,
     testID,
   }: any) {
+    const labelSlug = label.replace(/\s+/g, '-').toLowerCase();
     return (
       <View testID={testID || 'settings-toggle-item'}>
-        <Text testID="toggle-label">{label}</Text>
-        <Text testID="toggle-description">{description}</Text>
-        <TouchableOpacity testID="toggle-button" onPress={() => onToggle(!value)}>
-          <Text testID="toggle-value">{value ? 'ON' : 'OFF'}</Text>
+        <Text testID={`toggle-label-${labelSlug}`}>{label}</Text>
+        <Text testID={`toggle-description-${labelSlug}`}>{description}</Text>
+        <TouchableOpacity testID={`toggle-button-${labelSlug}`} onPress={() => onToggle(!value)}>
+          <Text testID={`toggle-value-${labelSlug}`}>{value ? 'ON' : 'OFF'}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -84,10 +115,16 @@ jest.mock('../../src/components/molecules/SettingsToggleItem', () => {
 
 const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
 
-const TestComponent = ({ isDark = false }: { isDark?: boolean }) => (
-  <AccessibilityProvider>
-    <AccessibilitySettingsContent isDark={isDark} />
-  </AccessibilityProvider>
+const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+  <ThemeProvider>
+    <AccessibilityProvider>{children}</AccessibilityProvider>
+  </ThemeProvider>
+);
+
+const TestComponent = () => (
+  <TestWrapper>
+    <AccessibilitySettingsContent />
+  </TestWrapper>
 );
 
 describe('AccessibilitySettingsContent Integration Tests', () => {
@@ -107,13 +144,11 @@ describe('AccessibilitySettingsContent Integration Tests', () => {
       expect(screen.queryByText('Loading settings...')).toBeNull();
     });
 
-    expect(screen.getByTestId('toggle-value')).toHaveTextContent('ON');
+    expect(screen.getByTestId('toggle-value-haptic-feedback')).toHaveTextContent('ON');
   });
 
   it('should handle AsyncStorage errors gracefully', async () => {
     mockAsyncStorage.getItem.mockRejectedValue(new Error('Storage error'));
-
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
     render(<TestComponent />);
 
@@ -122,29 +157,25 @@ describe('AccessibilitySettingsContent Integration Tests', () => {
     });
 
     expect(screen.getByText('Touch & Vibration')).toBeTruthy();
-    expect(consoleSpy).toHaveBeenCalled();
-
-    consoleSpy.mockRestore();
   });
 
   it('should show error when AsyncStorage write fails', async () => {
     mockAsyncStorage.getItem.mockResolvedValue('false');
     mockAsyncStorage.setItem.mockRejectedValue(new Error('Write failed'));
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
     render(<TestComponent />);
 
     await waitFor(() => {
       expect(screen.queryByText('Loading settings...')).toBeNull();
     });
 
-    const toggleButton = screen.getByTestId('toggle-button');
+    const toggleButton = screen.getByTestId('toggle-button-haptic-feedback');
     fireEvent.press(toggleButton);
 
     await waitFor(() => {
       expect(mockStandardPopup).toHaveBeenCalledWith({
         visible: true,
         title: 'Error',
-        message: 'Failed to save haptic feedback setting. Please try again.',
+        message: 'Failed to save accessibility setting. Please try again.',
         onConfirm: expect.any(Function),
         confirmText: 'OK',
         showCancel: false,
@@ -161,9 +192,9 @@ describe('AccessibilitySettingsContent Integration Tests', () => {
     mockAsyncStorage.getItem.mockResolvedValue('false');
 
     render(
-      <AccessibilityProvider>
-        <AccessibilitySettingsContent isDark={false} />
-      </AccessibilityProvider>,
+      <TestWrapper>
+        <AccessibilitySettingsContent />
+      </TestWrapper>,
     );
 
     await waitFor(() => {

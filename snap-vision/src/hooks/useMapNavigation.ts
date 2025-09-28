@@ -1,11 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { PermissionsAndroid } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
-import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import Tts from 'react-native-tts';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { addRecentlyVisitedPOI, Visit } from '../services/firebase/recentlyVService';
+import perf from '@react-native-firebase/perf';
 
 interface LocationState {
   latitude: number;
@@ -74,6 +74,63 @@ function getDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 }
 
+// GPS smoothing function to reduce location jumping
+function smoothGPSLocation(
+  newLocation: { latitude: number; longitude: number },
+  history: Array<{ lat: number; lon: number; timestamp: number }>,
+  lastSmoothed: { latitude: number; longitude: number } | null,
+): { latitude: number; longitude: number } {
+  const now = Date.now();
+
+  // Add to history
+  history.push({ lat: newLocation.latitude, lon: newLocation.longitude, timestamp: now });
+
+  // Keep only last 10 seconds of data
+  const cutoff = now - 10000;
+  while (history.length > 0 && history[0].timestamp < cutoff) {
+    history.shift();
+  }
+
+  // If we have previous smoothed location, check if new reading is reasonable
+  if (lastSmoothed && history.length > 1) {
+    const distanceFromPrevious = getDistanceMeters(
+      lastSmoothed.latitude,
+      lastSmoothed.longitude,
+      newLocation.latitude,
+      newLocation.longitude,
+    );
+
+    // If GPS jumped more than 50m, use weighted average with previous location
+    if (distanceFromPrevious > 50) {
+      return {
+        latitude: lastSmoothed.latitude * 0.7 + newLocation.latitude * 0.3,
+        longitude: lastSmoothed.longitude * 0.7 + newLocation.longitude * 0.3,
+      };
+    }
+  }
+
+  // Use weighted average of recent locations
+  if (history.length >= 3) {
+    let totalWeight = 0;
+    let weightedLat = 0;
+    let weightedLon = 0;
+
+    history.forEach((loc, index) => {
+      const weight = index + 1; // More recent = higher weight
+      weightedLat += loc.lat * weight;
+      weightedLon += loc.lon * weight;
+      totalWeight += weight;
+    });
+
+    return {
+      latitude: weightedLat / totalWeight,
+      longitude: weightedLon / totalWeight,
+    };
+  }
+
+  return newLocation;
+}
+
 const hapticOptions = {
   enableVibrateFallback: true,
   ignoreAndroidSystemSettings: false,
@@ -112,6 +169,8 @@ export const useMapNavigation = (
   // Navigation route reference
   const lastRoute = useRef<any[]>([]);
   const navigationWatchId = useRef<number | null>(null);
+  const locationHistory = useRef<Array<{ lat: number; lon: number; timestamp: number }>>([]);
+  const lastSmoothedLocation = useRef<{ latitude: number; longitude: number } | null>(null);
 
   const fetchRoute = async (destCoords: [number, number]) => {
     if (!currentLocation) {
@@ -119,6 +178,8 @@ export const useMapNavigation = (
       return;
     }
 
+    const trace = await perf().newTrace('route_fetch_latency');
+    await trace.start();
     setIsRouteLoading(true);
     setStatus('Calculating route...');
 
@@ -166,10 +227,11 @@ export const useMapNavigation = (
       // Reset progress
       setRouteProgress(0);
     } catch (error) {
-      console.error('Route fetch error:', error);
+      ////consoleerror('Route fetch error:', error);
       setError('Failed to fetch or draw route');
     } finally {
       setIsRouteLoading(false);
+      await trace.stop();
     }
   };
 
@@ -236,9 +298,9 @@ export const useMapNavigation = (
 
   // Destination reached function with haptic feedback
   const destinationReached = async () => {
-    if (!isNavigating || hasReachedDestination) return;
-
-    console.log('🎯 Destination reached - triggering once');
+    if (hasReachedDestination) {
+      return;
+    }
 
     // Set the flag immediately to prevent re-entry
     setHasReachedDestination(true);
@@ -258,17 +320,16 @@ export const useMapNavigation = (
 
       const userId = auth().currentUser?.uid;
       if (userId && selectedPOI) {
-        const visit: Visit = {
+        const visit = {
           userId,
           poiId: selectedPOI.id,
           name: selectedPOI.name,
-          timestamp: firestore.Timestamp.now(),
-          centroid: selectedPOI.centroid,
+          location: selectedPOI.location,
         };
         await addRecentlyVisitedPOI(visit);
       }
     } catch (error) {
-      console.error('Failed to record visit:', error);
+      ////consoleerror('Failed to record visit:', error);
     }
 
     setStatus('You have reached your destination!');
@@ -342,7 +403,7 @@ export const useMapNavigation = (
 
       setStatus(`Route updated! ${walkedFormatted} progress preserved`);
     } catch (error) {
-      console.error('Route fetch error:', error);
+      ////consoleerror('Route fetch error:', error);
       setError('Failed to fetch or draw route');
     } finally {
       setIsRouteLoading(false);
@@ -357,13 +418,26 @@ export const useMapNavigation = (
         return;
       }
 
+      // Apply GPS smoothing
+      const rawLocation = { latitude, longitude };
+      const smoothedLocation = smoothGPSLocation(
+        rawLocation,
+        locationHistory.current,
+        lastSmoothedLocation.current,
+      );
+      lastSmoothedLocation.current = smoothedLocation;
+
+      // Use smoothed coordinates for all calculations
+      const smoothedLat = smoothedLocation.latitude;
+      const smoothedLon = smoothedLocation.longitude;
+
       // Calculate distance walked from start location (never decreases)
       if (startLocation && isNavigating) {
         const totalWalked = getDistanceMeters(
           startLocation.latitude,
           startLocation.longitude,
-          latitude,
-          longitude,
+          smoothedLat,
+          smoothedLon,
         );
 
         // Only update if we've walked further (prevents decrease on rerouting)
@@ -372,41 +446,73 @@ export const useMapNavigation = (
         }
       }
 
-      // Find closest point on the route
+      // Find closest point on the route with improved logic to prevent backtracking
       let minDist = Infinity;
       let closestPointIndex = 0;
+      let currentProgressIndex = Math.max(
+        0,
+        Math.floor((routeProgress / 100) * (lastRoute.current.length - 1)),
+      );
 
-      for (let i = 0; i < lastRoute.current.length; i++) {
+      // Search in a wider range around current progress to better detect off-route situations
+      const searchStart = Math.max(0, currentProgressIndex - 10);
+      const searchEnd = Math.min(lastRoute.current.length, currentProgressIndex + 25);
+
+      for (let i = searchStart; i < searchEnd; i++) {
         const routePoint = lastRoute.current[i];
 
         // Add safety check for each route point
         if (!Array.isArray(routePoint) || routePoint.length < 2) {
-          console.warn('Invalid route point at index', i, routePoint);
+          ////consolewarn('Invalid route point at index', i, routePoint);
           continue;
         }
 
         const distance = getDistanceMeters(
-          latitude,
-          longitude,
+          smoothedLat,
+          smoothedLon,
           routePoint[1], // Latitude
           routePoint[0], // Longitude
         );
 
-        if (distance < minDist) {
-          minDist = distance;
+        // Prefer points ahead in the route when distances are similar
+        const progressBias = i >= currentProgressIndex ? 0 : distance * 0.5; // Add penalty for backward points
+        const adjustedDistance = distance + progressBias;
+
+        if (adjustedDistance < minDist) {
+          minDist = distance; // Use original distance for threshold checks
           closestPointIndex = i;
         }
       }
 
-      // Check for route deviation and automatic rerouting
-      if (minDist > 30 && !isRouteLoading) {
+      // Fallback: if no point found in range, search entire route with reduced threshold
+      if (minDist > 25) {
+        // Reduced threshold from 50m to 25m for better detection
+        for (let i = 0; i < lastRoute.current.length; i++) {
+          const routePoint = lastRoute.current[i];
+          if (!Array.isArray(routePoint) || routePoint.length < 2) continue;
+
+          const distance = getDistanceMeters(
+            smoothedLat,
+            smoothedLon,
+            routePoint[1],
+            routePoint[0],
+          );
+
+          if (distance < minDist) {
+            minDist = distance;
+            closestPointIndex = i;
+          }
+        }
+      }
+
+      // Check for route deviation and automatic rerouting - reduced threshold for more responsive rerouting
+      if (minDist > 15 && !isRouteLoading) {
         setStatus('Re-routing...');
         rerouteFromCurrentLocation();
         return; // Exit early to prevent further processing during reroute
       }
 
       // Calculate a more precise progress
-      // Consider not just the closest point, but also the percentage between points
       let progressValue;
 
       if (closestPointIndex < lastRoute.current.length - 1) {
@@ -416,14 +522,14 @@ export const useMapNavigation = (
 
         // Distance from user to closest point
         const distToClosest = getDistanceMeters(
-          latitude,
-          longitude,
+          smoothedLat,
+          smoothedLon,
           currentPoint[1],
           currentPoint[0],
         );
 
         // Distance from user to next point
-        const distToNext = getDistanceMeters(latitude, longitude, nextPoint[1], nextPoint[0]);
+        const distToNext = getDistanceMeters(smoothedLat, smoothedLon, nextPoint[1], nextPoint[0]);
 
         // Distance between closest and next point
         const segmentLength = getDistanceMeters(
@@ -474,7 +580,7 @@ export const useMapNavigation = (
           }
 
           const [lon, lat] = stepCoordinate;
-          const dist = getDistanceMeters(latitude, longitude, lat, lon);
+          const dist = getDistanceMeters(smoothedLat, smoothedLon, lat, lon);
           if (dist < minDist) {
             minDist = dist;
             stepIndex = i;
@@ -492,8 +598,8 @@ export const useMapNavigation = (
       // Check if we've reached the destination point
       const destinationPoint = lastRoute.current[lastRoute.current.length - 1];
       const distanceToEnd = getDistanceMeters(
-        latitude,
-        longitude,
+        smoothedLat,
+        smoothedLon,
         destinationPoint[1],
         destinationPoint[0],
       );
@@ -526,8 +632,10 @@ export const useMapNavigation = (
 
       // Check destination arrival based on either:
       // 1. Progress is 100%
-      // 2. Distance to destination is less than 3 meters
-      if ((newProgress >= 100 || distanceToEnd < 3) && isNavigating && !hasReachedDestination) {
+      // 2. Distance to destination is less than 8 meters
+
+      // Fix: Remove isNavigating requirement since it's not working properly but location tracking is active
+      if ((newProgress >= 100 || distanceToEnd < 8) && !hasReachedDestination) {
         destinationReached();
       }
     },
@@ -544,7 +652,7 @@ export const useMapNavigation = (
     ],
   );
 
-  // Navigation-specific tracking functions (self-contained)
+  // Navigation-specific tracking functions
   const startNavigationTracking = useCallback(async () => {
     // Stop any existing tracking
     if (navigationWatchId.current) {
@@ -572,15 +680,14 @@ export const useMapNavigation = (
           },
           {
             enableHighAccuracy: true,
-            distanceFilter: 3, // Update every 3 meters during navigation
-            interval: 1000, // Update every second
-            timeout: 25000,
-            maximumAge: 5000,
+            distanceFilter: 2, // Update every 2 meters during navigation
+            interval: 800, // Update every 0.8 seconds
+            timeout: 20000,
+            maximumAge: 3000, // Use fresher GPS data
           },
         );
       }
     } catch (err) {
-      console.error('❌ Navigation tracking setup failed:', err);
       setError('Failed to setup navigation tracking');
     }
   }, [updateNavigationProgress, setError]);

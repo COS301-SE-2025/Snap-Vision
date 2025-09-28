@@ -72,6 +72,39 @@ jest.mock('react-native-toast-message', () => ({
   show: jest.fn(),
 }));
 
+// mock toast config defaults for tests
+jest.mock('../src/toastConfig', () => ({
+  getToastDefaultProps: (isDark: boolean) =>
+    isDark
+      ? {
+          backgroundColor: '#0B1220',
+          borderColor: '#1E88E5',
+          textColor: '#E0E7FF',
+          iconColor: '#90CAF9',
+        }
+      : {
+          backgroundColor: '#F2F7FF',
+          borderColor: '#007AFF',
+          textColor: '#007AFF',
+          iconColor: '#007AFF',
+        },
+  toastConfig: {
+    default: (props: any) => null,
+  },
+  makeToastPayload: (text1: string, text2?: string, overrideProps: any = {}) => ({
+    type: 'default',
+    text1,
+    text2,
+    props: {
+      backgroundColor: '#F2F7FF',
+      borderColor: '#007AFF',
+      textColor: '#007AFF',
+      iconColor: '#007AFF',
+      ...overrideProps,
+    },
+  }),
+}));
+
 describe('LoginForm', () => {
   beforeAll(() => {
     jest.useFakeTimers();
@@ -144,11 +177,17 @@ describe('LoginForm', () => {
     jest.advanceTimersByTime(500);
 
     await waitFor(() => {
-      expect(Toast.show).toHaveBeenCalledWith(
-        expect.objectContaining({
-          text1: 'Login Successful!',
-        }),
-      );
+      expect(Toast.show).toHaveBeenCalledWith({
+        type: 'default',
+        text1: 'Login Successful!',
+        text2: 'Welcome back!',
+        props: {
+          backgroundColor: '#F2F7FF',
+          borderColor: '#007AFF',
+          textColor: '#007AFF',
+          iconColor: '#007AFF',
+        },
+      });
       expect(mockReplace).toHaveBeenCalledWith('Tabs');
     });
   });

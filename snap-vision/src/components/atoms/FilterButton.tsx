@@ -12,8 +12,8 @@ interface Props {
 }
 
 export default function FilterButton({ title, iconName, isSelected, onPress }: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const selectedBackground = colors.secondary;
   const selectedText = '#fff';

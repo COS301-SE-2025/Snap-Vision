@@ -1,4 +1,3 @@
-//C:\Users\bahiy\snapvision\Snap-Vision\snap-vision\src\screens\AdminScreen.tsx
 import React from 'react';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
@@ -11,13 +10,14 @@ type EditorStackParamList = {
   AdminEditFloorplans: undefined;
   //AdminSettings: undefined;
   AdminFloorplanEditor: undefined;
+  AdminQRCodes: undefined;
 };
 
 type EditorNavigationProp = NavigationProp<EditorStackParamList>;
 
 const EditorScreen = () => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const navigation = useNavigation<EditorNavigationProp>();
 
   const handleLoadFloorplans = () => {
@@ -26,15 +26,18 @@ const EditorScreen = () => {
   const handleEditFloorplans = () => {
     navigation.navigate('AdminEditFloorplans');
   };
-  // const handleSettings = () => {
-  //   navigation.navigate('AdminSettings');
-  // };
+
+  const handleManageQRCodes = () => {
+    navigation.navigate('AdminQRCodes');
+  };
 
   return (
     <AdminContent
       colors={colors}
       onLoadFloorplans={handleLoadFloorplans}
       onEditFloorplans={handleEditFloorplans}
+      onFloorplanEditor={handleManageQRCodes}
+      onManageQRCodes={handleManageQRCodes}
       //onSettings={handleSettings}
     />
   );

@@ -1,4 +1,3 @@
-//C:\Users\bahiy\snapvision\Snap-Vision\snap-vision\src\components\organisms\AdminContent.tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import AppButton from '../atoms/AppButton';
@@ -28,32 +27,38 @@ export default function AdminScreenContent({
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Text
         style={{
-          fontSize: 56,
-          fontFamily: 'PermanentMarkerRegular',
+          fontSize: 72,
+          fontFamily: 'ChicleRegular',
           color: colors.primary,
           textAlign: 'center',
-          marginBottom: 40,
-          transform: [{ rotate: '-3deg' }],
+          marginBottom: 3,
+          // transform: [{ rotate: '-3deg' }],
+          textShadowColor: colors.secondary,
+          textShadowOffset: { width: 1, height: 1 },
+          textShadowRadius: 1,
         }}
       >
-        ADMIN
+        {' ADMIN '}
       </Text>
       <Text
         style={{
-          fontSize: 52,
-          fontFamily: 'PermanentMarkerRegular',
+          fontSize: 72,
+          fontFamily: 'ChicleRegular',
           color: colors.primary,
           textAlign: 'center',
           marginBottom: 40,
-          transform: [{ rotate: '-3deg' }],
+          // transform: [{ rotate: '-3deg' }],
+          textShadowColor: colors.secondary,
+          textShadowOffset: { width: 1, height: 1 },
+          textShadowRadius: 1,
         }}
       >
-        DASHBOARD
+        {' DASHBOARD '}
       </Text>
       <View style={styles.buttonContainer}>
         <AppButton title="Load Floorplans" onPress={onLoadFloorplans} />
         <AppButton title="Edit Floorplans" onPress={onEditFloorplans} />
-        <AppButton title="Indoor Positioning" onPress={onIndoorPositioning} />
+        {/* <AppButton title="Indoor Positioning" onPress={onIndoorPositioning} /> */}
         <AppButton title="Manage QR Codes" onPress={onManageQRCodes} />
         <AppButton title="Manage Users" onPress={onManageUsers} />
       </View>

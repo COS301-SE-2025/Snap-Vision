@@ -1,67 +1,91 @@
-// src/services/badgeService.ts
 import firestore from '@react-native-firebase/firestore';
+import { Badge } from '../types/badges';
+import AuthorizationService from '../security/AuthorizationService';
+import InputValidator from '../security/InputValidator';
 
 const db = firestore();
+const authService = AuthorizationService.getInstance();
 
 export async function unlockBadgeForUser(userId: string, badgeId: string) {
+  const validUserId = InputValidator.validateUserId(userId);
+  const validBadgeId = InputValidator.validateDocumentId(badgeId);
+
+  if (!validUserId || !validBadgeId) {
+    throw new Error('Invalid user ID or badge ID');
+  }
+
+  // Authorization check
+  if (!(await authService.canAccessBadgeData(validUserId))) {
+    throw new Error('Unauthorized: Cannot access badge data');
+  }
+
   const POINT_INCREMENT = 50;
   const POINTS_MILESTONE = 150;
   const MILESTONE_BADGE = 'points-150';
 
-  const userRef = db.collection('users').doc(userId);
+  const userRef = db.collection('users').doc(validUserId);
 
   try {
     await db.runTransaction(async (transaction) => {
       const userDoc = await transaction.get(userRef);
-
       if (!userDoc.exists) {
-        const startingPoints = POINT_INCREMENT;
-        const badges = [badgeId];
-
-        if (startingPoints >= POINTS_MILESTONE && !badges.includes(MILESTONE_BADGE)) {
-          badges.push(MILESTONE_BADGE);
-        }
-
+        // Create new user with initial data
         transaction.set(userRef, {
-          badges,
-          points: startingPoints,
+          badges: [badgeId],
+          points: POINT_INCREMENT,
           checkIns: 0,
           routesCompleted: 0,
         });
-        return;
+      } else {
+        const data = userDoc.data();
+        const badges = data?.badges ? [...data.badges] : [];
+        let points = data?.points || 0;
+
+        if (!badges.includes(badgeId)) {
+          badges.push(badgeId);
+          points += POINT_INCREMENT;
+        }
+
+        if (points >= POINTS_MILESTONE && !badges.includes(MILESTONE_BADGE)) {
+          badges.push(MILESTONE_BADGE);
+        }
+
+        transaction.update(userRef, {
+          badges,
+          points,
+        });
       }
-
-      const data = userDoc.data();
-      const badges = data?.badges ? [...data.badges] : [];
-      let points = data?.points || 0;
-
-      if (!badges.includes(badgeId)) {
-        badges.push(badgeId);
-        points += POINT_INCREMENT;
-      }
-
-      if (points >= POINTS_MILESTONE && !badges.includes(MILESTONE_BADGE)) {
-        badges.push(MILESTONE_BADGE);
-      }
-
-      transaction.update(userRef, {
-        badges,
-        points,
-      });
     });
   } catch (error) {
-    console.error(`Error unlocking badge ${badgeId} for user ${userId}:`, error);
+    //console.error(`Error unlocking badge ${validBadgeId} for user ${validUserId}:`, error);
     throw error;
   }
 }
 
 export async function getUserBadgeData(userId: string) {
-  const userRef = db.collection('users').doc(userId);
+  const validUserId = InputValidator.validateUserId(userId);
+  if (!validUserId) {
+    throw new Error('Invalid user ID');
+  }
+
+  // Authorization check
+  if (!(await authService.canAccessBadgeData(validUserId))) {
+    throw new Error('Unauthorized: Cannot access badge data');
+  }
+
+  const userRef = db.collection('users').doc(validUserId);
   const userDoc = await userRef.get();
 
   if (!userDoc.exists) return null;
 
-  return userDoc.data();
+  const data = userDoc.data();
+  return {
+    badges: InputValidator.validateStringArray(data?.badges) || [],
+    routesCompleted: InputValidator.validateNumber(data?.routesCompleted, 0) || 0,
+    achievements: InputValidator.validateStringArray(data?.achievements) || [],
+    points: InputValidator.validateNumber(data?.points, 0) || 0,
+    checkIns: InputValidator.validateNumber(data?.checkIns, 0) || 0,
+  };
 }
 
 export async function purchaseItemForUser(userId: string, item: any) {
@@ -84,10 +108,28 @@ export async function purchaseItemForUser(userId: string, item: any) {
     const updatedPoints = currentPoints - item.cost;
     const previousPurchases = userData?.purchases || [];
 
-    const newPurchase = {
-      ...item,
+    const newPurchase: any = {
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      icon: item.icon,
+      cost: item.cost,
       boughtAt: firestore.FieldValue.serverTimestamp(),
     };
+
+    // Only add optional fields if they are defined to avoid Firestore undefined errors
+    if (item.itemType !== undefined) {
+      newPurchase.itemType = item.itemType;
+    }
+    if (item.tabType !== undefined) {
+      newPurchase.tabType = item.tabType;
+    }
+    if (item.baseThemeType !== undefined) {
+      newPurchase.baseThemeType = item.baseThemeType;
+    }
+    if (item.equipped !== undefined) {
+      newPurchase.equipped = item.equipped;
+    }
 
     transaction.update(userRef, {
       points: updatedPoints,
@@ -162,4 +204,20 @@ export async function incrementRoutesCompletedForUser(userId: string) {
 
   const updatedUser = await userRef.get();
   return updatedUser.data();
+}
+
+export async function getBadges(): Promise<Record<string, Badge>> {
+  // Read badges from Firestore badges collection
+  const badgesRef = db.collection('badges');
+  const snapshot = await badgesRef.get();
+  const badges: Record<string, Badge> = {};
+  snapshot.forEach((doc) => {
+    const data = doc.data();
+    badges[doc.id] = {
+      id: doc.id as any,
+      title: data.title,
+      description: data.description,
+    };
+  });
+  return badges;
 }

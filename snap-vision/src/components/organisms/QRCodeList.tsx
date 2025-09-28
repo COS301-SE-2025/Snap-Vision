@@ -47,8 +47,8 @@ const QRCodeList: React.FC<QRCodeListProps> = ({
   onDeleteQR,
   onAddQR,
 }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   // Filter QR codes for the selected floor
   const floorQRCodes = qrCodes.filter((c) => String(c.floorId) === String(selectedFloorId ?? ''));

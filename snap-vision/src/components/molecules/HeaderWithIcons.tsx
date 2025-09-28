@@ -1,7 +1,5 @@
-// src/components/molecules/HeaderWithIcons.tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import IconButton from '../atoms/IconButton';
 import FAIcon from 'react-native-vector-icons/FontAwesome5';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
@@ -9,8 +7,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useLanding } from '../../context/LandingContext';
 
 export default function HeaderWithIcons() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const navigation = useNavigation<any>();
   const { setHasSeenLanding } = useLanding();
 
@@ -20,17 +18,21 @@ export default function HeaderWithIcons() {
         style={[
           styles.title,
           {
-            fontFamily: 'PermanentMarkerRegular',
+            fontFamily: 'ChicleRegular',
             color: colors.primary,
-            transform: [{ rotate: '-3deg' }],
+            // transform: [{ rotate: '-3deg' }],
+            textShadowColor: colors.secondary,
+            textShadowOffset: { width: 1, height: 1 },
+            textShadowRadius: 1,
           },
         ]}
       >
         GOING SOMEWHERE?
       </Text>
 
-      <IconButton
-        name="notifications-outline"
+      {/* <FAIcon
+        name="bell"                     
+        size={30}
         color={colors.secondary}
         style={styles.notification}
         onPress={() =>
@@ -42,7 +44,7 @@ export default function HeaderWithIcons() {
 
       <FAIcon
         name="user-circle"
-        size={28}
+        size={30}
         color={colors.secondary}
         style={styles.profile}
         onPress={() =>
@@ -50,7 +52,7 @@ export default function HeaderWithIcons() {
             screen: 'AccountSettings',
           })
         }
-      />
+      /> */}
 
       <FAIcon
         name="info-circle"
@@ -65,29 +67,29 @@ export default function HeaderWithIcons() {
 
 const styles = StyleSheet.create({
   header: {
-    marginTop: 32,
+    marginTop: 6,
     alignItems: 'center',
     position: 'relative',
     paddingBottom: 20,
   },
   title: {
-    fontSize: 42,
+    fontSize: 52,
     textAlign: 'center',
     maxWidth: '90%',
   },
   notification: {
     position: 'absolute',
     top: -50,
-    right: 55,
+    right: 65,
   },
   profile: {
     position: 'absolute',
     top: -50,
-    right: 15,
+    right: 25,
   },
   info: {
     position: 'absolute',
-    top: -50,
-    left: 25, // Adjust spacing as needed
+    top: -40,
+    left: 25,
   },
 });

@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import TextToSpeech from '../molecules/TextToSpeech';
 
 interface NavigationPanelProps {
   isNavigating: boolean;
@@ -13,8 +12,8 @@ interface NavigationPanelProps {
   onCancelRoute: () => void;
   progress: number;
   distance: number | null;
-  distanceWalked: number; // New: Distance walked from start (never decreases)
-  originalRouteDistance: number | null; // New: Original route distance for completion tracking
+  distanceWalked: number;
+  originalRouteDistance: number | null;
   time: number | null;
   destination: string;
   isVoiceEnabled: boolean;
@@ -52,8 +51,8 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
   isMinimized = false,
   onToggleMinimize,
 }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   // Calculate completion percentage based on distance remaining
   const getCompletionPercentage = () => {
@@ -80,7 +79,6 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
     }
   };
 
-  // Format the time (e.g., "5 min" or "< 1 min")
   const formatTime = (minutes: number | null) => {
     if (minutes === null) return '';
 
@@ -105,34 +103,29 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
           <Icon name="chevron-up" size={16} color={colors.text} />
         </Pressable>
 
-        {/* Essential controls */}
-        <View style={styles.minimizedControls}>
-          <Pressable
-            style={[styles.miniButton, { backgroundColor: colors.danger }]}
-            onPress={onCancelRoute}
-          >
-            <Icon name="close" size={12} color="#fff" />
-          </Pressable>
-
-          <Pressable
-            style={[styles.miniButton, { backgroundColor: '#E53935' }]}
-            onPress={onStopNavigation}
-          >
-            <Icon name="stop" size={12} color="#fff" />
-          </Pressable>
-
-          {onToggleAR && (
+        {/* Essential controls - only show when navigating */}
+        {isNavigating && (
+          <View style={styles.minimizedControls}>
             <Pressable
-              style={[
-                styles.miniButton,
-                { backgroundColor: showAR ? colors.primary : colors.secondary },
-              ]}
-              onPress={onToggleAR}
+              style={[styles.miniButton, { backgroundColor: '#E53935' }]}
+              onPress={onStopNavigation}
             >
-              <Icon name="camera-outline" size={12} color="#fff" />
+              <Icon name="stop" size={12} color="#fff" />
             </Pressable>
-          )}
-        </View>
+
+            {onToggleAR && (
+              <Pressable
+                style={[
+                  styles.miniButton,
+                  { backgroundColor: showAR ? colors.primary : colors.secondary },
+                ]}
+                onPress={onToggleAR}
+              >
+                <Icon name="camera-outline" size={12} color="#fff" />
+              </Pressable>
+            )}
+          </View>
+        )}
       </View>
     );
   }
@@ -272,9 +265,6 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
                   />
                 ) : (
                   <>
-                    <Text style={styles.primaryButtonIcon}>
-                      {isLoading ? '⏳' : isNavigating ? '🛑' : '🧭'}
-                    </Text>
                     <Text style={styles.primaryButtonLabel}>
                       {isLoading ? 'Loading' : isNavigating ? 'Stop' : 'Start'}
                     </Text>
@@ -355,10 +345,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
-    height: 24, // Fixed height for the header
+    height: 24,
   },
   headerSpacer: {
-    flex: 1, // Takes up space so cancel button is right-aligned
+    flex: 1,
   },
   minimizeButton: {
     width: 24,
@@ -461,7 +451,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  // New Single Row Priority Styles
   singleRowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -511,7 +500,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
-  // Remove unused styles
   navButton: {
     paddingHorizontal: 16,
     paddingVertical: 10,

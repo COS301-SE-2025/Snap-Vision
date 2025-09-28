@@ -8,8 +8,12 @@ import {
   Animated,
   Easing,
   Dimensions,
+  Image,
 } from 'react-native';
 import Confetti from './Confetti';
+
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
 
 interface DestinationReachedPopupProps {
   visible: boolean;
@@ -31,6 +35,9 @@ const DestinationReachedPopup: React.FC<DestinationReachedPopupProps> = ({
     success: '#4CAF50',
   },
 }) => {
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
+
   const [showConfetti, setShowConfetti] = useState(false);
   const popupScale = useRef(new Animated.Value(0)).current;
   const pulseValue = useRef(new Animated.Value(1)).current;
@@ -49,9 +56,6 @@ const DestinationReachedPopup: React.FC<DestinationReachedPopupProps> = ({
       }).start(() => {
         // Start confetti after popup animation completes
         setShowConfetti(true);
-
-        // Start the pulsing animation
-        // startPulseAnimation();
       });
     } else {
       setShowConfetti(false);
@@ -78,14 +82,14 @@ const DestinationReachedPopup: React.FC<DestinationReachedPopupProps> = ({
   };
 
   const handleConfettiComplete = () => {
-    console.log('Confetti animation completed');
+    //////consolelog('Confetti animation completed');
   };
 
   // Debug logging for visibility issues
   useEffect(() => {
-    console.log('Popup visibility changed:', visible);
+    ////consolelog('Popup visibility changed:', visible);
     if (visible) {
-      console.log('Showing popup with confetti animation');
+      ////consolelog('Showing popup with confetti animation');
     }
   }, [visible]);
 
@@ -95,46 +99,50 @@ const DestinationReachedPopup: React.FC<DestinationReachedPopupProps> = ({
       visible={visible}
       animationType="fade"
       onRequestClose={onClose}
-      statusBarTranslucent={true} // Cover the status bar too
+      statusBarTranslucent={true}
     >
       <View style={styles.modalContainer}>
         <Confetti
           active={showConfetti}
           count={100}
           onComplete={handleConfettiComplete}
-          colors={[
-            '#FF577F',
-            '#FF884B',
-            '#FFCF0D',
-            '#4361EE',
-            themeColors.success,
-            themeColors.primary,
-          ]}
+          // colors={[
+          //   '#FF577F',
+          //   '#FF884B',
+          //   '#FFCF0D',
+          //   '#4361EE',
+          //   themeColors.success,
+          //   themeColors.primary,
+          // ]}
         />
 
         <Animated.View
           style={[
             styles.popupContainer,
             {
-              backgroundColor: themeColors.background,
+              backgroundColor: colors.background,
               transform: [{ scale: popupScale }, { scale: pulseValue }],
             },
           ]}
         >
-          <View style={[styles.checkmarkCircle, { backgroundColor: themeColors.success }]}>
-            <Text style={styles.checkmark}>✓</Text>
+          <View style={[styles.checkmarkCircle, { backgroundColor: colors.secondary }]}>
+            <Image
+              source={require('../../assets/images/mascot_reached.png')}
+              style={styles.mascotImage}
+              resizeMode="contain"
+            />
           </View>
 
-          <Text style={[styles.title, { color: themeColors.text }]}>You&apos;ve Arrived!</Text>
+          <Text style={[styles.title, { color: colors.text }]}>You&apos;ve Arrived!</Text>
 
-          <Text style={[styles.destination, { color: themeColors.text }]}>{destination}</Text>
+          <Text style={[styles.destination, { color: colors.text }]}>{destination}</Text>
 
-          <Text style={[styles.message, { color: themeColors.text }]}>
+          <Text style={[styles.message, { color: colors.text }]}>
             You have successfully reached your destination.
           </Text>
 
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: themeColors.primary }]}
+            style={[styles.button, { backgroundColor: colors.primary }]}
             onPress={onClose}
           >
             <Text style={styles.buttonText}>Great!</Text>
@@ -150,8 +158,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.75)', // Darker backdrop for better contrast
-    zIndex: 10000, // Very high z-index
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    zIndex: 10000,
   },
   popupContainer: {
     width: width * 0.85,
@@ -159,27 +167,26 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 24,
     alignItems: 'center',
-    elevation: 10, // Higher elevation
+    elevation: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
     shadowRadius: 8,
-    zIndex: 10001, // Even higher z-index than container
+    zIndex: 10001,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)', // Subtle border
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   checkmarkCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
   },
-  checkmark: {
-    fontSize: 40,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+  mascotImage: {
+    width: 100,
+    height: 100,
   },
   title: {
     fontSize: 28,

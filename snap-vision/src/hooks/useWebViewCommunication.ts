@@ -1,6 +1,6 @@
-import { useCallback, useEffect } from 'react';
-import { WebView as WebViewType } from 'react-native-webview';
+import { useRef, useCallback, useEffect } from 'react';
 import { POI } from './useMapPOI';
+import perf from '@react-native-firebase/perf';
 
 export interface UseWebViewCommunicationReturn {
   // Main message handler
@@ -87,6 +87,7 @@ export const useWebViewCommunication = (
   setShowErrorPopup: (show: boolean) => void,
   setShowDirectionsSheet: (show: boolean) => void,
 ): UseWebViewCommunicationReturn => {
+  const mapReadyTraceRef = useRef<any>(null);
   // JavaScript injection utility
   const injectJavaScript = useCallback(
     (code: string) => {
@@ -97,6 +98,20 @@ export const useWebViewCommunication = (
     [webViewRef, isMapReady],
   );
 
+  useEffect(() => {
+    if (!isMapReady) {
+      // Start the trace directly
+      const trace = perf().newTrace('webview_map_ready_perf');
+      mapReadyTraceRef.current = trace;
+      trace.start();
+    }
+    return () => {
+      if (mapReadyTraceRef.current) {
+        mapReadyTraceRef.current.stop();
+        mapReadyTraceRef.current = null;
+      }
+    };
+  }, [isMapReady]);
   // Clear route from map
   const clearRoute = useCallback(() => {
     injectJavaScript('window.clearRoute && window.clearRoute();');
@@ -218,20 +233,22 @@ export const useWebViewCommunication = (
   // Main WebView message handler
   const handleWebViewMessage = useCallback(
     async (event: any) => {
-      console.log('[WebView message]', event.nativeEvent.data);
+      ////consolelog('[WebView message]', event.nativeEvent.data);
 
       try {
         const data = event.nativeEvent.data;
 
         // === Handle simple message ===
         if (data === 'MAP_READY') {
-          console.log('🗺️ Map is ready!');
           setStatus('Map loaded');
           setIsMapReady(true);
+          if (mapReadyTraceRef.current) {
+            await mapReadyTraceRef.current.stop();
+            mapReadyTraceRef.current = null;
+          }
 
           // If we already have a location, send it to the map immediately
           if (currentLocation) {
-            console.log('📍 Sending existing location to newly ready map:', currentLocation);
             sendLocationToWebView(currentLocation.latitude, currentLocation.longitude, true);
           }
 
@@ -244,7 +261,6 @@ export const useWebViewCommunication = (
           return;
         }
 
-        // === Handle JSON message ===
         const parsed = JSON.parse(data);
 
         // Try to handle admin messages first
@@ -266,7 +282,7 @@ export const useWebViewCommunication = (
 
             clearRoute();
 
-            // Use the hook's selectPOI function instead of manual state updates
+            // Use the hook's selectPOI function
             selectPOI(selectedPOI);
             setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
 
@@ -281,11 +297,16 @@ export const useWebViewCommunication = (
             break;
           }
 
+          case 'SET_USER_ICON':
+            const iconName = parsed.iconName;
+            injectJavaScript(`window.setUserIcon && window.setUserIcon('${iconName}');`);
+            break;
+
           default:
-          // console.log('Unknown message type from WebView:', parsed.type);
+          // ////consolelog('Unknown message type from WebView:', parsed.type);
         }
       } catch (e) {
-        // console.log('WebView message error:', event.nativeEvent.data);
+        // ////consolelog('WebView message error:', event.nativeEvent.data);
       }
     },
     [

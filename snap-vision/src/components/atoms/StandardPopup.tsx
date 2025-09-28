@@ -1,4 +1,3 @@
-//Snap-Vision\snap-vision\src\components\atoms\StandardPopup.tsx
 import React from 'react';
 import {
   Modal,
@@ -21,7 +20,10 @@ interface Props {
   confirmText?: string;
   cancelText?: string;
   showCancel?: boolean;
-  verticalButtons?: boolean; // New prop for vertical button layout
+  verticalButtons?: boolean;
+  onClose?: () => void;
+  showCloseButton?: boolean;
+  testID?: string;
 }
 
 export default function StandardPopup({
@@ -33,10 +35,13 @@ export default function StandardPopup({
   confirmText = 'OK',
   cancelText = 'Cancel',
   showCancel = false,
-  verticalButtons = false, // Default to horizontal layout
+  verticalButtons = false,
+  onClose,
+  showCloseButton = false,
+  testID,
 }: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <Modal transparent visible={visible} animationType="fade" statusBarTranslucent>
@@ -50,9 +55,14 @@ export default function StandardPopup({
               shadowColor: isDark ? '#000' : '#888',
             },
           ]}
+          testID={testID}
         >
-          <Text style={[styles.title, { color: colors.primary }]}>{title}</Text>
-          <Text style={[styles.message, { color: colors.text }]}>{message}</Text>
+          <Text style={[styles.title, { color: colors.primary }]} testID="popup-title">
+            {title}
+          </Text>
+          <Text style={[styles.message, { color: colors.text }]} testID="popup-message">
+            {message}
+          </Text>
 
           <View style={[verticalButtons ? styles.buttonColumn : styles.buttonRow]}>
             {showCancel && (
@@ -60,7 +70,7 @@ export default function StandardPopup({
                 activeOpacity={0.7}
                 style={[
                   verticalButtons ? styles.buttonOutlineVertical : styles.buttonOutline,
-                  { borderColor: colors.border },
+                  { borderColor: colors.text },
                 ]}
                 onPress={onCancel}
               >
@@ -73,9 +83,19 @@ export default function StandardPopup({
                 verticalButtons ? styles.buttonFilledVertical : styles.buttonFilled,
                 { backgroundColor: colors.primary },
               ]}
-              onPress={onConfirm}
+              onPress={(e) => {
+                if (onConfirm) {
+                  onConfirm(e);
+                }
+                if (onClose) {
+                  onClose();
+                }
+              }}
+              testID={showCloseButton ? 'popup-close-button' : undefined}
             >
-              <Text style={[styles.buttonTextFilled]}>{confirmText}</Text>
+              <Text style={[styles.buttonTextFilled, { color: colors.background }]}>
+                {confirmText}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -87,7 +107,7 @@ export default function StandardPopup({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: '#00000099', // Dark overlay
+    backgroundColor: '#00000099',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
@@ -121,12 +141,12 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 16, // note: gap works only RN 0.71+, else use marginHorizontal on buttons
+    gap: 16,
   },
   buttonColumn: {
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 12, // Vertical spacing between buttons
+    gap: 12,
   },
   buttonOutline: {
     paddingVertical: 12,
@@ -144,7 +164,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     justifyContent: 'center',
     alignItems: 'center',
-    width: '100%', // Full width for vertical layout
+    width: '100%',
   },
   buttonFilled: {
     paddingVertical: 12,
@@ -165,7 +185,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    width: '100%', // Full width for vertical layout
+    width: '100%',
     shadowColor: '#000',
     shadowOpacity: 0.25,
     shadowRadius: 4,

@@ -33,7 +33,7 @@ jest.mock('@react-native-firebase/firestore', () => {
       doc: jest.fn(() => ({
         set: jest.fn(),
         get: jest.fn(() => ({
-          exists: jest.fn(() => true), // ✅ Changed to function
+          exists: jest.fn(() => true), //  Changed to function
           data: jest.fn(() => ({
             pois: [
               {
@@ -94,5 +94,23 @@ jest.mock('@react-native-firebase/auth', () => {
   return {
     __esModule: true,
     default: mockAuth,
+  };
+});
+
+jest.mock('@react-native-firebase/perf', () => {
+  const mockTrace = {
+    start: jest.fn(() => Promise.resolve()),
+    stop: jest.fn(() => Promise.resolve()),
+  };
+
+  const mockPerfInstance = {
+    newTrace: jest.fn(() => mockTrace),
+  };
+
+  const mockPerf = jest.fn(() => mockPerfInstance);
+
+  return {
+    __esModule: true,
+    default: mockPerf,
   };
 });
