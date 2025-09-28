@@ -159,12 +159,7 @@ export default function TimetableContent() {
 
   const getSubjectColor = (course: string) => {
     const colorOptions = [
-      '#E3F2FD', // Light Blue
-      '#E8F5E8', // Light Green
-      '#FFF3E0', // Light Orange
-      '#F3E5F5', // Light Purple
-      '#FFEBEE', // Light Pink
-      '#E0F2F1', // Light Teal
+      colors.background, // Default background color
     ];
 
     let hash = 0;

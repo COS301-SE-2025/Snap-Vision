@@ -307,7 +307,7 @@ export function useBluetoothPositioning(opts: Options) {
   //         const key = `${beaconInfo.major}|${beaconInfo.minor}`;
   //         const stored = coordinateHistory.get(key);
   //         if (stored && (Math.abs(stored.x - pt.x) > 0.1 || Math.abs(stored.y - pt.y) > 0.1)) {
-  //           //console.log(BT, `  🚨 COORDINATE INSTABILITY DETECTED for ${mm}!`);
+  //           //console.log(BT, `   COORDINATE INSTABILITY DETECTED for ${mm}!`);
   //           //console.log(BT, `     Previous: (${stored.x.toFixed(3)}, ${stored.y.toFixed(3)})`);
   //           //console.log(BT, `     Current:  (${pt.x.toFixed(3)}, ${pt.y.toFixed(3)})`);
   //           //console.log(BT, `     This will cause positioning errors - fix database coordinates!`);
@@ -319,15 +319,15 @@ export function useBluetoothPositioning(opts: Options) {
   //     // Check beacon spacing
   //     const spacing = meanAnchorSpacing;
   //     //console.log(BT, `  Mean beacon spacing: ${spacing.toFixed(3)} units`);
-  //     if (spacing < 0.3) //console.log(BT, '  ⚠️ Beacons may be too close together for accurate positioning');
-  //     if (spacing > 0.7) //console.log(BT, '  ⚠️ Beacons may be too far apart, consider adding more beacons');
-
+  //     if (spacing < 0.3) //console.log(BT, '   Beacons may be too close together for accurate positioning');
+  //     if (spacing > 0.7) //console.log(BT, '   Beacons may be too far apart, consider adding more beacons');
+      
   //     // Check if beacons form a good triangle
   //     if (anchorPoints.length === 3) {
   //       const [a, b, c] = anchorPoints;
   //       const area = Math.abs((b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y)) / 2;
   //       //console.log(BT, `  Triangle area: ${area.toFixed(4)} (>0.1 is good for positioning)`);
-  //       if (area < 0.1) console.log(BT, '  ⚠️ Beacons are too close to a straight line - move one beacon');
+  //       if (area < 0.1) console.log(BT, '   Beacons are too close to a straight line - move one beacon');
   //     }
   //   }
   // }, [anchorPoints, beaconsMeta, meanAnchorSpacing]);
@@ -474,7 +474,7 @@ export function useBluetoothPositioning(opts: Options) {
     }
 
     if (raw.length === 2) {
-      //console.log(BT, '⚠️ Using 2-beacon positioning (less accurate than 3-beacon trilateration)');
+      //console.log(BT, ' Using 2-beacon positioning (less accurate than 3-beacon trilateration)');
       // For 2 beacons, estimate position between them based on relative distances
       const [a, b] = raw;
       const totalDist = a.d + b.d;
@@ -499,7 +499,7 @@ export function useBluetoothPositioning(opts: Options) {
       setCurrentPos(smoothed);
       setVisible(true);
       //console.log(BT, '2-Beacon Position ->', { x: +smoothed.x.toFixed(3), y: +smoothed.y.toFixed(3) });
-      //console.log(BT, `⚠️ Missing beacon Minor=2 - check if it's powered on and broadcasting`);
+      //console.log(BT, ` Missing beacon Minor=2 - check if it's powered on and broadcasting`);
       return;
     }
 

@@ -4,8 +4,8 @@ import BleManager from 'react-native-ble-manager';
 import { Buffer } from 'buffer';
 
 const TAG = '[BeaconScanner]';
-const log = (...a: any[]) => console.log(TAG, ...a);
-const err = (...a: any[]) => console.error(TAG, ...a);
+// const log = (...a: any[]) => console.log(TAG, ...a);
+// const err = (...a: any[]) => console.error(TAG, ...a);
 
 //Helpers
 function toHex(bytes?: number[] | null, maxLen = 24): string {
@@ -468,13 +468,13 @@ export class NativeBeaconScanner {
               );
               if (!this.allowedMM.size || this.allowedMM.has(mm)) {
                 //console.log(
-                  `[BEACON PARSE DEBUG] ✅ FOUND iBeacon: UUID=${uuid} Major=${major} Minor=${minor}`,
+                  `[BEACON PARSE DEBUG]  FOUND iBeacon: UUID=${uuid} Major=${major} Minor=${minor}`,
                 );
               } else {
-                //console.log(`[BEACON PARSE DEBUG] ❌ iBeacon rejected by allowedMM filter`);
+                //console.log(`[BEACON PARSE DEBUG]  iBeacon rejected by allowedMM filter`);
               }
             } else {
-              //console.log(`[BEACON PARSE DEBUG] ❌ parseIBeaconBytes returned null`);
+              //console.log(`[BEACON PARSE DEBUG]  parseIBeaconBytes returned null`);
             }
             */
             if (ib) {
@@ -533,12 +533,12 @@ export class NativeBeaconScanner {
                       measuredPower = directBeacon.measuredPower;
                       found = true;
                       //console.log(
-                      //   `[BEACON PARSE DEBUG] ✅ FOUND via direct service parse: UUID=${uuid} Major=${major} Minor=${minor}`,
+                      //   `[BEACON PARSE DEBUG]  FOUND via direct service parse: UUID=${uuid} Major=${major} Minor=${minor}`,
                       // );
                       break;
                     } else {
                       //console.log(
-                      //   `[BEACON PARSE DEBUG] ❌ Direct service beacon rejected by allowedMM filter`,
+                      //   `[BEACON PARSE DEBUG]  Direct service beacon rejected by allowedMM filter`,
                       // );
                     }
                   }
@@ -556,7 +556,7 @@ export class NativeBeaconScanner {
                     measuredPower = m.measuredPower;
                     found = true;
                     //console.log(
-                    //   `[BEACON PARSE DEBUG] ✅ FOUND via Minew service: UUID=${uuid} Major=${major} Minor=${minor}`,
+                    //   `[BEACON PARSE DEBUG]  FOUND via Minew service: UUID=${uuid} Major=${major} Minor=${minor}`,
                     // );
                     break;
                   }

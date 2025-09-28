@@ -29,6 +29,10 @@ import TTS from 'react-native-tts';
 import { useBadges } from '../../context/BadgeContext';
 import POIPopup from '../molecules/POIPopup';
 import POIInfoModal from '../molecules/POIInfoModal';
+import CacheService from '../../services/CacheService';
+
+const cacheService = CacheService.getInstance();
+const FLOORPLANS_CACHE_TTL = 600 * 60 * 1000; // 10 minutes
 
 type ParamList = {
   IndoorSchematicNav: {
@@ -287,61 +291,112 @@ export default function IndoorSchematicNavScreen() {
   useEffect(() => {
     let cancelled = false;
 
-    async function fetchFloorplan() {
+        async function fetchFloorplan() {
       const trace = await perf().newTrace('indoor_floorplan_load_perf');
       await trace.start();
       try {
         setFloorplanLoading(true);
         setFloorplanUrl(null);
-
-        // Firestore: locations/{locationId}/buildingPOIs/{buildingId}/floorplans (filter by floorId)
-        const fpSnap = await firestore()
-          .collection('locations')
-          .doc(locationId)
-          .collection('buildingPOIs')
-          .doc(buildingId)
-          .collection('floorplans')
-          .where('floorId', '==', selectedFloorId)
-          .limit(1)
-          .get();
-
+    
+        // Check cache first for all floorplans
+        const cacheKey = `floorplans:${locationId}:${buildingId}`;
+        const cachedFloorplans = await cacheService.get<{ [key: string]: string }>(cacheKey, {
+          ttl: FLOORPLANS_CACHE_TTL,
+          userSpecific: false,
+        });
+    
         let url: string | null = null;
-
-        if (!fpSnap.empty) {
-          const data: any = fpSnap.docs[0].data();
-          url = data?.imageUrl || data?.url || null;
-
-          // If only a storagePath is stored, resolve it
-          const storagePath: string | undefined = data?.storagePath;
-          if (!url && storagePath) {
-            try {
-              url = await storage().ref(storagePath).getDownloadURL();
-            } catch (e) {
-              ////consolewarn('getDownloadURL failed for', storagePath, e);
+    
+        if (cachedFloorplans && cachedFloorplans[selectedFloorId]) {
+          // Found in cache
+          url = cachedFloorplans[selectedFloorId];
+          //console.log(`[FLOORPLAN CACHE] Found URL for floor ${selectedFloorId} in cache`);
+        } else {
+          //console.log(`[FLOORPLAN] Fetching all floorplans for ${locationId}/${buildingId} from Firestore...`);
+          
+          const fpSnap = await firestore()
+            .collection('locations')
+            .doc(locationId)
+            .collection('buildingPOIs')
+            .doc(buildingId)
+            .collection('floorplans')
+            .get();
+    
+          const floorplanMap: { [key: string]: string } = {};
+    
+          for (const doc of fpSnap.docs) {
+            if (cancelled) break; 
+            const data: any = doc.data();
+            const floorId = data.floorId || doc.id;
+            let floorUrl = data?.imageUrl || data?.url || data?.downloadURL || null;
+    
+            // If no direct URL, try resolving storagePath
+            if (!floorUrl && data?.storagePath) {
+              try {
+                floorUrl = await storage().ref(data.storagePath).getDownloadURL();
+                //console.log(`[FLOORPLAN] Resolved storage URL for floor ${floorId}: ${floorUrl}`);
+              } catch (e) {
+                //console.warn(`[FLOORPLAN] getDownloadURL failed for floor ${floorId}, storagePath: ${data.storagePath}`, e);
+              }
+            }
+    
+            if (floorUrl) {
+              floorplanMap[floorId] = floorUrl;
+            } else {
+              //console.warn(`[FLOORPLAN] No URL found for floor ${floorId}`);
             }
           }
+    
+          // Cache the map if we have data
+          if (Object.keys(floorplanMap).length > 0) {
+            await cacheService.set(cacheKey, floorplanMap, {
+              ttl: FLOORPLANS_CACHE_TTL,
+              userSpecific: false,
+            });
+            //console.log(`[FLOORPLAN] Cached floorplan map for ${locationId}/${buildingId}`);
+          }
+    
+          // Get URL for selected floor
+          url = floorplanMap[selectedFloorId] || null;
+          if (url) {
+            //console.log(`[FLOORPLAN] Set URL for floor ${selectedFloorId}: ${url}`);
+          } else {
+            //console.warn(`[FLOORPLAN] No URL found for selected floor ${selectedFloorId}`);
+          }
         }
-
+    
+        
         if (!url) {
+          //console.log(`[FLOORPLAN] Attempting storage fallback for floor ${selectedFloorId}`);
           try {
             const baseRef = storage().ref(`floorplans/${locationId}/${buildingId}`);
             const list = await baseRef.listAll();
-            const match =
-              list.items.find((it) =>
-                it.name.toLowerCase().includes(String(selectedFloorId).toLowerCase()),
-              ) || list.items[0];
-            if (match) url = await match.getDownloadURL();
+            const match = list.items.find((it) =>
+              it.name.toLowerCase().includes(String(selectedFloorId).toLowerCase())
+            ) || list.items[0];
+            if (match) {
+              url = await match.getDownloadURL();
+              //console.log(`[FLOORPLAN] Fallback URL found: ${url}`);
+            } else {
+              //console.warn(`[FLOORPLAN] No matching file in storage for floor ${selectedFloorId}`);
+            }
           } catch (e) {
-            ////consolewarn('Storage folder fallback failed', e);
+            //console.warn('[FLOORPLAN] Storage folder fallback failed', e);
           }
         }
-
-        if (!cancelled) setFloorplanUrl(url ?? null);
+    
+        if (!cancelled) {
+          setFloorplanUrl(url ?? null);
+        }
       } catch (e) {
-        ////consolewarn('Floorplan fetch failed', e);
-        if (!cancelled) setFloorplanUrl(null);
+        //console.warn('[FLOORPLAN] Floorplan fetch failed', e);
+        if (!cancelled) {
+          setFloorplanUrl(null);
+        }
       } finally {
-        if (!cancelled) setFloorplanLoading(false);
+        if (!cancelled) {
+          setFloorplanLoading(false);
+        }
         await trace.stop();
       }
     }
@@ -392,7 +447,6 @@ export default function IndoorSchematicNavScreen() {
       try {
         await unlock('qr-scan');
       } catch (badgeError) {
-        // Don't fail the whole operation if badge unlock fails
         //console.warn('Failed to unlock qr-scan badge:', badgeError);
       }
 

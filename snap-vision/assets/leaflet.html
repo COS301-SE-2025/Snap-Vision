@@ -164,7 +164,7 @@
 
       // Function to set user location icon
       // window.setUserIcon = function (iconName) {
-      //   let iconHtml = '📍'; // default
+      //   let iconHtml = ''; // default
       //   if (iconName === 'star') iconHtml = '⭐';
       //   else if (iconName === 'heart') iconHtml = '❤️';
       //   else if (iconName === 'compass') iconHtml = '🧭';
@@ -197,31 +197,31 @@
         //});
         const coords = [lat, lon];
         if (!map || !map._loaded) {
-          ////consolelog('❌ Map not loaded yet, cannot update user location');
+          ////consolelog(' Map not loaded yet, cannot update user location');
           return; // Check if map is fully loaded
         }
 
         try {
           if (centerMap) {
             if (zoomLevel !== null) {
-              ////consolelog('🎯 Centering map with zoom level:', zoomLevel);
+              ////consolelog(' Centering map with zoom level:', zoomLevel);
               map.setView(coords, zoomLevel);
             } else {
-              ////consolelog('🎯 Centering map with default zoom');
+              ////consolelog(' Centering map with default zoom');
               map.setView(coords, 16);
             }
           }
 
           if (userMarker) {
-            ////consolelog('📍 Updating existing user marker position');
+            ////consolelog(' Updating existing user marker position');
             userMarker.setLatLng(coords);
           } else {
-            //console.log('📍 Creating new user marker');
+            //console.log(' Creating new user marker');
             userMarker = L.marker(coords).addTo(map).bindPopup('You are here!').openPopup();
           }
-          ////consolelog('✅ User location updated successfully');
+          ////consolelog(' User location updated successfully');
         } catch (error) {
-          ////consoleerror('❌ Error updating user location:', error);
+          ////consoleerror(' Error updating user location:', error);
         }
       };
 

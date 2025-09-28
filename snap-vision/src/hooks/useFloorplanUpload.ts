@@ -1,45 +1,85 @@
 import { useState } from 'react';
-import * as ImagePicker from 'react-native-image-picker';
-import { uploadFloorplanImage } from '../services/firebase/uploadService';
+import { Platform, Alert } from 'react-native';
+import { launchImageLibrary, ImagePickerResponse, MediaType } from 'react-native-image-picker';
+import storage from '@react-native-firebase/storage';
 import { saveFloorplanMetadata } from '../services/firebase/floorplanService';
-import { UploadedData } from '../types/floorplan';
+import CacheService from '../services/CacheService';
+
+const cacheService = CacheService.getInstance();
+
+export type UploadedData = {
+  locationId: string;
+  buildingId: string;
+  floorLabel: string;
+  imageUri: string;
+};
 
 export const useFloorplanUpload = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [fileUri, setFileUri] = useState<string | null>(null);
-  const [fileName, setFileName] = useState<string>('');
+  const [error, setError] = useState('');
+  const [fileUri, setFileUri] = useState('');
+  const [fileName, setFileName] = useState('');
   const [uploadedData, setUploadedData] = useState<UploadedData | null>(null);
 
   const handlePickDocument = async () => {
     try {
-      const result = await ImagePicker.launchImageLibrary({
-        mediaType: 'photo',
-        quality: 0.8,
-      });
+      //console.log(' [UPLOAD] Starting image picker...');
+      
+      return new Promise<{ success: boolean; uri?: string; name?: string; error?: string }>((resolve) => {
+        const options = {
+          mediaType: 'photo' as MediaType,
+          includeBase64: false,
+          maxHeight: 2000,
+          maxWidth: 2000,
+          quality: 0.8,
+          selectionLimit: 1,
+        };
 
-      if (!result.didCancel && result.assets && result.assets.length > 0) {
-        const asset = result.assets[0];
-        if (asset.uri && asset.fileName) {
-          setFileUri(asset.uri);
-          setFileName(asset.fileName);
-          return { success: true, uri: asset.uri, name: asset.fileName };
-        } else if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
-          setError('Please select an image smaller than 5MB.');
-          return { success: false, error: 'Please select an image smaller than 5MB.' };
-        } else {
-          setError('Invalid image selected. Please try again.');
-          return { success: false, error: 'Invalid image selected. Please try again.' };
-        }
-      } else if (result.errorMessage) {
-        setError(`Image Picker error: ${result.errorMessage}`);
-        return { success: false, error: `Image Picker error: ${result.errorMessage}` };
-      }
-      return { success: false };
-    } catch (err) {
-      ////consoleerror('Error picking image:', err);
-      setError('Failed to select image');
-      return { success: false, error: 'Failed to select image' };
+        launchImageLibrary(options, (response: ImagePickerResponse) => {
+          if (response.didCancel) {
+            //console.log(' [UPLOAD] User cancelled image picker');
+            resolve({ success: false, error: 'Selection cancelled' });
+            return;
+          }
+
+          if (response.errorMessage) {
+            console.error(' [UPLOAD] ImagePicker error:', response.errorMessage);
+            const errorMessage = 'Failed to select image';
+            setError(errorMessage);
+            resolve({ success: false, error: errorMessage });
+            return;
+          }
+
+          if (response.assets && response.assets.length > 0) {
+            const asset = response.assets[0];
+            const uri = asset.uri;
+            const name = asset.fileName || `floorplan_${Date.now()}.jpg`;
+
+            if (!uri) {
+              const errorMessage = 'No image URI received';
+              setError(errorMessage);
+              resolve({ success: false, error: errorMessage });
+              return;
+            }
+
+            setFileUri(uri);
+            setFileName(name);
+            setError('');
+            //console.log(` [UPLOAD] Selected image: ${name}`);
+            
+            resolve({ success: true, uri, name });
+          } else {
+            const errorMessage = 'No image selected';
+            setError(errorMessage);
+            resolve({ success: false, error: errorMessage });
+          }
+        });
+      });
+    } catch (err: any) {
+      const errorMessage = 'Failed to open image picker';
+      setError(errorMessage);
+      console.error(' [UPLOAD] Image picker error:', err);
+      return { success: false, error: errorMessage };
     }
   };
 
@@ -50,8 +90,10 @@ export const useFloorplanUpload = () => {
     userRole?: string,
     adminLocations?: string[],
   ) => {
-    setError(null);
+    //console.log(` [UPLOAD] Starting upload for ${selectedBuilding?.name} - Floor ${floorLabel}`);
+    setError('');
 
+    // Validation checks
     if (!selectedBuilding || !selectedLocation) {
       setError('Please select a building and location');
       return { success: false, error: 'Please select a building and location' };
@@ -73,46 +115,64 @@ export const useFloorplanUpload = () => {
     }
 
     if (!fileUri) {
-      setError('Please select a floorplan file');
-      return { success: false, error: 'Please select a floorplan file' };
+      setError('Please select an image file');
+      return { success: false, error: 'Please select an image file' };
     }
 
     try {
       setIsLoading(true);
+      //console.log(' [UPLOAD] Uploading to Firebase Storage...');
 
-      const downloadURL = await uploadFloorplanImage(
-        selectedLocation,
-        selectedBuilding.id,
-        floorLabel,
-        fileUri,
-      );
+      const buildingId = selectedBuilding.id;
+      const fileName = `${buildingId}_floor_${floorLabel}_${Date.now()}.jpg`;
+      const ref = storage().ref(`floorplans/${selectedLocation}/${buildingId}/${fileName}`);
 
-      await saveFloorplanMetadata(selectedLocation, selectedBuilding.id, floorLabel, downloadURL);
+      // Upload the file
+      await ref.putFile(fileUri);
+      const downloadURL = await ref.getDownloadURL();
+      //console.log(' [UPLOAD] File uploaded to storage');
 
-      const uploadData: UploadedData = {
-        buildingId: selectedBuilding.id,
+      // Save metadata to Firestore
+      //console.log(' [UPLOAD] Saving metadata to Firestore...');
+      await saveFloorplanMetadata(selectedLocation, buildingId, floorLabel, downloadURL);
+
+      const uploadResult: UploadedData = {
+        locationId: selectedLocation,
+        buildingId,
         floorLabel,
         imageUri: downloadURL,
-        locationId: selectedLocation,
       };
 
-      setUploadedData(uploadData);
-      setIsLoading(false);
+      setUploadedData(uploadResult);
+      //console.log(' [UPLOAD] Upload completed successfully');
 
-      return { success: true, data: uploadData };
+      // Invalidate related caches after successful upload
+      //console.log(' [UPLOAD] Invalidating related caches...');
+      await cacheService.remove(`admin_floorplans:${selectedLocation}:${buildingId}`);
+      await cacheService.remove(`admin_buildings:${selectedLocation}`);
+      await cacheService.remove('admin_locations', true);
+      
+      // Also invalidate editor-specific caches
+      await cacheService.remove(`floors:${selectedLocation}:${buildingId}`);
+      await cacheService.remove(`rooms:${selectedLocation}:${buildingId}`);
+      await cacheService.remove(`floorplan_url:${selectedLocation}:${buildingId}:${floorLabel}`);
+      
+      // Invalidate any building-specific caches
+      await cacheService.remove(`buildings:${selectedLocation}`);
+
+      return { success: true, data: uploadedData };
     } catch (err) {
       ////consoleerror('Error uploading floorplan:', err);
       setError('Failed to upload floorplan');
       setIsLoading(false);
-      return { success: false, error: 'Failed to upload floorplan' };
     }
   };
 
-  const resetUpload = () => {
-    setFileUri(null);
+  const resetState = () => {
+    setFileUri('');
     setFileName('');
     setUploadedData(null);
-    setError(null);
+    setError('');
   };
 
   return {
@@ -120,10 +180,10 @@ export const useFloorplanUpload = () => {
     error,
     fileUri,
     fileName,
-    uploadedData,
     handlePickDocument,
     handleUpload,
-    resetUpload,
+    uploadedData,
     setError,
+    resetState,
   };
 };

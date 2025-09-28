@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import firestore from '@react-native-firebase/firestore';
 import perf from '@react-native-firebase/perf';
+import CacheService from '../services/CacheService';
+
+const cacheService = CacheService.getInstance();
 
 export interface POI {
   id: string;
@@ -31,6 +34,7 @@ interface UseMapPOIReturn {
   setSelectedFeature: (feature: POI | null) => void;
   setDestination: (destination: string) => void;
   clearPOISuggestions: () => void;
+  refreshPOIs: () => Promise<void>;
 
   // Internal for MapScreen
   sendPOIsToWebView: () => void;
@@ -48,11 +52,31 @@ export const useMapPOI = (
   const [selectedFeature, setSelectedFeature] = useState<POI | null>(null);
   const [destination, setDestination] = useState('');
 
-  // Fetch all POIs from Firestore
-  const fetchPOIs = useCallback(async () => {
+  // Cache configuration
+  const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+  const CACHE_KEY = 'map_pois';
+
+  // Fetch all POIs from Firestore with caching
+  const fetchPOIs = useCallback(async (useCache: boolean = true) => {
     const trace = await perf().newTrace('pois_load_perf');
     await trace.start();
+    
     try {
+      // Check cache first if enabled
+      if (useCache) {
+        const cached = await cacheService.get<POI[]>(CACHE_KEY, {
+          ttl: CACHE_TTL,
+          userSpecific: false,
+        });
+        
+        if (cached) {
+          setPOIs(cached);
+          await trace.stop();
+          return;
+        }
+      }
+
+      // Fetch from Firestore
       const locationsSnapshot = await firestore().collection('locations').get();
       const allPOIs: POI[] = [];
 
@@ -76,12 +100,26 @@ export const useMapPOI = (
       }
 
       setPOIs(allPOIs);
+      
+      // Cache the result
+      await cacheService.set(CACHE_KEY, allPOIs, {
+        ttl: CACHE_TTL,
+        userSpecific: false,
+      });
+      
     } catch (e) {
+      console.error('Error fetching POIs:', e);
       setError('Failed to load buildings');
     } finally {
       await trace.stop();
     }
   }, [setError]);
+
+  // Force refresh POIs (bypass cache)
+  const refreshPOIs = useCallback(async () => {
+    await cacheService.remove(CACHE_KEY);
+    await fetchPOIs(false);
+  }, [fetchPOIs]);
 
   // Filter POIs based on search query
   const filterPOIs = useCallback(
@@ -90,20 +128,20 @@ export const useMapPOI = (
         setPOISuggestions([]);
         return;
       }
-      const filtered = pois.filter(
-        (poi) => poi.name && poi.name.toLowerCase().includes(query.toLowerCase()),
+
+      const filtered = pois.filter((poi) =>
+        poi.name.toLowerCase().includes(query.toLowerCase()),
       );
-      setPOISuggestions(filtered);
+      setPOISuggestions(filtered.slice(0, 10)); // Limit to 10 suggestions
     },
     [pois],
   );
 
-  // Handle POI selection (simplified - just update state)
+  // Select a POI
   const selectPOI = useCallback((poi: POI) => {
+    setSelectedPOI(poi);
     setDestination(poi.name);
     setPOISuggestions([]);
-    setSelectedFeature(poi);
-    setSelectedPOI(poi);
   }, []);
 
   // Clear POI suggestions
@@ -113,24 +151,23 @@ export const useMapPOI = (
 
   // Send POIs to WebView
   const sendPOIsToWebView = useCallback(() => {
-    if (isMapReady && pois.length > 0 && webViewRef.current) {
-      // Modify the POI data to set labels to empty by default
-      const poisWithHiddenLabels = pois.map((poi) => ({
-        ...poi,
-        showLabel: false, // Add property to control label visibility
-      }));
-
-      const jsPOICode = `window.displayPOIs && window.displayPOIs(${JSON.stringify(poisWithHiddenLabels)});`;
-      webViewRef.current.injectJavaScript(jsPOICode);
+    if (isMapReady && webViewRef.current && pois.length > 0) {
+      const poisData = JSON.stringify(pois);
+      webViewRef.current.injectJavaScript(`
+        if (window.setPOIs) {
+          window.setPOIs(${poisData});
+        }
+        true;
+      `);
     }
-  }, [isMapReady, pois, webViewRef]);
+  }, [isMapReady, pois]);
 
-  // Initial POI fetch
+  // Load POIs on mount
   useEffect(() => {
     fetchPOIs();
   }, [fetchPOIs]);
 
-  // Send POIs to WebView when they change and WebView is ready
+  // Send POIs to WebView when ready
   useEffect(() => {
     sendPOIsToWebView();
   }, [sendPOIsToWebView]);
@@ -145,6 +182,7 @@ export const useMapPOI = (
 
     // Functions
     fetchPOIs,
+    refreshPOIs,
     filterPOIs,
     selectPOI,
     setSelectedPOI,
@@ -152,7 +190,7 @@ export const useMapPOI = (
     setDestination,
     clearPOISuggestions,
 
-    // Internal
+    // Internal for MapScreen
     sendPOIsToWebView,
   };
 };

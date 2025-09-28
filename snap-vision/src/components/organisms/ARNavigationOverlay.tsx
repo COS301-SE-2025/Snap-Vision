@@ -296,7 +296,7 @@ function MiniMapOverlay({
                 },
               ]}
             >
-              <Text style={styles.currentLocationIcon}>📍</Text>
+              <Text style={styles.currentLocationIcon}></Text>
             </View>
             {/* Destination Marker - positioned at route end */}
             <View
@@ -305,7 +305,7 @@ function MiniMapOverlay({
                 { left: routeEndPos.x - 6, top: routeEndPos.y - 6 },
               ]}
             >
-              <Text style={styles.destinationIcon}>🎯</Text>
+              <Text style={styles.destinationIcon}></Text>
             </View>
             {/* Upcoming waypoints */}
             {upcomingPoints.slice(1, 4).map((point, index) => {

@@ -39,7 +39,7 @@ export function useBeaconCalibration(scanner: BeaconScanner) {
 
   const stop = useCallback(async () => {
     if (!active) return;
-    //console.log('🔄 Manually stopping calibration');
+    //console.log(' Manually stopping calibration');
     setActive(false);
     clearTimers();
     try {
@@ -51,7 +51,7 @@ export function useBeaconCalibration(scanner: BeaconScanner) {
     async (target: IBeaconKey, durationMs = 15000) => {
       if (active) return; // prevent double start
 
-      //console.log(`🔄 Starting calibration for ${durationMs}ms for beacon:`, target);
+      //console.log(` Starting calibration for ${durationMs}ms for beacon:`, target);
 
       // reset state
       targetRef.current = { ...target, uuid: target.uuid.toLowerCase() };
