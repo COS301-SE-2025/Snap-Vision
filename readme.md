@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/img/Snap%20Vision%20cropped.png" alt="Snap Vision Logo" width="300"/>
+  <img src="docs/img/Snap%20Vision%20t2.png" alt="Snap Vision Logo" width="300"/>
   <h1>BLT’S</h1>
   <h1>Snap Vision</h1>
   <h2>AR Navigation for Indoor & Outdoor Spaces</h2>
@@ -47,27 +47,31 @@
 
 ## About Snap Vision
 
-Snap Vision is a mobile application designed to help users navigate complex indoor and outdoor environments such as university campuses and malls using AR-powered visual guidance. The app uses a combination of GPS, Bluetooth beacons, and AR overlays to provide seamless real-time wayfinding.  
+Snap Vision is a mobile application designed to help users navigate complex indoor and outdoor environments such as university campuses and malls using AR-powered visual guidance. The app uses a combination of GPS, QR Codes, and AR overlays to provide seamless real-time wayfinding.  
 This project was developed by Team BLT’S for the COS301 Capstone Module at the University of Pretoria.
 </div>
 ---
+<div align="center">
+[Download APK](https://github.com/COS301-SE-2025/Snap-Vision/releases/download/v2.0/app-release.apk)
+</div>
 
-[Download APK](https://github.com/COS301-SE-2025/Snap-Vision/releases/download/v1.0/app-release.apk)
+<div align="center">
+[![Website](https://img.shields.io/badge/Visit-Snap%20Vision%20Site-90AFA8)](https://cos301-se-2025.github.io/Snap-Vision/)
+</div>
+
 <div align="center">
 
-## Demo 3 Documentation
+## Demo 4 Documentation
 
 | Links |
 |-------|
-| [Software Requirements Specification](https://drive.google.com/file/d/10e8IgY9iwg686H7SVhVbZazR4wlA8sTt/view?usp=drive_link) |
-| [Architectural Requirements Document](https://drive.google.com/file/d/1RyBbxY6jlmmzAKqBadArbz94CJaxCXC8/view?usp=drive_link) |
-| [Architectural Diagram](https://drive.google.com/file/d/11ixKR4wulQl7omdKBBOfcJoy1uzE7qCJ/view?usp=sharing) |
-| [Coding Standards Document](https://drive.google.com/file/d/1aSgT-wrqmAOK-CeXChkGBrNOdwMBVqLD/view?usp=drive_link) |
-| [User Manual Document](https://drive.google.com/file/d/1ihAcTBi3OJW2Nfc64QRTLByx0WuS_oLS/view?usp=sharing) |
-| [Technical Installation Manual](https://drive.google.com/file/d/1MA92v3quEqsQEBygiR96L8RzZ_uxIscm/view?usp=sharing) |
-| [Deployment Model](https://drive.google.com/file/d/1MDQDhpUTNp6GCvZiLt6aiDLuHODiKSaI/view?usp=drive_link) |
-| [Wireframes](https://drive.google.com/file/d/1a_7AzWcia41O58lXFiizQpyJt3ljBOdw/view?usp=drive_link) |
-
+| [User Manual](docs\User%20Manual%20Document%20-%20V4.pdf) |
+| [Coding Standards Document](docs\Coding%20Standards%20Document%20-%20V4.pdf) |
+| [Testing Policy Document](docs\Testing%20Policy%20Document%20-%20V4.pdf) |
+| [Software Requirements Specification](docs\Software%20\Requirements%20Document%20-%20V4.pdf) |
+| [Architectural Requirements Document](docs\Architectural%20Requirements%20Document%20-%20V4.pdf) |
+| [Technical Installation Manual](docs\Technical%20installation%20Manual%20-%20V4.pdf) |
+| [Deployment Model](docs\Deployment%20Model%20-%20V4.pdf) |
 ---
 
 ## All Documentation Links
@@ -77,19 +81,13 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 | Demo 1 | [Slides 1](https://drive.google.com/file/d/1e_UbI8kLICTHZ9I2SDv51N_GJ24E8VHI/view?usp=drive_link) | [Docs 1](https://drive.google.com/file/d/1PjbgsJOFsjdsjYa_vm__W2UnuMKIfOYw/view?usp=drive_link) | [Video 1](https://drive.google.com/file/d/1rTIKg24IbTOZThUpLjTd6B59khP-cZaL/view?usp=drive_link) |
 | Demo 2 | [Slides 2](https://drive.google.com/file/d/1YEE-ge010J0ZCaks0T8ggVH2uF7fEHC8/view?usp=drive_link) | [Docs 2](https://drive.google.com/drive/folders/1paIiMCL94TNsxWsi4ypYfgUZSIqwxIns?usp=drive_link) | [Video 2](https://drive.google.com/file/d/1p8kSaRAugtSsM8uUkssOBTTXFzVAtIey/view?usp=drive_link) |
 | Demo 3 | [Slides 3](https://drive.google.com/file/d/1Wye-mflSMjL4sFv2WY0GXM5HZVb3kPbo/view?usp=sharing) | [Docs 3](https://drive.google.com/drive/folders/1MNeGPrEBpp5LMoOav7cew51myI6ndEDu?usp=sharing) | [Video 3](https://drive.google.com/file/d/1ckHsvY1-KsHNIP-jYk25CsysI22DOYQr/view?usp=drive_link) |
-| Demo 4 | [Slides 4] | [Docs 4] | [Video 4] |
+| Demo 4 | [Slides 4](Presentation%20Demo%204.pdf) | [Docs 4](docs) | [Video 4](docs\Demo%20Video%204.mp4) |
 ---
 <div align="center">
 
 ## Project Board
 
 📎 [GitHub Project Board](https://github.com/orgs/COS301-SE-2025/projects/153)
-
----
-
-## Wireframes
-
-📎 [Figma WireFrames](https://docs.google.com/document/d/1Tw_-R32h6ZFYEEylHIMkNw99Q2SSMdZmDiZ4tZZgZcI/edit?usp=sharing)
 
 ---
 
@@ -136,8 +134,8 @@ Hey there, Saalihah here! I'm a CS student who loves solving problems, delving i
 
 ## Target Platforms
 
-- Android 10+ (ARCore-supported devices)  
-- Optional future support for iOS 14+ with ARKit
+- Android 10+ 
+- Optional future support for iOS 14+
 
 ---
 
@@ -146,9 +144,9 @@ Hey there, Saalihah here! I'm a CS student who loves solving problems, delving i
 - React Native
 - Express.js
 - Firebase (Auth, Firestore, Hosting)  
-- ARCore  
+- Custom AR
 - OpenStreetMap LeafLet & MapTiler  
-- Bluetooth beacons & QR fallback
+- QR Code Positioning
 
 ---
 
