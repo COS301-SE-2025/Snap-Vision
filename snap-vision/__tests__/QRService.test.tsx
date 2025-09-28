@@ -1,6 +1,8 @@
 import AuthorizationService from '../src/security/AuthorizationService';
 
 jest.mock('../src/security/AuthorizationService');
+jest.mock('../src/services/CacheService');
+jest.mock('../src/security/InputValidator');
 
 const mockAuthService = {
   getCurrentUserContext: jest.fn(),
@@ -11,7 +13,33 @@ const mockAuthService = {
   canModifyQRCode: jest.fn(),
 };
 
+const mockCacheService = {
+  get: jest.fn(),
+  set: jest.fn(),
+  remove: jest.fn(),
+  getInstance: jest.fn(),
+};
+
+const mockInputValidator = {
+  validateDocumentId: jest.fn((id: string) => id), // return input as valid
+  validateText: jest.fn((text: string) => text), // return input as valid
+};
+
 (AuthorizationService.getInstance as jest.Mock).mockReturnValue(mockAuthService);
+
+// Mock CacheService
+jest.doMock('../src/services/CacheService', () => ({
+  __esModule: true,
+  default: {
+    getInstance: () => mockCacheService,
+  },
+}));
+
+// Mock InputValidator
+jest.doMock('../src/security/InputValidator', () => ({
+  __esModule: true,
+  default: mockInputValidator,
+}));
 
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
@@ -61,9 +89,6 @@ jest.mock('@react-native-firebase/firestore', () => {
     collection: jest.fn(),
   }));
 
-  // Attach Timestamp to the function
-  mockFirestore.Timestamp = mockTimestamp;
-
   // Create the module export structure
   const moduleExports = {
     __esModule: true,
@@ -72,7 +97,8 @@ jest.mock('@react-native-firebase/firestore', () => {
   };
 
   // Ensure default export also has Timestamp
-  moduleExports.default.Timestamp = mockTimestamp;
+  Object.assign(mockFirestore, { Timestamp: mockTimestamp });
+  Object.assign(moduleExports.default, { Timestamp: mockTimestamp });
 
   return moduleExports;
 });
@@ -94,6 +120,11 @@ beforeEach(() => {
   mockAuthService.canAccessBuilding.mockResolvedValue(true);
   mockAuthService.canAccessQRCode.mockResolvedValue(true);
   mockAuthService.canModifyQRCode.mockResolvedValue(true);
+
+  // Default cache service mocks
+  mockCacheService.get.mockResolvedValue(null); // No cache hits by default
+  mockCacheService.set.mockResolvedValue(undefined);
+  mockCacheService.remove.mockResolvedValue(undefined);
 
   mockCollection.mockImplementation((path: string) => ({
     doc: (id?: string) => {
@@ -254,14 +285,39 @@ describe('getBuildingsForLocation', () => {
 
 describe('getFloorsForBuilding', () => {
   it('orders by floorLabel if orderBy works', async () => {
-    // orderBy().get() returns docs with floorLabel
-    mockOrderBy.mockImplementation(() => ({ get: mockGet }));
-    mockGet.mockResolvedValueOnce(
+    // Setup the complete chain: firestore().collection('locations').doc(id).collection('buildingPOIs').doc(id).collection('floorplans')
+    const mockOrderByResult = { get: jest.fn() };
+    const mockFloorplansCollection = { 
+      orderBy: jest.fn(() => mockOrderByResult),
+      get: jest.fn() 
+    };
+    const mockBuildingDoc = { 
+      collection: jest.fn((name) => {
+        if (name === 'floorplans') return mockFloorplansCollection;
+        return mockFloorplansCollection;
+      })
+    };
+    const mockBuildingPOIsCollection = { 
+      doc: jest.fn(() => mockBuildingDoc) 
+    };
+    const mockLocationDoc = { 
+      collection: jest.fn((name) => {
+        if (name === 'buildingPOIs') return mockBuildingPOIsCollection;
+        return mockBuildingPOIsCollection;
+      })
+    };
+    const mockLocationsCollection = { 
+      doc: jest.fn(() => mockLocationDoc) 
+    };
+    
+    mockCollection.mockReturnValueOnce(mockLocationsCollection);
+    mockOrderByResult.get.mockResolvedValueOnce(
       makeSnap([
         { id: 'f1', data: () => ({ floorLabel: 'Floor 1' }) },
         { id: 'f2', data: () => ({ floorLabel: 'Floor 2' }) },
       ]),
     );
+    
     const out = await qrService.getFloorsForBuilding('loc', 'b');
     expect(out).toEqual([
       { id: 'f1', name: 'Floor 1' },
@@ -270,15 +326,39 @@ describe('getFloorsForBuilding', () => {
   });
 
   it('falls back to plain get() when orderBy throws', async () => {
-    mockOrderBy.mockImplementation(() => {
-      throw new Error('no index');
-    });
-    mockGet.mockResolvedValueOnce(
+    // Setup the complete chain with orderBy throwing error
+    const mockOrderByResult = { get: jest.fn() };
+    const mockFloorplansCollection = { 
+      orderBy: jest.fn(() => { throw new Error('no index'); }),
+      get: jest.fn()
+    };
+    const mockBuildingDoc = { 
+      collection: jest.fn((name) => {
+        if (name === 'floorplans') return mockFloorplansCollection;
+        return mockFloorplansCollection;
+      })
+    };
+    const mockBuildingPOIsCollection = { 
+      doc: jest.fn(() => mockBuildingDoc) 
+    };
+    const mockLocationDoc = { 
+      collection: jest.fn((name) => {
+        if (name === 'buildingPOIs') return mockBuildingPOIsCollection;
+        return mockBuildingPOIsCollection;
+      })
+    };
+    const mockLocationsCollection = { 
+      doc: jest.fn(() => mockLocationDoc) 
+    };
+    
+    mockCollection.mockReturnValueOnce(mockLocationsCollection);
+    mockFloorplansCollection.get.mockResolvedValueOnce(
       makeSnap([
         { id: 'fx', data: () => ({ name: 'Label X' }) },
         { id: 'fy', data: () => ({}) },
       ]),
     );
+    
     const out = await qrService.getFloorsForBuilding('loc', 'b');
     expect(out).toEqual([
       { id: 'fx', name: 'Label X' },
@@ -289,7 +369,14 @@ describe('getFloorsForBuilding', () => {
 
 describe('getRoomsForFloor', () => {
   it('filters by floorId/floorLevel/floorLabel and maps fields', async () => {
-    mockGet.mockResolvedValueOnce(
+    // Setup collection mock chain with where clause
+    const mockWhereChain = { get: jest.fn() };
+    const mockCollectionChain = { where: jest.fn(() => mockWhereChain) };
+    const mockDocChain = { collection: jest.fn(() => mockCollectionChain) };
+    const mockLocationCollection = { doc: jest.fn(() => mockDocChain) };
+    
+    mockCollection.mockReturnValueOnce(mockLocationCollection);
+    mockWhereChain.get.mockResolvedValueOnce(
       makeSnap([
         {
           id: 'r1',
@@ -313,7 +400,7 @@ describe('getRoomsForFloor', () => {
         id: 'r2',
         name: 'Room 2',
         buildingId: 'b',
-        buildingName: undefined,
+        buildingName: 'b',
         floorId: 'F2',
         floorLabel: 'F2',
       },
@@ -323,40 +410,108 @@ describe('getRoomsForFloor', () => {
 
 describe('getQRCodesForBuilding', () => {
   it('queries by buildingId, orders by createdAt desc, returns data', async () => {
-    mockOrderBy.mockImplementation(() => ({ get: mockGet }));
+    // Setup collection mock chain with where clause
+    const mockWhereChain = { get: jest.fn() };
+    const mockCollectionChain = { where: jest.fn(() => mockWhereChain) };
+    const mockDocChain = { collection: jest.fn(() => mockCollectionChain) };
+    const mockLocationCollection = { doc: jest.fn(() => mockDocChain) };
+    
     const d1 = { qrValue: 'A' };
     const d2 = { qrValue: 'B' };
-    mockGet.mockResolvedValueOnce(
+    
+    mockCollection.mockReturnValueOnce(mockLocationCollection);
+    mockWhereChain.get.mockResolvedValueOnce(
       makeSnap([
         { id: '1', data: () => d1 },
         { id: '2', data: () => d2 },
       ]),
     );
     const out = await qrService.getQRCodesForBuilding('loc', 'b');
-    expect(out).toEqual([d1, d2]);
+    expect(out).toEqual([
+      { ...d1, id: '1' },
+      { ...d2, id: '2' }
+    ]);
   });
 });
 
 describe('delete / update', () => {
   it('deleteQRCodeMapping returns true', async () => {
+    // Setup collection mock chain for get operation
+    const mockDocRef = { 
+      get: jest.fn(),
+      ref: { delete: mockDelete },
+      exists: true,
+      data: () => ({ buildingId: 'b1', qrValue: 'QR123' })
+    };
+    const mockQRCollection = { doc: jest.fn(() => mockDocRef) };
+    const mockLocationDoc = { collection: jest.fn(() => mockQRCollection) };
+    const mockLocationCollection = { doc: jest.fn(() => mockLocationDoc) };
+    
+    mockCollection.mockReturnValueOnce(mockLocationCollection);
+    mockDocRef.get.mockResolvedValueOnce(mockDocRef);
+    
     await expect(qrService.deleteQRCodeMapping('loc', 'qr1')).resolves.toBe(true);
     expect(mockDelete).toHaveBeenCalled();
   });
 
   it('updateQRCodeMapping returns true', async () => {
-    await expect(qrService.updateQRCodeMapping('loc', 'qr1', { description: 'x' })).resolves.toBe(
-      true,
-    );
+    // Setup collection mock chain for get and update operations
+    const mockDocRef = {
+      get: jest.fn(),
+      update: mockUpdate,
+      exists: true,
+      data: () => ({ buildingId: 'b1', qrValue: 'QR123', description: 'old desc' })
+    };
+    const mockQRCollection = { doc: jest.fn(() => mockDocRef) };
+    const mockLocationDoc = { collection: jest.fn(() => mockQRCollection) };
+    const mockLocationCollection = { doc: jest.fn(() => mockLocationDoc) };
+    
+    mockCollection.mockReturnValueOnce(mockLocationCollection);
+    mockDocRef.get.mockResolvedValueOnce(mockDocRef);
+    
+    await expect(qrService.updateQRCodeMapping('loc', 'qr1', { description: 'x' })).resolves.toMatchObject({
+      buildingId: 'b1',
+      qrValue: 'QR123', 
+      description: 'x'
+    });
     expect(mockUpdate).toHaveBeenCalledWith({ description: 'x' });
   });
 
   it('delete propagates errors', async () => {
+    // Setup collection mock chain that throws error
+    const mockDocRef = { 
+      get: jest.fn(),
+      ref: { delete: mockDelete },
+      exists: true,
+      data: () => ({ buildingId: 'b1', qrValue: 'QR123' })
+    };
+    const mockQRCollection = { doc: jest.fn(() => mockDocRef) };
+    const mockLocationDoc = { collection: jest.fn(() => mockQRCollection) };
+    const mockLocationCollection = { doc: jest.fn(() => mockLocationDoc) };
+    
+    mockCollection.mockReturnValueOnce(mockLocationCollection);
+    mockDocRef.get.mockResolvedValueOnce(mockDocRef);
     mockDelete.mockRejectedValueOnce(new Error('fail'));
+    
     await expect(qrService.deleteQRCodeMapping('loc', 'qr1')).rejects.toThrow('fail');
   });
 
   it('update propagates errors', async () => {
+    // Setup collection mock chain that throws error on update
+    const mockDocRef = {
+      get: jest.fn(),
+      update: mockUpdate,
+      exists: true,
+      data: () => ({ buildingId: 'b1', qrValue: 'QR123', description: 'old desc' })
+    };
+    const mockQRCollection = { doc: jest.fn(() => mockDocRef) };
+    const mockLocationDoc = { collection: jest.fn(() => mockQRCollection) };
+    const mockLocationCollection = { doc: jest.fn(() => mockLocationDoc) };
+    
+    mockCollection.mockReturnValueOnce(mockLocationCollection);
+    mockDocRef.get.mockResolvedValueOnce(mockDocRef);
     mockUpdate.mockRejectedValueOnce(new Error('boom'));
+    
     await expect(qrService.updateQRCodeMapping('loc', 'qr1', {})).rejects.toThrow('boom');
   });
 });
