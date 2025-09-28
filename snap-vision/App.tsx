@@ -61,6 +61,7 @@ function AppInner() {
   const [pendingDeepLink, setPendingDeepLink] = useState<{ lat?: string; lng?: string } | null>(
     null,
   );
+  const [isNavigationReady, setIsNavigationReady] = useState(false);
 
   useEffect(() => {
     // Handle notification presses when app is in foreground/background
@@ -338,6 +339,26 @@ function AppInner() {
     if (currentUser) {
       // User is logged in, set coordinates immediately
       setCoords({ lat: pendingDeepLink.lat, lng: pendingDeepLink.lng });
+      
+      // Navigate to MapScreen
+      console.log('[App] Navigating to MapScreen for deep link');
+      if (navigationRef.current) {
+        navigationRef.current.reset({
+          index: 0,
+          routes: [
+            {
+              name: 'Tabs',
+              params: {
+                screen: 'Map',
+                params: {
+                  lat: pendingDeepLink.lat,
+                  lng: pendingDeepLink.lng,
+                },
+              },
+            },
+          ],
+        });
+      }
     } else {
       // User not logged in, store for after login
       AsyncStorage.setItem('pendingDeepLinkAfterLogin', JSON.stringify(pendingDeepLink));
@@ -362,6 +383,55 @@ function AppInner() {
             
             // Set the coordinates to trigger navigation
             setCoords({ lat: coords.lat, lng: coords.lng });
+            
+            const navigateToMap = () => {
+              console.log('[App] Navigating to MapScreen for stored deep link after login');
+              if (navigationRef.current && isNavigationReady) {
+                navigationRef.current.reset({
+                  index: 0,
+                  routes: [
+                    {
+                      name: 'Tabs',
+                      params: {
+                        screen: 'Map',
+                        params: {
+                          lat: coords.lat,
+                          lng: coords.lng,
+                        },
+                      },
+                    },
+                  ],
+                });
+              } else {
+                console.log('[App] Navigation not ready yet, waiting...');
+                // Wait for navigation to be ready
+                const checkReady = () => {
+                  if (navigationRef.current && isNavigationReady) {
+                    navigationRef.current.reset({
+                      index: 0,
+                      routes: [
+                        {
+                          name: 'Tabs',
+                          params: {
+                            screen: 'Map',
+                            params: {
+                              lat: coords.lat,
+                              lng: coords.lng,
+                            },
+                          },
+                        },
+                      ],
+                    });
+                  } else {
+                    setTimeout(checkReady, 100);
+                  }
+                };
+                setTimeout(checkReady, 500);
+              }
+            };
+            
+            // Small delay to ensure auth flow is complete
+            setTimeout(navigateToMap, 1000);
           }
         } catch (error) {
           console.error('[App] Error processing stored deep link:', error);
@@ -370,7 +440,7 @@ function AppInner() {
     });
 
     return unsubscribe;
-  }, [setCoords]);
+  }, [setCoords, isNavigationReady]);
 
   useEffect(() => {
     initializePreBundledFloorplans();
@@ -414,7 +484,13 @@ function AppInner() {
   return (
     <BadgeProvider>
       <ThemeProvider>
-        <NavigationContainer ref={navigationRef}>
+        <NavigationContainer 
+          ref={navigationRef}
+          onReady={() => {
+            console.log('[App] Navigation is ready');
+            setIsNavigationReady(true);
+          }}
+        >
           <BadgeUnlockNotifier />
           <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="AuthResolver">
             <Stack.Screen name="AuthResolver" component={AuthResolverScreen} />
