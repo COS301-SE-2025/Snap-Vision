@@ -67,7 +67,6 @@ export async function collectWiFiFingerprint(fingerprint: FingerprintData): Prom
   }
 }
 
-// NEW: Delete WiFi fingerprint at matching location/building/floor/coords
 export async function deleteWiFiFingerprint({
   locationId,
   buildingId,

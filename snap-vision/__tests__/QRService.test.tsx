@@ -3,6 +3,8 @@ import AuthorizationService from '../src/security/AuthorizationService';
 jest.mock('../src/security/AuthorizationService');
 jest.mock('../src/services/CacheService');
 jest.mock('../src/security/InputValidator');
+jest.mock('../src/services/CacheService');
+jest.mock('../src/security/InputValidator');
 
 const mockAuthService = {
   getCurrentUserContext: jest.fn(),
@@ -28,7 +30,36 @@ const mockInputValidator = {
   validateText: jest.MockedFunction<(text: unknown, maxLength?: number) => string | null>;
 };
 
+const mockCacheService = {
+  get: jest.fn(),
+  set: jest.fn(),
+  remove: jest.fn(),
+  getInstance: jest.fn(),
+};
+
+const mockInputValidator = {
+  validateDocumentId: jest.fn((id: string) => id), // return input as valid by default
+  validateText: jest.fn((text: string) => text), // return input as valid by default
+} as {
+  validateDocumentId: jest.MockedFunction<(id: unknown) => string | null>;
+  validateText: jest.MockedFunction<(text: unknown, maxLength?: number) => string | null>;
+};
+
 (AuthorizationService.getInstance as jest.Mock).mockReturnValue(mockAuthService);
+
+// Mock CacheService
+jest.doMock('../src/services/CacheService', () => ({
+  __esModule: true,
+  default: {
+    getInstance: () => mockCacheService,
+  },
+}));
+
+// Mock InputValidator
+jest.doMock('../src/security/InputValidator', () => ({
+  __esModule: true,
+  default: mockInputValidator,
+}));
 
 // Mock CacheService
 jest.doMock('../src/services/CacheService', () => ({
@@ -102,6 +133,8 @@ jest.mock('@react-native-firebase/firestore', () => {
   // Ensure default export also has Timestamp
   Object.assign(mockFirestore, { Timestamp: mockTimestamp });
   Object.assign(moduleExports.default, { Timestamp: mockTimestamp });
+  Object.assign(mockFirestore, { Timestamp: mockTimestamp });
+  Object.assign(moduleExports.default, { Timestamp: mockTimestamp });
 
   return moduleExports;
 });
@@ -123,6 +156,11 @@ beforeEach(() => {
   mockAuthService.canAccessBuilding.mockResolvedValue(true);
   mockAuthService.canAccessQRCode.mockResolvedValue(true);
   mockAuthService.canModifyQRCode.mockResolvedValue(true);
+
+  // Default cache service mocks
+  mockCacheService.get.mockResolvedValue(null); // No cache hits by default
+  mockCacheService.set.mockResolvedValue(undefined);
+  mockCacheService.remove.mockResolvedValue(undefined);
 
   // Default cache service mocks
   mockCacheService.get.mockResolvedValue(null); // No cache hits by default
@@ -245,6 +283,27 @@ describe('createQRCodeMapping', () => {
       qrService.createQRCodeMapping('l', 'ln', 'b', 'bn', 'f', 'r', 'rn', 'QR'),
     ).rejects.toThrow('Unauthorized: Cannot modify QR codes for this location');
   });
+
+  it('throws when input validation fails - invalid locationId', async () => {
+    mockInputValidator.validateDocumentId.mockReturnValueOnce(null); // First call fails
+    await expect(
+      qrService.createQRCodeMapping('', 'ln', 'b', 'bn', 'f', 'r', 'rn', 'QR'),
+    ).rejects.toThrow('Invalid input parameters');
+  });
+
+  it('throws when input validation fails - invalid QR value', async () => {
+    mockInputValidator.validateText.mockReturnValueOnce(null); // QR value validation fails
+    await expect(
+      qrService.createQRCodeMapping('l', 'ln', 'b', 'bn', 'f', 'r', 'rn', ''),
+    ).rejects.toThrow('Invalid input parameters');
+  });
+
+  it('throws when user cannot modify location', async () => {
+    mockAuthService.canModifyLocation.mockResolvedValueOnce(false);
+    await expect(
+      qrService.createQRCodeMapping('l', 'ln', 'b', 'bn', 'f', 'r', 'rn', 'QR'),
+    ).rejects.toThrow('Unauthorized: Cannot modify QR codes for this location');
+  });
 });
 
 describe('getQRCodeMappingByValue', () => {
@@ -309,6 +368,20 @@ describe('getLocations', () => {
       { id: 'L1', name: 'Campus' },
       { id: 'L2', name: 'L2' },
     ]);
+  });
+
+  it('throws when user not authenticated', async () => {
+    mockAuthService.getCurrentUserContext.mockResolvedValueOnce(null);
+    await expect(qrService.getLocations()).rejects.toThrow('User not authenticated');
+  });
+
+  it('returns cached result when available', async () => {
+    const cachedLocations = [{ id: 'cached-loc', name: 'Cached Location' }];
+    mockCacheService.get.mockResolvedValueOnce(cachedLocations);
+
+    const result = await qrService.getLocations();
+    expect(result).toEqual(cachedLocations);
+    expect(mockGet).not.toHaveBeenCalled(); // Should not query Firestore
   });
 
   it('throws when user not authenticated', async () => {
@@ -513,6 +586,7 @@ describe('getRoomsForFloor', () => {
         id: 'r2',
         name: 'Room 2',
         buildingId: 'b',
+        buildingName: 'b',
         buildingName: 'b',
         floorId: 'F2',
         floorLabel: 'F2',

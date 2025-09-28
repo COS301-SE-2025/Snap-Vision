@@ -42,7 +42,6 @@ const BluetoothIndoorNavigationContent: React.FC = () => {
   const colors = getThemeColors(theme);
   const { buildingId, buildingName, locationId } = route.params;
 
-  // Custom Floor Dropdown state
   const [floorDropdownVisible, setFloorDropdownVisible] = useState(false);
 
   const {

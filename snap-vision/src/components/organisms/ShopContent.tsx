@@ -37,7 +37,7 @@ const ShopContent: React.FC = () => {
       isEquipped = isItemEquipped(item.id);
     }
 
-    // Use a safe default icon if needed
+    // Use a safe default icon
     const iconName = item.icon || 'help-circle';
 
     return (

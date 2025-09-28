@@ -1,4 +1,3 @@
-// src/services/firebase/recentlyVService.ts
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';

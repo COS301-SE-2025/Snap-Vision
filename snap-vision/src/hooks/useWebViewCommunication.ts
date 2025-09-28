@@ -1,5 +1,4 @@
 import { useRef, useCallback, useEffect } from 'react';
-import { WebView as WebViewType } from 'react-native-webview';
 import { POI } from './useMapPOI';
 import perf from '@react-native-firebase/perf';
 
@@ -262,7 +261,6 @@ export const useWebViewCommunication = (
           return;
         }
 
-        // === Handle JSON message ===
         const parsed = JSON.parse(data);
 
         // Try to handle admin messages first
@@ -284,7 +282,7 @@ export const useWebViewCommunication = (
 
             clearRoute();
 
-            // Use the hook's selectPOI function instead of manual state updates
+            // Use the hook's selectPOI function
             selectPOI(selectedPOI);
             setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
 

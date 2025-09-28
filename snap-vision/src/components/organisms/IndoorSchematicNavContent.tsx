@@ -167,7 +167,6 @@ export default function IndoorSchematicNavScreen() {
     TTS.setDefaultPitch(1.0);
 
     return () => {
-      // Just stop TTS on cleanup - avoid removeEventListener issues
       TTS.stop();
     };
   }, []);
@@ -412,10 +411,9 @@ export default function IndoorSchematicNavScreen() {
     [allRooms, selectedFloorId],
   );
 
-  // Add a guaranteed fallback coordinate that will work for all buildings/floors
   const fallbackCoordinates = { x: 500, y: 500 };
 
-  // Handle QR code scan results - using the same logic as QrCard.tsx
+  // Handle QR code scan results
   const handleQRScan = async (qrValue: string) => {
     try {
       // Close the scanner
@@ -485,7 +483,7 @@ export default function IndoorSchematicNavScreen() {
             buildingId: qrBuildingId,
             buildingName: qrBuildingName || 'Building',
             floorId: qrFloorId,
-            userPos: fallbackCoordinates, // Add fallback coordinates
+            userPos: fallbackCoordinates,
           });
         }, 1500);
         return;
@@ -510,7 +508,6 @@ export default function IndoorSchematicNavScreen() {
         ////consolelog('Fetching room data for:', qrRoomId, 'in location:', qrLocationId);
         const roomDoc = await roomRef.get();
 
-        // In newer Firebase versions, exists is a property or function
         let docExists = false;
         if (typeof roomDoc.exists === 'function') {
           docExists = roomDoc.exists();
@@ -663,7 +660,6 @@ export default function IndoorSchematicNavScreen() {
       setNavigationMode(true);
       setPoiPopupVisible(false);
       setSelectedPOI(null);
-      // Reset start to ensure user picks a start room
       setStartId(null);
       setSteps([]);
       setCurrentStep(0);
@@ -750,7 +746,6 @@ export default function IndoorSchematicNavScreen() {
       }
     }
     if (currentStep >= steps.length - 1) {
-      // Use custom destination reached popup with confetti instead of standard popup
       const destinationRoom = allRooms.find((room) => room.id === endId);
       const destinationName = destinationRoom?.name || 'Your Destination';
       setReachedDestination(destinationName);

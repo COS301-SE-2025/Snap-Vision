@@ -1,4 +1,3 @@
-// src/components/molecules/ActionButtonWithTooltip.tsx
 import React, { ReactNode } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Tooltip } from '../atoms/ToolTip';

@@ -1,5 +1,10 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import {
+  render,
+  fireEvent,
+  waitFor,
+  waitForElementToBeRemoved,
+} from '@testing-library/react-native';
 import HomeContent from '../src/components/organisms/HomeContent';
 import { ThemeProviderWrapper } from './test-utils/ThemeProviderWrapper';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -190,7 +195,7 @@ describe('HomeContent', () => {
       const goToMapsButton = getByTestId('app-button');
       fireEvent.press(goToMapsButton);
 
-      expect(mockNavigate).toHaveBeenCalledWith('Map');
+      expect(mockNavigate).toHaveBeenCalledWith({ name: 'Map', params: {} });
     });
 
     it('calls navigation navigate with correct parameter', async () => {
@@ -203,7 +208,7 @@ describe('HomeContent', () => {
       fireEvent.press(getByText('GO TO MAPS'));
 
       expect(mockNavigate).toHaveBeenCalledTimes(1);
-      expect(mockNavigate).toHaveBeenCalledWith('Map');
+      expect(mockNavigate).toHaveBeenCalledWith({ name: 'Map', params: {} });
     });
   });
 

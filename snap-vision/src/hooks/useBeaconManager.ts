@@ -112,7 +112,6 @@ export function useBeaconManager({
             await scannerRef.current.stop();
           }
 
-          // Small delay to ensure clean restart
           await new Promise((resolve) => setTimeout(resolve, 100));
 
           //console.log(BT, 'Starting scanner with UUID + whitelist… size=', allowedList.length);
@@ -138,7 +137,6 @@ export function useBeaconManager({
     }, [selectedFloorId, allowedList, handleBatch]),
   );
 
-  // Additional effect to restart scanner when allowedList changes significantly
   useEffect(() => {
     if (!selectedFloorId || allowedList.length === 0) return;
 
@@ -160,7 +158,7 @@ export function useBeaconManager({
         //console.error(BT, 'Scanner restart error:', e);
       }
     })();
-  }, [allowedList.length]); // Only depend on length to avoid constant restarts
+  }, [allowedList.length]);
 
   // Debug logging
   useEffect(() => {

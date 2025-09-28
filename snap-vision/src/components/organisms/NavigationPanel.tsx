@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -79,7 +79,6 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
     }
   };
 
-  // Format the time (e.g., "5 min" or "< 1 min")
   const formatTime = (minutes: number | null) => {
     if (minutes === null) return '';
 
@@ -346,10 +345,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
-    height: 24, // Fixed height for the header
+    height: 24,
   },
   headerSpacer: {
-    flex: 1, // Takes up space so cancel button is right-aligned
+    flex: 1,
   },
   minimizeButton: {
     width: 24,

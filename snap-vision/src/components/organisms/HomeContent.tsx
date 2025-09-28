@@ -11,14 +11,13 @@ import {
 import HeaderWithIcons from '../molecules/HeaderWithIcons';
 import QrCard from '../molecules/QrCard';
 import AppButton from '../atoms/AppButton';
-import TimetableSection from './TimetableSection';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useNavigation, useFocusEffect, CompositeNavigationProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import auth from '@react-native-firebase/auth';
 import RecentlyVisitedCarousel from '../molecules/RecentlyVisitedCarousel';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { getRecentlyVPOIs, Visit } from '../../services/firebase/recentlyVService';
 import perf from '@react-native-firebase/perf';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -107,7 +106,10 @@ export default function HomeContent() {
         <View style={styles.actionRow}>
           <View style={styles.mapButtonWrapper}>
             <View style={styles.mapButtonBox}>
-              <AppButton title="GO TO MAPS" onPress={() => navigation.navigate('Map')} />
+              <AppButton
+                title="GO TO MAPS"
+                onPress={() => navigation.navigate({ name: 'Map', params: {} })}
+              />
             </View>
           </View>
 
@@ -250,7 +252,6 @@ const styles = StyleSheet.create({
   bottomPadding: {
     height: 40,
   },
-  // Remove unused styles
   imageRow: {
     paddingHorizontal: 20,
     gap: 16,

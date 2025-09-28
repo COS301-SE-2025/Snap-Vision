@@ -382,7 +382,7 @@ describe('HomeContent Integration Tests', () => {
       const mapButton = getByTestId('app-button');
       fireEvent.press(mapButton);
 
-      expect(mockNavigate).toHaveBeenCalledWith('Map');
+      expect(mockNavigate).toHaveBeenCalledWith({ name: 'Map', params: {} });
       expect(mockNavigate).toHaveBeenCalledTimes(1);
     });
 
@@ -397,7 +397,7 @@ describe('HomeContent Integration Tests', () => {
 
       fireEvent.press(getByText('GO TO MAPS'));
 
-      expect(mockNavigate).toHaveBeenCalledWith('Map');
+      expect(mockNavigate).toHaveBeenCalledWith({ name: 'Map', params: {} });
     });
   });
 
@@ -543,7 +543,7 @@ describe('HomeContent Integration Tests', () => {
 
       const mapButton = getByTestId('app-button');
       fireEvent.press(mapButton);
-      expect(mockNavigate).toHaveBeenCalledWith('Map');
+      expect(mockNavigate).toHaveBeenCalledWith({ name: 'Map', params: {} });
 
       expect(getByTestId('header-with-icons')).toBeTruthy();
       expect(getByTestId('qr-card')).toBeTruthy();

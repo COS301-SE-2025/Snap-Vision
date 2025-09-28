@@ -1,7 +1,5 @@
-// src/components/molecules/HeaderWithIcons.tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import IconButton from '../atoms/IconButton';
 import FAIcon from 'react-native-vector-icons/FontAwesome5';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';

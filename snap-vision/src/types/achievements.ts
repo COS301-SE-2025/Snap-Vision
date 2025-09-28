@@ -1,4 +1,3 @@
-// src/types/achievements.ts
 export interface Challenge {
   id: string;
   title: string;

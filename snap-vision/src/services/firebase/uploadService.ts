@@ -1,5 +1,4 @@
 import storage from '@react-native-firebase/storage';
-import auth from '@react-native-firebase/auth';
 import AuthorizationService from '../../security/AuthorizationService';
 import InputValidator from '../../security/InputValidator';
 

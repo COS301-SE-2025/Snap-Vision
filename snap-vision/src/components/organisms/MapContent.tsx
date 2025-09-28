@@ -12,12 +12,9 @@ import MapActionsPanel from './MapActionsPanel';
 import NavigationPanel from './NavigationPanel';
 import DirectionsModal from './DirectionsModal';
 import CrowdReportModal from '../molecules/CrowdReportModal';
-import IndoorPickerModal from '../molecules/IndoorPickerModal';
-import IndoorNavigationButton from '../atoms/IndoorNavigationButton';
 import ARNavigationOverlay from './ARNavigationOverlay';
 import { useNotificationInstruction } from '../../hooks/useNotificationInstruction';
 
-// Define the props interface for MapContent
 interface MapContentProps {
   // Theme and styling
   colors: any;
@@ -42,7 +39,7 @@ interface MapContentProps {
   distanceToDestination: number | null;
   distanceWalked: number;
   originalRouteDistance: number | null;
-  estimatedTime: string | null; // Keep as string to match your hook
+  estimatedTime: string | null;
   isRouteLoading: boolean;
   routeCoordinates: any[];
   showDirectionsSheet: boolean;
@@ -69,12 +66,12 @@ interface MapContentProps {
   onDestinationChange: (text: string) => void;
   onDestinationSearch: () => void;
   onSelectPOI: (poi: any) => void;
-  onSelectCrowdReportPOI: (poi: any) => void; // Add this new prop
+  onSelectCrowdReportPOI: (poi: any) => void;
 
   // Bluetooth navigation
   onOpenBluetoothNavigation: () => void;
 
-  // Admin functionality - Fixed types to match hooks
+  // Admin functionality
   isAdmin: boolean;
   showAddPOIModal: boolean;
   showEditPOIModal: boolean;
@@ -82,22 +79,22 @@ interface MapContentProps {
   adminActionPOI: any;
   editingPOI: any;
   buildingName: string;
-  numberOfFloors: string; // Changed to string to match your hook
+  numberOfFloors: string;
   newName: string;
-  newFloors: string; // Changed to string to match your hook
+  newFloors: string;
   selectedLocation: string;
   availableLocations: any[];
   onSetShowAddPOIModal: (show: boolean) => void;
   onSetShowEditPOIModal: (show: boolean) => void;
   onSetShowAdminActions: (show: boolean) => void;
   onSetBuildingName: (name: string) => void;
-  onSetNumberOfFloors: (floors: string) => void; // Changed to string
+  onSetNumberOfFloors: (floors: string) => void;
   onSetNewName: (name: string) => void;
-  onSetNewFloors: (floors: string) => void; // Changed to string
+  onSetNewFloors: (floors: string) => void;
   onSetSelectedLocation: (location: string) => void;
   onSubmitNewBuilding: () => void;
   onSubmitEditBuilding: () => void;
-  onOpenEditBuildingModal: (poi: any) => void; // Added poi parameter
+  onOpenEditBuildingModal: (poi: any) => void;
   onConfirmDeleteBuilding: (poi: any, callback: () => void) => void;
   onEnableAdminPOICreation: () => void;
 

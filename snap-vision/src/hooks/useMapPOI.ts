@@ -62,25 +62,24 @@ export const useMapPOI = (
       const locationsSnapshot = await firestore().collection('locations').get();
       const allPOIs: POI[] = [];
 
-      for (const locationDoc of locationsSnapshot.docs) {
-        const locationId = locationDoc.id;
-        //console.log(`Fetching POIs from: locations/${locationId}/buildingPOIs`);
+        for (const locationDoc of locationsSnapshot.docs) {
+          const locationId = locationDoc.id;
 
-        const buildingPOIsSnapshot = await firestore()
-          .collection(`locations/${locationId}/buildingPOIs`)
-          .get();
+          const buildingPOIsSnapshot = await firestore()
+            .collection(`locations/${locationId}/buildingPOIs`)
+            .get();
 
-        buildingPOIsSnapshot.forEach((doc) => {
-          const data = doc.data();
-          if (data?.centroid?.latitude && data?.centroid?.longitude) {
-            allPOIs.push({
-              ...data,
-              id: doc.id,
-              location: locationId,
-            } as POI);
-          }
-        });
-      }
+          buildingPOIsSnapshot.forEach((doc) => {
+            const data = doc.data();
+            if (data?.centroid?.latitude && data?.centroid?.longitude) {
+              allPOIs.push({
+                ...data,
+                id: doc.id,
+                location: locationId,
+              } as POI);
+            }
+          });
+        }
 
       //console.log('Total POIs fetched:', allPOIs.length);
       setPOIs(allPOIs);

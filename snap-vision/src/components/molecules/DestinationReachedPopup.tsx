@@ -56,9 +56,6 @@ const DestinationReachedPopup: React.FC<DestinationReachedPopupProps> = ({
       }).start(() => {
         // Start confetti after popup animation completes
         setShowConfetti(true);
-
-        // Start the pulsing animation
-        // startPulseAnimation();
       });
     } else {
       setShowConfetti(false);
@@ -102,7 +99,7 @@ const DestinationReachedPopup: React.FC<DestinationReachedPopupProps> = ({
       visible={visible}
       animationType="fade"
       onRequestClose={onClose}
-      statusBarTranslucent={true} // Cover the status bar too
+      statusBarTranslucent={true}
     >
       <View style={styles.modalContainer}>
         <Confetti
@@ -161,8 +158,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.75)', // Darker backdrop for better contrast
-    zIndex: 10000, // Very high z-index
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    zIndex: 10000,
   },
   popupContainer: {
     width: width * 0.85,
@@ -170,14 +167,14 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 24,
     alignItems: 'center',
-    elevation: 10, // Higher elevation
+    elevation: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
     shadowRadius: 8,
-    zIndex: 10001, // Even higher z-index than container
+    zIndex: 10001,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)', // Subtle border
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   checkmarkCircle: {
     width: 90,

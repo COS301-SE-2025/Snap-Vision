@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View } from 'react-native';
 import { WebView as WebViewType } from 'react-native-webview';
 import { Share } from 'react-native';
 import Tts from 'react-native-tts';
@@ -26,7 +25,6 @@ import { useMapIndoor } from '../hooks/useMapIndoor';
 import { useWebViewCommunication } from '../hooks/useWebViewCommunication';
 import { POI } from '../hooks/useMapPOI';
 import { useTimetableNavigation } from '../hooks/useTimetableNavigation';
-import TimetableBackgroundService from '../services/TimetableBackgroundService';
 
 // utils
 import { requestCameraPermission } from '../utils/cameraPermissions';

@@ -19,8 +19,8 @@ interface UseNavigationManagerParams {
   allRooms: RoomPOI[];
 }
 
-const DESTINATION_THRESHOLD = 0.08; // 8% of map size - more forgiving
-const STEP_THRESHOLD = 0.05; // 5% of map size for step completion - more forgiving
+const DESTINATION_THRESHOLD = 0.08;
+const STEP_THRESHOLD = 0.05;
 
 export function useNavigationManager({
   locationId,

@@ -1,4 +1,3 @@
-// src/components/molecules/TextToSpeech.tsx
 import React, { useEffect, useState } from 'react';
 import { Pressable, Text, StyleSheet } from 'react-native';
 import Tts from 'react-native-tts';
@@ -109,11 +108,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4, // reduced
-    paddingHorizontal: 8, // reduced
+    paddingVertical: 4,
+    paddingHorizontal: 8,
     borderRadius: 6,
-    height: 36, // fixed height
-    width: 100, // fixed width to match both buttons
+    height: 36,
+    width: 100,
     backgroundColor: '#222',
   },
 

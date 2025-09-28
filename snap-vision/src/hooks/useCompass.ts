@@ -1,4 +1,3 @@
-// src/hooks/useCompass.ts
 import { useState, useEffect } from 'react';
 import CompassHeading from 'react-native-compass-heading';
 

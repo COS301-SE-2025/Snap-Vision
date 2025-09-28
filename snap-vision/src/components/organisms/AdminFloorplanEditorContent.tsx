@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import AppButton from '../atoms/AppButton';
-import FloorplanWebView, { FloorplanWebViewRef } from '../atoms/FloorplanWebView';
+import { FloorplanWebViewRef } from '../atoms/FloorplanWebView';
 import FloorplanEditor from '../organisms/FloorplanEditor';
 import RoomDetailsModal from '../molecules/RoomDetailsModal';
 import StandardPopup from '../atoms/StandardPopup';

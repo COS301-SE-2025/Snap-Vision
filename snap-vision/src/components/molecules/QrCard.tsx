@@ -17,18 +17,16 @@ interface Props {
   subtitleColor: string;
 }
 
-// Adjust these to match your real navigator params
 type RootStackParamList = {
   IndoorSchematicNav: {
-    locationId: string; // real location (e.g., "up-campus")
-    buildingId: string; // building to open
-    buildingName: string; // for UI
-    floorId: string; // floor to show
-    userPos?: { x: number; y: number } | null; // optional user position
+    locationId: string;
+    buildingId: string;
+    buildingName: string;
+    floorId: string;
+    userPos?: { x: number; y: number } | null;
   };
 };
 
-// Room POI interface matching the structure in IndoorSchematicNavScreen
 interface RoomPOI {
   id: string;
   name: string;
@@ -87,7 +85,6 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
         //console.warn('Failed to unlock qr-scan badge:', badgeError);
       }
 
-      // Use the mapping as saved by createQRCodeMapping
       const { locationId, buildingId, buildingName, roomId, floorId } = qrMapping;
 
       if (!locationId || !buildingId || !roomId || !floorId) {
@@ -106,22 +103,18 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
           buildingId,
           buildingName: buildingName || 'Building',
           floorId,
-          userPos: fallbackCoordinates, // Always include fallback coordinates
+          userPos: fallbackCoordinates,
         });
         return;
       }
 
       // Get room details to access coordinates for userPos
       try {
-        // Log the exact path we're accessing to debug
         const dbPath = `locations/${locationId}/roomPOIs/${roomId}`;
         ////consolelog('Accessing Firestore path:', dbPath);
-
-        // Try using collection group query which searches across all collections named 'roomPOIs'
         ////consolelog('Trying collection group query for roomId:', roomId);
 
         try {
-          // Try querying by name from QR mapping
           const groupQuery = await firestore()
             .collectionGroup('roomPOIs')
             .where('name', '==', qrMapping.roomName)
@@ -164,7 +157,6 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
         ////consolelog('Fetching room data for:', roomId, 'in location:', locationId);
         const roomDoc = await roomRef.get();
 
-        // In newer Firebase versions, exists is a property or function
         let docExists = false;
         if (typeof roomDoc.exists === 'function') {
           docExists = roomDoc.exists();
@@ -196,8 +188,6 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
         // Pre-define coordinates as fallback to guarantee we always have something
         let coordinates = fallbackCoordinates;
 
-        // Some room documents store position as 'position' instead of 'coordinates'
-        // Check for both fields
         if (!roomData) {
           ////consolewarn('Room data is null or undefined for room:', roomId);
           navigation.navigate('IndoorSchematicNav', {
@@ -205,7 +195,7 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
             buildingId,
             buildingName: buildingName || 'Building',
             floorId,
-            userPos: fallbackCoordinates, // Use the fallback coordinates
+            userPos: fallbackCoordinates,
           });
           return;
         }
@@ -220,27 +210,21 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
           ////consolelog('Room position found:', coordinates);
         } else {
           ////consolewarn('No coordinates or position found for room:', roomId);
-
-          // FALLBACK: Always use hardcoded coordinates when room data is missing
-          // This is a reliable workaround for demo/testing purposes
           ////consolelog('Using fallback coordinates for QR code room');
 
-          // Always use simple coordinates for any building/floor
-          coordinates = fallbackCoordinates; // Use the same fallback coordinates defined above
+          coordinates = fallbackCoordinates;
           ////consolelog('Using fallback coordinates:', coordinates);
         }
 
-        // Navigate with all needed params including userPos from room coordinates
         navigation.navigate('IndoorSchematicNav', {
           locationId,
           buildingId,
           buildingName: buildingName || 'Building',
           floorId,
-          userPos: coordinates, // Set starting position from room coordinates
+          userPos: coordinates,
         });
       } catch (roomError) {
         ////consoleerror('Error fetching room data:', roomError);
-        // Continue navigation without coordinates
         navigation.navigate('IndoorSchematicNav', {
           locationId,
           buildingId,

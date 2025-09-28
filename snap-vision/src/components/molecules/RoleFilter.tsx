@@ -63,6 +63,6 @@ const styles = StyleSheet.create({
   buttonsContainer: {
     flexDirection: 'row',
     gap: 12,
-    paddingRight: 16, // ensure padding at end for scroll
+    paddingRight: 16,
   },
 });

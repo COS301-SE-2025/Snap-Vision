@@ -8,7 +8,6 @@ import firestore from '@react-native-firebase/firestore';
 
 import { ThemeName, BaseTheme } from '../theme';
 
-// Define the shape of shop items
 export interface ShopItem {
   id: string;
   title: string;
@@ -17,12 +16,12 @@ export interface ShopItem {
   cost: number;
   itemType: 'icon' | 'theme';
   tabType?: 'Home' | 'Map' | 'Achievements' | 'Settings'; // For icons
-  baseThemeType?: BaseTheme; // For themes - now using base themes
+  baseThemeType?: BaseTheme; // For themes
   equipped?: boolean;
 }
 
 const SHOP_ITEMS: ShopItem[] = [
-  // Theme items - now using base themes
+  // Theme items
   {
     id: 'theme-light',
     title: 'Classic Theme',

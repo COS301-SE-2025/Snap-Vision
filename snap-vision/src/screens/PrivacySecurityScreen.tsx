@@ -4,9 +4,12 @@ import PrivacySecurityContent from '../components/organisms/PrivacySecurityConte
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 
+import { useNavigation } from '@react-navigation/native';
+
 export default function PrivacySecurityScreen() {
   const { theme, isDark } = useTheme();
   const colors = getThemeColors(theme);
+  const navigation = useNavigation();
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
@@ -18,7 +21,7 @@ export default function PrivacySecurityScreen() {
         style={[styles.container, { backgroundColor: colors.background }]}
         contentContainerStyle={{ backgroundColor: colors.background, flexGrow: 1 }}
       >
-        <PrivacySecurityContent />
+        <PrivacySecurityContent navigation={navigation} />
       </ScrollView>
     </SafeAreaView>
   );

@@ -1,18 +1,14 @@
-// src/components/forms/AchievementsForm.tsx
 import React, { useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import WelcomeHeader from '../molecules/WelcomeHeader';
-import ProgressCard from '../atoms/ProgressCard';
-import RewardCard from '../molecules/RewardCard';
 import ActionButton from '../molecules/ActionButton';
 import { useBadges } from '../../context/BadgeContext';
 import { BADGES, BadgeId } from '../../types/badges';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../navigation/types';
-import { createStackNavigator } from '@react-navigation/stack';
 import ProgressSection from '../molecules/ProgressSection';
 import BadgesSection from '../molecules/BadgeSection';
 
