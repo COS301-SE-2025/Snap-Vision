@@ -1,3 +1,8 @@
+---
+layout: default
+title: Snap Vision
+---
+
 <div align="center">
   <img src="docs/img/Snap%20Vision%20cropped.png" alt="Snap Vision Logo" width="300"/>
   <h1>BLT’S</h1>
