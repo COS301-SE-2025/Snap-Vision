@@ -39,7 +39,7 @@ type BeaconDoc = {
   minor: number;
   x: number; // 0..1 normalized
   y: number; // 0..1 normalized
-  txPowerAt1m: number; 
+  txPowerAt1m: number;
   label?: string;
 };
 

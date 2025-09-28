@@ -611,13 +611,13 @@ const MapScreen = () => {
           const classStartTime = new Date();
           const [hours, minutes] = classData.startTime.split(':').map(Number);
           classStartTime.setHours(hours, minutes, 0, 0);
-          
+
           if (now > classStartTime) {
             //console.log('[MapScreen] Class time has passed, not showing popup');
             return;
           }
         }
-        
+
         // Find the building for this class
         let building = null;
 

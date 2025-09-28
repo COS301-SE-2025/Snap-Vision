@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   type: {
     fontSize: 14,
     marginBottom: 16,
-    marginLeft: 28, 
+    marginLeft: 28,
   },
   closeButton: {
     padding: 4,

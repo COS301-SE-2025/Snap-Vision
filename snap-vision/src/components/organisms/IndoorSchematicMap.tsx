@@ -2,10 +2,7 @@ import React, { useRef, useEffect, useMemo, useCallback, useState } from 'react'
 import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
 import WebView from 'react-native-webview';
 import { useTheme } from '@react-navigation/native';
-import {
-  useFloorplanPreloader,
-  isFloorplanPreloaded,
-} from '../../../src/utils/FloorplanManager';
+import { useFloorplanPreloader, isFloorplanPreloaded } from '../../../src/utils/FloorplanManager';
 
 type RoomPOI = {
   id: string;
@@ -436,7 +433,7 @@ export default function IndoorSchematicMap({
 
   const handleLoadEnd = useCallback(() => {
     setWebViewReady(true);
-    setInitAttempts(0); 
+    setInitAttempts(0);
     const payload = {
       floorplanUrl,
       rooms,

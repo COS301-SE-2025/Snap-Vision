@@ -70,7 +70,7 @@ const TutorialSlider = ({ onFinish }: TutorialSliderProps) => {
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={handleScroll}
         keyExtractor={(_, index) => index.toString()}
-        decelerationRate="fast" 
+        decelerationRate="fast"
         snapToInterval={width}
         snapToAlignment="center"
       />

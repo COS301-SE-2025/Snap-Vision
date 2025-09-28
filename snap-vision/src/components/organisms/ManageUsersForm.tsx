@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 18,
     marginBottom: 12,
-    textAlign: 'center', 
+    textAlign: 'center',
   },
 
   roleOption: {

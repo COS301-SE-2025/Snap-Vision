@@ -214,7 +214,7 @@ export async function getBadges(): Promise<Record<string, Badge>> {
   snapshot.forEach((doc) => {
     const data = doc.data();
     badges[doc.id] = {
-      id: doc.id as any, 
+      id: doc.id as any,
       title: data.title,
       description: data.description,
     };

@@ -8,8 +8,8 @@ export interface TimetableEntry {
   startTime: string; // HH:mm format
   endTime: string; // HH:mm format
   venue: string;
-  buildingId?: string; 
-  buildingName?: string; 
+  buildingId?: string;
+  buildingName?: string;
   locationId?: string;
   createdAt: Timestamp;
 }

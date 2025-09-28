@@ -70,12 +70,7 @@ const CrowdReportModal: React.FC<CrowdReportModalProps> = ({
     }
 
     return (
-      <View
-        style={[
-          styles.suggestionsOverlay,
-          { top: 180 },
-        ]}
-      >
+      <View style={[styles.suggestionsOverlay, { top: 180 }]}>
         <View
           style={[
             styles.dropdown,
@@ -92,7 +87,7 @@ const CrowdReportModal: React.FC<CrowdReportModalProps> = ({
                   onChangePOI(item);
                   setBuildingSearchText(item.name);
                   setShowBuildingSuggestions(false);
-                  Keyboard.dismiss(); 
+                  Keyboard.dismiss();
                 }}
                 style={[styles.suggestionItem, { borderBottomColor: colors.border }]}
               >
@@ -290,10 +285,10 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   scrollView: {
-    flexGrow: 0, 
+    flexGrow: 0,
   },
   scrollContent: {
-    paddingBottom: 10, 
+    paddingBottom: 10,
   },
   section: {
     paddingHorizontal: 20,

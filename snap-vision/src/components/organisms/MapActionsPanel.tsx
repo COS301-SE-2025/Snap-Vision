@@ -56,7 +56,7 @@ const MapActionsPanel = ({
 
   const drawerTranslateX = drawerAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [150, 0], 
+    outputRange: [150, 0],
   });
 
   const arrowRotation = drawerAnimation.interpolate({
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     top: -20,
     right: 0,
     width: 130,
-    height: 170, 
+    height: 170,
     borderTopLeftRadius: 15,
     borderBottomLeftRadius: 15,
     elevation: 2,
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   },
   adminButtonContainer: {
     position: 'absolute',
-    top: 170, 
+    top: 170,
     right: 15,
     alignItems: 'center',
   },

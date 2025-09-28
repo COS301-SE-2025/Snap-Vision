@@ -158,7 +158,7 @@ export function useBeaconManager({
         //console.error(BT, 'Scanner restart error:', e);
       }
     })();
-  }, [allowedList.length]); 
+  }, [allowedList.length]);
 
   // Debug logging
   useEffect(() => {

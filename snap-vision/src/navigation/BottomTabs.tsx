@@ -27,7 +27,7 @@ export default function BottomTabs() {
         tabBarIcon: ({ color, size }) => (
           <TabBarIcon routeName={route.name} color={color} size={size} />
         ),
-        tabBarActiveTintColor: colors.primary, 
+        tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: isDark ? '#888' : '#888',
         tabBarStyle: {
           backgroundColor: colors.background,

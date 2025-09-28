@@ -16,12 +16,12 @@ export interface ShopItem {
   cost: number;
   itemType: 'icon' | 'theme';
   tabType?: 'Home' | 'Map' | 'Achievements' | 'Settings'; // For icons
-  baseThemeType?: BaseTheme; // For themes 
+  baseThemeType?: BaseTheme; // For themes
   equipped?: boolean;
 }
 
 const SHOP_ITEMS: ShopItem[] = [
-  // Theme items 
+  // Theme items
   {
     id: 'theme-light',
     title: 'Classic Theme',

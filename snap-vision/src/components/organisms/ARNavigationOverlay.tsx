@@ -274,11 +274,11 @@ function MiniMapOverlay({
                         styles.routeSegment,
                         {
                           left: start.x,
-                          top: start.y - 1, 
+                          top: start.y - 1,
                           width: length,
                           transform: [{ rotate: `${angle}deg` }],
                           backgroundColor: index < currentRouteIndex ? '#4CAF50' : '#2196F3', // Green for completed, blue for remaining
-                          opacity: index < currentRouteIndex ? 0.8 : 1, 
+                          opacity: index < currentRouteIndex ? 0.8 : 1,
                         },
                       ]}
                     />
@@ -606,7 +606,7 @@ function CustomDirectionArrow({ direction, size = 160 }: { direction: string; si
       case 'up-left':
         return 315;
       case 'turn-around':
-        return 0; 
+        return 0;
       default:
         return 0;
     }
@@ -679,8 +679,8 @@ function CustomDirectionArrow({ direction, size = 160 }: { direction: string; si
 // Helper functions to create Skia paths
 function createArrowShaft(size: number): string {
   const centerX = size / 2;
-  const shaftWidth = size * 0.15; 
-  const shaftHeight = size * 0.42; 
+  const shaftWidth = size * 0.15;
+  const shaftHeight = size * 0.42;
   const startY = size * 0.43;
 
   return `M ${centerX - shaftWidth / 2} ${startY} 
@@ -692,9 +692,9 @@ function createArrowShaft(size: number): string {
 
 function createArrowHead(size: number): string {
   const centerX = size / 2;
-  const headWidth = size * 0.35; 
-  const headHeight = size * 0.32; 
-  const tipY = size * 0.12; 
+  const headWidth = size * 0.35;
+  const headHeight = size * 0.32;
+  const tipY = size * 0.12;
 
   return `M ${centerX} ${tipY} 
           L ${centerX - headWidth / 2} ${tipY + headHeight} 
@@ -719,7 +719,7 @@ function createTurnAroundArrowHead(size: number): string {
 
   const arrowX = centerX - radius * 0.7 - size * 0.04;
   const arrowY = centerY - radius * 0.7;
-  const headSize = size * 0.1; 
+  const headSize = size * 0.1;
 
   return `M ${arrowX - headSize} ${arrowY} 
           L ${arrowX + headSize} ${arrowY - headSize} 
@@ -834,7 +834,7 @@ const styles = StyleSheet.create({
   // Instruction Bar
   instructionBar: {
     position: 'absolute',
-    top: 20, 
+    top: 20,
     left: 20,
     right: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -1071,8 +1071,8 @@ const styles = StyleSheet.create({
   warningContainer: {
     position: 'absolute',
     top: 70,
-    left: 20, 
-    width: 160, 
+    left: 20,
+    width: 160,
     borderRadius: 12,
     overflow: 'hidden',
     borderWidth: 2,
@@ -1085,7 +1085,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   warningCollapsed: {
-    width: 50, 
+    width: 50,
     height: 'auto',
   },
   warningHeader: {
@@ -1118,6 +1118,6 @@ const styles = StyleSheet.create({
   },
   warningLabel: {
     fontWeight: 'bold',
-    color: '#FFD700', 
+    color: '#FFD700',
   },
 });

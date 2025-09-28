@@ -4,7 +4,7 @@ import auth from '@react-native-firebase/auth';
 import { ShopItem } from '../hooks/useShopManager';
 
 interface UserIconState {
-  selectedIcons: Record<string, string>; 
+  selectedIcons: Record<string, string>;
   equippedItems: string[];
 }
 

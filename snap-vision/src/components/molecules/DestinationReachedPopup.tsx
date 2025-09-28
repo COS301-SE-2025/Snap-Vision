@@ -99,7 +99,7 @@ const DestinationReachedPopup: React.FC<DestinationReachedPopupProps> = ({
       visible={visible}
       animationType="fade"
       onRequestClose={onClose}
-      statusBarTranslucent={true} 
+      statusBarTranslucent={true}
     >
       <View style={styles.modalContainer}>
         <Confetti
@@ -158,8 +158,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.75)', 
-    zIndex: 10000, 
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    zIndex: 10000,
   },
   popupContainer: {
     width: width * 0.85,

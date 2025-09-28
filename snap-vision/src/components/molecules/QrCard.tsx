@@ -19,11 +19,11 @@ interface Props {
 
 type RootStackParamList = {
   IndoorSchematicNav: {
-    locationId: string; 
+    locationId: string;
     buildingId: string;
-    buildingName: string; 
+    buildingName: string;
     floorId: string;
-    userPos?: { x: number; y: number } | null; 
+    userPos?: { x: number; y: number } | null;
   };
 };
 
@@ -103,7 +103,7 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
           buildingId,
           buildingName: buildingName || 'Building',
           floorId,
-          userPos: fallbackCoordinates, 
+          userPos: fallbackCoordinates,
         });
         return;
       }
@@ -195,7 +195,7 @@ export default function QrCard({ backgroundColor, titleColor, subtitleColor }: P
             buildingId,
             buildingName: buildingName || 'Building',
             floorId,
-            userPos: fallbackCoordinates, 
+            userPos: fallbackCoordinates,
           });
           return;
         }

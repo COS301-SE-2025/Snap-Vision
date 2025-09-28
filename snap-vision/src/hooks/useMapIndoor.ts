@@ -84,7 +84,7 @@ export const useMapIndoor = (): UseMapIndoorReturn => {
       const buildingId = p.id || p.buildingId || fallbackPOI?.id || fallbackPOI?.buildingId;
       const buildingName =
         p.name || p.buildingName || fallbackPOI?.name || fallbackPOI?.title || 'Building';
-      const locationId = p.locationId || p.location || fallbackPOI?.location || 'up-campus'; 
+      const locationId = p.locationId || p.location || fallbackPOI?.location || 'up-campus';
       const floorId = '1';
 
       ////consolelog('[IndoorNav] payload:', p);

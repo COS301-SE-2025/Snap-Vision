@@ -30,11 +30,7 @@ const TutorialSlide = ({ image, title, description }: TutorialSlideProps) => {
       showsVerticalScrollIndicator={true}
     >
       <View style={styles.imageContainer}>
-        <Image
-          source={image}
-          style={styles.image}
-          resizeMode="contain" 
-        />
+        <Image source={image} style={styles.image} resizeMode="contain" />
       </View>
       <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
       <Text style={[styles.description, { color: colors.text }]}>{description}</Text>
@@ -50,13 +46,13 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: width * 0.9,
-    height: height * 0.5, 
+    height: height * 0.5,
     marginBottom: 24,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#f0f0f0', 
+    backgroundColor: '#f0f0f0',
     justifyContent: 'center',
-    alignItems: 'center', 
+    alignItems: 'center',
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

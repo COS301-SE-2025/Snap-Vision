@@ -30,6 +30,6 @@ export default function ThemedText({ children, size = 'md', weight = 'normal', s
 
 const styles = StyleSheet.create({
   base: {
-    textAlign: 'left', 
+    textAlign: 'left',
   },
 });

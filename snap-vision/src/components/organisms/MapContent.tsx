@@ -39,7 +39,7 @@ interface MapContentProps {
   distanceToDestination: number | null;
   distanceWalked: number;
   originalRouteDistance: number | null;
-  estimatedTime: string | null; 
+  estimatedTime: string | null;
   isRouteLoading: boolean;
   routeCoordinates: any[];
   showDirectionsSheet: boolean;
@@ -66,7 +66,7 @@ interface MapContentProps {
   onDestinationChange: (text: string) => void;
   onDestinationSearch: () => void;
   onSelectPOI: (poi: any) => void;
-  onSelectCrowdReportPOI: (poi: any) => void; 
+  onSelectCrowdReportPOI: (poi: any) => void;
 
   // Bluetooth navigation
   onOpenBluetoothNavigation: () => void;
@@ -79,18 +79,18 @@ interface MapContentProps {
   adminActionPOI: any;
   editingPOI: any;
   buildingName: string;
-  numberOfFloors: string; 
+  numberOfFloors: string;
   newName: string;
-  newFloors: string; 
+  newFloors: string;
   selectedLocation: string;
   availableLocations: any[];
   onSetShowAddPOIModal: (show: boolean) => void;
   onSetShowEditPOIModal: (show: boolean) => void;
   onSetShowAdminActions: (show: boolean) => void;
   onSetBuildingName: (name: string) => void;
-  onSetNumberOfFloors: (floors: string) => void; 
+  onSetNumberOfFloors: (floors: string) => void;
   onSetNewName: (name: string) => void;
-  onSetNewFloors: (floors: string) => void; 
+  onSetNewFloors: (floors: string) => void;
   onSetSelectedLocation: (location: string) => void;
   onSubmitNewBuilding: () => void;
   onSubmitEditBuilding: () => void;

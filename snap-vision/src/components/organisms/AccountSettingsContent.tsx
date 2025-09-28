@@ -26,23 +26,13 @@ export default function AccountSettingsContent({ navigation }: Props) {
       await auth().signOut();
 
       Toast.show(
-        makeToastPayload(
-          'Logged Out',
-          'You have been logged out successfully.',
-          {},
-          theme,
-        ),
+        makeToastPayload('Logged Out', 'You have been logged out successfully.', {}, theme),
       );
 
       resetToAuthResolver();
     } catch (error) {
       Toast.show(
-        makeToastPayload(
-          'Logout Failed',
-          'An error occurred while logging out.',
-          {},
-          theme,
-        ),
+        makeToastPayload('Logout Failed', 'An error occurred while logging out.', {}, theme),
       );
     } finally {
       setIsLoggingOut(false);

@@ -161,7 +161,7 @@ describe('TimetableBackgroundService', () => {
       ];
 
       mockGet.mockResolvedValue({
-        docs: mockEntries.map(entry => ({
+        docs: mockEntries.map((entry) => ({
           id: entry.id,
           data: () => entry,
         })),
@@ -208,7 +208,7 @@ describe('TimetableBackgroundService', () => {
 
       // Mock the locations collection
       mockGet.mockResolvedValueOnce({
-        docs: mockLocations.map(loc => ({
+        docs: mockLocations.map((loc) => ({
           id: loc.id,
           data: () => loc,
         })),
@@ -223,7 +223,7 @@ describe('TimetableBackgroundService', () => {
         } else if (path === 'locations/loc-1/buildingPOIs') {
           return {
             get: jest.fn().mockResolvedValue({
-              docs: mockPOIs.map(poi => ({
+              docs: mockPOIs.map((poi) => ({
                 id: poi.id,
                 data: () => poi,
               })),
@@ -329,7 +329,7 @@ describe('TimetableBackgroundService', () => {
 
       mockGet
         .mockResolvedValueOnce({
-          docs: mockEntries.map(entry => ({
+          docs: mockEntries.map((entry) => ({
             id: entry.id,
             data: () => entry,
           })),
@@ -342,10 +342,7 @@ describe('TimetableBackgroundService', () => {
       await service.scheduleWeekNotifications();
 
       expect(mockNotifee.createTriggerNotification).toHaveBeenCalled();
-      expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
-        'scheduledAutoNav',
-        expect.any(String)
-      );
+      expect(mockAsyncStorage.setItem).toHaveBeenCalledWith('scheduledAutoNav', expect.any(String));
     });
 
     it('skips if auto navigation disabled', async () => {

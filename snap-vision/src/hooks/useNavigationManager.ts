@@ -19,7 +19,7 @@ interface UseNavigationManagerParams {
   allRooms: RoomPOI[];
 }
 
-const DESTINATION_THRESHOLD = 0.08; 
+const DESTINATION_THRESHOLD = 0.08;
 const STEP_THRESHOLD = 0.05;
 
 export function useNavigationManager({

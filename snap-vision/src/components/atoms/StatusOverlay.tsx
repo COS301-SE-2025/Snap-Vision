@@ -12,14 +12,14 @@ export default function StatusOverlay({ status }: { status: string }) {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 80, 
+    top: 80,
     left: 20,
     right: 20,
     backgroundColor: 'rgba(0,0,0,0.8)',
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
-    zIndex: 1002, 
+    zIndex: 1002,
   },
   text: {
     color: 'white',
