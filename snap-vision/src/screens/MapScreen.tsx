@@ -305,6 +305,7 @@ const MapScreen = () => {
     showErrorPopupHelper,
     showSuccessPopupHelper,
     showConfirmationPopupHelper,
+    webViewRef,
   );
 
   const {
