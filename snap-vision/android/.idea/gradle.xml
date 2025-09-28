@@ -26,11 +26,15 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/../node_modules/@notifee/react-native/android" />
             <option value="$PROJECT_DIR$/../node_modules/@react-native-async-storage/async-storage/android" />
+            <option value="$PROJECT_DIR$/../node_modules/@react-native-community/datetimepicker/android" />
             <option value="$PROJECT_DIR$/../node_modules/@react-native-community/geolocation/android" />
             <option value="$PROJECT_DIR$/../node_modules/@react-native-firebase/app/android" />
             <option value="$PROJECT_DIR$/../node_modules/@react-native-firebase/auth/android" />
             <option value="$PROJECT_DIR$/../node_modules/@react-native-firebase/firestore/android" />
+            <option value="$PROJECT_DIR$/../node_modules/@react-native-firebase/messaging/android" />
+            <option value="$PROJECT_DIR$/../node_modules/@react-native-firebase/perf/android" />
             <option value="$PROJECT_DIR$/../node_modules/@react-native-firebase/storage/android" />
             <option value="$PROJECT_DIR$/../node_modules/@react-native-masked-view/masked-view/android" />
             <option value="$PROJECT_DIR$/../node_modules/@react-native-picker/picker/android" />
@@ -40,6 +44,8 @@
             <option value="$PROJECT_DIR$/../node_modules/@react-native/gradle-plugin/shared" />
             <option value="$PROJECT_DIR$/../node_modules/@react-native/gradle-plugin/shared-testutil" />
             <option value="$PROJECT_DIR$/../node_modules/@shopify/react-native-skia/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-ble-manager/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-ble-plx/android" />
             <option value="$PROJECT_DIR$/../node_modules/react-native-camera-kit/android" />
             <option value="$PROJECT_DIR$/../node_modules/react-native-compass-heading/android" />
             <option value="$PROJECT_DIR$/../node_modules/react-native-fs/android" />

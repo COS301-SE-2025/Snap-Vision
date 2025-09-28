@@ -6,4 +6,4 @@ const htmlPath = path.join(__dirname, '../android/app/src/main/assets/leaflet.ht
 let html = fs.readFileSync(htmlPath, 'utf8');
 html = html.replace('MAPTILER_API_KEY_PLACEHOLDER', process.env.MAPTILER_API_KEY);
 fs.writeFileSync(htmlPath, html);
-console.log('MapTiler API key injected into leaflet.html');
+////consolelog('MapTiler API key injected into leaflet.html');

@@ -7,8 +7,8 @@ import { getThemeColors } from '../../theme';
 import { useNavigation } from '@react-navigation/native';
 
 const TutorialContent = () => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const navigation = useNavigation();
 
   const handleFinish = () => {

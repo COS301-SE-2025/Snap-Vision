@@ -28,8 +28,8 @@ const { width, height } = Dimensions.get('window');
 const FRAME_SIZE = Math.min(width, height) * 0.8;
 
 export default function QRScanner({ onScan, onClose }: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [locked, setLocked] = useState(false);
@@ -62,7 +62,7 @@ export default function QRScanner({ onScan, onClose }: Props) {
           }
         }
       } catch (e) {
-        console.error('Permission error', e);
+        ////consoleerror('Permission error', e);
         setHasPermission(false);
       }
     };
@@ -77,9 +77,9 @@ export default function QRScanner({ onScan, onClose }: Props) {
   const device = useCameraDevice('back');
 
   useEffect(() => {
-    console.log('Camera device:', device ? 'Available' : 'Not available');
+    ////consolelog('Camera device:', device ? 'Available' : 'Not available');
     if (device) {
-      console.log('Formats available:', device.formats?.length ?? 0);
+      ////consolelog('Formats available:', device.formats?.length ?? 0);
     }
   }, [device]);
 
@@ -112,18 +112,13 @@ export default function QRScanner({ onScan, onClose }: Props) {
         }
         if (!codes || codes.length === 0) return;
 
-        // Log what the device is reporting (handy for OEM quirks)
-        codes.forEach((c, i) =>
-          console.log(`Code[${i}] type=${c?.type} value=${c?.value || c?.rawValue}`),
-        );
-
         const hit = extractFirstValue(codes);
         if (!hit) return;
 
         // Dedupe: ignore the same value within a short TTL window
         const lastTs = seenMapRef.current.get(hit.value) ?? 0;
         if (now() - lastTs < DEDUPE_TTL_MS) {
-          console.log('Duplicate within TTL, ignoring:', hit.value);
+          ////consolelog('Duplicate within TTL, ignoring:', hit.value);
           return;
         }
         seenMapRef.current.set(hit.value, now());
@@ -138,7 +133,7 @@ export default function QRScanner({ onScan, onClose }: Props) {
         setLastValue(hit.value);
         onScan(hit.value);
       } catch (err) {
-        console.error('handleBarcodeDetected error:', err);
+        ////consoleerror('handleBarcodeDetected error:', err);
       }
     },
     [locked, onScan],
@@ -200,7 +195,7 @@ export default function QRScanner({ onScan, onClose }: Props) {
         await maybeFocus({ x: locationX / width, y: locationY / height });
       }
     } catch (error) {
-      console.log('Focus error:', error);
+      ////consolelog('Focus error:', error);
     }
   };
 

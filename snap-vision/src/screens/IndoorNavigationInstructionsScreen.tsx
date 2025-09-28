@@ -4,7 +4,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
-import IndoorNavigationInstructionsContent from '../../editTests/IndoorNavigationInstructionsContent';
+import IndoorNavigationInstructionsContent from '../components/organisms/IndoorNavigationInstructionsContent';
 
 type RootStackParamList = {
   IndoorNavigationInterface: {
@@ -28,8 +28,8 @@ type NavP = StackNavigationProp<RootStackParamList, 'IndoorNavigationInstruction
 export default function IndoorNavigationInstructionsScreen() {
   const navigation = useNavigation<NavP>();
   const route = useRoute<RouteP>();
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const { buildingId, floorId, startRoomId, endRoomId, locationId } = route.params;
 

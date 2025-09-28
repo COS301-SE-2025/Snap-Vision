@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View } from 'react-native';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { WebView as WebViewType } from 'react-native-webview';
 import { Share } from 'react-native';
 import Tts from 'react-native-tts';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 //components
 import MapContent from '../components/organisms/MapContent';
@@ -14,6 +14,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 import { useBadges } from '../context/BadgeContext';
 import { useAccessibility } from '../context/AccessibilityContext';
+import { useDeepLink } from '../DeepLinkContext';
 import { useCompass } from '../hooks/useCompass';
 import { useMapLocation } from '../hooks/useMapLocation';
 import { useMapNavigation } from '../hooks/useMapNavigation';
@@ -22,6 +23,8 @@ import { useMapAdmin } from '../hooks/useMapAdmin';
 import { useCrowdReports } from '../hooks/useCrowdReports';
 import { useMapIndoor } from '../hooks/useMapIndoor';
 import { useWebViewCommunication } from '../hooks/useWebViewCommunication';
+import { POI } from '../hooks/useMapPOI';
+import { useTimetableNavigation } from '../hooks/useTimetableNavigation';
 
 // utils
 import { requestCameraPermission } from '../utils/cameraPermissions';
@@ -29,26 +32,40 @@ import { requestCameraPermission } from '../utils/cameraPermissions';
 type MapScreenParams = {
   lat?: string;
   lng?: string;
+  fromNotification?: boolean;
+  course?: string;
+  venue?: string;
+  startTime?: string;
+  poiId?: string;
+  selectedPOIId?: string;
 };
 
 const MapScreen = () => {
   // theme and context
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const { isHapticFeedbackEnabled } = useAccessibility();
-  const { setNavigationStartTime, unlock, incrementRoutes } = useBadges();
+  const { setNavigationStartTime, unlock, incrementRoutes, state } = useBadges();
+  const { coords: deepLinkCoords, setCoords: setDeepLinkCoords } = useDeepLink();
 
   // navigation
   const route = useRoute();
   const navigation = useNavigation<any>();
-  const params = route.params as MapScreenParams;
+  const params = route.params as MapScreenParams & { selectedPOI?: POI };
 
   // refs
   const webViewRef = useRef<WebViewType>(null);
 
   // basic state
   const [isMapReady, setIsMapReady] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [isNavigating, setIsNavigatingInternal] = useState(false);
+
+  const setIsNavigating = (value: boolean) => {
+    setIsNavigatingInternal(value);
+  };
+
+  React.useEffect(() => {}, [isNavigating]);
+
   const [showDirectionsSheet, setShowDirectionsSheet] = useState(false);
   const [showDestinationReachedPopup, setShowDestinationReachedPopup] = useState(false);
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
@@ -162,6 +179,68 @@ const MapScreen = () => {
     setIsNavigating,
   );
 
+  // auto navigation popup state
+  const [autoNavigationPopup, setAutoNavigationPopup] = useState<{
+    visible: boolean;
+    entry: any;
+    building: any;
+  }>({ visible: false, entry: null, building: null });
+
+  // timetable navigation hook
+  const { checkForUpcomingClasses, findBuildingForEntry } = useTimetableNavigation({
+    currentLocation,
+    isMapReady,
+    webViewRef,
+    fetchRoute,
+    setDestination,
+    setDestinationCoords,
+    selectPOI: setHookSelectedPOI,
+    setStatus,
+    onAutoNavigationTriggered: (entry, building) => {
+      setAutoNavigationPopup({
+        visible: true,
+        entry,
+        building,
+      });
+    },
+  });
+
+  //  auto navigation handlers
+  const handleAutoNavigationConfirm = () => {
+    const { entry, building } = autoNavigationPopup;
+
+    if (building && building.centroid) {
+      //console.log('[MapScreen] User confirmed auto-navigation, setting up route...');
+
+      // Clear any existing route first
+      webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute();');
+
+      // Now set up the navigation
+      setDestination(building.name || building.title || entry.venue);
+      setDestinationCoords([building.centroid.longitude, building.centroid.latitude]);
+      setHookSelectedPOI(building);
+
+      // Generate route
+      fetchRoute([building.centroid.longitude, building.centroid.latitude]);
+
+      // Update status
+      setStatus(`Auto-route to ${entry.course} at ${entry.venue}`);
+
+      // Show directions sheet
+      setShowDirectionsSheet(true);
+    }
+
+    // Close the popup
+    setAutoNavigationPopup({ visible: false, entry: null, building: null });
+  };
+
+  const handleAutoNavigationDismiss = () => {
+    //console.log('[MapScreen] User dismissed auto-navigation');
+
+    // Just close the popup - no navigation setup was done
+    setAutoNavigationPopup({ visible: false, entry: null, building: null });
+  };
+
   //helper functions for admin hook
   const showErrorPopupHelper = (message: string) => {
     setErrorPopupMessage(message);
@@ -224,6 +303,7 @@ const MapScreen = () => {
     showErrorPopupHelper,
     showSuccessPopupHelper,
     showConfirmationPopupHelper,
+    webViewRef,
   );
 
   const {
@@ -387,12 +467,16 @@ const MapScreen = () => {
   };
 
   const handleStartNavigation = () => {
-    console.log('[DirectionsModal] Start pressed');
-    console.log('Current destination:', destination);
-    console.log('Current steps:', steps);
-    console.log('CurrentStep:', currentStep);
-    console.log('CurrentLocation:', currentLocation);
-    setIsNavigating(true);
+    ////consolelog('[DirectionsModal] Start pressed');
+    ////consolelog('Current destination:', destination);
+    ////consolelog('Current steps:', steps);
+    ////consolelog('CurrentStep:', currentStep);
+    ////consolelog('CurrentLocation:', currentLocation);
+
+    // call the actual startNavigation function from useMapNavigation hook
+    // this handles location tracking, distance calculation, and destination detection
+    startNavigation();
+
     setShouldStartTTS(true);
     setCurrentStep(0);
   };
@@ -421,7 +505,18 @@ const MapScreen = () => {
 
   const handleOpenIndoorNavigation = () => {
     if (selectedBuildingForIndoor) {
-      openIndoorNavigation(selectedBuildingForIndoor, setErrorPopupMessage, setShowErrorPopup);
+      openIndoorNavigation(
+        selectedBuildingForIndoor,
+        navigation,
+        setErrorPopupMessage,
+        setShowErrorPopup,
+      );
+    } else if (hookSelectedPOI) {
+      setSelectedBuildingForIndoor(hookSelectedPOI);
+      openIndoorNavigation(hookSelectedPOI, navigation, setErrorPopupMessage, setShowErrorPopup);
+    } else {
+      setErrorPopupMessage('Please select a building first');
+      setShowErrorPopup(true);
     }
   };
 
@@ -437,12 +532,21 @@ const MapScreen = () => {
     openCrowdReportModal(selectedFeature, destination, destinationCoords, pois, setHookSelectedPOI);
   };
 
+  const handleSelectCrowdReportPOI = (poi: any) => {
+    // Only update the selected POI for crowd reporting, don't trigger navigation
+    setHookSelectedPOI(poi);
+  };
+
   const handleOpenEditBuildingModal = (poi: any) => {
     openEditBuildingModal(poi);
   };
 
   const handleEnableAdminPOICreation = () => {
     enableAdminPOICreation(webViewRef, setTempMessage);
+  };
+
+  const handleOpenBluetoothNavigation = () => {
+    navigation.navigate('BluetoothBuildings');
   };
 
   //effects
@@ -454,6 +558,129 @@ const MapScreen = () => {
       return () => clearTimeout(timer);
     }
   }, [tempMessage]);
+
+  // Check for notification-triggered popup when screen focuses
+  useFocusEffect(
+    useCallback(() => {
+      const checkForNotificationPopup = async () => {
+        try {
+          //console.log('[MapScreen] Checking for pending class popup...');
+
+          const popupData = await AsyncStorage.getItem('pendingClassPopup');
+          if (popupData) {
+            const classData = JSON.parse(popupData);
+
+            // Check if the popup has expired (class start time has passed)
+            const now = Date.now();
+            if (classData.expiresAt && now > classData.expiresAt) {
+              //console.log('[MapScreen] Class popup expired, removing from storage');
+              await AsyncStorage.removeItem('pendingClassPopup');
+              return;
+            }
+
+            await AsyncStorage.removeItem('pendingClassPopup');
+
+            //console.log('[MapScreen] Found pending class popup:', classData);
+
+            // Wait a bit for POIs to load if they haven't yet
+            let retries = 0;
+            const maxRetries = 10;
+
+            const waitForPOIs = () => {
+              if (pois && pois.length > 0) {
+                //console.log('[MapScreen] POIs loaded, processing popup');
+                processClassPopup(classData);
+              } else if (retries < maxRetries) {
+                retries++;
+                //console.log('[MapScreen] Waiting for POIs to load, retry', retries);
+                setTimeout(waitForPOIs, 500);
+              } else {
+                //console.log('[MapScreen] POIs not loaded, using coordinates fallback');
+                processClassPopup(classData);
+              }
+            };
+
+            waitForPOIs();
+          }
+        } catch (error) {
+          //console.error('[MapScreen] Error checking notification popup:', error);
+        }
+      };
+
+      const processClassPopup = (classData: any) => {
+        // Check if class time has passed before showing popup
+        if (classData.startTime) {
+          const now = new Date();
+          const classStartTime = new Date();
+          const [hours, minutes] = classData.startTime.split(':').map(Number);
+          classStartTime.setHours(hours, minutes, 0, 0);
+
+          if (now > classStartTime) {
+            //console.log('[MapScreen] Class time has passed, not showing popup');
+            return;
+          }
+        }
+
+        // Find the building for this class
+        let building = null;
+
+        // First try by buildingId
+        if (classData.buildingId && pois) {
+          building = pois.find((poi) => poi.id === classData.buildingId);
+        }
+
+        // Then try by building name
+        if (!building && classData.buildingName && pois) {
+          building = pois.find(
+            (poi) =>
+              poi.name?.toLowerCase().includes(classData.buildingName.toLowerCase()) ||
+              poi.title?.toLowerCase().includes(classData.buildingName.toLowerCase()),
+          );
+        }
+
+        // Use coordinates as fallback
+        if (!building && classData.lat && classData.lng) {
+          building = {
+            id: 'notification-building',
+            name: classData.buildingName || classData.venue,
+            title: classData.buildingName || classData.venue,
+            centroid: {
+              latitude: parseFloat(classData.lat),
+              longitude: parseFloat(classData.lng),
+            },
+          };
+        }
+
+        if (building && building.centroid) {
+          //console.log('[MapScreen] Triggering auto navigation popup for:', classData.course);
+
+          // Create a mock entry for the popup
+          const mockEntry = {
+            id: classData.entryKey,
+            course: classData.course,
+            venue: classData.venue,
+            startTime: classData.startTime,
+            buildingId: classData.buildingId,
+            buildingName: classData.buildingName,
+          };
+
+          // Trigger the auto navigation popup
+          setAutoNavigationPopup({
+            visible: true,
+            entry: mockEntry,
+            building: building,
+          });
+        } else {
+          //console.log('[MapScreen] Could not find building for notification popup');
+        }
+      };
+
+      // Only check when map is ready
+      if (isMapReady) {
+        checkForNotificationPopup();
+      }
+    }, [isMapReady, pois, setAutoNavigationPopup]),
+  );
 
   //tts and haptic feedback effect
   useEffect(() => {
@@ -471,7 +698,7 @@ const MapScreen = () => {
               Tts.speak(instruction);
             }, 500);
           } catch (e) {
-            console.error('TTS Error:', e);
+            ////consoleerror('TTS Error:', e);
             setError('Voice guidance is not available.');
           }
         }
@@ -484,7 +711,35 @@ const MapScreen = () => {
     if (!hasHandledDeepLink && params && params.lat && params.lng && currentLocation) {
       const lat = parseFloat(params.lat);
       const lng = parseFloat(params.lng);
-      setDestination("Friend's Location");
+
+      // Check if this is from a notification
+      const isFromNotification = params.fromNotification || params.course || params.venue;
+
+      if (isFromNotification) {
+        setDestination(`${params.course || 'Class'} at ${params.venue || 'Venue'}`);
+        setStatus('Auto-navigating to your class location');
+
+        // Trigger the popup if we have the course info
+        if (params.course) {
+          setTimeout(() => {
+            setAutoNavigationPopup({
+              visible: true,
+              entry: {
+                course: params.course,
+                venue: params.venue,
+                startTime: params.startTime,
+              },
+              building: {
+                name: params.venue,
+                centroid: { latitude: lat, longitude: lng },
+              },
+            });
+          }, 1000); // Small delay to ensure map is ready
+        }
+      } else {
+        setDestination("Friend's Location");
+      }
+
       setDestinationCoords([lng, lat]);
       fetchRoute([lng, lat]);
       setHasHandledDeepLink(true);
@@ -496,6 +751,43 @@ const MapScreen = () => {
     fetchRoute,
     setDestination,
     setDestinationCoords,
+    setStatus,
+    setAutoNavigationPopup,
+  ]);
+
+  // Handle deep link coordinates from DeepLinkContext (for location sharing)
+  useEffect(() => {
+    if (
+      deepLinkCoords &&
+      deepLinkCoords.lat &&
+      deepLinkCoords.lng &&
+      currentLocation &&
+      isMapReady
+    ) {
+      const lat = parseFloat(deepLinkCoords.lat);
+      const lng = parseFloat(deepLinkCoords.lng);
+
+      console.log('[MapScreen] Handling deep link coordinates:', { lat, lng });
+
+      setDestination("Friend's Location");
+      setDestinationCoords([lng, lat]);
+      fetchRoute([lng, lat]);
+      setStatus('Navigating to shared location');
+      setShowDirectionsSheet(true);
+
+      // Clear the deep link coords after handling
+      setDeepLinkCoords(null);
+    }
+  }, [
+    deepLinkCoords,
+    currentLocation,
+    isMapReady,
+    fetchRoute,
+    setDestination,
+    setDestinationCoords,
+    setDeepLinkCoords,
+    setStatus,
+    setShowDirectionsSheet,
   ]);
 
   // location availability check
@@ -511,6 +803,58 @@ const MapScreen = () => {
     }
   }, [isMapReady, currentLocation, isRefreshingLocation, showLocationRefreshPopup]);
 
+  // Handle user icon updates when purchases change
+  useEffect(() => {
+    if (isMapReady && webViewRef.current) {
+      // Find the latest user icon purchase
+      const userIconPurchases =
+        state.purchases?.filter((purchase: any) => purchase.id?.startsWith('user-icon-')) || [];
+
+      if (userIconPurchases.length > 0) {
+        // Get the most recent user icon purchase
+        const latestIconPurchase = userIconPurchases[userIconPurchases.length - 1];
+        const iconName =
+          latestIconPurchase.icon || latestIconPurchase.id?.replace('user-icon-', '');
+
+        // Update the WebView with the new icon
+        const iconUpdateScript = `window.setUserIcon && window.setUserIcon('${iconName}');`;
+        webViewRef.current.injectJavaScript(iconUpdateScript);
+      }
+    }
+  }, [state.purchases, isMapReady]);
+
+  useEffect(() => {
+    if (params?.selectedPOIId && isMapReady && pois.length > 0) {
+      const poi = pois.find((p) => p.id === params.selectedPOIId);
+      if (poi && (!selectedFeature || selectedFeature.id !== poi.id)) {
+        // select the POI immediately
+        selectPOI(poi);
+        setHookSelectedPOI(poi);
+        setSelectedFeature(poi);
+        setDestination(poi.name);
+        setDestinationCoords([poi.centroid.longitude, poi.centroid.latitude]);
+
+        // only fetch the route and show directions if location is available
+        if (currentLocation) {
+          fetchRoute([poi.centroid.longitude, poi.centroid.latitude]);
+          setShowDirectionsSheet(true);
+        }
+      }
+    }
+  }, [
+    params?.selectedPOIId,
+    isMapReady,
+    pois,
+    selectedFeature,
+    selectPOI,
+    setHookSelectedPOI,
+    setSelectedFeature,
+    setDestination,
+    setDestinationCoords,
+    currentLocation,
+    fetchRoute,
+    setShowDirectionsSheet,
+  ]);
   return (
     <MapContent
       //theme
@@ -558,6 +902,9 @@ const MapScreen = () => {
       onDestinationChange={handleDestinationChange}
       onDestinationSearch={handleDestinationSearch}
       onSelectPOI={handleSelectPOI}
+      onSelectCrowdReportPOI={handleSelectCrowdReportPOI}
+      // Bluetooth navigation
+      onOpenBluetoothNavigation={handleOpenBluetoothNavigation}
       //admin
       isAdmin={isAdmin}
       showAddPOIModal={showAddPOIModal}
@@ -627,6 +974,10 @@ const MapScreen = () => {
       onSetShowLocationRefreshPopup={setShowLocationRefreshPopup}
       onHandleDestinationReachedConfirm={handleDestinationReachedConfirm}
       onRefreshMap={refreshMap}
+      // auto nav props
+      autoNavigationPopup={autoNavigationPopup}
+      onAutoNavigationConfirm={handleAutoNavigationConfirm}
+      onAutoNavigationDismiss={handleAutoNavigationDismiss}
     />
   );
 };

@@ -1,4 +1,3 @@
-// src/hooks/useCompass.ts
 import { useState, useEffect } from 'react';
 import CompassHeading from 'react-native-compass-heading';
 
@@ -16,7 +15,7 @@ export function useCompass() {
       if (isSubscribed) {
         // The callback receives an object with heading and accuracy
         const currentHeading = data.heading;
-        console.log('Compass heading:', currentHeading, 'accuracy:', data.accuracy);
+        ////consolelog('Compass heading:', currentHeading, 'accuracy:', data.accuracy);
 
         // Simple moving average filter to reduce jitter
         setReadings((prev) => {

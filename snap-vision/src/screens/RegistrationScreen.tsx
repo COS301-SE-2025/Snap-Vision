@@ -5,8 +5,8 @@ import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 
 export default function RegistrationScreen() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <KeyboardAvoidingView

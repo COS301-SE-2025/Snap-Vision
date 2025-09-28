@@ -5,10 +5,11 @@ import SettingsHeader from '../molecules/SettingsHeader';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 import { useNavigation } from '@react-navigation/native';
+import { Linking } from 'react-native';
 
 export default function SupportContent() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const navigation = useNavigation<any>();
 
   const supportOptions = [
@@ -29,6 +30,15 @@ export default function SupportContent() {
       icon: 'book-open-page-variant-outline',
       description: 'View the tutorial to learn how to use SnapVision',
       onPress: () => navigation.navigate('Tutorial'),
+    },
+    {
+      title: 'User Manual',
+      icon: 'book-open-variant',
+      description: 'Download the complete user manual.',
+      onPress: () =>
+        Linking.openURL(
+          'https://github.com/COS301-SE-2025/Snap-Vision/raw/refs/heads/main/docs/User%20Manual%20Document%20-%20V4.pdf',
+        ),
     },
   ];
 

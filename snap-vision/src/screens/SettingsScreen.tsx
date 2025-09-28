@@ -1,4 +1,3 @@
-// SettingsScreen.tsx
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
@@ -12,15 +11,15 @@ type SettingsScreenProps = {
 };
 
 export default function SettingsScreen({ navigation }: SettingsScreenProps) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.primary }]}>
         <Text style={styles.headerText}>User Settings</Text>
       </View>
-      <SettingsContent isDark={isDark} navigation={navigation} /> {/* pass it here */}
+      <SettingsContent navigation={navigation} />
     </ScrollView>
   );
 }

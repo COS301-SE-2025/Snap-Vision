@@ -9,16 +9,19 @@ interface Props extends TouchableOpacityProps {
 }
 
 export default function AppButton({ title, testID, ...rest }: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <TouchableOpacity
-      style={[styles.button, { backgroundColor: colors.primary }]}
+      style={[
+        styles.button,
+        { backgroundColor: colors.primary, borderColor: colors.roleSecondary, borderWidth: 1 },
+      ]}
       testID={testID}
       {...rest}
     >
-      <Text style={[styles.buttonText, { color: '#fff' }]}>{title}</Text>
+      <Text style={[styles.buttonText, { color: colors.background }]}>{title}</Text>
     </TouchableOpacity>
   );
 }

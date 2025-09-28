@@ -17,8 +17,8 @@ const StyledTextInput: React.FC<StyledTextInputProps> = ({
   labelStyle,
   ...props
 }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <View style={[styles.container, containerStyle]}>

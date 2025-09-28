@@ -11,8 +11,8 @@ interface Props {
 }
 
 export default function ThemedText({ children, size = 'md', weight = 'normal', style }: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const fontSize = {
     sm: 14,
@@ -30,6 +30,6 @@ export default function ThemedText({ children, size = 'md', weight = 'normal', s
 
 const styles = StyleSheet.create({
   base: {
-    textAlign: 'left', // Changed from center to left
+    textAlign: 'left',
   },
 });

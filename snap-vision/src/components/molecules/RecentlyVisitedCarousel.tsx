@@ -4,9 +4,13 @@ import { Visit } from '../../services/firebase/recentlyVService';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
-const RecentlyVisitedCarousel = ({ visits }: { visits: Visit[] }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+type Props = {
+  visits: Visit[];
+  onVisitPress?: (visit: Visit) => void;
+};
+const RecentlyVisitedCarousel = ({ visits, onVisitPress }: Props) => {
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   if (visits.length === 0) {
     return (
@@ -24,7 +28,7 @@ const RecentlyVisitedCarousel = ({ visits }: { visits: Visit[] }) => {
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.listContainer}
       data={visits}
-      keyExtractor={(item, index) => item.id || item.poiId || index.toString()}
+      keyExtractor={(item, index) => item.poiId || index.toString()}
       renderItem={({ item }) => (
         <TouchableOpacity
           style={[
@@ -34,7 +38,7 @@ const RecentlyVisitedCarousel = ({ visits }: { visits: Visit[] }) => {
               borderColor: colors.roleSecondary,
             },
           ]}
-          onPress={() => console.log('Selected:', item.name)}
+          onPress={() => onVisitPress?.(item)}
         >
           <Text style={[styles.name, { color: colors.background }]} numberOfLines={1}>
             {item.name}
@@ -53,13 +57,15 @@ const RecentlyVisitedCarousel = ({ visits }: { visits: Visit[] }) => {
 const styles = StyleSheet.create({
   listContainer: {
     paddingHorizontal: 10,
+    marginLeft: 10,
+    marginTop: 5,
   },
   card: {
     marginRight: 10,
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 10,
-    borderWidth: 0,
+    borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'flex-start',
     height: 80,

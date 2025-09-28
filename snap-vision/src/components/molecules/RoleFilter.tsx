@@ -10,8 +10,8 @@ interface Props {
 }
 
 export default function RoleFilter({ selectedRole, onRoleChange }: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <View style={styles.container}>
@@ -63,6 +63,6 @@ const styles = StyleSheet.create({
   buttonsContainer: {
     flexDirection: 'row',
     gap: 12,
-    paddingRight: 16, // ensure padding at end for scroll
+    paddingRight: 16,
   },
 });

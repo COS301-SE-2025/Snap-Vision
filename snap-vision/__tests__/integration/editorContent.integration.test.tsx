@@ -4,21 +4,6 @@ import AdminScreenContent from '../../src/components/organisms/EditorContent';
 import { ThemeProviderWrapper } from '../test-utils/ThemeProviderWrapper';
 import { useNavigation } from '@react-navigation/native';
 
-// Mock console.error to suppress certain warnings
-const originalError = console.error;
-beforeAll(() => {
-  console.error = (...args) => {
-    if (typeof args[0] === 'string' && args[0].includes('was not wrapped in act')) {
-      return;
-    }
-    originalError.call(console, ...args);
-  };
-});
-
-afterAll(() => {
-  console.error = originalError;
-});
-
 // Mock navigation
 const mockNavigate = jest.fn();
 const mockNavigation = {
@@ -93,14 +78,14 @@ describe('EditorContent Integration Tests', () => {
       const dashboardText = getByText('DASHBOARD');
 
       expect(editorText.props.style).toMatchObject({
-        fontSize: 56,
-        fontFamily: 'PermanentMarkerRegular',
+        fontSize: 72,
+        fontFamily: 'ChicleRegular',
         color: mockColors.primary,
       });
 
       expect(dashboardText.props.style).toMatchObject({
-        fontSize: 52,
-        fontFamily: 'PermanentMarkerRegular',
+        fontSize: 72,
+        fontFamily: 'ChicleRegular',
         color: mockColors.primary,
       });
 

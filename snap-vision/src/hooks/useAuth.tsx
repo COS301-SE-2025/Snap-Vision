@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import { clearUserCache } from '../utils/cacheUtils';
 
 type User = FirebaseAuthTypes.User | null;
 
@@ -56,6 +57,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 // Use typeof AuthContext to get the correct type
 export const useAuth = (): AuthContextType => {
+  useEffect(() => {
+    const unsubscribe = auth().onAuthStateChanged(async (user) => {
+      if (!user) {
+        // User logged out, clear all user-specific caches
+        await clearUserCaches();
+      }
+    });
+
+    return unsubscribe;
+  }, []);
+
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');

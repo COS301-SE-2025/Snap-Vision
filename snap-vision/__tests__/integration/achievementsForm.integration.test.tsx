@@ -6,7 +6,6 @@ import AchievementsForm from '../../src/components/organisms/AchievementsForm';
 import { ThemeProvider } from '../../src/theme/ThemeContext';
 import { BadgeProvider } from '../../src/context/BadgeContext';
 import { BADGES, BadgeId } from '../../src/types/badges';
-import { Challenge } from '../../src/types/achievements';
 
 jest.mock('@react-navigation/native', () => {
   const actualNav = jest.requireActual('@react-navigation/native');
@@ -169,18 +168,6 @@ jest.mock('../../src/components/molecules/WelcomeHeader', () => {
   };
 });
 
-jest.mock('../../src/components/molecules/ChallengeItem', () => {
-  const { TouchableOpacity, Text } = require('react-native');
-  return function ChallengeItem({ challenge, onPress }: any) {
-    return (
-      <TouchableOpacity testID={`challenge-${challenge.id}`} onPress={() => onPress(challenge)}>
-        <Text>{challenge.title}</Text>
-        <Text>{challenge.description}</Text>
-      </TouchableOpacity>
-    );
-  };
-});
-
 jest.mock('../../src/components/molecules/ProgressSection', () => {
   const { View, Text } = require('react-native');
   return function ProgressSection({ points, badgeCount, checkIns }: any) {
@@ -233,27 +220,7 @@ jest.mock('../../src/context/BadgeContext', () => {
     checkIns: 0,
     routesCompleted: 0,
     purchases: [],
-    completedChallenges: new Set(),
   };
-
-  const mockChallenges = [
-    {
-      id: 'challenge-1',
-      title: 'Daily Navigator',
-      description: 'Navigate 3 times today',
-      isCompleted: false,
-      icon: 'navigation',
-      type: 'current',
-    },
-    {
-      id: 'challenge-2',
-      title: 'Campus Explorer',
-      description: 'Visit 5 different campus locations',
-      isCompleted: false,
-      icon: 'location',
-      type: 'current',
-    },
-  ];
 
   const BadgeContext = React.createContext(null);
 
@@ -265,26 +232,22 @@ jest.mock('../../src/context/BadgeContext', () => {
 
       const contextValue = {
         state: currentBadgeState,
-        getChallenges: jest.fn(() => mockChallenges),
         addPoints: jest.fn(),
         unlockBadge: jest.fn(),
         checkIn: jest.fn(),
         completeRoute: jest.fn(),
         makePurchase: jest.fn(),
-        completeChallenge: jest.fn(),
       };
 
       return React.createElement(BadgeContext.Provider, { value: contextValue }, children);
     },
     useBadges: () => ({
       state: currentBadgeState,
-      getChallenges: jest.fn(() => mockChallenges),
       addPoints: jest.fn(),
       unlockBadge: jest.fn(),
       checkIn: jest.fn(),
       completeRoute: jest.fn(),
       makePurchase: jest.fn(),
-      completeChallenge: jest.fn(),
     }),
   };
 });
@@ -403,43 +366,7 @@ describe('AchievementsForm Integration Tests', () => {
         purchasedAt: new Date().toISOString(),
       },
     ],
-    completedChallenges: new Set(['challenge-1', 'challenge-3']),
   };
-
-  const mockChallenges: Challenge[] = [
-    {
-      id: 'challenge-1',
-      title: 'Daily Navigator',
-      description: 'Navigate 3 times today',
-      isCompleted: true,
-      icon: 'navigation',
-      type: 'current',
-    },
-    {
-      id: 'challenge-2',
-      title: 'Campus Explorer',
-      description: 'Visit 5 different campus locations',
-      isCompleted: false,
-      icon: 'location',
-      type: 'current',
-    },
-    {
-      id: 'challenge-3',
-      title: 'Speed Challenge',
-      description: 'Complete navigation in under 2 minutes',
-      isCompleted: true,
-      icon: 'timer',
-      type: 'current',
-    },
-    {
-      id: 'challenge-4',
-      title: 'Check-in Master',
-      description: 'Check in at 10 locations',
-      isCompleted: false,
-      icon: 'check',
-      type: 'current',
-    },
-  ];
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -494,54 +421,6 @@ describe('AchievementsForm Integration Tests', () => {
         const shopButton = getByTestId('action-button-shop');
         expect(shopButton).toBeTruthy();
 
-        fireEvent.press(shopButton);
-
-        expect(shopButton).toBeTruthy();
-      });
-    });
-
-    it('integrates challenge interaction with real badge context', async () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-
-      const { queryByTestId } = render(
-        <IntegrationTestWrapper initialBadgeState={mockInitialBadgeState}>
-          <AchievementsForm />
-        </IntegrationTestWrapper>,
-      );
-
-      await waitFor(() => {
-        const challengeElements = [
-          queryByTestId('challenge-challenge-1'),
-          queryByTestId('challenge-challenge-2'),
-          queryByTestId('challenge-challenge-3'),
-          queryByTestId('challenge-challenge-4'),
-        ].filter(Boolean);
-
-        if (challengeElements.length > 0) {
-          fireEvent.press(challengeElements[0]);
-          expect(consoleSpy).toHaveBeenCalled();
-        }
-      });
-
-      consoleSpy.mockRestore();
-    });
-
-    it('integrates empty challenge state with user workflow and error handling', async () => {
-      const emptyBadgeState = {
-        ...mockInitialBadgeState,
-        completedChallenges: new Set<string>(),
-      };
-
-      const { getByText, getByTestId } = render(
-        <IntegrationTestWrapper initialBadgeState={emptyBadgeState}>
-          <AchievementsForm />
-        </IntegrationTestWrapper>,
-      );
-
-      await waitFor(() => {
-        expect(getByText('Current Challenges')).toBeTruthy();
-
-        const shopButton = getByTestId('action-button-shop');
         fireEvent.press(shopButton);
 
         expect(shopButton).toBeTruthy();
@@ -675,70 +554,6 @@ describe('AchievementsForm Integration Tests', () => {
 
       await waitFor(() => {
         expect(badgeState.justUnlocked).toHaveLength(0);
-      });
-    });
-
-    it('handles challenge press and logs the challenge title', async () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-
-      const { getByTestId } = render(
-        <IntegrationTestWrapper initialBadgeState={mockInitialBadgeState}>
-          <AchievementsForm />
-        </IntegrationTestWrapper>,
-      );
-
-      await waitFor(() => {
-        const challenge = getByTestId('challenge-challenge-1');
-        expect(challenge).toBeTruthy();
-
-        fireEvent.press(challenge);
-
-        expect(consoleSpy).toHaveBeenCalledWith('Challenge Daily Navigator pressed');
-      });
-
-      consoleSpy.mockRestore();
-    });
-
-    it('handles multiple challenge presses correctly', async () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-
-      const { getByTestId } = render(
-        <IntegrationTestWrapper initialBadgeState={mockInitialBadgeState}>
-          <AchievementsForm />
-        </IntegrationTestWrapper>,
-      );
-
-      await waitFor(() => {
-        const challenge1 = getByTestId('challenge-challenge-1');
-        fireEvent.press(challenge1);
-
-        const challenge2 = getByTestId('challenge-challenge-2');
-        fireEvent.press(challenge2);
-
-        expect(consoleSpy).toHaveBeenCalledWith('Challenge Daily Navigator pressed');
-        expect(consoleSpy).toHaveBeenCalledWith('Challenge Campus Explorer pressed');
-        expect(consoleSpy).toHaveBeenCalledTimes(2);
-      });
-
-      consoleSpy.mockRestore();
-    });
-
-    it('renders challenges dynamically when getChallenges returns data', async () => {
-      const { getByTestId, getByText } = render(
-        <IntegrationTestWrapper initialBadgeState={mockInitialBadgeState}>
-          <AchievementsForm />
-        </IntegrationTestWrapper>,
-      );
-
-      await waitFor(() => {
-        expect(getByText('Current Challenges')).toBeTruthy();
-        expect(getByText('Complete these to earn points!')).toBeTruthy();
-
-        expect(getByTestId('challenge-challenge-1')).toBeTruthy();
-        expect(getByTestId('challenge-challenge-2')).toBeTruthy();
-
-        expect(getByText('Daily Navigator')).toBeTruthy();
-        expect(getByText('Campus Explorer')).toBeTruthy();
       });
     });
   });

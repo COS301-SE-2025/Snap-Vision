@@ -8,7 +8,6 @@ import {
   Modal,
   TouchableOpacity,
   FlatList,
-  Button,
 } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
@@ -28,8 +27,8 @@ interface Props {
 const ROLE_OPTIONS: ('Admin' | 'Editor' | 'Viewer')[] = ['Admin', 'Editor', 'Viewer'];
 
 export default function ManageUsersForm({ navigation, currentUserId }: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme } = useTheme();
+  const colors = getThemeColors(theme);
 
   const {
     users,
@@ -187,6 +186,7 @@ export default function ManageUsersForm({ navigation, currentUserId }: Props) {
                   setPopupMessage(`Are you sure you want to delete ${u.name}?`);
                   setPopupConfirm(() => () => {
                     deleteUser(u);
+                    setPopupVisible(false); // Close the popup after deleting user
                   });
                   setPopupCancelHandler(() => () => setPopupVisible(false));
                   setPopupShowCancel(true);
@@ -235,8 +235,32 @@ export default function ManageUsersForm({ navigation, currentUserId }: Props) {
               </View>
 
               <View style={styles.modalButtons}>
-                <Button title="Cancel" onPress={resetEditingState} />
-                <Button title="Confirm" onPress={onConfirmRoleSelection} disabled={!selectedRole} />
+                <TouchableOpacity
+                  style={[
+                    styles.modalButton,
+                    {
+                      backgroundColor: colors.background,
+                      borderColor: colors.primary,
+                      borderWidth: 2,
+                    },
+                  ]}
+                  onPress={resetEditingState}
+                >
+                  <Text style={[styles.modalButtonText, { color: colors.primary }]}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.modalButton,
+                    {
+                      backgroundColor: selectedRole ? colors.primary : colors.secondary,
+                      opacity: selectedRole ? 1 : 0.6,
+                    },
+                  ]}
+                  onPress={onConfirmRoleSelection}
+                  disabled={!selectedRole}
+                >
+                  <Text style={[styles.modalButtonText, { color: 'white' }]}>Confirm</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -259,7 +283,10 @@ export default function ManageUsersForm({ navigation, currentUserId }: Props) {
                       styles.locationItem,
                       {
                         backgroundColor:
-                          selectedLocationId === item.id ? colors.background : colors.background,
+                          selectedLocationId === item.id ? colors.primary : colors.card,
+                        borderColor:
+                          selectedLocationId === item.id ? colors.primary : colors.border,
+                        borderWidth: 1,
                       },
                     ]}
                     onPress={() => setSelectedLocationId(item.id)}
@@ -277,12 +304,32 @@ export default function ManageUsersForm({ navigation, currentUserId }: Props) {
               />
 
               <View style={styles.modalButtons}>
-                <Button title="Cancel" onPress={resetEditingState} />
-                <Button
-                  title="Confirm"
+                <TouchableOpacity
+                  style={[
+                    styles.modalButton,
+                    {
+                      backgroundColor: colors.background,
+                      borderColor: colors.primary,
+                      borderWidth: 2,
+                    },
+                  ]}
+                  onPress={resetEditingState}
+                >
+                  <Text style={[styles.modalButtonText, { color: colors.primary }]}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.modalButton,
+                    {
+                      backgroundColor: selectedLocationId ? colors.primary : colors.secondary,
+                      opacity: selectedLocationId ? 1 : 0.6,
+                    },
+                  ]}
                   onPress={confirmLocationSelection}
                   disabled={!selectedLocationId}
-                />
+                >
+                  <Text style={[styles.modalButtonText, { color: 'white' }]}>Confirm</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -357,7 +404,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 18,
     marginBottom: 12,
-    textAlign: 'center', // <-- add this to center text horizontally
+    textAlign: 'center',
   },
 
   roleOption: {
@@ -379,7 +426,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 12, // space between buttons, works with React Native 0.71+
+    gap: 12,
     marginVertical: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 4,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

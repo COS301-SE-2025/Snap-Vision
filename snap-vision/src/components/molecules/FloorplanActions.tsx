@@ -16,8 +16,8 @@ export const FloorplanActions: React.FC<FloorplanActionsProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <View style={styles.sectionContainer}>

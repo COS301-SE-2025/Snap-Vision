@@ -2,11 +2,7 @@ import React, { useRef, useEffect, useMemo, useCallback, useState } from 'react'
 import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
 import WebView from 'react-native-webview';
 import { useTheme } from '@react-navigation/native';
-import {
-  useFloorplanPreloader,
-  preloadFloorplans,
-  isFloorplanPreloaded,
-} from '../../../src/utils/FloorplanManager';
+import { useFloorplanPreloader, isFloorplanPreloaded } from '../../../src/utils/FloorplanManager';
 
 type RoomPOI = {
   id: string;
@@ -27,7 +23,6 @@ interface Props {
   themeColors: any;
   floorplanUrl?: string;
   nextInstructionEnd?: { x: number; y: number };
-  /** Optional array of additional floorplan URLs to preload */
   additionalFloorplans?: string[];
 }
 
@@ -162,11 +157,9 @@ const STATIC_HTML = `
 
     function mountFloorplan(src) {
       if (!src) {
-        console.log('No floorplan source provided');
         window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'floorplan_loaded', success: false }));
         return;
       }
-      console.log('Setting floorplan src to:', src);
       
       // Add cache busting to avoid browser caching issues (if needed)
       const cacheBustingSrc = src.includes('?') ? src + '&t=' + Date.now() : src + '?t=' + Date.now();
@@ -174,7 +167,6 @@ const STATIC_HTML = `
       
       // Let React Native know immediately if image is already complete (from cache)
       if (floorplan.complete) {
-        console.log('Floorplan already loaded from cache');
         window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'floorplan_loaded', success: true }));
         return;
       }
@@ -182,7 +174,6 @@ const STATIC_HTML = `
       // Set a timeout to detect if the image doesn't load within a reasonable time
       setTimeout(() => {
         if (!floorplan.complete) {
-          console.warn('Floorplan image taking too long to load, may be an issue');
         }
       }, 5000); // 5 second timeout
     }
@@ -310,9 +301,7 @@ const STATIC_HTML = `
         currentScale = 1; currentOffsetX = 0; currentOffsetY = 0;
         applyTransform(); updateMarkerScales();
         window.initialMapLoadComplete = true;
-        console.log('Map initialization complete');
       } catch (error) {
-        console.error('Error in initMap function:', error);
       }
     }
     
@@ -362,7 +351,31 @@ const STATIC_HTML = `
       } else if (e.touches.length === 1 && isDragging) {
         const deltaX = e.touches[0].clientX - lastX;
         const deltaY = e.touches[0].clientY - lastY;
-        currentOffsetX += deltaX; currentOffsetY += deltaY;
+        
+        // Calculate new position with constraints
+        const newOffsetX = currentOffsetX + deltaX;
+        const newOffsetY = currentOffsetY + deltaY;
+        
+        // Get container dimensions
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+        
+        // Calculate the scaled image dimensions
+        const scaledWidth = containerWidth * currentScale;
+        const scaledHeight = containerHeight * currentScale;
+        
+        // Set boundaries to prevent image from moving completely out of view
+        // Allow some movement but keep at least 20% of the image visible
+        const minVisibleRatio = 0.3;
+        const maxOffsetX = containerWidth * (1 - minVisibleRatio);
+        const minOffsetX = -(scaledWidth - containerWidth * minVisibleRatio);
+        const maxOffsetY = containerHeight * (1 - minVisibleRatio);
+        const minOffsetY = -(scaledHeight - containerHeight * minVisibleRatio);
+        
+        // Apply constraints
+        currentOffsetX = Math.max(minOffsetX, Math.min(maxOffsetX, newOffsetX));
+        currentOffsetY = Math.max(minOffsetY, Math.min(maxOffsetY, newOffsetY));
+        
         applyTransform();
         lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
         e.preventDefault();
@@ -404,14 +417,11 @@ export default function IndoorSchematicMap({
   themeColors,
   floorplanUrl,
   additionalFloorplans = [],
-}: Props) {
+}: Props): React.JSX.Element {
   const webViewRef = useRef<WebView>(null);
   const { dark: isDarkMode } = useTheme();
 
-  // Always use the static HTML to avoid reloads when switching floors
   const htmlContent = useMemo(() => {
-    // Always return the full HTML with map capability regardless of whether floorplanUrl exists
-    // This prevents re-rendering the WebView when switching floors
     return STATIC_HTML;
   }, []);
 
@@ -422,9 +432,8 @@ export default function IndoorSchematicMap({
   const maxInitAttempts = 3;
 
   const handleLoadEnd = useCallback(() => {
-    console.log('WebView loaded, initializing map...');
     setWebViewReady(true);
-    setInitAttempts(0); // Reset attempts counter on fresh load
+    setInitAttempts(0);
     const payload = {
       floorplanUrl,
       rooms,
@@ -440,27 +449,19 @@ export default function IndoorSchematicMap({
         secondary: themeColors?.secondary || '#FF4081',
         success: themeColors?.success || '#4CAF50',
         warning: themeColors?.warning || '#FFB300',
-        destination: '#8B4513', // Darker brown for destination marker
+        destination: '#8B4513',
         isDarkMode: isDarkMode,
       },
     };
-    console.log(
-      'Initializing map with payload:',
-      JSON.stringify({ ...payload, floorplanUrl: payload.floorplanUrl }),
-    );
 
-    // Delay initialization slightly to ensure HTML is loaded and window.initMap is available
     setTimeout(() => {
       webViewRef.current?.injectJavaScript(`
-        console.log('WebView received initMap call');
         try {
           // First check if initMap exists, if not define a safety implementation
           if (typeof window.initMap !== 'function') {
-            console.log('window.initMap not found, re-defining it');
             // Define initMap function dynamically if it's missing
             window.initMap = function(payload) {
               try {
-                console.log('Dynamically defined initMap called with payload');
                 // Apply all the settings
                 if (window.setThemeColors) window.setThemeColors(payload.themeColors || null);
                 if (window.mountFloorplan) window.mountFloorplan(payload.floorplanUrl || '');
@@ -470,9 +471,7 @@ export default function IndoorSchematicMap({
                 if (window.setCompleted) window.setCompleted(payload.completedPolyline || []);
                 if (window.updateCurrentPos) window.updateCurrentPos(payload.currentPos || null);
                 window.initialMapLoadComplete = true;
-                console.log('Dynamic map initialization complete');
               } catch (err) {
-                console.error('Error in dynamically defined initMap:', err);
               }
             };
           }
@@ -480,12 +479,9 @@ export default function IndoorSchematicMap({
           // Now call initMap after ensuring it exists
           if (document.readyState === 'complete') {
             window.initMap(${JSON.stringify(payload)});
-            console.log('Floorplan URL set to:', '${payload.floorplanUrl}');
           } else {
-            console.log('Document not fully loaded, waiting...');
             document.addEventListener('DOMContentLoaded', function() {
               window.initMap(${JSON.stringify(payload)});
-              console.log('Floorplan URL set to:', '${payload.floorplanUrl}');
             });
           }
           
@@ -493,21 +489,18 @@ export default function IndoorSchematicMap({
           const floorplan = document.getElementById('floorplan');
           if (floorplan) {
             floorplan.onload = function() {
-              console.log('Floorplan image loaded successfully');
               window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'floorplan_loaded', success: true }));
             };
             floorplan.onerror = function(e) {
-              console.error('Error loading floorplan image:', e);
               window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'floorplan_loaded', success: false }));
             };
           }
         } catch(error) {
-          console.error('Error initializing map:', error);
           window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'map_init_error', error: error.toString() }));
         }
         true;
       `);
-    }, 300); // Add a small delay to ensure the WebView has properly loaded
+    }, 300);
   }, [
     floorplanUrl,
     rooms,
@@ -552,7 +545,6 @@ export default function IndoorSchematicMap({
     webViewRef.current?.injectJavaScript(cmd);
   }, [currentPos]);
 
-  // Update theme colors without reload
   useEffect(() => {
     const colors = {
       background: isDarkMode ? '#121212' : themeColors?.background || '#ffffff',
@@ -571,14 +563,10 @@ export default function IndoorSchematicMap({
       if (data.type === 'room_selected' && data.id) {
         onSelectRoom(data.id);
       } else if (data.type === 'floorplan_loaded') {
-        setFloorplanLoaded(data.success);
-        console.log(`Floorplan image ${data.success ? 'loaded successfully' : 'failed to load'}`);
+        setFloorplanLoaded(!!data.success);
       } else if (data.type === 'map_init_error') {
-        console.error('Map initialization error:', data.error);
       }
-    } catch (e) {
-      console.error('Error parsing WebView message:', e);
-    }
+    } catch (e) {}
   };
 
   // Loading and error states for floorplan
@@ -611,12 +599,10 @@ export default function IndoorSchematicMap({
   useEffect(() => {
     if (prevFloorplanUrlRef.current !== floorplanUrl && webViewRef.current && floorplanUrl) {
       // We're switching floors - directly update the floorplan in WebView without reloading
-      console.log('Switching floorplan to:', floorplanUrl);
 
       // If the new floorplan is already preloaded, don't show loading screen
       const alreadyPreloaded = isPreloaded(floorplanUrl);
       if (alreadyPreloaded) {
-        console.log('Using preloaded floorplan:', floorplanUrl);
         setFloorplanLoaded(true);
         // Set loading to false immediately if preloaded
         setIsLoading(false);
@@ -642,16 +628,15 @@ export default function IndoorSchematicMap({
     // Only show loading on first load or when not preloaded
     const isCurrentFloorplanPreloaded = floorplanUrl ? isPreloaded(floorplanUrl) : true;
     const initialLoad = !webViewReady;
-    const floorplanNeedsLoading = !floorplanLoaded && floorplanUrl && !isCurrentFloorplanPreloaded;
+    const floorplanNeedsLoading =
+      !floorplanLoaded && !!floorplanUrl && !isCurrentFloorplanPreloaded;
 
     setIsLoading(initialLoad || floorplanNeedsLoading);
   }, [webViewReady, floorplanLoaded, floorplanUrl, isPreloaded]);
 
-  // Recovery mechanism - retry initialization if the map fails to load
   useEffect(() => {
     if (webViewReady && !floorplanLoaded && floorplanUrl && initAttempts < maxInitAttempts) {
       const timer = setTimeout(() => {
-        console.log(`Map initialization retry attempt ${initAttempts + 1}/${maxInitAttempts}`);
         setInitAttempts((prev) => prev + 1);
 
         // Attempt reinitialization
@@ -676,12 +661,10 @@ export default function IndoorSchematicMap({
         };
 
         webViewRef.current?.injectJavaScript(`
-          console.log('Retrying map initialization');
           if (typeof window.initMap === 'function') {
             try {
               window.initMap(${JSON.stringify(payload)});
             } catch(e) {
-              console.error('Error during map reinitialization:', e);
             }
           }
           true;
@@ -708,17 +691,13 @@ export default function IndoorSchematicMap({
   // Clean up resources when component unmounts
   useEffect(() => {
     return () => {
-      // Reset any resources or listeners
       setWebViewReady(false);
       setFloorplanLoaded(false);
       setInitAttempts(0);
     };
   }, []);
 
-  // Create a full onLoad handler to supplement onLoadEnd
-  const handleLoad = useCallback(() => {
-    console.log('WebView full load completed');
-  }, []);
+  const handleLoad = useCallback(() => {}, []);
 
   return (
     <View style={styles.fixedFloorplanContainer}>
@@ -735,10 +714,9 @@ export default function IndoorSchematicMap({
         javaScriptEnabled
         domStorageEnabled
         cacheEnabled={true}
-        onError={(e) => console.error('WebView error:', e.nativeEvent)}
       />
 
-      {isLoading && (
+      {/* {isLoading && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#007AFF" />
           <Text style={styles.loadingText}>
@@ -747,7 +725,7 @@ export default function IndoorSchematicMap({
               : 'Loading floorplan...'}
           </Text>
         </View>
-      )}
+      )} */}
     </View>
   );
 }

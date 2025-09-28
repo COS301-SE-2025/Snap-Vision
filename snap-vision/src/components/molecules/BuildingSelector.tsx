@@ -26,13 +26,13 @@ const BuildingSelector: React.FC<BuildingSelectorProps> = ({
   setDropdownOpen,
   title = 'Select Building',
 }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const dropdownItems = buildings.map((b) => ({ label: b.name, value: b.id }));
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Text style={[styles.title, { color: colors.primary }]}>{title}</Text>
       <DropDownPicker
         open={dropdownOpen}
@@ -41,14 +41,76 @@ const BuildingSelector: React.FC<BuildingSelectorProps> = ({
         value={selectedBuildingId}
         setValue={(get) => setSelectedBuildingId(get())}
         searchable
-        listMode="SCROLLVIEW"
+        listMode="MODAL"
         placeholder="Select a building"
         zIndex={3000}
         zIndexInverse={1000}
-        style={{ backgroundColor: colors.card, borderColor: colors.primary }}
-        dropDownContainerStyle={{ backgroundColor: colors.card, borderColor: colors.primary }}
-        textStyle={{ color: colors.text }}
-        searchTextInputStyle={{ color: colors.text }}
+        style={{
+          backgroundColor: colors.card,
+          borderColor: colors.primary,
+          borderWidth: 2,
+          borderRadius: 8,
+          fontFamily: 'System',
+          fontSize: 16,
+        }}
+        dropDownContainerStyle={{
+          backgroundColor: colors.card,
+          borderColor: colors.primary,
+          maxHeight: 250,
+          borderRadius: 8,
+        }}
+        modalProps={{
+          animationType: 'fade',
+        }}
+        modalContentContainerStyle={{
+          backgroundColor: colors.background,
+        }}
+        modalTitleStyle={{
+          color: colors.text,
+        }}
+        textStyle={{
+          color: colors.text,
+          fontFamily: 'System',
+          fontSize: 16,
+        }}
+        searchTextInputStyle={{
+          color: colors.text,
+          backgroundColor: colors.card,
+          borderColor: colors.primary,
+          borderWidth: 1,
+          borderRadius: 8,
+          fontFamily: 'System',
+          fontSize: 16,
+        }}
+        selectedItemLabelStyle={{
+          color: colors.primary,
+          fontWeight: 'bold',
+        }}
+        placeholderStyle={{
+          color: colors.subtleText,
+          fontFamily: 'System',
+          fontSize: 16,
+        }}
+        listItemLabelStyle={{
+          color: colors.text,
+          fontFamily: 'System',
+          fontSize: 16,
+        }}
+        theme={isDark ? 'DARK' : 'LIGHT'}
+        closeIconContainerStyle={{
+          backgroundColor: 'transparent',
+        }}
+        arrowIconContainerStyle={{
+          backgroundColor: 'transparent',
+        }}
+        listItemContainerStyle={{
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+        }}
+        itemSeparator={true}
+        itemSeparatorStyle={{
+          backgroundColor: colors.border,
+        }}
       />
     </View>
   );
@@ -58,7 +120,6 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: 24,
     padding: 16,
-    backgroundColor: 'rgba(0,0,0,0.03)',
     borderRadius: 8,
   },
   title: {

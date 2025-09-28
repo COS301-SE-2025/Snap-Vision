@@ -6,11 +6,15 @@ import { getThemeColors } from '../../theme';
 
 const { width } = Dimensions.get('window');
 
-const TutorialSlider = ({ onFinish }) => {
+interface TutorialSliderProps {
+  onFinish: () => void;
+}
+
+const TutorialSlider = ({ onFinish }: TutorialSliderProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef(null);
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const tutorialData = [
     {
@@ -34,7 +38,7 @@ const TutorialSlider = ({ onFinish }) => {
 
   const handleScroll = (event) => {
     const contentOffset = event.nativeEvent.contentOffset;
-    const index = Math.floor(contentOffset.x / width + 0.5); // More accurate index calculation
+    const index = Math.floor(contentOffset.x / width + 0.5);
     setActiveIndex(index);
   };
 
@@ -66,8 +70,8 @@ const TutorialSlider = ({ onFinish }) => {
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={handleScroll}
         keyExtractor={(_, index) => index.toString()}
-        decelerationRate="fast" // Smoother paging
-        snapToInterval={width} // Ensure proper page snapping
+        decelerationRate="fast"
+        snapToInterval={width}
         snapToAlignment="center"
       />
 

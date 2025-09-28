@@ -1,6 +1,5 @@
-// src/components/molecules/RewardCard.tsx
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Reward } from '../../types/achievements';
 import { useTheme } from '../../theme/ThemeContext';
@@ -11,11 +10,18 @@ interface Props {
   backgroundColor?: string;
   borderColor?: string;
   onPress?: () => void;
+  containerStyle?: ViewStyle;
 }
 
-export default function RewardCard({ reward, backgroundColor, borderColor, onPress }: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+export default function RewardCard({
+  reward,
+  backgroundColor,
+  borderColor,
+  onPress,
+  containerStyle,
+}: Props) {
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const isUnlocked = reward.isUnlocked;
 
@@ -32,10 +38,11 @@ export default function RewardCard({ reward, backgroundColor, borderColor, onPre
       style={[
         styles.container,
         {
-          backgroundColor: backgroundColor ?? colors.card,
-          borderColor: borderColor ?? colors.border,
+          backgroundColor: colors.card,
+          borderColor: colors.primary,
           opacity: isUnlocked ? 1 : 0.4,
         },
+        containerStyle,
       ]}
       onPress={onPress}
       disabled={!isUnlocked}
@@ -63,13 +70,12 @@ export default function RewardCard({ reward, backgroundColor, borderColor, onPre
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    padding: 16,
+    padding: 12,
     marginHorizontal: 4,
     borderRadius: 12,
     borderWidth: 1,
     alignItems: 'center',
-    minHeight: 200,
+    minHeight: 160,
   },
   tag: {
     position: 'absolute',

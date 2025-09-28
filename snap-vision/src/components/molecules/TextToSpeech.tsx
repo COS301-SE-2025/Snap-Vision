@@ -1,4 +1,3 @@
-// src/components/molecules/TextToSpeech.tsx
 import React, { useEffect, useState } from 'react';
 import { Pressable, Text, StyleSheet } from 'react-native';
 import Tts from 'react-native-tts';
@@ -18,8 +17,8 @@ const TextToSpeech: React.FC<TextToSpeechProps> = ({
   text,
   onSpeakingChange,
 }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   // Initialize TTS
@@ -45,7 +44,7 @@ const TextToSpeech: React.FC<TextToSpeechProps> = ({
           onSpeakingChange?.(false);
         });
       } catch (error) {
-        console.error('TTS initialization failed:', error);
+        ////consoleerror('TTS initialization failed:', error);
       }
     };
 
@@ -78,7 +77,7 @@ const TextToSpeech: React.FC<TextToSpeechProps> = ({
         .replace(/\byd\b/g, 'yards');
       Tts.speak(cleanText);
     } catch (error) {
-      console.error('TTS speak error:', error);
+      ////consoleerror('TTS speak error:', error);
     }
   };
 
@@ -109,11 +108,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4, // reduced
-    paddingHorizontal: 8, // reduced
+    paddingVertical: 4,
+    paddingHorizontal: 8,
     borderRadius: 6,
-    height: 36, // fixed height
-    width: 100, // fixed width to match both buttons
+    height: 36,
+    width: 100,
     backgroundColor: '#222',
   },
 

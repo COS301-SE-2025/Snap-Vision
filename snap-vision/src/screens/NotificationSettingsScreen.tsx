@@ -1,4 +1,3 @@
-//Snap-Vision\snap-vision\src\screens\NotificationSettingsScreen.tsx
 import React from 'react';
 import { ScrollView, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
 import NotificationSettingsContent from '../components/organisms/NotificationSettingsContent';
@@ -6,8 +5,8 @@ import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 
 export default function NotificationSettingsScreen() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>

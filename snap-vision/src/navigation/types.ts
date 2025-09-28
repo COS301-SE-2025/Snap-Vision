@@ -5,5 +5,10 @@ export type RootStackParamList = {
   Dashboard: undefined;
   ShopScreen: undefined;
   BadgeScreen: undefined;
-  // Add other screen params here
+  BluetoothBuildings: undefined;
+  BluetoothIndoorNavigation: {
+    buildingId: string;
+    buildingName: string;
+    locationId: string;
+  };
 };

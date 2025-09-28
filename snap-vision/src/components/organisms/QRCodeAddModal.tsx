@@ -45,8 +45,8 @@ const QRCodeAddModal: React.FC<QRCodeAddModalProps> = ({
   onAdd,
   onClose,
 }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>

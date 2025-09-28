@@ -1,4 +1,3 @@
-// src/components/atoms/SectionTitle.tsx
 import React from 'react';
 import { Text, StyleSheet, TextStyle } from 'react-native';
 

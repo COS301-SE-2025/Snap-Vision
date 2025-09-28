@@ -10,8 +10,8 @@ type AccountSettingsScreenProps = {
 };
 
 export default function AccountSettingsScreen({ navigation }: AccountSettingsScreenProps) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
