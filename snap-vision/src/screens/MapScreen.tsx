@@ -15,6 +15,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 import { useBadges } from '../context/BadgeContext';
 import { useAccessibility } from '../context/AccessibilityContext';
+import { useDeepLink } from '../DeepLinkContext';
 import { useCompass } from '../hooks/useCompass';
 import { useMapLocation } from '../hooks/useMapLocation';
 import { useMapNavigation } from '../hooks/useMapNavigation';
@@ -47,6 +48,7 @@ const MapScreen = () => {
   const colors = getThemeColors(theme);
   const { isHapticFeedbackEnabled } = useAccessibility();
   const { setNavigationStartTime, unlock, incrementRoutes, state } = useBadges();
+  const { coords: deepLinkCoords, setCoords: setDeepLinkCoords } = useDeepLink();
 
   // navigation
   const route = useRoute();
@@ -753,6 +755,25 @@ const MapScreen = () => {
     setStatus,
     setAutoNavigationPopup,
   ]);
+
+  // Handle deep link coordinates from DeepLinkContext (for location sharing)
+  useEffect(() => {
+    if (deepLinkCoords && deepLinkCoords.lat && deepLinkCoords.lng && currentLocation && isMapReady) {
+      const lat = parseFloat(deepLinkCoords.lat);
+      const lng = parseFloat(deepLinkCoords.lng);
+      
+      console.log('[MapScreen] Handling deep link coordinates:', { lat, lng });
+      
+      setDestination("Friend's Location");
+      setDestinationCoords([lng, lat]);
+      fetchRoute([lng, lat]);
+      setStatus('Navigating to shared location');
+      setShowDirectionsSheet(true);
+      
+      // Clear the deep link coords after handling
+      setDeepLinkCoords(null);
+    }
+  }, [deepLinkCoords, currentLocation, isMapReady, fetchRoute, setDestination, setDestinationCoords, setDeepLinkCoords, setStatus, setShowDirectionsSheet]);
 
   // location availability check
   useEffect(() => {
