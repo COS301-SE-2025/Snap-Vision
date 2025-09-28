@@ -336,14 +336,14 @@ export default function IndoorSchematicNavScreen() {
                 floorUrl = await storage().ref(data.storagePath).getDownloadURL();
                 //console.log(`[FLOORPLAN] Resolved storage URL for floor ${floorId}: ${floorUrl}`);
               } catch (e) {
-                console.warn(`[FLOORPLAN] getDownloadURL failed for floor ${floorId}, storagePath: ${data.storagePath}`, e);
+                //console.warn(`[FLOORPLAN] getDownloadURL failed for floor ${floorId}, storagePath: ${data.storagePath}`, e);
               }
             }
     
             if (floorUrl) {
               floorplanMap[floorId] = floorUrl;
             } else {
-              console.warn(`[FLOORPLAN] No URL found for floor ${floorId}`);
+              //console.warn(`[FLOORPLAN] No URL found for floor ${floorId}`);
             }
           }
     
@@ -365,7 +365,7 @@ export default function IndoorSchematicNavScreen() {
           }
         }
     
-        // Fallback: Try storage folder if still no URL
+        
         if (!url) {
           //console.log(`[FLOORPLAN] Attempting storage fallback for floor ${selectedFloorId}`);
           try {
@@ -378,10 +378,10 @@ export default function IndoorSchematicNavScreen() {
               url = await match.getDownloadURL();
               //console.log(`[FLOORPLAN] Fallback URL found: ${url}`);
             } else {
-              console.warn(`[FLOORPLAN] No matching file in storage for floor ${selectedFloorId}`);
+              //console.warn(`[FLOORPLAN] No matching file in storage for floor ${selectedFloorId}`);
             }
           } catch (e) {
-            console.warn('[FLOORPLAN] Storage folder fallback failed', e);
+            //console.warn('[FLOORPLAN] Storage folder fallback failed', e);
           }
         }
     
@@ -389,7 +389,7 @@ export default function IndoorSchematicNavScreen() {
           setFloorplanUrl(url ?? null);
         }
       } catch (e) {
-        console.warn('[FLOORPLAN] Floorplan fetch failed', e);
+        //console.warn('[FLOORPLAN] Floorplan fetch failed', e);
         if (!cancelled) {
           setFloorplanUrl(null);
         }
@@ -447,7 +447,6 @@ export default function IndoorSchematicNavScreen() {
       try {
         await unlock('qr-scan');
       } catch (badgeError) {
-        // Don't fail the whole operation if badge unlock fails
         //console.warn('Failed to unlock qr-scan badge:', badgeError);
       }
 
