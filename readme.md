@@ -52,11 +52,11 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 </div>
 ---
 <div align="center">
-[Download APK](https://github.com/COS301-SE-2025/Snap-Vision/releases/download/v2.0/app-release.apk)
+<a href="https://github.com/COS301-SE-2025/Snap-Vision/releases/download/v2.0/app-release.apk"><button>Download APK</button></a>
 </div>
 
 <div align="center">
-[![Website](https://img.shields.io/badge/Visit-Snap%20Vision%20Site-90AFA8)](https://cos301-se-2025.github.io/Snap-Vision/)
+<a href="https://cos301-se-2025.github.io/Snap-Vision/"><button>Website</button></a>
 </div>
 
 <div align="center">
@@ -66,12 +66,12 @@ This project was developed by Team BLT’S for the COS301 Capstone Module at the
 | Links |
 |-------|
 | [User Manual](docs/User%20Manual%20Document%20-%20V4.pdf) |
-| [Coding Standards Document](docs\Coding%20Standards%20Document%20-%20V4.pdf) |
-| [Testing Policy Document](docs\Testing%20Policy%20Document%20-%20V4.pdf) |
-| [Software Requirements Specification](docs\Software%20\Requirements%20Document%20-%20V4.pdf) |
-| [Architectural Requirements Document](docs\Architectural%20Requirements%20Document%20-%20V4.pdf) |
-| [Technical Installation Manual](docs\Technical%20installation%20Manual%20-%20V4.pdf) |
-| [Deployment Model](docs\Deployment%20Model%20-%20V4.pdf) |
+| [Coding Standards Document](docs/Coding%20Standards%20Document%20-%20V4.pdf) |
+| [Testing Policy Document](docs/Testing%20Policy%20Document%20-%20V4.pdf) |
+| [Software Requirements Specification](docs/Software%20Requirements%20Specification%20-%20V4.pdf) |
+| [Architectural Requirements Document](docs/Architectural%20Requirements%20Document%20-%20V4.pdf) |
+| [Technical Installation Manual](docs/Technical%20installation%20Manual%20-%20V4.pdf) |
+| [Deployment Model](docs/Deployment%20Model%20-%20V4.pdf) |
 ---
 
 ## All Documentation Links
