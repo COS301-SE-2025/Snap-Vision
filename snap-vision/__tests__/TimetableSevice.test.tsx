@@ -252,6 +252,28 @@ describe('TimetableBackgroundService', () => {
       expect(entries).toHaveLength(0);
     });
 
+    it('returns empty array when authorization fails', async () => {
+      mockAuthService.canAccessTimetable.mockResolvedValue(false);
+
+      const entries = await (service as any).getTimetableEntries();
+
+      expect(entries).toHaveLength(0);
+    });
+
+    it('returns empty array when no timetable entries exist', async () => {
+      const mockWhereResult = {
+        get: jest.fn().mockResolvedValue({
+          docs: [],
+          empty: true,
+        }),
+      };
+      
+      mockWhere.mockReturnValue(mockWhereResult);
+
+      const entries = await (service as any).getTimetableEntries();
+
+      expect(entries).toHaveLength(0);
+    });
 
     it('handles firestore errors', async () => {
       mockGet.mockRejectedValue(new Error('Firestore error'));
@@ -480,7 +502,89 @@ describe('TimetableBackgroundService', () => {
       expect(mockNotifee.createTriggerNotification).not.toHaveBeenCalled();
     });
 
- 
+    it('cancels previous notifications before scheduling new ones', async () => {
+      const previousScheduled = { 'key1': 'notif-1', 'key2': 'notif-2' };
+      
+      mockAsyncStorage.getItem
+        .mockResolvedValueOnce('true') // auto nav enabled
+        .mockResolvedValueOnce(JSON.stringify(previousScheduled)); // previous scheduled
+      
+      jest.spyOn(service as any, 'getTimetableEntries').mockResolvedValue([]);
+      jest.spyOn(service as any, 'getPOIs').mockResolvedValue([]);
+
+      await service.scheduleWeekNotifications();
+
+      expect(mockNotifee.cancelNotification).toHaveBeenCalledWith('notif-1');
+      expect(mockNotifee.cancelNotification).toHaveBeenCalledWith('notif-2');
+    });
+
+    it('skips entries without matching buildings', async () => {
+      const mockEntries = [
+        {
+          id: 'entry-1',
+          course: 'Math',
+          venue: 'Room 101',
+          startTime: '10:00',
+          day: 'Monday',
+          buildingId: 'unknown-building',
+          userId: 'user-123',
+        },
+      ];
+
+      jest.spyOn(service as any, 'getTimetableEntries').mockResolvedValue(mockEntries);
+      jest.spyOn(service as any, 'getPOIs').mockResolvedValue([]);
+      
+      mockAsyncStorage.getItem
+        .mockResolvedValueOnce('true') // auto nav enabled
+        .mockResolvedValueOnce(null); // no previous scheduled
+
+      await service.scheduleWeekNotifications();
+
+      expect(mockNotifee.createTriggerNotification).not.toHaveBeenCalled();
+    });
+
+    it('skips past notifications', async () => {
+      // Mock a past time
+      const pastDate = new Date('2024-01-08 12:00:00'); // Monday noon
+      jest.spyOn(global, 'Date').mockImplementation(() => pastDate as any);
+      Object.defineProperty(global.Date, 'now', {
+        value: jest.fn(() => pastDate.getTime()),
+        writable: true
+      });
+      
+      const mockEntries = [
+        {
+          id: 'entry-1',
+          course: 'Math',
+          venue: 'Room 101',
+          startTime: '09:00', // 9 AM is in the past (current time is noon)
+          day: 'Monday',
+          buildingId: 'bldg-1',
+          userId: 'user-123',
+        },
+      ];
+
+      const mockPOIs = [
+        {
+          id: 'bldg-1',
+          name: 'Building A',
+          centroid: { latitude: 1.0, longitude: 2.0 },
+        },
+      ];
+
+      jest.spyOn(service as any, 'getTimetableEntries').mockResolvedValue(mockEntries);
+      jest.spyOn(service as any, 'getPOIs').mockResolvedValue(mockPOIs);
+      
+      mockAsyncStorage.getItem
+        .mockResolvedValueOnce('true') // auto nav enabled
+        .mockResolvedValueOnce(null); // no previous scheduled
+
+      await service.scheduleWeekNotifications();
+
+      expect(mockNotifee.createTriggerNotification).not.toHaveBeenCalled();
+      
+      jest.restoreAllMocks();
+    });
 
     it('handles errors gracefully', async () => {
       mockAsyncStorage.getItem.mockRejectedValue(new Error('Storage error'));
