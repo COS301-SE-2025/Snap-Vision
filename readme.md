@@ -50,7 +50,7 @@
 Snap Vision is a mobile application designed to help users navigate complex indoor and outdoor environments such as university campuses and malls using AR-powered visual guidance. The app uses a combination of GPS, QR Codes, and AR overlays to provide seamless real-time wayfinding.  
 This project was developed by Team BLT’S for the COS301 Capstone Module at the University of Pretoria.
 </div>
----
+
 <div align="center">
 <a href="https://github.com/COS301-SE-2025/Snap-Vision/releases/download/v2.0/snap-vision.apk"><button>Download APK</button></a>
 </div>
@@ -134,19 +134,19 @@ Hey there, Saalihah here! I'm a CS student who loves solving problems, delving i
 
 ## Target Platforms
 
-Android 10+ 
+Android 10+<br> 
 Optional future support for iOS 14+
 
 ---
 
 ## Technologies Used
 
-React Native
-Express.js
-Firebase (Auth, Firestore, Hosting)  
-Custom AR
-OpenStreetMap LeafLet & MapTiler  
-QR Code Positioning
+- React Native
+- Express.js
+- Firebase (Auth, Firestore, Hosting)  
+- Custom AR
+- OpenStreetMap LeafLet & MapTiler  
+- QR Code Positioning
 
 ---
 
