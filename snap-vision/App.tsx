@@ -1,6 +1,7 @@
 import { LogBox, Linking } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import auth from '@react-native-firebase/auth';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from './src/screens/LoginScreen';
@@ -60,6 +61,7 @@ function AppInner() {
   const [pendingDeepLink, setPendingDeepLink] = useState<{ lat?: string; lng?: string } | null>(
     null,
   );
+  const [isNavigationReady, setIsNavigationReady] = useState(false);
 
   useEffect(() => {
     // Handle notification presses when app is in foreground/background
@@ -291,13 +293,28 @@ function AppInner() {
     checkPendingNavigation();
   }, [setCoords]);
 
-  // Handle deep link - keep existing code
+  // Handle deep link
   useEffect(() => {
     const handleDeepLink = (event: { url: string }) => {
       const url = event.url;
-      if (url.includes('/location')) {
-        const [, query = ''] = url.split('?');
+      console.log('[App] Deep link received:', url);
+
+      // Handle both https:// and snapvision:// schemes
+      if (url.includes('/location') || url.includes('snapvision://location')) {
+        let query = '';
+
+        if (url.includes('snapvision://location')) {
+          // Handle custom scheme: snapvision://location?lat=...&lng=...
+          const [, queryPart = ''] = url.split('?');
+          query = queryPart;
+        } else {
+          // Handle HTTPS scheme: https://...../location?lat=...&lng=...
+          const [, queryPart = ''] = url.split('?');
+          query = queryPart;
+        }
+
         const params = queryString.parse(query);
+        console.log('[App] Location deep link params:', params);
         setPendingDeepLink({ lat: params.lat as string, lng: params.lng as string });
       }
     };
@@ -314,9 +331,116 @@ function AppInner() {
 
   useEffect(() => {
     if (!pendingDeepLink) return;
-    setCoords({ lat: pendingDeepLink.lat, lng: pendingDeepLink.lng });
+
+    console.log('[App] Setting deep link coords:', pendingDeepLink);
+
+    // Check if user is logged in
+    const currentUser = auth().currentUser;
+    if (currentUser) {
+      // User is logged in, set coordinates immediately
+      setCoords({ lat: pendingDeepLink.lat, lng: pendingDeepLink.lng });
+
+      // Navigate to MapScreen
+      console.log('[App] Navigating to MapScreen for deep link');
+      if (navigationRef.current) {
+        navigationRef.current.reset({
+          index: 0,
+          routes: [
+            {
+              name: 'Tabs',
+              params: {
+                screen: 'Map',
+                params: {
+                  lat: pendingDeepLink.lat,
+                  lng: pendingDeepLink.lng,
+                },
+              },
+            },
+          ],
+        });
+      }
+    } else {
+      // User not logged in, store for after login
+      AsyncStorage.setItem('pendingDeepLinkAfterLogin', JSON.stringify(pendingDeepLink));
+    }
+
     setPendingDeepLink(null);
   }, [pendingDeepLink, setCoords]);
+
+  // Handle deep links after user logs in
+  useEffect(() => {
+    const unsubscribe = auth().onAuthStateChanged(async (user) => {
+      if (user) {
+        // User just logged in, check for pending deep links
+        try {
+          const storedDeepLink = await AsyncStorage.getItem('pendingDeepLinkAfterLogin');
+          if (storedDeepLink) {
+            const coords = JSON.parse(storedDeepLink);
+            console.log('[App] Processing stored deep link after login:', coords);
+
+            // Remove the stored deep link
+            await AsyncStorage.removeItem('pendingDeepLinkAfterLogin');
+
+            // Set the coordinates to trigger navigation
+            setCoords({ lat: coords.lat, lng: coords.lng });
+
+            const navigateToMap = () => {
+              console.log('[App] Navigating to MapScreen for stored deep link after login');
+              if (navigationRef.current && isNavigationReady) {
+                navigationRef.current.reset({
+                  index: 0,
+                  routes: [
+                    {
+                      name: 'Tabs',
+                      params: {
+                        screen: 'Map',
+                        params: {
+                          lat: coords.lat,
+                          lng: coords.lng,
+                        },
+                      },
+                    },
+                  ],
+                });
+              } else {
+                console.log('[App] Navigation not ready yet, waiting...');
+                // Wait for navigation to be ready
+                const checkReady = () => {
+                  if (navigationRef.current && isNavigationReady) {
+                    navigationRef.current.reset({
+                      index: 0,
+                      routes: [
+                        {
+                          name: 'Tabs',
+                          params: {
+                            screen: 'Map',
+                            params: {
+                              lat: coords.lat,
+                              lng: coords.lng,
+                            },
+                          },
+                        },
+                      ],
+                    });
+                  } else {
+                    setTimeout(checkReady, 100);
+                  }
+                };
+                setTimeout(checkReady, 500);
+              }
+            };
+
+            // Small delay to ensure auth flow is complete
+            setTimeout(navigateToMap, 1000);
+          }
+        } catch (error) {
+          console.error('[App] Error processing stored deep link:', error);
+        }
+      }
+    });
+
+    return unsubscribe;
+  }, [setCoords, isNavigationReady]);
 
   useEffect(() => {
     initializePreBundledFloorplans();
@@ -360,7 +484,13 @@ function AppInner() {
   return (
     <BadgeProvider>
       <ThemeProvider>
-        <NavigationContainer ref={navigationRef}>
+        <NavigationContainer
+          ref={navigationRef}
+          onReady={() => {
+            console.log('[App] Navigation is ready');
+            setIsNavigationReady(true);
+          }}
+        >
           <BadgeUnlockNotifier />
           <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="AuthResolver">
             <Stack.Screen name="AuthResolver" component={AuthResolverScreen} />

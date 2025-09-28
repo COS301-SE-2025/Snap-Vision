@@ -217,7 +217,10 @@ export const calculateMultiFloorRoute = (
           let type: 'waypoint' | 'turn' = 'waypoint';
 
           // Skip generating instructions when the next room is stairs
-          if (nextRoom.type === 'stairs' && edge.connector?.kind === 'stairs') {
+          if (
+            (nextRoom.type === 'stairs' && edge.connector?.kind === 'stairs') ||
+            (nextRoom.type === 'elevator' && edge.connector?.kind === 'elevator')
+          ) {
             previousDirection = calculateInitialFacingDirection(previousWaypoint, pt);
             previousWaypoint = pt;
             continue;
@@ -599,10 +602,14 @@ export const calculateRoute = (
 
     // If both current and next POI are stairs, only add connector instruction and skip everything else
     if (
-      currentRoom.type === 'stairs' &&
-      nextRoom.type === 'stairs' &&
-      edge.connector &&
-      edge.connector.kind === 'stairs'
+      (currentRoom.type === 'stairs' &&
+        nextRoom.type === 'stairs' &&
+        edge.connector &&
+        edge.connector.kind === 'stairs') ||
+      (currentRoom.type === 'elevator' &&
+        nextRoom.type === 'elevator' &&
+        edge.connector &&
+        edge.connector.kind === 'elevator')
     ) {
       steps.push({
         instruction: `Take stairs to Floor ${edge.connector.toFloorId}`,
@@ -620,14 +627,13 @@ export const calculateRoute = (
 
     // If we are skipping, only stop when nextRoom is not a stair
     if (skipUntilNonStair) {
-      if (nextRoom.type === 'stairs') {
+      if (nextRoom.type === 'stairs' || nextRoom.type === 'elevator') {
         continue; // keep skipping
       } else {
         skipUntilNonStair = false; // stop skipping
       }
     }
 
-    // ...existing connector/waypoint logic...
     const waypoints = edge.waypoints.length ? edge.waypoints : [nextRoom.coordinates];
 
     if (edge.connector) {

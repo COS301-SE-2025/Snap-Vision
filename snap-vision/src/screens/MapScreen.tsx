@@ -14,6 +14,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { getThemeColors } from '../theme';
 import { useBadges } from '../context/BadgeContext';
 import { useAccessibility } from '../context/AccessibilityContext';
+import { useDeepLink } from '../DeepLinkContext';
 import { useCompass } from '../hooks/useCompass';
 import { useMapLocation } from '../hooks/useMapLocation';
 import { useMapNavigation } from '../hooks/useMapNavigation';
@@ -36,7 +37,7 @@ type MapScreenParams = {
   venue?: string;
   startTime?: string;
   poiId?: string;
-  selectedPOI?: POI;
+  selectedPOIId?: string;
 };
 
 const MapScreen = () => {
@@ -45,6 +46,7 @@ const MapScreen = () => {
   const colors = getThemeColors(theme);
   const { isHapticFeedbackEnabled } = useAccessibility();
   const { setNavigationStartTime, unlock, incrementRoutes, state } = useBadges();
+  const { coords: deepLinkCoords, setCoords: setDeepLinkCoords } = useDeepLink();
 
   // navigation
   const route = useRoute();
@@ -301,6 +303,7 @@ const MapScreen = () => {
     showErrorPopupHelper,
     showSuccessPopupHelper,
     showConfirmationPopupHelper,
+    webViewRef,
   );
 
   const {
@@ -752,6 +755,41 @@ const MapScreen = () => {
     setAutoNavigationPopup,
   ]);
 
+  // Handle deep link coordinates from DeepLinkContext (for location sharing)
+  useEffect(() => {
+    if (
+      deepLinkCoords &&
+      deepLinkCoords.lat &&
+      deepLinkCoords.lng &&
+      currentLocation &&
+      isMapReady
+    ) {
+      const lat = parseFloat(deepLinkCoords.lat);
+      const lng = parseFloat(deepLinkCoords.lng);
+
+      console.log('[MapScreen] Handling deep link coordinates:', { lat, lng });
+
+      setDestination("Friend's Location");
+      setDestinationCoords([lng, lat]);
+      fetchRoute([lng, lat]);
+      setStatus('Navigating to shared location');
+      setShowDirectionsSheet(true);
+
+      // Clear the deep link coords after handling
+      setDeepLinkCoords(null);
+    }
+  }, [
+    deepLinkCoords,
+    currentLocation,
+    isMapReady,
+    fetchRoute,
+    setDestination,
+    setDestinationCoords,
+    setDeepLinkCoords,
+    setStatus,
+    setShowDirectionsSheet,
+  ]);
+
   // location availability check
   useEffect(() => {
     if (isMapReady && !currentLocation && !isRefreshingLocation) {
@@ -786,23 +824,37 @@ const MapScreen = () => {
   }, [state.purchases, isMapReady]);
 
   useEffect(() => {
-    if (params?.selectedPOI && isMapReady && currentLocation) {
-      if (!selectedFeature || selectedFeature.id !== params.selectedPOI.id) {
-        const selectedPOI = params.selectedPOI;
+    if (params?.selectedPOIId && isMapReady && pois.length > 0) {
+      const poi = pois.find((p) => p.id === params.selectedPOIId);
+      if (poi && (!selectedFeature || selectedFeature.id !== poi.id)) {
+        // select the POI immediately
+        selectPOI(poi);
+        setHookSelectedPOI(poi);
+        setSelectedFeature(poi);
+        setDestination(poi.name);
+        setDestinationCoords([poi.centroid.longitude, poi.centroid.latitude]);
 
-        selectPOI(selectedPOI);
-        setHookSelectedPOI(selectedPOI);
-        setSelectedFeature(selectedPOI);
-        setDestination(selectedPOI.name);
-
-        if (selectedPOI.centroid) {
-          setDestinationCoords([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
-          fetchRoute([selectedPOI.centroid.longitude, selectedPOI.centroid.latitude]);
+        // only fetch the route and show directions if location is available
+        if (currentLocation) {
+          fetchRoute([poi.centroid.longitude, poi.centroid.latitude]);
           setShowDirectionsSheet(true);
         }
       }
     }
-  }, [params?.selectedPOI, isMapReady, currentLocation]);
+  }, [
+    params?.selectedPOIId,
+    isMapReady,
+    pois,
+    selectedFeature,
+    selectPOI,
+    setHookSelectedPOI,
+    setSelectedFeature,
+    setDestination,
+    setDestinationCoords,
+    currentLocation,
+    fetchRoute,
+    setShowDirectionsSheet,
+  ]);
   return (
     <MapContent
       //theme

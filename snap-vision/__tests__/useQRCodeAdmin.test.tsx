@@ -513,8 +513,6 @@ describe('useQRCodeAdmin', () => {
       expect(result.current.errorMessage).toBe('Please select a room and enter a QR code value.');
     });
 
-    // ...existing code...
-
     it('should handle QR code creation error', async () => {
       // Set the mock before hook initialization!
       (qrService.createQRCodeMapping as jest.Mock).mockRejectedValue(new Error('Network error'));
@@ -565,7 +563,6 @@ describe('useQRCodeAdmin', () => {
       expect(result.current.showErrorPopup).toBe(true);
       expect(result.current.errorMessage).toBe('Failed to add QR code. Please try again.');
     });
-    // ...existing code...
   });
 
   describe('QR Code Deletion', () => {

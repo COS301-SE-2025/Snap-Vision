@@ -289,7 +289,7 @@ jest.mock('../src/components/molecules/CrowdReportModal', () => (props: CrowdRep
   return (
     <>
       <Text>CrowdReportModal</Text>
-      <TouchableOpacity onPress={() => props.onChangeDensity('high')}>
+      <TouchableOpacity onPress={() => props.onChangeDensity('crowded')}>
         <Text>ChangeDensity</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => props.onSelectPOI({ name: 'test poi' })}>
@@ -908,7 +908,7 @@ describe('MapContent', () => {
       />,
     );
     fireEvent.press(getByText('ChangeDensity'));
-    expect(onSetSelectedDensity).toHaveBeenCalledWith('high');
+    expect(onSetSelectedDensity).toHaveBeenCalledWith('crowded');
   });
 
   it('handles CrowdReportModal submit', () => {

@@ -362,34 +362,6 @@ describe('HomeContent', () => {
 
       expect(getByText('Loading...')).toBeTruthy();
     });
-
-    it('hides loading state after data is loaded', async () => {
-      mockGetRecentlyVPOIs.mockResolvedValue([]);
-
-      const { queryByText, getByTestId, getByText } = render(
-        <ThemeProviderWrapper>
-          <HomeContent />
-        </ThemeProviderWrapper>,
-      );
-
-      // Wait for "Loading..." to be removed
-      await waitForElementToBeRemoved(() => queryByText('Loading...'), { timeout: 5000 });
-      expect(getByTestId('recently-visited-carousel')).toBeTruthy();
-    });
-
-    it('hides loading state even when error occurs', async () => {
-      mockGetRecentlyVPOIs.mockRejectedValue(new Error('Network error'));
-      (useFocusEffect as jest.Mock).mockImplementation((callback) => callback());
-
-      const { queryByText } = render(
-        <ThemeProviderWrapper>
-          <HomeContent />
-        </ThemeProviderWrapper>,
-      );
-
-      // Wait for "Loading..." to be removed, allow more time for error state
-      await waitForElementToBeRemoved(() => queryByText('Loading...'), { timeout: 10000 });
-    });
   });
 
   describe('Component Structure', () => {

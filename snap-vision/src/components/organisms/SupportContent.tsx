@@ -37,7 +37,7 @@ export default function SupportContent() {
       description: 'Download the complete user manual.',
       onPress: () =>
         Linking.openURL(
-          'https://raw.githubusercontent.com/COS301-SE-2025/Snap-Vision/main/docs/User%20Manual%20Document%20-%20V4.pdf',
+          'https://github.com/COS301-SE-2025/Snap-Vision/raw/refs/heads/main/docs/User%20Manual%20Document%20-%20V4.pdf',
         ),
     },
   ];
