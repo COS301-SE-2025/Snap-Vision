@@ -57,63 +57,63 @@ export const useMapPOI = (
   const CACHE_KEY = 'map_pois';
 
   // Fetch all POIs from Firestore with caching
-  const fetchPOIs = useCallback(async (useCache: boolean = true) => {
-    const trace = await perf().newTrace('pois_load_perf');
-    await trace.start();
-    
-    try {
-      // Check cache first if enabled
-      if (useCache) {
-        const cached = await cacheService.get<POI[]>(CACHE_KEY, {
-          ttl: CACHE_TTL,
-          userSpecific: false,
-        });
-        
-        if (cached) {
-          setPOIs(cached);
-          await trace.stop();
-          return;
+const fetchPOIs = useCallback(async () => {
+  try {
+    const locationsSnapshot = await firestore().collection('locations').get();
+    const allPOIs: POI[] = [];
+
+    for (const locationDoc of locationsSnapshot.docs) {
+      const locationId = locationDoc.id;
+      //console.log(`Fetching POIs from: locations/${locationId}/buildingPOIs`);
+
+      const buildingPOIsSnapshot = await firestore()
+        .collection(`locations/${locationId}/buildingPOIs`)
+        .get();
+
+      buildingPOIsSnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data?.centroid?.latitude && data?.centroid?.longitude) {
+          allPOIs.push({
+            ...data,
+            id: doc.id,
+            location: locationId,
+          } as POI);
         }
-      }
-
-      // Fetch from Firestore
-      const locationsSnapshot = await firestore().collection('locations').get();
-      const allPOIs: POI[] = [];
-
-      for (const locationDoc of locationsSnapshot.docs) {
-        const locationId = locationDoc.id;
-
-        const buildingPOIsSnapshot = await firestore()
-          .collection(`locations/${locationId}/buildingPOIs`)
-          .get();
-
-        buildingPOIsSnapshot.forEach((doc) => {
-          const data = doc.data();
-          if (data?.centroid?.latitude && data?.centroid?.longitude) {
-            allPOIs.push({
-              ...data,
-              id: doc.id,
-              location: locationId,
-            } as POI);
-          }
-        });
-      }
-
-      setPOIs(allPOIs);
-      
-      // Cache the result
-      await cacheService.set(CACHE_KEY, allPOIs, {
-        ttl: CACHE_TTL,
-        userSpecific: false,
       });
-      
-    } catch (e) {
-      console.error('Error fetching POIs:', e);
-      setError('Failed to load buildings');
-    } finally {
-      await trace.stop();
     }
-  }, [setError]);
+
+    //console.log('Total POIs fetched:', allPOIs.length);
+    setPOIs(allPOIs);
+    
+    // Immediately update WebView with fresh data if ready
+    if (isMapReady && webViewRef.current) {
+      const poisWithHiddenLabels = allPOIs.map((poi) => ({
+        ...poi,
+        showLabel: false,
+      }));
+      
+      // Clear existing POIs first
+      webViewRef.current.injectJavaScript(`
+        window.clearAllPOIMarkers && window.clearAllPOIMarkers();
+        true;
+      `);
+      
+      // Then display fresh POIs
+      setTimeout(() => {
+        if (webViewRef.current) {
+          const jsPOICode = `
+            window.poiData = ${JSON.stringify(poisWithHiddenLabels)};
+            window.displayPOIs && window.displayPOIs(${JSON.stringify(poisWithHiddenLabels)});
+          `;
+          webViewRef.current.injectJavaScript(jsPOICode);
+        }
+      }, 100);
+    }
+  } catch (e) {
+    //console.error('Failed to fetch POIs:', e);
+    setError('Failed to load buildings');
+  }
+}, [isMapReady, webViewRef, setError]);
 
   // Force refresh POIs (bypass cache)
   const refreshPOIs = useCallback(async () => {
