@@ -32,14 +32,7 @@ import POIInfoModal from '../molecules/POIInfoModal';
 import CacheService from '../../services/CacheService';
 
 const cacheService = CacheService.getInstance();
-
-// Cache TTL configurations
-const CACHE_TTL = {
-  ROOMS: 10 * 60 * 1000, // 10 minutes
-  PATHS: 10 * 60 * 1000, // 10 minutes
-  FLOORPLANS: 30 * 60 * 1000, // 30 minutes - longer for floorplan URLs
-  FLOOR_LIST: 15 * 60 * 1000, // 15 minutes
-};
+const FLOORPLANS_CACHE_TTL = 600 * 60 * 1000; // 10 minutes
 
 type ParamList = {
   IndoorSchematicNav: {
@@ -80,10 +73,9 @@ export default function IndoorSchematicNavScreen() {
   const navigation = useNavigation<any>();
   const { buildingId, buildingName, locationId, floorId: initialFloorId, userPos } = route.params;
 
-  // Theme handling - consistent with other files
-  const { isDark } = useTheme();
+  const { theme, isDark } = useTheme();
   const { isAccessibilityModeEnabled } = useAccessibility();
-  const colors = getThemeColors(isDark);
+  const colors = getThemeColors(theme);
   const { unlock } = useBadges();
 
   // Master data (ALL floors)
@@ -108,29 +100,6 @@ export default function IndoorSchematicNavScreen() {
     const checkFloorplansExist = async () => {
       try {
         setLoading(true);
-        
-        // Check cache first
-        const cacheKey = `floorplans_exist:${locationId}:${buildingId}`;
-        console.log('🔍 [INDOOR NAV CACHE] Checking if floorplans exist...');
-        
-        const cachedExists = await cacheService.get<boolean>(cacheKey, {
-          ttl: CACHE_TTL.FLOORPLANS,
-          userSpecific: false,
-        });
-
-        if (cachedExists !== null) {
-          console.log(`✅ [INDOOR NAV CACHE] Floorplan existence cached: ${cachedExists}`);
-          if (!cachedExists) {
-            navigation.replace('IndoorNavigationUnavailable', {
-              buildingId,
-              buildingName,
-              locationId,
-            });
-          }
-          return;
-        }
-
-        console.log('🔥 [INDOOR NAV FIRESTORE] Checking floorplans existence in Firestore...');
         const floorplansSnap = await firestore()
           .collection('locations')
           .doc(locationId)
@@ -140,16 +109,8 @@ export default function IndoorSchematicNavScreen() {
           .limit(1)
           .get();
 
-        const exists = !floorplansSnap.empty;
-
-        // Cache the result
-        await cacheService.set(cacheKey, exists, {
-          ttl: CACHE_TTL.FLOORPLANS,
-          userSpecific: false,
-        });
-        console.log(`💿 [INDOOR NAV CACHE] Cached floorplan existence: ${exists}`);
-
-        if (!exists) {
+        if (floorplansSnap.empty) {
+          // No floorplans exist, navigate to unavailable screen
           navigation.replace('IndoorNavigationUnavailable', {
             buildingId,
             buildingName,
@@ -157,7 +118,7 @@ export default function IndoorSchematicNavScreen() {
           });
         }
       } catch (error) {
-        console.error('❌ [INDOOR NAV] Error checking floorplans:', error);
+        //console.error('Error checking floorplans:', error);
         navigation.replace('IndoorNavigationUnavailable', {
           buildingId,
           buildingName,
@@ -225,11 +186,11 @@ export default function IndoorSchematicNavScreen() {
   const findNearestRoom = (rooms: RoomPOI[], pos: { x: number; y: number }, floorId: string) => {
     if (!pos || !rooms || !rooms.length) return null;
 
-    //consolelog(`Finding nearest room on floor ${floorId}. Total rooms: ${rooms.length}`);
+    ////consolelog(`Finding nearest room on floor ${floorId}. Total rooms: ${rooms.length}`);
 
     // Filter rooms by floor
     const roomsOnFloor = rooms.filter((r) => r.floorId === floorId);
-    //consolelog(`Rooms on floor ${floorId}: ${roomsOnFloor.length}`);
+    ////consolelog(`Rooms on floor ${floorId}: ${roomsOnFloor.length}`);
 
     if (!roomsOnFloor.length) return null;
 
@@ -248,74 +209,12 @@ export default function IndoorSchematicNavScreen() {
     return roomsWithDistance[0]?.room || null;
   };
 
-  // Fetch ALL floors for this building with caching
+  // Fetch ALL floors for this building
   useEffect(() => {
-    let cancelled = false;
-    
-    const loadData = async () => {
+    (async () => {
       try {
         setLoading(true);
-        console.log('🔍 [INDOOR NAV CACHE] Starting to load indoor navigation data...');
-
-        const roomsCacheKey = `indoor_nav_rooms:${locationId}:${buildingId}`;
-        const pathsCacheKey = `indoor_nav_paths:${locationId}:${buildingId}`;
-
-        // Check cache for rooms and paths
-        console.log(`🔍 [INDOOR NAV CACHE] Checking cache for rooms and paths...`);
-        
-        const [cachedRooms, cachedPaths] = await Promise.all([
-          cacheService.get<RoomPOI[]>(roomsCacheKey, { ttl: CACHE_TTL.ROOMS, userSpecific: false }),
-          cacheService.get<PathPOI[]>(pathsCacheKey, { ttl: CACHE_TTL.PATHS, userSpecific: false }),
-        ]);
-
-        if (cachedRooms && cachedPaths && !cancelled) {
-          console.log(`✅ [INDOOR NAV CACHE] Found cached data: ${cachedRooms.length} rooms, ${cachedPaths.length} paths`);
-          
-          setAllRooms(cachedRooms);
-          setAllPaths(cachedPaths);
-
-          // Extract unique floors from cached data
-          const uniqueFloors = Array.from(
-            new Set(cachedRooms.map((room) => room.floorId).filter(Boolean))
-          ).sort();
-          
-          setFloors(uniqueFloors);
-
-          // Ensure selectedFloorId is valid
-          if (!uniqueFloors.includes(selectedFloorId)) {
-            const newFloor = uniqueFloors.includes(initialFloorId) ? initialFloorId : uniqueFloors[0] || '1';
-            setSelectedFloorId(newFloor);
-          }
-
-          // Handle user position logic
-          if (userPos && !cancelled) {
-            setCurrentPos(userPos);
-            const nearestRoom = findNearestRoom(cachedRooms, userPos, selectedFloorId);
-            if (nearestRoom) {
-              setStartId(nearestRoom.id);
-              setPopupTitle('Location Set');
-              setPopupMessage(`Your starting position has been set to ${nearestRoom.name}`);
-              setPopupVisible(true);
-            }
-          } else {
-            const initFloor = uniqueFloors.includes(initialFloorId) ? initialFloorId : uniqueFloors[0] || '1';
-            const entrances = cachedRooms.filter(
-              (r) => (r.isEntrance || r.type === 'entrance') && r.floorId === initFloor,
-            );
-            if (entrances.length && !cancelled) {
-              setCurrentPos(entrances[0].coordinates);
-            }
-          }
-
-          setLoading(false);
-          return;
-        }
-
-        // Fetch from Firestore
-        console.log('🔥 [INDOOR NAV FIRESTORE] Fetching data from Firestore...');
-
-        const trace = await perf().newTrace('indoor_nav_data_load');
-        await trace.start();
+        ////consolelog('Loading rooms data with userPos:', userPos);
 
         const roomSnap = await firestore()
           .collection('locations')
@@ -323,7 +222,6 @@ export default function IndoorSchematicNavScreen() {
           .collection('roomPOIs')
           .where('buildingId', '==', buildingId)
           .get();
-
         const roomsData = roomSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as RoomPOI);
 
         const pathSnap = await firestore()
@@ -332,47 +230,44 @@ export default function IndoorSchematicNavScreen() {
           .collection('pathPOIs')
           .where('buildingId', '==', buildingId)
           .get();
-
         const pathsData = pathSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as PathPOI);
-
-        if (cancelled) {
-          await trace.stop();
-          return;
-        }
-
-        console.log(`📊 [INDOOR NAV FIRESTORE] Loaded ${roomsData.length} rooms and ${pathsData.length} paths`);
 
         setAllRooms(roomsData);
         setAllPaths(pathsData);
 
-        // Extract unique floor IDs
-        const uniqueFloors = Array.from(
-          new Set(roomsData.map((room) => room.floorId).filter(Boolean))
-        ).sort();
-        
-        setFloors(uniqueFloors);
-        console.log(`📊 [INDOOR NAV] Available floors: ${uniqueFloors.join(', ')}`);
+        // Floors list
+        const floorSet = Array.from(new Set(roomsData.map((r) => r.floorId))).sort();
+        setFloors(floorSet);
 
-        // Auto-select appropriate floor
-        if (uniqueFloors.length > 0 && !cancelled) {
-          const appropriateFloor = uniqueFloors.includes(initialFloorId) 
-            ? initialFloorId 
-            : uniqueFloors[0];
-          setSelectedFloorId(appropriateFloor);
+        // Ensure selectedFloorId is valid
+        if (!floorSet.includes(selectedFloorId)) {
+          setSelectedFloorId(floorSet[0] || initialFloorId);
         }
 
-        // Handle user position logic
-        if (userPos && !cancelled) {
+        // Set initial position and start room
+        if (userPos) {
+          // We have coordinates from QR code, set current position
+          ////consolelog('Setting current position from QR scan:', userPos);
           setCurrentPos(userPos);
+
+          // Find the nearest room to use as starting point
           const nearestRoom = findNearestRoom(roomsData, userPos, selectedFloorId);
+
           if (nearestRoom) {
+            ////consolelog('Setting start room from QR coordinates:', nearestRoom.name);
             setStartId(nearestRoom.id);
+            // setStatusMessage(`Current position: ${nearestRoom.name}`);
+
+            // Show popup notification to user
             setPopupTitle('Location Set');
             setPopupMessage(`Your starting position has been set to ${nearestRoom.name}`);
             setPopupVisible(true);
           }
-        } else if (!cancelled) {
-          const initFloor = uniqueFloors.includes(initialFloorId) ? initialFloorId : uniqueFloors[0] || '1';
+        } else {
+          // No userPos provided, use entrance as default
+          const initFloor = floorSet.includes(initialFloorId)
+            ? initialFloorId
+            : floorSet[0] || initialFloorId;
           const entrances = roomsData.filter(
             (r) => (r.isEntrance || r.type === 'entrance') && r.floorId === initFloor,
           );
@@ -380,156 +275,111 @@ export default function IndoorSchematicNavScreen() {
             setCurrentPos(entrances[0].coordinates);
           }
         }
-
-        // Cache the data
-        await Promise.all([
-          cacheService.set(roomsCacheKey, roomsData, { ttl: CACHE_TTL.ROOMS, userSpecific: false }),
-          cacheService.set(pathsCacheKey, pathsData, { ttl: CACHE_TTL.PATHS, userSpecific: false }),
-        ]);
-
-        console.log(`💿 [INDOOR NAV CACHE] Cached all navigation data`);
-
-        await trace.stop();
-
-      } catch (error) {
-        console.error('❌ [INDOOR NAV] Error loading data:', error);
-        if (!cancelled) {
-          setPopupTitle('Error');
-          setPopupMessage('Failed to load indoor navigation data.');
-          setPopupVisible(true);
-        }
+      } catch (e) {
+        ////consoleerror(e);
+        setPopupTitle('Error');
+        setPopupMessage('Failed to load indoor data.');
+        setPopupConfirmText('OK');
+        setPopupVisible(true);
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
-    };
+    })();
+  }, [buildingId, locationId]);
 
-    loadData();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [buildingId, locationId, initialFloorId, userPos, selectedFloorId]);
-
-  // Enhanced floorplan fetching with caching whenever floor changes
+  // Fetch floorplan image whenever floor changes
   useEffect(() => {
     let cancelled = false;
 
     async function fetchFloorplan() {
-      if (!selectedFloorId) return;
-      
       const trace = await perf().newTrace('indoor_floorplan_load_perf');
       await trace.start();
-      
       try {
         setFloorplanLoading(true);
         setFloorplanUrl(null);
 
-        const cacheKey = `indoor_nav_floorplan_url:${locationId}:${buildingId}:${selectedFloorId}`;
-        console.log(`🔍 [INDOOR NAV CACHE] Checking cache for floorplan: ${cacheKey}`);
-
-        // Check cache first
-        const cachedUrl = await cacheService.get<string>(cacheKey, {
-          ttl: CACHE_TTL.FLOORPLANS,
+        // Check cache first for all floorplans
+        const cacheKey = `floorplans:${locationId}:${buildingId}`;
+        const cachedFloorplans = await cacheService.get<{ [key: string]: string }>(cacheKey, {
+          ttl: FLOORPLANS_CACHE_TTL,
           userSpecific: false,
         });
 
-        if (cachedUrl && !cancelled) {
-          console.log(`✅ [INDOOR NAV CACHE] Found floorplan URL in cache`);
-          setFloorplanUrl(cachedUrl);
-          setFloorplanLoading(false);
-          await trace.stop();
-          return;
-        }
-
-        console.log(`🔥 [INDOOR NAV FIRESTORE] Fetching floorplan for floor ${selectedFloorId}...`);
-
-        // Try finding by floorId first
-        let fpSnap = await firestore()
-          .collection('locations')
-          .doc(locationId)
-          .collection('buildingPOIs')
-          .doc(buildingId)
-          .collection('floorplans')
-          .where('floorId', '==', selectedFloorId)
-          .limit(1)
-          .get();
-
         let url: string | null = null;
 
-        if (!fpSnap.empty) {
-          const data: any = fpSnap.docs[0].data();
-          url = data?.imageUrl || data?.url || data?.downloadURL || null;
-
-          const storagePath: string | undefined = data?.storagePath;
-          if (!url && storagePath) {
-            try {
-              console.log(`☁️ [INDOOR NAV STORAGE] Resolving storage path: ${storagePath}`);
-              url = await storage().ref(storagePath).getDownloadURL();
-            } catch (e) {
-              console.warn('getDownloadURL failed for', storagePath, e);
-            }
-          }
-        }
-
-        // Try by floorLabel if not found by floorId
-        if (!url) {
-          console.log(`🔍 [INDOOR NAV FIRESTORE] Trying by floorLabel: ${selectedFloorId}`);
-          fpSnap = await firestore()
+        if (cachedFloorplans && cachedFloorplans[selectedFloorId]) {
+          // Found in cache
+          url = cachedFloorplans[selectedFloorId];
+          console.log(`✅ [FLOORPLAN CACHE] Found URL for floor ${selectedFloorId} in cache`);
+        } else {
+          // Not in cache, fetch from Firestore and cache all floorplans
+          console.log(`🔥 [FLOORPLAN] Fetching all floorplans for ${locationId}/${buildingId} from Firestore...`);
+          
+          const fpSnap = await firestore()
             .collection('locations')
             .doc(locationId)
             .collection('buildingPOIs')
             .doc(buildingId)
             .collection('floorplans')
-            .where('floorLabel', '==', selectedFloorId)
-            .limit(1)
             .get();
 
-          if (!fpSnap.empty) {
-            const data: any = fpSnap.docs[0].data();
-            url = data?.imageUrl || data?.url || data?.downloadURL || null;
-            console.log(`✅ [INDOOR NAV FIRESTORE] Found floorplan by floorLabel`);
-          }
-        }
+          const floorplanMap: { [key: string]: string } = {};
 
-        // Last resort: try storage folder fallback
-        if (!url) {
-          try {
-            console.log(`📁 [INDOOR NAV STORAGE] Trying storage folder fallback...`);
-            const baseRef = storage().ref(`floorplans/${locationId}/${buildingId}`);
-            const list = await baseRef.listAll();
-            const match =
-              list.items.find((it) =>
-                it.name.toLowerCase().includes(String(selectedFloorId).toLowerCase()),
-              ) || list.items[0];
-            if (match) {
-              url = await match.getDownloadURL();
-              console.log(`✅ [INDOOR NAV STORAGE] Found via storage folder fallback`);
+          for (const doc of fpSnap.docs) {
+            const data: any = doc.data();
+            const floorId = data.floorId || doc.id;
+            let floorUrl = data?.imageUrl || data?.url || data?.downloadURL || null;
+
+            // If only a storagePath is stored, resolve it
+            const storagePath: string | undefined = data?.storagePath;
+            if (!floorUrl && storagePath) {
+              try {
+                console.log(`☁️ [FLOORPLAN] Resolving storage path: ${storagePath}`);
+                floorUrl = await storage().ref(storagePath).getDownloadURL();
+              } catch (e) {
+                console.warn('getDownloadURL failed for', storagePath, e);
+              }
             }
-          } catch (e) {
-            console.warn('Storage folder fallback failed', e);
+
+            if (floorUrl) {
+              floorplanMap[floorId] = floorUrl;
+            }
           }
+
+          // If no floorplans found in Firestore, try storage folder fallback
+          if (Object.keys(floorplanMap).length === 0) {
+            try {
+              console.log(`📁 [FLOORPLAN] Trying storage folder fallback...`);
+              const baseRef = storage().ref(`floorplans/${locationId}/${buildingId}`);
+              const list = await baseRef.listAll();
+              
+              for (const item of list.items) {
+                const itemUrl = await item.getDownloadURL();
+                // Try to extract floor ID from filename
+                const floorId = item.name.split('.')[0] || item.name;
+                floorplanMap[floorId] = itemUrl;
+              }
+            } catch (e) {
+              console.warn('Storage folder fallback failed', e);
+            }
+          }
+
+          // Cache all floorplans
+          if (Object.keys(floorplanMap).length > 0) {
+            await cacheService.set(cacheKey, floorplanMap, {
+              ttl: FLOORPLANS_CACHE_TTL,
+              userSpecific: false,
+            });
+            console.log(`💿 [FLOORPLAN CACHE] Cached ${Object.keys(floorplanMap).length} floorplan URLs`);
+          }
+
+          // Get URL for current floor
+          url = floorplanMap[selectedFloorId] || null;
         }
 
-        if (!cancelled) {
-          setFloorplanUrl(url);
-          
-          // Cache the result (even if null to avoid repeated fetches)
-          await cacheService.set(cacheKey, url || '', {
-            ttl: CACHE_TTL.FLOORPLANS,
-            userSpecific: false,
-          });
-          
-          if (url) {
-            console.log(`💿 [INDOOR NAV CACHE] Cached floorplan URL for floor ${selectedFloorId}`);
-          } else {
-            console.log(`💿 [INDOOR NAV CACHE] Cached empty result for floor ${selectedFloorId}`);
-          }
-        }
-
+        if (!cancelled) setFloorplanUrl(url ?? null);
       } catch (e) {
-        console.warn('❌ [INDOOR NAV] Floorplan fetch failed', e);
+        console.warn('Floorplan fetch failed', e);
         if (!cancelled) setFloorplanUrl(null);
       } finally {
         if (!cancelled) setFloorplanLoading(false);
@@ -538,7 +388,6 @@ export default function IndoorSchematicNavScreen() {
     }
 
     fetchFloorplan();
-
     return () => {
       cancelled = true;
     };
@@ -566,7 +415,7 @@ export default function IndoorSchematicNavScreen() {
         return;
       }
 
-      //consolelog('Processing QR code value:', qrValue);
+      ////consolelog('Processing QR code value:', qrValue);
 
       // Use the qrService to get mapping data - same as QrCard
       const qrMapping = await getQRCodeMappingByValue(qrValue);
@@ -578,14 +427,14 @@ export default function IndoorSchematicNavScreen() {
         return;
       }
 
-      //consolelog('QR mapping found:', JSON.stringify(qrMapping));
+      ////consolelog('QR mapping found:', JSON.stringify(qrMapping));
 
       // Unlock the QR scan badge for successful scan
       try {
         await unlock('qr-scan');
       } catch (badgeError) {
         // Don't fail the whole operation if badge unlock fails
-        console.warn('Failed to unlock qr-scan badge:', badgeError);
+        //console.warn('Failed to unlock qr-scan badge:', badgeError);
       }
 
       // Use the mapping as saved by createQRCodeMapping
@@ -632,7 +481,7 @@ export default function IndoorSchematicNavScreen() {
       // We're in the same building, try to get room details
       try {
         // Switch to the floor from the QR code
-        //consolelog('Changing to floor:', qrFloorId, 'from floor:', selectedFloorId);
+        ////consolelog('Changing to floor:', qrFloorId, 'from floor:', selectedFloorId);
         setSelectedFloorId(qrFloorId);
 
         // Reset navigation state when changing floors
@@ -645,7 +494,7 @@ export default function IndoorSchematicNavScreen() {
           .collection('roomPOIs')
           .doc(qrRoomId);
 
-        //consolelog('Fetching room data for:', qrRoomId, 'in location:', qrLocationId);
+        ////consolelog('Fetching room data for:', qrRoomId, 'in location:', qrLocationId);
         const roomDoc = await roomRef.get();
 
         // In newer Firebase versions, exists is a property or function
@@ -655,7 +504,7 @@ export default function IndoorSchematicNavScreen() {
         } else {
           docExists = !!roomDoc.exists;
         }
-        //consolelog('Room exists:', docExists, 'Room ID:', roomDoc.id);
+        ////consolelog('Room exists:', docExists, 'Room ID:', roomDoc.id);
 
         if (!docExists) {
           // Room not found, try to find by name in existing rooms
@@ -668,7 +517,7 @@ export default function IndoorSchematicNavScreen() {
 
           if (roomByName) {
             // Found room by name
-            //consolelog('Found room by name:', roomByName.name);
+            ////consolelog('Found room by name:', roomByName.name);
             setCurrentPos(roomByName.coordinates);
             setStartId(roomByName.id);
 
@@ -679,7 +528,7 @@ export default function IndoorSchematicNavScreen() {
           }
 
           // Not found by id or name, use fallback
-          //consolewarn('Room document not found:', qrRoomId);
+          ////consolewarn('Room document not found:', qrRoomId);
           setCurrentPos(fallbackCoordinates);
 
           // Try to find the nearest room to use as starting point
@@ -698,7 +547,7 @@ export default function IndoorSchematicNavScreen() {
 
         // Room document exists, try to get coordinates
         const roomData = roomDoc.data() as any;
-        //consolelog('Room data retrieved:', roomData ? JSON.stringify(roomData) : 'undefined');
+        ////consolelog('Room data retrieved:', roomData ? JSON.stringify(roomData) : 'undefined');
 
         // Pre-define coordinates as fallback to guarantee we always have something
         let coordinates = fallbackCoordinates;
@@ -706,10 +555,10 @@ export default function IndoorSchematicNavScreen() {
         if (roomData) {
           if (roomData.coordinates) {
             coordinates = roomData.coordinates;
-            //consolelog('Room coordinates found:', coordinates);
+            ////consolelog('Room coordinates found:', coordinates);
           } else if (roomData.position) {
             coordinates = roomData.position;
-            //consolelog('Room position found:', coordinates);
+            ////consolelog('Room position found:', coordinates);
           }
         }
 
@@ -720,7 +569,7 @@ export default function IndoorSchematicNavScreen() {
         const nearestRoom = findNearestRoom(allRooms, coordinates, qrFloorId);
 
         if (nearestRoom) {
-          //consolelog('Setting start room from QR coordinates:', nearestRoom.name);
+          ////consolelog('Setting start room from QR coordinates:', nearestRoom.name);
           setStartId(nearestRoom.id);
 
           // Show popup notification to user
@@ -734,7 +583,7 @@ export default function IndoorSchematicNavScreen() {
           setPopupVisible(true);
         }
       } catch (roomError) {
-        //consoleerror('Error fetching room data:', roomError);
+        ////consoleerror('Error fetching room data:', roomError);
         // Use fallback coordinates
         setCurrentPos(fallbackCoordinates);
 
@@ -742,19 +591,19 @@ export default function IndoorSchematicNavScreen() {
         const nearestRoom = findNearestRoom(allRooms, fallbackCoordinates, qrFloorId);
         if (nearestRoom) {
           setStartId(nearestRoom.id);
+          setPopupTitle('Location Set');
+          setPopupMessage(`Position set near: ${nearestRoom.name}`);
+          setPopupVisible(true);
         }
       }
     } catch (error) {
-      //consoleerror('Error processing QR code:', error);
+      ////consoleerror('Error processing QR code:', error);
       setPopupTitle('Error');
       setPopupMessage('Failed to process QR code. Please try again.');
       setPopupVisible(true);
-    } finally {
-      setStatus(null);
     }
   };
 
-  // Rest of the component functionality...
   const resetRoute = () => {
     setStartId(null);
     setEndId(null);
@@ -784,7 +633,7 @@ export default function IndoorSchematicNavScreen() {
       setSheetOpen(false);
     } else {
       // Show POI popup for any selected room when not in navigation mode
-      const selectedRoom = roomsOnSelectedFloor.find(room => room.id === roomId);
+      const selectedRoom = roomsOnSelectedFloor.find((room) => room.id === roomId);
       if (selectedRoom) {
         setSelectedPOI(selectedRoom);
         setPoiPopupVisible(true);
@@ -792,67 +641,161 @@ export default function IndoorSchematicNavScreen() {
     }
   };
 
-  const handleNavigateHere = (roomId: string) => {
-    // Set the selected room as destination and enter navigation mode
-    setEndId(roomId);
-    setNavigationMode(true);
-    setPoiPopupVisible(false);
-    setPoiInfoModalVisible(false);
-    
-    // Clear any existing route
-    setSteps([]);
-    setCurrentStep(0);
-    setSheetOpen(false);
+  const nextInstructionEnd = steps[currentStep]?.coordinates;
+
+  // POI popup handlers
+  const handleNavigateHere = () => {
+    if (selectedPOI) {
+      setEndId(selectedPOI.id);
+      setNavigationMode(true);
+      setPoiPopupVisible(false);
+      setSelectedPOI(null);
+      // Reset start to ensure user picks a start room
+      setStartId(null);
+      setSteps([]);
+      setCurrentStep(0);
+      setSheetOpen(false);
+    }
   };
 
-  const handleRoomInfo = () => {
+  const handleMoreInfo = () => {
     setPoiPopupVisible(false);
     setPoiInfoModalVisible(true);
   };
 
-  // Calculate route when start and end are selected
+  const handleClosePOIPopup = () => {
+    setPoiPopupVisible(false);
+    setSelectedPOI(null);
+  };
+
+  const handleClosePOIInfoModal = () => {
+    setPoiInfoModalVisible(false);
+    setSelectedPOI(null);
+  };
+
+  // Compute route (multi-floor if available)
   useEffect(() => {
-    if (startId && endId && startId !== endId) {
-      const route = NavUtils.calculateRoute(startId, endId, allRooms, allPaths);
-      if (route.length) {
-        const detailedSteps = NavUtils.generateDetailedDirections(route);
-        setSteps(detailedSteps);
-        setCurrentStep(0);
-        setSheetOpen(true);
-      } else {
-        setPopupTitle('No Route');
-        setPopupMessage('Cannot find a route between the selected rooms.');
+    if (!startId || !endId) return;
+
+    const hasMulti = typeof (NavUtils as any).calculateMultiFloorRoute === 'function';
+
+    const routeSteps: NavUtils.NavigationStep[] = hasMulti
+      ? (NavUtils as any).calculateMultiFloorRoute(
+          startId,
+          endId,
+          allRooms as any,
+          allPaths as any,
+          {
+            accessible: isAccessibilityModeEnabled,
+          },
+        )
+      : NavUtils.calculateRoute(startId, endId, allRooms as any, allPaths as any, {
+          accessible: isAccessibilityModeEnabled,
+        });
+
+    if (!routeSteps || !routeSteps.length) {
+      setPopupTitle('No route');
+      setPopupMessage('No path between the selected rooms in this building.');
+      setPopupConfirmText('OK');
+      setPopupVisible(true);
+      setSteps([]);
+      setCurrentStep(0);
+      setSheetOpen(false);
+      return;
+    }
+
+    const detailed = NavUtils.generateDetailedDirections(routeSteps);
+    const filtered = detailed.slice(1);
+    setSteps(filtered);
+    setCurrentStep(0);
+    setSheetOpen(true);
+
+    // TTS: Announce route found
+    if (isTtsEnabled && filtered.length > 0) {
+      TTS.stop();
+      setTimeout(() => {
+        TTS.speak(`Route found with ${filtered.length} steps. ${filtered[0].instruction}`);
+      }, 500);
+    }
+
+    const firstStep = filtered[0];
+    if (firstStep?.coordinates) setCurrentPos(firstStep.coordinates);
+    if ((firstStep as any)?.floorId) setSelectedFloorId(String((firstStep as any).floorId));
+  }, [startId, endId, allRooms, allPaths, isAccessibilityModeEnabled]);
+
+  const handleAdvance = () => {
+    if (!steps.length) return;
+    const endpoint = steps[currentStep]?.coordinates;
+    if (currentPos && endpoint) {
+      const dist = NavUtils.calculateDistance(currentPos, endpoint);
+      if (dist > 0.1) {
+        setPopupTitle('Not there yet');
+        setPopupMessage('Move closer to the highlighted point to complete this step.');
+        setPopupConfirmText('OK');
         setPopupVisible(true);
+        return;
       }
     }
-  }, [startId, endId, allRooms, allPaths]);
+    if (currentStep >= steps.length - 1) {
+      // Use custom destination reached popup with confetti instead of standard popup
+      const destinationRoom = allRooms.find((room) => room.id === endId);
+      const destinationName = destinationRoom?.name || 'Your Destination';
+      setReachedDestination(destinationName);
+      setShowDestinationReachedPopup(true);
 
-  // Route polyline data for map visualization
+      // TTS: Announce arrival
+      if (isTtsEnabled) {
+        TTS.stop();
+        setTimeout(() => {
+          TTS.speak(`You have arrived at ${destinationName}`);
+        }, 250);
+      }
+
+      resetRoute();
+      return;
+    }
+    const next = currentStep + 1;
+    setCurrentStep(next);
+    const nextStep = steps[next];
+    if (nextStep?.coordinates) setCurrentPos(nextStep.coordinates);
+    const nextFloor = (nextStep as any)?.floorId;
+    if (nextFloor && nextFloor !== selectedFloorId) setSelectedFloorId(String(nextFloor));
+  };
+
   const remainingPolyline = useMemo(() => {
     if (!steps.length) return [];
-    const remainingSteps = steps.slice(currentStep);
-    return remainingSteps.map(step => step.coordinates).filter(Boolean);
-  }, [steps, currentStep]);
+    return steps
+      .slice(currentStep)
+      .filter((s) => ((s as any).floorId ? String((s as any).floorId) === selectedFloorId : true))
+      .map((s) => s.coordinates);
+  }, [steps, currentStep, selectedFloorId]);
 
   const completedPolyline = useMemo(() => {
-    if (!steps.length || currentStep === 0) return [];
-    const completedSteps = steps.slice(0, currentStep);
-    return completedSteps.map(step => step.coordinates).filter(Boolean);
-  }, [steps, currentStep]);
+    if (!steps.length || currentStep <= 0) return [];
+    return steps
+      .slice(0, currentStep + 1)
+      .filter((s) => ((s as any).floorId ? String((s as any).floorId) === selectedFloorId : true))
+      .map((s) => s.coordinates);
+  }, [steps, currentStep, selectedFloorId]);
 
-  const nextInstructionEnd = useMemo(() => {
-    if (currentStep < steps.length) {
-      return steps[currentStep]?.coordinates || null;
-    }
-    return null;
-  }, [steps, currentStep]);
+  // Determine what prompt to show based on state
+  const prompt = !navigationMode
+    ? 'Tap any POI to explore'
+    : !startId
+      ? 'Choose your start room'
+      : !endId
+        ? 'Choose your destination'
+        : `${Math.max(0, steps.length - currentStep)} steps left`;
+
+  // Override prompt if userPos was set from QR code
+  const effectivePrompt = userPos && startId && navigationMode ? 'Choose your destination' : prompt;
 
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <SettingsHeader title={`Indoor Map — ${buildingName}`} />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator />
         </View>
       </View>
     );
@@ -876,61 +819,7 @@ export default function IndoorSchematicNavScreen() {
           </Text>
           <Icon name="chevron-down" size={20} color={colors.text} />
         </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[
-            styles.qrButton,
-            { backgroundColor: colors.primary },
-          ]}
-          onPress={() => setQrScannerVisible(true)}
-        >
-          <Icon name="qr-code" size={20} color={colors.background} />
-        </TouchableOpacity>
       </View>
-
-      {/* Map with floorplan loading overlay */}
-      <View style={{ flex: 1 }}>
-        {floorplanLoading && (
-          <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color={colors.primary} />
-          </View>
-        )}
-        <IndoorSchematicMap
-          rooms={roomsOnSelectedFloor}
-          startId={startId || undefined}
-          endId={endId || undefined}
-          routePolyline={remainingPolyline}
-          completedPolyline={completedPolyline}
-          onSelectRoom={onSelectRoom}
-          themeColors={colors}
-          currentPos={currentPos || undefined}
-          floorplanUrl={floorplanUrl || undefined}
-          nextInstructionEnd={nextInstructionEnd}
-        />
-      </View>
-
-      {/* { !!Uncomment to show Bottom sheet with step-by-step directions!!} */}
-      {/*Directions sheet*/}
-      <StepsBottomSheet
-        visible={sheetOpen}
-        onClose={() => setSheetOpen(false)}
-        onCancel={resetRoute}
-        steps={steps}
-        colors={colors}
-        currentStep={currentStep}
-        onStepComplete={(stepIndex) => {
-          if (stepIndex >= steps.length - 1) {
-            // Navigation complete
-            setReachedDestination(allRooms.find(r => r.id === endId)?.name || 'destination');
-            setShowDestinationReachedPopup(true);
-            resetRoute();
-          } else {
-            setCurrentStep(stepIndex + 1);
-          }
-        }}
-        isTtsEnabled={isTtsEnabled}
-        onToggleTts={() => setIsTtsEnabled(!isTtsEnabled)}
-      />
 
       {/* Custom Floor Dropdown Modal */}
       <Modal
@@ -976,48 +865,191 @@ export default function IndoorSchematicNavScreen() {
         </TouchableOpacity>
       </Modal>
 
-      {/* QR Scanner */}
-      {qrScannerVisible && (
-        <QRScanner
-          isVisible={qrScannerVisible}
-          onClose={() => setQrScannerVisible(false)}
-          onQRRead={handleQRScan}
-        />
+      {/* Prompt banner */}
+      <View
+        style={[styles.promptBar, { backgroundColor: colors.card, borderColor: colors.border }]}
+      >
+        <Text style={{ color: colors.text, fontWeight: '600' }}>{effectivePrompt}</Text>
+      </View>
+
+      {/* Status message */}
+      {statusMessage && (
+        <View
+          style={[
+            styles.statusBar,
+            { backgroundColor: colors.primary + '20', borderColor: colors.primary },
+          ]}
+        >
+          <Text style={{ color: colors.text, fontWeight: '500' }}>{statusMessage}</Text>
+        </View>
       )}
 
-      {/* POI Popup */}
-      <POIPopup
-        visible={poiPopupVisible}
-        poi={selectedPOI}
-        onClose={() => setPoiPopupVisible(false)}
-        onNavigateHere={() => selectedPOI && handleNavigateHere(selectedPOI.id)}
-        onRoomInfo={handleRoomInfo}
+      {/* Map area with floorplan */}
+      <View style={{ flex: 1 }}>
+        {floorplanLoading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator />
+          </View>
+        )}
+        <IndoorSchematicMap
+          rooms={roomsOnSelectedFloor}
+          startId={startId || undefined}
+          endId={endId || undefined}
+          routePolyline={remainingPolyline}
+          completedPolyline={completedPolyline}
+          onSelectRoom={onSelectRoom}
+          themeColors={colors}
+          currentPos={currentPos || undefined}
+          floorplanUrl={floorplanUrl || undefined}
+          nextInstructionEnd={nextInstructionEnd}
+        />
+      </View>
+
+      {/* { !!Uncomment to show Bottom sheet with step-by-step directions!!} */}
+      {/*Directions sheet*/}
+      <StepsBottomSheet
+        visible={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        onCancel={resetRoute}
+        steps={steps}
         colors={colors}
+        currentStep={currentStep}
+        onAdvance={handleAdvance}
       />
 
-      {/* POI Info Modal - Fixed prop name */}
-      <POIInfoModal
-        visible={poiInfoModalVisible}
-        poi={selectedPOI}
-        onClose={() => setPoiInfoModalVisible(false)}
-        themeColors={colors}
-      />
+      {/* {steps.length > 0 && !sheetOpen &&(
+        <AppSecondaryButton
+          title="Proceed"
+          onPress={handleAdvance}
+          style={styles.proceedBtn}
+          testID="proceed-btn"
+        />
+      )} */}
 
-      {/* Standard Popup */}
+      {/* Floating Directions button */}
+      {!sheetOpen && steps.length > 0 && (
+        <TouchableOpacity
+          onPress={() => setSheetOpen(true)}
+          style={[
+            styles.fab,
+            { backgroundColor: colors.primary, shadowColor: isDark ? '#000' : '#333' },
+          ]}
+        >
+          <Text style={{ color: '#fff', fontWeight: '700' }}>Directions</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Floating AR button
+      {steps.length > 0 && startId && endId && (
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate('ARIndoorNav', {
+              buildingId,
+              buildingName,
+              locationId,
+              floorId: selectedFloorId,
+              startRoomId: startId,
+              endRoomId: endId,
+              userPos: currentPos || null,
+            })
+          }
+          style={[styles.fabAR, { backgroundColor: colors.card, borderColor: colors.border }]}
+        >
+          <Text style={{ color: colors.text, fontWeight: '700' }}>AR</Text>
+        </TouchableOpacity>
+      )} */}
+
+      {/* Floating TTS toggle button */}
+      {steps.length > 0 && (
+        <TouchableOpacity
+          onPress={() => {
+            setIsTtsEnabled(!isTtsEnabled);
+            if (!isTtsEnabled) {
+              // If enabling TTS and there's a current step, speak it
+              if (steps[currentStep]) {
+                TTS.stop();
+                setTimeout(() => {
+                  TTS.speak(steps[currentStep].instruction);
+                }, 250);
+              }
+            } else {
+              // If disabling TTS, stop any current speech
+              TTS.stop();
+            }
+          }}
+          style={[
+            styles.fabTTS,
+            {
+              backgroundColor: isTtsEnabled ? colors.primary : colors.card,
+              borderColor: colors.border,
+            },
+          ]}
+        >
+          <Icon
+            name={isTtsEnabled ? 'volume-high' : 'volume-mute'}
+            size={20}
+            color={isTtsEnabled ? '#FFFFFF' : colors.text}
+          />
+        </TouchableOpacity>
+      )}
+
+      {/* Floating QR scan button */}
+      <TouchableOpacity
+        style={[styles.qrScanButton, { backgroundColor: colors.primary }]}
+        onPress={() => setQrScannerVisible(true)}
+      >
+        <Icon name="qr-code-outline" size={24} color="#FFFFFF" />
+        <Text style={styles.qrScanButtonText}>Scan QR</Text>
+      </TouchableOpacity>
+
+      {/* QR Scanner Modal */}
+      <Modal
+        visible={qrScannerVisible}
+        transparent={false}
+        animationType="slide"
+        onRequestClose={() => setQrScannerVisible(false)}
+      >
+        <QRScanner onScan={handleQRScan} onClose={() => setQrScannerVisible(false)} />
+      </Modal>
+
       <StandardPopup
         visible={popupVisible}
         title={popupTitle}
         message={popupMessage}
         confirmText={popupConfirmText}
         onConfirm={() => setPopupVisible(false)}
+        showCancel={false}
       />
 
-      {/* Destination Reached Popup */}
+      {/* Custom Destination Reached Popup with Confetti */}
       <DestinationReachedPopup
         visible={showDestinationReachedPopup}
-        destinationName={reachedDestination}
+        destination={reachedDestination}
         onClose={() => setShowDestinationReachedPopup(false)}
-        colors={colors}
+        themeColors={{
+          primary: colors.primary,
+          background: colors.background,
+          text: colors.text,
+          success: '#4CAF50',
+        }}
+      />
+
+      {/* POI Popup */}
+      <POIPopup
+        visible={poiPopupVisible}
+        poi={selectedPOI}
+        onNavigate={handleNavigateHere}
+        onMoreInfo={handleMoreInfo}
+        onClose={handleClosePOIPopup}
+        themeColors={colors}
+      />
+
+      {/* POI Info Modal */}
+      <POIInfoModal
+        visible={poiInfoModalVisible}
+        poi={selectedPOI}
+        onClose={handleClosePOIInfoModal}
+        themeColors={colors}
       />
     </View>
   );
@@ -1027,84 +1059,196 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  mapContainer: {
+    flex: 1,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  mapContainer: {
-    flex: 1,
+  pickerContainer: {
+    paddingHorizontal: 10,
+    zIndex: 2,
   },
+  roomListContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  instructionText: {
+    paddingHorizontal: 10,
+    marginTop: 10,
+    marginBottom: 5,
+    opacity: 0.7,
+    fontStyle: 'italic',
+  },
+  statusText: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  qrScanButton: {
+    position: 'absolute',
+    top: 90,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 30,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+  },
+  qrScanButtonText: {
+    color: '#FFFFFF',
+    marginLeft: 6,
+    fontWeight: '600',
+  },
+
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 5,
+  },
+
   topBar: {
     flexDirection: 'row',
-    padding: 16,
-    paddingTop: 8,
-    paddingBottom: 8,
-    justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  floorDropdown: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'flex-start',
     paddingHorizontal: 12,
     paddingVertical: 8,
+    width: 150,
+  },
+
+  promptBar: {
+    alignSelf: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     borderRadius: 8,
     borderWidth: 1,
-    flex: 1,
-    marginRight: 10,
+    marginBottom: 6,
   },
+
+  fab: {
+    position: 'absolute',
+    right: 20,
+    top: 140,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 24,
+    elevation: 5,
+  },
+
+  fabAR: {
+    position: 'absolute',
+    right: 16,
+    top: 144,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 24,
+    borderWidth: 1,
+    elevation: 4,
+  },
+
+  fabTTS: {
+    position: 'absolute',
+    right: 20,
+    top: 210,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    elevation: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  fabTest: {
+    position: 'absolute',
+    right: 16,
+    top: 194,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 24,
+    elevation: 5,
+    zIndex: 10,
+  },
+
+  proceedBtn: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 50,
+  },
+
+  statusBar: {
+    alignSelf: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 8,
+    marginTop: -2,
+  },
+
+  floorDropdown: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+
   floorDropdownText: {
     fontSize: 16,
-    flex: 1,
+    fontWeight: '600',
   },
-  qrButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
+
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   dropdownContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
     width: '80%',
-    maxHeight: '70%',
+    maxHeight: '50%',
+    borderRadius: 12,
     borderWidth: 1,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
   },
+
   dropdownTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
+    fontWeight: '600',
     textAlign: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
   },
+
   dropdownItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-    marginVertical: 2,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
+
   dropdownItemText: {
     fontSize: 16,
+    fontWeight: '500',
   },
 });
