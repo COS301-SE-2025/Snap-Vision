@@ -593,6 +593,90 @@ describe('TimetableBackgroundService', () => {
     });
   });
 
+  describe('cleanupExpiredPopups', () => {
+    it('removes expired popup data', async () => {
+      const expiredPopupData = {
+        course: 'Math',
+        expiresAt: Date.now() - 1000, // expired 1 second ago
+      };
+      
+      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify(expiredPopupData));
+
+      await service.cleanupExpiredPopups();
+
+      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith('pendingClassPopup');
+    });
+
+    it('keeps non-expired popup data', async () => {
+      const validPopupData = {
+        course: 'Math',
+        expiresAt: Date.now() + 10000, // expires in 10 seconds
+      };
+      
+      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify(validPopupData));
+
+      await service.cleanupExpiredPopups();
+
+      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalled();
+    });
+
+    it('handles no popup data', async () => {
+      mockAsyncStorage.getItem.mockResolvedValue(null);
+
+      await service.cleanupExpiredPopups();
+
+      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalled();
+    });
+
+    it('handles storage errors gracefully', async () => {
+      mockAsyncStorage.getItem.mockRejectedValue(new Error('Storage error'));
+
+      await expect(service.cleanupExpiredPopups()).resolves.not.toThrow();
+    });
+  });
+
+  describe('refreshNotifications', () => {
+    it('calls scheduleWeekNotifications', async () => {
+      const spy = jest.spyOn(service, 'scheduleWeekNotifications').mockResolvedValue();
+
+      await service.refreshNotifications();
+
+      expect(spy).toHaveBeenCalled();
+      spy.mockRestore();
+    });
+  });
+
+  describe('handleAppStateChange', () => {
+    it('reschedules notifications when app becomes active', async () => {
+      const scheduleWeekSpy = jest.spyOn(service, 'scheduleWeekNotifications').mockResolvedValue();
+      const cleanupSpy = jest.spyOn(service, 'cleanupExpiredPopups').mockResolvedValue();
+
+      // Simulate app state change to active
+      const handleAppStateChange = (service as any).handleAppStateChange;
+      await handleAppStateChange('active');
+
+      expect(scheduleWeekSpy).toHaveBeenCalled();
+      expect(cleanupSpy).toHaveBeenCalled();
+      
+      scheduleWeekSpy.mockRestore();
+      cleanupSpy.mockRestore();
+    });
+
+    it('does not reschedule when app state is not active', async () => {
+      const scheduleWeekSpy = jest.spyOn(service, 'scheduleWeekNotifications').mockResolvedValue();
+      const cleanupSpy = jest.spyOn(service, 'cleanupExpiredPopups').mockResolvedValue();
+
+      // Simulate app state change to background
+      const handleAppStateChange = (service as any).handleAppStateChange;
+      await handleAppStateChange('background');
+
+      expect(scheduleWeekSpy).not.toHaveBeenCalled();
+      expect(cleanupSpy).not.toHaveBeenCalled();
+      
+      scheduleWeekSpy.mockRestore();
+      cleanupSpy.mockRestore();
+    });
+  });
     it('marks notification as opened', async () => {
       await service.markNotificationOpened('entry-key');
 
