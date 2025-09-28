@@ -70,7 +70,7 @@ function AppInner() {
           const entryKey = data.entryKey;
           const action = data.action;
 
-          console.log('[App] Notification pressed (foreground):', { action, entryKey, data });
+          //console.log('[App] Notification pressed (foreground):', { action, entryKey, data });
 
           if (entryKey) {
             // Mark notification as opened to prevent in-app popup
@@ -79,7 +79,7 @@ function AppInner() {
 
           // Handle class popup action
           if (action === 'open_class_popup') {
-            console.log('[App] Handling class popup action');
+            //console.log('[App] Handling class popup action');
 
             const now = new Date();
             const classStartTime = new Date();
@@ -107,7 +107,7 @@ function AppInner() {
               }),
             );
 
-            console.log('[App] Stored pending class popup, navigating to Map');
+            //console.log('[App] Stored pending class popup, navigating to Map');
 
             // Use the same navigation pattern as login/register (replace instead of navigate)
             if (navigationRef.current) {
@@ -160,7 +160,7 @@ function AppInner() {
             await notifee.cancelNotification(detail.notification.id);
           }
         } catch (e) {
-          console.error('[App] notifee foreground press handler error:', e);
+          //console.error('[App] notifee foreground press handler error:', e);
         }
       }
     });
@@ -179,7 +179,7 @@ function AppInner() {
           const entryKey = data.entryKey;
           const action = data.action;
 
-          console.log('[App] Notification pressed (background):', { action, entryKey, data });
+          //console.log('[App] Notification pressed (background):', { action, entryKey, data });
 
           if (entryKey) {
             await TimetableBackgroundService.getInstance().markNotificationOpened(entryKey);
@@ -187,7 +187,7 @@ function AppInner() {
 
           // Store for when app opens - use the same pattern as deep links
           if (action === 'open_class_popup') {
-            console.log('[App] Storing class popup data for when app opens');
+            //console.log('[App] Storing class popup data for when app opens');
 
             // Store both the popup data AND use the deep link system
             await AsyncStorage.setItem(
@@ -235,7 +235,7 @@ function AppInner() {
             await notifee.cancelNotification(detail.notification.id);
           }
         } catch (e) {
-          console.error('[App] notifee background press handler error:', e);
+          //console.error('[App] notifee background press handler error:', e);
         }
       }
     };
@@ -253,7 +253,7 @@ function AppInner() {
           const data = JSON.parse(pendingDeepLinkData);
           await AsyncStorage.removeItem('pendingNotificationDeepLink');
 
-          console.log('[App] App opened from background notification, setting up navigation');
+          //console.log('[App] App opened from background notification, setting up navigation');
 
           // Set the deep link coords
           setCoords({ lat: data.lat, lng: data.lng });
@@ -284,7 +284,7 @@ function AppInner() {
           }, 100);
         }
       } catch (error) {
-        console.error('[App] Error checking pending navigation:', error);
+        //console.error('[App] Error checking pending navigation:', error);
       }
     };
 
@@ -346,7 +346,7 @@ function AppInner() {
       try {
         await TimetableBackgroundService.getInstance().start();
       } catch (error) {
-        console.error('[App] Error starting timetable background service:', error);
+        //console.error('[App] Error starting timetable background service:', error);
       }
     };
 

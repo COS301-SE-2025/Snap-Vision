@@ -44,7 +44,7 @@ export function useNavigationManager({
   useEffect(() => {
     const loadPathPOIs = async () => {
       try {
-        console.log('[NAV] Loading paths for location:', locationId, 'building:', buildingId);
+        //console.log('[NAV] Loading paths for location:', locationId, 'building:', buildingId);
 
         // Load from locations/{locationId}/pathPOIs collection
         const pathsSnapshot = await firestore()
@@ -56,7 +56,7 @@ export function useNavigationManager({
 
         const paths: PathPOI[] = pathsSnapshot.docs.map((doc) => {
           const data = doc.data();
-          console.log('[NAV] Path document:', doc.id, data);
+          //console.log('[NAV] Path document:', doc.id, data);
           return {
             id: doc.id,
             ...data,
@@ -64,10 +64,10 @@ export function useNavigationManager({
         }) as PathPOI[];
 
         setPathPOIs(paths);
-        console.log(`[NAV] Loaded ${paths.length} path segments for building ${buildingId}`);
-        console.log('[NAV] Path POIs:', paths);
+        //console.log(`[NAV] Loaded ${paths.length} path segments for building ${buildingId}`);
+        //console.log('[NAV] Path POIs:', paths);
       } catch (error) {
-        console.error('[NAV] Error loading paths:', error);
+        //console.error('[NAV] Error loading paths:', error);
       }
     };
 
@@ -115,45 +115,45 @@ export function useNavigationManager({
   // Start navigation to destination
   const startNavigation = useCallback(
     async (destination: RoomPOI) => {
-      console.log('[NAV] startNavigation called with destination:', destination.name);
-      console.log('[NAV] Current position:', currentPosition);
-      console.log('[NAV] Available rooms:', allRooms.length);
-      console.log('[NAV] Available paths:', pathPOIs.length);
+      //console.log('[NAV] startNavigation called with destination:', destination.name);
+      //console.log('[NAV] Current position:', currentPosition);
+      //console.log('[NAV] Available rooms:', allRooms.length);
+      //console.log('[NAV] Available paths:', pathPOIs.length);
 
       let startRoom: RoomPOI | null = null;
 
       if (currentPosition) {
         // Use current position to find nearest room
         startRoom = findNearestRoom(currentPosition);
-        console.log('[NAV] Found nearest room to current position:', startRoom?.name);
+        //console.log('[NAV] Found nearest room to current position:', startRoom?.name);
       } else {
         // Fallback: use any room on the same floor as destination
         startRoom =
           allRooms.find(
             (room) => room.floorId === destination.floorId && room.id !== destination.id,
           ) || allRooms[0];
-        console.log('[NAV] No current position, using fallback room:', startRoom?.name);
+        //console.log('[NAV] No current position, using fallback room:', startRoom?.name);
       }
 
       if (!startRoom) {
-        console.warn('[NAV] Cannot start navigation: no rooms available');
+        //console.warn('[NAV] Cannot start navigation: no rooms available');
         return false;
       }
 
-      console.log(
-        `[NAV] Starting navigation from ${startRoom.name} (${startRoom.id}) to ${destination.name} (${destination.id})`,
-      );
+      //console.log(
+      //   `[NAV] Starting navigation from ${startRoom.name} (${startRoom.id}) to ${destination.name} (${destination.id})`,
+      // );
 
       try {
         // Calculate route using existing navigation utils
         // Note: function signature is calculateMultiFloorRoute(startRoomId, endRoomId, roomPOIs, pathPOIs, opts?)
         let steps = calculateMultiFloorRoute(startRoom.id, destination.id, allRooms, pathPOIs);
 
-        console.log('[NAV] Route calculation result:', steps);
+        //console.log('[NAV] Route calculation result:', steps);
 
         // If no route found with paths, create a simple direct route
         if (!steps.length) {
-          console.log('[NAV] No path-based route found, creating direct route');
+          //console.log('[NAV] No path-based route found, creating direct route');
 
           // Use actual current position or fallback to start room
           const startCoordinates = currentPosition || startRoom.coordinates;
@@ -174,12 +174,12 @@ export function useNavigationManager({
               distance: calculateDistance(startCoordinates, destination.coordinates),
             },
           ];
-          console.log('[NAV] Created direct route with steps:', steps);
+          //console.log('[NAV] Created direct route with steps:', steps);
         } else {
           // If we have a path-based route but current position is available,
           // modify the first step to start from actual current location
           if (currentPosition && steps.length > 0) {
-            console.log('[NAV] Adjusting route to start from current position');
+            //console.log('[NAV] Adjusting route to start from current position');
             steps[0] = {
               ...steps[0],
               instruction: `Begin navigation from your current location`,
@@ -198,7 +198,7 @@ export function useNavigationManager({
         }
 
         if (!steps.length) {
-          console.warn('[NAV] Still no route found to destination');
+          //console.warn('[NAV] Still no route found to destination');
           return false;
         }
 
@@ -214,21 +214,21 @@ export function useNavigationManager({
           completedPolyline: [],
         });
 
-        console.log(`[NAV] Route calculated with ${steps.length} steps`);
-        console.log('[NAV] Navigation state updated, isNavigating should be true');
-        console.log('[NAV] Current navigation state after update:', {
-          isNavigating: true,
-          destination: destination.name,
-          currentStep: 0,
-          stepsLength: steps.length,
-        });
+        //console.log(`[NAV] Route calculated with ${steps.length} steps`);
+        //console.log('[NAV] Navigation state updated, isNavigating should be true');
+        //console.log('[NAV] Current navigation state after update:', {
+        //   isNavigating: true,
+        //   destination: destination.name,
+        //   currentStep: 0,
+        //   stepsLength: steps.length,
+        // });
         return true;
       } catch (error) {
-        console.error('[NAV] Error calculating route:', error);
+        //console.error('[NAV] Error calculating route:', error);
 
         // Fallback: create simple direct route from current position
         try {
-          console.log('[NAV] Attempting fallback direct route');
+          //console.log('[NAV] Attempting fallback direct route');
 
           const startCoordinates = currentPosition || startRoom.coordinates;
 
@@ -260,10 +260,10 @@ export function useNavigationManager({
             completedPolyline: [],
           });
 
-          console.log('[NAV] Fallback route created successfully');
+          //console.log('[NAV] Fallback route created successfully');
           return true;
         } catch (fallbackError) {
-          console.error('[NAV] Fallback route creation failed:', fallbackError);
+          //console.error('[NAV] Fallback route creation failed:', fallbackError);
           return false;
         }
       }
@@ -273,7 +273,7 @@ export function useNavigationManager({
 
   // Stop navigation and clear route
   const stopNavigation = useCallback(() => {
-    console.log('[NAV] Stopping navigation');
+    //console.log('[NAV] Stopping navigation');
     setNavigationState({
       isNavigating: false,
       destination: null,
@@ -293,18 +293,18 @@ export function useNavigationManager({
 
     const { destination, steps, currentStep } = navigationState;
 
-    console.log('[NAV] Position update - checking progress');
-    console.log('[NAV] Current position:', currentPosition);
-    console.log('[NAV] Current step:', currentStep, 'of', steps.length);
-    console.log('[NAV] Current step coordinates:', steps[currentStep]?.coordinates);
+    //console.log('[NAV] Position update - checking progress');
+    //console.log('[NAV] Current position:', currentPosition);
+    //console.log('[NAV] Current step:', currentStep, 'of', steps.length);
+    //console.log('[NAV] Current step coordinates:', steps[currentStep]?.coordinates);
 
     // Check if destination is reached
     if (destination) {
       const distanceToDestination = calculateDistance(currentPosition, destination.coordinates);
-      console.log('[NAV] Distance to destination:', distanceToDestination.toFixed(4));
+      //console.log('[NAV] Distance to destination:', distanceToDestination.toFixed(4));
 
       if (distanceToDestination < DESTINATION_THRESHOLD) {
-        console.log('[NAV] Destination reached!');
+        //console.log('[NAV] Destination reached!');
         setDestinationReached(true);
         return;
       }
@@ -317,13 +317,13 @@ export function useNavigationManager({
       const distanceToCurrentStep = calculateDistance(currentPosition, currentStepCoords);
       const distanceToNextStep = calculateDistance(currentPosition, nextStep.coordinates);
 
-      console.log('[NAV] Distance to current step:', distanceToCurrentStep.toFixed(4));
-      console.log(
-        '[NAV] Distance to next step:',
-        distanceToNextStep.toFixed(4),
-        'threshold:',
-        STEP_THRESHOLD,
-      );
+      //console.log('[NAV] Distance to current step:', distanceToCurrentStep.toFixed(4));
+      //console.log(
+      //   '[NAV] Distance to next step:',
+      //   distanceToNextStep.toFixed(4),
+      //   'threshold:',
+      //   STEP_THRESHOLD,
+      // );
 
       // Advance if we're close to the next step OR if we've passed the current step
       const shouldAdvance =
@@ -331,7 +331,7 @@ export function useNavigationManager({
         (distanceToCurrentStep < STEP_THRESHOLD && distanceToNextStep < distanceToCurrentStep * 2);
 
       if (shouldAdvance) {
-        console.log(`[NAV] Advancing to step ${currentStep + 1}`);
+        //console.log(`[NAV] Advancing to step ${currentStep + 1}`);
 
         // Add current step to completed polyline
         const newCompletedPolyline = [

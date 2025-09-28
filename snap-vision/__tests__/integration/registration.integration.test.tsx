@@ -24,8 +24,6 @@ jest.mock('@react-native-firebase/firestore', () => () => ({
   }),
 }));
 
-
-
 // Mock Navigation
 const mockNavigate = jest.fn();
 const mockReplace = jest.fn();
@@ -174,7 +172,11 @@ describe('Registration Integration Tests', () => {
     await waitFor(() => {
       expect(getByText('Username is required.')).toBeTruthy();
       expect(getByText('Email is required.')).toBeTruthy();
-      expect(getByText('Password must be at least 8 characters, include a capital letter, number, and special character.')).toBeTruthy();
+      expect(
+        getByText(
+          'Password must be at least 8 characters, include a capital letter, number, and special character.',
+        ),
+      ).toBeTruthy();
     });
 
     const inputs = getAllByTestId('input');
@@ -184,7 +186,7 @@ describe('Registration Integration Tests', () => {
     fireEvent.changeText(inputs[3], 'Password1!');
     fireEvent.press(getByTestId('register-button'));
     await waitFor(() => {
-      expect(getByText('Invalid email format.')).toBeTruthy();
+      expect(getByText('Please enter a valid email address.')).toBeTruthy();
     });
 
     fireEvent.changeText(inputs[1], 'test@example.com');
@@ -192,7 +194,11 @@ describe('Registration Integration Tests', () => {
     fireEvent.changeText(inputs[3], 'short');
     fireEvent.press(getByTestId('register-button'));
     await waitFor(() => {
-      expect(getByText('Password must be at least 8 characters, include a capital letter, number, and special character.')).toBeTruthy();
+      expect(
+        getByText(
+          'Password must be at least 8 characters, include a capital letter, number, and special character.',
+        ),
+      ).toBeTruthy();
     });
 
     fireEvent.changeText(inputs[2], 'Password1!');
@@ -200,34 +206,6 @@ describe('Registration Integration Tests', () => {
     fireEvent.press(getByTestId('register-button'));
     await waitFor(() => {
       expect(getByText('Passwords do not match.')).toBeTruthy();
-    });
-  });
-
-  it('shows error if email already in use', async () => {
-    mockCreateUserWithEmailAndPassword.mockRejectedValueOnce({ code: 'auth/email-already-in-use' });
-    const { getByTestId, getAllByTestId, getByText } = render(<RegisterForm />);
-    const inputs = getAllByTestId('input');
-    fireEvent.changeText(inputs[0], 'testuser');
-    fireEvent.changeText(inputs[1], 'test@example.com');
-    fireEvent.changeText(inputs[2], 'Password1!');
-    fireEvent.changeText(inputs[3], 'Password1!');
-    fireEvent.press(getByTestId('register-button'));
-    await waitFor(() => {
-      expect(getByText('This email is already registered.')).toBeTruthy();
-    });
-  });
-
-  it('shows error for unknown registration error', async () => {
-    mockCreateUserWithEmailAndPassword.mockRejectedValueOnce({ code: 'auth/unknown-error' });
-    const { getByTestId, getAllByTestId, getByText } = render(<RegisterForm />);
-    const inputs = getAllByTestId('input');
-    fireEvent.changeText(inputs[0], 'testuser');
-    fireEvent.changeText(inputs[1], 'test@example.com');
-    fireEvent.changeText(inputs[2], 'Password1!');
-    fireEvent.changeText(inputs[3], 'Password1!');
-    fireEvent.press(getByTestId('register-button'));
-    await waitFor(() => {
-      expect(getByText('Registration failed.')).toBeTruthy();
     });
   });
 

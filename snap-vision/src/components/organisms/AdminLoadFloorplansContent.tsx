@@ -26,8 +26,8 @@ type AdminLoadFloorplansNavigationProp = StackNavigationProp<
 >;
 
 export default function AdminLoadFloorplansContent() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme } = useTheme();
+  const colors = getThemeColors(theme);
   const navigation = useNavigation<AdminLoadFloorplansNavigationProp>();
 
   const { role, adminLocations, isLoading: isLoadingUser } = useUserRole();
@@ -80,7 +80,7 @@ export default function AdminLoadFloorplansContent() {
         setShowErrorPopup(true);
       }
     } catch (err: any) {
-      console.error('Upload error:', err);
+      //console.error('Upload error:', err);
       setError(err?.message || 'Unknown error occurred during upload');
       setShowErrorPopup(true);
     }
@@ -113,7 +113,7 @@ export default function AdminLoadFloorplansContent() {
       <SettingsHeader title="Upload Floorplan" />
 
       {isLoading && (
-        <View style={styles.loadingOverlay}>
+        <View style={[styles.loadingOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
           <ActivityIndicator size="large" color={colors.primary} testID="ActivityIndicator" />
         </View>
       )}
@@ -131,7 +131,7 @@ export default function AdminLoadFloorplansContent() {
 
       {selectedBuildingId && selectedBuildingName && floorLabel && (
         <View style={styles.uploadSection}>
-          <View style={styles.sectionContainer}>
+          <View style={[styles.sectionContainer, { backgroundColor: colors.card }]}>
             <Text style={[styles.sectionTitle, { color: colors.primary }]}>
               Upload Floorplan for {selectedBuildingName} - Floor {floorLabel}
             </Text>
@@ -203,7 +203,6 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
@@ -216,7 +215,6 @@ const styles = StyleSheet.create({
   sectionContainer: {
     marginBottom: 24,
     padding: 16,
-    backgroundColor: 'rgba(0,0,0,0.03)',
     borderRadius: 8,
   },
   sectionTitle: {

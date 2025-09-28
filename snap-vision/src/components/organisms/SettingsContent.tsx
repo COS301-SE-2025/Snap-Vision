@@ -4,14 +4,15 @@ import { View, StyleSheet, Image } from 'react-native';
 import SearchInput from '../atoms/SettingsSearch';
 import SettingItem from '../molecules/SettingsItem';
 import { getThemeColors } from '../../theme';
+import { useTheme } from '../../theme/ThemeContext';
 
 interface Props {
-  isDark: boolean;
   navigation: any;
 }
 
-export default function SettingsContent({ isDark, navigation }: Props) {
-  const colors = getThemeColors(isDark);
+export default function SettingsContent({ navigation }: Props) {
+  const { theme } = useTheme();
+  const colors = getThemeColors(theme);
 
   const items = [
     { icon: 'key', label: 'Account', screen: 'AccountSettings' },
@@ -32,7 +33,6 @@ export default function SettingsContent({ isDark, navigation }: Props) {
             key={index}
             icon={item.icon}
             label={item.label}
-            color={colors.primary}
             onPress={() => navigation.navigate(item.screen)}
           />
         ))}

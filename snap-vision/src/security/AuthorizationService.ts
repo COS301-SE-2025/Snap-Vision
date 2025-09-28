@@ -52,7 +52,6 @@ export class AuthorizationService {
 
       return context;
     } catch (error) {
-      console.error('Failed to get user context:', error);
       return null;
     }
   }
@@ -281,23 +280,7 @@ export class AuthorizationService {
     return sanitized;
   }
 
-  /**
-   * Log authorization failure for monitoring
-   */
-  private logAuthorizationFailure(
-    action: string,
-    resourceType: string,
-    resourceId: string,
-    userId?: string,
-  ): void {
-    console.warn('Authorization failed', {
-      action,
-      resourceType,
-      resourceId,
-      userId,
-      timestamp: new Date().toISOString(),
-    });
-  }
+
 }
 
 export default AuthorizationService;

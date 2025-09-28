@@ -288,6 +288,50 @@ export function useBluetoothPositioning(opts: Options) {
     return Math.max(0.05, Math.min(mean, 0.8));
   }, [anchorPoints]);
 
+  // CALIBRATION: Validate beacon coordinate setup  
+  // useEffect(() => {
+  //   if (anchorPoints.length >= 3) {
+  //     //console.log(BT, 'BEACON SETUP VALIDATION:');
+      
+  //     // Check for coordinate stability
+  //     const coordinateHistory = new Map<string, {x: number, y: number}>();
+      
+  //     anchorPoints.forEach((pt, i) => {
+  //       const beaconInfo = beaconsMeta.find(b => b.x === pt.x && b.y === pt.y);
+  //       const label = beaconInfo?.label || `Beacon ${i+1}`;
+  //       const mm = beaconInfo ? `${beaconInfo.major}|${beaconInfo.minor}` : 'unknown';
+  //       //console.log(BT, `  ${label} (${mm}): coordinates (${pt.x.toFixed(3)}, ${pt.y.toFixed(3)})`);
+        
+  //       // Store coordinate for stability check
+  //       if (beaconInfo) {
+  //         const key = `${beaconInfo.major}|${beaconInfo.minor}`;
+  //         const stored = coordinateHistory.get(key);
+  //         if (stored && (Math.abs(stored.x - pt.x) > 0.1 || Math.abs(stored.y - pt.y) > 0.1)) {
+  //           //console.log(BT, `  🚨 COORDINATE INSTABILITY DETECTED for ${mm}!`);
+  //           //console.log(BT, `     Previous: (${stored.x.toFixed(3)}, ${stored.y.toFixed(3)})`);
+  //           //console.log(BT, `     Current:  (${pt.x.toFixed(3)}, ${pt.y.toFixed(3)})`);
+  //           //console.log(BT, `     This will cause positioning errors - fix database coordinates!`);
+  //         }
+  //         coordinateHistory.set(key, {x: pt.x, y: pt.y});
+  //       }
+  //     });
+      
+  //     // Check beacon spacing
+  //     const spacing = meanAnchorSpacing;
+  //     //console.log(BT, `  Mean beacon spacing: ${spacing.toFixed(3)} units`);
+  //     if (spacing < 0.3) //console.log(BT, '  ⚠️ Beacons may be too close together for accurate positioning');
+  //     if (spacing > 0.7) //console.log(BT, '  ⚠️ Beacons may be too far apart, consider adding more beacons');
+      
+  //     // Check if beacons form a good triangle
+  //     if (anchorPoints.length === 3) {
+  //       const [a, b, c] = anchorPoints;
+  //       const area = Math.abs((b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y)) / 2;
+  //       //console.log(BT, `  Triangle area: ${area.toFixed(4)} (>0.1 is good for positioning)`);
+  //       if (area < 0.1) console.log(BT, '  ⚠️ Beacons are too close to a straight line - move one beacon');
+  //     }
+  //   }
+  // }, [anchorPoints, beaconsMeta, meanAnchorSpacing]);
+
   const kExact = (u: string, M: number, m: number) => `${String(u || '').toLowerCase()}|${M}|${m}`;
 
   // Accept batches from scanner
@@ -344,14 +388,17 @@ export function useBluetoothPositioning(opts: Options) {
       if (typeof rangeScale === 'number' && Number.isFinite(rangeScale)) return rangeScale;
 
       const med = median(rawMeters.filter(Number.isFinite));
-      if (!med || !Number.isFinite(med)) return 0.1; // fallback
-      const targetUnits = Math.max(0.03, Math.min(meanAnchorSpacing * 0.5, 0.35));
+      if (!med || !Number.isFinite(med)) return 0.15; // More realistic fallback
+      
+      // More stable scaling - aim for reasonable map coordinate scale
+      // Based on typical indoor environments where 2-5m = 0.2-0.5 map units
+      const targetUnits = Math.max(0.05, Math.min(meanAnchorSpacing * 0.6, 0.4));
       const k = targetUnits / med;
-      const kClamped = Math.max(0.02, Math.min(k, 0.8));
-      console.log(
-        BT,
-        `Auto rangeScale: meters->units ≈ ${kClamped.toFixed(3)} (median d=${med.toFixed(2)}m, anchor spacing=${meanAnchorSpacing.toFixed(2)}u)`,
-      );
+      const kClamped = Math.max(0.05, Math.min(k, 0.6)); // More conservative range
+      //console.log(
+      //   BT,
+      //   `Auto rangeScale: meters->units ≈ ${kClamped.toFixed(3)} (median d=${med.toFixed(2)}m, target=${targetUnits.toFixed(3)}u)`,
+      // );
       return kClamped;
     },
     [rangeScale, meanAnchorSpacing],
@@ -386,19 +433,69 @@ export function useBluetoothPositioning(opts: Options) {
 
       const rssiMed = median(arr.map((a) => a.rssi));
       const last = arr[arr.length - 1];
-      const tx =
-        typeof meta.txPowerAt1m === 'number'
-          ? meta.txPowerAt1m
-          : typeof last.measuredPower === 'number'
-            ? last.measuredPower!
-            : DEFAULT_TX;
+      const originalTx = typeof meta.txPowerAt1m === 'number'
+        ? meta.txPowerAt1m
+        : typeof last.measuredPower === 'number'
+          ? last.measuredPower!
+          : DEFAULT_TX;
 
-      const dMeters = rssiToDistanceMeters(rssiMed, tx, n); // meters
-      raw.push({ x: meta.x!, y: meta.y!, d: dMeters, tag: k, rssiMed, tx });
+      // Apply beacon-specific RSSI calibration corrections
+      let correctedTx = originalTx;
+      
+      // FINE-TUNED CALIBRATION: Based on actual vs calculated distance ratios
+      // Target: Minor=1 reduce by 30%, Minor=2 reduce by 81%, Minor=3 reduce by 24%
+      if (meta.major === 1 && meta.minor === 1) {
+        // Minor=1 (stairs): Need to reduce from 0.97m to ~0.69m equivalent
+        // Make TX power less negative to reduce calculated distance
+        correctedTx = Math.max(-85, Math.min(-65, originalTx + 5));
+      } else if (meta.major === 1 && meta.minor === 2) {
+        // Minor=2 (middle): Need to MASSIVELY reduce from 2.41m to ~0.46m equivalent  
+        // Make TX power much less negative to dramatically reduce distance
+        correctedTx = Math.max(-90, Math.min(-70, originalTx + 20));
+      } else if (meta.major === 1 && meta.minor === 3) {
+        // Minor=3 (wall): Need to reduce from 0.32m to ~0.24m equivalent
+        // Make TX power slightly less negative to reduce distance  
+        correctedTx = Math.max(-95, Math.min(-75, originalTx + 8));
+      }
+
+      // Use higher path loss exponent for indoor environment with obstacles
+      const indoorPathLoss = 3.0; // Keep at 3.0 for good distance spread
+      const dMeters = rssiToDistanceMeters(rssiMed, correctedTx, indoorPathLoss);
+      //console.log(BT, `RSSI Calibration ${k}: originalTx=${originalTx} → correctedTx=${correctedTx} | RSSI=${rssiMed} → distance=${dMeters.toFixed(2)}m`);
+      
+      raw.push({ x: meta.x!, y: meta.y!, d: dMeters, tag: k, rssiMed, tx: correctedTx });
     });
 
-    if (raw.length < 3) {
+    if (raw.length < 2) {
+      //console.log(BT, `Need at least 2 beacons for positioning, got ${raw.length}`);
       setVisible(false);
+      return;
+    }
+    
+    if (raw.length === 2) {
+      //console.log(BT, '⚠️ Using 2-beacon positioning (less accurate than 3-beacon trilateration)');
+      // For 2 beacons, estimate position between them based on relative distances
+      const [a, b] = raw;
+      const totalDist = a.d + b.d;
+      const ratio = totalDist > 0 ? a.d / totalDist : 0.5;
+      
+      // Position on line between beacons, weighted by distance
+      const pos = {
+        x: Math.max(0, Math.min(1, a.x + ratio * (b.x - a.x))),
+        y: Math.max(0, Math.min(1, a.y + ratio * (b.y - a.y)))
+      };
+      
+      // Heavy smoothing for 2-beacon mode since it's less stable
+      const smoothed = lastPosRef.current 
+        ? { x: 0.2 * pos.x + 0.8 * lastPosRef.current.x, y: 0.2 * pos.y + 0.8 * lastPosRef.current.y }
+        : pos;
+        
+      lastPosRef.current = smoothed;
+      lastComputeTsRef.current = Date.now();
+      setCurrentPos(smoothed);
+      setVisible(true);
+      //console.log(BT, '2-Beacon Position ->', { x: +smoothed.x.toFixed(3), y: +smoothed.y.toFixed(3) });
+      //console.log(BT, `⚠️ Missing beacon Minor=2 - check if it's powered on and broadcasting`);
       return;
     }
 
@@ -409,14 +506,25 @@ export function useBluetoothPositioning(opts: Options) {
           `${p.tag.split('|').slice(1).join('/')} rssi=${p.rssiMed.toFixed(0)} tx=${p.tx} d(m)=${p.d.toFixed(2)}`,
       )
       .join(' | ');
-    console.log(BT, `Solve with ${raw.length} anchors (metres): ${snapshotMeters}`);
+    //console.log(BT, `Solve with ${raw.length} anchors (metres): ${snapshotMeters}`);
+    
+    // CALIBRATION DEBUG: Show beacon positions and calculated distances
+    //console.log(BT, 'CALIBRATION DEBUG - Beacon positions and distances:');
+    raw.forEach(r => {
+      //console.log(BT, `  ${r.tag}: DB coords (${r.x.toFixed(3)}, ${r.y.toFixed(3)}) | RSSI=${r.rssiMed} | Calc distance=${r.d.toFixed(2)}m`);
+    });
+    
+    if (raw.length >= 3) {
+      const distances = raw.map(r => r.d).sort((a, b) => a - b);
+      //console.log(BT, `Distance distribution: min=${distances[0].toFixed(2)}m, median=${distances[Math.floor(distances.length/2)].toFixed(2)}m, max=${distances[distances.length-1].toFixed(2)}m`);
+    }
 
     //Initial scale guess
     const k0 = deriveRangeScale(raw.map((p) => p.d));
     const pts0 = raw.map((p) => ({ x: p.x, y: p.y, d: p.d * k0 }));
     let pos0 = trilaterateWeighted(pts0);
     if (!pos0) {
-      console.log(BT, 'Trilateration failed (initial)');
+      //console.log(BT, 'Trilateration failed (initial)');
       setVisible(false);
       return;
     }
@@ -462,8 +570,19 @@ export function useBluetoothPositioning(opts: Options) {
     setCurrentPos(smoothed);
     setVisible(true);
 
-    console.log(BT, 'Scale fit:', { k0: +k0.toFixed(4), kStar: +kStar.toFixed(4) });
-    console.log(BT, 'Position ->', { x: +smoothed.x.toFixed(3), y: +smoothed.y.toFixed(3) });
+    //console.log(BT, 'Scale fit:', { k0: +k0.toFixed(4), kStar: +kStar.toFixed(4) });
+    //console.log(BT, 'Position ->', { x: +smoothed.x.toFixed(3), y: +smoothed.y.toFixed(3) });
+    
+    // CALIBRATION DEBUG: Show position relative to each beacon
+    //console.log(BT, 'CALIBRATION - Position relative to beacons:');
+    raw.forEach(r => {
+      const dx = smoothed.x - r.x;
+      const dy = smoothed.y - r.y;
+      const calculatedDist = Math.sqrt(dx*dx + dy*dy) * meanAnchorSpacing;
+      const expectedDist = r.d;
+      const error = Math.abs(calculatedDist - expectedDist);
+      //console.log(BT, `  To ${r.tag}: calculated=${calculatedDist.toFixed(2)}m | expected=${expectedDist.toFixed(2)}m | error=${error.toFixed(2)}m`);
+    });
   }, [metaByExact, pathLossN, smoothing, deriveRangeScale, anchorPoints]);
 
   const computePosition = _computePosition;

@@ -44,8 +44,8 @@ type BeaconDoc = {
 };
 
 export default function AdminIndoorPositioningContent(props: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { isDark, theme } = useTheme();
+  const colors = getThemeColors(theme);
   const webViewRef = useRef<WebView>(null);
 
   const [role, setRole] = useState<string | null>(null);
@@ -114,11 +114,11 @@ export default function AdminIndoorPositioningContent(props: Props) {
       };
     });
 
-    console.log('🔷 Stored Beacons:');
+    //console.log('🔷 Stored Beacons:');
     list.forEach((b, i) => {
-      console.log(
-        `  ${i + 1}. ${b.label || 'Beacon'} @ (${b.x.toFixed(3)}, ${b.y.toFixed(3)})  ${b.uuid}/${b.major}/${b.minor}`,
-      );
+      //console.log(
+      //   `  ${i + 1}. ${b.label || 'Beacon'} @ (${b.x.toFixed(3)}, ${b.y.toFixed(3)})  ${b.uuid}/${b.major}/${b.minor}`,
+      // );
     });
 
     setExistingBeacons(list);
@@ -151,7 +151,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
         }
       }
     } catch (err) {
-      //consoleerror('Invalid message from WebView', err);
+      ////consoleerror('Invalid message from WebView', err);
     }
   };
 
@@ -170,7 +170,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
       setShowDeleteConfirmation(false);
       setBeaconToDelete(null);
     } catch (error) {
-      console.error('Error deleting beacon:', error);
+      //console.error('Error deleting beacon:', error);
       setErrorTitle('Error');
       setErrorMessage('Failed to delete beacon. Please try again.');
       setShowErrorPopup(true);
@@ -416,7 +416,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
       setSuccessMessage('Beacon placed on this floor.');
       setShowSuccessPopup(true);
     } catch (e) {
-      console.error(e);
+      // console.error(e);
       setErrorTitle('Error');
       setErrorMessage('Failed to save beacon.');
       setShowErrorPopup(true);
@@ -509,7 +509,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
                     onPress={saveBeacon}
                     style={[styles.btn, { backgroundColor: colors.primary }]}
                   >
-                    <Text style={{ color: '#fff', fontWeight: '600' }}>Save Beacon</Text>
+                    <Text style={{ color: colors.background, fontWeight: '600' }}>Save Beacon</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => {
@@ -537,7 +537,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
       </ScrollView>
 
       {isLoading && (
-        <View style={styles.loading}>
+        <View style={[styles.loading, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       )}
@@ -640,7 +640,6 @@ const styles = StyleSheet.create({
   },
   loading: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -12,8 +12,8 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   message = 'Loading...',
   overlay = false,
 }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <View

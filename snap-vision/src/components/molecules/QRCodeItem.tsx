@@ -21,8 +21,8 @@ interface QRCodeItemProps {
 }
 
 const QRCodeItem: React.FC<QRCodeItemProps> = ({ item, rooms, onViewQR, onDelete }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const roomObj = rooms.find((r) => r.id === item.roomId);
 

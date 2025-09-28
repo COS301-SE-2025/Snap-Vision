@@ -36,7 +36,7 @@ export function useRoomManager({ locationId, buildingId }: UseRoomManagerParams)
     (async () => {
       try {
         setLoading(true);
-        console.log(BT, 'Loading rooms for building:', buildingId);
+        //console.log(BT, 'Loading rooms for building:', buildingId);
 
         const cacheKey = `rooms:${locationId}:${buildingId}`;
 

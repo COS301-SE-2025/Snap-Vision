@@ -5,8 +5,8 @@ import { getThemeColors } from '../../theme';
 import { requestNotificationPermission } from '../../services/NotificationService';
 
 export default function NotificationSettings() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const [pushEnabled, setPushEnabled] = useState(true);
 
   const togglePushNotifications = async (value: boolean) => {

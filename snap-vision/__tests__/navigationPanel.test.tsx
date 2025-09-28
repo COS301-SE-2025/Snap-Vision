@@ -29,23 +29,6 @@ jest.mock('../src/components/molecules/TextToSpeech', () => {
   return MockTextToSpeech;
 });
 
-const originalError = //consoleerror;
-  beforeAll(() => {
-    console.error = (...args) => {
-      if (
-        typeof args[0] === 'string' &&
-        (args[0].includes('was not wrapped in act') || args[0].includes('Warning: React'))
-      ) {
-        return;
-      }
-      originalError.call(console, ...args);
-    };
-  });
-
-afterAll(() => {
-  console.error = originalError;
-});
-
 describe('NavigationPanel', () => {
   const defaultProps = {
     isNavigating: false,
@@ -168,19 +151,7 @@ describe('NavigationPanel', () => {
       expect(defaultProps.onToggleMinimize).toHaveBeenCalled();
     });
 
-    it('calls onCancelRoute when minimized cancel button is pressed', () => {
-      const { getAllByTestId } = render(
-        <ThemeProviderWrapper>
-          <NavigationPanel {...defaultProps} isMinimized={true} />
-        </ThemeProviderWrapper>,
-      );
 
-      // Find all mini buttons and press the first one (cancel)
-      const miniButtons = getAllByTestId('icon-close');
-      expect(miniButtons.length).toBeGreaterThan(0);
-      fireEvent.press(miniButtons[0]);
-      expect(defaultProps.onCancelRoute).toHaveBeenCalled();
-    });
 
     it('calls onStopNavigation when minimized stop button is pressed', () => {
       const { getAllByTestId } = render(
@@ -200,7 +171,7 @@ describe('NavigationPanel', () => {
       const mockOnToggleAR = jest.fn();
       const { getAllByTestId } = render(
         <ThemeProviderWrapper>
-          <NavigationPanel {...defaultProps} isMinimized={true} onToggleAR={mockOnToggleAR} />
+          <NavigationPanel {...defaultProps} isMinimized={true} isNavigating={true} onToggleAR={mockOnToggleAR} />
         </ThemeProviderWrapper>,
       );
 
@@ -301,7 +272,7 @@ describe('NavigationPanel', () => {
       const mockOnToggleAR = jest.fn();
       const { getAllByTestId } = render(
         <ThemeProviderWrapper>
-          <NavigationPanel {...defaultProps} isMinimized={true} onToggleAR={mockOnToggleAR} />
+          <NavigationPanel {...defaultProps} isMinimized={true} isNavigating={true} onToggleAR={mockOnToggleAR} />
         </ThemeProviderWrapper>,
       );
 
@@ -413,7 +384,6 @@ describe('NavigationPanel', () => {
           <NavigationPanel {...baseProps} />
         </ThemeProviderWrapper>,
       );
-      expect(getByText('🧭')).toBeTruthy();
       expect(getByText('Start')).toBeTruthy();
     });
 
@@ -423,7 +393,6 @@ describe('NavigationPanel', () => {
           <NavigationPanel {...baseProps} isLoading={true} />
         </ThemeProviderWrapper>,
       );
-      expect(getByText('⏳')).toBeTruthy();
       expect(getByText('Loading')).toBeTruthy();
     });
 

@@ -36,16 +36,16 @@ export const useTimetableNavigation = ({
   // Keep the findBuildingForEntry function for in-app use
   const findBuildingForEntry = useCallback(
     (entry: TimetableEntry) => {
-      console.log('[TimetableNav] Finding building for entry:', {
-        course: entry.course,
-        venue: entry.venue,
-        buildingId: entry.buildingId,
-        buildingName: entry.buildingName,
-        totalPOIs: pois?.length || 0,
-      });
+      //console.log('[TimetableNav] Finding building for entry:', {
+      //   course: entry.course,
+      //   venue: entry.venue,
+      //   buildingId: entry.buildingId,
+      //   buildingName: entry.buildingName,
+      //   totalPOIs: pois?.length || 0,
+      // });
 
       if (!pois || pois.length === 0) {
-        console.log('[TimetableNav] No POIs available');
+        //console.log('[TimetableNav] No POIs available');
         return null;
       }
 
@@ -53,7 +53,7 @@ export const useTimetableNavigation = ({
       if (entry.buildingId) {
         const buildingById = pois.find((poi) => poi.id === entry.buildingId);
         if (buildingById && buildingById.centroid) {
-          console.log('[TimetableNav] Found building by ID:', buildingById.name || buildingById.id);
+          //console.log('[TimetableNav] Found building by ID:', buildingById.name || buildingById.id);
           return buildingById;
         }
       }
@@ -66,10 +66,10 @@ export const useTimetableNavigation = ({
             poi.title?.toLowerCase().includes(entry.buildingName!.toLowerCase()),
         );
         if (buildingByName && buildingByName.centroid) {
-          console.log(
-            '[TimetableNav] Found building by name:',
-            buildingByName.name || buildingByName.id,
-          );
+          //console.log(
+          //   '[TimetableNav] Found building by name:',
+          //   buildingByName.name || buildingByName.id,
+          // );
           return buildingByName;
         }
       }
@@ -84,14 +84,14 @@ export const useTimetableNavigation = ({
       );
 
       if (buildingByVenue && buildingByVenue.centroid) {
-        console.log(
-          '[TimetableNav] Found building by venue:',
-          buildingByVenue.name || buildingByVenue.id,
-        );
+        //console.log(
+        //   '[TimetableNav] Found building by venue:',
+        //   buildingByVenue.name || buildingByVenue.id,
+        // );
         return buildingByVenue;
       }
 
-      console.log('[TimetableNav] No building found for entry');
+      //console.log('[TimetableNav] No building found for entry');
       return null;
     },
     [pois],
@@ -114,7 +114,7 @@ export const useTimetableNavigation = ({
 
   // Simplified check for in-app popups only (when user is actively on map screen)
   const checkForUpcomingClasses = useCallback(async () => {
-    console.log('[TimetableNav] ===== CHECKING FOR IN-APP UPCOMING CLASSES =====');
+    //console.log('[TimetableNav] ===== CHECKING FOR IN-APP UPCOMING CLASSES =====');
 
     if (!entries || entries.length === 0 || !currentLocation || !isMapReady) {
       return;
@@ -143,11 +143,11 @@ export const useTimetableNavigation = ({
         const notificationOpened =
           await TimetableBackgroundService.getInstance().isNotificationOpened(entryKey);
         if (notificationOpened) {
-          console.log(
-            '[TimetableNav] Notification already opened for',
-            entryKey,
-            '– skipping in-app popup',
-          );
+          //console.log(
+          //   '[TimetableNav] Notification already opened for',
+          //   entryKey,
+          //   '– skipping in-app popup',
+          // );
           lastTriggeredRef.current = entryKey;
           continue;
         }
@@ -161,7 +161,7 @@ export const useTimetableNavigation = ({
       }
     }
 
-    console.log('[TimetableNav] ===== IN-APP CHECK COMPLETE =====');
+    //console.log('[TimetableNav] ===== IN-APP CHECK COMPLETE =====');
   }, [
     entries,
     currentLocation,

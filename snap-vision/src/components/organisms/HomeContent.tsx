@@ -14,7 +14,7 @@ import AppButton from '../atoms/AppButton';
 import TimetableSection from './TimetableSection';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, CompositeNavigationProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import auth from '@react-native-firebase/auth';
 import RecentlyVisitedCarousel from '../molecules/RecentlyVisitedCarousel';
@@ -27,7 +27,7 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 type TabParamList = {
   Home: undefined;
-  Map: undefined;
+  Map: { selectedPOI?: POI };
   Timetable: undefined;
   Settings: undefined;
 };
@@ -42,8 +42,8 @@ type NavigationProp = CompositeNavigationProp<
 >;
 
 export default function HomeContent() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const navigation = useNavigation<NavigationProp>();
   const [recentlyVisited, setRecentlyVisited] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +61,7 @@ export default function HomeContent() {
           const visits = await getRecentlyVPOIs(userId);
           setRecentlyVisited(visits);
         } catch (error) {
-          //consoleerror('Error fetching recently visited:', error);
+          // error intentionally ignored for UI only
         } finally {
           setLoading(false);
           await trace.stop();
@@ -74,13 +74,10 @@ export default function HomeContent() {
     const poiToPass = {
       id: visit.poiId,
       name: visit.name,
-      centroid: visit.centroid,
+      location: visit.location,
     } as POI;
 
-    navigation.navigate('Map', {
-      screen: 'MapMain',
-      params: { selectedPOI: poiToPass },
-    });
+    navigation.navigate('Map', { selectedPOI: poiToPass });
   };
 
   return (
@@ -97,10 +94,10 @@ export default function HomeContent() {
 
       <View style={{ height: 20 }} />
 
-      {/* Mascot image */}
+      {/* Mascot Ponder Image */}
       <View style={styles.mascotContainer}>
-        <Image
-          source={require('../../assets/images/mascot_ponder.png')}
+        <Image 
+          source={require('../../assets/images/mascot_ponder.png')} 
           style={styles.mascotImage}
           resizeMode="contain"
         />

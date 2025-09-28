@@ -330,56 +330,34 @@ export default function IndoorSchematicNavScreen() {
             const floorId = data.floorId || doc.id;
             let floorUrl = data?.imageUrl || data?.url || data?.downloadURL || null;
 
-            // If only a storagePath is stored, resolve it
-            const storagePath: string | undefined = data?.storagePath;
-            if (!floorUrl && storagePath) {
-              try {
-                console.log(`☁️ [FLOORPLAN] Resolving storage path: ${storagePath}`);
-                floorUrl = await storage().ref(storagePath).getDownloadURL();
-              } catch (e) {
-                console.warn('getDownloadURL failed for', storagePath, e);
-              }
-            }
-
-            if (floorUrl) {
-              floorplanMap[floorId] = floorUrl;
-            }
-          }
-
-          // If no floorplans found in Firestore, try storage folder fallback
-          if (Object.keys(floorplanMap).length === 0) {
+          // If only a storagePath is stored, resolve it
+          const storagePath: string | undefined = data?.storagePath;
+          if (!url && storagePath) {
             try {
-              console.log(`📁 [FLOORPLAN] Trying storage folder fallback...`);
-              const baseRef = storage().ref(`floorplans/${locationId}/${buildingId}`);
-              const list = await baseRef.listAll();
-              
-              for (const item of list.items) {
-                const itemUrl = await item.getDownloadURL();
-                // Try to extract floor ID from filename
-                const floorId = item.name.split('.')[0] || item.name;
-                floorplanMap[floorId] = itemUrl;
-              }
+              url = await storage().ref(storagePath).getDownloadURL();
             } catch (e) {
-              console.warn('Storage folder fallback failed', e);
+              ////consolewarn('getDownloadURL failed for', storagePath, e);
             }
           }
+        }
 
-          // Cache all floorplans
-          if (Object.keys(floorplanMap).length > 0) {
-            await cacheService.set(cacheKey, floorplanMap, {
-              ttl: FLOORPLANS_CACHE_TTL,
-              userSpecific: false,
-            });
-            console.log(`💿 [FLOORPLAN CACHE] Cached ${Object.keys(floorplanMap).length} floorplan URLs`);
+        if (!url) {
+          try {
+            const baseRef = storage().ref(`floorplans/${locationId}/${buildingId}`);
+            const list = await baseRef.listAll();
+            const match =
+              list.items.find((it) =>
+                it.name.toLowerCase().includes(String(selectedFloorId).toLowerCase()),
+              ) || list.items[0];
+            if (match) url = await match.getDownloadURL();
+          } catch (e) {
+            ////consolewarn('Storage folder fallback failed', e);
           }
-
-          // Get URL for current floor
-          url = floorplanMap[selectedFloorId] || null;
         }
 
         if (!cancelled) setFloorplanUrl(url ?? null);
       } catch (e) {
-        console.warn('Floorplan fetch failed', e);
+        ////consolewarn('Floorplan fetch failed', e);
         if (!cancelled) setFloorplanUrl(null);
       } finally {
         if (!cancelled) setFloorplanLoading(false);

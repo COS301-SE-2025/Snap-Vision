@@ -2,16 +2,14 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Text, ScrollView } from 'react-native';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import { getThemeColors } from '../../theme';
+import { useTheme } from '../../theme/ThemeContext';
 import SettingsToggleItem from '../molecules/SettingsToggleItem';
 import SettingsHeader from '../molecules/SettingsHeader';
 import StandardPopup from '../atoms/StandardPopup';
 
-interface Props {
-  isDark: boolean;
-}
-
-export default function AccessibilitySettingsContent({ isDark }: Props) {
-  const colors = getThemeColors(isDark);
+export default function AccessibilitySettingsContent() {
+  const { theme } = useTheme();
+  const colors = getThemeColors(theme);
   const {
     isHapticFeedbackEnabled,
     isAccessibilityModeEnabled,
@@ -64,7 +62,7 @@ export default function AccessibilitySettingsContent({ isDark }: Props) {
               onToggle={handleHapticFeedbackToggle}
               color={colors.primary}
               textColor={colors.text}
-              descriptionColor={colors.secondary}
+              descriptionColor={colors.subtleText}
             />
           </View>
 
@@ -78,7 +76,7 @@ export default function AccessibilitySettingsContent({ isDark }: Props) {
               onToggle={handleAccessibilityModeToggle}
               color={colors.primary}
               textColor={colors.text}
-              descriptionColor={colors.secondary}
+              descriptionColor={colors.subtleText}
             />
           </View>
         </View>
@@ -125,7 +123,6 @@ const styles = StyleSheet.create({
     marginTop: 24,
     padding: 16,
     borderRadius: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
   infoText: {
     fontSize: 14,

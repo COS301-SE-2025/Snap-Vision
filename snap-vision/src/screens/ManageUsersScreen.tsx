@@ -11,8 +11,8 @@ interface Props {
 }
 
 export default function ManageUsersScreen({ navigation }: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const currentUserId = auth().currentUser?.uid;
 
   return (

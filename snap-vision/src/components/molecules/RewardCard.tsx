@@ -20,8 +20,8 @@ export default function RewardCard({
   onPress,
   containerStyle,
 }: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const isUnlocked = reward.isUnlocked;
 

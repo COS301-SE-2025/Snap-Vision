@@ -4,26 +4,25 @@ import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
 export default function PrivacySettings() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const [locationEnabled, setLocationEnabled] = useState(true);
   const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
   const [biometricsEnabled, setBiometricsEnabled] = useState(false);
 
   const trackColorOff = isDark ? '#444444' : '#cccccc';
-  const trackColorOn = isDark ? '#61dafb' : colors.primary; 
+  const trackColorOn = isDark ? '#61dafb' : colors.primary;
   const thumbColor = isDark ? '#ffffff' : '#ffffff';
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Privacy Policy Header */}
-      <Text style={[styles.headerText, { color: colors.text }]}>
-        Privacy & Data Protection
-      </Text>
-      
+      <Text style={[styles.headerText, { color: colors.text }]}>Privacy & Data Protection</Text>
+
       <Text style={[styles.introText, { color: colors.secondary }]}>
-        Snap-Vision is committed to protecting your privacy. This explains how we collect, use, and safeguard your information.
+        Snap-Vision is committed to protecting your privacy. This explains how we collect, use, and
+        safeguard your information.
       </Text>
 
       {/* Privacy Controls */}
@@ -86,44 +85,40 @@ export default function PrivacySettings() {
       {/* Information We Collect Section */}
       <View style={styles.infoSection}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Information We Collect</Text>
-        
+
         <Text style={[styles.subSectionTitle, { color: colors.text }]}>Location Information</Text>
         <Text style={[styles.bulletPoint, { color: colors.secondary }]}>
-          • GPS Location Data for accurate navigation{'\n'}
-          • Wi-Fi and Bluetooth signals for indoor positioning{'\n'}
-          • Navigation routes (processed temporarily)
+          • GPS Location Data for accurate navigation{'\n'}• Wi-Fi and Bluetooth signals for indoor
+          positioning{'\n'}• Navigation routes (processed temporarily)
         </Text>
 
         <Text style={[styles.subSectionTitle, { color: colors.text }]}>Camera & Media</Text>
         <Text style={[styles.bulletPoint, { color: colors.secondary }]}>
-          • QR code scanning for location identification{'\n'}
-          • Augmented Reality navigation features{'\n'}
+          • QR code scanning for location identification{'\n'}• Augmented Reality navigation
+          features{'\n'}
         </Text>
 
         <Text style={[styles.subSectionTitle, { color: colors.text }]}>Device Information</Text>
         <Text style={[styles.bulletPoint, { color: colors.secondary }]}>
-          • Device sensors (compass, accelerometer){'\n'}
-          • Network connectivity for map data{'\n'}
-          • Performance optimization data
+          • Device sensors (compass, accelerometer){'\n'}• Network connectivity for map data{'\n'}•
+          Performance optimization data
         </Text>
 
         <Text style={[styles.subSectionTitle, { color: colors.text }]}>Usage Analytics</Text>
         <Text style={[styles.bulletPoint, { color: colors.secondary }]}>
-          • App usage patterns (anonymized){'\n'}
-          • Performance metrics for improvements{'\n'}
-          • Feature usage to enhance experience
+          • App usage patterns (anonymized){'\n'}• Performance metrics for improvements{'\n'}•
+          Feature usage to enhance experience
         </Text>
       </View>
 
       {/* Data Protection Section */}
       <View style={styles.infoSection}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Data Protection</Text>
-        
+
         <View style={styles.highlightBox}>
           <Text style={[styles.highlightText, { color: colors.text }]}>
-            ✓ We DO NOT permanently save your location{'\n'}
-            ✓ All data transmission is encrypted{'\n'}
-            ✓ You control all privacy settings
+            ✓ We DO NOT permanently save your location{'\n'}✓ All data transmission is encrypted
+            {'\n'}✓ You control all privacy settings
           </Text>
         </View>
       </View>

@@ -103,8 +103,8 @@ export const useWebViewCommunication = (
     if (!isMapReady) {
       // Start the trace directly
       const trace = perf().newTrace('webview_map_ready_perf');
-    mapReadyTraceRef.current = trace;
-    trace.start();
+      mapReadyTraceRef.current = trace;
+      trace.start();
     }
     return () => {
       if (mapReadyTraceRef.current) {
@@ -234,7 +234,7 @@ export const useWebViewCommunication = (
   // Main WebView message handler
   const handleWebViewMessage = useCallback(
     async (event: any) => {
-      //consolelog('[WebView message]', event.nativeEvent.data);
+      ////consolelog('[WebView message]', event.nativeEvent.data);
 
       try {
         const data = event.nativeEvent.data;
@@ -244,9 +244,9 @@ export const useWebViewCommunication = (
           setStatus('Map loaded');
           setIsMapReady(true);
           if (mapReadyTraceRef.current) {
-          await mapReadyTraceRef.current.stop();
-          mapReadyTraceRef.current = null;
-        }
+            await mapReadyTraceRef.current.stop();
+            mapReadyTraceRef.current = null;
+          }
 
           // If we already have a location, send it to the map immediately
           if (currentLocation) {
@@ -305,10 +305,10 @@ export const useWebViewCommunication = (
             break;
 
           default:
-          // //consolelog('Unknown message type from WebView:', parsed.type);
+          // ////consolelog('Unknown message type from WebView:', parsed.type);
         }
       } catch (e) {
-        // //consolelog('WebView message error:', event.nativeEvent.data);
+        // ////consolelog('WebView message error:', event.nativeEvent.data);
       }
     },
     [

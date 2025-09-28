@@ -7,7 +7,6 @@ import { ThemeProvider } from '../../src/theme/ThemeContext';
 import { BadgeProvider } from '../../src/context/BadgeContext';
 import { BADGES, BadgeId } from '../../src/types/badges';
 
-
 jest.mock('@react-navigation/native', () => {
   const actualNav = jest.requireActual('@react-navigation/native');
   return {
@@ -169,8 +168,6 @@ jest.mock('../../src/components/molecules/WelcomeHeader', () => {
   };
 });
 
-
-
 jest.mock('../../src/components/molecules/ProgressSection', () => {
   const { View, Text } = require('react-native');
   return function ProgressSection({ points, badgeCount, checkIns }: any) {
@@ -224,8 +221,6 @@ jest.mock('../../src/context/BadgeContext', () => {
     routesCompleted: 0,
     purchases: [],
   };
-
-
 
   const BadgeContext = React.createContext(null);
 
@@ -373,8 +368,6 @@ describe('AchievementsForm Integration Tests', () => {
     ],
   };
 
-
-
   beforeEach(() => {
     jest.clearAllMocks();
     mockStandardPopup.mockClear();
@@ -433,10 +426,6 @@ describe('AchievementsForm Integration Tests', () => {
         expect(shopButton).toBeTruthy();
       });
     });
-
-
-
-
   });
 
   describe('Navigation Integration', () => {
@@ -567,10 +556,5 @@ describe('AchievementsForm Integration Tests', () => {
         expect(badgeState.justUnlocked).toHaveLength(0);
       });
     });
-
-
-
-
-
   });
 });

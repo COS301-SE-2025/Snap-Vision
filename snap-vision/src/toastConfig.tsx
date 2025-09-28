@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from './theme/ThemeContext';
-import { getThemeColors } from './theme';
+import { getThemeColors, ThemeName } from './theme';
 
 const getStyles = (colors: any) =>
   StyleSheet.create({
@@ -39,8 +39,8 @@ const getStyles = (colors: any) =>
   });
 
 const StyledToast = ({ text1, text2, props: toastProps }: any) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme } = useTheme();
+  const colors = getThemeColors(theme);
   const styles = getStyles(colors);
 
   const backgroundColor = toastProps?.backgroundColor ?? colors.card;
@@ -68,8 +68,8 @@ export const toastConfig = {
 };
 
 // Export standardized props for programmatic Toast.show usage
-export const getToastDefaultProps = (isDark: boolean) => {
-  const colors = getThemeColors(isDark);
+export const getToastDefaultProps = (theme: ThemeName) => {
+  const colors = getThemeColors(theme);
 
   return {
     backgroundColor: colors.card,
@@ -84,9 +84,9 @@ export const makeToastPayload = (
   text1: string,
   text2?: string,
   overrideProps: any = {},
-  isDark: boolean = false,
+  theme: ThemeName = 'light',
 ) => {
-  const defaultProps = getToastDefaultProps(isDark);
+  const defaultProps = getToastDefaultProps(theme);
   return {
     type: 'default',
     text1,

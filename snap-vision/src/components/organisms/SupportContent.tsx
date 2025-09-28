@@ -7,8 +7,8 @@ import { getThemeColors } from '../../theme';
 import { useNavigation } from '@react-navigation/native';
 
 export default function SupportContent() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const navigation = useNavigation<any>();
 
   const supportOptions = [
@@ -29,6 +29,12 @@ export default function SupportContent() {
       icon: 'book-open-page-variant-outline',
       description: 'View the tutorial to learn how to use SnapVision',
       onPress: () => navigation.navigate('Tutorial'),
+    },
+    {
+      title: 'User Manual',
+      icon: 'book-open-variant',
+      description: 'Access the complete user manual.',
+      onPress: () => navigation.navigate('UserManual'),
     },
   ];
 

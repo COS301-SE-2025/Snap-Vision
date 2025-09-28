@@ -7,12 +7,12 @@ import BadgeUnlockNotifier from '../components/organisms/BadgeUnlockNotifier';
 import AchievementsForm from '../components/organisms/AchievementsForm';
 
 export default function AchievementsScreen() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const { state, clearJustUnlocked } = useBadges();
 
   useEffect(() => {
-    //consolelog('Unlocked badges:', Array.from(state.unlocked));
+    ////consolelog('Unlocked badges:', Array.from(state.unlocked));
   }, [state.justUnlocked]);
 
   return (
@@ -27,7 +27,7 @@ export default function AchievementsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: 16 },
+  container: { flex: 1, paddingHorizontal: 9 },
   section: { marginBottom: 24 },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 4 },
   sectionSubtitle: { fontSize: 14, opacity: 0.7, marginBottom: 16 },

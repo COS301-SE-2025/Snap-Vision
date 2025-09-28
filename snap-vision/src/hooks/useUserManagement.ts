@@ -52,7 +52,7 @@ export const useUserManagement = () => {
           setLoading(false);
         },
         (error) => {
-          console.error('Firestore error:', error);
+          //console.error('Firestore error:', error);
           setAuthError('Failed to load user data');
           setLoading(false);
         },
@@ -95,7 +95,7 @@ export const useUserManagement = () => {
         }));
         setAllLocations(locations);
       } catch (error) {
-        //consoleerror('Failed to fetch locations:', error);
+        ////consoleerror('Failed to fetch locations:', error);
       }
     };
 
@@ -114,7 +114,9 @@ export const useUserManagement = () => {
     try {
       // Validate inputs
       const validUserId = InputValidator.validateUserId(user.id);
-      const validRole = InputValidator.validateRole(user.role.toLowerCase());
+      // Convert UI role to database role
+      const databaseRole = user.role === 'Viewer' ? 'user' : user.role.toLowerCase();
+      const validRole = InputValidator.validateRole(databaseRole);
 
       if (!validUserId || !validRole) {
         throw new Error('Invalid user data');
@@ -150,6 +152,10 @@ export const useUserManagement = () => {
           updateData.adminLocations = validLocations;
           break;
 
+        case 'user': 
+          updateData.adminLocations = firestore.FieldValue.delete();
+          break;
+
         default:
           updateData.adminLocations = firestore.FieldValue.delete();
       }
@@ -159,7 +165,7 @@ export const useUserManagement = () => {
       // Clear auth cache for the updated user
       authService.clearCache(validUserId);
     } catch (err) {
-      console.error('Failed to update role:', err);
+      //console.error('Failed to update role:', err);
       throw err;
     }
   };
@@ -188,7 +194,7 @@ export const useUserManagement = () => {
       // Clear auth cache
       authService.clearCache(validUserId);
     } catch (err) {
-      console.error('Failed to delete user:', err);
+      //console.error('Failed to delete user:', err);
       throw err;
     }
   };

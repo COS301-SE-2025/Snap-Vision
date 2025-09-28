@@ -11,8 +11,8 @@ interface Props {
 }
 
 export default function ThemedText({ children, size = 'md', weight = 'normal', style }: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const fontSize = {
     sm: 14,

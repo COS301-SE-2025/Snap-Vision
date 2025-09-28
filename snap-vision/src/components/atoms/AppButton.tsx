@@ -9,8 +9,8 @@ interface Props extends TouchableOpacityProps {
 }
 
 export default function AppButton({ title, testID, ...rest }: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <TouchableOpacity

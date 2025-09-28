@@ -69,7 +69,7 @@ export function useAutoLocationDetection() {
               }
             }
           } catch (locationError) {
-            //console.error(`Error checking location ${locationId}:`, locationError);
+            ////console.error(`Error checking location ${locationId}:`, locationError);
           }
         }
 

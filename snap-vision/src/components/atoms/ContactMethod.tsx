@@ -10,8 +10,8 @@ interface ContactMethodProps {
 }
 
 const ContactMethod = ({ email, label }: ContactMethodProps) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const handlePress = () => {
     Linking.openURL(`mailto:${email}`);

@@ -10,7 +10,7 @@ import { useBadges } from '../../context/BadgeContext';
 
 const { width } = Dimensions.get('window');
 const numColumns = 2;
-const cardWidth = (width - 48) / numColumns; // used for item width when laying out cards
+const cardWidth = width / numColumns;
 
 export default function BadgesSection({ unlockedIds }: { unlockedIds: BadgeId[] }) {
   const { isDark } = useTheme();
@@ -19,8 +19,14 @@ export default function BadgesSection({ unlockedIds }: { unlockedIds: BadgeId[] 
   const badges: Record<BadgeId, Badge> = state.badges;
   const badgeIds = Object.keys(badges) as BadgeId[];
 
-  const renderItem = ({ item }: { item: BadgeId }) => (
-    <View style={styles.cardContainer}>
+  const renderItem = ({ item, index }: { item: BadgeId; index: number }) => (
+    <View
+      style={{
+        width: cardWidth,
+        marginLeft: index === 0 ? 0 : 8,
+        marginRight: index === badgeIds.length - 1 ? 0 : 8,
+      }}
+    >
       <RewardCard
         reward={{
           id: item,
@@ -40,21 +46,21 @@ export default function BadgesSection({ unlockedIds }: { unlockedIds: BadgeId[] 
   return (
     <View style={styles.section}>
       <SectionHeader title="Your Badges" />
-      <FlatList
-        data={badgeIds}
-        renderItem={renderItem}
-        keyExtractor={(item) => item}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.gridHorizontal}
-      />
+      <View style={styles.badgeContainer}>
+        <FlatList
+          data={badgeIds}
+          renderItem={renderItem}
+          keyExtractor={(item) => item}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 0, alignItems: 'center' }}
+        />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   section: { marginBottom: 24 },
-  grid: { paddingHorizontal: 16 },
-  gridHorizontal: { paddingHorizontal: 16, alignItems: 'center' },
-  cardContainer: { width: cardWidth, marginHorizontal: 8 },
+  badgeContainer: { marginHorizontal: -20 },
 });

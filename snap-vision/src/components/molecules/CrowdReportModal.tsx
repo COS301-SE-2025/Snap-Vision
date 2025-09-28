@@ -36,8 +36,8 @@ const CrowdReportModal: React.FC<CrowdReportModalProps> = ({
   onSubmit,
   onCancel,
 }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const [buildingSearchText, setBuildingSearchText] = useState('');
   const [showBuildingSuggestions, setShowBuildingSuggestions] = useState(false);
 

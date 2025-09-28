@@ -576,8 +576,7 @@ export default function IndoorSchematicMap({
         setFloorplanLoaded(!!data.success);
       } else if (data.type === 'map_init_error') {
       }
-    } catch (e) {
-    }
+    } catch (e) {}
   };
 
   // Loading and error states for floorplan
@@ -639,7 +638,8 @@ export default function IndoorSchematicMap({
     // Only show loading on first load or when not preloaded
     const isCurrentFloorplanPreloaded = floorplanUrl ? isPreloaded(floorplanUrl) : true;
     const initialLoad = !webViewReady;
-    const floorplanNeedsLoading = !floorplanLoaded && !!floorplanUrl && !isCurrentFloorplanPreloaded;
+    const floorplanNeedsLoading =
+      !floorplanLoaded && !!floorplanUrl && !isCurrentFloorplanPreloaded;
 
     setIsLoading(initialLoad || floorplanNeedsLoading);
   }, [webViewReady, floorplanLoaded, floorplanUrl, isPreloaded]);
@@ -710,8 +710,7 @@ export default function IndoorSchematicMap({
   }, []);
 
   // Create a full onLoad handler to supplement onLoadEnd
-  const handleLoad = useCallback(() => {
-  }, []);
+  const handleLoad = useCallback(() => {}, []);
 
   return (
     <View style={styles.fixedFloorplanContainer}>

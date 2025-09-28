@@ -26,8 +26,8 @@ type BuildingSelectionScreenNavigationProp = StackNavigationProp<
 
 export default function BuildingSelectionScreen() {
   const navigation = useNavigation<BuildingSelectionScreenNavigationProp>();
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const { buildings, isLoading } = useBuildings();
 
   const handleBuildingSelect = (building: any) => {

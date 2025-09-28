@@ -25,8 +25,8 @@ type FloorplanEditorScreenRouteParams = {
 export default function AdminFloorplanEditorContent() {
   const route = useRoute<RouteProp<{ params: FloorplanEditorScreenRouteParams }, 'params'>>();
   const navigation = useNavigation<StackNavigationProp<any>>();
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { isDark, theme } = useTheme();
+  const colors = getThemeColors(theme);
   const isDarkMode = isDark;
 
   const webViewRef = useRef<FloorplanWebViewRef>(null);
@@ -183,7 +183,7 @@ export default function AdminFloorplanEditorContent() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SettingsHeader title={`Edit ${floorLabel} Floorplan`} />
-      
+
       <FloorplanEditor
         floorLabel={floorLabel}
         isPathMode={pathManagement.isPathMode}
@@ -200,7 +200,7 @@ export default function AdminFloorplanEditorContent() {
         paths={pathManagement.pathMarkers}
         roomMarkers={roomManagement.roomMarkers}
         onDeletePath={(pathId) => pathManagement.deletePathById(pathId, webViewRef)}
-        onDone={() => {}} 
+        onDone={() => {}}
         colors={colors}
         webViewRef={webViewRef}
       />
@@ -214,7 +214,6 @@ export default function AdminFloorplanEditorContent() {
         onCancel={() => roomManagement.setIsModalVisible(false)}
         onSave={() => roomManagement.saveRoomPOI(webViewRef)}
         onDelete={confirmDelete}
-        colors={colors}
       />
 
       {/* Error Popup */}

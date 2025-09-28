@@ -22,6 +22,12 @@ jest.mock('@react-native-firebase/auth', () => {
   return api;
 });
 
+jest.mock('../src/security/AuthorizationService', () => ({
+  getInstance: jest.fn(() => ({
+    canModifyBuilding: jest.fn().mockResolvedValue(true),
+  })),
+}));
+
 // Helper to access the auth mock
 const getAuthMock = () => require('@react-native-firebase/auth');
 
@@ -34,18 +40,12 @@ function load() {
 }
 
 describe('uploadFloorplanImage', () => {
-  const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-
   beforeEach(() => {
     jest.clearAllMocks();
     mockPutFile.mockResolvedValue(undefined);
     mockGetDownloadURL.mockResolvedValue('https://cdn.example.com/f.jpg');
     // Reset user to default
     getAuthMock().__setUser({ uid: 'u-123' });
-  });
-
-  afterAll(() => {
-    logSpy.mockRestore();
   });
 
   it('uploads to expected storage path and returns download URL', async () => {
@@ -60,8 +60,7 @@ describe('uploadFloorplanImage', () => {
   it('includes path and UID in logs', async () => {
     const { uploadFloorplanImage } = load();
     await uploadFloorplanImage('locX', 'bY', 'Level-2', 'file:///x.jpg');
-    expect(logSpy).toHaveBeenCalledWith('Uploading to:', 'floorplans/locX/bY/Level-2.jpg');
-    expect(logSpy).toHaveBeenCalledWith('Current user UID:', 'u-123');
+    // Logging removed as per policy
   });
 
   it('propagates error from putFile', async () => {
@@ -86,6 +85,6 @@ describe('uploadFloorplanImage', () => {
     const { uploadFloorplanImage } = load();
     await uploadFloorplanImage('test', 'building', 'floor', 'file:///test.jpg');
 
-    expect(logSpy).toHaveBeenCalledWith('Current user UID:', 'different-user');
+    // Logging removed as per policy
   });
 });

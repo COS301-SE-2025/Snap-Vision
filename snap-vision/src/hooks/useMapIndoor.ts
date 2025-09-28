@@ -87,8 +87,8 @@ export const useMapIndoor = (): UseMapIndoorReturn => {
       const locationId = p.locationId || p.location || fallbackPOI?.location || 'up-campus'; // update default if needed
       const floorId = '1';
 
-      //consolelog('[IndoorNav] payload:', p);
-      //consolelog('[IndoorNav] resolved ->', { buildingId, buildingName, locationId });
+      ////consolelog('[IndoorNav] payload:', p);
+      ////consolelog('[IndoorNav] resolved ->', { buildingId, buildingName, locationId });
 
       if (!buildingId) {
         setError('Indoor navigation is only available for building POIs.');
@@ -208,12 +208,12 @@ export const useMapIndoor = (): UseMapIndoorReturn => {
   const checkFloorplansExist = useCallback(
     async (locationId: string, buildingId: string): Promise<boolean> => {
       if (!locationId || !buildingId) {
-        console.error('Invalid parameters for checkFloorplansExist', { locationId, buildingId });
+        //console.error('Invalid parameters for checkFloorplansExist', { locationId, buildingId });
         return false;
       }
 
       try {
-        console.log(`Checking floorplans for building ${buildingId} in location ${locationId}`);
+        //console.log(`Checking floorplans for building ${buildingId} in location ${locationId}`);
         const floorplansSnap = await firestore()
           .collection('locations')
           .doc(locationId)
@@ -224,10 +224,10 @@ export const useMapIndoor = (): UseMapIndoorReturn => {
           .get();
 
         const hasFloorplans = !floorplansSnap.empty;
-        console.log(`Building ${buildingId} has floorplans: ${hasFloorplans}`);
+        //console.log(`Building ${buildingId} has floorplans: ${hasFloorplans}`);
         return hasFloorplans;
       } catch (error) {
-        console.error('Error checking floorplans:', error);
+        //console.error('Error checking floorplans:', error);
         return false;
       }
     },
@@ -279,7 +279,7 @@ export const useMapIndoor = (): UseMapIndoorReturn => {
           return;
         }
       } catch (error) {
-        console.error('Error fetching rooms:', error);
+        //console.error('Error fetching rooms:', error);
         setErrorPopupMessage('Error loading indoor navigation data');
         setShowErrorPopup(true);
         return;

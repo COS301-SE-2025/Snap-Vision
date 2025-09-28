@@ -6,8 +6,8 @@ import { getThemeColors } from '../theme';
 import IndoorSchematicNavScreen from '../components/organisms/IndoorSchematicNavContent';
 
 export default function IndoorSchematicMapScreen() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>

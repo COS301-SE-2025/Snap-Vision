@@ -15,8 +15,8 @@ export default function ProgressSection({
   badgeCount: number;
   checkIns: number;
 }) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   return (
     <View style={styles.section}>
       <SectionHeader title="Your Progress" subtitle="Keep track of your achievements" />

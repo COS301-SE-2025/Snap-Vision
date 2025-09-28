@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import Modal from 'react-native-modal';
+import { useTheme } from '../../theme/ThemeContext';
+import { getThemeColors } from '../../theme';
 
 interface RoomData {
   name: string;
@@ -18,14 +20,6 @@ interface RoomDetailsModalProps {
   onCancel: () => void;
   onSave: () => void;
   onDelete: () => void;
-  colors: {
-    card: string;
-    text: string;
-    border: string;
-    background: string;
-    secondary: string;
-    primary: string;
-  };
 }
 
 const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
@@ -36,8 +30,9 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
   onCancel,
   onSave,
   onDelete,
-  colors,
 }) => {
+  const { theme } = useTheme();
+  const colors = getThemeColors(theme);
   const roomTypes = ['classroom', 'office', 'lab', 'restroom', 'stairs', 'elevator', 'entrance'];
 
   return (
@@ -59,7 +54,7 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
               backgroundColor: colors.background,
             },
           ]}
-          placeholderTextColor={colors.secondary}
+          placeholderTextColor={colors.subtleText}
         />
 
         <View style={styles.typeSelector}>
@@ -80,7 +75,7 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
               >
                 <Text
                   style={{
-                    color: roomData.type === type ? '#FFFFFF' : colors.text,
+                    color: roomData.type === type ? colors.background : colors.text,
                     fontSize: 14,
                   }}
                 >
@@ -104,7 +99,7 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
               },
             ]}
           >
-            <Text style={{ color: roomData.isEntrance ? '#fff' : colors.text }}>
+            <Text style={{ color: roomData.isEntrance ? colors.background : colors.text }}>
               {roomData.isEntrance ? 'Yes' : 'No'}
             </Text>
           </TouchableOpacity>
@@ -128,7 +123,7 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
                   backgroundColor: colors.background,
                 },
               ]}
-              placeholderTextColor={colors.secondary}
+              placeholderTextColor={colors.subtleText}
             />
           </>
         )}
@@ -146,15 +141,15 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
               backgroundColor: colors.background,
             },
           ]}
-          placeholderTextColor={colors.secondary}
+          placeholderTextColor={colors.subtleText}
           multiline
         />
 
         <View style={styles.modalButtons}>
           {/* Show delete button when editing */}
           {isEditing && (
-            <TouchableOpacity onPress={onDelete} style={styles.deleteButton}>
-              <Text style={{ color: '#FFFFFF' }}>Delete</Text>
+            <TouchableOpacity onPress={onDelete} style={[styles.deleteButton, { backgroundColor: colors.danger }]}>
+              <Text style={{ color: colors.background }}>Delete</Text>
             </TouchableOpacity>
           )}
 
@@ -183,7 +178,7 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
               },
             ]}
           >
-            <Text style={{ color: '#FFFFFF' }}>Save</Text>
+            <Text style={{ color: colors.background }}>Save</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -264,7 +259,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 4,
-    backgroundColor: '#D32F2F',
     marginRight: 8,
     flex: 0.4,
   },

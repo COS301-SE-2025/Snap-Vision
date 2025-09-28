@@ -72,7 +72,7 @@ export const useCrowdReports = (
         return;
       }
       const trace = await perf().newTrace('crowd_report_submission_latency');
-    await trace.start();
+      await trace.start();
 
       try {
         // Authorization check
@@ -123,18 +123,17 @@ export const useCrowdReports = (
           await unlock('reported-crowd');
         } catch (badgeError) {
           // Don't fail the whole operation if badge unlock fails
-          console.warn('Failed to unlock reported-crowd badge:', badgeError);
+          //console.warn('Failed to unlock reported-crowd badge:', badgeError);
         }
 
         // Refresh crowd reports to get the latest data
         await fetchRecentCrowdReports();
       } catch (error) {
-        //consoleerror('Error saving crowd report:', error);
+        ////consoleerror('Error saving crowd report:', error);
         setError('Failed to submit crowd report');
+      } finally {
+        await trace.stop();
       }
-      finally {
-      await trace.stop();
-    }
     },
     [selectedDensity, isMapReady, webViewRef, setStatus, setError, unlock],
   );
@@ -178,7 +177,7 @@ export const useCrowdReports = (
         });
       }
     } catch (error) {
-      //consoleerror('Error fetching crowd reports:', error);
+      ////consoleerror('Error fetching crowd reports:', error);
       // More informative error handling
       if (
         typeof error === 'object' &&

@@ -25,7 +25,7 @@ export const LandingProvider = ({ children }: { children: React.ReactNode }) => 
           setHasSeenLanding(storedValue === 'true');
         }
       } catch (e) {
-        //consoleerror('Failed to load hasSeenLanding from storage', e);
+        ////consoleerror('Failed to load hasSeenLanding from storage', e);
       } finally {
         setLoading(false);
       }
@@ -38,7 +38,7 @@ export const LandingProvider = ({ children }: { children: React.ReactNode }) => 
       await AsyncStorage.setItem(STORAGE_KEY, val ? 'true' : 'false');
       setHasSeenLanding(val);
     } catch (e) {
-      //consoleerror('Failed to save hasSeenLanding to storage', e);
+      ////consoleerror('Failed to save hasSeenLanding to storage', e);
     }
   };
 

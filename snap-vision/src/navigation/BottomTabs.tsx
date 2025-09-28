@@ -16,8 +16,8 @@ import EditorScreen from '../screens/EditorScreen';
 const Tab = createBottomTabNavigator();
 
 export default function BottomTabs() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const { role, loading } = useUser();
 
   if (loading) return null;

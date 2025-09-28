@@ -35,8 +35,8 @@ const DestinationReachedPopup: React.FC<DestinationReachedPopupProps> = ({
     success: '#4CAF50',
   },
 }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const [showConfetti, setShowConfetti] = useState(false);
   const popupScale = useRef(new Animated.Value(0)).current;
@@ -85,14 +85,14 @@ const DestinationReachedPopup: React.FC<DestinationReachedPopupProps> = ({
   };
 
   const handleConfettiComplete = () => {
-    ////consolelog('Confetti animation completed');
+    //////consolelog('Confetti animation completed');
   };
 
   // Debug logging for visibility issues
   useEffect(() => {
-    //consolelog('Popup visibility changed:', visible);
+    ////consolelog('Popup visibility changed:', visible);
     if (visible) {
-      //consolelog('Showing popup with confetti animation');
+      ////consolelog('Showing popup with confetti animation');
     }
   }, [visible]);
 

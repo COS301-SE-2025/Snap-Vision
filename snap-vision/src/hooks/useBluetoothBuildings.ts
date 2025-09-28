@@ -49,7 +49,7 @@ export const useBluetoothBuildings = (): UseBluetoothBuildingsReturn => {
 
       setBuildings(beaconBuildings);
     } catch (err) {
-      console.error('Error fetching beacon buildings:', err);
+      //console.error('Error fetching beacon buildings:', err);
       setError('Failed to load buildings with Bluetooth beacons');
     } finally {
       setLoading(false);

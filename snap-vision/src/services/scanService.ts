@@ -3,10 +3,10 @@ import WifiManager from 'react-native-wifi-reborn';
 export async function scanForWiFiNetworks() {
   try {
     const results = await WifiManager.reScanAndLoadWifiList();
-    //consolelog('WiFi scan results:', results);
+    ////consolelog('WiFi scan results:', results);
 
     if (!Array.isArray(results)) {
-      //consolewarn('WiFi scan returned non-array:', results);
+      ////consolewarn('WiFi scan returned non-array:', results);
       return [];
     }
 
@@ -17,7 +17,7 @@ export async function scanForWiFiNetworks() {
       frequency: wifi.frequency,
     }));
   } catch (error) {
-    //consoleerror('Wi-Fi scan failed:', error);
+    ////consoleerror('Wi-Fi scan failed:', error);
     return [];
   }
 }

@@ -5,8 +5,8 @@ import { getThemeColors } from '../theme';
 import BluetoothIndoorNavigationContent from '../components/organisms/BluetoothIndoorNavigationContent';
 
 export default function BluetoothIndoorNavigationScreen() {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>

@@ -22,6 +22,8 @@ interface Props {
   showCancel?: boolean;
   verticalButtons?: boolean;
   onClose?: () => void;
+  showCloseButton?: boolean;
+  testID?: string;
 }
 
 export default function StandardPopup({
@@ -35,9 +37,11 @@ export default function StandardPopup({
   showCancel = false,
   verticalButtons = false,
   onClose,
+  showCloseButton = false,
+  testID,
 }: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <Modal transparent visible={visible} animationType="fade" statusBarTranslucent>
@@ -51,9 +55,10 @@ export default function StandardPopup({
               shadowColor: isDark ? '#000' : '#888',
             },
           ]}
+          testID={testID}
         >
-          <Text style={[styles.title, { color: colors.primary }]}>{title}</Text>
-          <Text style={[styles.message, { color: colors.text }]}>{message}</Text>
+          <Text style={[styles.title, { color: colors.primary }]} testID="popup-title">{title}</Text>
+          <Text style={[styles.message, { color: colors.text }]} testID="popup-message">{message}</Text>
 
           <View style={[verticalButtons ? styles.buttonColumn : styles.buttonRow]}>
             {showCancel && (
@@ -82,6 +87,7 @@ export default function StandardPopup({
                   onClose();
                 }
               }}
+              testID={showCloseButton ? "popup-close-button" : undefined}
             >
               <Text style={[styles.buttonTextFilled, { color: colors.background }]}>
                 {confirmText}

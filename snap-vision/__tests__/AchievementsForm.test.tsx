@@ -137,6 +137,8 @@ describe('AchievementsForm', () => {
     isDark: false,
     theme: 'light' as const,
     toggleTheme: jest.fn(),
+    setTheme: jest.fn(),
+    isLoading: false,
   };
 
   const mockColors = {
@@ -198,8 +200,6 @@ describe('AchievementsForm', () => {
     });
   });
 
-
-
   describe('Component Rendering', () => {
     it('displays progress data correctly', () => {
       const { getByText, queryByText } = render(
@@ -211,7 +211,7 @@ describe('AchievementsForm', () => {
       try {
         expect(getByText('Points: 150')).toBeTruthy();
       } catch (error) {
-        //consolelog('Points: 150 not found, checking for alternative formats');
+        ////consolelog('Points: 150 not found, checking for alternative formats');
         const pointsText = queryByText(/150/) || queryByText(/Points/);
         if (pointsText) {
           expect(pointsText).toBeTruthy();
@@ -221,7 +221,7 @@ describe('AchievementsForm', () => {
       try {
         expect(getByText('Badges: 2')).toBeTruthy();
       } catch (error) {
-        //consolelog('Badges: 2 not found, checking for alternative formats');
+        ////consolelog('Badges: 2 not found, checking for alternative formats');
         const badgesText = queryByText(/Badges/) || queryByText(/2/);
         if (badgesText) {
           expect(badgesText).toBeTruthy();
@@ -231,7 +231,7 @@ describe('AchievementsForm', () => {
       try {
         expect(getByText('Check-ins: 5')).toBeTruthy();
       } catch (error) {
-        //consolelog('Check-ins: 5 not found, checking for alternative formats');
+        ////consolelog('Check-ins: 5 not found, checking for alternative formats');
         const checkInsText = queryByText(/Check-ins/) || queryByText(/5/);
         if (checkInsText) {
           expect(checkInsText).toBeTruthy();
@@ -249,7 +249,7 @@ describe('AchievementsForm', () => {
       try {
         expect(getByText('Unlocked Badges: 2')).toBeTruthy();
       } catch (error) {
-        //consolelog('Unlocked Badges: 2 not found, checking for alternative');
+        ////consolelog('Unlocked Badges: 2 not found, checking for alternative');
         const unlockedText = queryByText(/Unlocked/) || queryByText(/2/);
         if (unlockedText) {
           expect(unlockedText).toBeTruthy();
@@ -259,7 +259,7 @@ describe('AchievementsForm', () => {
       try {
         expect(getByTestId('badge-first-navigation')).toBeTruthy();
       } catch (error) {
-        //consolelog('badge-first-navigation not found, checking for alternative');
+        ////consolelog('badge-first-navigation not found, checking for alternative');
         const badgeElement = queryByTestId('first-navigation') || queryByText('first-navigation');
         if (badgeElement) {
           expect(badgeElement).toBeTruthy();
@@ -269,15 +269,13 @@ describe('AchievementsForm', () => {
       try {
         expect(getByTestId('badge-speed-demon')).toBeTruthy();
       } catch (error) {
-        //consolelog('badge-speed-demon not found, checking for alternative');
+        ////consolelog('badge-speed-demon not found, checking for alternative');
         const badgeElement = queryByTestId('speed-demon') || queryByText('speed-demon');
         if (badgeElement) {
           expect(badgeElement).toBeTruthy();
         }
       }
     });
-
-
   });
 
   describe('Theme Integration', () => {
@@ -289,11 +287,11 @@ describe('AchievementsForm', () => {
       );
 
       expect(mockUseTheme).toHaveBeenCalled();
-      expect(mockGetThemeColors).toHaveBeenCalledWith(false);
+      expect(mockGetThemeColors).toHaveBeenCalledWith('light');
     });
 
     it('applies dark theme colors correctly', () => {
-      const darkTheme = { ...mockTheme, isDark: true };
+      const darkTheme = { ...mockTheme, isDark: true, theme: 'dark' };
       const darkColors = {
         ...mockColors,
         background: '#1e1e1e',
@@ -301,7 +299,7 @@ describe('AchievementsForm', () => {
         primary: '#0A84FF',
       };
 
-      mockUseTheme.mockReturnValue(darkTheme);
+      mockUseTheme.mockReturnValue(darkTheme as any);
       mockGetThemeColors.mockReturnValue(darkColors);
 
       render(
@@ -310,7 +308,7 @@ describe('AchievementsForm', () => {
         </TestWrapper>,
       );
 
-      expect(mockGetThemeColors).toHaveBeenCalledWith(true);
+      expect(mockGetThemeColors).toHaveBeenCalledWith('dark');
     });
   });
 
@@ -426,8 +424,6 @@ describe('AchievementsForm', () => {
     });
   });
 
-
-
   describe('Error Handling and Edge Cases', () => {
     it('handles missing badge context gracefully', () => {
       mockUseBadges.mockImplementation(() => {
@@ -448,7 +444,9 @@ describe('AchievementsForm', () => {
         isDark: false,
         theme: 'light',
         toggleTheme: jest.fn(),
-      });
+        setTheme: jest.fn(),
+        isLoading: false,
+      } as any);
 
       const { queryByText } = render(
         <TestWrapper>
@@ -484,7 +482,6 @@ describe('AchievementsForm', () => {
       expect(queryByText('Check-ins: 0')).toBeTruthy();
       expect(queryByTestId('badges-section')).toBeTruthy();
     });
-
   });
 
   describe('Purchases Section', () => {
@@ -509,8 +506,6 @@ describe('AchievementsForm', () => {
       expect(queryByText('Speed Boost')).toBeNull();
     });
   });
-
-
 
   describe('Action Buttons', () => {
     it('renders action buttons correctly', () => {

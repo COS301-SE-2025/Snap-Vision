@@ -77,7 +77,7 @@ export const useMapLocation = (
 
   const requestLocation = async () => {
     const trace = await perf().newTrace('location_acquisition_latency');
-  await trace.start();
+    await trace.start();
     try {
       setStatus('Getting your location...');
       setError(null);

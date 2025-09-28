@@ -11,16 +11,16 @@ interface LogoutButtonProps {
 }
 
 export default function LogoutButton({ onLogout, isLoading = false }: LogoutButtonProps) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme } = useTheme();
+  const colors = getThemeColors(theme);
 
   const handlePress = async () => {
     try {
       await onLogout();
 
-      Toast.show(makeToastPayload('Logged Out', 'See you soon!', {}, isDark));
+      Toast.show(makeToastPayload('Logged Out', 'See you soon!', {}, theme));
     } catch (error) {
-      Toast.show(makeToastPayload('Logout Failed', 'Please try again.', {}, isDark));
+      Toast.show(makeToastPayload('Logout Failed', 'Please try again.', {}, theme));
     }
   };
 

@@ -81,7 +81,7 @@ const authenticateUser = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error('Authentication error:', error);
+    //console.error('Authentication error:', error);
     res.status(401).json({ 
       error: 'Unauthorized',
       details: 'Invalid or expired token'
@@ -222,15 +222,15 @@ const logRequest = (req, res, next) => {
     
     // Log security-relevant events
     if (statusCode === 401 || statusCode === 403) {
-      console.warn('Security event:', {
-        method,
-        path,
-        ip,
-        userId,
-        statusCode,
-        duration,
-        timestamp: new Date().toISOString()
-      });
+      //console.warn('Security event:', {
+    //     method,
+    //     path,
+    //     ip,
+    //     userId,
+    //     statusCode,
+    //     duration,
+    //     timestamp: new Date().toISOString()
+    //   });
     }
   });
   

@@ -75,7 +75,7 @@ export function useFloorplanManager({
               console.log(`☁️ [FLOORPLAN] Resolving storage path: ${storagePath}`);
               url = await storage().ref(storagePath).getDownloadURL();
             } catch (e) {
-              console.warn('getDownloadURL failed for', storagePath, e);
+              //console.warn(BT, 'getDownloadURL failed', e);
             }
           }
         }
@@ -94,7 +94,7 @@ export function useFloorplanManager({
               console.log(`✅ [FLOORPLAN] Found via storage folder fallback`);
             }
           } catch (e) {
-            console.warn('Storage folder fallback failed', e);
+            //console.warn(BT, 'Storage fallback failed', e);
           }
         }
 
@@ -111,7 +111,7 @@ export function useFloorplanManager({
           }
         }
       } catch (e) {
-        console.warn('Floorplan fetch failed', e);
+        //console.warn(BT, 'Floorplan fetch failed', e);
         if (!cancelled) setFloorplanUrl(null);
       } finally {
         if (!cancelled) setFloorplanLoading(false);

@@ -13,7 +13,7 @@ interface NavigationPanelProps {
   progress: number;
   distance: number | null;
   distanceWalked: number;
-  originalRouteDistance: number | null; 
+  originalRouteDistance: number | null;
   time: number | null;
   destination: string;
   isVoiceEnabled: boolean;
@@ -51,8 +51,8 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
   isMinimized = false,
   onToggleMinimize,
 }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   // Calculate completion percentage based on distance remaining
   const getCompletionPercentage = () => {

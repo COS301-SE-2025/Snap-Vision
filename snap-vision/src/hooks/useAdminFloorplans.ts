@@ -63,7 +63,7 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
       console.log(`💿 [ADMIN CACHE] Cached ${filteredLocations.length} locations`);
       
     } catch (err) {
-      console.error('Error fetching locations:', err);
+      ////consoleerror(err);
       setError('Failed to load locations');
     } finally {
       setIsLoading(false);
@@ -117,7 +117,7 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
       
       await trace.stop();
     } catch (err) {
-      console.error('Error fetching buildings:', err);
+      ////consoleerror(err);
       setError('Failed to load buildings');
     } finally {
       setIsLoading(false);
@@ -168,7 +168,7 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
         };
       });
 
-      console.log(`📊 [ADMIN FIRESTORE] Loaded ${newFloorplans.length} floorplans`);
+      ////consolelog('Floorplans loaded:', newFloorplans);
       setFloorplans(newFloorplans);
       
       // Cache the result
@@ -180,7 +180,7 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
       
       await trace.stop();
     } catch (err) {
-      console.error('Error fetching floorplans:', err);
+      ////consoleerror(err);
       setError('Failed to load floorplans');
     } finally {
       setIsLoading(false);
@@ -223,7 +223,7 @@ export const useAdminFloorplans = (role: string | null, adminLocations: string[]
       
       return { success: true };
     } catch (err) {
-      console.error('Error deleting floorplan:', err);
+      ////consoleerror(err);
       setError('Failed to delete floorplan');
       return { success: false, error: 'Failed to delete floorplan' };
     } finally {

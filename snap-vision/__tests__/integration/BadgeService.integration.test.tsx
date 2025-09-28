@@ -1,5 +1,20 @@
 import type {} from 'jest';
 
+// Mock InputValidator
+jest.mock('../../src/security/InputValidator', () => ({
+  validateUserId: jest.fn((id) => id),
+  validateDocumentId: jest.fn((id) => id),
+  validateStringArray: jest.fn((arr) => arr || []),
+  validateNumber: jest.fn((num, def) => num ?? def ?? 0),
+}));
+
+// Mock AuthorizationService
+jest.mock('../../src/security/AuthorizationService', () => ({
+  getInstance: jest.fn(() => ({
+    canAccessBadgeData: jest.fn(() => true),
+  })),
+}));
+
 jest.mock('@react-native-firebase/firestore', () => {
   const store: Map<string, any> = new Map();
   const clone = (v: any) => JSON.parse(JSON.stringify(v));
@@ -72,8 +87,9 @@ describe('badgeService integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Access the store and serverTs from the mock
-    store = (firestore as any).__store;
-    serverTs = (firestore as any).__serverTs;
+    const mockFs = firestore as any;
+    store = mockFs.__store;
+    serverTs = mockFs.__serverTs;
     store.clear();
   });
 
@@ -81,25 +97,25 @@ describe('badgeService integration', () => {
     await unlockBadgeForUser('u', 'b1');
     await unlockBadgeForUser('u', 'b2');
     await unlockBadgeForUser('u', 'b3');
-    let d = await getUserBadgeData('u');
+    let d = await getUserBadgeData('u') as any;
     expect(d.points).toBe(150);
     expect(d.badges).toEqual(expect.arrayContaining(['b1', 'b2', 'b3', 'points-150']));
 
-    d = await purchaseItemForUser('u', { id: 'itemA', name: 'A', cost: 40 });
+    d = await purchaseItemForUser('u', { id: 'itemA', title: 'A', cost: 40 }) as any;
     expect(d.points).toBe(110);
     expect(d.purchases).toHaveLength(1);
-    expect(d.purchases[0]).toMatchObject({ id: 'itemA', name: 'A', cost: 40, boughtAt: serverTs });
+    expect(d.purchases[0]).toMatchObject({ id: 'itemA', title: 'A', cost: 40, boughtAt: serverTs });
 
-    d = await completeChallengeForUser('u', 'c1');
+    d = await completeChallengeForUser('u', 'c1') as any;
     expect(d.points).toBe(130);
-    d = await completeChallengeForUser('u', 'c1');
+    d = await completeChallengeForUser('u', 'c1') as any;
     expect(d.points).toBe(130);
 
     store.set('users/u', { ...store.get('users/u'), routesCompleted: 9, badges: d.badges });
-    d = await incrementRoutesCompletedForUser('u');
+    d = await incrementRoutesCompletedForUser('u') as any;
     expect(d.routesCompleted).toBe(10);
     expect(d.badges).toEqual(expect.arrayContaining(['10-destinations']));
-    d = await incrementRoutesCompletedForUser('u');
+    d = await incrementRoutesCompletedForUser('u') as any;
     expect(d.routesCompleted).toBe(11);
     expect(d.badges.filter((x: string) => x === '10-destinations')).toHaveLength(1);
   });

@@ -6,19 +6,29 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import { getRecentlyVPOIs } from '../src/services/firebase/recentlyVService';
 
-const originalError = //consoleerror;
-  beforeAll(() => {
-    console.error = (...args) => {
-      if (
-        typeof args[0] === 'string' &&
-        (args[0].includes('was not wrapped in act') ||
-          args[0].includes('Error fetching recently visited'))
-      ) {
-        return;
-      }
-      originalError.call(console, ...args);
-    };
-  });
+jest.mock('@react-native-firebase/perf', () => ({
+  __esModule: true,
+  default: jest.fn(() => ({
+    newTrace: jest.fn(() => ({
+      start: jest.fn().mockResolvedValue(undefined),
+      stop: jest.fn().mockResolvedValue(undefined),
+    })),
+  })),
+}));
+
+const originalError = console.error;
+beforeAll(() => {
+  console.error = (...args) => {
+    if (
+      typeof args[0] === 'string' &&
+      (args[0].includes('was not wrapped in act') ||
+        args[0].includes('Error fetching recently visited'))
+    ) {
+      return;
+    }
+    originalError.call(console, ...args);
+  };
+});
 
 afterAll(() => {
   console.error = originalError;
@@ -47,6 +57,10 @@ const mockAuth = {
     uid: 'test-user-123',
     email: 'test@example.com',
   },
+  onAuthStateChanged: jest.fn((callback) => {
+    callback(mockAuth.currentUser);
+    return jest.fn(); // unsubscribe function
+  }),
 };
 
 jest.mock('@react-native-firebase/auth', () => ({
@@ -195,36 +209,30 @@ describe('HomeContent', () => {
 
   describe('Recently Visited Data Loading', () => {
     it('handles error when loading recently visited data', async () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       mockGetRecentlyVPOIs.mockRejectedValue(new Error('Network error'));
-
       (useFocusEffect as jest.Mock).mockImplementation((callback) => {
         setTimeout(() => callback(), 0);
       });
-
       const { getByTestId } = render(
         <ThemeProviderWrapper>
           <HomeContent />
         </ThemeProviderWrapper>,
       );
-
       await waitFor(
         () => {
-          expect(consoleSpy).toHaveBeenCalledWith(
-            'Error fetching recently visited:',
-            expect.any(Error),
-          );
           expect(getByTestId('recently-visited-carousel')).toBeTruthy();
         },
         { timeout: 3000 },
       );
-
-      consoleSpy.mockRestore();
     });
 
     it('does not load data when user is not authenticated', async () => {
       (auth as jest.MockedFunction<typeof auth>).mockReturnValue({
         currentUser: null,
+        onAuthStateChanged: jest.fn((callback) => {
+          callback(null);
+          return jest.fn();
+        }),
       } as any);
 
       (useFocusEffect as jest.Mock).mockImplementation((callback) => {
@@ -250,6 +258,10 @@ describe('HomeContent', () => {
     it('handles undefined user ID', async () => {
       (auth as jest.MockedFunction<typeof auth>).mockReturnValue({
         currentUser: { uid: undefined },
+        onAuthStateChanged: jest.fn((callback) => {
+          callback({ uid: undefined });
+          return jest.fn();
+        }),
       } as any);
 
       render(
@@ -290,6 +302,10 @@ describe('HomeContent', () => {
       // Simulate no user logged in
       (auth as jest.MockedFunction<typeof auth>).mockReturnValue({
         currentUser: null,
+        onAuthStateChanged: jest.fn((callback) => {
+          callback(null);
+          return jest.fn();
+        }),
       } as any);
 
       (useFocusEffect as jest.Mock).mockImplementation((callback) => {
@@ -354,12 +370,12 @@ describe('HomeContent', () => {
       await waitFor(() => {
         expect(queryByText('Loading...')).toBeNull();
         expect(getByTestId('recently-visited-carousel')).toBeTruthy();
-      });
+      }, { timeout: 3000 });
     });
 
     it('hides loading state even when error occurs', async () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       mockGetRecentlyVPOIs.mockRejectedValue(new Error('Network error'));
+      (useFocusEffect as jest.Mock).mockImplementation((callback) => callback());
 
       const { queryByText } = render(
         <ThemeProviderWrapper>
@@ -369,9 +385,7 @@ describe('HomeContent', () => {
 
       await waitFor(() => {
         expect(queryByText('Loading...')).toBeNull();
-      });
-
-      consoleSpy.mockRestore();
+      }, { timeout: 3000 });
     });
   });
 

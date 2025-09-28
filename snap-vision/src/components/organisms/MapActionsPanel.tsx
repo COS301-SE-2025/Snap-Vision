@@ -27,7 +27,7 @@ const MapActionsPanel = ({
   onShare,
   onReport,
   onAddPOI,
-  onOpenBluetoothNavigation,
+  //onOpenBluetoothNavigation,
   isAdmin,
   shareTooltip,
   reportTooltip,
@@ -36,8 +36,8 @@ const MapActionsPanel = ({
   onReportIn,
   onReportOut,
 }: Props) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const [drawerAnimation] = useState(new Animated.Value(1));
 
@@ -124,7 +124,7 @@ const MapActionsPanel = ({
 
         <View style={styles.spacer} />
 
-        <ActionButtonWithTooltip
+        {/* <ActionButtonWithTooltip
           icon={<MaterialIcons name="bluetooth" size={30} color={colors.background} />}
           onPress={onOpenBluetoothNavigation}
           onPressIn={() => {}}
@@ -132,7 +132,7 @@ const MapActionsPanel = ({
           showTooltip={false}
           backgroundColor={colors.primary}
           tooltipText="Bluetooth Navigation"
-        />
+        /> */}
       </Animated.View>
 
       {/* Admin-only Add POI button - positioned below the drawer */}
@@ -157,18 +157,17 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     top: '30%',
-    right: 0, 
-    flexDirection: 'row-reverse', 
+    right: 0,
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     transform: [{ translateY: -25 }],
-    
   },
   drawerBackground: {
     position: 'absolute',
-    top: -20, 
+    top: -20,
     right: 0,
     width: 130,
-    height: 240, 
+    height: 170, // decreased from 240 in absence of bluetooth button
     borderTopLeftRadius: 15,
     borderBottomLeftRadius: 15,
     elevation: 2,
@@ -202,8 +201,8 @@ const styles = StyleSheet.create({
   },
   adminButtonContainer: {
     position: 'absolute',
-    top: 250, 
-    right: 15, 
+    top: 170, // decreased from 250 in absence of bluetooth button
+    right: 15,
     alignItems: 'center',
   },
 });

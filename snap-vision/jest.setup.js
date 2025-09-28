@@ -96,3 +96,21 @@ jest.mock('@react-native-firebase/auth', () => {
     default: mockAuth,
   };
 });
+
+jest.mock('@react-native-firebase/perf', () => {
+  const mockTrace = {
+    start: jest.fn(() => Promise.resolve()),
+    stop: jest.fn(() => Promise.resolve()),
+  };
+
+  const mockPerfInstance = {
+    newTrace: jest.fn(() => mockTrace),
+  };
+
+  const mockPerf = jest.fn(() => mockPerfInstance);
+
+  return {
+    __esModule: true,
+    default: mockPerf,
+  };
+});

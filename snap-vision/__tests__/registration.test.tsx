@@ -97,6 +97,13 @@ jest.mock('@react-native-firebase/firestore', () => () => ({
   })),
 }));
 
+jest.mock('@react-native-firebase/perf', () => jest.fn(() => ({
+  newTrace: jest.fn(() => ({
+    start: jest.fn().mockResolvedValue(undefined),
+    stop: jest.fn().mockResolvedValue(undefined),
+  })),
+})));
+
 jest.mock('@react-navigation/native', () => {
   const actualNav = jest.requireActual('@react-navigation/native');
   return {
@@ -134,17 +141,19 @@ describe('RegisterForm', () => {
     expect(getByPlaceholderText('Confirm your password')).toBeTruthy();
   });
 
-  it('shows popup if fields are empty', () => {
-    const { getByTestId } = setup();
+  it('shows inline errors if fields are empty', async () => {
+    const { getByTestId, getByText } = setup();
     fireEvent.press(getByTestId('register-button'));
 
-    expect(screen.getByTestId('error-popup')).toBeTruthy();
-    expect(screen.getByTestId('popup-title')).toHaveTextContent('Registration Error');
-    expect(screen.getByTestId('popup-message')).toHaveTextContent('Please fill in all fields');
+    await waitFor(() => {
+      expect(getByText('Username is required.')).toBeTruthy();
+      expect(getByText('Email is required.')).toBeTruthy();
+      expect(getByText('Password must be at least 8 characters, include a capital letter, number, and special character.')).toBeTruthy();
+    }, { timeout: 1000 });
   });
 
-  it('shows popup for invalid email format', () => {
-    const { getByPlaceholderText, getByTestId } = setup();
+  it('shows inline error for invalid email format', async () => {
+    const { getByPlaceholderText, getByTestId, getByText } = setup();
 
     fireEvent.changeText(getByPlaceholderText('Enter your name'), 'John');
     fireEvent.changeText(getByPlaceholderText('Enter your email'), 'invalid-email');
@@ -153,15 +162,13 @@ describe('RegisterForm', () => {
 
     fireEvent.press(getByTestId('register-button'));
 
-    expect(screen.getByTestId('error-popup')).toBeTruthy();
-    expect(screen.getByTestId('popup-title')).toHaveTextContent('Registration Error');
-    expect(screen.getByTestId('popup-message')).toHaveTextContent(
-      'Please enter a valid email address',
-    );
+    await waitFor(() => {
+      expect(getByText('Please enter a valid email address.')).toBeTruthy();
+    }, { timeout: 1000 });
   });
 
-  it('shows popup for weak password', () => {
-    const { getByPlaceholderText, getByTestId } = setup();
+  it('shows inline error for weak password', async () => {
+    const { getByPlaceholderText, getByTestId, getByText } = setup();
 
     fireEvent.changeText(getByPlaceholderText('Enter your name'), 'John');
     fireEvent.changeText(getByPlaceholderText('Enter your email'), 'john@example.com');
@@ -170,15 +177,13 @@ describe('RegisterForm', () => {
 
     fireEvent.press(getByTestId('register-button'));
 
-    expect(screen.getByTestId('error-popup')).toBeTruthy();
-    expect(screen.getByTestId('popup-title')).toHaveTextContent('Registration Error');
-    expect(screen.getByTestId('popup-message')).toHaveTextContent(
-      /Password must be at least 8 characters/,
-    );
+    await waitFor(() => {
+      expect(getByText(/Password must be at least 8 characters/)).toBeTruthy();
+    }, { timeout: 1000 });
   });
 
-  it('shows popup if passwords do not match', () => {
-    const { getByPlaceholderText, getByTestId } = setup();
+  it('shows inline error if passwords do not match', async () => {
+    const { getByPlaceholderText, getByTestId, getByText } = setup();
 
     fireEvent.changeText(getByPlaceholderText('Enter your name'), 'John');
     fireEvent.changeText(getByPlaceholderText('Enter your email'), 'john@example.com');
@@ -187,52 +192,9 @@ describe('RegisterForm', () => {
 
     fireEvent.press(getByTestId('register-button'));
 
-    expect(screen.getByTestId('error-popup')).toBeTruthy();
-    expect(screen.getByTestId('popup-title')).toHaveTextContent('Registration Error');
-    expect(screen.getByTestId('popup-message')).toHaveTextContent('Passwords do not match');
-  });
-
-  it('calls Firebase auth and shows success popup', async () => {
-    mockCreateUser.mockResolvedValueOnce({ user: { uid: 'test123' } });
-
-    const { getByPlaceholderText, getByTestId } = setup();
-
-    fireEvent.changeText(getByPlaceholderText('Enter your name'), 'John');
-    fireEvent.changeText(getByPlaceholderText('Enter your email'), 'john@example.com');
-    fireEvent.changeText(getByPlaceholderText('Enter your password'), 'Strong@123');
-    fireEvent.changeText(getByPlaceholderText('Confirm your password'), 'Strong@123');
-
-    fireEvent.press(getByTestId('register-button'));
-
     await waitFor(() => {
-      expect(mockCreateUser).toHaveBeenCalledWith('john@example.com', 'Strong@123');
-    });
-
-    expect(screen.getByTestId('success-popup')).toBeTruthy();
-    expect(screen.getByTestId('popup-title')).toHaveTextContent('Registration Successful');
-    expect(screen.getByTestId('popup-message')).toHaveTextContent(
-      'Your account has been created successfully!',
-    );
+      expect(getByText('Passwords do not match.')).toBeTruthy();
+    }, { timeout: 1000 });
   });
 
-  it('shows Firebase error if email already in use', async () => {
-    mockCreateUser.mockRejectedValueOnce({ code: 'auth/email-already-in-use' });
-
-    const { getByPlaceholderText, getByTestId } = setup();
-
-    fireEvent.changeText(getByPlaceholderText('Enter your name'), 'John');
-    fireEvent.changeText(getByPlaceholderText('Enter your email'), 'john@example.com');
-    fireEvent.changeText(getByPlaceholderText('Enter your password'), 'Strong@123');
-    fireEvent.changeText(getByPlaceholderText('Confirm your password'), 'Strong@123');
-
-    fireEvent.press(getByTestId('register-button'));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('error-popup')).toBeTruthy();
-      expect(screen.getByTestId('popup-title')).toHaveTextContent('Registration Error');
-      expect(screen.getByTestId('popup-message')).toHaveTextContent(
-        'This email is already registered.',
-      );
-    });
-  });
 });

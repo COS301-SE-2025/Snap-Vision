@@ -9,8 +9,8 @@ import auth from '@react-native-firebase/auth';
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   // Popup states
   const [showErrorPopup, setShowErrorPopup] = useState(false);

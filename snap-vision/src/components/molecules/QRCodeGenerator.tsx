@@ -18,8 +18,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   onGenerate,
   onSavePNG,
 }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const qrRef = useRef<QRCode | null>(null);
 
   return (

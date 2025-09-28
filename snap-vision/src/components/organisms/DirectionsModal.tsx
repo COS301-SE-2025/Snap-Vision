@@ -7,7 +7,7 @@ import { getThemeColors } from '../../theme';
 interface DirectionsModalProps {
   visible: boolean;
   onClose: () => void;
-  onStart: () => void; 
+  onStart: () => void;
   destination: string;
   steps: any[];
   currentStep: number;
@@ -22,8 +22,8 @@ const DirectionsModal: React.FC<DirectionsModalProps> = ({
   steps,
   currentStep,
 }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>

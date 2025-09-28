@@ -29,11 +29,11 @@ async function addDefaultPurchasesToUsers() {
     if (!userData.purchases || userData.purchases.length === 0) {
       const userRef = usersRef.doc(doc.id);
       batch.update(userRef, { purchases: [defaultPurchase] });
-      console.log(`Will update user ${doc.id} with default purchase.`);
+      //console.log(`Will update user ${doc.id} with default purchase.`);
     }
   });
   await batch.commit();
-  console.log('Default purchases added to users who were missing them.');
+  //console.log('Default purchases added to users who were missing them.');
 }
 
 addDefaultPurchasesToUsers().catch(console.error);

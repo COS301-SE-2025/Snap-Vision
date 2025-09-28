@@ -23,7 +23,7 @@ export class PermissionService {
       }
       return false;
     } catch (error) {
-      //consoleerror('Permission request failed:', error);
+      ////consoleerror('Permission request failed:', error);
       return false;
     }
   }
@@ -40,7 +40,7 @@ export class PermissionService {
       }
       return false;
     } catch (error) {
-      console.error('Bluetooth permission request failed:', error);
+      //console.error('Bluetooth permission request failed:', error);
       return false;
     }
   }
@@ -57,7 +57,7 @@ export class PermissionService {
       }
       return false;
     } catch (error) {
-      //consoleerror('Permission check failed:', error);
+      ////consoleerror('Permission check failed:', error);
       return false;
     }
   }
@@ -74,7 +74,7 @@ export class PermissionService {
       }
       return false;
     } catch (error) {
-      console.error('Bluetooth permission check failed:', error);
+      //console.error('Bluetooth permission check failed:', error);
       return false;
     }
   }
@@ -117,7 +117,7 @@ export class PermissionService {
 
       return true;
     } catch (error) {
-      //consoleerror('Android permission request failed:', error);
+      ////consoleerror('Android permission request failed:', error);
       return false;
     }
   }
@@ -147,7 +147,7 @@ export class PermissionService {
 
       return fineLocationGranted && coarseLocationGranted && nearbyWiFiDevices;
     } catch (error) {
-      //consoleerror('Android permission check failed:', error);
+      ////consoleerror('Android permission check failed:', error);
       return false;
     }
   }
@@ -171,7 +171,7 @@ export class PermissionService {
 
       return false;
     } catch (error) {
-      //consoleerror('iOS permission request failed:', error);
+      ////consoleerror('iOS permission request failed:', error);
       return false;
     }
   }
@@ -184,7 +184,7 @@ export class PermissionService {
       const result = await check(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
       return result === RESULTS.GRANTED;
     } catch (error) {
-      //consoleerror('iOS permission check failed:', error);
+      ////consoleerror('iOS permission check failed:', error);
       return false;
     }
   }
@@ -224,7 +224,7 @@ export class PermissionService {
 
       return true;
     } catch (error) {
-      console.error('Android Bluetooth permission request failed:', error);
+      //console.error('Android Bluetooth permission request failed:', error);
       return false;
     }
   }
@@ -260,7 +260,7 @@ export class PermissionService {
         return true;
       }
     } catch (error) {
-      console.error('Android Bluetooth permission check failed:', error);
+      //console.error('Android Bluetooth permission check failed:', error);
       return false;
     }
   }
@@ -286,7 +286,7 @@ export class PermissionService {
 
       return false;
     } catch (error) {
-      console.error('iOS Bluetooth permission request failed:', error);
+      //console.error('iOS Bluetooth permission request failed:', error);
       return false;
     }
   }
@@ -299,7 +299,7 @@ export class PermissionService {
       const result = await check(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
       return result === RESULTS.GRANTED;
     } catch (error) {
-      console.error('iOS Bluetooth permission check failed:', error);
+      //console.error('iOS Bluetooth permission check failed:', error);
       return false;
     }
   }

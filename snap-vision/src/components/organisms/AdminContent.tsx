@@ -59,7 +59,7 @@ export default function AdminScreenContent({
       <View style={styles.buttonContainer}>
         <AppButton title="Load Floorplans" onPress={onLoadFloorplans} />
         <AppButton title="Edit Floorplans" onPress={onEditFloorplans} />
-        <AppButton title="Indoor Positioning" onPress={onIndoorPositioning} />
+        {/* <AppButton title="Indoor Positioning" onPress={onIndoorPositioning} /> */}
         <AppButton title="Manage QR Codes" onPress={onManageQRCodes} />
         <AppButton title="Manage Users" onPress={onManageUsers} />
       </View>

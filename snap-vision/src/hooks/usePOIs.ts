@@ -37,7 +37,7 @@ export const usePOIs = () => {
 
         setPois(poisData);
       } catch (err) {
-        console.error('Error fetching POIs:', err);
+        //console.error('Error fetching POIs:', err);
         setError('Failed to load buildings');
       } finally {
         setIsLoading(false);

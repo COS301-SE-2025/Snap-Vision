@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Modal, FlatList } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+  Modal,
+  FlatList,
+} from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme } from '../../theme/ThemeContext';
@@ -30,8 +38,8 @@ type NavP = StackNavigationProp<RootStackParamList, 'BluetoothIndoorNavigation'>
 const BluetoothIndoorNavigationContent: React.FC = () => {
   const navigation = useNavigation<NavP>();
   const route = useRoute<RouteP>();
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const { buildingId, buildingName, locationId } = route.params;
 
   // Custom Floor Dropdown state
@@ -102,7 +110,9 @@ const BluetoothIndoorNavigationContent: React.FC = () => {
           onPress={handleShowRoomsList}
         >
           <MaterialIcons name="list" size={16} color="white" />
-          <Text style={styles.roomsButtonText}>Rooms ({roomManager.roomsOnSelectedFloor.length})</Text>
+          <Text style={styles.roomsButtonText}>
+            Rooms ({roomManager.roomsOnSelectedFloor.length})
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -132,7 +142,9 @@ const BluetoothIndoorNavigationContent: React.FC = () => {
                 <TouchableOpacity
                   style={[
                     styles.dropdownItem,
-                    roomManager.selectedFloorId === item && { backgroundColor: colors.primary + '20' },
+                    roomManager.selectedFloorId === item && {
+                      backgroundColor: colors.primary + '20',
+                    },
                   ]}
                   onPress={() => {
                     roomManager.setSelectedFloorId(item);
@@ -174,8 +186,8 @@ const BluetoothIndoorNavigationContent: React.FC = () => {
         >
           <IndoorSchematicMap
             rooms={roomManager.roomsOnSelectedFloor}
-            startId={undefined} 
-            endId={navigationManager.destination?.id} 
+            startId={undefined}
+            endId={navigationManager.destination?.id}
             routePolyline={navigationManager.routePolyline}
             completedPolyline={navigationManager.completedPolyline}
             onSelectRoom={handleRoomSelect}
@@ -302,11 +314,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 16,
   },
-  roomsButtonText: { 
-    color: 'white', 
-    fontSize: 12, 
-    fontWeight: '500', 
-    marginLeft: 4 
+  roomsButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 4,
   },
   modalOverlay: {
     flex: 1,

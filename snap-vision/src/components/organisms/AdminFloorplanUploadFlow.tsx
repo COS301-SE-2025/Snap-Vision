@@ -23,8 +23,8 @@ export const AdminFloorplanUploadFlow: React.FC<AdminFloorplanUploadFlowProps> =
   adminLocations,
   onSelectionChange,
 }) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme } = useTheme();
+  const colors = getThemeColors(theme);
 
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);

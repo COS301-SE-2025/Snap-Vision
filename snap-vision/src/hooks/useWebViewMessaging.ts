@@ -67,10 +67,10 @@ export const useWebViewMessaging = ({
             break;
 
           default:
-          //consolewarn('Unknown WebView message type:', data.type);
+          ////consolewarn('Unknown WebView message type:', data.type);
         }
       } catch (e) {
-        //consoleerror('Error parsing WebView message:', e);
+        ////consoleerror('Error parsing WebView message:', e);
       }
     },
     [

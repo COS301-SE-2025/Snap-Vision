@@ -114,7 +114,7 @@ export const createQRCodeMapping = async (
     
     return qrData;
   } catch (error) {
-    console.error('Error creating QR code mapping:', error);
+    ////consoleerror('Error creating QR code mapping:', error);
     throw error;
   }
 };
@@ -175,7 +175,7 @@ export const getQRCodeMappingByValue = async (qrValue: string): Promise<QRCodeMa
 
     return null;
   } catch (error) {
-    console.error('Error getting QR code mapping:', error);
+    ////consoleerror('Error getting QR code mapping:', error);
     throw error;
   }
 };
@@ -217,7 +217,7 @@ export const getLocations = async (): Promise<LocationLite[]> => {
     
     return locations;
   } catch (error) {
-    console.error('Error getting locations:', error);
+    ////consoleerror('Error getting locations:', error);
     throw error;
   }
 };
@@ -268,7 +268,7 @@ export const getBuildingsForLocation = async (locationId: string): Promise<Build
     
     return buildings;
   } catch (error) {
-    console.error('Error getting buildings for location:', error);
+    ////consoleerror('Error getting buildings for location:', error);
     throw error;
   }
 };
@@ -333,7 +333,7 @@ export const getFloorsForBuilding = async (
     
     return floors;
   } catch (error) {
-    console.error('Error getting floors for building:', error);
+    ////consoleerror('Error getting floors for building:', error);
     throw error;
   }
 };
@@ -404,7 +404,7 @@ export const getRoomsForFloor = async (
     
     return rooms;
   } catch (error) {
-    console.error('Error getting rooms for floor:', error);
+    ////consoleerror('Error getting rooms for floor:', error);
     throw error;
   }
 };
@@ -461,7 +461,7 @@ export const getQRCodesForBuilding = async (
     
     return qrCodes;
   } catch (error) {
-    console.error('Error getting QR codes for building:', error);
+    ////consoleerror('Error getting QR codes for building:', error);
     throw error;
   }
 };
@@ -507,7 +507,7 @@ export const deleteQRCodeMapping = async (
     
     return true;
   } catch (error) {
-    console.error('Error deleting QR code mapping:', error);
+    ////consoleerror('Error deleting QR code mapping:', error);
     throw error;
   }
 };
@@ -558,7 +558,7 @@ export const updateQRCodeMapping = async (
     
     return updatedData;
   } catch (error) {
-    console.error('Error updating QR code mapping:', error);
+    ////consoleerror('Error updating QR code mapping:', error);
     throw error;
   }
 };

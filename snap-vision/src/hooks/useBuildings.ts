@@ -37,7 +37,7 @@ export const useBuildings = () => {
   const loadBuildingsWithNavigation = async () => {
     try {
       setIsLoading(true);
-      console.log('🔍 [BUILDINGS CACHE] Starting to load buildings...');
+      ////consolelog('[useBuildings] Starting to load buildings...');
 
       // Check authentication
       const currentUser = auth().currentUser;
@@ -193,8 +193,7 @@ export const useBuildings = () => {
       );
 
       const navigableBuildings = buildingsWithNavigation.filter((b) => b.hasNavigation);
-      console.log(`📊 [BUILDINGS] Found ${navigableBuildings.length} navigable buildings`);
-      
+      ////consolelog('[useBuildings] Final navigable buildings:', navigableBuildings.length);
       setBuildings(navigableBuildings);
       
       // Cache the buildings
@@ -205,7 +204,8 @@ export const useBuildings = () => {
       console.log(`💿 [BUILDINGS CACHE] Cached ${navigableBuildings.length} buildings`);
 
     } catch (error) {
-      console.error('Error loading buildings:', error);
+      ////consoleerror('Error loading buildings:', error);
+      setBuildings([]); // Clear buildings on error to avoid stale data
     } finally {
       setIsLoading(false);
     }

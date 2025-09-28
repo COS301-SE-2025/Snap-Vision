@@ -1,17 +1,28 @@
-import {
-  createQRCodeMapping,
-  getQRCodeMappingByValue,
-  getLocations,
-  getBuildingsForLocation,
-  getFloorsForBuilding,
-  getRoomsForFloor,
-  getQRCodesForBuilding,
-  deleteQRCodeMapping,
-  updateQRCodeMapping,
-} from '../src/services/qrService';
+import AuthorizationService from '../src/security/AuthorizationService';
+
+jest.mock('../src/security/AuthorizationService');
+
+const mockAuthService = {
+  getCurrentUserContext: jest.fn(),
+  canModifyLocation: jest.fn(),
+  canAccessLocation: jest.fn(),
+  canAccessBuilding: jest.fn(),
+  canAccessQRCode: jest.fn(),
+  canModifyQRCode: jest.fn(),
+};
+
+(AuthorizationService.getInstance as jest.Mock).mockReturnValue(mockAuthService);
 
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
+
+let qrService: any;
+
+beforeAll(() => {
+  jest.isolateModules(() => {
+    qrService = require('../src/services/qrService');
+  });
+});
 
 let mockUser: { uid: string } | null = { uid: 'user-123' };
 jest.mock('@react-native-firebase/auth', () => {
@@ -76,6 +87,14 @@ beforeEach(() => {
   // Ensure the firestore mock returns our mockTimestampNow
   (firestore as any).Timestamp.now.mockImplementation(() => mockNow);
 
+  // Default auth service mocks for happy paths
+  mockAuthService.getCurrentUserContext.mockResolvedValue({ userId: 'user-123', role: 'admin' });
+  mockAuthService.canModifyLocation.mockResolvedValue(true);
+  mockAuthService.canAccessLocation.mockResolvedValue(true);
+  mockAuthService.canAccessBuilding.mockResolvedValue(true);
+  mockAuthService.canAccessQRCode.mockResolvedValue(true);
+  mockAuthService.canModifyQRCode.mockResolvedValue(true);
+
   mockCollection.mockImplementation((path: string) => ({
     doc: (id?: string) => {
       const _id = id ?? 'gen-id-1';
@@ -130,7 +149,7 @@ describe('createQRCodeMapping', () => {
       },
     }));
 
-    const result = await createQRCodeMapping(
+    const result = await qrService.createQRCodeMapping(
       'loc1',
       'Loc Name',
       'b1',
@@ -166,7 +185,8 @@ describe('createQRCodeMapping', () => {
 
   it('throws when unauthenticated', async () => {
     setAuthUser(null);
-    await expect(createQRCodeMapping('l', 'ln', 'b', 'bn', 'f', 'r', 'rn', 'QR')).rejects.toThrow(
+    mockAuthService.getCurrentUserContext.mockResolvedValue(null);
+    await expect(qrService.createQRCodeMapping('l', 'ln', 'b', 'bn', 'f', 'r', 'rn', 'QR')).rejects.toThrow(
       'User not authenticated',
     );
   });
@@ -188,14 +208,14 @@ describe('getQRCodeMappingByValue', () => {
         makeSnap([{ id: 'doc1', data: () => ({ qrValue: 'X', roomId: 'r1' }) } as any]),
       );
 
-    const found = await getQRCodeMappingByValue('X');
+    const found = await qrService.getQRCodeMappingByValue('X');
     expect(found).toMatchObject({ id: 'doc1', qrValue: 'X', roomId: 'r1' });
   });
 
   it('returns null when not found', async () => {
     mockGet.mockResolvedValueOnce(makeSnap([{ id: 'locA', data: () => ({}) }]));
     mockGet.mockResolvedValueOnce(makeSnap([])); // first location no hit
-    const found = await getQRCodeMappingByValue('NOPE');
+    const found = await qrService.getQRCodeMappingByValue('NOPE');
     expect(found).toBeNull();
   });
 });
@@ -208,7 +228,7 @@ describe('getLocations', () => {
         { id: 'L2', data: () => ({}) },
       ]),
     );
-    const out = await getLocations();
+    const out = await qrService.getLocations();
     expect(out).toEqual([
       { id: 'L1', name: 'Campus' },
       { id: 'L2', name: 'L2' },
@@ -224,7 +244,7 @@ describe('getBuildingsForLocation', () => {
         { id: 'B2', data: () => ({}) },
       ]),
     );
-    const out = await getBuildingsForLocation('loc1');
+    const out = await qrService.getBuildingsForLocation('loc1');
     expect(out).toEqual([
       { id: 'B1', name: 'A Block' },
       { id: 'B2', name: 'B2' },
@@ -242,7 +262,7 @@ describe('getFloorsForBuilding', () => {
         { id: 'f2', data: () => ({ floorLabel: 'Floor 2' }) },
       ]),
     );
-    const out = await getFloorsForBuilding('loc', 'b');
+    const out = await qrService.getFloorsForBuilding('loc', 'b');
     expect(out).toEqual([
       { id: 'f1', name: 'Floor 1' },
       { id: 'f2', name: 'Floor 2' },
@@ -259,7 +279,7 @@ describe('getFloorsForBuilding', () => {
         { id: 'fy', data: () => ({}) },
       ]),
     );
-    const out = await getFloorsForBuilding('loc', 'b');
+    const out = await qrService.getFloorsForBuilding('loc', 'b');
     expect(out).toEqual([
       { id: 'fx', name: 'Label X' },
       { id: 'fy', name: 'fy' },
@@ -279,7 +299,7 @@ describe('getRoomsForFloor', () => {
         { id: 'r3', data: () => ({ buildingId: 'b', floorLabel: 'F1' }) }, // should be filtered out for target F2
       ]),
     );
-    const out = await getRoomsForFloor('loc', 'b', 'F2');
+    const out = await qrService.getRoomsForFloor('loc', 'b', 'F2');
     expect(out).toEqual([
       {
         id: 'r1',
@@ -312,29 +332,29 @@ describe('getQRCodesForBuilding', () => {
         { id: '2', data: () => d2 },
       ]),
     );
-    const out = await getQRCodesForBuilding('loc', 'b');
+    const out = await qrService.getQRCodesForBuilding('loc', 'b');
     expect(out).toEqual([d1, d2]);
   });
 });
 
 describe('delete / update', () => {
   it('deleteQRCodeMapping returns true', async () => {
-    await expect(deleteQRCodeMapping('loc', 'qr1')).resolves.toBe(true);
+    await expect(qrService.deleteQRCodeMapping('loc', 'qr1')).resolves.toBe(true);
     expect(mockDelete).toHaveBeenCalled();
   });
 
   it('updateQRCodeMapping returns true', async () => {
-    await expect(updateQRCodeMapping('loc', 'qr1', { description: 'x' })).resolves.toBe(true);
+    await expect(qrService.updateQRCodeMapping('loc', 'qr1', { description: 'x' })).resolves.toBe(true);
     expect(mockUpdate).toHaveBeenCalledWith({ description: 'x' });
   });
 
   it('delete propagates errors', async () => {
     mockDelete.mockRejectedValueOnce(new Error('fail'));
-    await expect(deleteQRCodeMapping('loc', 'qr1')).rejects.toThrow('fail');
+    await expect(qrService.deleteQRCodeMapping('loc', 'qr1')).rejects.toThrow('fail');
   });
 
   it('update propagates errors', async () => {
     mockUpdate.mockRejectedValueOnce(new Error('boom'));
-    await expect(updateQRCodeMapping('loc', 'qr1', {})).rejects.toThrow('boom');
+    await expect(qrService.updateQRCodeMapping('loc', 'qr1', {})).rejects.toThrow('boom');
   });
 });

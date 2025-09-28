@@ -86,6 +86,8 @@ describe('LandingOverlay', () => {
     isDark: false,
     theme: 'light' as const,
     toggleTheme: jest.fn(),
+    setTheme: jest.fn(),
+    isLoading: false,
   };
 
   const mockColors = {
@@ -160,7 +162,7 @@ describe('LandingOverlay', () => {
       render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(mockUseTheme).toHaveBeenCalled();
-      expect(mockGetThemeColors).toHaveBeenCalledWith(false);
+      expect(mockGetThemeColors).toHaveBeenCalledWith('light');
     });
 
     it('applies light theme colors', () => {
@@ -179,12 +181,12 @@ describe('LandingOverlay', () => {
         warning: '#ffc107',
       };
 
-      mockUseTheme.mockReturnValue({ ...mockTheme, isDark: false });
+      mockUseTheme.mockReturnValue({ ...mockTheme, isDark: false, theme: 'light' });
       mockGetThemeColors.mockReturnValue(lightColors);
 
       const { getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
-      expect(mockGetThemeColors).toHaveBeenCalledWith(false);
+      expect(mockGetThemeColors).toHaveBeenCalledWith('light');
       expect(getByText('Snap')).toBeTruthy();
     });
 
@@ -204,12 +206,12 @@ describe('LandingOverlay', () => {
         warning: '#ffd60a',
       };
 
-      mockUseTheme.mockReturnValue({ ...mockTheme, isDark: true });
+      mockUseTheme.mockReturnValue({ ...mockTheme, isDark: true, theme: 'dark' });
       mockGetThemeColors.mockReturnValue(darkColors);
 
       const { getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
-      expect(mockGetThemeColors).toHaveBeenCalledWith(true);
+      expect(mockGetThemeColors).toHaveBeenCalledWith('dark');
       expect(getByText('Snap')).toBeTruthy();
     });
 
@@ -508,7 +510,7 @@ describe('LandingOverlay', () => {
       expect(getByText('Earn Badges and Shop Icons!')).toBeTruthy();
       expect(getByText('Integrated Timetable Builder')).toBeTruthy();
       expect(getByText('© 2025 Snap Vision Team')).toBeTruthy();
-      expect(getByText("Hi, I'm Snaps, tap to get started!")).toBeTruthy();
+  expect(getByText('Hi, I am Snaps, tap to get started!')).toBeTruthy();
     });
 
     it('handles touch accessibility', () => {

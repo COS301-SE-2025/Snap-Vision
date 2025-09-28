@@ -9,8 +9,8 @@ const { width } = Dimensions.get('window');
 const TutorialSlider = ({ onFinish }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef(null);
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   const tutorialData = [
     {

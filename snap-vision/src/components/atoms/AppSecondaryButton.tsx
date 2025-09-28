@@ -13,8 +13,8 @@ export default function AppSecondaryButton({
   style,
   ...rest
 }: Props & { testID?: string }) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   return (
     <TouchableOpacity

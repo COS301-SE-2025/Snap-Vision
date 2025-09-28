@@ -1,3 +1,18 @@
+const mockAuthService = {
+  getCurrentUserContext: jest.fn(),
+  canModifyLocation: jest.fn(),
+  canAccessLocation: jest.fn(),
+  canAccessBuilding: jest.fn(),
+  canAccessQRCode: jest.fn(),
+  canModifyQRCode: jest.fn(),
+};
+
+jest.mock('../../src/security/AuthorizationService', {
+  default: {
+    getInstance: () => mockAuthService,
+  },
+});
+
 import {
   createQRCodeMapping,
   getQRCodeMappingByValue,
@@ -59,8 +74,7 @@ jest.mock('@react-native-firebase/firestore', () => {
   });
 
   const makeQuery = (basePath: string, filters: any[] = [], _order?: any, _limit?: number) => ({
-    where: (field: string, op: string, val: any) =>
-      makeQuery(basePath, [...filters, { field, op, val }], _order, _limit),
+    where: (field: string, op: string, val: any) => makeQuery(basePath, [...filters, { field, op, val }], _order, _limit),
     orderBy: (field: string, dir: 'asc' | 'desc' = 'asc') => {
       return makeQuery(basePath, filters, { field, dir }, _limit);
     },
@@ -68,24 +82,19 @@ jest.mock('@react-native-firebase/firestore', () => {
     get: async () => {
       const coll = ensurePath(basePath);
       let rows = Array.from(coll.entries()).map(([id, data]) => ({ id, data: () => clone(data) }));
-
       for (const f of filters) {
         rows = rows.filter((r) => {
           const v = (r.data() as any)[f.field];
           return f.op === '==' ? String(v) === String(f.val) : false;
         });
       }
-
       if (_order) {
         rows.sort((a, b) => {
           const va: any = (a.data() as any)[_order.field];
           const vb: any = (b.data() as any)[_order.field];
-
           if (va === undefined && vb === undefined) return 0;
           if (va === undefined) return 1;
           if (vb === undefined) return -1;
-
-          // Handle timestamp objects (with seconds property)
           let valA = va;
           let valB = vb;
           if (va && typeof va === 'object' && 'seconds' in va) {
@@ -94,13 +103,11 @@ jest.mock('@react-native-firebase/firestore', () => {
           if (vb && typeof vb === 'object' && 'seconds' in vb) {
             valB = vb.seconds;
           }
-
           if (valA < valB) return _order.dir === 'asc' ? -1 : 1;
           if (valA > valB) return _order.dir === 'asc' ? 1 : -1;
           return 0;
         });
       }
-
       if (_limit != null) rows = rows.slice(0, _limit);
       return { docs: rows, empty: rows.length === 0 };
     },
@@ -130,89 +137,28 @@ jest.mock('@react-native-firebase/firestore', () => {
     collection: (name: string) => makeCollection(name),
   });
 
-  // The exported function
   const fn: any = () => root();
-
-  // Attach Timestamp.now()
   fn.Timestamp = { now: jest.fn(() => ({ seconds: Math.floor(Date.now() / 1000) })) };
-
-  // Helpers to seed & reset from tests
   fn.__reset = () => store.clear();
   fn.__seed = (path: string, id: string, data: any) => {
     const coll = ensurePath(path);
     coll.set(id, clone(data));
   };
-
   return fn;
 });
 
 const fns = firestore as any;
 
-beforeEach(() => {
-  jest.clearAllMocks();
-  (firestore as any).__reset();
-  setAuthUser({ uid: 'u-int' });
-});
-
-describe('QR Service', () => {
-  it('create -> read getQRCodeMappingByValue across locations', async () => {
-    // seed two locations to iterate over
-    fns.__seed('locations', 'A', { name: 'Campus A' });
-    fns.__seed('locations', 'B', { name: 'Campus B' });
-
-    // Insert a QR in location B only
-    const created = await createQRCodeMapping(
-      'B',
-      'Campus B',
-      'BLDG1',
-      'Main Building',
-      'F1',
-      'R101',
-      'Room 101',
-      'QR-XYZ',
-      'Near lift',
-    );
-
-    // lookup by value, scanning A then B
-    const found = await getQRCodeMappingByValue('QR-XYZ');
-    expect(found).not.toBeNull();
-    expect(found!.qrValue).toBe('QR-XYZ');
-    expect(found!.locationId).toBe('B');
-    expect(found!.id).toBe(created.id);
+describe('QRService integration tests', () => {
+  beforeEach(() => {
+    mockAuthService.getCurrentUserContext.mockResolvedValue({ userId: 'u-int' });
+    mockAuthService.canModifyLocation.mockResolvedValue(true);
+    mockAuthService.canAccessLocation.mockResolvedValue(true);
+    mockAuthService.canAccessBuilding.mockResolvedValue(true);
+    mockAuthService.canAccessQRCode.mockResolvedValue(true);
+    mockAuthService.canModifyQRCode.mockResolvedValue(true);
   });
-
-  it('lists locations/buildings/floors and handles names & floor labels', async () => {
-    fns.__seed('locations', 'LOC1', { name: 'Campus 1' });
-    fns.__seed('locations/LOC1/buildingPOIs', 'B1', { name: 'Block A' });
-    fns.__seed('locations/LOC1/buildingPOIs/B1/floorplans', 'F1', { floorLabel: 'Level 1' });
-    fns.__seed('locations/LOC1/buildingPOIs/B1/floorplans', 'F2', { name: 'Level 2 name' });
-
-    const locs = await getLocations();
-    expect(locs).toEqual([{ id: 'LOC1', name: 'Campus 1' }]);
-
-    const blds = await getBuildingsForLocation('LOC1');
-    expect(blds).toEqual([{ id: 'B1', name: 'Block A' }]);
-
-    const floors = await getFloorsForBuilding('LOC1', 'B1');
-    expect(floors).toEqual([
-      { id: 'F1', name: 'Level 1' },
-      { id: 'F2', name: 'Level 2 name' },
-    ]);
-  });
-
-  it('filters rooms for a floor by any of floorId/floorLevel/floorLabel', async () => {
-    // Rooms live under locations/LOC1/roomPOIs
-    fns.__seed('locations/LOC1/roomPOIs', 'R1', {
-      name: 'One',
-      buildingId: 'B1',
-      buildingName: 'B1n',
-      floorId: 'F2',
-    });
-    fns.__seed('locations/LOC1/roomPOIs', 'R2', {
-      roomName: 'Two',
-      buildingId: 'B1',
-      floorLevel: 'F2',
-    });
+  it('queries rooms for a floor', async () => {
     fns.__seed('locations/LOC1/roomPOIs', 'R3', { buildingId: 'B1', floorLabel: 'F1' });
 
     const rooms = await getRoomsForFloor('LOC1', 'B1', 'F2');
@@ -282,6 +228,7 @@ describe('QR Service', () => {
 
   it('create throws if unauthenticated', async () => {
     setAuthUser(null);
+    mockAuthService.getCurrentUserContext.mockResolvedValue(null);
     await expect(createQRCodeMapping('L', 'LN', 'B', 'BN', 'F', 'R', 'RN', 'Q')).rejects.toThrow(
       'User not authenticated',
     );

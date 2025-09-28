@@ -9,8 +9,8 @@ type Props = {
   onVisitPress?: (visit: Visit) => void;
 };
 const RecentlyVisitedCarousel = ({ visits, onVisitPress }: Props) => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
 
   if (visits.length === 0) {
     return (
@@ -28,7 +28,7 @@ const RecentlyVisitedCarousel = ({ visits, onVisitPress }: Props) => {
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.listContainer}
       data={visits}
-      keyExtractor={(item, index) => item.id || item.poiId || index.toString()}
+      keyExtractor={(item, index) => item.poiId || index.toString()}
       renderItem={({ item }) => (
         <TouchableOpacity
           style={[

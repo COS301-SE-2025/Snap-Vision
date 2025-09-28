@@ -8,8 +8,8 @@ import SettingsHeader from '../molecules/SettingsHeader';
 import StandardPopup from '../atoms/StandardPopup';
 
 const ShopContent: React.FC = () => {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme, isDark } = useTheme();
+  const colors = getThemeColors(theme);
   const {
     badgeState,
     selectedTab,
@@ -18,9 +18,10 @@ const ShopContent: React.FC = () => {
     setPopup,
     getFilteredItems,
     handlePurchase,
-    handleEquipIcon,
+    handleEquipItem,
     isItemOwned,
     isItemEquipped,
+    isThemeEquipped,
   } = useShopManager();
 
   // Render function for shop items
@@ -28,8 +29,13 @@ const ShopContent: React.FC = () => {
     // Check if user owns this item (either it's free or they've purchased it)
     const isOwned = isItemOwned(item);
 
-    // Check if this icon is currently equipped using UserIconContext
-    const isEquipped = isItemEquipped(item.id);
+    // Check if this item is currently equipped
+    let isEquipped = false;
+    if (item.itemType === 'theme' && item.baseThemeType) {
+      isEquipped = isThemeEquipped(item.baseThemeType);
+    } else if (item.itemType === 'icon') {
+      isEquipped = isItemEquipped(item.id);
+    }
 
     // Use a safe default icon if needed
     const iconName = item.icon || 'help-circle';
@@ -57,7 +63,7 @@ const ShopContent: React.FC = () => {
                 backgroundColor: isEquipped ? colors.secondary : colors.primary,
               },
             ]}
-            onPress={() => handleEquipIcon(item)}
+            onPress={() => handleEquipItem(item)}
           >
             <Text style={styles.buyText}>{isEquipped ? 'Equipped' : 'Equip'}</Text>
           </TouchableOpacity>
@@ -97,9 +103,9 @@ const ShopContent: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <SettingsHeader title="Icon Shop" />
+      <SettingsHeader title="Shop" />
       <Text style={[styles.subtitle, { color: colors.text }]}>
-        Customize your navigation tabs with different icons!
+        Customize your app with different themes and navigation icons!
       </Text>
 
       {/* Tab selector */}
@@ -109,7 +115,7 @@ const ShopContent: React.FC = () => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.tabSelectorContent}
         >
-          {['Home', 'Map', 'Achievements', 'Settings'].map(renderTabButton)}
+          {['Themes', 'Home', 'Map', 'Achievements', 'Settings'].map(renderTabButton)}
         </ScrollView>
       </View>
 

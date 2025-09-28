@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import LandingOverlay from '../../src/components/organisms/LandingOverlay';
@@ -134,19 +135,17 @@ describe('LandingOverlay Integration Tests', () => {
       const { getByText, getByTestId } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(mockUseTheme).toHaveBeenCalled();
-      expect(mockGetThemeColors).toHaveBeenCalledWith(false);
+  expect(mockGetThemeColors).toHaveBeenCalledWith('light');
 
       expect(getByText('Snap')).toBeTruthy();
       expect(getByText('Vision')).toBeTruthy();
-      expect(getByText('Wander Less, Discover More')).toBeTruthy();
-      expect(getByText(/Snap Vision is an indoor and outdoor navigation system/)).toBeTruthy();
       expect(getByText('Key Features')).toBeTruthy();
 
       const features = [
-        'Turn-by-turn Navigation',
-        'Indoor & Outdoor Coverage',
-        'Voice Assistance',
-        'AR Navigation',
+        'Indoor and Outdoor Navigation',
+        'AR Mode',
+        'Earn Badges and Shop Icons!',
+        'Integrated Timetable Builder',
       ];
       features.forEach((feature) => {
         expect(getByText(feature)).toBeTruthy();
@@ -176,13 +175,10 @@ describe('LandingOverlay Integration Tests', () => {
       expect(getByText('Snap')).toBeTruthy();
       expect(getByText('Vision')).toBeTruthy();
 
-      expect(getByText('Wander Less, Discover More')).toBeTruthy();
-      expect(getByText(/designed to help students and visitors/)).toBeTruthy();
-
-      expect(getByText('Turn-by-turn Navigation')).toBeTruthy();
-      expect(getByText('Indoor & Outdoor Coverage')).toBeTruthy();
-      expect(getByText('Voice Assistance')).toBeTruthy();
-      expect(getByText('AR Navigation')).toBeTruthy();
+      expect(getByText('Indoor and Outdoor Navigation')).toBeTruthy();
+      expect(getByText('AR Mode')).toBeTruthy();
+      expect(getByText('Earn Badges and Shop Icons!')).toBeTruthy();
+      expect(getByText('Integrated Timetable Builder')).toBeTruthy();
 
       const snapText = getByText('Snap');
       let currentElement = snapText.parent;
@@ -210,7 +206,7 @@ describe('LandingOverlay Integration Tests', () => {
       const { rerender, getByText } = render(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(getByText('Snap')).toBeTruthy();
-      expect(mockGetThemeColors).toHaveBeenCalledWith(false);
+  expect(mockGetThemeColors).toHaveBeenCalledWith('light');
 
       mockUseTheme.mockReturnValue(darkTheme);
       mockGetThemeColors.mockReturnValue(darkColors);
@@ -218,10 +214,9 @@ describe('LandingOverlay Integration Tests', () => {
       rerender(<LandingOverlay onDismiss={mockOnDismiss} />);
 
       expect(getByText('Snap')).toBeTruthy();
-      expect(mockGetThemeColors).toHaveBeenCalledWith(true);
+  expect(mockGetThemeColors).toHaveBeenCalledWith('dark');
 
       expect(getByText('Vision')).toBeTruthy();
-      expect(getByText('Wander Less, Discover More')).toBeTruthy();
     });
   });
 
@@ -296,7 +291,7 @@ describe('LandingOverlay Integration Tests', () => {
 
       const gradient = getByTestId('linear-gradient');
       expect(gradient).toBeTruthy();
-      expect(gradient.props.colors).toEqual(['#69c6d0', '#ffffff', '#69c6d0']);
+      expect(gradient.props.colors).toEqual(['#000000', '#6c757d']);
 
       expect(getByText('Key Features')).toBeTruthy();
 
@@ -318,15 +313,11 @@ describe('LandingOverlay Integration Tests', () => {
       expect(getByText('Snap')).toBeTruthy();
       expect(getByText('Vision')).toBeTruthy();
 
-      expect(getByText('Wander Less, Discover More')).toBeTruthy();
-
-      expect(getByText(/navigation system designed to help students/)).toBeTruthy();
-
       expect(getByText('Key Features')).toBeTruthy();
-      expect(getByText('Turn-by-turn Navigation')).toBeTruthy();
-      expect(getByText('Indoor & Outdoor Coverage')).toBeTruthy();
-      expect(getByText('Voice Assistance')).toBeTruthy();
-      expect(getByText('AR Navigation')).toBeTruthy();
+      expect(getByText('Indoor and Outdoor Navigation')).toBeTruthy();
+      expect(getByText('AR Mode')).toBeTruthy();
+      expect(getByText('Earn Badges and Shop Icons!')).toBeTruthy();
+      expect(getByText('Integrated Timetable Builder')).toBeTruthy();
 
       expect(getByText('© 2025 Snap Vision Team')).toBeTruthy();
 
@@ -343,12 +334,11 @@ describe('LandingOverlay Integration Tests', () => {
       const accessibleTexts = [
         'Snap',
         'Vision',
-        'Wander Less, Discover More',
         'Key Features',
-        'Turn-by-turn Navigation',
-        'Indoor & Outdoor Coverage',
-        'Voice Assistance',
-        'AR Navigation',
+        'Indoor and Outdoor Navigation',
+        'AR Mode',
+        'Earn Badges and Shop Icons!',
+        'Integrated Timetable Builder',
         '© 2025 Snap Vision Team',
       ];
 
