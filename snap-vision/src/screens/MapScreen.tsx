@@ -825,9 +825,9 @@ const MapScreen = () => {
     }
   }, [state.purchases, isMapReady]);
 
-    useEffect(() => {
+  useEffect(() => {
     if (params?.selectedPOIId && isMapReady && pois.length > 0) {
-      const poi = pois.find(p => p.id === params.selectedPOIId);
+      const poi = pois.find((p) => p.id === params.selectedPOIId);
       if (poi && (!selectedFeature || selectedFeature.id !== poi.id)) {
         // select the POI immediately
         selectPOI(poi);
@@ -835,7 +835,7 @@ const MapScreen = () => {
         setSelectedFeature(poi);
         setDestination(poi.name);
         setDestinationCoords([poi.centroid.longitude, poi.centroid.latitude]);
-        
+
         // only fetch the route and show directions if location is available
         if (currentLocation) {
           fetchRoute([poi.centroid.longitude, poi.centroid.latitude]);
@@ -843,7 +843,20 @@ const MapScreen = () => {
         }
       }
     }
-  }, [params?.selectedPOIId, isMapReady, pois, selectedFeature, selectPOI, setHookSelectedPOI, setSelectedFeature, setDestination, setDestinationCoords, currentLocation, fetchRoute, setShowDirectionsSheet]);
+  }, [
+    params?.selectedPOIId,
+    isMapReady,
+    pois,
+    selectedFeature,
+    selectPOI,
+    setHookSelectedPOI,
+    setSelectedFeature,
+    setDestination,
+    setDestinationCoords,
+    currentLocation,
+    fetchRoute,
+    setShowDirectionsSheet,
+  ]);
   return (
     <MapContent
       //theme
