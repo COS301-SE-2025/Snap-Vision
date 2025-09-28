@@ -4,8 +4,8 @@ import auth from '@react-native-firebase/auth';
 import { ShopItem } from '../hooks/useShopManager';
 
 interface UserIconState {
-  selectedIcons: Record<string, string>; // tabType -> iconName mapping
-  equippedItems: string[]; // list of equipped shop item IDs
+  selectedIcons: Record<string, string>; 
+  equippedItems: string[];
 }
 
 type UserIconContextType = {
@@ -72,7 +72,6 @@ export const UserIconProvider: React.FC<{ children: ReactNode }> = ({ children }
     loadUserIconPreferences();
   }, []);
 
-  // Clean up old storage format (migration helper)
   const cleanupOldStorage = async () => {
     try {
       await AsyncStorage.removeItem('@snap_vision_tab_icons');
@@ -84,7 +83,6 @@ export const UserIconProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   // Listen to auth state changes to reset icons on logout and load on login
   useEffect(() => {
-    // Clean up old storage format on first load
     cleanupOldStorage();
 
     const unsubscribe = auth().onAuthStateChanged(async (user) => {

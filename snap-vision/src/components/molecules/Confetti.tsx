@@ -30,7 +30,7 @@ const Confetti: React.FC<ConfettiProps> = (props) => {
   const colors = getThemeColors(theme);
 
   const {
-    count = 80, // Increased from 50 to 80
+    count = 80, 
     duration = 5000,
     colours = [
       // '#FF577F',

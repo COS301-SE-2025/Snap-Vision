@@ -205,8 +205,6 @@ export default function TimetableEntryForm({
       : { borderColor: colors.primary };
   };
 
-  // Render functions removed - using native Picker instead
-
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.modalOverlay}>

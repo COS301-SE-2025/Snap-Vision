@@ -1,4 +1,3 @@
-//Snap-Vision\snap-vision\src\types\badges.ts
 // 1. Badge ID types
 export type BadgeId =
   | 'first-login' //done

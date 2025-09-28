@@ -169,7 +169,6 @@ export const useQRCodeAdmin = (): UseQRCodeAdminReturn => {
   // Ref to export QR
   const qrRef = useRef<QRCode | null>(null);
 
-  // --- RBAC: fetch user role + permitted locations (editors) ---
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
@@ -188,7 +187,6 @@ export const useQRCodeAdmin = (): UseQRCodeAdminReturn => {
     fetchUserInfo();
   }, []);
 
-  // --- Load locations (filtered for editor) ---
   useEffect(() => {
     const loadLocations = async () => {
       if (!role) return; // wait for RBAC
@@ -217,7 +215,6 @@ export const useQRCodeAdmin = (): UseQRCodeAdminReturn => {
     loadLocations();
   }, [role, adminLocations]);
 
-  // --- When location selected: load buildings ---
   useEffect(() => {
     const loadBuildingsForLocation = async () => {
       if (!selectedLocationId) return;
@@ -242,7 +239,6 @@ export const useQRCodeAdmin = (): UseQRCodeAdminReturn => {
     loadBuildingsForLocation();
   }, [selectedLocationId]);
 
-  // --- When building selected: load floors + QR codes for building ---
   useEffect(() => {
     const loadFloorsAndQRCodes = async () => {
       if (!selectedLocationId || !selectedBuildingId) return;
@@ -266,7 +262,6 @@ export const useQRCodeAdmin = (): UseQRCodeAdminReturn => {
     loadFloorsAndQRCodes();
   }, [selectedBuildingId, selectedLocationId]);
 
-  // --- When floor selected: load rooms (used in Add modal) ---
   useEffect(() => {
     const loadRoomsForFloor = async () => {
       if (!selectedLocationId || !selectedBuildingId || !selectedFloorId) return;
@@ -283,7 +278,6 @@ export const useQRCodeAdmin = (): UseQRCodeAdminReturn => {
     loadRoomsForFloor();
   }, [selectedFloorId, selectedBuildingId, selectedLocationId]);
 
-  // --- Business Logic Actions ---
   const generateQRValue = useCallback(() => {
     const rand = Math.random().toString(36).slice(2, 10);
     return `qr:${selectedLocationId || ''}:${selectedBuildingId || ''}:${selectedFloorId || ''}:${selectedRoom?.id || ''}:${rand}`;

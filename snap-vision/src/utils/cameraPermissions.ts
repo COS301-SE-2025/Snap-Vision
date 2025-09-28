@@ -1,4 +1,3 @@
-// src/utils/cameraPermissions.ts
 import { PermissionsAndroid, Platform, Alert } from 'react-native';
 
 export const requestCameraPermission = async (): Promise<boolean> => {
@@ -27,7 +26,6 @@ export const requestCameraPermission = async (): Promise<boolean> => {
     }
   }
 
-  // For iOS, camera permissions are handled automatically by react-native-vision-camera
   return true;
 };
 

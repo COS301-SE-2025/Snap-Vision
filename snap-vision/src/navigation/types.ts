@@ -11,5 +11,4 @@ export type RootStackParamList = {
     buildingName: string;
     locationId: string;
   };
-  // Add other screen params here
 };

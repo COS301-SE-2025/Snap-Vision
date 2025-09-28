@@ -19,7 +19,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       <View style={[styles.header, { backgroundColor: colors.primary }]}>
         <Text style={styles.headerText}>User Settings</Text>
       </View>
-      <SettingsContent navigation={navigation} /> {/* pass it here */}
+      <SettingsContent navigation={navigation} />
     </ScrollView>
   );
 }

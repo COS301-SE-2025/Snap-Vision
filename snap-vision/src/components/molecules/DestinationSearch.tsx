@@ -1,4 +1,3 @@
-// src/components/molecules/DestinationSearch.tsx
 import React from 'react';
 import { View, TextInput, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { getThemeColors } from '../../theme';

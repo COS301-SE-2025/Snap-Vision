@@ -1,4 +1,3 @@
-// src/hooks/useUserManagement.ts
 import { useState, useEffect } from 'react';
 import { User, UserFilters } from '../types/User';
 import firestore from '@react-native-firebase/firestore';

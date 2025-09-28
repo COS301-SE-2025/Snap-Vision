@@ -73,7 +73,7 @@ const CrowdReportModal: React.FC<CrowdReportModalProps> = ({
       <View
         style={[
           styles.suggestionsOverlay,
-          { top: 180 }, // Position below the search box
+          { top: 180 },
         ]}
       >
         <View
@@ -92,7 +92,7 @@ const CrowdReportModal: React.FC<CrowdReportModalProps> = ({
                   onChangePOI(item);
                   setBuildingSearchText(item.name);
                   setShowBuildingSuggestions(false);
-                  Keyboard.dismiss(); // Dismiss keyboard immediately
+                  Keyboard.dismiss(); 
                 }}
                 style={[styles.suggestionItem, { borderBottomColor: colors.border }]}
               >
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
   modalContainer: {
     width: width - 40,
     maxWidth: 400,
-    maxHeight: height * 0.85, // Limit height to 85% of screen
+    maxHeight: height * 0.85,
     borderRadius: 12,
     elevation: 10,
     shadowColor: '#000',
@@ -290,10 +290,10 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   scrollView: {
-    flexGrow: 0, // Don't allow the scroll view to expand
+    flexGrow: 0, 
   },
   scrollContent: {
-    paddingBottom: 10, // Add padding at the bottom
+    paddingBottom: 10, 
   },
   section: {
     paddingHorizontal: 20,

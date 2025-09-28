@@ -39,7 +39,7 @@ type BeaconDoc = {
   minor: number;
   x: number; // 0..1 normalized
   y: number; // 0..1 normalized
-  txPowerAt1m: number; // e.g. -59
+  txPowerAt1m: number; 
   label?: string;
 };
 
@@ -54,7 +54,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
   const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Beacon state (replaces WiFi fingerprints)
+  // Beacon state
   const [existingBeacons, setExistingBeacons] = useState<BeaconDoc[]>([]);
   const [beaconLabel, setBeaconLabel] = useState('');
   const [beaconUUID, setBeaconUUID] = useState('');
@@ -135,7 +135,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
     setCoords(null);
   };
 
-  // 6) Handle messages from WebView (tap to place or select existing beacon)
+  // Handle messages from WebView (tap to place or select existing beacon)
   const handleMessage = (event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
@@ -177,7 +177,7 @@ export default function AdminIndoorPositioningContent(props: Props) {
     }
   };
 
-  // 8) Floorplan HTML with existing beacon markers
+  // Floorplan HTML with existing beacon markers
   const getHTML = () => {
     const markers = existingBeacons
       .map((b) => {

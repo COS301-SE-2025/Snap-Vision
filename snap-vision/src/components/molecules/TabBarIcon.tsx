@@ -1,4 +1,3 @@
-// src/components/molecules/TabBarIcon.tsx
 import React from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useUserIcons } from '../../context/UserIconContext';
@@ -10,7 +9,6 @@ interface Props {
 }
 
 export default function TabBarIcon({ routeName, color, size }: Props) {
-  // Use custom icon from context if available
   const { getIconForTab } = useUserIcons();
 
   // Get custom icon for this tab, or use default if none is set

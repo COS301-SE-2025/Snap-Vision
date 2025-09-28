@@ -35,7 +35,7 @@ type Options = {
 type Pos = { x: number; y: number };
 
 const DEFAULT_TX = -59;
-const RELAXED_UUIDS = new Set(['minew-fef3', 'minew-c5e2']); // Minew service-data aliases when not picked up as iBeacon
+const RELAXED_UUIDS = new Set(['minew-fef3', 'minew-c5e2']);
 
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 

@@ -1,5 +1,3 @@
-// src/security/InputValidator.ts
-
 export class InputValidator {
   /**
    * Validate and sanitize user ID

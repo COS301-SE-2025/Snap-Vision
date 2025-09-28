@@ -1,4 +1,3 @@
-// src/components/organisms/DirectionsModal.tsx
 import React from 'react';
 import { Modal, View, FlatList, Pressable, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
@@ -85,7 +84,7 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.4)', // Semi-transparent dark overlay
+    backgroundColor: 'rgba(0,0,0,0.4)', 
   },
   mapArea: {
     flex: 1,

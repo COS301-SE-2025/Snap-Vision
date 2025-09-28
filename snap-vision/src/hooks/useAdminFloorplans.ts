@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import firestore from '@react-native-firebase/firestore';
 import { FloorplanMeta, Location, Building } from '../types/floorplan.types';
 import perf from '@react-native-firebase/perf';

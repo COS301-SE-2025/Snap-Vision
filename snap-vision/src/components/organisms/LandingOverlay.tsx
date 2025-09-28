@@ -136,7 +136,7 @@ const LandingOverlay = ({ onDismiss }: { onDismiss: () => void }) => {
               <Animated.View
                 style={{
                   height: 40,
-                  width: 600, // Wider than mask so it can scroll across
+                  width: 600,
                   transform: [{ translateX: shimmerTranslate }],
                 }}
               >
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexGrow: 1,
-    paddingBottom: 0, // leave room for mascot and absolute footer
+    paddingBottom: 0,
   },
   mascotWrapper: {
     position: 'absolute',

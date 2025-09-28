@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import ActionButtonWithTooltip from '../molecules/ActionButtonWithTooltip';
 import Icon from 'react-native-vector-icons/Ionicons';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useTheme } from '../../theme/ThemeContext';
 import { getThemeColors } from '../../theme';
 
@@ -57,7 +56,7 @@ const MapActionsPanel = ({
 
   const drawerTranslateX = drawerAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [150, 0], // Increased from 80 to 150 to fully hide buttons
+    outputRange: [150, 0], 
   });
 
   const arrowRotation = drawerAnimation.interpolate({
@@ -167,7 +166,7 @@ const styles = StyleSheet.create({
     top: -20,
     right: 0,
     width: 130,
-    height: 170, // decreased from 240 in absence of bluetooth button
+    height: 170, 
     borderTopLeftRadius: 15,
     borderBottomLeftRadius: 15,
     elevation: 2,
@@ -201,7 +200,7 @@ const styles = StyleSheet.create({
   },
   adminButtonContainer: {
     position: 'absolute',
-    top: 170, // decreased from 250 in absence of bluetooth button
+    top: 170, 
     right: 15,
     alignItems: 'center',
   },

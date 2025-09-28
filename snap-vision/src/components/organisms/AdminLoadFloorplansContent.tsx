@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-
-import AppInput from '../atoms/AppInput';
 import AppButton from '../atoms/AppButton';
 import AppSecondaryButton from '../atoms/AppSecondaryButton';
 import SettingsHeader from '../molecules/SettingsHeader';
@@ -14,7 +12,6 @@ import { useUserRole } from '../../hooks/useUserRole';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { AdminFloorplanUploadFlow } from './AdminFloorplanUploadFlow';
-import { FloorplanMeta } from '../../types/floorplan.types';
 
 type RootStackParamList = {
   AdminFloorplanEditor: any;

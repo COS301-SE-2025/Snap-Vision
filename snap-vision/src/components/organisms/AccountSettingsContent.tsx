@@ -30,7 +30,7 @@ export default function AccountSettingsContent({ navigation }: Props) {
           'Logged Out',
           'You have been logged out successfully.',
           {},
-          theme === 'dark',
+          theme,
         ),
       );
 
@@ -41,7 +41,7 @@ export default function AccountSettingsContent({ navigation }: Props) {
           'Logout Failed',
           'An error occurred while logging out.',
           {},
-          theme === 'dark',
+          theme,
         ),
       );
     } finally {

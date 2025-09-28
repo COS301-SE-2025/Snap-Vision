@@ -89,7 +89,6 @@ export default function RegisterForm() {
 
     if (hasError) {
       setErrors(newErrors);
-      // Using inline error messages only, no popups
       await trace.stop();
       return;
     }

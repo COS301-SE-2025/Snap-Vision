@@ -274,11 +274,11 @@ function MiniMapOverlay({
                         styles.routeSegment,
                         {
                           left: start.x,
-                          top: start.y - 1, // Center the line vertically
+                          top: start.y - 1, 
                           width: length,
                           transform: [{ rotate: `${angle}deg` }],
                           backgroundColor: index < currentRouteIndex ? '#4CAF50' : '#2196F3', // Green for completed, blue for remaining
-                          opacity: index < currentRouteIndex ? 0.8 : 1, // Slightly more visible for completed segments
+                          opacity: index < currentRouteIndex ? 0.8 : 1, 
                         },
                       ]}
                     />
@@ -386,7 +386,7 @@ function SimpleARGuidance({
                 point[0],
               );
 
-              // Prefer points 15-40 meters ahead (good range for direction)
+              // Prefer points 15-40 meters ahead
               if (
                 distanceToPoint >= 15 &&
                 distanceToPoint <= 40 &&
@@ -508,7 +508,6 @@ function SimpleARFallback({
 }) {
   if (!currentLocation || !destinationCoords) return null;
 
-  // FIXED: Use correct coordinate order for GPS coordinates
   const bearing = calculateBearing(
     currentLocation.y, // latitude
     currentLocation.x, // longitude
@@ -516,7 +515,6 @@ function SimpleARFallback({
     destinationCoords.x, // destination longitude
   );
 
-  // NO OFFSETS - Pure raw readings from react-native-compass-heading library
   const normalizedHeading = ((deviceHeading % 360) + 360) % 360;
   const relativeBearing = normalizeAngle(bearing - normalizedHeading);
   const distance = calculateDistance(
@@ -608,7 +606,7 @@ function CustomDirectionArrow({ direction, size = 160 }: { direction: string; si
       case 'up-left':
         return 315;
       case 'turn-around':
-        return 0; // Will use different path
+        return 0; 
       default:
         return 0;
     }
@@ -681,9 +679,9 @@ function CustomDirectionArrow({ direction, size = 160 }: { direction: string; si
 // Helper functions to create Skia paths
 function createArrowShaft(size: number): string {
   const centerX = size / 2;
-  const shaftWidth = size * 0.15; // Made thicker for better visibility
-  const shaftHeight = size * 0.42; // Slightly longer
-  const startY = size * 0.43; // Adjusted start position
+  const shaftWidth = size * 0.15; 
+  const shaftHeight = size * 0.42; 
+  const startY = size * 0.43;
 
   return `M ${centerX - shaftWidth / 2} ${startY} 
           L ${centerX + shaftWidth / 2} ${startY} 
@@ -694,9 +692,9 @@ function createArrowShaft(size: number): string {
 
 function createArrowHead(size: number): string {
   const centerX = size / 2;
-  const headWidth = size * 0.35; // Made wider
-  const headHeight = size * 0.32; // Slightly taller
-  const tipY = size * 0.12; // Moved tip up slightly
+  const headWidth = size * 0.35; 
+  const headHeight = size * 0.32; 
+  const tipY = size * 0.12; 
 
   return `M ${centerX} ${tipY} 
           L ${centerX - headWidth / 2} ${tipY + headHeight} 
@@ -707,7 +705,7 @@ function createArrowHead(size: number): string {
 function createTurnAroundPath(size: number): string {
   const centerX = size / 2;
   const centerY = size / 2;
-  const radius = size * 0.3; // Increased radius for bigger circular arrow
+  const radius = size * 0.3;
 
   // Create a 3/4 circle path
   return `M ${centerX + radius} ${centerY} 
@@ -717,14 +715,12 @@ function createTurnAroundPath(size: number): string {
 function createTurnAroundArrowHead(size: number): string {
   const centerX = size / 2;
   const centerY = size / 2;
-  const radius = size * 0.3; // Match the increased radius
+  const radius = size * 0.3;
 
-  const arrowX = centerX - radius * 0.7 - size * 0.04; // Shifted left by 3.5% of size
+  const arrowX = centerX - radius * 0.7 - size * 0.04;
   const arrowY = centerY - radius * 0.7;
-  const headSize = size * 0.1; // Increased head size
+  const headSize = size * 0.1; 
 
-  // Flipped arrow head to point at 270 degrees (to the left)
-  // Creating a triangular arrow head pointing left (270 degrees)
   return `M ${arrowX - headSize} ${arrowY} 
           L ${arrowX + headSize} ${arrowY - headSize} 
           L ${arrowX + headSize} ${arrowY + headSize} 
@@ -758,7 +754,7 @@ const styles = StyleSheet.create({
   // Main AR Guidance
   mainGuidanceContainer: {
     position: 'absolute',
-    top: screenHeight * 0.375, // Moved down slightly from 0.35 for better positioning
+    top: screenHeight * 0.375,
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -789,7 +785,6 @@ const styles = StyleSheet.create({
     fontSize: 50,
     color: 'white',
   },
-  // Updated arrow container without circle
   arrowContainer: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -839,7 +834,7 @@ const styles = StyleSheet.create({
   // Instruction Bar
   instructionBar: {
     position: 'absolute',
-    top: 20, // Aligned with turn-by-turn directions in MapScreen
+    top: 20, 
     left: 20,
     right: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -963,7 +958,7 @@ const styles = StyleSheet.create({
   // Mini Map Styles
   miniMapContainer: {
     position: 'absolute',
-    top: 70, // distanc from top of screen
+    top: 70,
     right: 20,
     width: 160,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -1073,12 +1068,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  // Warning component styles (matching minimap styling)
   warningContainer: {
     position: 'absolute',
-    top: 70, // Same level as minimap
-    left: 20, // Left side to avoid minimap overlap
-    width: 160, // Same width as minimap when expanded
+    top: 70,
+    left: 20, 
+    width: 160, 
     borderRadius: 12,
     overflow: 'hidden',
     borderWidth: 2,
@@ -1091,7 +1085,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   warningCollapsed: {
-    width: 50, // Smaller width when minimized
+    width: 50, 
     height: 'auto',
   },
   warningHeader: {
@@ -1124,6 +1118,6 @@ const styles = StyleSheet.create({
   },
   warningLabel: {
     fontWeight: 'bold',
-    color: '#FFD700', // Gold color for emphasis
+    color: '#FFD700', 
   },
 });

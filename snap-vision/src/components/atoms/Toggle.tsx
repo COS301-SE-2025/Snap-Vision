@@ -13,7 +13,6 @@ const Toggle = ({ value, onValueChange }: Props) => {
   const { theme, isDark } = useTheme();
   const colors = getThemeColors(theme);
 
-  // Define text styles with proper typing
   const baseTextStyle: TextStyle = {
     position: 'absolute',
     fontSize: 12,

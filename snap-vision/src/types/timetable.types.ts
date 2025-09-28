@@ -8,9 +8,9 @@ export interface TimetableEntry {
   startTime: string; // HH:mm format
   endTime: string; // HH:mm format
   venue: string;
-  buildingId?: string; // New field
-  buildingName?: string; // New field
-  locationId?: string; // New field for campus location
+  buildingId?: string; 
+  buildingName?: string; 
+  locationId?: string;
   createdAt: Timestamp;
 }
 

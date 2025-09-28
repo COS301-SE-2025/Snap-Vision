@@ -1,4 +1,3 @@
-// src/components/molecules/ActionButton.tsx
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
@@ -21,8 +20,8 @@ export default function ActionButton({
   borderColor,
   variant = 'primary',
 }: Props) {
-  const { isDark } = useTheme();
-  const colors = getThemeColors(isDark);
+  const { theme } = useTheme();
+  const colors = getThemeColors(theme);
 
   const getButtonStyle = () => {
     switch (variant) {

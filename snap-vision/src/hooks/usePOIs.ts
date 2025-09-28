@@ -26,7 +26,7 @@ export const usePOIs = () => {
       try {
         setIsLoading(true);
         const snapshot = await firestore()
-          .collection('locations/up-campus/buildingPOIs') // Adjust path as needed
+          .collection('locations/up-campus/buildingPOIs') 
           .get();
 
         const poisData = snapshot.docs.map((doc) => ({

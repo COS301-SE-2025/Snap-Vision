@@ -4,7 +4,6 @@ import WebView from 'react-native-webview';
 import { useTheme } from '@react-navigation/native';
 import {
   useFloorplanPreloader,
-  preloadFloorplans,
   isFloorplanPreloaded,
 } from '../../../src/utils/FloorplanManager';
 
@@ -27,7 +26,6 @@ interface Props {
   themeColors: any;
   floorplanUrl?: string;
   nextInstructionEnd?: { x: number; y: number };
-  /** Optional array of additional floorplan URLs to preload */
   additionalFloorplans?: string[];
 }
 
@@ -426,10 +424,7 @@ export default function IndoorSchematicMap({
   const webViewRef = useRef<WebView>(null);
   const { dark: isDarkMode } = useTheme();
 
-  // Always use the static HTML to avoid reloads when switching floors
   const htmlContent = useMemo(() => {
-    // Always return the full HTML with map capability regardless of whether floorplanUrl exists
-    // This prevents re-rendering the WebView when switching floors
     return STATIC_HTML;
   }, []);
 
@@ -441,7 +436,7 @@ export default function IndoorSchematicMap({
 
   const handleLoadEnd = useCallback(() => {
     setWebViewReady(true);
-    setInitAttempts(0); // Reset attempts counter on fresh load
+    setInitAttempts(0); 
     const payload = {
       floorplanUrl,
       rooms,
@@ -457,12 +452,11 @@ export default function IndoorSchematicMap({
         secondary: themeColors?.secondary || '#FF4081',
         success: themeColors?.success || '#4CAF50',
         warning: themeColors?.warning || '#FFB300',
-        destination: '#8B4513', // Darker brown for destination marker
+        destination: '#8B4513',
         isDarkMode: isDarkMode,
       },
     };
 
-    // Delay initialization slightly to ensure HTML is loaded and window.initMap is available
     setTimeout(() => {
       webViewRef.current?.injectJavaScript(`
         try {
@@ -509,7 +503,7 @@ export default function IndoorSchematicMap({
         }
         true;
       `);
-    }, 300); // Add a small delay to ensure the WebView has properly loaded
+    }, 300);
   }, [
     floorplanUrl,
     rooms,
@@ -554,7 +548,6 @@ export default function IndoorSchematicMap({
     webViewRef.current?.injectJavaScript(cmd);
   }, [currentPos]);
 
-  // Update theme colors without reload
   useEffect(() => {
     const colors = {
       background: isDarkMode ? '#121212' : themeColors?.background || '#ffffff',
@@ -644,7 +637,6 @@ export default function IndoorSchematicMap({
     setIsLoading(initialLoad || floorplanNeedsLoading);
   }, [webViewReady, floorplanLoaded, floorplanUrl, isPreloaded]);
 
-  // Recovery mechanism - retry initialization if the map fails to load
   useEffect(() => {
     if (webViewReady && !floorplanLoaded && floorplanUrl && initAttempts < maxInitAttempts) {
       const timer = setTimeout(() => {
@@ -702,14 +694,12 @@ export default function IndoorSchematicMap({
   // Clean up resources when component unmounts
   useEffect(() => {
     return () => {
-      // Reset any resources or listeners
       setWebViewReady(false);
       setFloorplanLoaded(false);
       setInitAttempts(0);
     };
   }, []);
 
-  // Create a full onLoad handler to supplement onLoadEnd
   const handleLoad = useCallback(() => {}, []);
 
   return (
