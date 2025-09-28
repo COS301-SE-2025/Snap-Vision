@@ -195,7 +195,7 @@ describe('HomeContent', () => {
       const goToMapsButton = getByTestId('app-button');
       fireEvent.press(goToMapsButton);
 
-      expect(mockNavigate).toHaveBeenCalledWith('Map');
+      expect(mockNavigate).toHaveBeenCalledWith({ name: 'Map', params: {} });
     });
 
     it('calls navigation navigate with correct parameter', async () => {
@@ -208,7 +208,7 @@ describe('HomeContent', () => {
       fireEvent.press(getByText('GO TO MAPS'));
 
       expect(mockNavigate).toHaveBeenCalledTimes(1);
-      expect(mockNavigate).toHaveBeenCalledWith('Map');
+      expect(mockNavigate).toHaveBeenCalledWith({ name: 'Map', params: {} });
     });
   });
 
