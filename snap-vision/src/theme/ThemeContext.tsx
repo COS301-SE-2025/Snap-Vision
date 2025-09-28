@@ -38,11 +38,11 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(async (user) => {
       const newUserId = user?.uid || null;
-      
+
       // If user changed (logged out or different user logged in)
       if (currentUserId !== newUserId) {
         setCurrentUserId(newUserId);
-        
+
         if (!newUserId) {
           // User logged out - reset to system defaults
           const systemDark = Appearance.getColorScheme() === 'dark';
@@ -59,7 +59,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
           await loadThemeForUser();
         }
       }
-      
+
       setIsLoading(false);
     });
 
@@ -73,7 +73,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
         BASE_THEME_STORAGE_KEY,
         DARK_MODE_STORAGE_KEY,
       ]);
-      
+
       // Load base theme
       const baseThemeValue = savedBaseTheme[1];
       if (baseThemeValue && ['light', 'pink', 'ocean', 'forest'].includes(baseThemeValue)) {
@@ -81,7 +81,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       } else {
         setBaseThemeState('light');
       }
-      
+
       // Load dark mode preference
       const darkModeValue = savedDarkMode[1];
       if (darkModeValue !== null) {
@@ -129,7 +129,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const setTheme = async (themeName: ThemeName) => {
     const newBaseTheme = getBaseTheme(themeName);
     const newIsDark = isDarkTheme(themeName);
-    
+
     setBaseThemeState(newBaseTheme);
     setIsDarkState(newIsDark);
 
@@ -147,15 +147,15 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <ThemeContext.Provider 
-      value={{ 
-        theme, 
-        baseTheme, 
-        isDark, 
-        toggleDarkMode, 
-        setBaseTheme, 
-        setTheme, 
-        isLoading 
+    <ThemeContext.Provider
+      value={{
+        theme,
+        baseTheme,
+        isDark,
+        toggleDarkMode,
+        setBaseTheme,
+        setTheme,
+        isLoading,
       }}
     >
       {children}

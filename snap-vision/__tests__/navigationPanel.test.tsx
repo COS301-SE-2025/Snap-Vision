@@ -151,8 +151,6 @@ describe('NavigationPanel', () => {
       expect(defaultProps.onToggleMinimize).toHaveBeenCalled();
     });
 
-
-
     it('calls onStopNavigation when minimized stop button is pressed', () => {
       const { getAllByTestId } = render(
         <ThemeProviderWrapper>
@@ -171,7 +169,12 @@ describe('NavigationPanel', () => {
       const mockOnToggleAR = jest.fn();
       const { getAllByTestId } = render(
         <ThemeProviderWrapper>
-          <NavigationPanel {...defaultProps} isMinimized={true} isNavigating={true} onToggleAR={mockOnToggleAR} />
+          <NavigationPanel
+            {...defaultProps}
+            isMinimized={true}
+            isNavigating={true}
+            onToggleAR={mockOnToggleAR}
+          />
         </ThemeProviderWrapper>,
       );
 
@@ -272,7 +275,12 @@ describe('NavigationPanel', () => {
       const mockOnToggleAR = jest.fn();
       const { getAllByTestId } = render(
         <ThemeProviderWrapper>
-          <NavigationPanel {...defaultProps} isMinimized={true} isNavigating={true} onToggleAR={mockOnToggleAR} />
+          <NavigationPanel
+            {...defaultProps}
+            isMinimized={true}
+            isNavigating={true}
+            onToggleAR={mockOnToggleAR}
+          />
         </ThemeProviderWrapper>,
       );
 

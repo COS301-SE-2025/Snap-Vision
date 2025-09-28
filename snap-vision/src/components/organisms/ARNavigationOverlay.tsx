@@ -85,7 +85,7 @@ export default function ARNavigationOverlay({
             nextInstruction={nextInstruction}
           />
         </View>
-        
+
         {/* AR Navigation Warning for fallback view */}
         <ARNavigationWarning
           isMinimized={isWarningMinimized}
@@ -151,27 +151,23 @@ function ARNavigationWarning({
   const colors = theme.dark ? darkColors : lightColors;
 
   return (
-    <View style={[
-      styles.warningContainer,
-      isMinimized && styles.warningCollapsed,
-      { backgroundColor: colors.warning }
-    ]}>
-      <TouchableOpacity 
-        style={styles.warningHeader} 
-        onPress={onToggleMinimize}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.warningTitle}>
-          {isMinimized ? '   ⚠' : 'Navigation Warning'}
-        </Text>
-
+    <View
+      style={[
+        styles.warningContainer,
+        isMinimized && styles.warningCollapsed,
+        { backgroundColor: colors.warning },
+      ]}
+    >
+      <TouchableOpacity style={styles.warningHeader} onPress={onToggleMinimize} activeOpacity={0.7}>
+        <Text style={styles.warningTitle}>{isMinimized ? '   ⚠' : 'Navigation Warning'}</Text>
       </TouchableOpacity>
-      
+
       {!isMinimized && (
         <View style={styles.warningContent}>
           <Text style={styles.warningText}>
             <Text style={styles.warningLabel}>NOTE: </Text>
-            AR navigation can be inaccurate due to GPS imprecision and sensor limitations. Use as a general guide only.
+            AR navigation can be inaccurate due to GPS imprecision and sensor limitations. Use as a
+            general guide only.
           </Text>
         </View>
       )}

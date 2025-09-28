@@ -19,14 +19,14 @@ function toHex(bytes?: number[] | null, maxLen = 24): string {
 function mdToBytes(md: any): number[] | null {
   try {
     if (!md) return null;
-    
+
     // Handle direct array format
     if (Array.isArray(md.bytes)) return md.bytes as number[];
-    
+
     // Handle base64 string format
     const b64 = typeof md?.data === 'string' ? md.data : typeof md === 'string' ? md : null;
     if (b64) return Array.from(Buffer.from(b64, 'base64').values());
-    
+
     // Handle nested object format with company IDs (e.g., {004c: {bytes: [...], data: "..."}})
     if (typeof md === 'object' && md !== null) {
       // Look for Apple's company ID (004c) first - most common for iBeacons
@@ -37,7 +37,7 @@ function mdToBytes(md: any): number[] | null {
           return Array.from(Buffer.from(appleData.data, 'base64').values());
         }
       }
-      
+
       // Try any other company ID
       for (const companyId of Object.keys(md)) {
         const companyData = md[companyId];
@@ -49,7 +49,7 @@ function mdToBytes(md: any): number[] | null {
         }
       }
     }
-    
+
     //console.log('[mdToBytes] Unknown format:', JSON.stringify(md));
     return null;
   } catch (e) {
@@ -716,14 +716,14 @@ export class NativeBeaconScanner {
       for (const m of minors) {
         this.allowedMM.add(`1|${m}`);
       }
-      
+
       // Also add the actual values we're seeing in the logs (from iBeacon data)
       // From the debug logs: C2:03:03:00:41:67 has [0,1,0,3] which is Major=1, Minor=3
       // From the debug logs: C2:03:03:00:41:6B has [0,1,0,1] which is Major=1, Minor=1
-      this.allowedMM.add(`1|1`);  // Explicitly add what we expect to see
+      this.allowedMM.add(`1|1`); // Explicitly add what we expect to see
       this.allowedMM.add(`1|2`);
       this.allowedMM.add(`1|3`);
-      
+
       log('Default MM whitelist:', Array.from(this.allowedMM));
     }
 

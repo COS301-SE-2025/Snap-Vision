@@ -74,7 +74,8 @@ jest.mock('@react-native-firebase/firestore', () => {
   });
 
   const makeQuery = (basePath: string, filters: any[] = [], _order?: any, _limit?: number) => ({
-    where: (field: string, op: string, val: any) => makeQuery(basePath, [...filters, { field, op, val }], _order, _limit),
+    where: (field: string, op: string, val: any) =>
+      makeQuery(basePath, [...filters, { field, op, val }], _order, _limit),
     orderBy: (field: string, dir: 'asc' | 'desc' = 'asc') => {
       return makeQuery(basePath, filters, { field, dir }, _limit);
     },

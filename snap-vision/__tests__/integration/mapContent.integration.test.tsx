@@ -58,8 +58,6 @@ jest.mock('../../src/components/molecules/Confetti', () => {
 // Mock the ARNavigationOverlay import for tracking
 const MockARNavigationOverlay = require('../../src/components/organisms/ARNavigationOverlay');
 
-
-
 describe('MapContent Integration', () => {
   const baseProps = {
     colors: { background: '#fff', primary: '#000', card: '#eee', text: '#111' },

@@ -90,9 +90,7 @@ export function useBeaconCalibration(scanner: BeaconScanner) {
 
         // Auto-stop after duration
         if (elapsed >= durationRef.current) {
-          //console.log(
-            ` Auto-stopping calibration after ${elapsed}ms (target: ${durationRef.current}ms)`,
-          );
+          // Auto-stopping calibration after elapsed time
           // Clear the timer first to prevent multiple calls
           clearTimers();
           setActive(false);

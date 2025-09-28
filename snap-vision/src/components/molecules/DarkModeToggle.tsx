@@ -20,11 +20,16 @@ export default function DarkModeToggle() {
   // Get theme display name for the label
   const getThemeDisplayName = () => {
     switch (baseTheme) {
-      case 'light': return '';
-      case 'pink': return ' Pink';
-      case 'ocean': return ' Ocean';
-      case 'forest': return ' Forest';
-      default: return '';
+      case 'light':
+        return '';
+      case 'pink':
+        return ' Pink';
+      case 'ocean':
+        return ' Ocean';
+      case 'forest':
+        return ' Forest';
+      default:
+        return '';
     }
   };
 

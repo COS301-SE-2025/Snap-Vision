@@ -331,7 +331,6 @@ export default function TimetableContent() {
         visible={showForm}
         onClose={handleCloseForm}
         onSubmit={handleSubmitEntry}
-
         editingEntry={editingEntry}
       />
 

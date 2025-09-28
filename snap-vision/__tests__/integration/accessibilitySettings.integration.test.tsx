@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import AccessibilitySettingsContent from '../../src/components/organisms/AccessibilitySettingsContent';
@@ -118,9 +117,7 @@ const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
 
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
   <ThemeProvider>
-    <AccessibilityProvider>
-      {children}
-    </AccessibilityProvider>
+    <AccessibilityProvider>{children}</AccessibilityProvider>
   </ThemeProvider>
 );
 

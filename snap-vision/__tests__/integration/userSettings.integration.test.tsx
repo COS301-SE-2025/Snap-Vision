@@ -183,8 +183,16 @@ jest.mock('@expo/vector-icons', () => {
   const React = require('react');
   const { View, Text } = require('react-native');
   return {
-    Ionicons: ({ name, ...props }) => <View testID={`icon-${name}`} {...props}><Text>{name}</Text></View>,
-    MaterialIcons: ({ name, ...props }) => <View testID={`icon-${name}`} {...props}><Text>{name}</Text></View>,
+    Ionicons: ({ name, ...props }) => (
+      <View testID={`icon-${name}`} {...props}>
+        <Text>{name}</Text>
+      </View>
+    ),
+    MaterialIcons: ({ name, ...props }) => (
+      <View testID={`icon-${name}`} {...props}>
+        <Text>{name}</Text>
+      </View>
+    ),
     // Add other icon sets if needed
   };
 });
@@ -328,10 +336,10 @@ describe('App Preferences Integration Tests', () => {
 describe('Privacy & Security Integration Tests', () => {
   it('renders privacy security content with header', () => {
     const { getByTestId, getByText } = render(<PrivacySecurityContent />);
-  expect(getByTestId('settings-header')).toBeTruthy();
-  expect(getByText('Privacy Policy')).toBeTruthy();
-  expect(getByTestId('privacy-settings-mock')).toBeTruthy();
-  expect(getByText('Privacy Settings Section')).toBeTruthy();
+    expect(getByTestId('settings-header')).toBeTruthy();
+    expect(getByText('Privacy Policy')).toBeTruthy();
+    expect(getByTestId('privacy-settings-mock')).toBeTruthy();
+    expect(getByText('Privacy Settings Section')).toBeTruthy();
   });
 
   it('displays privacy and security options', () => {
@@ -360,25 +368,25 @@ describe('SettingsContent Integration Tests', () => {
 
   it('renders all settings items', () => {
     const { getByText } = render(<SettingsContent navigation={navigation} />);
-  expect(getByText('Account')).toBeTruthy();
-  expect(getByText('Accessibility')).toBeTruthy();
-  // Notifications is not rendered, so skip this assertion
-  expect(getByText('App Preferences')).toBeTruthy();
-  expect(getByText('Support')).toBeTruthy();
+    expect(getByText('Account')).toBeTruthy();
+    expect(getByText('Accessibility')).toBeTruthy();
+    // Notifications is not rendered, so skip this assertion
+    expect(getByText('App Preferences')).toBeTruthy();
+    expect(getByText('Support')).toBeTruthy();
   });
 
   it('calls navigation.navigate with correct screen when each item is pressed', () => {
     const { getByTestId } = render(<SettingsContent navigation={navigation} />);
-  fireEvent.press(getByTestId('settings-item-Account'));
-  fireEvent.press(getByTestId('settings-item-Accessibility'));
-  // Notifications is not rendered, so skip this fireEvent
-  fireEvent.press(getByTestId('settings-item-App-Preferences'));
-  fireEvent.press(getByTestId('settings-item-Support'));
-  expect(navigation.navigate).toHaveBeenCalledWith('AccountSettings');     
-  expect(navigation.navigate).toHaveBeenCalledWith('AccessibilitySettings');
-  // NotificationSettings is not navigated to, so skip this assertion
-  expect(navigation.navigate).toHaveBeenCalledWith('AppPreferences');    
-  expect(navigation.navigate).toHaveBeenCalledWith('Support');
+    fireEvent.press(getByTestId('settings-item-Account'));
+    fireEvent.press(getByTestId('settings-item-Accessibility'));
+    // Notifications is not rendered, so skip this fireEvent
+    fireEvent.press(getByTestId('settings-item-App-Preferences'));
+    fireEvent.press(getByTestId('settings-item-Support'));
+    expect(navigation.navigate).toHaveBeenCalledWith('AccountSettings');
+    expect(navigation.navigate).toHaveBeenCalledWith('AccessibilitySettings');
+    // NotificationSettings is not navigated to, so skip this assertion
+    expect(navigation.navigate).toHaveBeenCalledWith('AppPreferences');
+    expect(navigation.navigate).toHaveBeenCalledWith('Support');
   });
 });
 

@@ -56,16 +56,16 @@ export const UserIconProvider: React.FC<{ children: ReactNode }> = ({ children }
         }));
       }
 
-        if (savedEquippedItems) {
-          setState((prev) => ({
-            ...prev,
-            equippedItems: JSON.parse(savedEquippedItems),
-          }));
-        }
-      } catch (error) {
-        //console.error('Failed to load icon preferences:', error);
+      if (savedEquippedItems) {
+        setState((prev) => ({
+          ...prev,
+          equippedItems: JSON.parse(savedEquippedItems),
+        }));
       }
-    };
+    } catch (error) {
+      //console.error('Failed to load icon preferences:', error);
+    }
+  };
 
   // Load saved icon preferences on startup
   useEffect(() => {

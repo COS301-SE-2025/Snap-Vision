@@ -279,8 +279,6 @@ export class AuthorizationService {
 
     return sanitized;
   }
-
-
 }
 
 export default AuthorizationService;

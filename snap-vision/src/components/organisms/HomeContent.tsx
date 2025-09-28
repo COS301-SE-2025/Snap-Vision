@@ -96,8 +96,8 @@ export default function HomeContent() {
 
       {/* Mascot Ponder Image */}
       <View style={styles.mascotContainer}>
-        <Image 
-          source={require('../../assets/images/mascot_ponder.png')} 
+        <Image
+          source={require('../../assets/images/mascot_ponder.png')}
           style={styles.mascotImage}
           resizeMode="contain"
         />

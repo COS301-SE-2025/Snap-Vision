@@ -60,7 +60,7 @@ describe('ARNavigationOverlay Component Integration', () => {
       const { getByTestId } = render(
         <NavigationContainer>
           <ARNavigationOverlay {...defaultProps} />
-        </NavigationContainer>
+        </NavigationContainer>,
       );
       expect(getByTestId('mock-camera')).toBeTruthy();
     });
@@ -79,11 +79,13 @@ describe('ARNavigationOverlay Component Integration', () => {
         ] as [number, number][],
       };
 
-      expect(() => render(
-        <NavigationContainer>
-          <ARNavigationOverlay {...propsWithLongRoute} />
-        </NavigationContainer>
-      )).not.toThrow();
+      expect(() =>
+        render(
+          <NavigationContainer>
+            <ARNavigationOverlay {...propsWithLongRoute} />
+          </NavigationContainer>,
+        ),
+      ).not.toThrow();
     });
 
     it('handles edge case coordinates', () => {
@@ -93,11 +95,13 @@ describe('ARNavigationOverlay Component Integration', () => {
         destinationCoords: { x: -180, y: 90 },
       };
 
-      expect(() => render(
-        <NavigationContainer>
-          <ARNavigationOverlay {...propsWithEdgeCases} />
-        </NavigationContainer>
-      )).not.toThrow();
+      expect(() =>
+        render(
+          <NavigationContainer>
+            <ARNavigationOverlay {...propsWithEdgeCases} />
+          </NavigationContainer>,
+        ),
+      ).not.toThrow();
     });
 
     it('handles missing optional props', () => {
@@ -111,11 +115,13 @@ describe('ARNavigationOverlay Component Integration', () => {
         showMiniMap: false,
       };
 
-      expect(() => render(
-        <NavigationContainer>
-          <ARNavigationOverlay {...minimalProps} />
-        </NavigationContainer>
-      )).not.toThrow();
+      expect(() =>
+        render(
+          <NavigationContainer>
+            <ARNavigationOverlay {...minimalProps} />
+          </NavigationContainer>,
+        ),
+      ).not.toThrow();
     });
   });
 
@@ -124,7 +130,7 @@ describe('ARNavigationOverlay Component Integration', () => {
       const { getByTestId } = render(
         <NavigationContainer>
           <ARNavigationOverlay {...defaultProps} />
-        </NavigationContainer>
+        </NavigationContainer>,
       );
       const camera = getByTestId('mock-camera');
       expect(camera).toBeTruthy();
@@ -134,13 +140,13 @@ describe('ARNavigationOverlay Component Integration', () => {
       const { rerender, queryByTestId } = render(
         <NavigationContainer>
           <ARNavigationOverlay {...defaultProps} showMiniMap={true} />
-        </NavigationContainer>
+        </NavigationContainer>,
       );
 
       rerender(
         <NavigationContainer>
           <ARNavigationOverlay {...defaultProps} showMiniMap={false} />
-        </NavigationContainer>
+        </NavigationContainer>,
       );
       // Should not render mini-map when showMiniMap is false
     });
@@ -154,11 +160,13 @@ describe('ARNavigationOverlay Component Integration', () => {
         destinationCoords: { x: NaN, y: NaN },
       };
 
-      expect(() => render(
-        <NavigationContainer>
-          <ARNavigationOverlay {...propsWithInvalidCoords} />
-        </NavigationContainer>
-      )).not.toThrow();
+      expect(() =>
+        render(
+          <NavigationContainer>
+            <ARNavigationOverlay {...propsWithInvalidCoords} />
+          </NavigationContainer>,
+        ),
+      ).not.toThrow();
     });
 
     it('handles empty navigation steps', () => {
@@ -167,11 +175,13 @@ describe('ARNavigationOverlay Component Integration', () => {
         navigationSteps: [],
       };
 
-      expect(() => render(
-        <NavigationContainer>
-          <ARNavigationOverlay {...propsWithEmptySteps} />
-        </NavigationContainer>
-      )).not.toThrow();
+      expect(() =>
+        render(
+          <NavigationContainer>
+            <ARNavigationOverlay {...propsWithEmptySteps} />
+          </NavigationContainer>,
+        ),
+      ).not.toThrow();
     });
 
     it('handles negative route index', () => {
@@ -180,11 +190,13 @@ describe('ARNavigationOverlay Component Integration', () => {
         currentRouteIndex: -1,
       };
 
-      expect(() => render(
-        <NavigationContainer>
-          <ARNavigationOverlay {...propsWithNegativeIndex} />
-        </NavigationContainer>
-      )).not.toThrow();
+      expect(() =>
+        render(
+          <NavigationContainer>
+            <ARNavigationOverlay {...propsWithNegativeIndex} />
+          </NavigationContainer>,
+        ),
+      ).not.toThrow();
     });
 
     it('handles route index beyond array bounds', () => {
@@ -193,11 +205,13 @@ describe('ARNavigationOverlay Component Integration', () => {
         currentRouteIndex: 999,
       };
 
-      expect(() => render(
-        <NavigationContainer>
-          <ARNavigationOverlay {...propsWithLargeIndex} />
-        </NavigationContainer>
-      )).not.toThrow();
+      expect(() =>
+        render(
+          <NavigationContainer>
+            <ARNavigationOverlay {...propsWithLargeIndex} />
+          </NavigationContainer>,
+        ),
+      ).not.toThrow();
     });
   });
 
@@ -209,11 +223,13 @@ describe('ARNavigationOverlay Component Integration', () => {
       };
 
       // This should trigger the fallback component paths
-      expect(() => render(
-        <NavigationContainer>
-          <ARNavigationOverlay {...propsWithNullLocation} />
-        </NavigationContainer>
-      )).not.toThrow();
+      expect(() =>
+        render(
+          <NavigationContainer>
+            <ARNavigationOverlay {...propsWithNullLocation} />
+          </NavigationContainer>,
+        ),
+      ).not.toThrow();
     });
 
     it('renders simple AR fallback with null destination', () => {
@@ -223,11 +239,13 @@ describe('ARNavigationOverlay Component Integration', () => {
       };
 
       // This should trigger the fallback component paths
-      expect(() => render(
-        <NavigationContainer>
-          <ARNavigationOverlay {...propsWithNullDestination} />
-        </NavigationContainer>
-      )).not.toThrow();
+      expect(() =>
+        render(
+          <NavigationContainer>
+            <ARNavigationOverlay {...propsWithNullDestination} />
+          </NavigationContainer>,
+        ),
+      ).not.toThrow();
     });
 
     it('handles fallback distance calculation and formatting', () => {
@@ -242,11 +260,13 @@ describe('ARNavigationOverlay Component Integration', () => {
         showMiniMap: false,
       };
 
-      expect(() => render(
-        <NavigationContainer>
-          <ARNavigationOverlay {...mockProps} />
-        </NavigationContainer>
-      )).not.toThrow();
+      expect(() =>
+        render(
+          <NavigationContainer>
+            <ARNavigationOverlay {...mockProps} />
+          </NavigationContainer>,
+        ),
+      ).not.toThrow();
     });
   });
 
@@ -255,7 +275,7 @@ describe('ARNavigationOverlay Component Integration', () => {
       const { getByTestId } = render(
         <NavigationContainer>
           <ARNavigationOverlay {...defaultProps} />
-        </NavigationContainer>
+        </NavigationContainer>,
       );
       const camera = getByTestId('mock-camera');
 
@@ -275,7 +295,7 @@ describe('ARNavigationOverlay Component Integration', () => {
       const { getByTestId } = render(
         <NavigationContainer>
           <ARNavigationOverlay {...defaultProps} />
-        </NavigationContainer>
+        </NavigationContainer>,
       );
       expect(getByTestId('mock-camera')).toBeTruthy();
     });
@@ -286,7 +306,7 @@ describe('ARNavigationOverlay Component Integration', () => {
       const { rerender } = render(
         <NavigationContainer>
           <ARNavigationOverlay {...defaultProps} />
-        </NavigationContainer>
+        </NavigationContainer>,
       );
 
       // Simulate rapid location updates
@@ -300,11 +320,13 @@ describe('ARNavigationOverlay Component Integration', () => {
           deviceHeading: (45 + i * 10) % 360,
           currentRouteIndex: Math.min(i, defaultProps.routeCoordinates.length - 1),
         };
-        expect(() => rerender(
-          <NavigationContainer>
-            <ARNavigationOverlay {...updatedProps} />
-          </NavigationContainer>
-        )).not.toThrow();
+        expect(() =>
+          rerender(
+            <NavigationContainer>
+              <ARNavigationOverlay {...updatedProps} />
+            </NavigationContainer>,
+          ),
+        ).not.toThrow();
       }
     });
 
@@ -320,11 +342,13 @@ describe('ARNavigationOverlay Component Integration', () => {
         routeCoordinates: largeRoute,
       };
 
-      expect(() => render(
-        <NavigationContainer>
-          <ARNavigationOverlay {...propsWithLargeRoute} />
-        </NavigationContainer>
-      )).not.toThrow();
+      expect(() =>
+        render(
+          <NavigationContainer>
+            <ARNavigationOverlay {...propsWithLargeRoute} />
+          </NavigationContainer>,
+        ),
+      ).not.toThrow();
     });
   });
 
@@ -333,7 +357,7 @@ describe('ARNavigationOverlay Component Integration', () => {
       const { getByTestId } = render(
         <NavigationContainer>
           <ARNavigationOverlay {...defaultProps} />
-        </NavigationContainer>
+        </NavigationContainer>,
       );
       const camera = getByTestId('mock-camera');
       expect(camera).toBeTruthy();

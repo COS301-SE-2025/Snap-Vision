@@ -6,8 +6,6 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import { getRecentlyVPOIs } from '../../src/services/firebase/recentlyVService';
 
-
-
 //mock navigation
 const mockNavigate = jest.fn();
 const mockNavigation = {
@@ -53,10 +51,12 @@ jest.mock('@react-native-firebase/firestore', () => ({
 jest.mock('@react-native-firebase/perf', () => ({
   __esModule: true,
   default: jest.fn(() => ({
-    newTrace: jest.fn(() => Promise.resolve({
-      start: jest.fn(() => Promise.resolve()),
-      stop: jest.fn(() => Promise.resolve()),
-    })),
+    newTrace: jest.fn(() =>
+      Promise.resolve({
+        start: jest.fn(() => Promise.resolve()),
+        stop: jest.fn(() => Promise.resolve()),
+      }),
+    ),
   })),
 }));
 

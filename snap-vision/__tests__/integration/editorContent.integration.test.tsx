@@ -4,8 +4,6 @@ import AdminScreenContent from '../../src/components/organisms/EditorContent';
 import { ThemeProviderWrapper } from '../test-utils/ThemeProviderWrapper';
 import { useNavigation } from '@react-navigation/native';
 
-
-
 // Mock navigation
 const mockNavigate = jest.fn();
 const mockNavigation = {

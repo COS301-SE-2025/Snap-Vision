@@ -510,7 +510,7 @@ describe('LandingOverlay', () => {
       expect(getByText('Earn Badges and Shop Icons!')).toBeTruthy();
       expect(getByText('Integrated Timetable Builder')).toBeTruthy();
       expect(getByText('© 2025 Snap Vision Team')).toBeTruthy();
-  expect(getByText('Hi, I am Snaps, tap to get started!')).toBeTruthy();
+      expect(getByText('Hi, I am Snaps, tap to get started!')).toBeTruthy();
     });
 
     it('handles touch accessibility', () => {
