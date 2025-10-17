@@ -527,7 +527,9 @@ export default function IndoorSchematicMap({
   // Incremental updates (no reloads)
   useEffect(() => {
     if (webViewRef.current && webViewReady) {
-      webViewRef.current.injectJavaScript(`window.setRooms(${JSON.stringify(rooms || [])}, ${JSON.stringify(highlightedPOI)}); true;`);
+      webViewRef.current.injectJavaScript(
+        `window.setRooms(${JSON.stringify(rooms || [])}, ${JSON.stringify(highlightedPOI)}); true;`,
+      );
     }
   }, [rooms, highlightedPOI, webViewReady]);
 

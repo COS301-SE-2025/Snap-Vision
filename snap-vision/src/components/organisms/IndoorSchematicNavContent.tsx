@@ -628,7 +628,7 @@ export default function IndoorSchematicNavScreen() {
   const onSelectRoom = (roomId: string) => {
     // Highlight the selected POI
     setHighlightedPOI(roomId);
-    
+
     // If in navigation mode (after user clicked "Navigate Here"), handle start selection only
     if (navigationMode) {
       if (!startId) {
@@ -795,11 +795,11 @@ export default function IndoorSchematicNavScreen() {
   // Function to get prompt color based on state
   const getPromptColor = () => {
     if (!startId) {
-      return colors.background; 
+      return colors.background;
     } else if (!endId) {
-      return '#4CAF50'; 
+      return '#4CAF50';
     } else {
-      return colors.primary; 
+      return colors.primary;
     }
   };
 
@@ -916,23 +916,26 @@ export default function IndoorSchematicNavScreen() {
       {navigationMode && !steps.length && (
         <View
           style={[
-            styles.navigationPromptBar, 
-            { 
-              backgroundColor: getPromptColor(), 
+            styles.navigationPromptBar,
+            {
+              backgroundColor: getPromptColor(),
               borderColor: colors.text,
-              borderWidth: 2
-            }
+              borderWidth: 2,
+            },
           ]}
         >
-          <Text style={{ color: colors.text, fontWeight: '600' }}>
-            {'Choose your start room'}
-          </Text>
+          <Text style={{ color: colors.text, fontWeight: '600' }}>{'Choose your start room'}</Text>
         </View>
       )}
 
       {/* Fixed Directions Display */}
       {steps.length > 0 && steps[currentStep] && (
-        <View style={[styles.directionsContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.directionsContainer,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
           <View style={styles.directionHeader}>
             <Text style={[styles.directionTitle, { color: colors.text }]}>
               Step {currentStep + 1} of {steps.length}
@@ -941,11 +944,11 @@ export default function IndoorSchematicNavScreen() {
               {Math.max(0, steps.length - currentStep - 1)} steps remaining
             </Text>
           </View>
-          
+
           <Text style={[styles.directionInstruction, { color: colors.text }]}>
             {steps[currentStep].instruction}
           </Text>
-          
+
           <View style={styles.directionButtons}>
             <TouchableOpacity
               style={[styles.cancelButton, { borderColor: colors.border }]}
@@ -953,7 +956,7 @@ export default function IndoorSchematicNavScreen() {
             >
               <Text style={[styles.cancelButtonText, { color: colors.text }]}>Cancel</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={[styles.markDoneButton, { backgroundColor: colors.primary }]}
               onPress={handleAdvance}
@@ -974,8 +977,6 @@ export default function IndoorSchematicNavScreen() {
           testID="proceed-btn"
         />
       )} */}
-
-
 
       {/* Floating AR button
       {steps.length > 0 && startId && endId && (
@@ -1168,7 +1169,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 8,
     borderWidth: 1,
-    marginBottom:6,
+    marginBottom: 6,
   },
 
   navigationPromptBar: {
