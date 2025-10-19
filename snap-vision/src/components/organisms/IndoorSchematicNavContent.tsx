@@ -158,6 +158,7 @@ export default function IndoorSchematicNavScreen() {
   const [poiPopupVisible, setPoiPopupVisible] = useState(false);
   const [poiInfoModalVisible, setPoiInfoModalVisible] = useState(false);
   const [navigationMode, setNavigationMode] = useState(false);
+  const [highlightedPOI, setHighlightedPOI] = useState<string | null>(null);
 
   // TTS: Setup and configuration
   useEffect(() => {
@@ -173,13 +174,13 @@ export default function IndoorSchematicNavScreen() {
 
   // TTS: Speak the current step's instruction when it changes
   useEffect(() => {
-    if (isTtsEnabled && steps.length && steps[currentStep] && sheetOpen) {
+    if (isTtsEnabled && steps.length && steps[currentStep]) {
       TTS.stop();
       setTimeout(() => {
         TTS.speak(steps[currentStep].instruction);
       }, 250);
     }
-  }, [currentStep, steps, sheetOpen, isTtsEnabled]);
+  }, [currentStep, steps, isTtsEnabled]);
 
   // Helper function to find nearest room to a point
   const findNearestRoom = (rooms: RoomPOI[], pos: { x: number; y: number }, floorId: string) => {
@@ -619,12 +620,15 @@ export default function IndoorSchematicNavScreen() {
     setEndId(null);
     setSteps([]);
     setCurrentStep(0);
-    setSheetOpen(false);
     setNavigationMode(false);
+    setHighlightedPOI(null);
     // keep currentPos
   };
 
   const onSelectRoom = (roomId: string) => {
+    // Highlight the selected POI
+    setHighlightedPOI(roomId);
+
     // If in navigation mode (after user clicked "Navigate Here"), handle start selection only
     if (navigationMode) {
       if (!startId) {
@@ -633,14 +637,12 @@ export default function IndoorSchematicNavScreen() {
         // Don't reset endId since it's already set as destination
         setSteps([]);
         setCurrentStep(0);
-        setSheetOpen(false);
         return;
       }
       // If start is already set and user taps another room, reset start to the new room
       setStartId(roomId);
       setSteps([]);
       setCurrentStep(0);
-      setSheetOpen(false);
     } else {
       // Show POI popup for any selected room when not in navigation mode
       const selectedRoom = roomsOnSelectedFloor.find((room) => room.id === roomId);
@@ -660,10 +662,12 @@ export default function IndoorSchematicNavScreen() {
       setNavigationMode(true);
       setPoiPopupVisible(false);
       setSelectedPOI(null);
-      setStartId(null);
+      // Only reset startId if it wasn't set from QR scan (userPos indicates QR scan)
+      if (!userPos) {
+        setStartId(null);
+      }
       setSteps([]);
       setCurrentStep(0);
-      setSheetOpen(false);
     }
   };
 
@@ -675,11 +679,13 @@ export default function IndoorSchematicNavScreen() {
   const handleClosePOIPopup = () => {
     setPoiPopupVisible(false);
     setSelectedPOI(null);
+    setHighlightedPOI(null);
   };
 
   const handleClosePOIInfoModal = () => {
     setPoiInfoModalVisible(false);
     setSelectedPOI(null);
+    setHighlightedPOI(null);
   };
 
   // Compute route (multi-floor if available)
@@ -709,7 +715,6 @@ export default function IndoorSchematicNavScreen() {
       setPopupVisible(true);
       setSteps([]);
       setCurrentStep(0);
-      setSheetOpen(false);
       return;
     }
 
@@ -717,7 +722,8 @@ export default function IndoorSchematicNavScreen() {
     const filtered = detailed.slice(1);
     setSteps(filtered);
     setCurrentStep(0);
-    setSheetOpen(true);
+    setHighlightedPOI(null); // Clear highlighting when navigation starts
+    // Don't auto-open sheet since we're showing directions inline now
 
     // TTS: Announce route found
     if (isTtsEnabled && filtered.length > 0) {
@@ -786,17 +792,16 @@ export default function IndoorSchematicNavScreen() {
       .map((s) => s.coordinates);
   }, [steps, currentStep, selectedFloorId]);
 
-  // Determine what prompt to show based on state
-  const prompt = !navigationMode
-    ? 'Tap any POI to explore'
-    : !startId
-      ? 'Choose your start room'
-      : !endId
-        ? 'Choose your destination'
-        : `${Math.max(0, steps.length - currentStep)} steps left`;
-
-  // Override prompt if userPos was set from QR code
-  const effectivePrompt = userPos && startId && navigationMode ? 'Choose your destination' : prompt;
+  // Function to get prompt color based on state
+  const getPromptColor = () => {
+    if (!startId) {
+      return colors.background;
+    } else if (!endId) {
+      return '#4CAF50';
+    } else {
+      return colors.primary;
+    }
+  };
 
   if (loading) {
     return (
@@ -873,13 +878,6 @@ export default function IndoorSchematicNavScreen() {
         </TouchableOpacity>
       </Modal>
 
-      {/* Prompt banner */}
-      <View
-        style={[styles.promptBar, { backgroundColor: colors.card, borderColor: colors.border }]}
-      >
-        <Text style={{ color: colors.text, fontWeight: '600' }}>{effectivePrompt}</Text>
-      </View>
-
       {/* Status message */}
       {statusMessage && (
         <View
@@ -910,20 +908,66 @@ export default function IndoorSchematicNavScreen() {
           currentPos={currentPos || undefined}
           floorplanUrl={floorplanUrl || undefined}
           nextInstructionEnd={nextInstructionEnd}
+          highlightedPOI={highlightedPOI || undefined}
         />
       </View>
 
-      {/* { !!Uncomment to show Bottom sheet with step-by-step directions!!} */}
-      {/*Directions sheet*/}
-      <StepsBottomSheet
-        visible={sheetOpen}
-        onClose={() => setSheetOpen(false)}
-        onCancel={resetRoute}
-        steps={steps}
-        colors={colors}
-        currentStep={currentStep}
-        onAdvance={handleAdvance}
-      />
+      {/* Navigation prompt - shown right below map when in navigation mode */}
+      {navigationMode && !steps.length && (
+        <View
+          style={[
+            styles.navigationPromptBar,
+            {
+              backgroundColor: getPromptColor(),
+              borderColor: colors.text,
+              borderWidth: 2,
+            },
+          ]}
+        >
+          <Text style={{ color: colors.text, fontWeight: '600' }}>{'Choose your start room'}</Text>
+        </View>
+      )}
+
+      {/* Fixed Directions Display */}
+      {steps.length > 0 && steps[currentStep] && (
+        <View
+          style={[
+            styles.directionsContainer,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
+          <View style={styles.directionHeader}>
+            <Text style={[styles.directionTitle, { color: colors.text }]}>
+              Step {currentStep + 1} of {steps.length}
+            </Text>
+            <Text style={[styles.stepsRemaining, { color: colors.text }]}>
+              {Math.max(0, steps.length - currentStep - 1)} steps remaining
+            </Text>
+          </View>
+
+          <Text style={[styles.directionInstruction, { color: colors.text }]}>
+            {steps[currentStep].instruction}
+          </Text>
+
+          <View style={styles.directionButtons}>
+            <TouchableOpacity
+              style={[styles.cancelButton, { borderColor: colors.border }]}
+              onPress={resetRoute}
+            >
+              <Text style={[styles.cancelButtonText, { color: colors.text }]}>Cancel</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.markDoneButton, { backgroundColor: colors.primary }]}
+              onPress={handleAdvance}
+            >
+              <Text style={styles.markDoneButtonText}>
+                {currentStep >= steps.length - 1 ? "I've arrived" : 'Mark step done'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {/* {steps.length > 0 && !sheetOpen &&(
         <AppSecondaryButton
@@ -933,19 +977,6 @@ export default function IndoorSchematicNavScreen() {
           testID="proceed-btn"
         />
       )} */}
-
-      {/* Floating Directions button */}
-      {!sheetOpen && steps.length > 0 && (
-        <TouchableOpacity
-          onPress={() => setSheetOpen(true)}
-          style={[
-            styles.fab,
-            { backgroundColor: colors.primary, shadowColor: isDark ? '#000' : '#333' },
-          ]}
-        >
-          <Text style={{ color: '#fff', fontWeight: '700' }}>Directions</Text>
-        </TouchableOpacity>
-      )}
 
       {/* Floating AR button
       {steps.length > 0 && startId && endId && (
@@ -1141,6 +1172,16 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
 
+  navigationPromptBar: {
+    alignSelf: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    marginTop: 8,
+    marginBottom: 188,
+  },
+
   fab: {
     position: 'absolute',
     right: 20,
@@ -1258,5 +1299,74 @@ const styles = StyleSheet.create({
   dropdownItemText: {
     fontSize: 16,
     fontWeight: '500',
+  },
+
+  directionsContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 2,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+
+  directionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+
+  directionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  stepsRemaining: {
+    fontSize: 14,
+    opacity: 0.7,
+  },
+
+  directionInstruction: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 16,
+    lineHeight: 22,
+  },
+
+  directionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  markDoneButton: {
+    flex: 2,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+
+  markDoneButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
