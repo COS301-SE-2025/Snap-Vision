@@ -96,6 +96,7 @@
     "detox": "^20.41.3",
     "detox-cli": "^20.0.0",
     "eslint": "^9.28.0",
+    "eslint-config-expo": "^10.0.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-import-resolver-babel-module": "^5.3.2",
     "eslint-plugin-prettier": "^5.5.1",
