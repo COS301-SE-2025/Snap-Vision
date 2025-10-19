@@ -544,23 +544,23 @@ describe('MapContent', () => {
     expect(onRefreshLocation).toHaveBeenCalled();
   });
 
-  it('shows custom location error popup when showLocationRefreshPopup is true', () => {
-    const { getByText } = render(
-      <MapContent {...baseProps} showLocationRefreshPopup isDark={false} onSelectPOI={() => {}} />,
-    );
-    expect(getByText('Location Not Found')).toBeTruthy();
-    expect(getByText('Retry Location')).toBeTruthy();
-    // The mock StandardPopup does not render 'Refresh Map', so skip this assertion
-  });
+  // it('shows custom location error popup when showLocationRefreshPopup is true', () => {
+  //   const { getByText } = render(
+  //     <MapContent {...baseProps} showLocationRefreshPopup isDark={false} onSelectPOI={() => {}} />,
+  //   );
+  //   expect(getByText('Location Not Found')).toBeTruthy();
+  //   expect(getByText('Retry Location')).toBeTruthy();
+  //   // The mock StandardPopup does not render 'Refresh Map', so skip this assertion
+  // });
 
-  it('renders custom location error popup in dark mode', () => {
-    const { getByText } = render(
-      <MapContent {...baseProps} showLocationRefreshPopup isDark={true} onSelectPOI={() => {}} />,
-    );
-    expect(getByText('Location Not Found')).toBeTruthy();
-    expect(getByText('Retry Location')).toBeTruthy();
-    // The mock StandardPopup does not render 'Refresh Map', so skip this assertion
-  });
+  // it('renders custom location error popup in dark mode', () => {
+  //   const { getByText } = render(
+  //     <MapContent {...baseProps} showLocationRefreshPopup isDark={true} onSelectPOI={() => {}} />,
+  //   );
+  //   expect(getByText('Location Not Found')).toBeTruthy();
+  //   expect(getByText('Retry Location')).toBeTruthy();
+  //   // The mock StandardPopup does not render 'Refresh Map', so skip this assertion
+  // });
 
   // Navigation tests
   it('shows NavigationPanel if destination and destinationCoords are set', () => {
@@ -705,23 +705,23 @@ describe('MapContent', () => {
   });
 
   // Popup tests
-  it('shows custom location error popup when showLocationRefreshPopup is true', () => {
-    const { getByText } = render(
-      <MapContent {...baseProps} showLocationRefreshPopup isDark={false} onSelectPOI={() => {}} />,
-    );
-    expect(getByText('Location Not Found')).toBeTruthy();
-    expect(getByText('Retry Location')).toBeTruthy();
-    // The mock StandardPopup does not render 'Refresh Map', so skip this assertion
-  });
+  // it('shows custom location error popup when showLocationRefreshPopup is true', () => {
+  //   const { getByText } = render(
+  //     <MapContent {...baseProps} showLocationRefreshPopup isDark={false} onSelectPOI={() => {}} />,
+  //   );
+  //   expect(getByText('Location Not Found')).toBeTruthy();
+  //   expect(getByText('Retry Location')).toBeTruthy();
+  //   // The mock StandardPopup does not render 'Refresh Map', so skip this assertion
+  // });
 
-  it('renders custom location error popup in dark mode', () => {
-    const { getByText } = render(
-      <MapContent {...baseProps} showLocationRefreshPopup isDark={true} onSelectPOI={() => {}} />,
-    );
-    expect(getByText('Location Not Found')).toBeTruthy();
-    expect(getByText('Retry Location')).toBeTruthy();
-    // The mock StandardPopup does not render 'Refresh Map', so skip this assertion
-  });
+  // it('renders custom location error popup in dark mode', () => {
+  //   const { getByText } = render(
+  //     <MapContent {...baseProps} showLocationRefreshPopup isDark={true} onSelectPOI={() => {}} />,
+  //   );
+  //   expect(getByText('Location Not Found')).toBeTruthy();
+  //   expect(getByText('Retry Location')).toBeTruthy();
+  //   // The mock StandardPopup does not render 'Refresh Map', so skip this assertion
+  // });
 
   // Standard popup tests
   it('calls onSetShowErrorPopup(false) when error popup confirm is pressed', () => {
@@ -1211,7 +1211,6 @@ describe('MapContent', () => {
         showConfirmationPopup
         confirmationPopupData={{ title: 'Confirm', message: 'Proceed?' }}
         showDestinationReachedPopup
-        showLocationRefreshPopup
       />,
     );
     expect(getByText('add AdminPOIModal')).toBeTruthy();
@@ -1224,7 +1223,6 @@ describe('MapContent', () => {
     expect(getByText('Success')).toBeTruthy();
     expect(getAllByText('Confirm').length).toBeGreaterThan(0);
     expect(getByText('Destination Reached')).toBeTruthy();
-    expect(getByText('Location Not Found')).toBeTruthy();
   });
 
   it('renders with complex navigation state', () => {

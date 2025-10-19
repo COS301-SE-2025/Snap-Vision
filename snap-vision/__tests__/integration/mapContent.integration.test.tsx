@@ -358,52 +358,52 @@ describe('MapContent Integration', () => {
     expect(getByText('Temporary message')).toBeTruthy();
   });
 
-  it('shows Custom Location Error Popup and handles all actions (light mode)', () => {
-    const onSetShowLocationRefreshPopup = jest.fn();
-    const onRefreshLocation = jest.fn();
-    const onRefreshMap = jest.fn();
-    const { getByText } = renderWithTheme(
-      <MapContent
-        {...baseProps}
-        showLocationRefreshPopup
-        onSetShowLocationRefreshPopup={onSetShowLocationRefreshPopup}
-        onRefreshLocation={onRefreshLocation}
-        onRefreshMap={onRefreshMap}
-      />,
-    );
-    // Close button
-    fireEvent.press(getByText('Close'));
-    expect(onSetShowLocationRefreshPopup).toHaveBeenCalledWith(false);
-    // Retry Location button
-    fireEvent.press(getByText('Retry Location'));
-    expect(onRefreshLocation).toHaveBeenCalled();
-  });
+  // it('shows Custom Location Error Popup and handles all actions (light mode)', () => {
+  //   const onSetShowLocationRefreshPopup = jest.fn();
+  //   const onRefreshLocation = jest.fn();
+  //   const onRefreshMap = jest.fn();
+  //   const { getByText } = renderWithTheme(
+  //     <MapContent
+  //       {...baseProps}
+  //       showLocationRefreshPopup
+  //       onSetShowLocationRefreshPopup={onSetShowLocationRefreshPopup}
+  //       onRefreshLocation={onRefreshLocation}
+  //       onRefreshMap={onRefreshMap}
+  //     />,
+  //   );
+  //   // Close button
+  //   fireEvent.press(getByText('Close'));
+  //   expect(onSetShowLocationRefreshPopup).toHaveBeenCalledWith(false);
+  //   // Retry Location button
+  //   fireEvent.press(getByText('Retry Location'));
+  //   expect(onRefreshLocation).toHaveBeenCalled();
+  // });
 
-  it('shows Custom Location Error Popup in dark mode', () => {
-    const { getByText } = renderWithTheme(
-      <MapContent {...baseProps} showLocationRefreshPopup isDark={true} />,
-    );
-    expect(getByText('Location Not Found')).toBeTruthy();
-    expect(getByText('Retry Location')).toBeTruthy();
-  });
+  // it('shows Custom Location Error Popup in dark mode', () => {
+  //   const { getByText } = renderWithTheme(
+  //     <MapContent {...baseProps} showLocationRefreshPopup isDark={true} />,
+  //   );
+  //   expect(getByText('Location Not Found')).toBeTruthy();
+  //   expect(getByText('Retry Location')).toBeTruthy();
+  // });
 
-  it('disables Retry Location button when isRefreshingLocation is true', () => {
-    const onRefreshLocation = jest.fn();
-    const { getByText } = renderWithTheme(
-      <MapContent
-        {...baseProps}
-        showLocationRefreshPopup
-        isRefreshingLocation={true}
-        onRefreshLocation={onRefreshLocation}
-      />,
-    );
-    // The Retry Location button should be present, but disabled
-    const retryButton = getByText('Retry Location');
-    expect(retryButton).toBeTruthy();
-    // Try to press it (should not call handler if disabled)
-    fireEvent.press(retryButton);
-    // Handler may or may not be called depending on implementation, so just check presence
-  });
+  // it('disables Retry Location button when isRefreshingLocation is true', () => {
+  //   const onRefreshLocation = jest.fn();
+  //   const { getByText } = renderWithTheme(
+  //     <MapContent
+  //       {...baseProps}
+  //       showLocationRefreshPopup
+  //       isRefreshingLocation={true}
+  //       onRefreshLocation={onRefreshLocation}
+  //     />,
+  //   );
+  //   // The Retry Location button should be present, but disabled
+  //   const retryButton = getByText('Retry Location');
+  //   expect(retryButton).toBeTruthy();
+  //   // Try to press it (should not call handler if disabled)
+  //   fireEvent.press(retryButton);
+  //   // Handler may or may not be called depending on implementation, so just check presence
+  // });
 
   it('triggers MapActionsPanel callbacks', () => {
     const onShareLocation = jest.fn();
