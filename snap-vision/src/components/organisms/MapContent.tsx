@@ -608,7 +608,7 @@ const MapContent: React.FC<MapContentProps> = ({
       ) : null}
 
       {/* Custom Location Error Popup */}
-      <StandardPopup
+      {/* <StandardPopup
         visible={showLocationRefreshPopup}
         title="Location Not Found"
         message="Unable to find your location. This can happen indoors or in areas with poor GPS signal."
@@ -621,7 +621,7 @@ const MapContent: React.FC<MapContentProps> = ({
         cancelText="Close"
         showCancel={true}
         verticalButtons={true}
-      />
+      /> */}
 
       {/* Standard Popups */}
       <StandardPopup
