@@ -179,7 +179,7 @@ Key innovations include:</br>
   <img src="docs\img\downloadapk.png" alt="About Snap Vision" width="400"/>
 </div>
 <div align="center">
-<a href="https://github.com/COS301-SE-2025/Snap-Vision/releases/download/v2.0/snap-vision.apk"><button style="background-color:#1E90FF;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">Download APK</button></a>
+<a href="https://github.com/COS301-SE-2025/Snap-Vision/releases/download/v2.1/app-release.apk"><button style="background-color:#1E90FF;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">Download APK</button></a>
 </div>
 
 ---
