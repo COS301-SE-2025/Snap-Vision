@@ -6,150 +6,254 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="light dark" />
   <style>
+    /* ------------------------
+       THEME (light-first)
+       Uses your accent / accent-2 / accent-3 variables
+       ------------------------ */
     :root{
-      --bg: #0f1320;
-      --bg-soft: #141a2a;
-      --card: #161d2f;
-      --text: #e8eefc;
-      --muted: #b7c0d9;
-      --accent: #5cc8ff;
-      --accent-2: #90AFA8;
-      --accent-3: #B78459;
-      --border: rgba(255,255,255,.08);
-      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      /* Provided palette mapping (light-first) */
+      --bg: #fef4ec;            /* lightColors.background */
+      --bg-soft: #ffffff;       /* lightColors.card / softer surface */
+      --card: #e4ddcfff;        /* lightColors.card */
+      --text: #2f6e83;          /* lightColors.text */
+      --muted: #666666;        /* lightColors.subtleText */
+      --border: #ddd;           /* lightColors.border */
+      --accent: #B78459;        /* lightColors.primary */
+      --accent-2: #824713;     /* roleSecondary / accent-3 mapping */
+      --accent-3: #90AFA8;     /* lightColors.secondary */
+      --accent-4: #90AFA8;     /* alternate from original CSS */
+      --shadow: 0 12px 36px rgba(47,110,131,0.06);
+      --glass: rgba(255,255,255,0.6);
+      --glass-2: rgba(255,255,255,0.85);
       --radius: 18px;
       --radius-sm: 12px;
       --maxw: 1100px;
-    }
-    @media (prefers-color-scheme: light) {
-      :root{
-        --bg: #f6f7fb;
-        --bg-soft: #ffffff;
-        --card: #ffffff;
-        --text: #0e1a2a;
-        --muted: #51607a;
-        --border: rgba(0,0,0,.06);
-        --shadow: 0 10px 30px rgba(0,0,0,.08);
-      }
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
-      color:var(--text);
-      background: radial-gradient(1200px 800px at 20% -10%, rgba(92,200,255,.15), transparent 55%),
-                  radial-gradient(1000px 600px at 120% -20%, rgba(183,132,89,.12), transparent 55%),
-                  var(--bg);
-      line-height:1.5;
-    }
-    a{color:var(--accent); text-decoration:none}
-    a:hover{text-decoration:underline}
-    img{max-width:100%; display:block}
-    .wrap{max-width:var(--maxw); margin:0 auto; padding:24px}
-    .section{margin:36px 0}
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      box-shadow:var(--shadow);
-      border-radius:var(--radius);
-      padding:24px;
+
+      /* small helpers */
+      --btn-h: 44px;
+      --muted-2: rgba(47,110,131,0.12);
     }
 
-    /* HERO */
+    /* Dark system preference fallback (keeps accents but darkens surfaces) */
+    @media (prefers-color-scheme: dark) {
+      :root{
+        --bg: #000000;
+        --bg-soft: #0f1720;
+        --card: #11121a;
+        --text: #69c6d0;
+        --muted: #999999;
+        --border: #2a2a2a;
+        --shadow: 0 14px 48px rgba(0,0,0,0.6);
+        --glass: rgba(255,255,255,0.03);
+        --glass-2: rgba(255,255,255,0.02);
+      }
+    }
+
+    /* ------------------------
+       Base
+       ------------------------ */
+    * { box-sizing: border-box; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+    html,body { height: 100%; }
+    body{
+      margin:0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color:var(--text);
+      background:
+        radial-gradient(1000px 600px at 10% -10%, rgba(139,109,73,0.06), transparent 25%),
+        radial-gradient(900px 500px at 120% -20%, rgba(46,150,180,0.04), transparent 30%),
+        var(--bg);
+      line-height:1.55;
+      -webkit-text-size-adjust:100%;
+      -moz-osx-font-smoothing:grayscale;
+    }
+    a{ color:var(--accent); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+    img{ max-width:100%; display:block; height:auto; }
+
+    .wrap{ max-width:var(--maxw); margin:0 auto; padding:28px; }
+
+    .section{ margin:32px 0; }
+    .center{ text-align:center; }
+
+    /* ------------------------
+       Card / glass
+       ------------------------ */
+    .card{
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding:22px;
+      transition: transform 220ms cubic-bezier(.2,.9,.2,1), box-shadow 220ms;
+      backdrop-filter: blur(6px) saturate(120%);
+    }
+    .card:hover{
+      transform: translateY(-6px);
+      box-shadow: 0 18px 48px rgba(47,110,131,0.08);
+    }
+
+    /* ------------------------
+       HERO
+       ------------------------ */
     .hero{
-      margin-top:32px;
+      margin-top:22px;
       text-align:center;
-      padding:32px 20px;
-      background: var(--bg-soft);
+      padding:34px 20px;
+      background: linear-gradient(135deg, rgba(130,71,19,0.06), rgba(183,132,89,0.03));
       border:1px solid var(--border);
       border-radius:28px;
       box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
     }
-    .brand{
-      display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;
+
+    /* subtle animated shimmer for hero */
+    .hero::before{
+      content:"";
+      position:absolute;
+      inset: -40% -20% auto -20%;
+      height:220px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.0), rgba(255,255,255,0.06));
+      transform: rotate(-12deg) translateX(-30%);
+      filter: blur(18px);
+      animation: shimmer 6.5s linear infinite;
+      pointer-events:none;
     }
+    @keyframes shimmer{
+      to { transform: rotate(-12deg) translateX(120%); }
+    }
+
+    .brand{ display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap; z-index:1; position:relative; }
     .brand h1{
-      font-weight:800; margin:0; letter-spacing:.3px;
-      color: var(--accent);
-      font-size: clamp(28px, 3.8vw, 44px);
-      line-height:1.1;
+      font-weight:800; margin:-10px 0 0 0; letter-spacing:.2px;
+      color: #B78459;
+      font-size: clamp(24px, 3vw, 36px);
+      line-height:1.05;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.4);
     }
-    .tag{color:var(--muted); margin-top:6px; font-size:clamp(14px, 1.8vw, 18px)}
-    .logo{width:min(800px, 80vw); margin:8px auto 2px}
+    .tag{ color:#90AFA8; margin-top:8px; font-size:clamp(14px,1.6vw,18px); z-index:1; position:relative; }
 
-    .cta-row{
-      margin-top:22px; display:flex; gap:14px; justify-content:center; flex-wrap:wrap;
-    }
+    .logo{ width:min(500px, 80vw); margin:20px auto 6px; filter: drop-shadow(0 8px 20px rgba(130,71,19,0.06)); }
+
+    /* CTA row */
+    .cta-row{ margin-top:20px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; z-index:1; position:relative; }
+
+    /* ------------------------
+       Buttons (gradient using accents)
+       ------------------------ */
     .btn{
-      display:inline-flex; align-items:center; justify-content:center; gap:8px;
-      padding:12px 16px; border:1px solid var(--border);
-      border-radius:14px; background:rgba(255,255,255,.03);
-      color:var(--text); text-decoration:none; font-weight:600;
-      transition: transform .06s ease, background .2s ease, border-color .2s ease;
+      display:inline-flex; align-items:center; justify-content:center; gap:10px;
+      padding:10px 16px; min-height:var(--btn-h);
+      border-radius:12px; border:1px solid var(--border);
+      color:var(--text); text-decoration:none; font-weight:700;
+      background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.3));
+      box-shadow: 0 6px 18px rgba(47,110,131,0.04);
+      transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms;
+      cursor:pointer;
     }
-    .btn:hover{ transform: translateY(-1px); border-color: rgba(92,200,255,.45) }
+    .btn:hover{ transform: translateY(-4px); box-shadow: 0 14px 36px rgba(47,110,131,0.09); }
+
     .btn.primary{
-      background: var(--accent);
-      color:#0e1a2a; border-color: transparent;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      color: white;
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: 0 10px 30px rgba(130,71,19,0.10);
     }
-    .btn.primary:hover{ filter: brightness(1.03) }
+    .btn.primary:hover{ filter: brightness(1.02); }
 
-    /* BADGES */
-    .badges.card{padding:18px}
-    .badges-grid{
-      display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-      align-items:center;
+    .btn.ghost{
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid rgba(130,71,19,0.08);
     }
-    .badges-grid a{display:block; border-radius:12px; overflow:hidden; border:1px solid var(--border)}
-    .badges-grid img{width:100%; height:24px; object-fit:cover; background:#fff}
 
-    /* SECTIONS */
+    /* small subtle icon effect */
+    .btn svg { opacity:0.92; transform:translateY(1px); }
+
+    /* ------------------------
+       Badges grid (kept but commented in HTML)
+       ------------------------ */
+    .badges.card{ padding:14px; }
+    .badges-grid{ display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); align-items:center; }
+    .badges-grid a{ display:block; border-radius:12px; overflow:hidden; border:1px solid var(--border); background:var(--glass-2); padding:6px; }
+    .badges-grid img{ width:100%; height:24px; object-fit:cover; background:#fff }
+
+    /* ------------------------
+       Section headings & content
+       ------------------------ */
     h2{
-      margin:0 0 8px; font-size: clamp(20px, 2.4vw, 26px);
+      margin:0 0 8px; font-size: clamp(20px, 2.2vw, 26px);
       letter-spacing:.2px;
+      color:var(--accent-3);
     }
-    p{margin:0 0 10px}
-    .center{text-align:center}
-    .divider{height:1px; background:var(--border); margin:24px 0}
+    p{ margin:0 0 10px; color:var(--text); }
 
-    /* TABLES */
-    .table.card{padding:0}
-    table{width:100%; border-collapse:collapse; overflow:hidden; border-radius: var(--radius)}
+    .divider{ height:1px; background:var(--border); margin:20px 0; border-radius:2px; opacity:0.9; }
+
+    /* ------------------------
+       Tables
+       ------------------------ */
+    .table.card{ padding:0; overflow:hidden; }
+    table{ width:100%; border-collapse:collapse; font-size:15px; }
     thead th{
-      text-align:left; padding:14px 16px; background:rgba(255,255,255,.03);
-      border-bottom:1px solid var(--border); font-weight:700;
+      text-align:left; padding:14px 16px;
+      border-bottom:1px solid var(--border); font-weight:700; color:var(--accent-3);
     }
-    tbody td{padding:12px 16px; border-top:1px solid var(--border)}
-    tbody tr:hover{background:rgba(255,255,255,.03)}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: .95em}
+    tbody td{ padding:12px 16px; border-top:1px solid var(--border); color:var(--text); }
+    tbody tr:hover{ background: linear-gradient(90deg, rgba(47,110,131,0.03), rgba(130,71,19,0.02)); }
 
-    /* DETAILS (Team) */
-    details{border:1px solid var(--border); border-radius:var(--radius); padding:8px 0; background:var(--card)}
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size:.95em; color:var(--muted); }
+
+    /* ------------------------
+       Details / Team
+       ------------------------ */
+    details{ border:1px solid var(--border); border-radius:var(--radius); padding:8px 0; }
     summary{
-      cursor:pointer; list-style:none; padding:14px 20px; font-weight:700;
+      cursor:pointer; list-style:none; padding:14px 20px; font-weight:800; color:var(--accent-2);
     }
-    summary::-webkit-details-marker{display:none}
+    summary::-webkit-details-marker{ display:none; }
+
     .team{
-      display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:14px; padding: 0 14px 16px;
+      display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; padding: 0 14px 8px;
     }
     .team .member{
-      border:1px solid var(--border); border-radius:14px; padding:16px; background:rgba(255,255,255,.01);
+      border:1px solid var(--border); border-radius:14px; padding:16px;
+      box-shadow: 0 8px 22px rgba(47,110,131,0.04);
     }
-    .member h3{margin:0 0 6px; font-size:18px}
-    .member p{margin:0 0 10px; color:var(--muted)}
-    .pill-row{display:flex; gap:8px; flex-wrap:wrap}
+    .member h3{ margin:0 0 8px; font-size:18px; color:var(--accent-3); }
+    .member p{ margin:0 0 10px; color:var(--muted); }
+
+    .pill-row{ display:flex; gap:8px; flex-wrap:wrap; }
     .pill{
-      border:1px solid var(--border); padding:8px 12px; border-radius:999px; font-weight:600; text-decoration:none
+      border:1px solid rgba(47,110,131,0.06);
+      padding:8px 12px; border-radius:999px; font-weight:700; text-decoration:none;
+      color:var(--accent);
+      transition: transform 160ms ease, box-shadow 160ms;
     }
+    .pill:hover{ transform: translateY(-3px); box-shadow: 0 8px 20px rgba(47,110,131,0.06); background: linear-gradient(90deg, var(--accent-4), rgba(255,255,255,0.6)); color:white; }
 
-    /* STAKEHOLDERS */
+    /* ------------------------
+       Stakeholder image
+       ------------------------ */
     .stakeholder-img{
-      width:min(420px, 85%); margin: 0 auto; border-radius: 16px; border:1px solid var(--border); overflow:hidden;
-      background: #fff;
+      width:min(300px, 60%); margin: 0 auto; overflow:hidden;
     }
 
-    /* FOOTER */
-    footer{opacity:.8; font-size:13px; text-align:center; margin:26px 0}
+    /* ------------------------
+       Footer
+       ------------------------ */
+    footer{ opacity:.9; font-size:13px; text-align:center; margin:22px 0 48px; color:var(--muted); }
+
+    /* ------------------------
+       Responsive tweaks
+       ------------------------ */
+    @media (max-width:720px){
+      .wrap{ padding:18px; }
+      .logo{ width: min(260px, 60vw); }
+      .brand h1{ font-size: clamp(20px, 6vw, 28px); }
+      .cta-row{ gap:10px; }
+      .card{ padding:16px; }
+      .team{ gap:12px; }
+    }
   </style>
 </head>
 <body>
@@ -159,15 +263,23 @@
     <section class="hero">
       <img class="logo" src="docs/img/Snap%20Vision%20t2.png" alt="Snap Vision Logo" />
       <div class="brand">
-        <h1>BLT’S – Snap Vision</h1>
+        <h1>BLT’S</h1>
       </div>
-      <div class="tag">AR Navigation for Indoor &amp; Outdoor Spaces</div>
+      <div class="tag">Indoor, Outdoor Navigation and AR Navigation</div>
 
       <div class="cta-row">
         <!-- <a class="btn primary" href="https://github.com/COS301-SE-2025/Snap-Vision/releases/download/v2.0/app-release.apk">Download APK</a> -->
-        <a class="btn" href="https://github.com/orgs/COS301-SE-2025/projects/153">Project Board</a>
-        <a class="btn" href="#docs">Documentation</a>
+        <a class="btn ghost" href="https://github.com/orgs/COS301-SE-2025/projects/153">Project Board</a>
+        <a class="btn primary" href="#docs">Documentation</a>
       </div>
+    </section>
+
+    <!-- TRAILER VIDEO -->
+    <section class="section center">
+      <video controls style="max-width:100%; width:30vw; height:auto; border-radius:18px; box-shadow: var(--shadow);">
+        <source src="docs/img/trailer.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
     </section>
 
     <!-- BADGES -->
@@ -211,7 +323,6 @@
       <h2>About Snap Vision</h2>
       <p>Snap Vision is a mobile application designed to help users navigate complex indoor and outdoor environments such as university campuses and malls using AR-powered visual guidance.</p>
       <p>The app uses a combination of GPS, QR Codes, and AR overlays to provide seamless real-time wayfinding.</p>
-      <p>This project was developed by Team <strong>BLT’S</strong> for the COS301 Capstone Module at the University of Pretoria.</p>
       <div class="cta-row" style="margin-top:10px">
         <a class="btn primary" href="https://github.com/COS301-SE-2025/Snap-Vision/releases/download/v2.0/snap-vision.apk">Download APK</a>
       </div>
@@ -219,7 +330,7 @@
 
     <!-- DEMO 4 DOCS -->
     <section id="docs" class="section">
-      <h2 class="center">Demo 4 Documentation</h2>
+      <h2 class="center">Documentation</h2>
       <div class="table card">
         <table>
           <thead>
@@ -285,7 +396,7 @@
     <section class="section card center">
       <h2>Project Board</h2>
       <div class="cta-row" style="margin-top:10px">
-        <a class="btn" href="https://github.com/orgs/COS301-SE-2025/projects/153">Open Project Board →</a>
+        <a class="btn primary" href="https://github.com/orgs/COS301-SE-2025/projects/153">Open Project Board →</a>
       </div>
     </section>
 
@@ -370,14 +481,11 @@
     </section>
 
     <!-- STAKEHOLDERS -->
-    <section class="section card center">
-      <h2>Stakeholders</h2>
-      <div class="stakeholder-img">
-        <img src="docs/img/naked-insurance.png" alt="Stakeholders" />
-      </div>
+    <section class="section center" style="margin:-80px 0 0 0;">
+        <img class="stakeholder-img" src="docs/img/people.jpg" alt="Stakeholders" />
     </section>
 
-    <footer>© Team BLT’S · Snap Vision · COS301 Capstone · University of Pretoria</footer>
+    <footer style="margin:-60px 0 200px;">© Team BLT’S · Snap Vision · COS301 Capstone · University of Pretoria</footer>
   </main>
 </body>
 </html>
