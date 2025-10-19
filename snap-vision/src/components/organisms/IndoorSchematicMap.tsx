@@ -24,6 +24,7 @@ interface Props {
   floorplanUrl?: string;
   nextInstructionEnd?: { x: number; y: number };
   additionalFloorplans?: string[];
+  highlightedPOI?: string;
 }
 
 const FLOORPLAN_CONTAINER_WIDTH = 360;
@@ -63,6 +64,7 @@ const STATIC_HTML = `
   }
   .marker.start { background: var(--destination); }
   .marker.end { background: var(--success); }
+  .marker.highlighted { background: var(--secondary); }
   .marker-label {
     position: absolute; top: 25px; left: 50%; transform: translateX(-50%);
     background: #ffffff; color: var(--secondary);
@@ -98,7 +100,7 @@ const STATIC_HTML = `
     window.__state = {
       rooms: [], startId: null, endId: null,
       route: [], done: [], currentPos: null,
-      floorplanUrl: null
+      floorplanUrl: null, highlightedPOI: null
     };
 
     const container = document.getElementById('container');
@@ -178,8 +180,9 @@ const STATIC_HTML = `
       }, 5000); // 5 second timeout
     }
 
-    function setRooms(rooms) {
+    function setRooms(rooms, highlightedPOI) {
       window.__state.rooms = rooms || [];
+      window.__state.highlightedPOI = highlightedPOI;
       // Remove old markers/labels/flags
       [...zoomableArea.querySelectorAll('.marker,.marker-label,.entrance-flag')].forEach(n => n.remove());
       // Add new
@@ -187,6 +190,12 @@ const STATIC_HTML = `
         const m = document.createElement('div');
         m.className = 'marker';
         m.dataset.id = room.id;
+        
+        // Add highlighted class if this room is highlighted
+        if (highlightedPOI && room.id === highlightedPOI) {
+          m.classList.add('highlighted');
+        }
+        
         placeAbs(m, room.coordinates.x, room.coordinates.y);
         m.addEventListener('click', () => {
           window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'room_selected', id: room.id }));
@@ -291,7 +300,7 @@ const STATIC_HTML = `
       try {
         setThemeColors(payload.themeColors || null);
         mountFloorplan(payload.floorplanUrl || '');
-        setRooms(payload.rooms || []);
+        setRooms(payload.rooms || [], payload.highlightedPOI);
         setStartEnd(payload.startId || null, payload.endId || null);
         setRoute(payload.routePolyline || []);
         setCompleted(payload.completedPolyline || []);
@@ -417,6 +426,7 @@ export default function IndoorSchematicMap({
   themeColors,
   floorplanUrl,
   additionalFloorplans = [],
+  highlightedPOI,
 }: Props): React.JSX.Element {
   const webViewRef = useRef<WebView>(null);
   const { dark: isDarkMode } = useTheme();
@@ -442,6 +452,7 @@ export default function IndoorSchematicMap({
       routePolyline,
       completedPolyline,
       currentPos,
+      highlightedPOI,
       themeColors: {
         background: isDarkMode ? '#121212' : themeColors?.background || '#ffffff',
         text: themeColors?.text || (isDarkMode ? '#ffffff' : '#000000'),
@@ -465,7 +476,7 @@ export default function IndoorSchematicMap({
                 // Apply all the settings
                 if (window.setThemeColors) window.setThemeColors(payload.themeColors || null);
                 if (window.mountFloorplan) window.mountFloorplan(payload.floorplanUrl || '');
-                if (window.setRooms) window.setRooms(payload.rooms || []);
+                if (window.setRooms) window.setRooms(payload.rooms || [], payload.highlightedPOI);
                 if (window.setStartEnd) window.setStartEnd(payload.startId || null, payload.endId || null);
                 if (window.setRoute) window.setRoute(payload.routePolyline || []);
                 if (window.setCompleted) window.setCompleted(payload.completedPolyline || []);
@@ -516,9 +527,11 @@ export default function IndoorSchematicMap({
   // Incremental updates (no reloads)
   useEffect(() => {
     if (webViewRef.current && webViewReady) {
-      webViewRef.current.injectJavaScript(`window.setRooms(${JSON.stringify(rooms || [])}); true;`);
+      webViewRef.current.injectJavaScript(
+        `window.setRooms(${JSON.stringify(rooms || [])}, ${JSON.stringify(highlightedPOI)}); true;`,
+      );
     }
-  }, [rooms, webViewReady]);
+  }, [rooms, highlightedPOI, webViewReady]);
 
   useEffect(() => {
     webViewRef.current?.injectJavaScript(
@@ -648,6 +661,7 @@ export default function IndoorSchematicMap({
           routePolyline,
           completedPolyline,
           currentPos,
+          highlightedPOI,
           themeColors: {
             background: isDarkMode ? '#121212' : themeColors?.background || '#ffffff',
             text: themeColors?.text || (isDarkMode ? '#ffffff' : '#000000'),
